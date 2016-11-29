@@ -22,13 +22,13 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.BasePathMacroManager
-import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NamedJDOMExternalizable
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.io.delete
+import com.intellij.util.io.outputStream
 import org.jdom.Element
 
 private class ApplicationPathMacroManager : BasePathMacroManager(null)
@@ -52,13 +52,9 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
       invokeAndWaitIfNeed {
         // not recursive, config directory contains various data - for example, ICS or shelf should not be refreshed,
         // but we refresh direct children to avoid refreshAndFindFile in SchemeManager (to find schemes directory)
-
-        // ServiceManager inits service under read-action, so, we cannot refresh scheme dir on SchemeManager creation because it leads to error "Calling invokeAndWait from read-action leads to possible deadlock."
-        val refreshAll = ServiceManagerImpl.isUseReadActionToInitService()
-
-        VfsUtil.markDirtyAndRefresh(false, refreshAll, true, configDir)
+        VfsUtil.markDirtyAndRefresh(false, false, true, configDir)
         val optionsDir = configDir.findChild(ApplicationStorageManager.FILE_STORAGE_DIR)
-        if (!refreshAll && optionsDir != null) {
+        if (optionsDir != null) {
           // not recursive, options directory contains only files
           VfsUtil.markDirtyAndRefresh(false, false, true, optionsDir)
         }
@@ -67,7 +63,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
   }
 }
 
-class ApplicationStorageManager(private val application: Application, pathMacroManager: PathMacroManager? = null) : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
+class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null) : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
   companion object {
     private val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
@@ -95,8 +91,7 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
         storage.file.delete()
       }
       else {
-        FileUtilRt.createParentDirs(storage.file)
-        JDOMUtil.writeElement(element, storage.file.writer(), "\n")
+        JDOMUtil.writeElement(element, storage.file.outputStream().writer(), "\n")
       }
     }
     catch (e: Throwable) {

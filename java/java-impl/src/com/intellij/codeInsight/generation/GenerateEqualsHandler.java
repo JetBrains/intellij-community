@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,9 @@ import java.util.List;
  */
 public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateEqualsHandler");
-  private PsiField[] myEqualsFields = null;
-  private PsiField[] myHashCodeFields = null;
-  private PsiField[] myNonNullFields = null;
+  private PsiField[] myEqualsFields;
+  private PsiField[] myHashCodeFields;
+  private PsiField[] myNonNullFields;
   private static final PsiElementClassMember[] DUMMY_RESULT = new PsiElementClassMember[1]; //cannot return empty array, but this result won't be used anyway
 
   public GenerateEqualsHandler() {

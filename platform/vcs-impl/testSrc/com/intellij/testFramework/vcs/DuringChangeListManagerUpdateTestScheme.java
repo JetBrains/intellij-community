@@ -54,7 +54,7 @@ public class DuringChangeListManagerUpdateTestScheme {
     projectLevelVcsManager.registerVcs(vcs);
     //projectLevelVcsManager.setDirectoryMapping(mockVcsRoot.getAbsolutePath(), vcs.getName());
     final ArrayList<VcsDirectoryMapping> list =
-      new ArrayList<VcsDirectoryMapping>(projectLevelVcsManager.getDirectoryMappings());
+      new ArrayList<>(projectLevelVcsManager.getDirectoryMappings());
     list.add(new VcsDirectoryMapping(vRoot.getPath(), vcs.getName()));
     projectLevelVcsManager.setDirectoryMappings(list);
 

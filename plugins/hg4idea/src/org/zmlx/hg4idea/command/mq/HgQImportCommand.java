@@ -18,13 +18,12 @@ package org.zmlx.hg4idea.command.mq;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.List;
 
@@ -37,18 +36,23 @@ public class HgQImportCommand {
   }
 
   public void execute(@NotNull final String startRevisionNumber) {
+    HgUtil.executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        executeInCurrentThread(startRevisionNumber);
+      }
+    }, myRepository.getProject());
+  }
+
+  public void executeInCurrentThread(@NotNull final String startRevisionNumber) {
     final Project project = myRepository.getProject();
     String lastRevisionName = myRepository.getMQAppliedPatches().isEmpty() ? "tip" : "qparent";
     List<String> arguments = ContainerUtil.newArrayList("--rev", startRevisionNumber + ":" + lastRevisionName);
-    new HgCommandExecutor(project).execute(myRepository.getRoot(), "qimport", arguments, new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-          new HgCommandResultNotifier(project)
-            .notifyError(result, "Import failed", "Import revision from " + startRevisionNumber + " to qparent failed");
-        }
-        myRepository.update();
-      }
-    });
+    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(myRepository.getRoot(), "qimport", arguments);
+    if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+      new HgCommandResultNotifier(project)
+        .notifyError(result, "Import failed", "Import revision from " + startRevisionNumber + " to qparent failed");
+    }
+    myRepository.update();
   }
 }

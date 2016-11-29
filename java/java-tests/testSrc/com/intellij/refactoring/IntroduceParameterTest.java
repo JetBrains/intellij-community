@@ -28,6 +28,7 @@ import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,6 +76,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false,
            "field <b><code>Test.i</code></b> is not accessible from method <b><code>XTest.n()</code></b>. " +
            "Value for introduced parameter in that method call will be incorrect.");
+  }
+
+  public void testRemoveOverrideFromDelegated() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, true);
   }
 
   public void testFieldAccess() {
@@ -151,6 +156,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   }
 
   public void testNewWithRefToVararg() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, false, false);
+  }
+
+  public void testMethodCallRefToVararg() throws Exception {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, false, false);
   }
 
@@ -302,6 +311,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
   }
 
+  public void testSubstituteTypeParamsInInheritor() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+  }
+
   public void testDelegateWithVarargs() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, true);
   }
@@ -354,12 +367,14 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   public void testCodeDuplicates() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     perform(true, 0, "anObject", false, true, true, false, 0, true);
+    UIUtil.dispatchAllInvocationEvents();
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
   public void testCodeDuplicatesFromConstructor() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     perform(true, 0, "anObject", false, true, true, false, 0, true);
+    UIUtil.dispatchAllInvocationEvents();
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 

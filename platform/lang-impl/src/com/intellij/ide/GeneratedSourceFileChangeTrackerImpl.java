@@ -52,7 +52,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     super(project);
     myDocumentManager = documentManager;
     myEditorNotifications = editorNotifications;
-    myCheckingQueue = new MergingUpdateQueue("Checking for changes in generated sources", 500, false, null, project, null, Alarm.ThreadToUse.SHARED_THREAD);
+    myCheckingQueue = new MergingUpdateQueue("Checking for changes in generated sources", 500, false, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
   }
 
   @Override
@@ -116,7 +116,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
       files = myFilesToCheck.toArray(new VirtualFile[myFilesToCheck.size()]);
       myFilesToCheck.clear();
     }
-    final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();
     new ReadAction() {
       protected void run(final @NotNull Result result) {
         if (myProject.isDisposed()) return;

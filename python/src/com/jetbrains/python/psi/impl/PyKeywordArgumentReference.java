@@ -50,12 +50,12 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
     final PsiPolyVariantReference calleeReference = (PsiPolyVariantReference) callee.getReference();
     if (calleeReference == null) return ResolveResult.EMPTY_ARRAY;
     final ResolveResult[] calleeCandidates = calleeReference.multiResolve(incompleteCode);
-    List<ResolveResult> resultList = new ArrayList<ResolveResult>();
+    List<ResolveResult> resultList = new ArrayList<>();
     for (ResolveResult calleeCandidate : calleeCandidates) {
       if (!calleeCandidate.isValidResult()) continue;
       final PsiElement element = calleeCandidate.getElement();
       if (element == null) continue;
-      final PyFunction calleeFunction = resolveToFunction(element, new HashSet<PsiElement>());
+      final PyFunction calleeFunction = resolveToFunction(element, new HashSet<>());
       if (calleeFunction != null) {
         final PsiElement result = calleeFunction.getParameterList().findParameterByName(keyword);
         if (result != null) {

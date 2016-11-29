@@ -47,6 +47,6 @@ public class NoteProjectNode extends ProjectViewNodeWithChildrenList<NoteNode> {
   protected void update(PresentationData presentation) {
     presentation.setPresentableText(getValue().getText());
     // todo define own color
-    presentation.setForcedTextForeground(FileStatus.COLOR_SWITCHED);
+    presentation.setForcedTextForeground(FileStatus.SWITCHED.getColor());
   }
 }

@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
  */
-public interface IntentionAction {
+public interface IntentionAction extends IntentionLike {
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
   /**
    * Returns text to be shown in the list of available actions, if this action

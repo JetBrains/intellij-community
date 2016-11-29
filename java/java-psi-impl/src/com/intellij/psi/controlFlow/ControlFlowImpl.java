@@ -18,9 +18,8 @@ package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiStatement;
+import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,14 +29,14 @@ class ControlFlowImpl implements ControlFlow {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowImpl");
 
   private final List<Instruction> myInstructions = new ArrayList<Instruction>();
-  private final TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<PsiElement>();
-  private final TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<PsiElement>();
+  private final ObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new ObjectIntHashMap<PsiElement>();
+  private final ObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new ObjectIntHashMap<PsiElement>();
   private final List<PsiElement> myElementsForInstructions = new ArrayList<PsiElement>();
   private boolean myConstantConditionOccurred;
 
   private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
 
-  public void addInstruction(Instruction instruction) {
+  void addInstruction(Instruction instruction) {
     myInstructions.add(instruction);
     myElementsForInstructions.add(myElementStack.peek());
   }
@@ -45,20 +44,9 @@ class ControlFlowImpl implements ControlFlow {
   public void startElement(PsiElement element) {
     myElementStack.push(element);
     myElementToStartOffsetMap.put(element, myInstructions.size());
-
-    if (LOG.isDebugEnabled()){
-      if (element instanceof PsiStatement){
-        String text = element.getText();
-        int index = Math.min(text.indexOf('\n'), text.indexOf('\r'));
-        if (index >= 0){
-          text = text.substring(0, index);
-        }
-        addInstruction(new CommentInstruction(text));
-      }
-    }
   }
 
-  public void finishElement(PsiElement element) {
+  void finishElement(PsiElement element) {
     PsiElement popped = myElementStack.pop();
     LOG.assertTrue(popped.equals(element));
     myElementToEndOffsetMap.put(element, myInstructions.size());
@@ -76,20 +64,12 @@ class ControlFlowImpl implements ControlFlow {
 
   @Override
   public int getStartOffset(@NotNull PsiElement element) {
-    int value = myElementToStartOffsetMap.get(element);
-    if (value == 0){
-      if (!myElementToStartOffsetMap.containsKey(element)) return -1;
-    }
-    return value;
+    return myElementToStartOffsetMap.get(element, -1);
   }
 
   @Override
   public int getEndOffset(@NotNull PsiElement element) {
-    int value = myElementToEndOffsetMap.get(element);
-    if (value == 0){
-      if (!myElementToEndOffsetMap.containsKey(element)) return -1;
-    }
-    return value;
+    return myElementToEndOffsetMap.get(element, -1);
   }
 
   @Override
@@ -101,7 +81,7 @@ class ControlFlowImpl implements ControlFlow {
   public boolean isConstantConditionOccurred() {
     return myConstantConditionOccurred;
   }
-  public void setConstantConditionOccurred(boolean constantConditionOccurred) {
+  void setConstantConditionOccurred(boolean constantConditionOccurred) {
     myConstantConditionOccurred = constantConditionOccurred;
   }
 
@@ -111,7 +91,7 @@ class ControlFlowImpl implements ControlFlow {
       Instruction instruction = myInstructions.get(i);
       buffer.append(Integer.toString(i));
       buffer.append(": ");
-      buffer.append(instruction.toString());
+      buffer.append(instruction);
       buffer.append("\n");
     }
     return buffer.toString();

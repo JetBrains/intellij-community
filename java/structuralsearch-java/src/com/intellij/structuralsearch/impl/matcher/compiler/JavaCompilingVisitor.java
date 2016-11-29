@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,19 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
-import com.intellij.structuralsearch.impl.matcher.strategies.*;
+import com.intellij.structuralsearch.impl.matcher.strategies.CommentMatchingStrategy;
+import com.intellij.structuralsearch.impl.matcher.strategies.ExprMatchingStrategy;
+import com.intellij.structuralsearch.impl.matcher.strategies.JavaDocMatchingStrategy;
+import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -291,11 +296,11 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       final PsiModifierList modifierList = (PsiModifierList)firstChild;
       final PsiAnnotation[] annotations = modifierList.getAnnotations();
       if (annotations.length != 1) {
-        throw new UnsupportedPatternException("Pattern is malformed");
+        throw new MalformedPatternException();
       }
       for (String modifier : PsiModifier.MODIFIERS) {
         if (modifierList.hasExplicitModifier(modifier)) {
-          throw new UnsupportedPatternException("Pattern is malformed");
+          throw new MalformedPatternException();
         }
       }
       myCompilingVisitor.setHandler(psiDeclarationStatement, new AnnotationHandler());
@@ -348,32 +353,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     handleReferenceText(psiClass.getName(), myCompilingVisitor.getContext());
 
     GlobalCompilingVisitor.setFilter(handler, ClassFilter.getInstance());
-
-    boolean hasSubstitutionHandler = false;
-    for (PsiElement element = psiClass.getFirstChild(); element != null; element = element.getNextSibling()) {
-      if (element instanceof PsiTypeElement && element.getNextSibling() instanceof PsiErrorElement) {
-        // found match that
-        MatchingHandler unmatchedSubstitutionHandler = pattern.getHandler(element);
-        if (unmatchedSubstitutionHandler != null) {
-          psiClass.putUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY, pattern.getTypedVarString(element));
-          hasSubstitutionHandler = true;
-        }
-      }
-    }
-
-    if (!hasSubstitutionHandler) {
-      String name = CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
-      psiClass.putUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY, name);
-      MatchOptions options = myCompilingVisitor.getContext().getOptions();
-      if (pattern.getHandler(name) == null) {
-        pattern.createSubstitutionHandler(name, name, false, 0, Integer.MAX_VALUE, true);
-        MatchVariableConstraint constraint = new MatchVariableConstraint(true);
-        constraint.setName(name);
-        constraint.setMinCount(0);
-        constraint.setMaxCount(Integer.MAX_VALUE);
-        options.addVariableConstraint(constraint);
-      }
-    }
   }
 
   private SubstitutionHandler createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText,
@@ -398,14 +377,10 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       final PsiElement reference = expr.getFirstChild();
       MatchingHandler referenceHandler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
 
-      if (referenceHandler instanceof SubstitutionHandler &&
-          (reference instanceof PsiReferenceExpression)
-        ) {
+      if (referenceHandler instanceof SubstitutionHandler && (reference instanceof PsiReferenceExpression)) {
         // symbol
         myCompilingVisitor.getContext().getPattern().setHandler(expr, referenceHandler);
-        referenceHandler.setFilter(
-          SymbolNodeFilter.getInstance()
-        );
+        referenceHandler.setFilter(SymbolNodeFilter.getInstance());
 
         myCompilingVisitor.setHandler(expr, new SymbolHandler((SubstitutionHandler)referenceHandler));
       }
@@ -520,14 +495,11 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(context.getProject());
     final PsiClass[] classes = cache.getClassesByName(className, (GlobalSearchScope)scope);
-    final List<PsiClass> results = new ArrayList<PsiClass>();
+    final List<PsiClass> results = new ArrayList<>();
 
-    final Processor<PsiClass> processor = new Processor<PsiClass>() {
-      @Override
-      public boolean process(PsiClass aClass) {
-        results.add(aClass);
-        return true;
-      }
+    final Processor<PsiClass> processor = aClass -> {
+      results.add(aClass);
+      return true;
     };
 
     for (PsiClass aClass : classes) {
@@ -585,7 +557,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     myCompilingVisitor.setCodeBlockLevel(myCompilingVisitor.getCodeBlockLevel() - 1);
   }
 
-  private MatchingStrategy findStrategy(PsiElement el) {
+  private static MatchingStrategy findStrategy(PsiElement el) {
     if (el instanceof PsiDocComment) {
       return JavaDocMatchingStrategy.getInstance();
     }

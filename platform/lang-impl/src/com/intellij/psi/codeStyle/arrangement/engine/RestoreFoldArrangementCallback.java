@@ -42,7 +42,7 @@ public class RestoreFoldArrangementCallback implements ArrangementCallback {
     Project project = myEditor.getProject();
     if (project != null) {
       final FoldRegion[] regions = myEditor.getFoldingModel().getAllFoldRegions();
-      final List<FoldRegionInfo> foldRegionsInfo = new ArrayList<FoldRegionInfo>();
+      final List<FoldRegionInfo> foldRegionsInfo = new ArrayList<>();
       for (FoldRegion region : regions) {
         final FoldRegionInfo info = new FoldRegionInfo(region.getStartOffset(), region.getEndOffset(), region.isExpanded());
         foldRegionsInfo.add(info);
@@ -50,14 +50,11 @@ public class RestoreFoldArrangementCallback implements ArrangementCallback {
 
       final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
       foldingManager.updateFoldRegions(myEditor);
-      myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          for (FoldRegionInfo info : foldRegionsInfo) {
-            final FoldRegion foldRegion = foldingManager.findFoldRegion(myEditor, info.myStart, info.myEnd);
-            if (foldRegion != null) {
-              foldRegion.setExpanded(info.myIsExpanded);
-            }
+      myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+        for (FoldRegionInfo info : foldRegionsInfo) {
+          final FoldRegion foldRegion = foldingManager.findFoldRegion(myEditor, info.myStart, info.myEnd);
+          if (foldRegion != null) {
+            foldRegion.setExpanded(info.myIsExpanded);
           }
         }
       });

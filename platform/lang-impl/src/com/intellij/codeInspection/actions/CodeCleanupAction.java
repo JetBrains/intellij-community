@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -24,9 +23,9 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
-
-import javax.swing.*;
+import com.intellij.profile.codeInspection.ui.header.ProfilesComboBox;
 
 public class CodeCleanupAction extends CodeInspectionAction {
 
@@ -38,10 +37,11 @@ public class CodeCleanupAction extends CodeInspectionAction {
 
   @Override
   protected void runInspections(Project project, AnalysisScope scope) {
-    final InspectionProfile profile = myExternalProfile != null ? myExternalProfile : InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfile profile = myExternalProfile != null ? myExternalProfile : InspectionProjectProfileManager.getInstance(project)
+      .getCurrentProfile();
     final InspectionManager managerEx = InspectionManager.getInstance(project);
     final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext(false);
-    globalContext.codeCleanup(project, scope, profile, getTemplatePresentation().getText(), null, false);
+    globalContext.codeCleanup(scope, profile, getTemplatePresentation().getText(), null, false);
   }
 
   @Override
@@ -50,10 +50,10 @@ public class CodeCleanupAction extends CodeInspectionAction {
   }
 
   @Override
-  protected InspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
+  protected InspectionToolsConfigurable createConfigurable(ProjectInspectionProfileManager projectProfileManager,
                                                            InspectionProfileManager profileManager,
-                                                           JComboBox profilesCombo) {
-    return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profileManager, profilesCombo) {
+                                                           ProfilesComboBox profilesCombo) {
+    return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profilesCombo) {
       @Override
       protected boolean acceptTool(InspectionToolWrapper entry) {
         return super.acceptTool(entry) && entry.isCleanupTool();

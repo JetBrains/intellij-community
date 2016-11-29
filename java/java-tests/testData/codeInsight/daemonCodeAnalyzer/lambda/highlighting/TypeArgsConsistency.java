@@ -33,7 +33,7 @@ class TypeArgsConsistency1 {
         I<Integer> i1 = (i, j) -> i + j;
         foo((i, j) -> i + j);
         I<Integer> i2 =bar((i, j) -> i) ;
-        I<Integer> i3 = bar(<error descr="Bad return type in lambda expression: String cannot be converted to int">(i, j) -> "" + i + j</error>);
+        I<Integer> i3 = bar((i, j) -> <error descr="Bad return type in lambda expression: String cannot be converted to int">"" + i + j</error>);
     }
 }
 

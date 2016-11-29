@@ -86,7 +86,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     SettingsEditor<DeployToServerRunConfiguration> commonEditor
       = new DeployToServerSettingsEditor(myServerType, myDeploymentConfigurator, getProject());
 
-    SettingsEditorGroup<DeployToServerRunConfiguration> group = new SettingsEditorGroup<DeployToServerRunConfiguration>();
+    SettingsEditorGroup<DeployToServerRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor("Deployment", commonEditor);
     DeployToServerRunConfigurationExtensionsManager.getInstance().appendEditors(this, group);
     return group.getEditors().size() == 1 ? commonEditor : group;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +98,7 @@ public class CommonActionsPanel extends JPanel {
     }
   }
 
-  private Map<Buttons, MyActionButton> myButtons = new HashMap<Buttons, MyActionButton>();
+  private Map<Buttons, MyActionButton> myButtons = new HashMap<>();
   private final AnActionButton[] myActions;
 
   CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
@@ -148,7 +149,6 @@ public class CommonActionsPanel extends JPanel {
                                         new DefaultActionGroup(toolbarActions.toArray(new AnAction[toolbarActions.size()])),
                                         position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP,
                                         myDecorateButtons);
-    myToolbar.getComponent().setOpaque(false);
     myToolbar.getComponent().setBorder(null);
     add(myToolbar.getComponent(), BorderLayout.CENTER);
   }
@@ -170,8 +170,10 @@ public class CommonActionsPanel extends JPanel {
   protected void paintComponent(Graphics g2) {
     final Graphics2D g = (Graphics2D)g2;
     if (myDecorateButtons) {
+      myToolbar.getComponent().setOpaque(false);
       MacUIUtil.drawToolbarDecoratorBackground(g, getWidth(), getHeight());
-    } else {
+    }
+    else {
       super.paintComponent(g);
     }
   }
@@ -322,6 +324,7 @@ public class CommonActionsPanel extends JPanel {
     }
   }
 
+  @Contract("!null -> !null")
   public static ShortcutSet getCommonShortcut(Buttons button) {
     switch (button) {
       case ADD: return CommonShortcuts.getNewForDialogs();

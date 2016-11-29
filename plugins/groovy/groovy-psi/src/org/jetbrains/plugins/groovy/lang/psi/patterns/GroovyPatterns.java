@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 public class GroovyPatterns extends PsiJavaPatterns {
 
   public static GroovyElementPattern groovyElement() {
-    return new GroovyElementPattern.Capture<GroovyPsiElement>(GroovyPsiElement.class);
+    return new GroovyElementPattern.Capture<>(GroovyPsiElement.class);
   }
 
   public static GroovyBinaryExpressionPattern groovyBinaryExpression() {
@@ -56,7 +56,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
   }
 
   public static GroovyElementPattern.Capture<GrLiteral> groovyLiteralExpression(@Nullable final ElementPattern value) {
-    return new GroovyElementPattern.Capture<GrLiteral>(new InitialPatternCondition<GrLiteral>(GrLiteral.class) {
+    return new GroovyElementPattern.Capture<>(new InitialPatternCondition<GrLiteral>(GrLiteral.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof GrLiteral && (value == null || value.accepts(((GrLiteral)o).getValue(), context));
@@ -75,7 +75,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
   
   public static GroovyElementPattern.Capture<GroovyPsiElement> rightOfAssignment(final ElementPattern<? extends GroovyPsiElement> value,
                                                                                  final GroovyAssignmentExpressionPattern assignment) {
-    return new GroovyElementPattern.Capture<GroovyPsiElement>(new InitialPatternCondition<GroovyPsiElement>(GroovyPsiElement.class) {
+    return new GroovyElementPattern.Capture<>(new InitialPatternCondition<GroovyPsiElement>(GroovyPsiElement.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         if (!(o instanceof GroovyPsiElement)) return false;
@@ -91,7 +91,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
   }
 
   public static GroovyElementPattern.Capture<GrLiteralImpl> stringLiteral() {
-    return new GroovyElementPattern.Capture<GrLiteralImpl>(new InitialPatternCondition<GrLiteralImpl>(GrLiteralImpl.class) {
+    return new GroovyElementPattern.Capture<>(new InitialPatternCondition<GrLiteralImpl>(GrLiteralImpl.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (!(o instanceof GrLiteralImpl)) return false;
@@ -109,7 +109,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
   }
 
   public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(@Nullable final ElementPattern<? extends String> namePattern) {
-    return new GroovyElementPattern.Capture<GrArgumentLabel>(new InitialPatternCondition<GrArgumentLabel>(GrArgumentLabel.class) {
+    return new GroovyElementPattern.Capture<>(new InitialPatternCondition<GrArgumentLabel>(GrArgumentLabel.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (o instanceof GrArgumentLabel) {
@@ -149,7 +149,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
   }
 
   public static PsiFilePattern.Capture<GroovyFile> groovyScript() {
-    return new PsiFilePattern.Capture<GroovyFile>(new InitialPatternCondition<GroovyFile>(GroovyFile.class) {
+    return new PsiFilePattern.Capture<>(new InitialPatternCondition<GroovyFile>(GroovyFile.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         return o instanceof GroovyFileBase && ((GroovyFileBase)o).isScript();

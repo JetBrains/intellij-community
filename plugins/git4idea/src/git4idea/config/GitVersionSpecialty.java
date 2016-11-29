@@ -140,6 +140,20 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 9, 0, 0));
     }
+  },
+
+  LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return !SystemInfo.isMac || version.isLaterOrEqual(new GitVersion(1, 8, 3, 3));
+    }
+  },
+
+  KNOWS_SET_UPSTREAM_TO { // in Git 1.8.0 --set-upstream-to was introduced as a replacement of --set-upstream which became deprecated
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 8, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

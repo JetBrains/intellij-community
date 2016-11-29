@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang;
+package org.jetbrains.plugins.groovy.lang
 
 
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
@@ -23,34 +23,52 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public class MissingReturnTest extends LightGroovyTestCase {
+class MissingReturnTest extends LightGroovyTestCase {
 
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}highlighting/missingReturn";
+    return "${TestUtils.testDataPath}highlighting/missingReturn"
   }
 
-  public void testMissingReturnWithLastLoop() throws Throwable { doTest(); }
-  public void testMissingReturnWithUnknownCall() throws Throwable { doTest(); }
-  public void testMissingReturnWithIf() throws Throwable { doTest(); }
-  public void testMissingReturnWithAssertion() throws Throwable { doTest(); }
-  public void testMissingReturnThrowException() throws Throwable { doTest(); }
-  public void testMissingReturnTryCatch() throws Throwable { doTest(); }
-  public void testMissingReturnLastNull() throws Throwable { doTest(); }
-  public void testMissingReturnImplicitReturns() throws Throwable {doTest();}
-  public void testMissingReturnOvertReturnType() throws Throwable {doTest();}
-  public void testMissingReturnFromClosure() throws Throwable {doTest();}
-  public void testReturnsWithoutValue() throws Throwable {doTest();}
-  public void testEndlessLoop() throws Throwable {doTest();}
-  public void testEndlessLoop2() throws Throwable {doTest();}
-  public void testExceptionWithFinally() throws Throwable {doTest();}
-  public void testOnlyAssert() throws Throwable {doTest();}
-  public void testImplicitReturnNull() throws Throwable {doTest();}
-  public void testMissingReturnInClosure() {doTest();}
-  public void testFinally() {doTest();}
-  public void testClosureWithExplicitExpectedType() {doTest()}
+  void testMissingReturnWithLastLoop() throws Throwable { doTest() }
 
-  public void testAssert() {
+  void testMissingReturnWithUnknownCall() throws Throwable { doTest() }
+
+  void testMissingReturnWithIf() throws Throwable { doTest() }
+
+  void testMissingReturnWithAssertion() throws Throwable { doTest() }
+
+  void testMissingReturnThrowException() throws Throwable { doTest() }
+
+  void testMissingReturnTryCatch() throws Throwable { doTest() }
+
+  void testMissingReturnLastNull() throws Throwable { doTest() }
+
+  void testMissingReturnImplicitReturns() throws Throwable { doTest() }
+
+  void testMissingReturnOvertReturnType() throws Throwable { doTest() }
+
+  void testMissingReturnFromClosure() throws Throwable { doTest() }
+
+  void testReturnsWithoutValue() throws Throwable { doTest() }
+
+  void testEndlessLoop() throws Throwable { doTest() }
+
+  void testEndlessLoop2() throws Throwable { doTest() }
+
+  void testExceptionWithFinally() throws Throwable { doTest() }
+
+  void testOnlyAssert() throws Throwable { doTest() }
+
+  void testImplicitReturnNull() throws Throwable { doTest() }
+
+  void testMissingReturnInClosure() { doTest() }
+
+  void testFinally() { doTest() }
+
+  void testClosureWithExplicitExpectedType() { doTest() }
+
+  void testAssert() {
     doTextText('''\
 Integer.with {
   assert valueof('1') == 1
@@ -68,7 +86,7 @@ Integer.with {
   }
 
 
-  public void testInterruptFlowInElseBranch() {
+  void testInterruptFlowInElseBranch() {
     doTextText('''\
 //correct
 public int foo(int bar) {
@@ -309,8 +327,8 @@ void foo() {
   }
 
   private void doTest() {
-    myFixture.enableInspections(new MissingReturnInspection());
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
+    myFixture.enableInspections(new MissingReturnInspection())
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy")
   }
 
 }

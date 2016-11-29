@@ -17,6 +17,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -50,10 +51,12 @@ import java.util.Collection;
 * @author egor
 */
 public abstract class CompilingEvaluator implements ExpressionEvaluator {
+  @NotNull protected final Project myProject;
   @NotNull protected final PsiElement myPsiContext;
   @NotNull protected final ExtractLightMethodObjectHandler.ExtractedData myData;
 
-  public CompilingEvaluator(@NotNull PsiElement context, @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
+  public CompilingEvaluator(@NotNull Project project, @NotNull PsiElement context, @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
+    myProject = project;
     myPsiContext = context;
     myData = data;
   }
@@ -85,17 +88,15 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
     try {
       // invoke base evaluator on call code
-      final Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)myPsiContext::getProject);
+      SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
       ExpressionEvaluator evaluator =
-        DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
+        DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
           @Override
           public ExpressionEvaluator compute() throws EvaluateException {
-            final TextWithImports callCode = getCallCode();
+            TextWithImports callCode = getCallCode();
             PsiElement copyContext = myData.getAnchor();
-            final CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
-            return factory.getEvaluatorBuilder().
-              build(factory.createCodeFragment(callCode, copyContext, project),
-                    ContextUtil.getSourcePosition(evaluationContext));
+            CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
+            return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, myProject), position);
           }
         });
       ((EvaluationContextImpl)evaluationContext).setClassLoader(classLoader);
@@ -124,7 +125,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
   private static byte[] changeSuperToMagicAccessor(byte[] bytes) {
     ClassWriter classWriter = new ClassWriter(0);
-    ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM5, classWriter) {
+    ClassVisitor classVisitor = new ClassVisitor(Opcodes.API_VERSION, classWriter) {
       @Override
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         if ("java/lang/Object".equals(superName)) {
@@ -148,12 +149,8 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
 
   protected String getGenClassQName() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass());
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction(
+      (Computable<String>)() -> JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass()));
   }
 
   ///////////////// Compiler stuff

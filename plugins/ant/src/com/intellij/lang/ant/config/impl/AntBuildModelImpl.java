@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -47,13 +48,11 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     myFile = buildFile;
     final Project project = myFile.getProject();
     
-    myTargets = new PsiCachedValueImpl<List<AntBuildTargetBase>>(PsiManager.getInstance(project), new CachedValueProvider<List<AntBuildTargetBase>>() {
-      public Result<List<AntBuildTargetBase>> compute() {
-        final Pair<List<AntBuildTargetBase>, Collection<Object>> result = getTargetListImpl(AntBuildModelImpl.this);
-        final Collection<Object> deps = result.getSecond();
-        return Result.create(result.getFirst(), ArrayUtil.toObjectArray(deps));
-      }
-    });    
+    myTargets = new PsiCachedValueImpl<>(PsiManager.getInstance(project), () -> {
+      final Pair<List<AntBuildTargetBase>, Collection<Object>> result = getTargetListImpl(this);
+      final Collection<Object> deps = result.getSecond();
+      return CachedValueProvider.Result.create(result.getFirst(), ArrayUtil.toObjectArray(deps));
+    });
   }
 
   @Nullable
@@ -77,7 +76,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   public AntBuildTarget[] getFilteredTargets() {
-    final List<AntBuildTargetBase> filtered = new ArrayList<AntBuildTargetBase>();
+    final List<AntBuildTargetBase> filtered = new ArrayList<>();
     for (final AntBuildTargetBase buildTarget : getTargetsList()) {
       if (myFile.isTargetVisible(buildTarget)) {
         filtered.add(buildTarget);
@@ -124,11 +123,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   public boolean hasTargetWithActionId(final String id) {
-    final List<AntBuildTargetBase> targetsList = getTargetsList();
-    for (AntBuildTargetBase buildTarget : targetsList) {
-      if (id.equals(buildTarget.getActionId())) return true;
-    }
-    return false;
+    return StreamEx.of(getTargetsList()).map(AntBuildTargetBase::getActionId).has(id);
   }
 
   private List<AntBuildTargetBase> getTargetsList() {
@@ -152,8 +147,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   // todo: return list of dependent psi files as well
   private static Pair<List<AntBuildTargetBase>, Collection<Object>> getTargetListImpl(final AntBuildModelBase model) {
-    final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>();
-    final Set<Object> dependencies = new HashSet<Object>();
+    final List<AntBuildTargetBase> list = new ArrayList<>();
+    final Set<Object> dependencies = new HashSet<>();
     
     final AntDomProject project = model.getAntProject();
     if (project != null) {
@@ -164,7 +159,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
       final VirtualFile sourceFile = buildFile.getVirtualFile();
       new Object() {
         private boolean myIsImported = false;
-        private final Set<VirtualFile> myProcessed = new HashSet<VirtualFile>();
+        private final Set<VirtualFile> myProcessed = new HashSet<>();
         private AntDomTarget myDefaultTarget = null;
                 
         private void fillTargets(List<AntBuildTargetBase> list, AntBuildModelBase model, AntDomProject project, VirtualFile sourceFile) {
@@ -211,7 +206,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     if (dependencies.isEmpty()) {
       dependencies.add(PsiModificationTracker.MODIFICATION_COUNT);
     }
-    return new Pair<List<AntBuildTargetBase>, Collection<Object>>(list, dependencies);
+    return new Pair<>(list, dependencies);
   }
 
 }

@@ -28,7 +28,7 @@ import java.util.Arrays;
  */
 public class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   private final Usage myUsage;
-  private boolean myUsageExcluded = false;
+  private boolean myUsageExcluded;
 
   public UsageNode(@NotNull Usage usage, @NotNull UsageViewTreeModelBuilder model) {
     super(model);
@@ -44,7 +44,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
   public String tree2string(int indent, String lineSeparator) {
     StringBuffer result = new StringBuffer();
     StringUtil.repeatSymbol(result, ' ', indent);
-    result.append(myUsage.toString());
+    result.append(myUsage);
     return result.toString();
   }
 
@@ -98,7 +98,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     }
   }
 
-  public void setUsageExcluded(boolean usageExcluded) {
+  void setUsageExcluded(boolean usageExcluded) {
     myUsageExcluded = usageExcluded;
   }
 }

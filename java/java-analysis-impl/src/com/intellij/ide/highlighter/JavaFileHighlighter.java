@@ -39,8 +39,8 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> ourMap2;
 
   static {
-    ourMap1 = new HashMap<IElementType, TextAttributesKey>();
-    ourMap2 = new HashMap<IElementType, TextAttributesKey>();
+    ourMap1 = new HashMap<>();
+    ourMap2 = new HashMap<>();
 
     fillMap(ourMap1, ElementType.KEYWORD_BIT_SET, JavaHighlightingColors.KEYWORD);
     fillMap(ourMap1, ElementType.LITERAL_BIT_SET, JavaHighlightingColors.KEYWORD);

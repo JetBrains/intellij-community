@@ -41,7 +41,7 @@ public class CheckBoxListModelEditor<T> {
 
   public CheckBoxListModelEditor(@NotNull Function<T, String> toNameConverter, @NotNull String emptyText) {
     this.toNameConverter = toNameConverter;
-    list = new CheckBoxList<T>();
+    list = new CheckBoxList<>();
     list.setEmptyText(emptyText);
     // toolbar decorator is responsible for border
     list.setBorder(null);
@@ -50,17 +50,14 @@ public class CheckBoxListModelEditor<T> {
 
   @NotNull
   public CheckBoxListModelEditor<T> editAction(final @NotNull Function<T, T> consumer) {
-    final Runnable action = new Runnable() {
-      @Override
-      public void run() {
-        T item = getSelectedItem();
-        if (item != null) {
-          T newItem = consumer.fun(item);
-          if (newItem != null) {
-            list.updateItem(item, newItem, StringUtil.notNullize(toNameConverter.fun(newItem)));
-          }
-          list.requestFocus();
+    final Runnable action = () -> {
+      T item = getSelectedItem();
+      if (item != null) {
+        T newItem = consumer.fun(item);
+        if (newItem != null) {
+          list.updateItem(item, newItem, StringUtil.notNullize(toNameConverter.fun(newItem)));
         }
+        list.requestFocus();
       }
     };
     toolbarDecorator.setEditAction(new AnActionButtonRunnable() {
@@ -156,7 +153,7 @@ public class CheckBoxListModelEditor<T> {
   @NotNull
   public List<T> getItems() {
     int count = list.getItemsCount();
-    List<T> result = new ArrayList<T>(count);
+    List<T> result = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
       T item = list.getItemAt(i);
       if (item != null) {
@@ -169,7 +166,7 @@ public class CheckBoxListModelEditor<T> {
   @NotNull
   public List<Pair<T, Boolean>> apply() {
     int count = list.getItemsCount();
-    List<Pair<T, Boolean>> result = new ArrayList<Pair<T, Boolean>>(count);
+    List<Pair<T, Boolean>> result = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
       T item = list.getItemAt(i);
       if (item != null) {

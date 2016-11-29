@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,13 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +51,12 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection());
     setLanguageLevel(LanguageLevel.JDK_1_7);
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), getTestRootDisposable());
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17(); // has to have src.zip and weird method handle signatures
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos, InspectionProfileEntry... inspections) {
@@ -83,6 +93,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondNeg13() { doTest(false, false); }
   public void testDiamondNeg14() { doTest(false, false); }
   public void testDiamondMisc() { doTest(false, false); }
+  public void testNestedDiamond() { doTest(false, false); }
   public void testMultipleConstructors() { doTest(false, false); }
   public void testHighlightInaccessibleFromClassModifierList() { doTest(false, false); }
   public void testInnerInTypeArguments() { doTest(false, false); }
@@ -103,8 +114,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
       @Override public String[] getIgnoreAnnotations() { return new String[]{"MyAnno"}; }
     };
 
-    UnusedDeclarationInspectionBase deadCodeInspection = new UnusedDeclarationInspectionBase(true);
-    enableInspectionTool(deadCodeInspection);
+    enableInspectionTool(new UnusedDeclarationInspectionBase(true));
 
     doTest(true, false);
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
@@ -168,4 +178,19 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testAccessToStaticMethodsFromInterfaces() { doTest(true, false); }
   public void testUncheckedExtendedWarnings() { doTest(true, false); }
   public void testInaccessibleInferredTypeForVarargsArgument() { doTest(false, false);}
+  public void testRuntimeClassCast() { doTest(true, false);}
+  public void testTryWithResourcesWithMultipleCloseInterfaces() { doTest(false, false);}
+  public void testIDEA138978() { doTest(false, false); }
+
+  public void testArrayInitializerTypeCheckVariableType() { doTest(false, false);}
+
+  public void testJavaUtilCollections_NoVerify() throws Exception {
+    PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
+    assertNotNull(collectionsClass);
+    collectionsClass = (PsiClass)collectionsClass.getNavigationElement();
+    assertTrue(!(collectionsClass instanceof PsiCompiledElement));
+    final String text = collectionsClass.getContainingFile().getText();
+    configureFromFileText("Collections.java", StringUtil.convertLineSeparators(StringUtil.replace(text, "package java.util;", "package java.utilx; import java.util.*;")));
+    doTestConfiguredFile(false, false, null);
+  }
 }

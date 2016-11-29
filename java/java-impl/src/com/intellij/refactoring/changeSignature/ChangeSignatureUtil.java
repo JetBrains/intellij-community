@@ -56,7 +56,7 @@ public class ChangeSignatureUtil {
       if (index == newElements.size()) break;
 
       if (elementsToRemove == null) {
-        elementsToRemove = new ArrayList<Child>();
+        elementsToRemove = new ArrayList<>();
         for (int i = 0; i < shouldRemoveChild.length; i++) {
           if (shouldRemoveChild[i] && i < elements.size()) {
             elementsToRemove.add(elements.get(i));

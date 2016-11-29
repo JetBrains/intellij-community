@@ -71,7 +71,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     public TableCellRenderer getRenderer(VirtualFileCheckedTreeNode node) {
       final SuggestedChildRootInfo rootInfo = node.getRootInfo();
       if (rootInfo != null && isCellEditable(node)) {
-        return new ComboBoxTableRenderer<String>(rootInfo.getRootTypeNames());
+        return new ComboBoxTableRenderer<>(rootInfo.getRootTypeNames());
       }
       return new DefaultTableCellRenderer();
     }
@@ -204,15 +204,11 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
 
   private static CheckedTreeNode createRoot(Collection<SuggestedChildRootInfo> suggestedRoots) {
     SuggestedChildRootInfo[] sortedRoots = suggestedRoots.toArray(new SuggestedChildRootInfo[suggestedRoots.size()]);
-    Arrays.sort(sortedRoots, new Comparator<SuggestedChildRootInfo>() {
-      @Override
-      public int compare(@NotNull SuggestedChildRootInfo o1, @NotNull SuggestedChildRootInfo o2) {
-        return o1.getDetectedRoot().getFile().getPresentableUrl().compareTo(o2.getDetectedRoot().getFile().getPresentableUrl());
-      }
-    });
+    Arrays.sort(sortedRoots,
+                (o1, o2) -> o1.getDetectedRoot().getFile().getPresentableUrl().compareTo(o2.getDetectedRoot().getFile().getPresentableUrl()));
 
     CheckedTreeNode root = new CheckedTreeNode(null);
-    Map<VirtualFile, CheckedTreeNode> rootCandidateNodes = new HashMap<VirtualFile, CheckedTreeNode>();
+    Map<VirtualFile, CheckedTreeNode> rootCandidateNodes = new HashMap<>();
     for (SuggestedChildRootInfo rootInfo : sortedRoots) {
       final VirtualFile rootCandidate = rootInfo.getRootCandidate();
       CheckedTreeNode parent = rootCandidateNodes.get(rootCandidate);

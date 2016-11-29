@@ -54,12 +54,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
 
   @Override
   public PopupStep createSubStep() {
-    return LibraryEditingUtil.createChooseTypeStep(myClasspathPanel, new ParameterizedRunnable<LibraryType>() {
-      @Override
-      public void run(LibraryType libraryType) {
-        new AddNewLibraryDependencyAction(myClasspathPanel, myContext, libraryType).execute();
-      }
-    });
+    return LibraryEditingUtil.createChooseTypeStep(myClasspathPanel,
+                                                   libraryType -> new AddNewLibraryDependencyAction(myClasspathPanel, myContext, libraryType).execute());
   }
 
   @Override

@@ -41,7 +41,6 @@ import java.util.List;
  * @author dcheryasov
  */
 public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportElementStub> implements PyStarImportElement {
-
   public PyStarImportElementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -55,8 +54,8 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
     if (getParent() instanceof PyFromImportStatement) {
       PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
-      ChainIterable<PyElement> chain = new ChainIterable<PyElement>();
-      for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
+      ChainIterable<PyElement> chain = new ChainIterable<>();
+      for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {
           final PyFile sourceFile = (PyFile)source;
@@ -80,7 +79,12 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   }
 
   @NotNull
-  public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
+  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
+    return PyUtil.getParameterizedCachedValue(this, name, this::calculateMultiResolveName);
+  }
+
+  @NotNull
+  private List<RatedResolveResult> calculateMultiResolveName(@NotNull String name) {
     if (PyUtil.isClassPrivateName(name)) {
       return Collections.emptyList();
     }
@@ -88,7 +92,7 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
     if (parent instanceof PyFromImportStatement) {
       PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
-      for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
+      for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {
           PyFile sourceFile = (PyFile)source;
@@ -96,6 +100,9 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
                                                                                       PyResolveContext.defaultContext());
           if (results != null && !results.isEmpty() && PyUtil.isStarImportableFrom(name, sourceFile)) {
+            if (results.isEmpty()) {
+              return Collections.emptyList();
+            }
             final List<RatedResolveResult> res = Lists.newArrayList();
             for (RatedResolveResult result : results) {
               res.add(result);

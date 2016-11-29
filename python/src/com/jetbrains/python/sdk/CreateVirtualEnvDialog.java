@@ -70,10 +70,9 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
                PythonSdkType.isCondaVirtualEnv(s);
       }
     });
-    List<Sdk> sortedSdks = new ArrayList<Sdk>(allSdks);
+    List<Sdk> sortedSdks = new ArrayList<>(allSdks);
     Collections.sort(sortedSdks, new PreferredSdkComparator());
-    updateSdkList(allSdks, sortedSdks.get(0));
-
+    updateSdkList(allSdks, sortedSdks.isEmpty() ? null : sortedSdks.get(0));
   }
 
   protected void layoutPanel(final List<Sdk> allSdks) {
@@ -140,8 +139,6 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     myMainPanel.add(myMakeAvailableToAllProjectsCheckbox, c);
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final PySdkService sdkService = PySdkService.getInstance();
-
         final PythonSdkType sdkType = PythonSdkType.getInstance();
         final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
 
@@ -149,16 +146,12 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
         VirtualFile suggestedDir = suggestedPath == null
                                    ? null
                                    : LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
-        final NullableConsumer<Sdk> consumer = new NullableConsumer<Sdk>() {
-          @Override
-          public void consume(@Nullable Sdk sdk) {
-            if (sdk == null) return;
-            if (!allSdks.contains(sdk)) {
-              allSdks.add(sdk);
-              sdkService.addSdk(sdk);
-            }
-            updateSdkList(allSdks, sdk);
+        final NullableConsumer<Sdk> consumer = sdk -> {
+          if (sdk == null) return;
+          if (!allSdks.contains(sdk)) {
+            allSdks.add(sdk);
           }
+          updateSdkList(allSdks, sdk);
         };
         FileChooser.chooseFiles(descriptor, myProject, suggestedDir, new FileChooser.FileChooserConsumer() {
           @Override
@@ -212,7 +205,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
 
   private void updateSdkList(final List<Sdk> allSdks, @Nullable Sdk initialSelection) {
     mySdkCombo.setRenderer(new PySdkListCellRenderer(false));
-    mySdkCombo.setModel(new CollectionComboBoxModel<Sdk>(allSdks, initialSelection));
+    mySdkCombo.setModel(new CollectionComboBoxModel<>(allSdks, initialSelection));
     checkValid();
   }
 

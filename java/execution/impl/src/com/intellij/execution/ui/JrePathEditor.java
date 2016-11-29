@@ -64,15 +64,12 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
   public JrePathEditor() {
     myLabel = new JBLabel(ExecutionBundle.message("run.configuration.jre.label"));
 
-    myComboBoxModel = new SortedComboBoxModel<JreComboBoxItem>(new Comparator<JreComboBoxItem>() {
-      @Override
-      public int compare(JreComboBoxItem o1, JreComboBoxItem o2) {
-        int result = Comparing.compare(o1.getOrder(), o2.getOrder());
-        if (result != 0) {
-          return result;
-        }
-        return o1.getPresentableText().compareToIgnoreCase(o2.getPresentableText());
+    myComboBoxModel = new SortedComboBoxModel<>((o1, o2) -> {
+      int result = Comparing.compare(o1.getOrder(), o2.getOrder());
+      if (result != 0) {
+        return result;
       }
+      return o1.getPresentableText().compareToIgnoreCase(o2.getPresentableText());
     });
     myDefaultJreItem = new DefaultJreItem();
     myComboBoxModel.add(myDefaultJreItem);
@@ -81,7 +78,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
       myComboBoxModel.add(new SdkAsJreItem(sdk));
     }
 
-    final Set<String> jrePaths = new HashSet<String>();
+    final Set<String> jrePaths = new HashSet<>();
     for (JreProvider provider : JreProvider.EP_NAME.getExtensions()) {
       String path = provider.getJrePath();
       if (!StringUtil.isEmpty(path)) {
@@ -103,7 +100,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
         myComboBoxModel.add(new CustomJreItem(homePath));
       }
     }
-    ComboBox comboBox = new ComboBox(myComboBoxModel);
+    ComboBox comboBox = new ComboBox(myComboBoxModel, 100);
     comboBox.setEditable(true);
     comboBox.setRenderer(new ColoredListCellRendererWrapper<JreComboBoxItem>() {
       @Override
@@ -152,12 +149,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
 
   public void setDefaultJreSelector(DefaultJreSelector defaultJreSelector) {
     myDefaultJreSelector = defaultJreSelector;
-    myDefaultJreSelector.addChangeListener(new Runnable() {
-      @Override
-      public void run() {
-        updateDefaultJrePresentation();
-      }
-    });
+    myDefaultJreSelector.addChangeListener(() -> updateDefaultJrePresentation());
   }
 
   public void setPathOrName(@Nullable String pathOrName, boolean useAlternativeJre) {

@@ -74,7 +74,7 @@ public class NSDeclTracker implements ModificationTracker {
     }
 
     private ArrayList<XmlAttribute> getNSDecls(boolean updateModCount) {
-        final ArrayList<XmlAttribute> list = new ArrayList<XmlAttribute>(Arrays.asList(myRootTag.getAttributes()));
+        final ArrayList<XmlAttribute> list = new ArrayList<>(Arrays.asList(myRootTag.getAttributes()));
         final Iterator<XmlAttribute> it = list.iterator();
         while (it.hasNext()) {
             final XmlAttribute attribute = it.next();

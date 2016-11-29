@@ -44,8 +44,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.extract.GrParameterTablePanel;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
-import org.jetbrains.plugins.groovy.refactoring.extract.ParameterTablePanel;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrMethodSignatureComponent;
 import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
@@ -76,7 +76,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private ComboBoxVisibilityPanel<String> myVisibilityPanel;
   private Splitter mySplitter;
   private JCheckBox myForceReturnCheckBox;
-  private ParameterTablePanel myParameterTablePanel;
+  private GrParameterTablePanel myParameterTablePanel;
   private final Project myProject;
 
   public GroovyExtractMethodDialog(InitialInfo info, PsiClass owner) {
@@ -247,7 +247,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       }
     });
 
-    myParameterTablePanel = new ParameterTablePanel() {
+    myParameterTablePanel = new GrParameterTablePanel() {
       @Override
       protected void updateSignature(){
         GroovyExtractMethodDialog.this.updateSignature();
@@ -266,7 +266,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   private static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
-    ArrayList<String> conflicts = new ArrayList<String>();
+    ArrayList<String> conflicts = new ArrayList<>();
     PsiClass owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
     final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<PsiMethod>() {

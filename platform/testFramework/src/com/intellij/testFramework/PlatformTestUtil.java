@@ -27,7 +27,9 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -39,6 +41,7 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
@@ -49,6 +52,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
@@ -70,6 +76,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarFile;
 
@@ -82,6 +89,8 @@ public class PlatformTestUtil {
 
   public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
+  
+  private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -175,7 +184,7 @@ public class PlatformTestUtil {
                                                 boolean withSelection,
                                                 @Nullable Queryable.PrintInfo printInfo,
                                                 Condition<String> nodePrintCondition) {
-    Collection<String> strings = new ArrayList<String>();
+    Collection<String> strings = new ArrayList<>();
     printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
   }
@@ -250,36 +259,44 @@ public class PlatformTestUtil {
 
   @TestOnly
   public static void waitForAlarm(final int delay) throws InterruptedException {
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
-    assert ApplicationManager.getApplication().isDispatchThread();
+    Application app = ApplicationManager.getApplication();
+    assert !app.isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
+    assert app.isDispatchThread();
 
-    final AtomicBoolean invoked = new AtomicBoolean();
+    final AtomicBoolean runnableInvoked = new AtomicBoolean();
+    final AtomicBoolean alarmInvoked1 = new AtomicBoolean();
+    final AtomicBoolean alarmInvoked2 = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            alarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                invoked.set(true);
-              }
-            }, delay);
-          }
-        });
-      }
+    ModalityState initialModality = ModalityState.current();
+
+    alarm.addRequest(() -> {
+      alarmInvoked1.set(true);
+      app.invokeLater(() -> {
+        runnableInvoked.set(true);
+        alarm.addRequest(() -> alarmInvoked2.set(true), delay);
+      });
     }, delay);
 
     UIUtil.dispatchAllInvocationEvents();
 
+    long start = System.currentTimeMillis();
     boolean sleptAlready = false;
-    while (!invoked.get()) {
+    while (!alarmInvoked2.get()) {
       UIUtil.dispatchAllInvocationEvents();
       //noinspection BusyWait
       Thread.sleep(sleptAlready ? 10 : delay);
       sleptAlready = true;
+      if (System.currentTimeMillis() - start > 100 * 1000) {
+        throw new AssertionError("Couldn't await alarm" +
+                                 "; alarm1 passed=" + alarmInvoked1.get() +
+                                 "; modality1=" + initialModality +
+                                 "; modality2=" + ModalityState.current() +
+                                 "; invokeLater passed=" + runnableInvoked.get() +
+                                 "; app.disposed=" + app.isDisposed() +
+                                 "; alarm.disposed=" + alarm.isDisposed() +
+                                 "; alarm.requests=" + alarm.getActiveRequestCount()
+        );
+      }
     }
     UIUtil.dispatchAllInvocationEvents();
   }
@@ -287,15 +304,32 @@ public class PlatformTestUtil {
   @TestOnly
   public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
-    final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
-        AWTEvent event1 = eventQueue.getNextEvent();
-        if (event1 instanceof InvocationEvent) {
-          IdeEventQueue.getInstance().dispatchEvent(event1);
-        }
+      AWTEvent event1 = eventQueue.getNextEvent();
+      if (event1 instanceof InvocationEvent) {
+        eventQueue.dispatchEvent(event1);
+      }
     }
+  }
+
+  @TestOnly
+  public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    //noinspection StatementWithEmptyBody
+    while (dispatchNextEventIfAny(eventQueue) != null);
+  }
+
+  @TestOnly
+  public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
+    AWTEvent event = eventQueue.peekEvent();
+    if (event == null) return null;
+    AWTEvent event1 = eventQueue.getNextEvent();
+    eventQueue.dispatchEvent(event1);
+    return event1;
   }
 
   private static Date raidDate(Bombed bombed) {
@@ -343,7 +377,7 @@ public class PlatformTestUtil {
     Object[] children = structure.getChildElements(node);
 
     if (comparator != null) {
-      ArrayList<?> list = new ArrayList<Object>(Arrays.asList(children));
+      ArrayList<?> list = new ArrayList<>(Arrays.asList(children));
       @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) Comparator<Object> c = comparator;
       Collections.sort(list, c);
       children = ArrayUtil.toObjectArray(list);
@@ -402,7 +436,7 @@ public class PlatformTestUtil {
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
-    action.update(event);
+    action.beforeActionPerformedUpdate(event);
     Assert.assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
   }
@@ -474,8 +508,13 @@ public class PlatformTestUtil {
   }
 
   @NotNull
+  public static String getJavaExe() {
+    return SystemProperties.getJavaHome() + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
+  }
+
+  @NotNull
   public static String getRtJarPath() {
-    String home = System.getProperty("java.home");
+    String home = SystemProperties.getJavaHome();
     return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
   }
 
@@ -563,7 +602,7 @@ public class PlatformTestUtil {
           logMessage += ": " + percentage + "% longer";
         }
         logMessage +=
-          ". Expected: " + formatTime(expectedOnMyMachine) + ". Actual: " + formatTime(duration) + "." + Timings.getStatistics();
+          "\n  Expected: " + formatTime(expectedOnMyMachine) + "\n  Actual: " + formatTime(duration) + "\n " + Timings.getStatistics();
         final double acceptableChangeFactor = 1.1;
         if (duration < expectedOnMyMachine) {
           int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
@@ -667,7 +706,7 @@ public class PlatformTestUtil {
   }
 
   private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
-    HashMap<String, VirtualFile> map = new HashMap<String, VirtualFile>();
+    HashMap<String, VirtualFile> map = new HashMap<>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
       map.put(file.getName(), file);
@@ -716,12 +755,12 @@ public class PlatformTestUtil {
   }
 
   private static void shallowCompare(VirtualFile[] vfs, @Nullable File[] io) {
-    List<String> vfsPaths = new ArrayList<String>();
+    List<String> vfsPaths = new ArrayList<>();
     for (VirtualFile file : vfs) {
       vfsPaths.add(file.getPath());
     }
 
-    List<String> ioPaths = new ArrayList<String>();
+    List<String> ioPaths = new ArrayList<>();
     if (io != null) {
       for (File file : io) {
         ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
@@ -798,19 +837,16 @@ public class PlatformTestUtil {
     Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
     Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        dirAfter.refresh(false, true);
-        dirBefore.refresh(false, true);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      dirAfter.refresh(false, true);
+      dirBefore.refresh(false, true);
     });
     assertDirectoriesEqual(dirAfter, dirBefore);
   }
 
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      Assert.assertEquals(printElement(expected), printElement(actual));
+      Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
   }
 
@@ -821,12 +857,6 @@ public class PlatformTestUtil {
     catch (IOException | JDOMException e) {
       throw new AssertionError(e);
     }
-  }
-
-  public static String printElement(final Element element) throws IOException {
-    final StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(element, writer, "\n");
-    return writer.getBuffer().toString();
   }
 
   public static String getCommunityPath() {
@@ -841,15 +871,11 @@ public class PlatformTestUtil {
     return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
   }
 
-
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
-    return new Comparator<AbstractTreeNode>() {
-      @Override
-      public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
-        String displayText1 = o1.toTestString(printInfo);
-        String displayText2 = o2.toTestString(printInfo);
-        return Comparing.compare(displayText1, displayText2);
-      }
+    return (o1, o2) -> {
+      String displayText1 = o1.toTestString(printInfo);
+      String displayText2 = o2.toTestString(printInfo);
+      return Comparing.compare(displayText1, displayText2);
     };
   }
 
@@ -914,5 +940,33 @@ public class PlatformTestUtil {
     catch (ExecutionException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  public static List<WebReference> collectWebReferences(@NotNull PsiElement element) {
+    List<WebReference> refs = new ArrayList<>();
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        for (PsiReference ref : element.getReferences()) {
+          if (ref instanceof WebReference) {
+            refs.add((WebReference)ref);
+          }
+        }
+        super.visitElement(element);
+      }
+    });
+    return refs;
+  }
+  
+  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
+    ourProjectCleanups.add(cleanup);
+  }
+  
+  public static void cleanupAllProjects() {
+    for (Runnable each : ourProjectCleanups) {
+      each.run();
+    }
+    ourProjectCleanups.clear();
   }
 }

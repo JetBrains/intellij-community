@@ -73,7 +73,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
   private final ArtifactEditorContext myContext;
   private final Artifact myOriginalArtifact;
-  private SelectedElementInfo<?> mySelectedElementInfo = new SelectedElementInfo<PackagingElement<?>>(null);
+  private SelectedElementInfo<?> mySelectedElementInfo = new SelectedElementInfo<>(null);
   private JPanel myPropertiesPanelWrapper;
   private JPanel myPropertiesPanel;
   private final LayoutTreeBuilder myBuilder;
@@ -185,13 +185,10 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
     final List<? extends PackagingElement<?>> children = type.chooseAndCreate(myContext, getArtifact(), parent);
     final PackagingElementNode<?> finalParentNode = parentNode;
-    editLayout(new Runnable() {
-      @Override
-      public void run() {
-        CompositePackagingElement<?> actualParent = getOrCreateModifiableParent(parent, finalParentNode);
-        for (PackagingElement<?> child : children) {
-          actualParent.addOrFindChild(child);
-        }
+    editLayout(() -> {
+      CompositePackagingElement<?> actualParent = getOrCreateModifiableParent(parent, finalParentNode);
+      for (PackagingElement<?> child : children) {
+        actualParent.addOrFindChild(child);
       }
     });
     updateAndSelect(parentNode, children);
@@ -199,7 +196,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
   private static CompositePackagingElement<?> getOrCreateModifiableParent(CompositePackagingElement<?> parentElement, PackagingElementNode<?> node) {
     PackagingElementNode<?> current = node;
-    List<String> dirNames = new ArrayList<String>();
+    List<String> dirNames = new ArrayList<>();
     while (current != null && !(current instanceof ArtifactRootNode)) {
       final PackagingElement<?> packagingElement = current.getFirstElement();
       if (!(packagingElement instanceof DirectoryPackagingElement)) {
@@ -225,7 +222,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public boolean checkCanModifyChildren(@NotNull PackagingElement<?> parentElement,
                                         @NotNull PackagingElementNode<?> parentNode,
                                         @NotNull Collection<? extends PackagingElementNode<?>> children) {
-    final List<PackagingNodeSource> sources = new ArrayList<PackagingNodeSource>(parentNode.getNodeSource(parentElement));
+    final List<PackagingNodeSource> sources = new ArrayList<>(parentNode.getNodeSource(parentElement));
     for (PackagingElementNode<?> child : children) {
       sources.addAll(child.getNodeSources());
     }
@@ -268,7 +265,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public boolean checkCanRemove(final List<? extends PackagingElementNode<?>> nodes) {
-    Set<PackagingNodeSource> rootSources = new HashSet<PackagingNodeSource>();
+    Set<PackagingNodeSource> rootSources = new HashSet<>();
     for (PackagingElementNode<?> node : nodes) {
       rootSources.addAll(getRootNodeSources(node.getNodeSources()));
     }
@@ -291,12 +288,9 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void updateAndSelect(PackagingElementNode<?> node, final List<? extends PackagingElement<?>> toSelect) {
     myArtifactsEditor.queueValidation();
     myTreeStructure.clearCaches();
-    myBuilder.queueUpdateFrom(node, true).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        List<PackagingElementNode<?>> nodes = myTree.findNodes(toSelect);
-        myBuilder.select(ArrayUtil.toObjectArray(nodes), null);
-      }
+    myBuilder.queueUpdateFrom(node, true).doWhenDone(() -> {
+      List<PackagingElementNode<?>> nodes = myTree.findNodes(toSelect);
+      myBuilder.select(ArrayUtil.toObjectArray(nodes), null);
     });
   }
 
@@ -340,18 +334,13 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     final LayoutTreeSelection selection = myTree.getSelection();
     if (!checkCanRemove(selection.getNodes())) return;
 
-    editLayout(new Runnable() {
-      @Override
-      public void run() {
-        removeNodes(selection.getNodes());
-      }
-    });
+    editLayout(() -> removeNodes(selection.getNodes()));
 
     myArtifactsEditor.rebuildTries();
   }
 
   public void removeNodes(final List<PackagingElementNode<?>> nodes) {
-    Set<PackagingElement<?>> parents = new HashSet<PackagingElement<?>>();
+    Set<PackagingElement<?>> parents = new HashSet<>();
     for (PackagingElementNode<?> node : nodes) {
       final List<? extends PackagingElement<?>> toDelete = node.getPackagingElements();
       for (PackagingElement<?> element : toDelete) {
@@ -379,7 +368,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   private static Collection<PackagingNodeSource> getRootNodeSources(Collection<PackagingNodeSource> nodeSources) {
-    Set<PackagingNodeSource> result = new HashSet<PackagingNodeSource>();
+    Set<PackagingNodeSource> result = new HashSet<>();
     collectRootNodeSources(nodeSources, result);
     return result;
   }
@@ -457,16 +446,13 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       if (!checkCanAdd(targetElement, targetNode)) {
         return;
       }
-      final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
-      editLayout(new Runnable() {
-        @Override
-        public void run() {
-          draggingObject.beforeDrop();
-          final CompositePackagingElement<?> parent = getOrCreateModifiableParent(targetElement, targetNode);
-          for (PackagingElement<?> element : draggingObject.createPackagingElements(myContext)) {
-            toSelect.add(element);
-            parent.addOrFindChild(element);
-          }
+      final List<PackagingElement<?>> toSelect = new ArrayList<>();
+      editLayout(() -> {
+        draggingObject.beforeDrop();
+        final CompositePackagingElement<?> parent = getOrCreateModifiableParent(targetElement, targetNode);
+        for (PackagingElement<?> element : draggingObject.createPackagingElements(myContext)) {
+          toSelect.add(element);
+          parent.addOrFindChild(element);
         }
       });
       updateAndSelect(targetNode, toSelect);
@@ -531,25 +517,22 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void putIntoDefaultLocations(@NotNull final List<? extends PackagingSourceItem> items) {
-    final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
-    editLayout(new Runnable() {
-      @Override
-      public void run() {
-        final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
-        final ArtifactType artifactType = getArtifact().getArtifactType();
-        for (PackagingSourceItem item : items) {
-          final String path = artifactType.getDefaultPathFor(item);
-          if (path != null) {
-            final CompositePackagingElement<?> parent;
-            if (path.endsWith(URLUtil.JAR_SEPARATOR)) {
-              parent = PackagingElementFactory.getInstance().getOrCreateArchive(rootElement, StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR));
-            }
-            else {
-              parent = PackagingElementFactory.getInstance().getOrCreateDirectory(rootElement, path);
-            }
-            final List<? extends PackagingElement<?>> elements = item.createElements(myContext);
-            toSelect.addAll(parent.addOrFindChildren(elements));
+    final List<PackagingElement<?>> toSelect = new ArrayList<>();
+    editLayout(() -> {
+      final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
+      final ArtifactType artifactType = getArtifact().getArtifactType();
+      for (PackagingSourceItem item : items) {
+        final String path = artifactType.getDefaultPathFor(item);
+        if (path != null) {
+          final CompositePackagingElement<?> parent;
+          if (path.endsWith(URLUtil.JAR_SEPARATOR)) {
+            parent = PackagingElementFactory.getInstance().getOrCreateArchive(rootElement, StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR));
           }
+          else {
+            parent = PackagingElementFactory.getInstance().getOrCreateDirectory(rootElement, path);
+          }
+          final List<? extends PackagingElement<?>> elements = item.createElements(myContext);
+          toSelect.addAll(parent.addOrFindChildren(elements));
         }
       }
     });
@@ -559,32 +542,26 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void putElements(@NotNull final String path, @NotNull final List<? extends PackagingElement<?>> elements) {
-    final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
-    editLayout(new Runnable() {
-      @Override
-      public void run() {
-        final CompositePackagingElement<?> directory =
-          PackagingElementFactory.getInstance().getOrCreateDirectory(getArtifact().getRootElement(), path);
-        toSelect.addAll(directory.addOrFindChildren(elements));
-      }
+    final List<PackagingElement<?>> toSelect = new ArrayList<>();
+    editLayout(() -> {
+      final CompositePackagingElement<?> directory =
+        PackagingElementFactory.getInstance().getOrCreateDirectory(getArtifact().getRootElement(), path);
+      toSelect.addAll(directory.addOrFindChildren(elements));
     });
     myArtifactsEditor.getSourceItemsTree().rebuildTree();
     updateAndSelect(myTree.getRootPackagingNode(), toSelect);
   }
 
   public void packInto(@NotNull final List<? extends PackagingSourceItem> items, final String pathToJar) {
-    final List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
+    final List<PackagingElement<?>> toSelect = new ArrayList<>();
     final CompositePackagingElement<?> rootElement = getArtifact().getRootElement();
-    editLayout(new Runnable() {
-      @Override
-      public void run() {
-        final CompositePackagingElement<?> archive = PackagingElementFactory.getInstance().getOrCreateArchive(rootElement, pathToJar);
-        for (PackagingSourceItem item : items) {
-          final List<? extends PackagingElement<?>> elements = item.createElements(myContext);
-          archive.addOrFindChildren(elements);
-        }
-        toSelect.add(archive);
+    editLayout(() -> {
+      final CompositePackagingElement<?> archive = PackagingElementFactory.getInstance().getOrCreateArchive(rootElement, pathToJar);
+      for (PackagingSourceItem item : items) {
+        final List<? extends PackagingElement<?>> elements = item.createElements(myContext);
+        archive.addOrFindChildren(elements);
       }
+      toSelect.add(archive);
     });
 
     myArtifactsEditor.getSourceItemsTree().rebuildTree();
@@ -627,12 +604,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
     public void save() {
       if (myCurrentPanel != null && myCurrentPanel.isModified()) {
-        editLayout(new Runnable() {
-          @Override
-          public void run() {
-            myCurrentPanel.apply();
-          }
-        });
+        editLayout(() -> myCurrentPanel.apply());
       }
     }
 

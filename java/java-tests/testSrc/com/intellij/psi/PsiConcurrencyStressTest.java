@@ -26,6 +26,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -54,6 +55,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    ApplicationInfoImpl.setInPerformanceTest(true);
     super.setUp();
 
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
@@ -63,7 +65,8 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
   }
 
   public void testStress() throws Exception {
-    int numOfThreads = 10;
+    DaemonProgressIndicator.setDebug(false);
+    int numOfThreads = Runtime.getRuntime().availableProcessors();
     int iterations = Timings.adjustAccordingToMySpeed(20, true);
     System.out.println("iterations = " + iterations);
     final int readIterations = iterations * 3;
@@ -137,9 +140,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         mark("-");
         final PsiMethod[] psiMethods = getPsiClass().getMethods();
         if (psiMethods.length > 0) {
-          WriteCommandAction.runWriteCommandAction(null, () -> {
-            psiMethods[random.nextInt(psiMethods.length)].delete();
-          });
+          WriteCommandAction.runWriteCommandAction(null, () -> psiMethods[random.nextInt(psiMethods.length)].delete());
         }
         break;
     }

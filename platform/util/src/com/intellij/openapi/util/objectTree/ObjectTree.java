@@ -60,13 +60,14 @@ public final class ObjectTree<T> {
   }
 
   public final void register(@NotNull T parent, @NotNull T child) {
+    Object wasDisposed = getDisposalInfo(parent);
+    if (wasDisposed != null) {
+      throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
+                                            "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
+                                            wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
+    }
+
     synchronized (treeLock) {
-      Object wasDisposed = myDisposedObjects.get(parent);
-      if (wasDisposed != null) {
-        throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
-                                              "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
-                                   wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
-      }
       myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
       ObjectNode<T> parentNode = getNode(parent);
       if (parentNode == null) parentNode = createNodeFor(parent, null);
@@ -88,6 +89,12 @@ public final class ObjectTree<T> {
       parentNode.addChild(childNode);
 
       fireRegistered(childNode.getObject());
+    }
+  }
+
+  public Object getDisposalInfo(@NotNull T parent) {
+    synchronized (treeLock) {
+      return myDisposedObjects.get(parent);
     }
   }
 
@@ -120,6 +127,7 @@ public final class ObjectTree<T> {
     }
     if (node == null) {
       if (processUnregistered) {
+        rememberDisposedTrace(object);
         executeUnregistered(object, action);
         return true;
       }
@@ -245,6 +253,10 @@ public final class ObjectTree<T> {
     for (ObjectTreeListener each : myListeners) {
       each.objectExecuted(object);
     }
+    rememberDisposedTrace(object);
+  }
+
+  private void rememberDisposedTrace(@NotNull Object object) {
     synchronized (treeLock) {
       myDisposedObjects.put(object, Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : Boolean.TRUE);
     }

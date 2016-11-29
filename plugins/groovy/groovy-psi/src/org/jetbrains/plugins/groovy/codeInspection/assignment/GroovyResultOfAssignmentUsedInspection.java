@@ -15,15 +15,33 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import javax.swing.*;
+
 public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
+  /**
+   * @noinspection PublicField, WeakerAccess
+   */
+  public boolean inspectClosures = false;
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox("Inspect anonymous closures", "inspectClosures");
+    return optionsPanel;
+  }
 
   @Override
   @Nls
@@ -51,14 +69,21 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
     return new Visitor();
   }
 
-  private static class Visitor extends BaseInspectionVisitor {
+  private class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(GrAssignmentExpression grAssignmentExpression) {
+    public void visitAssignmentExpression(@NotNull GrAssignmentExpression grAssignmentExpression) {
       super.visitAssignmentExpression(grAssignmentExpression);
-      if (PsiUtil.isExpressionUsed(grAssignmentExpression)) {
+      if (isConfusingAssignmentUsage(grAssignmentExpression)) {
         registerError(grAssignmentExpression);
       }
+    }
+
+    private boolean isConfusingAssignmentUsage(PsiElement expr) {
+      PsiElement parent = expr.getParent();
+      return !(parent instanceof GroovyFile) &&
+             (inspectClosures || !(parent instanceof GrClosableBlock)) &&
+             PsiUtil.isExpressionUsed(expr);
     }
   }
 }

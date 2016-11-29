@@ -59,27 +59,21 @@ public final class DataBindingWizard extends AbstractWizard<StepAdapter> {
   protected void doOKAction() {
     CommandProcessor.getInstance().executeCommand(
       myProject,
-      new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(
-            new Runnable() {
-              public void run() {
-                try {
-                  Generator.generateDataBindingMethods(myData);
-                  DataBindingWizard.super.doOKAction();
-                }
-                catch (Generator.MyException exc) {
-                  Messages.showErrorDialog(
-                    getContentPane(),
-                    exc.getMessage(),
-                    CommonBundle.getErrorTitle()
-                  );
-                }
-              }
-            }
-          );
+      () -> ApplicationManager.getApplication().runWriteAction(
+        () -> {
+          try {
+            Generator.generateDataBindingMethods(myData);
+            super.doOKAction();
+          }
+          catch (Generator.MyException exc) {
+            Messages.showErrorDialog(
+              getContentPane(),
+              exc.getMessage(),
+              CommonBundle.getErrorTitle()
+            );
+          }
         }
-      },
+      ),
       "",
       null
     );

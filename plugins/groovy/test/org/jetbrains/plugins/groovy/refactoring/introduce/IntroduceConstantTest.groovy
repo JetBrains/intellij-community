@@ -36,46 +36,46 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
+class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     TestUtils.testDataPath + "refactoring/introduceConstant/"
   }
 
-  public void testSimple() {
-    doTest();
+  void testSimple() {
+    doTest()
   }
 
-  public void testReplaceAllOccurences() {
-    doTest();
+  void testReplaceAllOccurences() {
+    doTest()
   }
 
-  public void testEscalateVisibility() {
-    doTest("Other", true, false, VisibilityUtil.ESCALATE_VISIBILITY);
+  void testEscalateVisibility() {
+    doTest("Other", true, false, VisibilityUtil.ESCALATE_VISIBILITY)
   }
 
-  public void testInsertInEnum() {
-    doTest("Planet", false, false, PsiModifier.PROTECTED);
+  void testInsertInEnum() {
+    doTest("Planet", false, false, PsiModifier.PROTECTED)
   }
 
-  public void testInsertInInterface() {
-    doTest("MyInterface", false, false, PsiModifier.PROTECTED);
+  void testInsertInInterface() {
+    doTest("MyInterface", false, false, PsiModifier.PROTECTED)
   }
 
-  public void testTupleDeclaration() {
-    doTest("Test", true, false, PsiModifier.PUBLIC);
+  void testTupleDeclaration() {
+    doTest("Test", true, false, PsiModifier.PUBLIC)
   }
 
-  public void testStringPart() {
-    doTest();
+  void testStringPart() {
+    doTest()
   }
 
-  public void testAnonymousClass() {
-    doTest();
+  void testAnonymousClass() {
+    doTest()
   }
 
-  public void testFieldWithClassName() {
-    doTest();
+  void testFieldWithClassName() {
+    doTest()
   }
 
   void testLocalVarRef() {
@@ -83,109 +83,109 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest() {
-    doTest(null, true, true, PsiModifier.PUBLIC);
+    doTest(null, true, true, PsiModifier.PUBLIC)
   }
 
   private void doTest(@Nullable String targetClassName, boolean replaceAllOccurrences, boolean useExplicitType, String modifier) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.configureByFile(getTestName(false) + ".groovy")
 
 
 
-    final GrIntroduceConstantHandler handler = new GrIntroduceConstantHandler();
-    final Editor editor = myFixture.getEditor();
+    final GrIntroduceConstantHandler handler = new GrIntroduceConstantHandler()
+    final Editor editor = myFixture.getEditor()
 
-    final GrExpression expression = findExpression(myFixture);
-    final GrVariable variable = findVariable(myFixture);
-    final StringPartInfo stringPart = findStringPart(myFixture);
-    PsiElement[] scopes = handler.findPossibleScopes(expression, variable, stringPart, editor);
-    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, variable, stringPart, scopes[0]);
+    final GrExpression expression = findExpression(myFixture)
+    final GrVariable variable = findVariable(myFixture)
+    final StringPartInfo stringPart = findStringPart(myFixture)
+    PsiElement[] scopes = handler.findPossibleScopes(expression, variable, stringPart, editor)
+    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, variable, stringPart, scopes[0])
 
     PsiClass targetClass = targetClassName == null ? GrIntroduceConstantHandler.findContainingClass(context)
-                                                   : myFixture.findClass(targetClassName);
-    assertNotNull("target class is null", targetClass);
+                                                   : myFixture.findClass(targetClassName)
+    assertNotNull("target class is null", targetClass)
 
     def type = getType(useExplicitType, expression, variable, stringPart)
-    final GrIntroduceConstantSettings settings = new MockIntroduceConstantSettings(targetClass, replaceAllOccurrences, type, modifier);
+    final GrIntroduceConstantSettings settings = new MockIntroduceConstantSettings(targetClass, replaceAllOccurrences, type, modifier)
 
     WriteCommandAction.runWriteCommandAction(null) {
-      handler.runRefactoring(context, settings);
-      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+      handler.runRefactoring(context, settings)
+      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     }
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true)
   }
 
   private static PsiType getType(boolean useExplicitType, GrExpression expression, GrVariable variable, StringPartInfo stringPart) {
     if (!useExplicitType) {
-      return null;
+      return null
     }
     return expression != null ? expression.getType() :
            variable   != null ? variable.getType() :
-                                stringPart.getLiteral().getType();
+                                stringPart.getLiteral().getType()
   }
 
   @Nullable
-  public static GrVariable findVariable(JavaCodeInsightTestFixture fixture) {
-    final Editor editor = fixture.getEditor();
-    final int start = editor.getSelectionModel().getSelectionStart();
-    final int end = editor.getSelectionModel().getSelectionEnd();
-    return GrIntroduceHandlerBase.findVariable(fixture.getFile(), start, end);
+  static GrVariable findVariable(JavaCodeInsightTestFixture fixture) {
+    final Editor editor = fixture.getEditor()
+    final int start = editor.getSelectionModel().getSelectionStart()
+    final int end = editor.getSelectionModel().getSelectionEnd()
+    return GrIntroduceHandlerBase.findVariable(fixture.getFile(), start, end)
   }
 
   @Nullable
-  public static GrExpression findExpression(JavaCodeInsightTestFixture fixture) {
-    final Editor editor = fixture.getEditor();
-    final int start = editor.getSelectionModel().getSelectionStart();
-    final int end = editor.getSelectionModel().getSelectionEnd();
-    return GrIntroduceHandlerBase.findExpression(fixture.getFile(), start, end);
+  static GrExpression findExpression(JavaCodeInsightTestFixture fixture) {
+    final Editor editor = fixture.getEditor()
+    final int start = editor.getSelectionModel().getSelectionStart()
+    final int end = editor.getSelectionModel().getSelectionEnd()
+    return GrIntroduceHandlerBase.findExpression(fixture.getFile(), start, end)
   }
 
   @Nullable
-  public static StringPartInfo findStringPart(JavaCodeInsightTestFixture fixture) {
-    final Editor editor = fixture.getEditor();
-    final int start = editor.getSelectionModel().getSelectionStart();
-    final int end = editor.getSelectionModel().getSelectionEnd();
-    return StringPartInfo.findStringPart(fixture.getFile(), start, end);
+  static StringPartInfo findStringPart(JavaCodeInsightTestFixture fixture) {
+    final Editor editor = fixture.getEditor()
+    final int start = editor.getSelectionModel().getSelectionStart()
+    final int end = editor.getSelectionModel().getSelectionEnd()
+    return StringPartInfo.findStringPart(fixture.getFile(), start, end)
   }
 
   private static class MockIntroduceConstantSettings implements GrIntroduceConstantSettings {
-    private final PsiClass myTargetClass;
-    private final boolean myReplaceAllOccurrences;
-    private final PsiType mySelectedType;
-    private final String myModifier;
+    private final PsiClass myTargetClass
+    private final boolean myReplaceAllOccurrences
+    private final PsiType mySelectedType
+    private final String myModifier
 
     private MockIntroduceConstantSettings(@NotNull PsiClass targetClass,
                                           boolean replaceAllOccurrences,
                                           @Nullable PsiType selectedType,
                                           String modifier) {
-      myTargetClass = targetClass;
-      myReplaceAllOccurrences = replaceAllOccurrences;
-      mySelectedType = selectedType;
-      myModifier = modifier;
+      myTargetClass = targetClass
+      myReplaceAllOccurrences = replaceAllOccurrences
+      mySelectedType = selectedType
+      myModifier = modifier
     }
 
     @Override
-    public String getVisibilityModifier() {
-      return myModifier;
+    String getVisibilityModifier() {
+      return myModifier
     }
 
     @Override
-    public PsiClass getTargetClass() {
-      return myTargetClass;
+    PsiClass getTargetClass() {
+      return myTargetClass
     }
 
     @Override
-    public String getName() {
-      return "CONST";
+    String getName() {
+      return "CONST"
     }
 
     @Override
-    public boolean replaceAllOccurrences() {
-      return myReplaceAllOccurrences;
+    boolean replaceAllOccurrences() {
+      return myReplaceAllOccurrences
     }
 
     @Override
-    public PsiType getSelectedType() {
-      return mySelectedType;
+    PsiType getSelectedType() {
+      return mySelectedType
     }
   }
 }

@@ -55,7 +55,7 @@ import java.util.Map;
  * @author cdr
  */
 public class MoveClassToModuleFix implements IntentionAction {
-  private final Map<PsiClass, Module> myModules = new LinkedHashMap<PsiClass, Module>();
+  private final Map<PsiClass, Module> myModules = new LinkedHashMap<>();
   private final String myReferenceName;
   private final Module myCurrentModule;
   private final PsiDirectory mySourceRoot;
@@ -135,13 +135,10 @@ public class MoveClassToModuleFix implements IntentionAction {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            final Object value = list.getSelectedValue();
-            if (value instanceof PsiClass) {
-              moveClass(project, editor, file, (PsiClass)value);
-            }
+        .setItemChoosenCallback(() -> {
+          final Object value = list.getSelectedValue();
+          if (value instanceof PsiClass) {
+            moveClass(project, editor, file, (PsiClass)value);
           }
         }).createPopup().showInBestPositionFor(editor);
     }

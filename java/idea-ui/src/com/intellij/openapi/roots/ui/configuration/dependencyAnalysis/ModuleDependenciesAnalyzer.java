@@ -54,11 +54,11 @@ public class ModuleDependenciesAnalyzer {
   /**
    * The order entry explanations
    */
-  private final List<OrderEntryExplanation> myOrderEntries = new ArrayList<OrderEntryExplanation>();
+  private final List<OrderEntryExplanation> myOrderEntries = new ArrayList<>();
   /**
    * The url explanations
    */
-  private final List<UrlExplanation> myUrls = new ArrayList<UrlExplanation>();
+  private final List<UrlExplanation> myUrls = new ArrayList<>();
 
   /**
    * The constructor (it creates explanations immediately
@@ -108,17 +108,17 @@ public class ModuleDependenciesAnalyzer {
     if (myProduction) {
       e.productionOnly();
     }
-    final Map<String, List<OrderPath>> urlExplanations = new LinkedHashMap<String, List<OrderPath>>();
+    final Map<String, List<OrderPath>> urlExplanations = new LinkedHashMap<>();
     final OrderRootsEnumerator classes = e.classes();
     if (myCompile) {
       classes.withoutSelfModuleOutput();
     }
     for (String url : classes.getUrls()) {
       if (!urlExplanations.containsKey(url)) {
-        urlExplanations.put(url, new ArrayList<OrderPath>());
+        urlExplanations.put(url, new ArrayList<>());
       }
     }
-    final Map<OrderEntry, List<OrderPath>> orderExplanations = new LinkedHashMap<OrderEntry, List<OrderPath>>();
+    final Map<OrderEntry, List<OrderPath>> orderExplanations = new LinkedHashMap<>();
     new PathWalker(urlExplanations, orderExplanations).examine(myModule, 0);
     for (Map.Entry<OrderEntry, List<OrderPath>> entry : orderExplanations.entrySet()) {
       myOrderEntries.add(new OrderEntryExplanation(entry.getKey(), entry.getValue()));
@@ -143,11 +143,11 @@ public class ModuleDependenciesAnalyzer {
     /**
      * The current stack
      */
-    private final ArrayList<OrderPathElement> myStack = new ArrayList<OrderPathElement>();
+    private final ArrayList<OrderPathElement> myStack = new ArrayList<>();
     /**
      * Visited modules (in order to detect cyclic dependencies)
      */
-    private final HashSet<Module> myVisited = new HashSet<Module>();
+    private final HashSet<Module> myVisited = new HashSet<>();
 
     /**
      * The constructor
@@ -189,38 +189,35 @@ public class ModuleDependenciesAnalyzer {
         else {
           e.runtimeOnly();
         }
-        e.forEach(new Processor<OrderEntry>() {
-          @Override
-          public boolean process(OrderEntry orderEntry) {
-            myStack.add(new OrderEntryPathElement(orderEntry));
-            try {
-              if (orderEntry instanceof ModuleOrderEntry) {
-                ModuleOrderEntry o = (ModuleOrderEntry)orderEntry;
-                examine(o.getModule(), level + 1);
-              }
-              else if (orderEntry instanceof ModuleSourceOrderEntry) {
-                if (!myProduction || !myCompile) {
-                  CompilerModuleExtension e = CompilerModuleExtension.getInstance(m);
-                  final OrderPath p = new OrderPath(myStack);
-                  for (String u : e.getOutputRootUrls(!myCompile ? !myProduction : level > 0 && !myProduction)) {
-                    addUrlPath(p, u);
-                  }
-                  addEntryPath(orderEntry, p);
-                }
-              }
-              else {
+        e.forEach(orderEntry -> {
+          myStack.add(new OrderEntryPathElement(orderEntry));
+          try {
+            if (orderEntry instanceof ModuleOrderEntry) {
+              ModuleOrderEntry o = (ModuleOrderEntry)orderEntry;
+              examine(o.getModule(), level + 1);
+            }
+            else if (orderEntry instanceof ModuleSourceOrderEntry) {
+              if (!myProduction || !myCompile) {
+                CompilerModuleExtension e1 = CompilerModuleExtension.getInstance(m);
                 final OrderPath p = new OrderPath(myStack);
-                for (String u : orderEntry.getUrls(OrderRootType.CLASSES)) {
+                for (String u : e1.getOutputRootUrls(!myCompile ? !myProduction : level > 0 && !myProduction)) {
                   addUrlPath(p, u);
                 }
                 addEntryPath(orderEntry, p);
               }
             }
-            finally {
-              myStack.remove(myStack.size() - 1);
+            else {
+              final OrderPath p = new OrderPath(myStack);
+              for (String u : orderEntry.getUrls(OrderRootType.CLASSES)) {
+                addUrlPath(p, u);
+              }
+              addEntryPath(orderEntry, p);
             }
-            return true;
           }
+          finally {
+            myStack.remove(myStack.size() - 1);
+          }
+          return true;
         });
       }
       finally {
@@ -250,7 +247,7 @@ public class ModuleDependenciesAnalyzer {
     private void addEntryPath(OrderEntry orderEntry, OrderPath p) {
       List<OrderPath> paths = myOrderExplanations.get(orderEntry);
       if (paths == null) {
-        paths = new ArrayList<OrderPath>();
+        paths = new ArrayList<>();
         myOrderExplanations.put(orderEntry, paths);
       }
       paths.add(p);
@@ -272,7 +269,7 @@ public class ModuleDependenciesAnalyzer {
      * @param entries the list of entries (will be copied and wrapped)
      */
     public OrderPath(List<OrderPathElement> entries) {
-      this.myEntries = Collections.unmodifiableList(new ArrayList<OrderPathElement>(entries));
+      this.myEntries = Collections.unmodifiableList(new ArrayList<>(entries));
     }
 
     /**

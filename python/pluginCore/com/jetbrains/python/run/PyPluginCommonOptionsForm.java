@@ -21,13 +21,13 @@ import com.intellij.execution.util.PathMappingsComponent;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -57,7 +57,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private TextFieldWithBrowseButton myWorkingDirectoryTextField;
   private EnvironmentVariablesComponent myEnvsComponent;
   private RawCommandLineEditor myInterpreterOptionsTextField;
-  private JComboBox myInterpreterComboBox;
+  private ComboBox myInterpreterComboBox;
   private JRadioButton myUseModuleSdkRadioButton;
   private ModulesComboBox myModuleComboBox;
   private JPanel myMainPanel;
@@ -81,6 +81,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     myModuleComboBox.setModules(validModules);
     myModuleComboBox.setSelectedModule(selection);
 
+    myInterpreterComboBox.setMinimumAndPreferredWidth(100);
     myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
@@ -167,7 +168,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public void setSdkHome(String sdkHome) {
-    List<Sdk> sdkList = new ArrayList<Sdk>();
+    List<Sdk> sdkList = new ArrayList<>();
     sdkList.add(null);
     final List<Sdk> allSdks = PythonSdkType.getAllSdks();
     Collections.sort(allSdks, new PreferredSdkComparator());

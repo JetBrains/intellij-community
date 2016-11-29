@@ -1,0 +1,7 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>uiForm</title>
+  <g>
+    <polygon points="6 0 2 4 6 4 6 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+    <path d="M7,0V5H2V15H13V0H7Zm4,13H4V9h7v4Zm0-5H4V6h7V8Z" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+  </g>
+</svg>

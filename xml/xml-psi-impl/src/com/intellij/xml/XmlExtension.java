@@ -42,18 +42,10 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class XmlExtension {
-  public static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<XmlExtension>("com.intellij.xml.xmlExtension");
-
-  public static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
+  public static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<>("com.intellij.xml.xmlExtension");
 
   public static XmlExtension getExtension(@NotNull final PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<XmlExtension>() {
-      @Nullable
-      @Override
-      public Result<XmlExtension> compute() {
-        return Result.create(calcExtension(file), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(calcExtension(file), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static XmlExtension calcExtension(PsiFile file) {
@@ -62,7 +54,7 @@ public abstract class XmlExtension {
         return extension;
       }
     }
-    return DEFAULT_EXTENSION;
+    return DefaultXmlExtension.DEFAULT_EXTENSION;
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -164,6 +156,10 @@ public abstract class XmlExtension {
     return false;
   }
 
+  public boolean shouldBeInserted(final XmlAttributeDescriptor descriptor) {
+    return descriptor.isRequired();
+  }
+
   public boolean isCustomTagAllowed(final XmlTag tag) {
     return false;
   }
@@ -174,5 +170,9 @@ public abstract class XmlExtension {
 
   public boolean useXmlTagInsertHandler() {
     return true;
+  }
+
+  public boolean isCollapsibleTag(XmlTag tag) {
+    return false;
   }
 }

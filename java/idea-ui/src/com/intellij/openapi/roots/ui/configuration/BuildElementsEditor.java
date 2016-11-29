@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -98,26 +99,26 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
     outputPathsPanel.add(myInheritCompilerOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
                                                                          GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                                         new Insets(6, 0, 0, 4), 0, 0));
+                                                                         JBUI.insets(6, 0, 0, 4), 0, 0));
     outputPathsPanel.add(myPerModuleCompilerOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
                                                                            GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                                           new Insets(6, 0, 0, 4), 0, 0));
+                                                                           JBUI.insets(6, 0, 0, 4), 0, 0));
 
     myOutputLabel = new JLabel(ProjectBundle.message("module.paths.output.label"));
     outputPathsPanel.add(myOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-                                                               GridBagConstraints.NONE, new Insets(6, 12, 0, 4), 0, 0));
+                                                               GridBagConstraints.NONE, JBUI.insets(6, 12, 0, 4), 0, 0));
     outputPathsPanel.add(myOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
-                                                                   GridBagConstraints.HORIZONTAL, new Insets(6, 4, 0, 0), 0, 0));
+                                                                   GridBagConstraints.HORIZONTAL, JBUI.insets(6, 4, 0, 0), 0, 0));
 
     myTestOutputLabel = new JLabel(ProjectBundle.message("module.paths.test.output.label"));
     outputPathsPanel.add(myTestOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-                                                                   GridBagConstraints.NONE, new Insets(6, 16, 0, 4), 0, 0));
+                                                                   GridBagConstraints.NONE, JBUI.insets(6, 16, 0, 4), 0, 0));
     outputPathsPanel.add(myTestsOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
                                                                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                                        new Insets(6, 4, 0, 0), 0, 0));
+                                                                        JBUI.insets(6, 4, 0, 0), 0, 0));
 
     outputPathsPanel.add(myCbExcludeOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
-                                                                   GridBagConstraints.NONE, new Insets(6, 16, 0, 0), 0, 0));
+                                                                   GridBagConstraints.NONE, JBUI.insets(6, 16, 0, 0), 0, 0));
 
     final boolean outputPathInherited = getCompilerExtension().isCompilerOutputPathInherited();
     myInheritCompilerOutput.setSelected(outputPathInherited);
@@ -195,27 +196,24 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     outputPathsChooserDescriptor.setHideIgnored(false);
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     FileChooserFactory.getInstance().installFileCompletion(textField, outputPathsChooserDescriptor, true, null);
-    final Runnable commitRunnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!getModel().isWritable()) {
-          return;
+    final Runnable commitRunnable = () -> {
+      if (!getModel().isWritable()) {
+        return;
+      }
+      final String path = textField.getText().trim();
+      if (path.length() == 0) {
+        commitPathRunnable.saveUrl(null);
+      }
+      else {
+        // should set only absolute paths
+        String canonicalPath;
+        try {
+          canonicalPath = FileUtil.resolveShortWindowsName(path);
         }
-        final String path = textField.getText().trim();
-        if (path.length() == 0) {
-          commitPathRunnable.saveUrl(null);
+        catch (IOException e) {
+          canonicalPath = path;
         }
-        else {
-          // should set only absolute paths
-          String canonicalPath;
-          try {
-            canonicalPath = FileUtil.resolveShortWindowsName(path);
-          }
-          catch (IOException e) {
-            canonicalPath = path;
-          }
-          commitPathRunnable.saveUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
-        }
+        commitPathRunnable.saveUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
       }
     };
 

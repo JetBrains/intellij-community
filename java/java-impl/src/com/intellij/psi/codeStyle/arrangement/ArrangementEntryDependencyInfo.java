@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class ArrangementEntryDependencyInfo {
 
-  @NotNull private final List<ArrangementEntryDependencyInfo> myDependentEntries = new ArrayList<ArrangementEntryDependencyInfo>();
+  @NotNull private final List<ArrangementEntryDependencyInfo> myDependentEntries = new ArrayList<>();
   
   @NotNull private final JavaElementArrangementEntry myAnchorEntry;
 

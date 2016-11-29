@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,15 +76,12 @@ public interface MergeVersion {
       workingDocument.setReadOnly(false);
       final DocumentReference ref = DocumentReferenceManager.getInstance().create(workingDocument);
       myTextBeforeMerge = myDocument.getText();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          setDocumentText(workingDocument, myOriginalText, DiffBundle.message("merge.init.merge.content.command.name"), project);
-          if (project != null) {
-            final UndoManager undoManager = UndoManager.getInstance(project);
-            if (undoManager != null) { //idea.sh merge command
-              undoManager.nonundoableActionPerformed(ref, false);
-            }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        setDocumentText(workingDocument, myOriginalText, DiffBundle.message("merge.init.merge.content.command.name"), project);
+        if (project != null) {
+          final UndoManager undoManager = UndoManager.getInstance(project);
+          if (undoManager != null) { //idea.sh merge command
+            undoManager.nonundoableActionPerformed(ref, false);
           }
         }
       });
@@ -93,17 +90,7 @@ public interface MergeVersion {
 
     @Override
     public void applyText(@NotNull final String text, final Project project) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            @Override
-            public void run() {
-              doApplyText(text, project);
-            }
-          }, "Merge changes", null);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> doApplyText(text, project), "Merge changes", null));
     }
 
     protected void doApplyText(@NotNull String text, Project project) {
@@ -114,40 +101,32 @@ public interface MergeVersion {
     }
 
     public static void reportProjectFileChangeIfNeeded(@Nullable Project project, @Nullable VirtualFile file) {
-      if (project != null && file != null && !file.isDirectory() && (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file))) {
+      if (project != null && file != null && !file.isDirectory() && (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file))) {
         ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
       }
     }
 
     @Nullable
     public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, @NotNull Collection<VirtualFile> files) {
-      final Set<VirtualFile> vfs = new THashSet<VirtualFile>();
+      final Set<VirtualFile> vfs = new THashSet<>();
       for (VirtualFile file : files) {
         if (file != null && !file.isDirectory()) {
-          if (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
+          if (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
             vfs.add(file);
           }
         }
       }
-      return vfs.isEmpty() ? null : new Runnable() {
-        @Override
-        public void run() {
-          ProjectManagerEx ex = ProjectManagerEx.getInstanceEx();
-          for (VirtualFile vf : vfs) {
-            ex.saveChangedProjectFile(vf, project);
-          }
+      return vfs.isEmpty() ? null : (Runnable)() -> {
+        ProjectManagerEx ex = ProjectManagerEx.getInstanceEx();
+        for (VirtualFile vf : vfs) {
+          ex.saveChangedProjectFile(vf, project);
         }
       };
     }
 
     @Override
     public void restoreOriginalContent(final Project project) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          doRestoreOriginalContent(project);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> doRestoreOriginalContent(project));
     }
 
     public static boolean isProjectFile(VirtualFile file) {
@@ -179,12 +158,7 @@ public interface MergeVersion {
     }
 
     private static void setDocumentText(@NotNull final Document document, @NotNull final String text, @Nullable String name, @Nullable Project project) {
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        @Override
-        public void run() {
-          document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
-        }
-      }, name, null);
+      CommandProcessor.getInstance().executeCommand(project, () -> document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text)), name, null);
     }
   }
 }

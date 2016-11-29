@@ -66,7 +66,7 @@ public class AnonymousFromMapGenerator {
 
       final GrClosableBlock closure = (GrClosableBlock)expression;
       final GrParameter[] allParameters = closure.getAllParameters();
-      List<GrParameter> actual = new ArrayList<GrParameter>(Arrays.asList(allParameters));
+      List<GrParameter> actual = new ArrayList<>(Arrays.asList(allParameters));
       final PsiType clReturnType = context.typeProvider.getReturnType(closure);
 
       GrExpression[] args = new GrExpression[allParameters.length];

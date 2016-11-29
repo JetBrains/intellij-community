@@ -48,7 +48,7 @@ public class LeakHunter {
 
   private static void walkObjects(@NotNull final Class<?> lookFor, @NotNull Collection<Object> startRoots, @NotNull final Processor<BackLink> leakProcessor) {
     TIntHashSet visited = new TIntHashSet();
-    final Queue<BackLink> toVisit = new Queue<BackLink>(1000000);
+    final Queue<BackLink> toVisit = new Queue<>(1000000);
     for (Object startRoot : startRoots) {
       toVisit.addLast(new BackLink(startRoot, null, null));
     }
@@ -57,18 +57,15 @@ public class LeakHunter {
       final BackLink backLink = toVisit.pullFirst();
       Object root = backLink.value;
       if (!visited.add(System.identityHashCode(root))) continue;
-      DebugReflectionUtil.processStronglyReferencedValues(root, new PairProcessor<Object, Field>() {
-        @Override
-        public boolean process(Object value, Field field) {
-          Class<?> valueClass = value.getClass();
-          if (lookFor.isAssignableFrom(valueClass) && isReallyLeak(value)) {
-            leakProcessor.process(new BackLink(value, field, backLink));
-          }
-          else {
-            toVisit.addLast(new BackLink(value, field, backLink));
-          }
-          return true;
+      DebugReflectionUtil.processStronglyReferencedValues(root, (value, field) -> {
+        Class<?> valueClass = value.getClass();
+        if (lookFor.isAssignableFrom(valueClass) && isReallyLeak(value)) {
+          leakProcessor.process(new BackLink(value, field, backLink));
         }
+        else {
+          toVisit.addLast(new BackLink(value, field, backLink));
+        }
+        return true;
       });
     }
   }
@@ -84,13 +81,8 @@ public class LeakHunter {
   private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
   @TestOnly
   public static void checkProjectLeak() throws Exception {
-    Processor<Project> isReallyLeak = new Processor<Project>() {
-      @Override
-      public boolean process(Project project) {
-        return !project.isDefault() && !((ProjectImpl)project).isLight();
-      }
-    };
-    Collection<Object> roots = new ArrayList<Object>(allRoots());
+    Processor<Project> isReallyLeak = project -> !project.isDefault() && !((ProjectImpl)project).isLight();
+    Collection<Object> roots = new ArrayList<>(allRoots());
     ClassLoader classLoader = LeakHunter.class.getClassLoader();
     Vector<Class> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
     roots.addAll(allLoadedClasses); // inspect static fields of all loaded classes

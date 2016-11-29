@@ -47,13 +47,13 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
 
   public ModuleToDoNode(Project project, Module value, TodoTreeBuilder builder) {
     super(project, value, builder);
-    myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
+    myHighlightedRegions = new ArrayList<>(2);
   }
 
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> children = new ArrayList<>();
     if (myToDoSettings.getIsPackagesShown()) {
       TodoTreeHelper.getInstance(getProject()).addPackagesToChildren(children, getValue(), myBuilder);
     }

@@ -36,7 +36,7 @@ public abstract class VariableTypeMacroBase extends Macro {
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
-    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+    Set<LookupElement> set = new LinkedHashSet<>();
     for (PsiElement element : vars) {
       JavaTemplateUtil.addElementLookupItem(set, element);
     }

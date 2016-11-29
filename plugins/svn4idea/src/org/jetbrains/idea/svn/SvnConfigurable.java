@@ -402,7 +402,7 @@ public class SvnConfigurable implements Configurable {
     value = (value == -1) ? SvnConfiguration.ourMaxAnnotateRevisionsDefault : value;
     myNumRevsInAnnotations = new JSpinner(new SpinnerNumberModel(value, 10, 100000, 100));
 
-    myNavigateToCommonProxyLink = new LinkLabel<Object>(SvnBundle.message("navigate.to.idea.proxy.settings"), null);
+    myNavigateToCommonProxyLink = new LinkLabel<>(SvnBundle.message("navigate.to.idea.proxy.settings"), null);
 
     final Long maximum = 30 * 60 * 1000L;
     final long connection = configuration.getSshConnectionTimeout() <= maximum ? configuration.getSshConnectionTimeout() : maximum;

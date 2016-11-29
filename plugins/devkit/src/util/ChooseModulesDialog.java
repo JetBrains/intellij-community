@@ -33,6 +33,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
@@ -156,7 +157,7 @@ public class ChooseModulesDialog extends DialogWrapper {
   }
 
   public List<Module> getSelectedModules() {
-    final ArrayList<Module> list = new ArrayList<Module>(myCandidateModules);
+    final ArrayList<Module> list = new ArrayList<>(myCandidateModules);
     final Iterator<Module> modules = list.iterator();
     for (boolean b : myStates) {
       modules.next();
@@ -176,7 +177,7 @@ public class ChooseModulesDialog extends DialogWrapper {
       myProject = project;
       myList = new JBList();
       myCellRenderer = new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final Module module = ((Module)value);
           setIcon(ModuleType.get(module).getIcon());
           append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

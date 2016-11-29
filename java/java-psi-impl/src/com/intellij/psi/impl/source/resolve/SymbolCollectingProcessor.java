@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
@@ -33,8 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SymbolCollectingProcessor extends BaseScopeProcessor implements ElementClassHint {
   private final MostlySingularMultiMap<String, ResultWithContext> myResult = new MostlySingularMultiMap<String, ResultWithContext>();
-  private PsiElement myCurrentFileContext = null;
-  private PsiAnchor myCurrentContextAnchor = null;
+  private PsiElement myCurrentFileContext;
 
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
@@ -49,7 +47,6 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
   public void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
       myCurrentFileContext = (PsiElement)associated;
-      myCurrentContextAnchor = null;
     }
   }
 
@@ -59,11 +56,7 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
       PsiNamedElement named = (PsiNamedElement)element;
       String name = named.getName();
       if (name != null) {
-        PsiAnchor context = myCurrentContextAnchor;
-        if (context == null && myCurrentFileContext != null) {
-          myCurrentContextAnchor = context = PsiAnchor.create(myCurrentFileContext);
-        }
-        myResult.add(name, new ResultWithContext(named, context));
+        myResult.add(name, new ResultWithContext(named, myCurrentFileContext));
       }
     }
     return true;
@@ -79,30 +72,21 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
   }
 
   public static class ResultWithContext {
-    private final PsiAnchor myElement;
-    private final PsiAnchor myFileContext;
+    private final PsiNamedElement myElement;
+    private final PsiElement myFileContext;
 
-    public ResultWithContext(@NotNull PsiNamedElement element, @Nullable PsiAnchor fileContext) {
-      myElement = PsiAnchor.create(element);
+    public ResultWithContext(@NotNull PsiNamedElement element, @Nullable PsiElement fileContext) {
+      myElement = element;
       myFileContext = fileContext;
     }
 
     @NotNull
     public PsiNamedElement getElement() {
-      PsiElement element = myElement.retrieve();
-      if (element == null) {
-        String message = "Anchor hasn't survived: " + myElement;
-        if (myElement instanceof PsiAnchor.StubIndexReference) {
-          message += "; diagnostics=" + ((PsiAnchor.StubIndexReference)myElement).diagnoseNull();
-        }
-        throw new AssertionError(message);
-      }
-
-      return (PsiNamedElement)element;
+      return myElement;
     }
 
     public PsiElement getFileContext() {
-      return myFileContext == null ? null : myFileContext.retrieve();
+      return myFileContext;
     }
 
     @Override

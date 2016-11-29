@@ -44,7 +44,7 @@ public class ThreadDumpParser {
   }
 
   public static List<ThreadState> parse(String threadDump) {
-    List<ThreadState> result = new ArrayList<ThreadState>();
+    List<ThreadState> result = new ArrayList<>();
     StringBuilder lastThreadStack = new StringBuilder();
     ThreadState lastThreadState = null;
     boolean expectingThreadState = false;
@@ -115,11 +115,7 @@ public class ThreadDumpParser {
   }
 
   public static void sortThreads(List<ThreadState> result) {
-    Collections.sort(result, new Comparator<ThreadState>() {
-      public int compare(final ThreadState o1, final ThreadState o2) {
-        return getInterestLevel(o2) - getInterestLevel(o1);
-      }
-    });
+    Collections.sort(result, (o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
   }
 
   @Nullable

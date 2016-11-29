@@ -16,20 +16,18 @@
 
 package com.intellij.ui;
 
-import javax.accessibility.AccessibleAction;
-import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -48,13 +46,9 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class HyperlinkLabel extends HighlightableComponent {
-  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(new NotNullProducer<Color>() {
-    @NotNull
-    @Override
-    public Color produce() {
-      final Color foreground = UIUtil.getLabelTextForeground();
-      return foreground == null ? UIUtil.getLabelForeground() : foreground;
-    }
+  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(() -> {
+    final Color foreground1 = UIUtil.getLabelTextForeground();
+    return foreground1 == null ? UIUtil.getLabelForeground() : foreground1;
   }), null, null, null, Font.BOLD);
 
   private static final Logger LOG = Logger.getInstance(HyperlinkLabel.class.getName());
@@ -208,7 +202,7 @@ public class HyperlinkLabel extends HighlightableComponent {
 
         @Override
         public void handleText(char[] data, int pos) {
-          highlightedText.appendText(new String(data), currentAttributes);
+          highlightedText.appendText(data, currentAttributes);
         }
 
         @Override

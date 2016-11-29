@@ -36,7 +36,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();
     if (pattern.trim().length() == 0) {
-      return new Pair<String, Query>(pattern, new MatchAllDocsQuery());
+      return new Pair<>(pattern, new MatchAllDocsQuery());
     }
 
     List<String> parts = StringUtil.split(pattern, ".");
@@ -56,7 +56,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
     pattern = newPattern.toString();
     String queryPattern = "*/" + pattern.replaceAll("\\.", "/");
 
-    return new Pair<String, Query>(pattern, new WildcardQuery(new Term(TERM, queryPattern)));
+    return new Pair<>(pattern, new WildcardQuery(new Term(TERM, queryPattern)));
   }
 
   protected Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
@@ -86,7 +86,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       return Collections.emptyList();
     }
 
-    Map<String, MavenClassSearchResult> result = new THashMap<String, MavenClassSearchResult>();
+    Map<String, MavenClassSearchResult> result = new THashMap<>();
     for (MavenArtifactInfo each : infos) {
       if (each.getClassNames() == null) continue;
 

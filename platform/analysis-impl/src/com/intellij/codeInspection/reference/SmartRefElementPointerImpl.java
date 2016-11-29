@@ -41,7 +41,6 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   public SmartRefElementPointerImpl(RefEntity ref, boolean isPersistent) {
       myIsPersistent = isPersistent;
       myRefElement = ref;
-      ref = ref.getRefManager().getRefinedElement(ref);
       myFQName = ref.getExternalName();
       myType = ref.getRefManager().getType(ref);
     }
@@ -86,12 +85,6 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     Element element = new Element(ENTRY_POINT);
     element.setAttribute(TYPE_ATTR, myType);
     element.setAttribute(FQNAME_ATTR, getFQName());
-    /*if (myRefElement != null) {
-      final RefEntity entity = myRefElement.getOwner();
-      if (entity != null) {
-        new SmartRefElementPointerImpl(entity, myIsPersistent).writeExternal(element);
-      }
-    }*/
     parentNode.addContent(element);
   }
 

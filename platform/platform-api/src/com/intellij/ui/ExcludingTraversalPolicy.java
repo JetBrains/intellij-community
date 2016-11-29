@@ -26,8 +26,8 @@ import java.util.Set;
 
 public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
   private final FocusTraversalPolicy myWrappee;
-  private final Set<Component> myExcludes = new THashSet<Component>();
-  private final Set<String> myRecursionGuard = new THashSet<String>();
+  private final Set<Component> myExcludes = new THashSet<>();
+  private final Set<String> myRecursionGuard = new THashSet<>();
 
   public ExcludingTraversalPolicy(Component... excludes) {
     this(KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalPolicy(), excludes);
@@ -47,11 +47,7 @@ public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
     try {
       if (!myRecursionGuard.add("getComponentAfter")) return null;
 
-      return traverse(aContainer, aComponent, new Function<Pair<Container, Component>, Component>() {
-        public Component fun(Pair<Container, Component> param) {
-          return myWrappee.getComponentAfter(param.first, param.second);
-        }
-      });
+      return traverse(aContainer, aComponent, param -> myWrappee.getComponentAfter(param.first, param.second));
     }
     finally {
       myRecursionGuard.clear();
@@ -63,11 +59,7 @@ public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
     try {
       if (!myRecursionGuard.add("getComponentBefore")) return null;
 
-      return traverse(aContainer, aComponent, new Function<Pair<Container, Component>, Component>() {
-        public Component fun(Pair<Container, Component> param) {
-          return myWrappee.getComponentBefore(param.first, param.second);
-        }
-      });
+      return traverse(aContainer, aComponent, param -> myWrappee.getComponentBefore(param.first, param.second));
     }
     finally {
       myRecursionGuard.clear();
@@ -75,7 +67,7 @@ public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
   }
 
   private Component traverse(Container aContainer, Component aComponent, Function<Pair<Container, Component>, Component> func) {
-    Set<Component> loopGuard = new THashSet<Component>();
+    Set<Component> loopGuard = new THashSet<>();
     do {
       if (!loopGuard.add(aComponent)) return null;
       aComponent = func.fun(Pair.create(aContainer, aComponent));

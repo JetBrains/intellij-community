@@ -8,25 +8,25 @@
     <changesViewContent tabName="Log" className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"/>
 
-    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogManager"/>
+    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings"
-                    serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties"
-                    serviceImplementation="com.intellij.vcs.log.data.VcsLogUiPropertiesDeprecated"/>
     <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogTabsProperties"
                     serviceImplementation="com.intellij.vcs.log.data.VcsLogTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsRootsRegistry"
-                    serviceImplementation="com.intellij.vcs.log.impl.VcsRootsRegistryImpl"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.MergeCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.CurrentBranchHighlighter$Factory"/>
+    <logHighlighterFactory implementation="com.intellij.vcs.log.ui.IndexHighlighter$Factory"/>
+
+    <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsProjectLog$InitLogStartupActivity"/>
+
+    <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
   </extensions>
 
   <actions>
@@ -36,7 +36,7 @@
             use-shortcut-of="Find"
             text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
-            icon="AllIcons.General.Gear" text="Quick Settings" description="Quick Settings"/>
+            icon="VcsLogIcons.GearWithDropDown" text="Quick Settings" description="Quick Settings"/>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
@@ -46,7 +46,6 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowBranchesPanelAction" id="Vcs.Log.ShowBranchesPanelAction"/>
     <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control L" keymap="Visual Studio" remove="true"/>
@@ -55,19 +54,24 @@
     <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
     <action class="com.intellij.vcs.log.ui.actions.CloseLogTabAction" id="Vcs.Log.CloseLogTabAction"/>
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowGraphHistoryAction" id="Vcs.Show.Graph.History"
+            text="Show History as Graph" description="Show History as Graph" internal="true"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
+            text="Show Commit Tooltip" description="Show tooltip for currently selected commit in the Log"
+            use-shortcut-of="QuickJavaDoc"/>
 
     <group id="Vcs.Log.Settings">
-      <reference id="Vcs.Log.ShowBranchesPanelAction"/>
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
       <separator/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
+      <separator/>
+      <reference id="ContextHelp"/>
     </group>
     <group id="Vcs.Log.Toolbar.Internal">
       <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.Refresh"/>
-      <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.GoToRef"/>
       <group id="Vcs.Log.Toolbar"/>
       <separator/>
@@ -93,7 +97,6 @@
       <reference ref="Vcs.Log.QuickSettings"/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowRootsColumnAction"/>
-      <reference ref="Vcs.Log.ShowBranchesPanelAction"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>

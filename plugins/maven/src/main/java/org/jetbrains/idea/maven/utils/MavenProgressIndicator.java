@@ -25,7 +25,7 @@ import java.util.List;
 
 public class MavenProgressIndicator {
   private ProgressIndicator myIndicator;
-  private final List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<Condition<MavenProgressIndicator>>();
+  private final List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<>();
 
   public MavenProgressIndicator() {
     this(new MyEmptyProgressIndicator());

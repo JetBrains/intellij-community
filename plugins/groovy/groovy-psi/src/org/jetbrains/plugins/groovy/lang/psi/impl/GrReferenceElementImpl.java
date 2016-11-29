@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @author ven
  */
 public abstract class GrReferenceElementImpl<Q extends PsiElement> extends GroovyPsiElementImpl implements GrReferenceElement<Q> {
-  private volatile String myCachedQName = null;
+  private volatile String myCachedQName;
   private volatile String myCachedTextSkipWhiteSpaceAndComments;
 
   public GrReferenceElementImpl(@NotNull ASTNode node) {
@@ -76,7 +76,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   }
 
   @Override
-  public PsiElement handleElementRenameSimple(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
       ASTNode node = nameElement.getNode();
@@ -96,11 +96,6 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return handleElementRenameSimple(newElementName);
-  }
-
-  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return this;
     final boolean fullyQualified = isFullyQualified();
@@ -111,7 +106,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
       if (!preserveQualification || qualifiedName == null) {
         final String newName = ((PsiClass)element).getName();
         setQualifier(null);
-        final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRenameSimple(newName));
+        final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRename(newName));
 
         if (newElement.isReferenceTo(element) || qualifiedName == null || JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope()) == null) {
           return newElement;

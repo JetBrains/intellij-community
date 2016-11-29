@@ -27,6 +27,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -67,9 +68,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   private JComponent myToolbar;
   private IdeStatusBarImpl myStatusBar;
+  private boolean myStatusBarDisposed;
 
   private final Box myNorthPanel = Box.createVerticalBox();
-  private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<IdeRootPaneNorthExtension>();
+  private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
 
   /**
    * Current <code>ToolWindowsPane</code>. If there is no such pane then this field is null.
@@ -77,7 +79,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private ToolWindowsPane myToolWindowsPane;
   private JBPanel myContentPane;
   private final ActionManager myActionManager;
-  private final UISettings myUISettings;
 
   private final boolean myGlassPaneInitialized;
   private final IdeGlassPaneImpl myGlassPane;
@@ -88,13 +89,17 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private boolean myFullScreen;
 
-  public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager, Application application, final IdeFrame frame) {
+  public IdeRootPane(ActionManagerEx actionManager, DataManager dataManager, Application application, final IdeFrame frame) {
     if (SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
       //setUI(DarculaRootPaneUI.createUI(this));
-      setWindowDecorationStyle(FRAME);
+      try {
+        setWindowDecorationStyle(FRAME);
+      }
+      catch (Exception e) {
+        Logger.getInstance(IdeRootPane.class).error(e);
+      }
     }
     myActionManager = actionManager;
-    myUISettings = uiSettings;
 
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
 
@@ -106,7 +111,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     createStatusBar(frame);
 
     updateStatusBarVisibility();
-    updateToolbar();
 
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
@@ -127,7 +131,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       setJMenuBar(new IdeMenuBar(actionManager, dataManager));
     }
 
-    myGlassPane = new IdeGlassPaneImpl(this);
+    myGlassPane = new IdeGlassPaneImpl(this, true);
     setGlassPane(myGlassPane);
     myGlassPaneInitialized = true;
 
@@ -151,16 +155,19 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   public final void addNotify(){
     super.addNotify();
-    myUISettings.addUISettingsListener(this);
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   public final void removeNotify(){
-    myUISettings.removeUISettingsListener(this);
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      if (!myStatusBarDisposed) {
+        myStatusBarDisposed = true;
+        Disposer.dispose(myStatusBar);
+      }
       removeToolbar();
+      setJMenuBar(null);
     }
     super.removeNotify();
   }
@@ -279,9 +286,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
 
     myStatusBar.addWidget(myMemoryWidget);
-    myStatusBar.addWidget(new IdeMessagePanel(MessagePool.getInstance()), "before " + MemoryUsagePanel.WIDGET_ID);
+    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), "before " + MemoryUsagePanel.WIDGET_ID);
 
-    setMemoryIndicatorVisible(myUISettings.SHOW_MEMORY_INDICATOR);
+    setMemoryIndicatorVisible(UISettings.getInstance().SHOW_MEMORY_INDICATOR);
   }
 
   void setMemoryIndicatorVisible(final boolean visible) {
@@ -303,18 +310,18 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void updateToolbarVisibility(){
-    myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR && !UISettings.getInstance().PRESENTATION_MODE);
+    myToolbar.setVisible(UISettings.getInstance().SHOW_MAIN_TOOLBAR && !UISettings.getInstance().PRESENTATION_MODE);
   }
 
   private void updateStatusBarVisibility(){
-    myStatusBar.setVisible(myUISettings.SHOW_STATUS_BAR && !myUISettings.PRESENTATION_MODE);
+    myStatusBar.setVisible(UISettings.getInstance().SHOW_STATUS_BAR && !UISettings.getInstance().PRESENTATION_MODE);
   }
 
   public void installNorthComponents(final Project project) {
     ContainerUtil.addAll(myNorthComponents, Extensions.getExtensions(IdeRootPaneNorthExtension.EP_NAME, project));
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       myNorthPanel.add(northComponent.getComponent());
-      northComponent.uiSettingsChanged(myUISettings);
+      northComponent.uiSettingsChanged(UISettings.getInstance());
     }
   }
 
@@ -335,12 +342,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return null;
   }
 
-  public void uiSettingsChanged(UISettings source) {
-    setMemoryIndicatorVisible(source.SHOW_MEMORY_INDICATOR);
+  public void uiSettingsChanged(UISettings uiSettings) {
+    setMemoryIndicatorVisible(uiSettings.SHOW_MEMORY_INDICATOR);
     updateToolbarVisibility();
     updateStatusBarVisibility();
     for (IdeRootPaneNorthExtension component : myNorthComponents) {
-      component.uiSettingsChanged(source);
+      component.uiSettingsChanged(uiSettings);
     }
     IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, this);
     BalloonLayout layout = frame != null ? frame.getBalloonLayout() : null;

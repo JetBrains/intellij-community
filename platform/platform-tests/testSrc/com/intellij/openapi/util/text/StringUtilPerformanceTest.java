@@ -31,13 +31,10 @@ public class StringUtilPerformanceTest {
   public void containsAnyChar() throws Exception {
     assertTrue(StringUtil.containsAnyChar(TEST_STRING, Integer.toString(new Random().nextInt())));
 
-    PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", SystemInfo.isWindows ? 500 : 200, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        for (int i = 0; i < 1000000; i++) {
-          StringUtil.containsAnyChar(TEST_STRING, "XYZ");
-          StringUtil.containsAnyChar("XYZ", TEST_STRING);
-        }
+    PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", SystemInfo.isWindows ? 500 : 200, () -> {
+      for (int i = 0; i < 1000000; i++) {
+        StringUtil.containsAnyChar(TEST_STRING, "XYZ");
+        StringUtil.containsAnyChar("XYZ", TEST_STRING);
       }
     }).cpuBound().useLegacyScaling().assertTiming();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -44,13 +47,25 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     return myTagName;
   }
 
+  /**
+   * in case settings save additional top-level tags, list the list of them to prevent serializer to treat such tag as unknown settings.
+   */
+  @NotNull
+  public List<String> getKnownTagNames() {
+    return Collections.singletonList(getTagName());
+  }
+
   public void readExternal(Element parentElement) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentElement.getChild(myTagName));
+    Element child = parentElement.getChild(myTagName);
+    if (child != null) {
+      DefaultJDOMExternalizer.readExternal(this, child);
+      importLegacySettings();
+    }
   }
 
   public void writeExternal(Element parentElement, @NotNull final CustomCodeStyleSettings parentSettings) throws WriteExternalException {
     final Element childElement = new Element(myTagName);
-    DefaultJDOMExternalizer.writeExternal(this, childElement, new DifferenceFilter<CustomCodeStyleSettings>(this, parentSettings));
+    DefaultJDOMExternalizer.writeExternal(this, childElement, new DifferenceFilter<>(this, parentSettings));
     if (!childElement.getContent().isEmpty()) {
       parentElement.addContent(childElement);
     }
@@ -69,7 +84,6 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
   /**
    * For compatibility with old code style settings stored in CodeStyleSettings.
    */
-  public void importLegacySettings() {
+  protected void importLegacySettings() {
   }
-
 }

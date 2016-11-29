@@ -19,36 +19,13 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public abstract class VisibleHighlightingPassFactory extends AbstractProjectComponent {
-  public VisibleHighlightingPassFactory(Project project) {
-    super(project);
-  }
-
+public abstract class VisibleHighlightingPassFactory  {
   @NotNull
   public static ProperTextRange calculateVisibleRange(@NotNull Editor editor) {
     return VisibleRangeCalculator.SERVICE.getInstance().getVisibleTextRange(editor);
-  }
-
-  @Nullable
-  protected static TextRange calculateRangeToProcess(Editor editor) {
-    TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
-    if (dirtyTextRange == null) return null;
-
-    TextRange visibleRange = calculateVisibleRange(editor);
-    TextRange textRange = dirtyTextRange.intersection(visibleRange);
-
-    if (textRange == null || textRange.isEmpty() || textRange.equals(dirtyTextRange)) {
-      return null; // no sense in highlighting the same region twice
-    }
-    return textRange;
   }
 }

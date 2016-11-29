@@ -59,7 +59,7 @@ public class PyReturnFromInitInspection extends PyInspection {
 
     public void visitPyFunction(PyFunction function) {
       if (function.getContainingClass() != null && PyNames.INIT.equals(function.getName())) {
-        Collection<PsiElement> offenders = new ArrayList<PsiElement>();
+        Collection<PsiElement> offenders = new ArrayList<>();
         findReturnValueInside(function, offenders);
         for (PsiElement offender : offenders) {
           registerProblem(offender, PyBundle.message("INSP.cant.return.value.from.init"), new PyRemoveStatementQuickFix());

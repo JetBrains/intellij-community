@@ -2,6 +2,7 @@ package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
@@ -23,6 +24,9 @@ import java.util.List;
  * @author ksafonov
  */
 public class AttachmentsTabForm {
+
+  private static final Logger LOG = Logger.getInstance(AttachmentsTabForm.class);
+
   private JPanel myContentPane;
   private TableView<Attachment> myTable;
   private LabeledTextComponent myFileTextArea;
@@ -74,12 +78,15 @@ public class AttachmentsTabForm {
         if (e.getValueIsAdjusting()) {
           return;
         }
-        final Attachment selection = myTable.getSelectedObject();
-        if (selection != null) {
-          LabeledTextComponent.setText(myFileTextArea.getTextComponent(), selection.getDisplayText(), true);
-        }
-        else {
-          LabeledTextComponent.setText(myFileTextArea.getTextComponent(), null, true);
+        LabeledTextComponent.setText(myFileTextArea.getTextComponent(), null, true);
+        Attachment attachment = myTable.getSelectedObject();
+        if (attachment != null) {
+          try {
+            LabeledTextComponent.setText(myFileTextArea.getTextComponent(), attachment.getDisplayText(), true);
+          }
+          catch (Throwable th) {
+            LOG.warn(th);
+          }
         }
       }
     });
@@ -107,7 +114,7 @@ public class AttachmentsTabForm {
   }
 
   public void setAttachments(List<Attachment> attachments) {
-    myTable.setModelAndUpdateColumns(new ListTableModel<Attachment>(new ColumnInfo[]{ENABLED_COLUMN, PATH_COLUMN}, attachments, 1));
+    myTable.setModelAndUpdateColumns(new ListTableModel<>(new ColumnInfo[]{ENABLED_COLUMN, PATH_COLUMN}, attachments, 1));
     myTable.setBorder(IdeBorderFactory.createBorder());
     myTable.setSelection(Collections.singletonList(attachments.get(0)));
   }

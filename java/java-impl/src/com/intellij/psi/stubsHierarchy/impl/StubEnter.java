@@ -16,107 +16,96 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.stubsHierarchy.stubs.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInput;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
-import static com.intellij.psi.stubsHierarchy.impl.Symbol.*;
+import static com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
+import static com.intellij.psi.stubsHierarchy.impl.Symbol.PackageSymbol;
 
 public class StubEnter {
-  private NameEnvironment myNameEnvironment;
-  private Symbols mySymbols;
-  private StubHierarchyConnector myStubHierarchyConnector;
+  final Imports imports = new Imports();
+  private final Symbols mySymbols;
+  private final StubHierarchyConnector myStubHierarchyConnector;
 
-  private ArrayList<ClassSymbol> uncompleted = new ArrayList<ClassSymbol>();
+  private ArrayList<ClassSymbol> uncompleted = new ArrayList<>();
 
-  public StubEnter(NameEnvironment nameEnvironment, Symbols symbols) {
-    this.myNameEnvironment = nameEnvironment;
-    this.mySymbols = symbols;
-    myStubHierarchyConnector = new StubHierarchyConnector(nameEnvironment, symbols);
+  StubEnter(Symbols symbols) {
+    mySymbols = symbols;
+    myStubHierarchyConnector = new StubHierarchyConnector(symbols);
   }
 
-  void unitEnter(Unit tree) {
-    PackageSymbol pkg = tree.myPackageId != null ? mySymbols.enterPackage(tree.myPackageId) : mySymbols.myRootPackage;
-    enter(tree.myClasses, tree.myUnitInfo, pkg);
+  PackageSymbol readPackageName(DataInput in) throws IOException {
+    PackageSymbol pkg = mySymbols.myRootPackage;
+    int qname = 0;
+    int len = DataInputOutputUtil.readINT(in);
+    for (int i = 0; i < len; i++) {
+      int shortName = in.readInt();
+      qname = NameEnvironment.qualifiedName(qname, shortName);
+      pkg = mySymbols.enterPackage(qname, shortName, pkg);
+    }
+    return pkg;
   }
 
-  private void enter(ClassDeclaration[] trees, UnitInfo info, Symbol owner) {
-    for (ClassDeclaration tree : trees) {
-      enter(tree, info, owner);
-    }
-  }
+  ClassSymbol classEnter(UnitInfo info,
+                         Symbol owner,
+                         int stubId,
+                         int mods,
+                         @ShortName int name,
+                         @CompactArray(QualifiedName.class) Object superNames,
+                         @QNameHash int qname, int fileId) throws IOException {
+    int flags = checkFlags(mods, info.isCompiled());
+    @CompactArray(QualifiedName.class) Object supers = handleSpecialSupers(mods, superNames);
 
-  private ClassSymbol[] enter(Declaration[] trees, UnitInfo info, Symbol owner) {
-    ClassSymbol[] members = new ClassSymbol[trees.length];
-    int i = 0;
-    for (Declaration tree : trees) {
-      ClassSymbol member = enter(tree, info, owner);
-      if (member != null && member.myShortName != 0) {
-        members[i++] = member;
-      }
-    }
-    members = members.length == 0 ? ClassSymbol.EMPTY_ARRAY : Arrays.copyOf(members, i);
-    Arrays.sort(members, CLASS_SYMBOL_BY_NAME_COMPARATOR);
-    return members;
-  }
-
-  private ClassSymbol enter(Declaration tree, UnitInfo info, Symbol owner) {
-    if (tree instanceof ClassDeclaration) {
-      return classEnter((ClassDeclaration)tree, info, owner);
-    }
-    if (tree instanceof MemberDeclaration) {
-      memberEnter((MemberDeclaration)tree, info, owner);
-      return null;
-    }
-    return null;
-  }
-
-  private void memberEnter(MemberDeclaration tree, UnitInfo info, Symbol owner) {
-    MemberSymbol mc = new MemberSymbol(owner);
-    ClassSymbol[] members = enter(tree.myDeclarations, info, mc);
-    mc.setMembers(members);
-  }
-
-  private ClassSymbol classEnter(ClassDeclaration tree, UnitInfo info, Symbol owner) {
-    int flags = checkFlags(tree.mods, owner);
-    if (info.getType() == IndexTree.BYTECODE) {
-      flags |= IndexTree.COMPILED;
-    }
-    QualifiedName[] supers = tree.mySupers;
-    if ((tree.mods & IndexTree.ANNOTATION) != 0) {
-      supers = myNameEnvironment.annotation;
-    }
-
-    ClassSymbol classSymbol = mySymbols.enterClass(tree.myClassAnchor, flags, tree.myName, owner, info, supers, myStubHierarchyConnector);
-
-    if (uncompleted != null)  {
+    ClassSymbol classSymbol = mySymbols.enterClass(fileId, stubId, flags, name, owner, info, supers, qname);
+    if (uncompleted != null) {
       uncompleted.add(classSymbol);
     }
-    ClassSymbol[] members = enter(tree.myDeclarations, info, classSymbol);
-    classSymbol.setMembers(members);
     return classSymbol;
+  }
+
+  @Nullable
+  @CompactArray(QualifiedName.class)
+  Object handleSpecialSupers(int flags, @CompactArray(QualifiedName.class) Object superNames) {
+    if (BitUtil.isSet(flags, IndexTree.ANNOTATION)) {
+      return NameEnvironment.java_lang_annotation_Annotation;
+    }
+
+    if (BitUtil.isSet(flags, IndexTree.ENUM)) {
+      if (superNames == null) return NameEnvironment.java_lang_Enum;
+      if (superNames instanceof QualifiedName) return new QualifiedName[]{(QualifiedName)superNames, NameEnvironment.java_lang_Enum};
+      return ArrayUtil.append((QualifiedName[])superNames, NameEnvironment.java_lang_Enum);
+    }
+
+    return superNames;
   }
 
   public void connect1() {
     for (ClassSymbol classSymbol : uncompleted) {
-      classSymbol.connect();
+      classSymbol.connect(myStubHierarchyConnector);
     }
-    uncompleted = new ArrayList<ClassSymbol>();
+    uncompleted = new ArrayList<>();
   }
 
   public void connect2() {
     for (ClassSymbol classSymbol : uncompleted) {
-      classSymbol.connect();
+      classSymbol.connect(myStubHierarchyConnector);
     }
     uncompleted = null;
   }
 
-  public static int checkFlags(long flags, Symbol owner) {
+  private static int checkFlags(long flags, boolean compiled) {
     int mask = 0;
-    if (owner.isClass() && (owner.myOwner.isPackage() || owner.isStatic())) {
-      if ((flags & (IndexTree.INTERFACE | IndexTree.ENUM | IndexTree.STATIC)) != 0 )
-        mask |= IndexTree.STATIC;
+    if ((flags & IndexTree.SUPERS_UNRESOLVED) != 0) {
+      mask |= IndexTree.SUPERS_UNRESOLVED;
+    }
+    if (compiled) {
+      mask |= IndexTree.COMPILED;
     }
     return mask;
   }

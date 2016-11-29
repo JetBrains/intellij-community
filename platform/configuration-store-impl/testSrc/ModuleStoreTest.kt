@@ -14,9 +14,9 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
-import com.intellij.util.parentSystemIndependentPath
-import com.intellij.util.readText
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.io.parentSystemIndependentPath
+import com.intellij.util.io.readText
+import com.intellij.util.io.systemIndependentPath
 import gnu.trove.TObjectIntHashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
@@ -43,7 +43,10 @@ class ModuleStoreTest {
       }
     }
 
-    private fun VirtualFile.loadModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).loadModule(path) }
+    private fun VirtualFile.loadModule(): Module {
+      val project = projectRule.project
+      return runWriteAction { ModuleManager.getInstance(project).loadModule(path) }
+    }
 
     fun Path.createModule() = projectRule.createModule(this)
   }
@@ -103,9 +106,6 @@ class ModuleStoreTest {
         override fun onBatchUpdateStarted() {
           nameToCount.put(moduleName, ++batchUpdateCount)
         }
-
-        override fun onBatchUpdateFinished() {
-        }
       })
 
       //
@@ -138,9 +138,6 @@ class ModuleStoreTest {
       override fun onBatchUpdateStarted() {
         nameToCount.put("p", ++projectBatchUpdateCount)
       }
-
-      override fun onBatchUpdateFinished() {
-      }
     })
 
     m1.addContentRoot()
@@ -164,4 +161,7 @@ class ModuleStoreTest {
 val Module.contentRootUrls: Array<String>
   get() = ModuleRootManager.getInstance(this).contentRootUrls
 
-fun ProjectRule.createModule(path: Path) = runWriteAction { ModuleManager.getInstance(project).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
+fun ProjectRule.createModule(path: Path): Module {
+  val p = project
+  return runWriteAction { ModuleManager.getInstance(p).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
+}

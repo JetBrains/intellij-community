@@ -77,13 +77,10 @@ public class IOExceptionDialog extends DialogWrapper {
   public static boolean showErrorDialog(final String title, final String text) {
     final Ref<Boolean> ok = Ref.create(false);
     try {
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          IOExceptionDialog dialog = new IOExceptionDialog(title, text);
-          dialog.show();
-          ok.set(dialog.isOK());
-        }
+      GuiUtils.runOrInvokeAndWait(() -> {
+        IOExceptionDialog dialog = new IOExceptionDialog(title, text);
+        dialog.show();
+        ok.set(dialog.isOK());
       });
     }
     catch (InterruptedException e) {

@@ -180,7 +180,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
     final GrParameter[] parameters = method.getBaseMethod().getParameters();
 
-    Set<String> actual = new HashSet<String>(actualParams.length);
+    Set<String> actual = new HashSet<>(actualParams.length);
     for (GrParameter param : actualParams) {
       actual.add(param.getName());
     }
@@ -337,7 +337,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
   @Override
   public Collection<PsiMethod> collectMethods(PsiClass typeDefinition) {
-    List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(typeDefinition.getMethods()));
+    List<PsiMethod> result = new ArrayList<>(Arrays.asList(typeDefinition.getMethods()));
 
     if (typeDefinition instanceof GroovyScriptClass) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
@@ -368,12 +368,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     Map<PsiMethod, String> setters = context.getSetters();
     Set<Map.Entry<PsiMethod, String>> entries = setters.entrySet();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      entries = ImmutableSortedSet.copyOf(new Comparator<Map.Entry<PsiMethod, String>>() {
-        @Override
-        public int compare(Map.Entry<PsiMethod, String> o1, Map.Entry<PsiMethod, String> o2) {
-          return o1.getValue().compareTo(o2.getValue());
-        }
-      }, entries);
+      entries = ImmutableSortedSet.copyOf((o1, o2) -> o1.getValue().compareTo(o2.getValue()), entries);
     }
     for (Map.Entry<PsiMethod, String> entry : entries) {
       new SetterWriter(builder, psiClass, entry.getKey(), entry.getValue(), classNameProvider, context).write();
@@ -390,7 +385,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
   @Override
   public void writeImplementsList(StringBuilder text, PsiClass typeDefinition) {
-    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
+    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<>();
     Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
 
     if (implementsTypes.isEmpty()) return;
@@ -458,7 +453,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     PsiClass classToSearch = JavaPsiFacade.getInstance(aClass.getProject()).findClass(fqn, aClass.getResolveScope());
     if (classToSearch == null) return true;
 
-    Set<String> methodsToFind = new HashSet<String>();
+    Set<String> methodsToFind = new HashSet<>();
     for (PsiMethod method : classToSearch.getMethods()) {
       methodsToFind.add(method.getName());
     }

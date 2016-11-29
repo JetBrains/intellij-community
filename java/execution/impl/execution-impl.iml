@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="execution-openapi" exported="" />
     <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />

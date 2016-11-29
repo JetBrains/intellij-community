@@ -46,7 +46,7 @@ public class ReturnInstruction extends InstructionImpl {
 
     final CallInstruction callInstruction = callStack.peek();
     final Iterable<? extends Instruction> successors = callInstruction.allSuccessors();
-    final Deque<CallInstruction> copy = new ArrayDeque<CallInstruction>(callStack);
+    final Deque<CallInstruction> copy = new ArrayDeque<>(callStack);
     copy.pop();
     for (Instruction instruction : successors) {
       environment.update(copy, instruction);

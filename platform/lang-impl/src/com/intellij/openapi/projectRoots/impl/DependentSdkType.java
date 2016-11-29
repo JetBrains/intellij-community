@@ -43,12 +43,7 @@ public abstract class DependentSdkType extends SdkType {
    * Checks if dependencies satisfied.
    */
   protected boolean checkDependency(SdkModel sdkModel) {
-    return ContainerUtil.find(sdkModel.getSdks(), new Condition<Sdk>() {
-      @Override
-      public boolean value(Sdk sdk) {
-        return isValidDependency(sdk);
-      }
-    }) != null;
+    return ContainerUtil.find(sdkModel.getSdks(), sdk -> isValidDependency(sdk)) != null;
   }
 
   protected abstract boolean isValidDependency(Sdk sdk);
@@ -83,17 +78,14 @@ public abstract class DependentSdkType extends SdkType {
   protected static Sdk createSdkOfType(final SdkModel sdkModel,
                                   final SdkType sdkType,
                                   final Consumer<Sdk> sdkCreatedCallback) {
-    final Ref<Sdk> result = new Ref<Sdk>(null);
-    SdkConfigurationUtil.selectSdkHome(sdkType, new Consumer<String>() {
-      @Override
-      public void consume(final String home) {
-        String newSdkName = SdkConfigurationUtil.createUniqueSdkName(sdkType, home, Arrays.asList(sdkModel.getSdks()));
-        final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, sdkType);
-        newJdk.setHomePath(home);
+    final Ref<Sdk> result = new Ref<>(null);
+    SdkConfigurationUtil.selectSdkHome(sdkType, home -> {
+      String newSdkName = SdkConfigurationUtil.createUniqueSdkName(sdkType, home, Arrays.asList(sdkModel.getSdks()));
+      final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, sdkType);
+      newJdk.setHomePath(home);
 
-        sdkCreatedCallback.consume(newJdk);
-        result.set(newJdk);
-      }
+      sdkCreatedCallback.consume(newJdk);
+      result.set(newJdk);
     });
     return result.get();
   }

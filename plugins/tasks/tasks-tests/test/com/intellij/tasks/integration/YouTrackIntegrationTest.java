@@ -8,7 +8,6 @@ import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.youtrack.YouTrackRepository;
 import com.intellij.tasks.youtrack.YouTrackRepositoryType;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.httpclient.Header;
@@ -44,13 +43,10 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     assertNotNull(task);
 
     final Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
-    final List<String> stateNames = ContainerUtil.map(states, new Function<CustomTaskState, String>() {
-      @Override
-      public String fun(CustomTaskState state) {
-        return state.getPresentableName();
-      }
-    });
+    final List<String> stateNames = ContainerUtil.map(states, CustomTaskState::getPresentableName);
     assertContainsElements(stateNames, "North", "South");
+    // IDEA-147006
+    assertDoesntContain(stateNames, "Peru State College", "The Evergreen State College");
 
     // ? -> North
     myRepository.setTaskState(task, NORTH_STATE);

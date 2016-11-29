@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.util.Function
 import org.jetbrains.annotations.NotNull
@@ -43,7 +44,7 @@ TestExternalSystemExecutionSettings>
   TestExternalSystemExecutionSettings executionSettings
 
   TestExternalSystemManager(@NotNull Project project) {
-    systemSettings = new TestExternalSystemSettings(project)
+    Disposer.register(project, systemSettings = new TestExternalSystemSettings(project))
     localSettings = new TestExternalSystemLocalSettings(project)
     executionSettings = new TestExternalSystemExecutionSettings()
   }

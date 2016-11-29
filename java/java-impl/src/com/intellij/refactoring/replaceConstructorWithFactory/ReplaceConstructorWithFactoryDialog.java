@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -96,7 +97,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     gbc.anchor = GridBagConstraints.WEST;
     gbc.fill = GridBagConstraints.BOTH;
 
-    gbc.insets = new Insets(4, 0, 4, 8);
+    gbc.insets = JBUI.insets(4, 0, 4, 8);
     gbc.gridwidth = 1;
     gbc.gridx = 0;
     gbc.gridy = 0;
@@ -141,7 +142,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
       myTfTargetClassName.setText(myContainingClass.getQualifiedName());
     }
     else {
-      ArrayList<String> list = new ArrayList<String>();
+      ArrayList<String> list = new ArrayList<>();
       PsiElement parent = myContainingClass;
       while (parent instanceof PsiClass) {
         list.add(((PsiClass)parent).getQualifiedName());

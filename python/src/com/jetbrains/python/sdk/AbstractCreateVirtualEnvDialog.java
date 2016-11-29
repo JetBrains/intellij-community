@@ -23,8 +23,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -72,7 +70,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
     void virtualEnvCreated(Sdk sdk, boolean associateWithProject);
   }
 
-  protected static void setupVirtualEnvSdk(final String path,
+  public static void setupVirtualEnvSdk(final String path,
                                            boolean associateWithProject,
                                            VirtualEnvCallback callback) {
     final VirtualFile sdkHome =
@@ -249,14 +247,11 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
           myPath = createEnvironment(basicSdk);
         }
         catch (final ExecutionException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              final PackageManagementService.ErrorDescription description =
-                PyPackageManagementService.toErrorDescription(Collections.singletonList(e), basicSdk);
-              if (description != null) {
-                PackagesNotificationPanel.showError(PyBundle.message("sdk.create.venv.dialog.error.failed.to.create.venv"), description);
-              }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            final PackageManagementService.ErrorDescription description =
+              PyPackageManagementService.toErrorDescription(Collections.singletonList(e), basicSdk);
+            if (description != null) {
+              PackagesNotificationPanel.showError(PyBundle.message("sdk.create.venv.dialog.error.failed.to.create.venv"), description);
             }
           }, ModalityState.any());
         }
@@ -266,17 +261,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
       @Override
       public void onSuccess() {
         if (myPath != null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-                @Override
-                public void run() {
-                  setupVirtualEnvSdk(myPath, associateWithProject(), callback);
-                }
-              });
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> setupVirtualEnvSdk(myPath, associateWithProject(), callback));
         }
       }
     };

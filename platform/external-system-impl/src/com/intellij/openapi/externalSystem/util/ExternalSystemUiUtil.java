@@ -21,33 +21,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
-import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.lang.reflect.Field;
-import java.util.*;
-import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -55,7 +42,7 @@ import java.util.List;
  */
 public class ExternalSystemUiUtil {
 
-  public static final int INSETS = 7;
+  public static final int INSETS = 5;
   private static final int BALLOON_FADEOUT_TIME = 5000;
 
   private ExternalSystemUiUtil() {
@@ -91,13 +78,13 @@ public class ExternalSystemUiUtil {
 
   @NotNull
   public static GridBag getLabelConstraints(int indentLevel) {
-    Insets insets = new Insets(INSETS, INSETS + INSETS * indentLevel, 0, INSETS);
+    Insets insets = JBUI.insets(INSETS, INSETS + INSETS * indentLevel, 0, INSETS);
     return new GridBag().anchor(GridBagConstraints.WEST).weightx(0).insets(insets);
   }
 
   @NotNull
   public static GridBag getFillLineConstraints(int indentLevel) {
-    Insets insets = new Insets(INSETS, INSETS + INSETS * indentLevel, 0, INSETS);
+    Insets insets = JBUI.insets(INSETS, INSETS + INSETS * indentLevel, 0, INSETS);
     return new GridBag().weightx(1).coverLine().fillCellHorizontally().anchor(GridBagConstraints.WEST).insets(insets);
   }
 

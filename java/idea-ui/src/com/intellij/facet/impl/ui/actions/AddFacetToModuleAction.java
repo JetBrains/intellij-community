@@ -99,7 +99,7 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
   }
 
   public static Collection<AnAction> createAddFrameworkActions(FacetEditorFacade editor, Project project) {
-    SortedMap<String, AnAction> actions = new TreeMap<String, AnAction>();
+    SortedMap<String, AnAction> actions = new TreeMap<>();
     for (FrameworkTypeEx frameworkType : FrameworkTypeEx.EP_NAME.getExtensions()) {
       final AnAction action = new AddFrameworkSupportInProjectStructureAction(frameworkType, frameworkType.createProvider(),
                                                                               ModuleStructureConfigurable.getInstance(project));

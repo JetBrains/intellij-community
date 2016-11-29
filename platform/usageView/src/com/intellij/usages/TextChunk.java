@@ -53,7 +53,8 @@ public class TextChunk {
     return getText();
   }
 
-  public @Nullable UsageType getType() {
+  @Nullable
+  public UsageType getType() {
     return myType;
   }
 

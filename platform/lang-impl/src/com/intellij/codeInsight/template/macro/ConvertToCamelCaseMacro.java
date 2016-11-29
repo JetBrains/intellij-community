@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,16 +43,13 @@ public class ConvertToCamelCaseMacro extends MacroBase {
   @Override
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
     final String text = getTextResult(params, context, true);
-    if (text != null) {
-      return convertString(text);
-    }
-    return null;
+    return text != null ? convertString(text) : null;
   }
 
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
-  @Nullable
+  @NotNull
   @VisibleForTesting
-  public Result convertString(String text) {
+  public Result convertString(@NotNull String text) {
     final String[] strings = splitWords(text);
     if (strings.length > 0) {
       final StringBuilder buf = new StringBuilder();
@@ -65,7 +62,7 @@ public class ConvertToCamelCaseMacro extends MacroBase {
       }
       return new TextResult(buf.toString());
     }
-    return null;
+    return new TextResult("");
   }
 
   @NotNull

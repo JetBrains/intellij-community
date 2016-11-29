@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author cdr
  */
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
-  private final Map<VirtualFile, ProblemFileInfo> myProblems = new THashMap<VirtualFile, ProblemFileInfo>(); // guarded by myProblems
-  private final Collection<VirtualFile> myCheckingQueue = new THashSet<VirtualFile>(10);
+  private final Map<VirtualFile, ProblemFileInfo> myProblems = new THashMap<>(); // guarded by myProblems
+  private final Collection<VirtualFile> myCheckingQueue = new THashSet<>(10);
 
   private final Project myProject;
   private final List<ProblemListener> myProblemListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -100,7 +100,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   private static class ProblemFileInfo {
-    private final Collection<Problem> problems = new THashSet<Problem>();
+    private final Collection<Problem> problems = new THashSet<>();
     private boolean hasSyntaxErrors;
 
     public boolean equals(@Nullable final Object o) {
@@ -224,14 +224,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
     List<VirtualFile> files;
     synchronized (myCheckingQueue) {
-      files = new ArrayList<VirtualFile>(myCheckingQueue);
+      files = new ArrayList<>(myCheckingQueue);
     }
-    long progressLimit = 0;
-    for (VirtualFile file : files) {
-      if (file.isValid()) {
-        progressLimit += file.getLength(); // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
-      }
-    }
+    // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
+    long progressLimit = files.stream().filter(VirtualFile::isValid).mapToLong(VirtualFile::getLength).sum();
     pass.setProgressLimit(progressLimit);
     for (final VirtualFile virtualFile : files) {
       progress.checkCanceled();
@@ -263,7 +259,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return false;
 
-    final AtomicReference<HighlightInfo> error = new AtomicReference<HighlightInfo>();
+    final AtomicReference<HighlightInfo> error = new AtomicReference<>();
     final AtomicBoolean hasErrorElement = new AtomicBoolean();
     try {
       GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(),
@@ -288,7 +284,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     catch (ProcessCanceledException e) {
       if (error.get() != null) {
         ProblemImpl problem = new ProblemImpl(file, error.get(), hasErrorElement.get());
-        reportProblems(file, Collections.<Problem>singleton(problem));
+        reportProblems(file, Collections.singleton(problem));
       }
       return false;
     }
@@ -332,12 +328,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   @Override
   public boolean hasProblemFilesBeneath(@NotNull final Module scope) {
-    return hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      @Override
-      public boolean value(final VirtualFile virtualFile) {
-        return ModuleUtilCore.moduleContainsFile(scope, virtualFile, false);
-      }
-    });
+    return hasProblemFilesBeneath(virtualFile -> ModuleUtilCore.moduleContainsFile(scope, virtualFile, false));
   }
 
   @Override
@@ -448,13 +439,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
                                   final int column,
                                   @NotNull final String[] message) {
     if (virtualFile == null || virtualFile.isDirectory() || virtualFile.getFileType().isBinary()) return null;
-    HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
-      @Override
-      public HighlightInfo compute() {
-        TextRange textRange = getTextRange(virtualFile, line, column);
-        String description = StringUtil.join(message, "\n");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
-      }
+    HighlightInfo info = ApplicationManager.getApplication().runReadAction((Computable<HighlightInfo>)() -> {
+      TextRange textRange = getTextRange(virtualFile, line, column);
+      String description = StringUtil.join(message, "\n");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
     });
     if (info == null) return null;
     return new ProblemImpl(virtualFile, info, false);

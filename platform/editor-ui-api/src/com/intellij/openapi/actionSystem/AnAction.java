@@ -16,13 +16,15 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,17 +65,18 @@ import java.util.List;
  * @see com.intellij.openapi.actionSystem.ActionPlaces
  */
 public abstract class AnAction implements PossiblyDumbAware {
+  private static final Logger LOG = Logger.getInstance(AnAction.class);
+
+  public static final Key<List<AnAction>> ACTIONS_KEY = Key.create("AnAction.shortcutSet");
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
-  @NonNls public static final String ourClientProperty = "AnAction.shortcutSet";
 
   private Presentation myTemplatePresentation;
   private ShortcutSet myShortcutSet;
   private boolean myEnabledInModalContext;
 
-
-  private static final ShortcutSet ourEmptyShortcutSet = new CustomShortcutSet();
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
+  private boolean myIsGlobal; // action is registered in ActionManager
 
 
   /**
@@ -115,7 +118,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param icon Action's icon
    */
   public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon){
-    myShortcutSet = ourEmptyShortcutSet;
+    myShortcutSet = CustomShortcutSet.EMPTY;
     myEnabledInModalContext = false;
     Presentation presentation = getTemplatePresentation();
     presentation.setText(text);
@@ -148,18 +151,19 @@ public abstract class AnAction implements PossiblyDumbAware {
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, modifiers)), component);
   }
 
-  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable final JComponent component, @Nullable Disposable parentDisposable) {
-    myShortcutSet = shortcutSet;
-    if (component != null){
-      @SuppressWarnings("unchecked")
-      List<AnAction> actionList = (List<AnAction>)component.getClientProperty(ourClientProperty);
-      if (actionList == null){
-        actionList = new SmartList<AnAction>();
-        component.putClientProperty(ourClientProperty, actionList);
-      }
-      if (!actionList.contains(this)){
-        actionList.add(this);
-      }
+  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable JComponent component, @Nullable Disposable parentDisposable) {
+    setShortcutSet(shortcutSet);
+    registerCustomShortcutSet(component, parentDisposable);
+  }
+
+  public final void registerCustomShortcutSet(@Nullable JComponent component, @Nullable Disposable parentDisposable) {
+    if (component == null) return;
+    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+    if (actionList == null) {
+      UIUtil.putClientProperty(component, ACTIONS_KEY, actionList = new SmartList<>());
+    }
+    if (!actionList.contains(this)) {
+      actionList.add(this);
     }
 
     if (parentDisposable != null) {
@@ -172,13 +176,10 @@ public abstract class AnAction implements PossiblyDumbAware {
     }
   }
 
-  public final void unregisterCustomShortcutSet(JComponent component){
-    if (component != null){
-      @SuppressWarnings("unchecked")
-      List<AnAction> actionList = (List<AnAction>)component.getClientProperty(ourClientProperty);
-      if (actionList != null){
-        actionList.remove(this);
-      }
+  public final void unregisterCustomShortcutSet(@Nullable JComponent component) {
+    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+    if (actionList != null) {
+      actionList.remove(this);
     }
   }
 
@@ -197,7 +198,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   public final void copyShortcutFrom(@NotNull AnAction sourceAction) {
-    myShortcutSet = sourceAction.myShortcutSet;
+    setShortcutSet(sourceAction.getShortcutSet());
   }
 
 
@@ -273,6 +274,11 @@ public abstract class AnAction implements PossiblyDumbAware {
   public abstract void actionPerformed(AnActionEvent e);
 
   protected void setShortcutSet(ShortcutSet shortcutSet) {
+    if (myIsGlobal && myShortcutSet != shortcutSet) {
+      LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
+               "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
+               "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
+    }
     myShortcutSet = shortcutSet;
   }
 
@@ -313,6 +319,16 @@ public abstract class AnAction implements PossiblyDumbAware {
     return this instanceof DumbAware;
   }
 
+  /**
+   * @return whether this action should be wrapped into a single transaction. PSI/VFS-related actions
+   * that can show progresses or modal dialogs should return true. The default value is false, to prevent
+   * transaction-related assertions from actions in harmless dialogs like "Enter password" shown inside invokeLater.
+   * @see com.intellij.openapi.application.TransactionGuard
+   */
+  public boolean startInTransaction() {
+    return false;
+  }
+
   public interface TransparentUpdate {
   }
 
@@ -324,5 +340,9 @@ public abstract class AnAction implements PossiblyDumbAware {
   @Override
   public String toString() {
     return getTemplatePresentation().toString();
+  }
+
+  void markAsGlobal() {
+    myIsGlobal = true;
   }
 }

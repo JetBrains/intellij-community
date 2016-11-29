@@ -44,7 +44,7 @@ import java.util.*;
 public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private final AnnotationHolderImpl myAnnotationHolder;
 
-  private final Map<ExternalAnnotator, MyData> myAnnotator2DataMap = new HashMap<ExternalAnnotator, MyData>();
+  private final Map<ExternalAnnotator, MyData> myAnnotator2DataMap = new HashMap<>();
 
   private final ExternalToolPassFactory myExternalToolPassFactory;
   private final boolean myMainHighlightingPass;
@@ -60,11 +60,11 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
   }
 
-  public ExternalToolPass(@NotNull ExternalToolPassFactory externalToolPassFactory,
-                          @NotNull PsiFile file,
-                          @NotNull Editor editor,
-                          int startOffset,
-                          int endOffset) {
+  ExternalToolPass(@NotNull ExternalToolPassFactory externalToolPassFactory,
+                   @NotNull PsiFile file,
+                   @NotNull Editor editor,
+                   int startOffset,
+                   int endOffset) {
     super(file.getProject(), editor.getDocument(), "External annotators", file, editor, new TextRange(startOffset, endOffset), false, new DefaultHighlightInfoProcessor());
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
     myExternalToolPassFactory = externalToolPassFactory;
@@ -159,15 +159,12 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         }
         doAnnotate();
 
-        ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-              return;
-            }
-            applyRelevant();
-            doFinish(getHighlights(), modificationStampBefore);
+        ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+          if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+            return;
           }
+          applyRelevant();
+          doFinish(getHighlights(), modificationStampBefore);
         });
       }
     };
@@ -181,7 +178,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   @NotNull
   private List<HighlightInfo> getHighlights() {
-    List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
+    List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
     for (Annotation annotation : myAnnotationHolder) {
       infos.add(HighlightInfo.fromAnnotation(annotation));
     }
@@ -198,16 +195,13 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   }
 
   private void doFinish(@NotNull final List<HighlightInfo> highlights, final long modificationStampBefore) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-          return;
-        }
-        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), highlights, getColorsScheme(), getId());
-        DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-        daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+        return;
       }
+      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), highlights, getColorsScheme(), getId());
+      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+      daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
     }, ModalityState.stateForComponent(getEditor().getComponent()));
   }
 

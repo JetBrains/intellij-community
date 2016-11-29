@@ -39,7 +39,7 @@ public class CustomProtocolHandler {
 
   @NotNull
   public List<String> getOpenArgs(URI uri) {
-    final List<String> args = new ArrayList<String>();
+    final List<String> args = new ArrayList<>();
     final String query = uri.getQuery();
     String file = null;
     String line = null;

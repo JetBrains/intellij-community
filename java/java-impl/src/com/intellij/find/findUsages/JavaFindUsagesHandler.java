@@ -20,9 +20,9 @@ import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -90,6 +90,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   private static boolean askWhetherShouldSearchForParameterInOverridingMethods(@NotNull PsiElement psiElement, @NotNull PsiParameter parameter) {
+    assertInTransaction();
     return Messages.showOkCancelDialog(psiElement.getProject(),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.getName()),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.title"),
@@ -99,14 +100,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   @NotNull
   private static PsiElement[] getParameterElementsToSearch(@NotNull PsiParameter parameter, @NotNull PsiMethod method) {
-    PsiMethod[] overrides = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
+    PsiMethod[] overrides = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
     for (int i = 0; i < overrides.length; i++) {
       final PsiElement navigationElement = overrides[i].getNavigationElement();
       if (navigationElement instanceof PsiMethod) {
         overrides[i] = (PsiMethod)navigationElement;
       }
     }
-    List<PsiElement> elementsToSearch = new ArrayList<PsiElement>(overrides.length + 1);
+    List<PsiElement> elementsToSearch = new ArrayList<>(overrides.length + 1);
     elementsToSearch.add(parameter);
     int idx = method.getParameterList().getParameterIndex(parameter);
     for (PsiMethod override : overrides) {
@@ -153,7 +154,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       if (containingClass != null) {
         String fieldName = field.getName();
         final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(fieldName, VariableKind.FIELD);
-        Set<PsiMethod> accessors = new THashSet<PsiMethod>();
+        Set<PsiMethod> accessors = new THashSet<>();
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
         PsiMethod getter = PropertyUtil.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
                                      ContainerUtil.iterate(containingClass.getMethods()));
@@ -163,20 +164,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         if (setter != null) accessors.add(setter);
         accessors.addAll(PropertyUtil.getAccessors(containingClass, fieldName));
         if (!accessors.isEmpty()) {
-          boolean containsPhysical = ContainerUtil.find(accessors, new Condition<PsiMethod>() {
-            @Override
-            public boolean value(PsiMethod psiMethod) {
-              return psiMethod.isPhysical();
-            }
-          }) != null;
-          final boolean doSearch = !containsPhysical ||
-                                   Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
-                                                               FindBundle.message("find.field.accessors.title"),
-                                                               CommonBundle.getYesButtonText(),
-                                                               CommonBundle.getNoButtonText(), Messages.getQuestionIcon()) ==
-                                   Messages.OK;
+          boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
+          final boolean doSearch = !containsPhysical || askShouldSearchAccessors(fieldName);
           if (doSearch) {
-            final Set<PsiElement> elements = new THashSet<PsiElement>();
+            final Set<PsiElement> elements = new THashSet<>();
             for (PsiMethod accessor : accessors) {
               ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, ACTION_STRING));
             }
@@ -186,6 +177,18 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
     }
     return super.getSecondaryElements();
+  }
+
+  private static boolean askShouldSearchAccessors(String fieldName) {
+    assertInTransaction();
+    return Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
+                                       FindBundle.message("find.field.accessors.title"),
+                                       CommonBundle.getYesButtonText(),
+                                       CommonBundle.getNoButtonText(), Messages.getQuestionIcon()) == Messages.OK;
+  }
+
+  private static void assertInTransaction() {
+    LOG.assertTrue(TransactionGuard.getInstance().getContextTransaction() != null, "Find Usages should be shown in a transaction, see AnAction#startInTransaction");
   }
 
   @Override
@@ -236,7 +239,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       if (superMethods.length == 0) {
         return MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
       }
-      final Collection<PsiReference> result = new ArrayList<PsiReference>();
+      final Collection<PsiReference> result = new ArrayList<>();
       for (PsiMethod superMethod : superMethods) {
         result.addAll(MethodReferencesSearch.search(superMethod, searchScope, true).findAll());
       }

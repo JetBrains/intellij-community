@@ -2,6 +2,7 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,7 +69,17 @@ public class PyEnvTaskRunner {
           System.err.println(String.format("Skipping root %s", root));
         }
       }
-      catch (Throwable e) {
+      catch (final Throwable e) {
+        final Logger logger = Logger.getInstance(PyEnvTaskRunner.class);
+        // Direct output of enteredTheMatrix may break idea or TC since can't distinguish test output from real test result
+        // Exception is thrown anyway, so we escape message before logging
+        if (e.getMessage().contains("enteredTheMatrix")) {
+          // .error( may lead to new exception with out of stacktrace.
+          logger.warn(PyEnvTestCase.escapeTestMessage(e.getMessage()));
+        }
+        else {
+          logger.error(e);
+        }
         throw new RuntimeException(
           PyEnvTestCase.joinStrings(passedRoots, "Tests passed environments: ") + "Test failed on " + getEnvType() + " environment " + root,
           e);

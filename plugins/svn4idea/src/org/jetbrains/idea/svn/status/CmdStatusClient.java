@@ -63,7 +63,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                        @Nullable final Collection changeLists) throws SvnBindException {
     File base = CommandUtil.requireExistingParent(path);
     final Info infoBase = myFactory.createInfoClient().doInfo(base, revision);
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
 
@@ -180,7 +180,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                                                                             final File base,
                                                                             final Info infoBase,
                                                                             final SvnStatusHandler[] svnHandl) {
-    final Map<File, Info> externalsMap = new HashMap<File, Info>();
+    final Map<File, Info> externalsMap = new HashMap<>();
     final String[] changelistName = new String[1];
 
     return new SvnStatusHandler.ExternalDataCallback() {

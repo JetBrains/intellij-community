@@ -56,17 +56,34 @@ public class JavaTestLocator implements SMTestLocator {
       PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), path, null, true, scope);
       if (aClass != null) {
         results = ContainerUtil.newSmartList();
-        results.add(paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName)
-                                      : new PsiLocation<PsiClass>(project, aClass));
+        results.add(createClassNavigatable(paramName, aClass));
+      }
+      else {
+        results = collectMethodNavigatables(path, project, scope, paramName);
       }
     }
     else if (TEST_PROTOCOL.equals(protocol)) {
-      String className = StringUtil.getPackageName(path);
-      if (!StringUtil.isEmpty(className)) {
-        String methodName = StringUtil.getShortName(path);
-        PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
-        if (aClass != null) {
-          results = ContainerUtil.newSmartList();
+      results = collectMethodNavigatables(path, project, scope, paramName);
+    }
+
+    return results;
+  }
+
+  private static List<Location> collectMethodNavigatables(@NotNull String path,
+                                                          @NotNull Project project,
+                                                          @NotNull GlobalSearchScope scope,
+                                                           String paramName) {
+    List<Location> results = Collections.emptyList();
+    String className = StringUtil.getPackageName(path);
+    if (!StringUtil.isEmpty(className)) {
+      String methodName = StringUtil.getShortName(path);
+      PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
+      if (aClass != null) {
+        results = ContainerUtil.newSmartList();
+        if (methodName.trim().equals(aClass.getName())) {
+          results.add(createClassNavigatable(paramName, aClass));
+        }
+        else {
           PsiMethod[] methods = aClass.findMethodsByName(methodName.trim(), true);
           if (methods.length > 0) {
             for (PsiMethod method : methods) {
@@ -77,7 +94,11 @@ public class JavaTestLocator implements SMTestLocator {
         }
       }
     }
-
     return results;
+  }
+
+  private static Location createClassNavigatable(String paramName, @NotNull PsiClass aClass) {
+    return paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName)
+                             : new PsiLocation<>(aClass.getProject(), aClass);
   }
 }

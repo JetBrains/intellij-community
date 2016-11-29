@@ -1,7 +1,7 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
- * Licensed under the Apache License, Version 2.0 (the "License")
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -40,13 +40,13 @@ class WarModelBuilderImpl implements ModelBuilderService {
   private static final String WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
 
   @Override
-  public boolean canBuild(String modelName) {
+  boolean canBuild(String modelName) {
     return WebConfiguration.name.equals(modelName)
   }
 
   @Nullable
   @Override
-  public Object buildAll(String modelName, Project project) {
+  Object buildAll(String modelName, Project project) {
     final WarPlugin warPlugin = project.plugins.findPlugin(WarPlugin)
     if (warPlugin == null) return null
 
@@ -90,11 +90,12 @@ class WarModelBuilderImpl implements ModelBuilderService {
           warModel.classpath = warTask.classpath.files
         }
         catch (Exception ignore) {
-          ErrorMessageBuilder builderError = getErrorMessageBuilder(project, ignore);
-          project.getLogger().error(builderError.build());
+          ErrorMessageBuilder builderError = getErrorMessageBuilder(project, ignore)
+          project.getLogger().error(builderError.build())
         }
 
         warModel.webResources = webResources
+        warModel.archivePath = warTask.archivePath
 
         Manifest manifest = warTask.manifest
         if (manifest != null) {
@@ -111,7 +112,7 @@ class WarModelBuilderImpl implements ModelBuilderService {
 
   @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
     ErrorMessageBuilder.create(
       project, e, "JEE project import errors"
     ).withDescription("Web Facets/Artifacts will not be configured properly")

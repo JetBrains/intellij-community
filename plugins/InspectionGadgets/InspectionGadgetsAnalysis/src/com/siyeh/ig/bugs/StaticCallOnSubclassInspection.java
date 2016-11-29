@@ -61,13 +61,8 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix");
     }
 
     @Override

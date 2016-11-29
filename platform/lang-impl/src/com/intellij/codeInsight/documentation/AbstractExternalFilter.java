@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public abstract class AbstractExternalFilter {
 
   private static final Pattern ourClassDataStartPattern = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
   private static final Pattern ourClassDataEndPattern = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
-  private static final Pattern ourNonClassDataEndPattern = Pattern.compile("<A NAME=", Pattern.CASE_INSENSITIVE);
+  private static final Pattern ourNonClassDataEndPattern = Pattern.compile("<A (NAME|ID)=", Pattern.CASE_INSENSITIVE);
 
   @NonNls
   protected static final Pattern ourAnchorSuffix = Pattern.compile("#(.*)$");
@@ -307,7 +307,7 @@ public abstract class AbstractExternalFilter {
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
     if (anchorMatcher.find()) {
       anchorPresent = true;
-      startSection = Pattern.compile(Pattern.quote("<a name=\"" + anchorMatcher.group(1) + "\""), Pattern.CASE_INSENSITIVE);
+      startSection = Pattern.compile("<a (name|id)=\"" + Pattern.quote(anchorMatcher.group(1)) + "\"", Pattern.CASE_INSENSITIVE);
       endSection = ourNonClassDataEndPattern;
     }
     return new ParseSettings(startSection, endSection, !anchorPresent, anchorPresent);
@@ -440,15 +440,15 @@ public abstract class AbstractExternalFilter {
    * Settings used for parsing of external documentation
    */
   protected static class ParseSettings {
-    @NotNull
     /**
      * Pattern defining the start of target fragment
      */
-    private final Pattern startPattern;
     @NotNull
+    private final Pattern startPattern;
     /**
      * Pattern defining the end of target fragment
      */
+    @NotNull
     private final Pattern endPattern;
     /**
      * If <code>false</code>, and line matching start pattern is not found, whole document will be processed

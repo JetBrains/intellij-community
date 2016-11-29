@@ -50,7 +50,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
     final ClassMember[] classMembers = chooseOriginalMembersImpl(aClass, project);
     if (classMembers == null) return null;
 
-    List<ClassMember> res = new ArrayList<ClassMember>();
+    List<ClassMember> res = new ArrayList<>();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     for (ClassMember classMember : classMembers) {
       if (classMember instanceof PsiMethodMember) {
@@ -92,7 +92,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
     throws IncorrectOperationException {
     final List<? extends GenerationInfo> list = super.generateMemberPrototypes(aClass, members);
 
-    List<PsiGenerationInfo<GrMethod>> grConstructors = new ArrayList<PsiGenerationInfo<GrMethod>>();
+    List<PsiGenerationInfo<GrMethod>> grConstructors = new ArrayList<>();
 
     final Project project = aClass.getProject();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
@@ -110,8 +110,8 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
       final String body = StringUtil.replace(StringUtil.replace(block.getText(), DEF_PSEUDO_ANNO, ""), ";", "");
       final PsiParameterList list1 = constructor.getParameterList();
 
-      List<String> parametersNames = new ArrayList<String>();
-      List<String> parametersTypes = new ArrayList<String>();
+      List<String> parametersNames = new ArrayList<>();
+      List<String> parametersTypes = new ArrayList<>();
       for (PsiParameter parameter : list1.getParameters()) {
         final String fullName = parameter.getName();
         parametersNames.add(StringUtil.trimStart(fullName, DEF_PSEUDO_ANNO));
@@ -128,7 +128,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
       }
       codeStyleManager.shortenClassReferences(grConstructor);
 
-      grConstructors.add(new GroovyGenerationInfo<GrMethod>(grConstructor));
+      grConstructors.add(new GroovyGenerationInfo<>(grConstructor));
     }
 
     return grConstructors;

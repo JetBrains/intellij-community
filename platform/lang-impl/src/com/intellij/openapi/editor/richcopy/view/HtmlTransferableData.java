@@ -51,7 +51,7 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
   private boolean myItalic;
   private int     myCurrentColumn;
 
-  private final TIntObjectHashMap<String> myColors = new TIntObjectHashMap<String>();
+  private final TIntObjectHashMap<String> myColors = new TIntObjectHashMap<>();
 
   public HtmlTransferableData(@NotNull SyntaxInfo syntaxInfo, int tabSize) {
     super(syntaxInfo, FLAVOR);

@@ -65,7 +65,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
                          @Nullable String name) {
     super(project, element, ViewSettings.DEFAULT);
     myBuilder = builder;
-    myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
+    myHighlightedRegions = new ArrayList<>(2);
     if (element != null && name == null){
       final PsiPackage aPackage = element.getPackage();
       myPresentationName = aPackage.getName();
@@ -199,7 +199,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> children = new ArrayList<>();
     final Project project = getProject();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final PsiPackage psiPackage = getValue().getPackage();
@@ -270,7 +270,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
    *         and which are located under specified <code>psiDirctory</code>.
    */
   public Iterator<PsiFile> getFiles(PackageElement packageElement) {
-    ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>();
+    ArrayList<PsiFile> psiFileList = new ArrayList<>();
     GlobalSearchScope scope = packageElement.getModule() != null ? GlobalSearchScope.moduleScope(packageElement.getModule()) :
                               GlobalSearchScope.projectScope(myProject);
     final PsiDirectory[] directories = packageElement.getPackage().getDirectories(scope);

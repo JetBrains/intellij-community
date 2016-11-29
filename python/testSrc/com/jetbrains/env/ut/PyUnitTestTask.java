@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -88,37 +87,32 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   private StringBuilder myOutput;
   private boolean mySetUp = false;
 
-  public PyUnitTestTask() {
-  }
 
-  public PyUnitTestTask(String workingFolder, String scriptName, String scriptParameters) {
-    setWorkingFolder(getTestDataPath() + workingFolder);
+  protected PyUnitTestTask(@Nullable final String relativeTestDataPath, String scriptName, String scriptParameters) {
+    super(relativeTestDataPath);
     setScriptName(scriptName);
     setScriptParameters(scriptParameters);
-    deletePycFiles(new File(getTestDataPath() + workingFolder));
   }
 
   private static void deletePycFiles(@NotNull final File directory) {
-    FileUtil.processFilesRecursively(directory, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
-            FileUtilRt.extensionEquals(file.getName(), "pyc") ||
-            FileUtilRt.extensionEquals(file.getName(), "pyo") ||
-            file.getName().endsWith("$py.class")) {
-          FileUtil.delete(file);
-        }
-        return true;
+    FileUtil.processFilesRecursively(directory, file -> {
+      if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
+          FileUtilRt.extensionEquals(file.getName(), "pyc") ||
+          FileUtilRt.extensionEquals(file.getName(), "pyo") ||
+          file.getName().endsWith("$py.class")) {
+        FileUtil.delete(file);
       }
+      return true;
     });
   }
 
   @Override
   public void setUp(final String testName) throws Exception {
     if (myFixture == null) {
-      PyUnitTestTask.super.setUp(testName);
+      super.setUp(testName);
       mySetUp = true;
     }
+    deletePycFiles(new File(myFixture.getTempDirPath()));
   }
 
   @NotNull
@@ -172,17 +166,17 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
 
     config.setSdkHome(sdkHome);
-    config.setScriptName(getScriptPath());
-    config.setWorkingDirectory(getWorkingFolder());
+    config.setScriptName(getScriptName());
+    config.setWorkingDirectory(myFixture.getTempDirPath());
 
     PythonSdkFlavor sdk = PythonSdkFlavor.getFlavor(sdkHome);
 
 
     if (sdk instanceof JythonSdkFlavor) {
-      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.<String>newArrayList(getWorkingFolder())));
+      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.<String>newArrayList(myFixture.getTempDirPath())));
     }
     else {
-      PythonEnvUtil.addToPythonPath(config.getEnvs(), getWorkingFolder());
+      PythonEnvUtil.addToPythonPath(config.getEnvs(), myFixture.getTempDirPath());
     }
 
 
@@ -322,8 +316,8 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     assert console instanceof ConsoleViewImpl : "Console has no editor!";
     final ConsoleViewImpl consoleView = (ConsoleViewImpl)console;
     final Editor editor = consoleView.getEditor();
-    final List<String> resultStrings = new ArrayList<String>();
-    final List<Pair<Integer, Integer>> resultRanges = new ArrayList<Pair<Integer, Integer>>();
+    final List<String> resultStrings = new ArrayList<>();
+    final List<Pair<Integer, Integer>> resultRanges = new ArrayList<>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -28,6 +30,8 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author vlan
@@ -41,25 +45,34 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
-        myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-        myFixture.checkHighlighting(true, false, false);
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
+      myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+      myFixture.checkHighlighting(true, false, false);
     });
   }
 
   private void doMultiFileTest(@NotNull final String filename) {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        final String testName = getTestName(false);
-        myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
+    doMultiFileTest(filename, Collections.emptyList());
+  }
+
+  private void doMultiFileTest(@NotNull final String filename, @NotNull List<String> sourceRoots) {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final String testName = getTestName(false);
+      myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
+      final Module module = myFixture.getModule();
+      for (String root : sourceRoots) {
+        PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
+      }
+      try {
         myFixture.configureFromTempProjectFile(filename);
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
         myFixture.checkHighlighting(true, false, false);
+      }
+      finally {
+        for (String root : sourceRoots) {
+          PsiTestUtil.removeSourceRoot(module, myFixture.findFileInTempDir(root));
+        }
       }
     });
   }
@@ -79,6 +92,16 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
 
   // PY-10208
   public void testMetaclassMethods() {
+    doTest();
+  }
+
+  // PY-19702
+  public void testMetaclassAttribute() {
+    doTest();
+  }
+
+  // PY-19702
+  public void testNonexistentMetaclassAttribute() {
     doTest();
   }
 
@@ -136,5 +159,40 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   // PY-17841
   public void testNoMostDerivedMetaClass() {
     doTest();
+  }
+
+  // PY-19028
+  public void testDecodeBytesAfterSlicing() {
+    doTest();
+  }
+
+  // PY-13734
+  public void testDunderClass() {
+    doTest();
+  }
+
+  // PY-19085
+  public void testReAndRegexFullmatch() {
+    doTest();
+  }
+
+  // PY-19775
+  public void testAsyncInitMethod() {
+    doTest();
+  }
+
+  // PY-19691
+  public void testNestedPackageNamedAsSourceRoot() {
+    doMultiFileTest("a.py", Collections.singletonList("lib1"));
+  }
+  
+  // PY-18972
+  public void testReferencesInFStringLiterals() {
+    doTest();
+  }
+
+  // PY-11208
+  public void testMockPatchObject() {
+    doMultiFileTest(getTestName(true) + ".py");
   }
 }

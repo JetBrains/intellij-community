@@ -80,7 +80,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement ifKeywordElement = descriptor.getPsiElement();
       final GrIfStatement statement =

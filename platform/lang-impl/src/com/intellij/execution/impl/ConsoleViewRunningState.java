@@ -99,7 +99,7 @@ public class ConsoleViewRunningState extends ConsoleState {
   }
 
   @Override
-  public void sendUserInput(final String input) throws IOException {
+  public void sendUserInput(@NotNull final String input) throws IOException {
     if (myUserInputWriter == null) {
       throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
     }
@@ -107,8 +107,9 @@ public class ConsoleViewRunningState extends ConsoleState {
     myUserInputWriter.flush();
   }
 
+  @NotNull
   @Override
-  public ConsoleState attachTo(final ConsoleViewImpl console, final ProcessHandler processHandler) {
+  public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }
 

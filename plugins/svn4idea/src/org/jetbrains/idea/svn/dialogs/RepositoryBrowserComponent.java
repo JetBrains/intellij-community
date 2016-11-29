@@ -133,7 +133,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
 
     final Enumeration<TreePath> expanded = myRepositoryTree.getExpandedDescendants(new TreePath(pathToNode));
 
-    final List<TreeNode> result = new ArrayList<TreeNode>();
+    final List<TreeNode> result = new ArrayList<>();
     if (expanded != null) {
       while (expanded.hasMoreElements()) {
         final TreePath treePath = expanded.nextElement();

@@ -68,26 +68,31 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   }
 
   @NotNull
+  @Override
   public ExternalSystemTaskId getExternalSystemTaskId() {
     return myExternalSystemTaskId;
   }
 
   @Nullable
+  @Override
   public String getIdeProjectPath() {
     return mySettings != null ? mySettings.getIdeProjectPath() : null;
   }
 
   @NotNull
+  @Override
   public String getProjectPath() {
     return myProjectPath;
   }
 
   @Nullable
+  @Override
   public GradleExecutionSettings getSettings() {
     return mySettings;
   }
 
   @NotNull
+  @Override
   public ProjectConnection getConnection() {
     return myConnection;
   }
@@ -97,6 +102,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   }
 
   @Nullable
+  @Override
   public CancellationTokenSource getCancellationTokenSource() {
     return myCancellationTokenSource;
   }
@@ -106,42 +112,56 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   }
 
   @NotNull
+  @Override
   public ExternalSystemTaskNotificationListener getListener() {
     return myListener;
   }
 
+  @Override
   public boolean isPreviewMode() {
     return myIsPreviewMode;
   }
 
+  @Override
+  public boolean isResolveModulePerSourceSet() {
+    return mySettings == null || mySettings.isResolveModulePerSourceSet();
+  }
+
   @NotNull
+  @Override
   public ProjectImportAction.AllModels getModels() {
     return myModels;
   }
 
+  @Override
   public void setModels(@NotNull ProjectImportAction.AllModels models) {
     myModels = models;
   }
 
   @Nullable
+  @Override
   public <T> T getExtraProject(Class<T> modelClazz) {
     return myModels.getExtraProject(null, modelClazz);
   }
 
   @Nullable
+  @Override
   public <T> T getExtraProject(@Nullable IdeaModule module, Class<T> modelClazz) {
     return myModels.getExtraProject(module, modelClazz);
   }
 
   @NotNull
+  @Override
   public Collection<String> findModulesWithModel(@NotNull Class modelClazz) {
     return myModels.findModulesWithModel(modelClazz);
   }
 
+  @Override
   public boolean hasModulesWithModel(@NotNull Class modelClazz) {
     return myModels.hasModulesWithModel(modelClazz);
   }
 
+  @Override
   public void checkCancelled() {
     if (myCancellationTokenSource != null && myCancellationTokenSource.token().isCancellationRequested()) {
       throw new ProcessCanceledException();

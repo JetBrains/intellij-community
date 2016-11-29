@@ -74,7 +74,10 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public boolean isCheckIncomingOutgoing() {
-    return myState.CHECK_INCOMING_OUTGOING != null && myState.CHECK_INCOMING_OUTGOING.booleanValue();
+    if (myState.CHECK_INCOMING_OUTGOING == null) {
+      return myState.myCheckIncoming || myState.myCheckOutgoing;
+    }
+    return myState.CHECK_INCOMING_OUTGOING.booleanValue();
   }
 
   public boolean isWhitespacesIgnoredInAnnotations() {

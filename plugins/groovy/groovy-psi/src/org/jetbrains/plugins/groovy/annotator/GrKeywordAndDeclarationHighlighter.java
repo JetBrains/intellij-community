@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    final List<HighlightInfo> result = new ArrayList<>();
     myFile.accept(new PsiRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -99,8 +99,8 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
     if (parent instanceof GrArgumentLabel) return false; //don't highlight: print (void:'foo')
 
     if (PsiTreeUtil.getParentOfType(element, GrCodeReferenceElement.class) != null) {
-      if (token == GroovyTokenTypes.kDEF || token == GroovyTokenTypes.kIN || token == GroovyTokenTypes.kAS) {
-        return false; //It is allowed to name packages 'as', 'in' or 'def'
+      if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(token)) {
+        return false; //It is allowed to name packages 'as', 'in', 'def' or 'trait'
       }
     }
     else if (token == GroovyTokenTypes.kDEF && element.getParent() instanceof GrAnnotationNameValuePair) {

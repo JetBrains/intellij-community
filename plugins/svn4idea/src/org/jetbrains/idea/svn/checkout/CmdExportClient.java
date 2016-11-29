@@ -31,7 +31,7 @@ public class CmdExportClient extends BaseSvnClient implements ExportClient {
                      boolean force,
                      boolean ignoreExternals,
                      @Nullable ProgressTracker handler) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, from);
     CommandUtil.put(parameters, to);

@@ -275,7 +275,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
     final Facet[] facets = getSortedFacets();
 
-    Map<Facet, List<FacetState>> states = new HashMap<Facet, List<FacetState>>();
+    Map<Facet, List<FacetState>> states = new HashMap<>();
     states.put(null, managerState.getFacets());
 
     for (Facet facet : facets) {
@@ -320,9 +320,9 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   private void commit(final ModifiableFacetModel model, final boolean fireEvents) {
     LOG.assertTrue(!myInsideCommit, "Recursive commit");
 
-    Set<Facet> toRemove = new HashSet<Facet>(Arrays.asList(getAllFacets()));
-    List<Facet> toAdd = new ArrayList<Facet>();
-    List<FacetRenameInfo> toRename = new ArrayList<FacetRenameInfo>();
+    Set<Facet> toRemove = new HashSet<>(Arrays.asList(getAllFacets()));
+    List<Facet> toAdd = new ArrayList<>();
+    List<FacetRenameInfo> toRename = new ArrayList<>();
 
     final FacetManagerListener publisher = myMessageBus.syncPublisher(FACETS_TOPIC);
 
@@ -336,7 +336,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         }
       }
 
-      List<Facet> newFacets = new ArrayList<Facet>();
+      List<Facet> newFacets = new ArrayList<>();
       for (Facet facet : getAllFacets()) {
         if (!toRemove.contains(facet)) {
           newFacets.add(facet);

@@ -42,34 +42,28 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
 
     final AtomicBoolean isFinished = new AtomicBoolean(false);
 
-    Thread t1 = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          for (int i = 0; i < 3; i++) {
-            System.out.println("INDEXING #" + i);
-            indices.updateOrRepair(index, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-          }
-        }
-        catch (MavenProcessCanceledException e) {
-          throw new RuntimeException(e);
-        }
-        finally {
-          isFinished.set(true);
+    Thread t1 = new Thread(() -> {
+      try {
+        for (int i = 0; i < 3; i++) {
+          System.out.println("INDEXING #" + i);
+          indices.updateOrRepair(index, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
         }
       }
-    },"maven index 1");
+      catch (MavenProcessCanceledException e) {
+        throw new RuntimeException(e);
+      }
+      finally {
+        isFinished.set(true);
+      }
+    }, "maven index 1");
 
-    Thread t2 = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        Random random = new Random();
-        while (!isFinished.get()) {
-          int i = random.nextInt(100);
-          System.out.println("Adding artifact #" + i);
-          //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
-          fail();
-        }
+    Thread t2 = new Thread(() -> {
+      Random random = new Random();
+      while (!isFinished.get()) {
+        int i = random.nextInt(100);
+        System.out.println("Adding artifact #" + i);
+        //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
+        fail();
       }
     }, "maven index 2");
 
@@ -137,21 +131,18 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
   }
 
   private static Thread createThread(final MavenIndex index, final AtomicInteger finishedCount) {
-    Thread t2 = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          for (int i = 0; i < 1000; i++) {
-            System.out.println("Adding artifact #" + i);
-            //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
-            fail();
-          }
-        }
-        finally {
-          finishedCount.incrementAndGet();
+    Thread t2 = new Thread(() -> {
+      try {
+        for (int i = 0; i < 1000; i++) {
+          System.out.println("Adding artifact #" + i);
+          //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
+          fail();
         }
       }
-    },"maven test");
+      finally {
+        finishedCount.incrementAndGet();
+      }
+    }, "maven test");
     return t2;
   }
 

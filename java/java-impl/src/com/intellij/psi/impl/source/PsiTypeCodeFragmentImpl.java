@@ -63,19 +63,23 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
   @NotNull
   public PsiType getType() throws TypeSyntaxException, NoTypeException {
     class MyTypeSyntaxException extends RuntimeException {
-      MyTypeSyntaxException(final String message) { super(message); }
+      final PsiErrorElement error;
+
+      MyTypeSyntaxException(final PsiErrorElement e) { super(e.getErrorDescription());
+        error = e;
+      }
     }
 
     try {
       accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitErrorElement(PsiErrorElement element) {
-          throw new MyTypeSyntaxException(element.getErrorDescription());
+          throw new MyTypeSyntaxException(element);
         }
       });
     }
     catch (MyTypeSyntaxException e) {
-      throw new TypeSyntaxException(e.getMessage());
+      throw new TypeSyntaxException(e.getMessage(), e.error.getTextRange().getStartOffset());
     }
 
     final PsiTypeElement typeElement = PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);

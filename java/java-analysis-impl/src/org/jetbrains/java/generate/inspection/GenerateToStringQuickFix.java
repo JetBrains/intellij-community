@@ -58,4 +58,9 @@ public class GenerateToStringQuickFix implements LocalQuickFix {
     GenerateToStringActionHandler handler = ServiceManager.getService(GenerateToStringActionHandler.class);
     handler.executeActionQuickFix(project, clazz);
   }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }

@@ -16,7 +16,6 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
@@ -32,13 +31,12 @@ public class DarculaScrollBarUI extends ButtonlessScrollBarUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    if (Registry.is("ide.scroll.new.layout")) {
-      try {
-        if (!SystemInfo.isMac) return (ComponentUI)newInstance(Class.forName("com.intellij.ui.components.DefaultScrollBarUI"));
-        if (Registry.is("mac.scroll.new.ui")) return (ComponentUI)newInstance(Class.forName("com.intellij.ui.components.MacScrollBarUI"));
-      }
-      catch (Exception ignore) {
-      }
+    try {
+      return (ComponentUI)newInstance(Class.forName(SystemInfo.isMac
+                                                    ? "com.intellij.ui.components.MacScrollBarUI"
+                                                    : "com.intellij.ui.components.DefaultScrollBarUI"));
+    }
+    catch (Exception ignore) {
     }
     return new DarculaScrollBarUI();
   }

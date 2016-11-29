@@ -71,7 +71,7 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
   }
 
   private static List<Pair<LibraryKind, LibraryProperties>> computeKinds(List<VirtualFile> files) {
-    final SmartList<Pair<LibraryKind, LibraryProperties>> result = new SmartList<Pair<LibraryKind, LibraryProperties>>();
+    final SmartList<Pair<LibraryKind, LibraryProperties>> result = new SmartList<>();
     final LibraryType<?>[] libraryTypes = LibraryType.EP_NAME.getExtensions();
     final LibraryPresentationProvider[] presentationProviders = LibraryPresentationProvider.EP_NAME.getExtensions();
     for (LibraryPresentationProvider provider : ContainerUtil.concat(libraryTypes, presentationProviders)) {

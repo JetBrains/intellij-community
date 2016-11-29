@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaSliceUsage extends SliceUsage {
   private final PsiSubstitutor mySubstitutor;
-  protected final int indexNesting; // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
-  @NotNull protected final String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
+  final int indexNesting; // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
+  @NotNull final String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
 
 
-  public JavaSliceUsage(@NotNull PsiElement element,
-                    @NotNull SliceUsage parent,
-                    @NotNull PsiSubstitutor substitutor,
-                    int indexNesting,
-                    @NotNull String syntheticField) {
+  JavaSliceUsage(@NotNull PsiElement element,
+                 @NotNull SliceUsage parent,
+                 @NotNull PsiSubstitutor substitutor,
+                 int indexNesting,
+                 @NotNull String syntheticField) {
     super(element, parent);
     mySubstitutor = substitutor;
     this.syntheticField = syntheticField;
@@ -52,7 +52,7 @@ public class JavaSliceUsage extends SliceUsage {
 
   @Override
   protected void processUsagesFlownFromThe(PsiElement element, Processor<SliceUsage> uniqueProcessor) {
-    SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, this);
+    SliceForwardUtil.processUsagesFlownFromThe(element, this, uniqueProcessor);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class EmptyXmlTag implements XmlTag {
   @NotNull
   @Override
   public XmlAttribute[] getAttributes() {
-    return new XmlAttribute[0];
+    return XmlAttribute.EMPTY_ARRAY;
   }
 
   @Override
@@ -125,19 +125,19 @@ public class EmptyXmlTag implements XmlTag {
   @NotNull
   @Override
   public XmlTag[] getSubTags() {
-    return new XmlTag[0];
+    return XmlTag.EMPTY;
   }
 
   @NotNull
   @Override
   public XmlTag[] findSubTags(@NonNls String qname) {
-    return new XmlTag[0];
+    return XmlTag.EMPTY;
   }
 
   @NotNull
   @Override
   public XmlTag[] findSubTags(@NonNls String localName, @NonNls String namespace) {
-    return new XmlTag[0];
+    return XmlTag.EMPTY;
   }
 
   @Override
@@ -185,13 +185,13 @@ public class EmptyXmlTag implements XmlTag {
       @NotNull
       @Override
       public XmlTagChild[] getChildren() {
-        return new XmlTagChild[0];
+        return XmlTagChild.EMPTY_ARRAY;
       }
 
       @NotNull
       @Override
       public XmlText[] getTextElements() {
-        return new XmlText[0];
+        return XmlText.EMPTY_ARRAY;
       }
 
       @NotNull
@@ -287,7 +287,7 @@ public class EmptyXmlTag implements XmlTag {
   @NotNull
   @Override
   public PsiElement[] getChildren() {
-    return new PsiElement[0];
+    return PsiElement.EMPTY_ARRAY;
   }
 
   @Override
@@ -475,7 +475,7 @@ public class EmptyXmlTag implements XmlTag {
   @NotNull
   @Override
   public PsiReference[] getReferences() {
-    return new PsiReference[0];
+    return PsiReference.EMPTY_ARRAY;
   }
 
   @Override

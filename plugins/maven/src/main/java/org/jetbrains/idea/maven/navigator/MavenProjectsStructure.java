@@ -78,12 +78,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final Collection<String> BASIC_PHASES = MavenConstants.BASIC_PHASES;
   private static final Collection<String> PHASES = MavenConstants.PHASES;
 
-  private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = new Comparator<MavenSimpleNode>() {
-    @Override
-    public int compare(MavenSimpleNode o1, MavenSimpleNode o2) {
-      return StringUtil.compare(o1.getName(), o2.getName(), true);
-    }
-  };
+  private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true);
 
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
@@ -94,7 +89,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private final SimpleTreeBuilder myTreeBuilder;
   private final RootNode myRoot = new RootNode();
 
-  private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new THashMap<MavenProject, ProjectNode>();
+  private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new THashMap<>();
 
   public MavenProjectsStructure(Project project,
                                 MavenProjectsManager projectsManager,
@@ -159,7 +154,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public void update() {
     List<MavenProject> projects = myProjectsManager.getProjects();
-    Set<MavenProject> deleted = new HashSet<MavenProject>(myProjectToNodeMapping.keySet());
+    Set<MavenProject> deleted = new HashSet<>(myProjectToNodeMapping.keySet());
     deleted.removeAll(projects);
     updateProjects(projects, deleted);
   }
@@ -308,7 +303,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public static <T extends MavenSimpleNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
-    final List<T> filtered = new ArrayList<T>();
+    final List<T> filtered = new ArrayList<>();
     for (SimpleNode node : getSelectedNodes(tree)) {
       if ((nodeClass != null) && (!nodeClass.isInstance(node))) {
         filtered.clear();
@@ -321,7 +316,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   private static List<SimpleNode> getSelectedNodes(SimpleTree tree) {
-    List<SimpleNode> nodes = new ArrayList<SimpleNode>();
+    List<SimpleNode> nodes = new ArrayList<>();
     TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths != null) {
       for (TreePath treePath : treePaths) {
@@ -400,7 +395,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       List<? extends MavenSimpleNode> children = doGetChildren();
       if (children.isEmpty()) return NO_CHILDREN;
 
-      List<MavenSimpleNode> result = new ArrayList<MavenSimpleNode>();
+      List<MavenSimpleNode> result = new ArrayList<>();
       for (MavenSimpleNode each : children) {
         if (each.isVisible()) result.add(each);
       }
@@ -540,7 +535,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public abstract class ProjectsGroupNode extends GroupNode {
-    private final List<ProjectNode> myProjectNodes = new ArrayList<ProjectNode>();
+    private final List<ProjectNode> myProjectNodes = new ArrayList<>();
 
     public ProjectsGroupNode(MavenSimpleNode parent) {
       super(parent);
@@ -601,7 +596,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class ProfilesNode extends GroupNode {
-    private List<ProfileNode> myProfileNodes = new ArrayList<ProfileNode>();
+    private List<ProfileNode> myProfileNodes = new ArrayList<>();
 
     public ProfilesNode(MavenSimpleNode parent) {
       super(parent);
@@ -621,7 +616,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updateProfiles() {
       Collection<Pair<String, MavenProfileKind>> profiles = myProjectsManager.getProfilesWithStates();
 
-      List<ProfileNode> newNodes = new ArrayList<ProfileNode>(profiles.size());
+      List<ProfileNode> newNodes = new ArrayList<>(profiles.size());
       for (Pair<String, MavenProfileKind> each : profiles) {
         ProfileNode node = findOrCreateNodeFor(each.first);
         node.setState(each.second);
@@ -731,13 +726,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
             });
             JBPopupFactory.getInstance().createListPopupBuilder(list)
               .setTitle("Choose file to open ")
-              .setItemChoosenCallback(new Runnable() {
-                public void run() {
-                  final Object value = list.getSelectedValue();
-                  if (value instanceof MavenDomProfile) {
-                    final Navigatable navigatable = getNavigatable((MavenDomProfile)value);
-                    if (navigatable != null) navigatable.navigate(requestFocus);
-                  }
+              .setItemChoosenCallback(() -> {
+                final Object value = list.getSelectedValue();
+                if (value instanceof MavenDomProfile) {
+                  final Navigatable navigatable = getNavigatable((MavenDomProfile)value);
+                  if (navigatable != null) navigatable.navigate(requestFocus);
                 }
               }).createPopup().showInFocusCenter();
           }
@@ -955,7 +948,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
       super.setNameAndTooltip(name, tooltip, attributes);
       if (myProjectsNavigator.getShowVersions()) {
-        addColoredFragment(":" + myMavenProject.getMavenId().getVersion(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+        addColoredFragment(":" + myMavenProject.getMavenId().getVersion(),
+                           new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
       }
     }
 
@@ -980,7 +974,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public abstract class GoalsGroupNode extends GroupNode {
-    protected final List<GoalNode> myGoalNodes = new ArrayList<GoalNode>();
+    protected final List<GoalNode> myGoalNodes = new ArrayList<>();
 
     public GoalsGroupNode(MavenSimpleNode parent) {
       super(parent);
@@ -1110,7 +1104,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class PluginsNode extends GroupNode {
-    private final List<PluginNode> myPluginNodes = new ArrayList<PluginNode>();
+    private final List<PluginNode> myPluginNodes = new ArrayList<>();
 
     public PluginsNode(ProjectNode parent) {
       super(parent);
@@ -1257,7 +1251,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public abstract class BaseDependenciesNode extends GroupNode {
     protected final MavenProject myMavenProject;
-    private List<DependencyNode> myChildren = new ArrayList<DependencyNode>();
+    private List<DependencyNode> myChildren = new ArrayList<>();
 
     protected BaseDependenciesNode(MavenSimpleNode parent, MavenProject mavenProject) {
       super(parent);
@@ -1278,7 +1272,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       int validChildCount = 0;
 
       for (MavenArtifactNode each : children) {
-        if (each.getState() != MavenArtifactState.ADDED && each.getState() != MavenArtifactState.CONFLICT) continue;
+        if (each.getState() != MavenArtifactState.ADDED &&
+            each.getState() != MavenArtifactState.CONFLICT &&
+            each.getState() != MavenArtifactState.DUPLICATE) {
+          continue;
+        }
 
         if (newNodes == null) {
           if (validChildCount < myChildren.size()) {
@@ -1295,7 +1293,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
             }
           }
 
-          newNodes = new ArrayList<DependencyNode>(children.size());
+          newNodes = new ArrayList<>(children.size());
           newNodes.addAll(myChildren.subList(0, validChildCount));
         }
 
@@ -1314,7 +1312,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
         assert validChildCount < myChildren.size();
 
-        newNodes = new ArrayList<DependencyNode>(myChildren.subList(0, validChildCount));
+        newNodes = new ArrayList<>(myChildren.subList(0, validChildCount));
       }
 
       myChildren = newNodes;
@@ -1375,7 +1373,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private String getToolTip() {
       final StringBuilder myToolTip = new StringBuilder("");
-      String scope = myArtifact.getScope();
+      String scope = myArtifactNode.getOriginalScope();
 
       if (StringUtil.isNotEmpty(scope) && !MavenConstants.SCOPE_COMPILE.equals(scope)) {
         myToolTip.append(scope).append(" ");
@@ -1386,12 +1384,26 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
           myToolTip.append(" with ").append(myArtifactNode.getRelatedArtifact().getVersion());
         }
       }
-      return myToolTip.toString();
+      if (myArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
+        myToolTip.append("omitted for duplicate");
+      }
+      return myToolTip.toString().trim();
     }
 
     @Override
     protected void doUpdate() {
       setNameAndTooltip(getName(), null, getToolTip());
+    }
+
+    @Override
+    protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
+      final SimpleTextAttributes mergedAttributes;
+      if (myArtifactNode.getState() == MavenArtifactState.CONFLICT || myArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
+        mergedAttributes = SimpleTextAttributes.merge(attributes, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      } else {
+        mergedAttributes = attributes;
+      }
+      super.setNameAndTooltip(name, tooltip, mergedAttributes);
     }
 
     private void updateDependency() {
@@ -1422,7 +1434,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public class RunConfigurationsNode extends GroupNode {
 
-    private final List<RunConfigurationNode> myChildren = new ArrayList<RunConfigurationNode>();
+    private final List<RunConfigurationNode> myChildren = new ArrayList<>();
 
     public RunConfigurationsNode(ProjectNode parent) {
       super(parent);
@@ -1442,7 +1454,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updateRunConfigurations(MavenProject mavenProject) {
       boolean childChanged = false;
 
-      Set<RunnerAndConfigurationSettings> settings = new THashSet<RunnerAndConfigurationSettings>(
+      Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
         RunManager.getInstance(myProject).getConfigurationSettingsList(MavenRunConfigurationType.getInstance()));
 
       for (Iterator<RunConfigurationNode> itr = myChildren.iterator(); itr.hasNext(); ) {

@@ -19,13 +19,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
 
-public class PushDownData {
+import java.util.List;
+
+public class PushDownData<MemberInfo extends MemberInfoBase<Member>,
+                          Member extends PsiElement
+  > {
   private PsiElement mySourceClass;
-  private final MemberInfoBase<? extends PsiElement>[] myMembersToMove;
+  private final List<MemberInfo> myMembersToMove;
   private final DocCommentPolicy myCommentPolicy;
 
-  public PushDownData(PsiElement sourceClass, 
-                      MemberInfoBase<? extends PsiElement>[] membersToMove, 
+  public PushDownData(PsiElement sourceClass,
+                      List<MemberInfo> membersToMove,
                       DocCommentPolicy commentPolicy) {
     mySourceClass = sourceClass;
     myMembersToMove = membersToMove;
@@ -36,7 +40,7 @@ public class PushDownData {
     return mySourceClass;
   }
 
-  public MemberInfoBase<? extends PsiElement>[] getMembersToMove() {
+  public List<MemberInfo> getMembersToMove() {
     return myMembersToMove;
   }
 

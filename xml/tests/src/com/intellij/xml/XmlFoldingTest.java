@@ -15,7 +15,6 @@
  */
 package com.intellij.xml;
 
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -32,7 +31,11 @@ public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testStyleAttributeFolding() throws Throwable { doTest(); }
   public void testStyleAttributeFolding2() throws Throwable { doTest(".xml"); }
 
+  public void testEntities() throws Throwable { doTest(); }
 
+  public void testDataUri() throws Throwable { doTest(); }
+
+  public void testCustomRegions() throws Throwable { doTest(); }
 
   private void doTest() throws Throwable {
     doTest(".html");

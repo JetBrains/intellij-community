@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 
 import java.util.*;
 
@@ -60,8 +59,8 @@ public abstract class DslPointcut<T,V> {
         final List<V> vs2 = next.matches(src, context);
         if (vs2 == null) return null;
 
-        final List<V> result = new ArrayList<V>(vs1);
-        result.retainAll(new HashSet<V>(vs2));
+        final List<V> result = new ArrayList<>(vs1);
+        result.retainAll(new HashSet<>(vs2));
         return result;
       }
 
@@ -82,14 +81,14 @@ public abstract class DslPointcut<T,V> {
 
         if (vs1 == null && vs2 == null) return null;
 
-        final Set<V> result = new LinkedHashSet<V>();
+        final Set<V> result = new LinkedHashSet<>();
         if (vs1 != null) {
           result.addAll(vs1);
         }
         if (vs2 != null) {
           result.addAll(vs2);
         }
-        return new ArrayList<V>(result);
+        return new ArrayList<>(result);
       }
 
       @Override
@@ -119,9 +118,9 @@ public abstract class DslPointcut<T,V> {
 
       @Override
       List<GdslType> matches(GdslType src, ProcessingContext context) {
-        final PsiFile placeFile = context.get(GdslUtil.INITIAL_CONTEXT).getPlaceFile();
+        final PsiFile placeFile = context.get(GdslUtil.INITIAL_CONTEXT).justGetPlaceFile();
         if (ClassContextFilter.isSubtype(src.psiType, placeFile, (String)arg)) {
-          return Arrays.asList(src);
+          return Collections.singletonList(src);
         }
         return null;
       }
@@ -147,7 +146,7 @@ public abstract class DslPointcut<T,V> {
 
       @Override
       List<GdslType> matches(GroovyClassDescriptor src, ProcessingContext context) {
-        final GdslType currentType = new GdslType(ClassUtil.findPsiType(src, context));
+        final GdslType currentType = new GdslType(src.getPsiType());
         if (inner.matches(currentType, context) != null) {
           return Arrays.asList(currentType);
         }
@@ -165,7 +164,7 @@ public abstract class DslPointcut<T,V> {
     return new DslPointcut<GroovyClassDescriptor, GdslType>() {
       @Override
       List<GdslType> matches(GroovyClassDescriptor src, ProcessingContext context) {
-        List<GdslType> result = new ArrayList<GdslType>();
+        List<GdslType> result = new ArrayList<>();
         PsiElement place = src.getPlace();
         while (true) {
           final PsiClass cls = PsiTreeUtil.getContextOfType(place, PsiClass.class);
@@ -220,7 +219,7 @@ public abstract class DslPointcut<T,V> {
     return new DslPointcut<GroovyClassDescriptor, GdslMethod>() {
       @Override
       List<GdslMethod> matches(GroovyClassDescriptor src, ProcessingContext context) {
-        List<GdslMethod> result = new ArrayList<GdslMethod>();
+        List<GdslMethod> result = new ArrayList<>();
         PsiElement place = src.getPlace();
         while (true) {
           final PsiMethod method = PsiTreeUtil.getContextOfType(place, PsiMethod.class);
@@ -256,7 +255,7 @@ public abstract class DslPointcut<T,V> {
         if (result != null) {
           Map<String, List> map = context.get(BOUND);
           if (map == null) {
-            context.put(BOUND, map = new HashMap<String, List>());
+            context.put(BOUND, map = new HashMap<>());
           }
           map.put(name, result);
         }

@@ -15,16 +15,17 @@
  */
 package org.jetbrains.settingsRepository.test
 
+import com.intellij.testFramework.InMemoryFsRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.util.writeChild
+import com.intellij.util.io.writeChild
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.jgit.dirCache.AddLoadedFile
-import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.IcsManager
+import org.jetbrains.settingsRepository.git.AddLoadedFile
+import org.jetbrains.settingsRepository.git.createGitRepository
+import org.jetbrains.settingsRepository.git.edit
 import org.junit.Rule
 import java.nio.file.FileSystem
 import java.nio.file.Path
-import org.jetbrains.settingsRepository.git.createRepository as createGitRepository
 
 fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
 
@@ -46,8 +47,9 @@ abstract class IcsTestCase {
   val tempDirManager = TemporaryDirectory()
   @Rule fun getTemporaryFolder() = tempDirManager
 
-  private val fsRule = InMemoryFsRule()
-  @Rule fun _inMemoryFsRule() = fsRule
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
 
   val fs: FileSystem
     get() = fsRule.fs

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,49 +20,36 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileManager;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
 public class InspectionProfileLoadUtil {
-  @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
-  @NonNls public static final String PROFILE_TAG = "profile";
-
   private static String getProfileName(@NotNull File file, @NotNull Element element) {
-    String name = getRootElementAttribute(PROFILE_NAME_TAG, element);
+    String name = null;
+    for (Element option : element.getChildren("option")) {
+      if ("myName".equals(option.getAttributeValue("name"))) {
+        name = option.getAttributeValue("value");
+      }
+    }
+    if (name == null) {
+      //noinspection deprecation
+      name = element.getAttributeValue("profile_name");
+    }
     return name != null ? name : FileUtil.getNameWithoutExtension(file);
   }
 
-  private static String getRootElementAttribute(@NotNull Element element, @NonNls String name) {
-    return element.getAttributeValue(name);
-  }
-
-  @Nullable
-  private static String getRootElementAttribute(@NonNls String name, @NotNull Element element) {
-    return getRootElementAttribute(element, name);
-  }
-
   @NotNull
-  public static String getProfileName(@NotNull Element element) {
-    String name = getRootElementAttribute(element, PROFILE_NAME_TAG);
-    if (name != null) return name;
-    return "unnamed";
-  }
-
-  @NotNull
-  public static Profile load(@NotNull File file,
-                             @NotNull InspectionToolRegistrar registrar,
-                             @NotNull ProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
-    Element element = JDOMUtil.loadDocument(file).getRootElement();
-    InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file, element), registrar, profileManager);
-    final Element profileElement = element.getChild(PROFILE_TAG);
+  public static InspectionProfileImpl load(@NotNull File file,
+                                           @NotNull InspectionToolRegistrar registrar,
+                                           @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
+    Element element = JDOMUtil.load(file);
+    InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file, element), registrar,
+                                                              (BaseInspectionProfileManager)profileManager);
+    final Element profileElement = element.getChild("profile");
     if (profileElement != null) {
       element = profileElement;
     }

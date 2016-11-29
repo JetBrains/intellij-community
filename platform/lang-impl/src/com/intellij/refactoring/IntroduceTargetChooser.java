@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,22 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.refactoring.introduce.IntroduceTarget;
+import com.intellij.refactoring.introduce.PsiIntroduceTarget;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
@@ -41,41 +44,62 @@ public class IntroduceTargetChooser {
   private IntroduceTargetChooser() {
   }
 
-  public static <T extends PsiElement> void showChooser(final Editor editor, final List<T> expressions, final Pass<T> callback,
-                                                        final Function<T, String> renderer) {
+  public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
+                                                        @NotNull List<T> expressions,
+                                                        @NotNull Pass<T> callback,
+                                                        @NotNull Function<T, String> renderer) {
     showChooser(editor, expressions, callback, renderer, "Expressions");
   }
 
-  public static <T extends PsiElement> void showChooser(final Editor editor,
-                                                        final List<T> expressions,
-                                                        final Pass<T> callback,
-                                                        final Function<T, String> renderer,
-                                                        String title) {
+  public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
+                                                        @NotNull List<T> expressions,
+                                                        @NotNull Pass<T> callback,
+                                                        @NotNull Function<T, String> renderer,
+                                                        @NotNull @Nls String title) {
     showChooser(editor, expressions, callback, renderer, title, ScopeHighlighter.NATURAL_RANGER);
   }
 
-  public static <T extends PsiElement> void showChooser(final Editor editor,
-                                                        final List<T> expressions,
-                                                        final Pass<T> callback,
-                                                        final Function<T, String> renderer,
-                                                        String title,
-                                                        NotNullFunction<PsiElement, TextRange> ranger) {
+  public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
+                                                        @NotNull List<T> expressions,
+                                                        @NotNull Pass<T> callback,
+                                                        @NotNull Function<T, String> renderer,
+                                                        @NotNull @Nls String title,
+                                                        @NotNull NotNullFunction<PsiElement, TextRange> ranger) {
     showChooser(editor, expressions, callback, renderer, title, -1, ranger);
   }
 
-  public static <T extends PsiElement> void showChooser(final Editor editor,
-                                                        final List<T> expressions,
-                                                        final Pass<T> callback,
-                                                        final Function<T, String> renderer,
-                                                        String title,
+  public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
+                                                        @NotNull List<T> expressions,
+                                                        @NotNull Pass<T> callback,
+                                                        @NotNull Function<T, String> renderer,
+                                                        @NotNull @Nls String title,
                                                         int selection,
-                                                        NotNullFunction<PsiElement, TextRange> ranger) {
-    final ScopeHighlighter highlighter = new ScopeHighlighter(editor, ranger);
+                                                        @NotNull NotNullFunction<PsiElement, TextRange> ranger) {
+    List<MyIntroduceTarget<T>> targets = ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger, renderer));
+    Pass<MyIntroduceTarget<T>> callbackWrapper = new Pass<MyIntroduceTarget<T>>() {
+      @Override
+      public void pass(MyIntroduceTarget<T> target) {
+        callback.pass(target.getPlace());
+      }
+    };
+    showIntroduceTargetChooser(editor, targets, callbackWrapper, title, selection);
+  }
+
+  public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,
+                                                                            @NotNull List<T> expressions,
+                                                                            @NotNull Pass<T> callback,
+                                                                            @NotNull @Nls String title,
+                                                                            int selection) {
+
+
+    final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
     final DefaultListModel model = new DefaultListModel();
     for (T expr : expressions) {
-      model.addElement(SmartPointerManager.getInstance(expr.getProject()).createSmartPsiElementPointer(expr));
+      model.addElement(expr);
     }
     final JList list = new JBList(model);
+    // Set the accessible name so that screen readers announce the list tile (e.g. "Expression Types list").
+    AccessibleContextUtil.setName(list, title);
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     if (selection > -1) list.setSelectedIndex(selection);
     list.setCellRenderer(new DefaultListCellRenderer() {
@@ -87,10 +111,9 @@ public class IntroduceTargetChooser {
                                                     final boolean isSelected,
                                                     final boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        SmartPsiElementPointer<T> pointer = (SmartPsiElementPointer<T>)value;
-        final T expr = pointer.getElement();
-        if (expr != null) {
-          String text = renderer.fun(expr);
+        final IntroduceTarget expr = (T)value;
+        if (expr.isValid()) {
+          String text = expr.render();
           int firstNewLinePos = text.indexOf('\n');
           String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
           if (trimmedText.length() != text.length()) trimmedText += " ...";
@@ -104,17 +127,14 @@ public class IntroduceTargetChooser {
       }
     });
 
-    list.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(final ListSelectionEvent e) {
-        highlighter.dropHighlight();
-        final int index = list.getSelectedIndex();
-        if (index < 0) return;
-        SmartPsiElementPointer<T> pointer = ((SmartPsiElementPointer<T>)model.get(index));
-        final T expr = pointer.getElement();
-        if (expr != null) {
-          highlighter.highlight(expr, Collections.<PsiElement>singletonList(expr));
-        }
+    list.addListSelectionListener(e -> {
+      highlighter.dropHighlight();
+      final int index = list.getSelectedIndex();
+      if (index < 0) return;
+      final T expr = (T)model.get(index);
+      if (expr.isValid()) {
+        TextRange range = expr.getTextRange();
+        highlighter.highlight(Pair.create(range, Collections.singletonList(range)));
       }
     });
 
@@ -123,14 +143,10 @@ public class IntroduceTargetChooser {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          SmartPsiElementPointer<T> value = (SmartPsiElementPointer<T>)list.getSelectedValue();
-          T expr = value != null ? value.getElement() : null;
-          if (expr != null) {
-            callback.pass(expr);
-          }
+      .setItemChoosenCallback(() -> {
+        T expr = (T)list.getSelectedValue();
+        if (expr != null && expr.isValid()) {
+          callback.pass(expr);
         }
       })
       .addListener(new JBPopupAdapter() {
@@ -140,5 +156,30 @@ public class IntroduceTargetChooser {
         }
       })
       .createPopup().showInBestPositionFor(editor);
+  }
+
+  private static class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {
+    private final NotNullFunction<PsiElement, TextRange> myRanger;
+    private final Function<T, String> myRenderer;
+
+    public MyIntroduceTarget(@NotNull T psi,
+                             @NotNull NotNullFunction<PsiElement, TextRange> ranger,
+                             @NotNull Function<T, String> renderer) {
+      super(psi);
+      myRanger = ranger;
+      myRenderer = renderer;
+    }
+
+    @NotNull
+    @Override
+    public TextRange getTextRange() {
+      return myRanger.fun(getPlace());
+    }
+
+    @NotNull
+    @Override
+    public String render() {
+      return myRenderer.fun(getPlace());
+    }
   }
 }

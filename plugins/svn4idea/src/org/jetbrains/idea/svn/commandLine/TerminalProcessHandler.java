@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnUtil;
 
@@ -57,9 +58,10 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     process.destroy();
   }
 
+  @NotNull
   @Override
-  protected boolean useNonBlockingRead() {
-    return false;
+  protected BaseOutputReader.Options readerOptions() {
+    return BaseOutputReader.Options.BLOCKING;
   }
 
   @Override

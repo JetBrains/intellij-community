@@ -71,14 +71,9 @@ public class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
       newText.append('#');
       newText.append(method.getName());
       newText.append('(');
-      final List<PsiParameter> parameters = new ArrayList<PsiParameter>(Arrays.asList(method.getParameterList().getParameters()));
+      final List<PsiParameter> parameters = new ArrayList<>(Arrays.asList(method.getParameterList().getParameters()));
       parameters.remove(parameter);
-      newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
-        @Override
-        public String fun(PsiParameter psiParameter) {
-          return parameter.getType().getCanonicalText();
-        }
-      }, ","));
+      newText.append(StringUtil.join(parameters, psiParameter -> parameter.getType().getCanonicalText(), ","));
       newText.append(")*/");
       usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
         @Override

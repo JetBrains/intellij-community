@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -74,7 +75,7 @@ public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor
   }
 
   @Override
-  public boolean isVisible(Template template) {
+  public boolean isVisible(@NotNull Template template, @NotNull TemplateContext context) {
     return false;
   }
 }

@@ -38,7 +38,7 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
   private final Icon myEmptyIcon;
 
   public LookupActionsStep(Collection<LookupElementAction> actions, LookupImpl lookup, LookupElement lookupElement) {
-    super(null, new ArrayList<LookupElementAction>(actions));
+    super(null, new ArrayList<>(actions));
     myLookup = lookup;
     myLookupElement = lookupElement;
 
@@ -50,7 +50,7 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
         h = Math.max(h, icon.getIconHeight());
       }
     }
-    myEmptyIcon = new EmptyIcon(w, h);
+    myEmptyIcon = EmptyIcon.create(w, h);
   }
 
   @Override
@@ -64,12 +64,7 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
       myLookup.refreshUi(false, true);
     } else if (result instanceof LookupElementAction.Result.ChooseItem) {
       myLookup.setCurrentItem(((LookupElementAction.Result.ChooseItem)result).item);
-      CommandProcessor.getInstance().executeCommand(myLookup.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          myLookup.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
-        }
-      }, null, null);
+      CommandProcessor.getInstance().executeCommand(myLookup.getProject(), () -> myLookup.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR), null, null);
     }
     return FINAL_CHOICE;
   }

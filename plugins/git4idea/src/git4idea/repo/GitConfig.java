@@ -16,6 +16,8 @@
 package git4idea.repo;
 
   import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -24,7 +26,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
-import git4idea.GitPlatformFacade;
 import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchUtil;
 import org.ini4j.Ini;
@@ -119,7 +120,7 @@ public class GitConfig {
    * If some section is invalid, it is skipped, and a warning is reported.
    */
   @NotNull
-  static GitConfig read(@NotNull GitPlatformFacade platformFacade, @NotNull File configFile) {
+  static GitConfig read(@NotNull File configFile) {
     GitConfig emptyConfig = new GitConfig(Collections.<Remote>emptyList(), Collections.<Url>emptyList(),
                                           Collections.<BranchConfig>emptyList());
     if (!configFile.exists()) {
@@ -138,7 +139,7 @@ public class GitConfig {
       return emptyConfig;
     }
 
-    IdeaPluginDescriptor plugin = platformFacade.getPluginByClassName(GitConfig.class.getName());
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManagerCore.getPluginByClassName(GitConfig.class.getName()));
     ClassLoader classLoader = plugin == null ?
                               GitConfig.class.getClassLoader() :   // null e.g. if IDEA is started from IDEA
                               plugin.getPluginClassLoader();
@@ -151,7 +152,7 @@ public class GitConfig {
 
   @NotNull
   private static Collection<BranchConfig> parseTrackedInfos(@NotNull Ini ini, @NotNull ClassLoader classLoader) {
-    Collection<BranchConfig> configs = new ArrayList<BranchConfig>();
+    Collection<BranchConfig> configs = new ArrayList<>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
@@ -240,8 +241,8 @@ public class GitConfig {
 
   @NotNull
   private static Pair<Collection<Remote>, Collection<Url>> parseRemotes(@NotNull Ini ini, @NotNull ClassLoader classLoader) {
-    Collection<Remote> remotes = new ArrayList<Remote>();
-    Collection<Url> urls = new ArrayList<Url>();
+    Collection<Remote> remotes = new ArrayList<>();
+    Collection<Url> urls = new ArrayList<>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
@@ -288,8 +289,8 @@ public class GitConfig {
    */
   @NotNull
   private static UrlsAndPushUrls substituteUrls(@NotNull Collection<Url> urlSections, @NotNull Remote remote) {
-    List<String> urls = new ArrayList<String>(remote.getUrls().size());
-    Collection<String> pushUrls = new ArrayList<String>();
+    List<String> urls = new ArrayList<>(remote.getUrls().size());
+    Collection<String> pushUrls = new ArrayList<>();
 
     // urls are substituted by insteadOf
     // if there are no pushUrls, we create a pushUrl for pushInsteadOf substitutions
@@ -337,7 +338,7 @@ public class GitConfig {
 
     // if no pushUrls are explicitly defined yet via pushUrl or url.<base>.pushInsteadOf, they are the same as urls.
     if (pushUrls.isEmpty()) {
-      pushUrls = new ArrayList<String>(urls);
+      pushUrls = new ArrayList<>(urls);
     }
 
     return new UrlsAndPushUrls(urls, pushUrls);
@@ -484,7 +485,7 @@ public class GitConfig {
 
   @NotNull
   private static Collection<String> nonNullCollection(@Nullable String[] array) {
-    return array == null ? Collections.<String>emptyList() : new ArrayList<String>(Arrays.asList(array));
+    return array == null ? Collections.<String>emptyList() : new ArrayList<>(Arrays.asList(array));
   }
 
 }

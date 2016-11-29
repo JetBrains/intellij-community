@@ -38,13 +38,11 @@ public class Manifest extends Tag{
     ManifestBuilder.setGlobalAttributes(manifest.getMainAttributes());
     final Attributes mainAttributes = manifest.getMainAttributes();
 
-    List<Object> keys = new ArrayList<Object>(mainAttributes.keySet());
-    Collections.sort(keys, new Comparator<Object>() {
-      public int compare(final Object o1, final Object o2) {
-        Attributes.Name name1 = (Attributes.Name)o1;
-        Attributes.Name name2 = (Attributes.Name)o2;
-        return name1.toString().compareTo(name2.toString());
-      }
+    List<Object> keys = new ArrayList<>(mainAttributes.keySet());
+    Collections.sort(keys, (o1, o2) -> {
+      Attributes.Name name1 = (Attributes.Name)o1;
+      Attributes.Name name2 = (Attributes.Name)o2;
+      return name1.toString().compareTo(name2.toString());
     });
     for (final Object o : keys) {
       Attributes.Name name = (Attributes.Name)o;

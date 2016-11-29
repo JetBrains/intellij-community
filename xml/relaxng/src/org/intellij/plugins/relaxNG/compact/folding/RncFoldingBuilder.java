@@ -45,7 +45,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
 
-    final ArrayList<FoldingDescriptor> regions = new ArrayList<FoldingDescriptor>();
+    final ArrayList<FoldingDescriptor> regions = new ArrayList<>();
     process(node, document, regions);
 
     return regions.size() > 0

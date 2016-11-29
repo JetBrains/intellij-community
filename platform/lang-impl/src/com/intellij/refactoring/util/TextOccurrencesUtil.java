@@ -47,26 +47,20 @@ public class TextOccurrencesUtil {
                                        @NotNull GlobalSearchScope searchScope,
                                        @NotNull final Collection<UsageInfo> results,
                                        @NotNull final UsageInfoFactory factory) {
-    PsiSearchHelperImpl.processTextOccurrences(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
-      @Override
-      public boolean process(UsageInfo t) {
-        results.add(t);
-        return true;
-      }
+    PsiSearchHelperImpl.processTextOccurrences(element, stringToSearch, searchScope, t -> {
+      results.add(t);
+      return true;
     }, factory);
   }
 
   private static boolean processStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, PsiSearchHelper helper, final Processor<PsiElement> processor) {
-    TextOccurenceProcessor occurenceProcessor = new TextOccurenceProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
-        final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
-        final ASTNode node = element.getNode();
-        if (definition != null && node != null && definition.getStringLiteralElements().contains(node.getElementType())) {
-          return processor.process(element);
-        }
-        return true;
+    TextOccurenceProcessor occurenceProcessor = (element, offsetInElement) -> {
+      final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
+      final ASTNode node = element.getNode();
+      if (definition != null && node != null && definition.getStringLiteralElements().contains(node.getElementType())) {
+        return processor.process(element);
       }
+      return true;
     };
 
     return helper.processElementsWithWord(occurenceProcessor,
@@ -83,12 +77,7 @@ public class TextOccurrencesUtil {
     PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
     SearchScope scope = helper.getUseScope(element);
     scope = GlobalSearchScope.projectScope(element.getProject()).intersectWith(scope);
-    Processor<PsiElement> commentOrLiteralProcessor = new Processor<PsiElement>() {
-      @Override
-      public boolean process(PsiElement literal) {
-        return processTextIn(literal, stringToSearch, ignoreReferences, processor);
-      }
-    };
+    Processor<PsiElement> commentOrLiteralProcessor = literal -> processTextIn(literal, stringToSearch, ignoreReferences, processor);
     return processStringLiteralsContainingIdentifier(stringToSearch, scope, helper, commentOrLiteralProcessor) &&
            helper.processCommentsContainingIdentifier(stringToSearch, scope, commentOrLiteralProcessor);
   }
@@ -98,17 +87,14 @@ public class TextOccurrencesUtil {
                                                    @NotNull final Collection<UsageInfo> results,
                                                    @NotNull final UsageInfoFactory factory) {
     final Object lock = new Object();
-    processUsagesInStringsAndComments(element, stringToSearch, false, new PairProcessor<PsiElement, TextRange>() {
-      @Override
-      public boolean process(PsiElement commentOrLiteral, TextRange textRange) {
-        UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
-        if (usageInfo != null) {
-          synchronized (lock) {
-            results.add(usageInfo);
-          }
+    processUsagesInStringsAndComments(element, stringToSearch, false, (commentOrLiteral, textRange) -> {
+      UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
+      if (usageInfo != null) {
+        synchronized (lock) {
+          results.add(usageInfo);
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -170,13 +156,10 @@ public class TextOccurrencesUtil {
 
   private static UsageInfoFactory createUsageInfoFactory(final PsiElement element,
                                                         final String newQName) {
-    return new UsageInfoFactory() {
-      @Override
-      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-        int start = usage.getTextRange().getStartOffset();
-        return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,
-                                       newQName);
-      }
+    return (usage, startOffset, endOffset) -> {
+      int start = usage.getTextRange().getStartOffset();
+      return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,
+                                     newQName);
     };
   }
 }

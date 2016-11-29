@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.util.containers.ContainerUtil
  */
 class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCase {
 
-  public void "test use original place classpath for reference type resolving"() {
+  void "test use original place classpath for reference type resolving"() {
     addTwoModules()
 
     myFixture.addFileToProject "mod1/Class2.java", '''
@@ -63,7 +63,7 @@ class Class3 {
     myFixture.checkHighlighting()
   }
 
-  public void "test use original place classpath for new expression type resolving"() {
+  void "test use original place classpath for new expression type resolving"() {
     addTwoModules()
 
     myFixture.addFileToProject "mod1/A.java", '''
@@ -101,7 +101,7 @@ class Class3 {
     ModuleRootModificationUtil.addDependency(myModule, mod2)
   }
 
-  public void testOverridingJdkExceptions() {
+  void testOverridingJdkExceptions() {
     def dep = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "dep", myFixture.tempDirFixture.findOrCreateDir("dep"))
     ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(myModule).sdk)
     ModuleRootModificationUtil.updateModel(myModule, { model ->

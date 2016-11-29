@@ -45,23 +45,21 @@ public class GenerateAntApplication {
       GenerateAntMain.printHelp();
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-        try {
-          logMessage(0, "Starting app... ");
-          application.doNotSave();
-          application.load();
-          logMessageLn(0, "done");
+    SwingUtilities.invokeLater(() -> {
+      ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+      try {
+        logMessage(0, "Starting app... ");
+        application.doNotSave();
+        application.load();
+        logMessageLn(0, "done");
 
-          GenerateAntApplication.this.run();
-        }
-        catch (Exception e) {
-          GenerateAntApplication.LOG.error(e);
-        }
-        finally {
-          application.exit(true, true);
-        }
+        this.run();
+      }
+      catch (Exception e) {
+        GenerateAntApplication.LOG.error(e);
+      }
+      finally {
+        application.exit(true, true);
       }
     });
   }

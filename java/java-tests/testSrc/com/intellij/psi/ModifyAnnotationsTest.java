@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestCase;
@@ -40,7 +41,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
 
   public void testReplaceAnnotation() throws Exception {
     //be sure not to load tree
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
     PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
     final PsiAnnotation[] annotations = aClass.getModifierList().getAnnotations();
@@ -48,23 +49,15 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     assertEquals("A", annotations[0].getNameReferenceElement().getReferenceName());
     final PsiAnnotation newAnnotation = myJavaFacade.getElementFactory().createAnnotationFromText("@B", null);
     //here the tree is going to be loaded
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          @Override
-          public void run() {
-            try {
-              annotations[0].replace(newAnnotation);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
+    CommandProcessor.getInstance().executeCommand(myProject, () -> WriteCommandAction.runWriteCommandAction(null, () -> {
+      try {
+        annotations[0].replace(newAnnotation);
       }
-    }, null, null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), null, null);
 
     assertEquals("@B", aClass.getModifierList().getText());
   }

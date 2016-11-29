@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,20 +136,6 @@ public class PyTypeTest extends PyTestCase {
            "expr = u'foo'");
   }
 
-  // TODO: uncomment when we have a mock SDK for Python 3.x
-  // PY-1427
-  @SuppressWarnings("unused")
-  public void _testBytesLiteral() {  // PY-1427
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest("bytes",
-             "expr = b'foo'");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
-  }
-
   public void testPropertyType() {
     doTest("property",
            "class C:\n" +
@@ -175,9 +161,26 @@ public class PyTypeTest extends PyTestCase {
            "l = [1, 2, 3]; expr = l[0]");
   }
 
-  public void testSliceType() {
+  public void testListSliceType() {
     doTest("List[int]",
            "l = [1, 2, 3]; expr = l[0:1]");
+  }
+
+  public void testTupleSliceType() {
+    doTest("tuple",
+           "l = (1, 2, 3); expr = l[0:1]");
+  }
+
+  // PY-18560
+  public void testCustomSliceType() {
+    doTest(
+      "int",
+      "class RectangleFactory(object):\n" +
+      "    def __getitem__(self, item):\n" +
+      "        return 1\n" +
+      "factory = RectangleFactory()\n" +
+      "expr = factory[:]"
+    );
   }
 
   public void testExceptType() {
@@ -305,6 +308,90 @@ public class PyTypeTest extends PyTestCase {
            "        x = 1 if c else 'foo'\n" +
            "        self.assertIsInstance(x, int)\n" +
            "        expr = x\n");
+  }
+
+  // PY-20679
+  public void testIsInstanceViaTrue() {
+    doTest("str",
+           "a = None\n" +
+           "if isinstance(a, str) is True:\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+
+    doTest("str",
+           "a = None\n" +
+           "if True is isinstance(a, str):\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+  }
+
+  // PY-20679
+  public void testIsInstanceViaFalse() {
+    doTest("str",
+           "a = None\n" +
+           "if isinstance(a, str) is not False:\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+
+    doTest("str",
+           "a = None\n" +
+           "if False is not isinstance(a, str):\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+
+    doTest("str",
+           "a = None\n" +
+           "if not isinstance(a, str) is False:\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+
+    doTest("str",
+           "a = None\n" +
+           "if not False is isinstance(a, str):\n" +
+           "    expr = a\n" +
+           "raise TypeError('Invalid type')");
+  }
+
+  // PY-20679
+  public void testNotIsInstanceViaTrue() {
+    doTest("str",
+           "a = None\n" +
+           "if not isinstance(a, str) is True:\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+
+    doTest("str",
+           "a = None\n" +
+           "if not True is isinstance(a, str):\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+
+    doTest("str",
+           "a = None\n" +
+           "if isinstance(a, str) is not True:\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+
+    doTest("str",
+           "a = None\n" +
+           "if True is not isinstance(a, str):\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+  }
+
+  // PY-20679
+  public void testNotIsInstanceViaFalse() {
+    doTest("str",
+           "a = None\n" +
+           "if isinstance(a, str) is False:\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
+
+    doTest("str",
+           "a = None\n" +
+           "if False is isinstance(a, str):\n" +
+           "    raise TypeError('Invalid type')\n" +
+           "expr = a");
   }
 
   // PY-4279
@@ -694,17 +781,17 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo', 'rb')\n");
   }
 
@@ -799,6 +886,80 @@ public class PyTypeTest extends PyTestCase {
            "  expr, foo = xs\n");
   }
 
+  // PY-19826
+  public void testListFromTuple() {
+    doTest("List[Union[str, int]]",
+           "expr = list(('1', 2, 3))");
+  }
+
+  public void testDictFromTuple() {
+    doTest("Dict[Union[str, int], Union[str, int]]",
+           "expr = dict((('1', 1), (2, 2), (3, '3')))");
+  }
+
+  public void testSetFromTuple() {
+    doTest("Set[Union[str, int]]",
+           "expr = set(('1', 2, 3))");
+  }
+
+  public void testTupleFromTuple() {
+    doTest("Tuple[str, int, int]",
+           "expr = tuple(('1', 2, 3))");
+  }
+
+  public void testTupleFromList() {
+    doTest("Tuple[Union[str, int], ...]",
+           "expr = tuple(['1', 2, 3])");
+  }
+
+  public void testTupleFromDict() {
+    doTest("Tuple[Union[str, int], ...]",
+           "expr = tuple({'1': 'a', 2: 'b', 3: 4})");
+  }
+
+  public void testTupleFromSet() {
+    doTest("Tuple[Union[str, int], ...]",
+           "expr = tuple({'1', 2, 3})");
+  }
+
+  public void testHomogeneousTupleSubstitution() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        myFixture.copyDirectoryToProject("typing", "");
+
+        doTest("Tuple[int, ...]",
+               "from typing import TypeVar, Tuple\n" +
+               "T = TypeVar('T')\n" +
+               "def foo(i: T) -> Tuple[T, ...]:\n" +
+               "    pass\n" +
+               "expr = foo(5)");
+      }
+    );
+  }
+
+  public void testHeterogeneousTupleSubstitution() {
+    doTest("tuple[int, int]",
+           "def foo(i):\n" +
+           "    \"\"\"\n" +
+           "    :type i: T\n" +
+           "    :rtype: tuple[T, T]\n" +
+           "    \"\"\"\n" +
+           "    pass\n" +
+           "expr = foo(5)");
+  }
+
+  public void testUnknownTupleSubstitution() {
+    doTest("tuple",
+           "def foo(i):\n" +
+           "    \"\"\"\n" +
+           "    :type i: T\n" +
+           "    :rtype: tuple\n" +
+           "    \"\"\"\n" +
+           "    pass\n" +
+           "expr = foo(5)");
+  }
+
   public void testTupleIterationType() {
     doTest("Union[int, str]",
            "xs = (1, 'a')\n" +
@@ -815,6 +976,30 @@ public class PyTypeTest extends PyTestCase {
   public void testTupleMultiplication() {
     doTest("Tuple[int, bool, int, bool]",
            "expr = (1, False) * 2");
+  }
+
+
+  public void testTupleDestructuring() {
+    doTest("str",
+           "_, expr = (1, 'val') ");
+  }
+
+  public void testParensTupleDestructuring() {
+    doTest("str",
+           "(_, expr) = (1, 'val') ");
+  }
+
+  // PY-19825
+  public void testSubTupleDestructuring() {
+    doTest("str",
+           "(a, (_, expr)) = (1, (2,'val')) ");
+  }
+
+  // PY-19825
+  public void testSubTupleIndirectDestructuring() {
+    doTest("str",
+           "xs = (2,'val')\n" +
+           "(a, (_, expr)) = (1, xs) ");
   }
 
   public void testConstructorUnification() {
@@ -960,6 +1145,23 @@ public class PyTypeTest extends PyTestCase {
            "expr = f\n");
   }
 
+  // PY-20832
+  public void testStructuralTypeWithDunderIter() {
+    doTest("{__iter__}",
+           "def expand(values1):\n" +
+           "    for a in values1:\n" +
+           "        print(a)\n" +
+           "    expr = values1\n");
+  }
+
+  // PY-20833
+  public void testStructuralTypeWithDunderLen() {
+    doTest("{__len__}",
+           "def expand(values1):\n" +
+           "    a = len(values1)\n" +
+           "    expr = values1\n");
+  }
+
   // PY-16267
   public void testGenericField() {
     doTest("str",
@@ -1046,6 +1248,270 @@ public class PyTypeTest extends PyTestCase {
                     "from module import func\n" +
                     "\n" +
                     "expr = func()");
+  }
+
+  // PY-19967
+  public void testInheritedNamedTupleReplace() {
+    PyExpression expr = parseExpr("from collections import namedtuple\n" +
+                                  "class MyClass(namedtuple('T', 'a b c')):\n" +
+                                  "    def get_foo(self):\n" +
+                                  "        return self.a\n" +
+                                  "\n" +
+                                  "inst = MyClass(1,2,3)\n" +
+                                  "expr = inst._replace(a=2)\n");
+    doTest("MyClass",
+           expr,
+           TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()));
+  }
+
+  // PY-20063
+  public void testIteratedSetElement() {
+    doTest("int",
+           "xs = {1}\n" +
+           "for expr in xs:\n" +
+           "    print(expr)");
+  }
+
+  public void testIsNotNone() {
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is not None:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is not x:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not x is None:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not None is x:\n" +
+           "        expr = x\n");
+  }
+
+  public void testIsNone() {
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is None:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is x:\n" +
+           "        expr = x\n");
+  }
+
+  public void testHeterogeneousListLiteral() {
+    doTest("List[Union[str, int]]", "expr = ['1', 1, 1]");
+
+    doTest("List[Union[Union[str, int], Any]]", "expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]");
+  }
+
+  public void testHeterogeneousSetLiteral() {
+    doTest("Set[Union[str, int]]", "expr = {'1', 1, 1}");
+
+    doTest("Set[Union[Union[str, int], Any]]", "expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}");
+  }
+
+  public void testHeterogeneousDictLiteral() {
+    doTest("Dict[Union[str, int], Union[str, int]]", "expr = {'1': 1, 1: '1', 1: 1}");
+
+    doTest("Dict[Union[Union[str, int], Any], Union[Union[str, int], Any]]",
+           "expr = {'1': 1, 1: '1', 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1}");
+  }
+
+  public void testHeterogeneousTupleLiteral() {
+    doTest("Tuple[str, int, int]", "expr = ('1', 1, 1)");
+
+    doTest("Tuple[str, int, int, int, int, int, int, int, int, int, int]", "expr = ('1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)");
+  }
+
+  // PY-20818
+  public void testIsInstanceForSuperclass() {
+    doTest("B",
+           "class A:\n" +
+           "    pass\n" +
+           "class B(A):\n" +
+           "    def foo(self):\n" +
+           "        pass\n" +
+           "def test():\n" +
+           "    b = B()\n" +
+           "    assert(isinstance(b, A))\n" +
+           "    expr = b\n");
+  }
+
+  // PY-20794
+  public void testIterateOverPureList() {
+    doTest("Any",
+           "l = None  # type: list\n" +
+           "for expr in l:\n" +
+           "    print(expr)\n");
+  }
+
+  // PY-20794
+  public void testIterateOverDictValueWithDefaultValue() {
+    doTest("Any",
+           "d = None  # type: dict\n" +
+           "for expr in d.get('field', []):\n" +
+           "    print(expr['id'])\n");
+  }
+
+  // PY-20797
+  public void testValueOfEmptyDefaultDict() {
+    doTest("list",
+           "from collections import defaultdict\n" +
+           "expr = defaultdict(lambda: [])['x']\n");
+  }
+
+  // PY-8473
+  public void testCopyDotCopy() {
+    doMultiFileTest("A",
+                    "import copy\n" +
+                    "class A(object):\n" +
+                    "    pass\n" +
+                    "expr = copy.copy(A())\n");
+  }
+
+  // PY-8473
+  public void testCopyDotDeepCopy() {
+    doMultiFileTest("A",
+                    "import copy\n" +
+                    "class A(object):\n" +
+                    "    pass\n" +
+                    "expr = copy.deepcopy(A())\n");
+  }
+
+  // PY-21083
+  public void testFloatFromhex() {
+    doTest("float",
+           "expr = float.fromhex(\"0.5\")");
+  }
+
+  // PY-20409
+  public void testGetFromDictWithDefaultNoneValue() {
+    doTest("Any",
+           "d = {}\n" +
+           "expr = d.get(\"abc\", None)");
+  }
+
+  // PY-20757
+  public void testMinOrNone() {
+    doTest("Union[None, Any]",
+           "def get_value(v):\n" +
+           "    if v:\n" +
+           "        return min(v)\n" +
+           "    else:\n" +
+           "        return None\n" +
+           "expr = get_value([])");
+  }
+
+  // PY-21350
+  public void testBuiltinInput() {
+    doTest("Any",
+           "expr = input()");
+  }
+
+  // PY-21350
+  public void testBuiltinRawInput() {
+    doTest("str",
+           "expr = raw_input()");
+  }
+
+  // PY-19723
+  public void testPositionalArgs() {
+    doTest("Tuple[int, ...]",
+           "def foo(*args):\n" +
+           "    \"\"\"\n" +
+           "    :type args: int\n" +
+           "    \"\"\"\n" +
+           "    expr = args");
+  }
+
+  // PY-19723
+  public void testKeywordArgs() {
+    doTest("Dict[str, int]",
+           "def foo(**kwargs):\n" +
+           "    \"\"\"\n" +
+           "    :type kwargs: int\n" +
+           "    \"\"\"\n" +
+           "    expr = kwargs");
+  }
+
+  // PY-19723
+  public void testIterateOverKeywordArgs() {
+    doTest("str",
+           "def foo(**kwargs):\n" +
+           "    for expr in kwargs:\n" +
+           "        pass");
+  }
+
+  // PY-19723
+  public void testTypeVarSubstitutionInPositionalArgs() {
+    doTest("int",
+           "def foo(*args):" +
+           "  \"\"\"\n" +
+           "  :type args: T\n" +
+           "  :rtype: T\n" +
+           "  \"\"\"\n" +
+           "  pass\n" +
+           "expr = foo(1)");
+  }
+
+  // PY-19723
+  public void testTypeVarSubstitutionInHeterogeneousPositionalArgs() {
+    doTest("Union[int, str]",
+           "def foo(*args):" +
+           "  \"\"\"\n" +
+           "  :type args: T\n" +
+           "  :rtype: T\n" +
+           "  \"\"\"\n" +
+           "  pass\n" +
+           "expr = foo(1, \"2\")");
+  }
+
+  // PY-19723
+  public void testTypeVarSubstitutionInKeywordArgs() {
+    doTest("int",
+           "def foo(**kwargs):" +
+           "  \"\"\"\n" +
+           "  :type kwargs: T\n" +
+           "  :rtype: T\n" +
+           "  \"\"\"\n" +
+           "  pass\n" +
+           "expr = foo(a=1)");
+  }
+
+  // PY-19723
+  public void testTypeVarSubstitutionInHeterogeneousKeywordArgs() {
+    doTest("Union[int, str]",
+           "def foo(**kwargs):" +
+           "  \"\"\"\n" +
+           "  :type kwargs: T\n" +
+           "  :rtype: T\n" +
+           "  \"\"\"\n" +
+           "  pass\n" +
+           "expr = foo(a=1, b=\"2\")");
+  }
+
+  // PY-21474
+  public void testReassigningOptionalListWithDefaultValue() {
+    doTest("Union[List[str], list]",
+           "def x(things):\n" +
+           "    \"\"\"\n" +
+           "    :type things: None | list[str]\n" +
+           "    \"\"\"\n" +
+           "    expr = things if things else []");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

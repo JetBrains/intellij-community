@@ -16,8 +16,8 @@
 
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <tt>PsiQualifiedNamedElement</tt> interface marks psi elements that can have
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
  * @author Konstantin Bulenkov
  * @since 9.0
  */
-public interface PsiQualifiedNamedElement {
+public interface PsiQualifiedNamedElement extends PsiNamedElement {
   /**
    * Returns the fully qualified name of the element.
    *
@@ -49,13 +49,4 @@ public interface PsiQualifiedNamedElement {
   @Nullable
   @NonNls
   String getName();
-
-  /**
-   * Returns container of the element.
-   *
-   * @return container of the element
-   */
-  @Deprecated
-  @Nullable
-  PsiQualifiedNamedElement getContainer();
 }

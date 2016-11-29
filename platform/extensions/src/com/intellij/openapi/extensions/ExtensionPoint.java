@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,6 @@ public interface ExtensionPoint<T> {
   @NotNull
   String getName();
   AreaInstance getArea();
-
-  /**
-   * @deprecated use {@link #getClassName()} instead
-   */
-  @NotNull
-  String getBeanClassName();
 
   void registerExtension(@NotNull T extension);
   void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);

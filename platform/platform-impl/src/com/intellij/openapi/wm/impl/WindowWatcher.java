@@ -46,7 +46,7 @@ import java.util.Map;
 public final class WindowWatcher implements PropertyChangeListener{
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.WindowWatcher");
   private final Object myLock = new Object();
-  private final Map<Window, WindowInfo> myWindow2Info = new WeakHashMap<Window, WindowInfo>();
+  private final Map<Window, WindowInfo> myWindow2Info = new WeakHashMap<>();
   /**
    * Currenly focused window (window which has focused component). Can be <code>null</code> if there is no focused
    * window at all.
@@ -310,7 +310,7 @@ public final class WindowWatcher implements PropertyChangeListener{
     public WindowInfo(final Window window,final boolean suggestAsParent){
       final FocusWatcher focusWatcher=new FocusWatcher();
       focusWatcher.install(window);
-      myFocusWatcherRef=new WeakReference<FocusWatcher>(focusWatcher);
+      myFocusWatcherRef= new WeakReference<>(focusWatcher);
       mySuggestAsParent=suggestAsParent;
     }
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.IncorrectOperationException;
@@ -42,6 +44,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * User: cdr
  */
 abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<T> implements IntervalTree<T> {
+  static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerTree");
+  static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal());
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
   final ReadWriteLock l = new ReentrantReadWriteLock();
 
@@ -66,7 +70,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
     @NotNull
     private final IntervalTreeImpl<E> myIntervalTree;
 
-    public IntervalNode(@NotNull IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
+    IntervalNode(@NotNull IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
       myIntervalTree = intervalTree;
       myStart = start;
@@ -374,7 +378,9 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
   }
 
   private void assertUnderWriteLock() {
-    assert isAcquired(l.writeLock()) : l.writeLock();
+    if (DEBUG) {
+      assert isAcquired(l.writeLock()) : l.writeLock();
+    }
   }
   private static boolean isAcquired(@NotNull Lock l) {
     String s = l.toString();

@@ -167,11 +167,9 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
   private void storeLineSeparatorInTheVirtualFile(IFileSystem fileSystem, FileObject fileObject) {
     final VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(fileSystem.getFile(fileObject));
     if (virtualFile != null) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          FileDocumentManager.getInstance().getDocument(virtualFile);
-          myReceiveTextFilePreprocessor.saveLineSeparatorForFile(virtualFile, getLineSeparatorFor(virtualFile));
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        FileDocumentManager.getInstance().getDocument(virtualFile);
+        myReceiveTextFilePreprocessor.saveLineSeparatorForFile(virtualFile, getLineSeparatorFor(virtualFile));
       });
     }
   }

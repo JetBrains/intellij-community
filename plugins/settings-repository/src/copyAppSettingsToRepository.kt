@@ -15,38 +15,43 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.ROOT_CONFIG
-import com.intellij.configurationStore.StateStorageManagerImpl
-import com.intellij.configurationStore.removeMacroIfStartsWith
-import com.intellij.ide.actions.ExportableItem
-import com.intellij.ide.actions.getExportableComponentsMap
+import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
-import com.intellij.util.directoryStreamIfExists
-import com.intellij.util.isFile
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.containers.forEachGuaranteed
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.isFile
+import com.intellij.util.io.readBytes
+import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.stateStorageManager as StateStorageManagerImpl) {
-  val streamProvider = storageManager.streamProvider!! as IcsManager.IcsStreamProvider
+  val streamProvider = StreamProviderWrapper.getOriginalProvider(storageManager.streamProvider)!! as IcsManager.IcsStreamProvider
 
-  val fileToComponents = getExportableComponentsMap(true, false, storageManager)
-  for (file in fileToComponents.keys) {
-    val absolutePath = file.toAbsolutePath().systemIndependentPath
-    var fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(absolutePath), ROOT_CONFIG)
-    if (fileSpec == absolutePath) {
-      // we have not experienced such problem yet, but we are just aware
-      val canonicalPath = file.toRealPath().systemIndependentPath
-      if (canonicalPath != absolutePath) {
-        fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(canonicalPath), ROOT_CONFIG)
+  val fileToItems = getExportableComponentsMap(true, false, storageManager)
+  fileToItems.keys.forEachGuaranteed { file ->
+    var fileSpec: String
+    try {
+      val absolutePath = file.toAbsolutePath().systemIndependentPath
+      fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(absolutePath), ROOT_CONFIG)
+      if (fileSpec == absolutePath) {
+        // we have not experienced such problem yet, but we are just aware
+        val canonicalPath = file.toRealPath().systemIndependentPath
+        if (canonicalPath != absolutePath) {
+          fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(canonicalPath), ROOT_CONFIG)
+        }
       }
     }
+    catch (e: NoSuchFileException) {
+      return@forEachGuaranteed
+    }
 
-    val roamingType = getRoamingType(fileToComponents.get(file)!!)
+    val roamingType = fileToItems.get(file)?.firstOrNull()?.roamingType ?: RoamingType.DEFAULT
     if (file.isFile()) {
-      val fileBytes = Files.readAllBytes(file)
+      val fileBytes = file.readBytes()
       streamProvider.doSave(fileSpec, fileBytes, fileBytes.size, roamingType)
     }
     else {
@@ -68,22 +73,4 @@ private fun saveDirectory(parent: Path, parentFileSpec: String, roamingType: Roa
       }
     }
   }
-}
-
-private fun getRoamingType(components: Collection<ExportableItem>): RoamingType {
-  for (component in components) {
-    if (component is ExportableItem) {
-      return component.roamingType
-    }
-//    else if (component is PersistentStateComponent<*>) {
-//      val stateAnnotation = component.javaClass.getAnnotation(State::class.java)
-//      if (stateAnnotation != null) {
-//        val storages = stateAnnotation.storages
-//        if (!storages.isEmpty()) {
-//          return storages[0].roamingType
-//        }
-//      }
-//    }
-  }
-  return RoamingType.DEFAULT
 }

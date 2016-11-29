@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -116,9 +117,10 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
       if (statement == null) {
         return;
       }
-      final PsiStatement nextStatement =
-        PsiTreeUtil.getNextSiblingOfType(statement,
-                                         PsiStatement.class);
+      PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
+      while (nextStatement != null && !isSignificant(nextStatement)) {
+        nextStatement = PsiTreeUtil.getNextSiblingOfType(nextStatement, PsiStatement.class);
+      }
       if (!(nextStatement instanceof PsiTryStatement)) {
         registerError(expression, referenceExpression);
         return;
@@ -129,6 +131,19 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
         return;
       }
       registerError(expression, referenceExpression);
+    }
+
+    private static boolean isSignificant(@NotNull PsiStatement statement) {
+      final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
+      statement.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitExpression(PsiExpression expression) {
+          super.visitExpression(expression);
+          result.set(Boolean.FALSE);
+          stopWalking();
+        }
+      });
+      return !result.get().booleanValue();
     }
 
     private static boolean lockIsUnlockedInFinally(

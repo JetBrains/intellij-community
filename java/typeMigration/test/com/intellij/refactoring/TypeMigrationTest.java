@@ -714,7 +714,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
       }
 
       @Override
-      public PsiElement victims(final PsiClass aClass) {
+      public PsiElement victim(final PsiClass aClass) {
         final PsiCatchSection catchSection = PsiTreeUtil.findChildOfType(aClass, PsiCatchSection.class);
         assert catchSection != null : aClass.getText();
         final PsiParameter parameter = catchSection.getParameter();
@@ -826,12 +826,40 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("fooDontMigrateName", PsiType.BOOLEAN);
   }
 
+  public void testMethodMigrationToVoidWithUnusedReturns() {
+    doTestMethodType("toVoidMethod", PsiType.VOID);
+  }
+
   public void testMigrationToSuper() {
     doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("Test.A<java.lang.String>", null));
   }
 
   public void testMigrationToSuper2() {
     doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("Test.Base<java.lang.String>", null));
+  }
+
+  public void testMultiVarDeclaration1() {
+    doTestFieldsType("Test", myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null), "a", "b");
+  }
+
+  public void testMultiVarDeclaration2() {
+    doTestFieldsType("Test", myFactory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null), "a", "b");
+  }
+
+  public void testVoidMigrationInVarDecl() {
+    doTestMethodType("migrationMethod", PsiType.VOID);
+  }
+
+  public void testVoidMigrationInVarDeclFailed() {
+    doTestMethodType("migrationMethod", PsiType.VOID);
+  }
+
+  public void testVoidMigrationInAssignment() {
+    doTestMethodType("migrationMethod", PsiType.VOID);
+  }
+
+  public void testVoidMigrationInAssignmentFailed() {
+    doTestMethodType("migrationMethod", PsiType.VOID);
   }
 
   private void doTestReturnType(final String methodName, final String migrationType) {
@@ -842,7 +870,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
       }
 
       @Override
-      public PsiElement victims(PsiClass aClass) {
+      public PsiElement victim(PsiClass aClass) {
         for (PsiMethod method : PsiTreeUtil.findChildrenOfType(aClass, PsiMethod.class)) {
           if (methodName.equals(method.getName())) {
             return method;
@@ -861,7 +889,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
       }
 
       @Override
-      public PsiElement victims(final PsiClass aClass) {
+      public PsiElement victim(final PsiClass aClass) {
         final PsiForeachStatement foreachStatement = PsiTreeUtil.findChildOfType(aClass, PsiForeachStatement.class);
         assert foreachStatement != null : aClass.getText();
         return foreachStatement.getIterationParameter();

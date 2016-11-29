@@ -20,10 +20,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -44,7 +41,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.LogicalRoot;
+import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +55,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -73,6 +74,7 @@ public class CopyReferenceAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     boolean plural = false;
     boolean enabled;
+    boolean paths = false;
 
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -83,6 +85,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       List<PsiElement> elements = getElementsToCopy(editor, dataContext);
       enabled = !elements.isEmpty();
       plural = elements.size() > 1;
+      paths = elements.stream().allMatch(el -> el instanceof PsiFileSystemItem && getQualifiedNameFromProviders(el) == null);
     }
 
     e.getPresentation().setEnabled(enabled);
@@ -92,7 +95,9 @@ public class CopyReferenceAction extends DumbAwareAction {
     else {
       e.getPresentation().setVisible(true);
     }
-    e.getPresentation().setText(plural ? "Cop&y References" : "Cop&y Reference");
+    e.getPresentation().setText(
+      paths ? plural ? "Cop&y Relative Paths" : "Cop&y Relative Path"
+            : plural ? "Cop&y References" : "Cop&y Reference");
   }
 
   @Override
@@ -143,6 +148,13 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
 
     if (elements.isEmpty()) {
+      PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      if (psiElements != null) {
+        Collections.addAll(elements, psiElements);
+      }
+    }
+
+    if (elements.isEmpty()) {
       ContainerUtil.addIfNotNull(elements, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
     }
 
@@ -156,12 +168,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       }
     }
 
-    return ContainerUtil.mapNotNull(elements, new Function<PsiElement, PsiElement>() {
-      @Override
-      public PsiElement fun(PsiElement element) {
-        return element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical() ? null : adjustElement(element);
-      }
-    });
+    return ContainerUtil.mapNotNull(elements, element -> element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical() ? null : adjustElement(element));
   }
 
   private static PsiElement adjustElement(PsiElement element) {
@@ -297,7 +304,10 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
 
     if (outerMostRoot != null && !outerMostRoot.equals(virtualFile)) {
-      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, outerMostRoot, '/'));
+      String relative = VfsUtilCore.getRelativePath(virtualFile, outerMostRoot, '/');
+      if (relative != null) {
+        return relative;
+      }
     }
 
     return virtualFile.getPath();

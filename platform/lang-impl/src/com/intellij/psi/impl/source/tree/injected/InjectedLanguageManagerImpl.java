@@ -105,7 +105,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
       @Override
       public void daemonCancelEventOccurred(@NotNull String reason) {
-        myProgress.cancel();
+        if (!myProgress.isCanceled()) myProgress.cancel();
       }
     });
   }
@@ -241,7 +241,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }
 
-    ClassMapCachingNulls<MultiHostInjector> result = new ClassMapCachingNulls<>(injectors, new MultiHostInjector[0]);
+    ClassMapCachingNulls<MultiHostInjector> result = new ClassMapCachingNulls<>(injectors, new MultiHostInjector[0], allInjectors);
     cachedInjectors = result;
     return result;
   }

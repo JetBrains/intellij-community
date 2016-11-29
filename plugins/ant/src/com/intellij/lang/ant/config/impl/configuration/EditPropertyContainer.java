@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class EditPropertyContainer extends AbstractProperty.AbstractPropertyContainer {
   private final AbstractProperty.AbstractPropertyContainer[] myOriginals;
-  private final Map<AbstractProperty, Object> myModifications = new HashMap<AbstractProperty, Object>();
+  private final Map<AbstractProperty, Object> myModifications = new HashMap<>();
   private final AbstractProperty.AbstractPropertyContainer myParent;
 
   public EditPropertyContainer(AbstractProperty.AbstractPropertyContainer original) {

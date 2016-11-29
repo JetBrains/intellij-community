@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -77,20 +80,20 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
     final JLabel label = new JLabel(text);
     label.setUI(new MultiLineLabelUI());
     panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                            GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
+                                            GridBagConstraints.HORIZONTAL, JBUI.insets(8, 10, 0, 10), 0, 0));
     panel.add(myDetectedRootsChooser.getComponent(),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                     new Insets(8, 10, 8, 10), 0, 0));
+                                     JBUI.insets(8, 10), 0, 0));
 
     final JButton markAllButton = new JButton(IdeBundle.message("button.mark.all"));
     panel.add(markAllButton,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 10, 8, 2), 0, 0));
+                                     JBUI.insets(0, 10, 8, 2), 0, 0));
 
     final JButton unmarkAllButton = new JButton(IdeBundle.message("button.unmark.all"));
     panel.add(unmarkAllButton,
               new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 0, 8, 10), 0, 0));
+                                     JBUI.insets(0, 0, 8, 10), 0, 0));
 
     markAllButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -123,7 +126,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   }
 
   private void updateSelectedTypes() {
-    Set<String> selectedTypes = new LinkedHashSet<String>();
+    Set<String> selectedTypes = new LinkedHashSet<>();
 
     selectedTypes.add("Existing Sources");
 

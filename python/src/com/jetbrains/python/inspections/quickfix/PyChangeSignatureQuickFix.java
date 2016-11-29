@@ -42,14 +42,8 @@ public class PyChangeSignatureQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.change.signature");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.change.signature");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
@@ -79,5 +73,8 @@ public class PyChangeSignatureQuickFix implements LocalQuickFix {
     dialog.show();
   }
 
-
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public interface DebugProcess {
 
   RequestManager getRequestsManager();
 
+  @NotNull
   PositionManager getPositionManager();
 
   VirtualMachineProxy getVirtualMachineProxy();
@@ -74,7 +75,7 @@ public interface DebugProcess {
   Value invokeMethod(EvaluationContext evaluationContext,
                      ObjectReference objRef,
                      Method method,
-                     List args) throws EvaluateException;
+                     List<? extends Value> args) throws EvaluateException;
 
   /**
    * Is equivalent to invokeInstanceMethod(evaluationContext, classType, method, args, 0)
@@ -82,12 +83,12 @@ public interface DebugProcess {
   Value invokeMethod(EvaluationContext evaluationContext,
                      ClassType classType,
                      Method method,
-                     List args) throws EvaluateException;
+                     List<? extends Value> args) throws EvaluateException;
 
   Value invokeInstanceMethod(EvaluationContext evaluationContext,
                              ObjectReference objRef,
                              Method method,
-                             List args,
+                             List<? extends Value> args,
                              int invocationOptions) throws EvaluateException;
 
   ReferenceType findClass(EvaluationContext evaluationContext,
@@ -100,7 +101,7 @@ public interface DebugProcess {
   ObjectReference newInstance(EvaluationContext evaluationContext,
                               ClassType classType,
                               Method constructor,
-                              List paramList) throws EvaluateException;
+                              List<? extends Value> paramList) throws EvaluateException;
 
   boolean isAttached();
 

@@ -79,7 +79,7 @@ public class CollectionElementNameMacro extends Macro {
     }
     final String[] words = result.toString().split("_");
     if (words.length > 1) {
-      List<LookupElement> lookup = new ArrayList<LookupElement>();
+      List<LookupElement> lookup = new ArrayList<>();
       for(int i=0; i<words.length; i++) {
         String element = StringUtil.join(words, i, words.length, "_");
         lookup.add(LookupElementBuilder.create(element));

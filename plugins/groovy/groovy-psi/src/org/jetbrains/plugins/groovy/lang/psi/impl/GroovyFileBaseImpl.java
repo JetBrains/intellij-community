@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,28 +42,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * @author ilyas
  */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
-
-  private GrMethod[] myMethods = null;
-
-  @Override
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    myMethods = null;
-  }
 
   protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
@@ -103,35 +90,13 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   @Override
   @NotNull
-  public GrMethod[] getCodeMethods() {
+  public GrMethod[] getMethods() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
       return stub.getChildrenByType(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
     }
 
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
-  }
-
-  @NotNull
-  @Override
-  public GrMethod[] getMethods() {
-    if (myMethods == null) {
-      List<GrMethod> result = new ArrayList<GrMethod>();
-      
-      GrMethod[] methods = getCodeMethods();
-      for (GrMethod method : methods) {
-        final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
-        if (reflectedMethods.length > 0) {
-          result.addAll(Arrays.asList(reflectedMethods));
-        }
-        else {
-          result.add(method);
-        }
-      }
-
-      myMethods = result.toArray(new GrMethod[result.size()]);
-    }
-    return myMethods;
   }
 
   @Override
@@ -220,7 +185,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     myControlFlow = null;
   }
 
-  private volatile SoftReference<Instruction[]> myControlFlow = null;
+  private volatile SoftReference<Instruction[]> myControlFlow;
 
   @Override
   public Instruction[] getControlFlow() {
@@ -228,7 +193,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     Instruction[] result = SoftReference.dereference(myControlFlow);
     if (result == null) {
       result = new ControlFlowBuilder(getProject()).buildControlFlow(this);
-      myControlFlow = new SoftReference<Instruction[]>(result);
+      myControlFlow = new SoftReference<>(result);
     }
     return ControlFlowBuilder.assertValidPsi(result);
   }

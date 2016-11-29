@@ -16,32 +16,25 @@
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.regexp.psi.RegExpClassElement;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpIntersection;
-import org.intellij.lang.regexp.RegExpElementTypes;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpIntersectionImpl extends RegExpElementImpl implements RegExpIntersection {
+
     public RegExpIntersectionImpl(ASTNode astNode) {
         super(astNode);
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpIntersection(this);
     }
 
+    @Override
     @NotNull
-    public RegExpClassElement getLOperand() {
-        final ASTNode[] nodes = getNode().getChildren(RegExpElementTypes.CLASS_ELEMENTS);
-        return (RegExpClassElement)nodes[0].getPsi();
-    }
-
-    @Nullable
-    public RegExpClassElement getROperand() {
-        final ASTNode[] nodes = getNode().getChildren(RegExpElementTypes.CLASS_ELEMENTS);
-        return nodes.length > 1 ? (RegExpClassElement)nodes[1].getPsi() : null;
+    public RegExpClassElement[] getOperands() {
+        return findChildrenByClass(RegExpClassElement.class);
     }
 }

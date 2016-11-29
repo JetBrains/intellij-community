@@ -4,11 +4,18 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.Processor;
+import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
 
 class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
   @NotNull private final String myName;
-  private boolean myIsUserSchema;
+  @NotNull private final SchemaType mySchemaType;
+  @NotNull private final VirtualFile mySchemaFile;
+  @NotNull private final JsonSchemaObject mySchemaObject;
 
   @NotNull
   private final CompletionContributor myContributor;
@@ -18,9 +25,16 @@ class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
   @NotNull
   private final DocumentationProvider myDocumentationProvider;
 
-  public JsonSchemaObjectCodeInsightWrapper(@NotNull String name, @NotNull JsonSchemaObject schemaObject) {
+
+  public JsonSchemaObjectCodeInsightWrapper(@NotNull Project project, @NotNull String name,
+                                            @NotNull SchemaType type,
+                                            @NotNull VirtualFile schemaFile,
+                                            @NotNull JsonSchemaObject schemaObject) {
     myName = name;
-    myContributor = new JsonBySchemaObjectCompletionContributor(schemaObject);
+    mySchemaType = type;
+    mySchemaFile = schemaFile;
+    mySchemaObject = schemaObject;
+    myContributor = new JsonBySchemaObjectCompletionContributor(type, schemaObject);
     myAnnotator = new JsonBySchemaObjectAnnotator(schemaObject);
     myDocumentationProvider = new JsonBySchemaDocumentationProvider(schemaObject);
   }
@@ -48,12 +62,17 @@ class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
     return myDocumentationProvider;
   }
 
-  public JsonSchemaObjectCodeInsightWrapper setUserSchema(boolean userSchema) {
-    myIsUserSchema = userSchema;
-    return this;
+  @Override
+  public boolean iterateSchemaObjects(@NotNull final Processor<JsonSchemaObject> consumer) {
+    return consumer.process(mySchemaObject);
+  }
+
+  @Override
+  public void iterateSchemaFiles(@NotNull final PairConsumer<VirtualFile, String> consumer) {
+    consumer.consume(mySchemaFile, mySchemaObject.getId());
   }
 
   public boolean isUserSchema() {
-    return myIsUserSchema;
+    return SchemaType.userSchema.equals(mySchemaType);
   }
 }

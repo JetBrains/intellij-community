@@ -16,45 +16,82 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemProperties;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.gist.GistManager;
+import com.intellij.util.gist.VirtualFileGist;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquations> {
-  public static final ID<Bytes, HEquations> NAME = ID.create("bytecodeAnalysis");
-  private final HEquationsExternalizer myExternalizer = new HEquationsExternalizer();
-  private static final ClassDataIndexer INDEXER = new ClassDataIndexer();
+public class BytecodeAnalysisIndex extends ScalarIndexExtension<Bytes> {
+  private static final ID<Bytes, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
-
-  private static final int ourInternalVersion = 8;
-  private static final boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", true);
+  private static final VirtualFileGist<Map<Bytes, HEquations>> ourGist = GistManager.getInstance().newVirtualFileGist(
+    "BytecodeAnalysisIndex", 0, new HEquationsExternalizer(), new ClassDataIndexer());
 
   @NotNull
   @Override
-  public ID<Bytes, HEquations> getName() {
+  public ID<Bytes, Void> getName() {
     return NAME;
   }
 
   @NotNull
   @Override
-  public DataIndexer<Bytes, HEquations, FileContent> getIndexer() {
-    return INDEXER;
+  public DataIndexer<Bytes, Void, FileContent> getIndexer() {
+    return inputData -> {
+      try {
+        return collectKeys(inputData.getContent());
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        // incorrect bytecode may result in Runtime exceptions during analysis
+        // so here we suppose that exception is due to incorrect bytecode
+        LOG.debug("Unexpected Error during indexing of bytecode", e);
+        return Collections.emptyMap();
+      }
+    };
+  }
+
+  @NotNull
+  private static Map<Bytes, Void> collectKeys(byte[] content) throws NoSuchAlgorithmException {
+    HashMap<Bytes, Void> map = new HashMap<>();
+    MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
+    new ClassReader(content).accept(new KeyedMethodVisitor() {
+      @Nullable
+      @Override
+      MethodVisitor visitMethod(MethodNode node, Key key) {
+        map.put(ClassDataIndexer.compressKey(md, key), null);
+        return null;
+      }
+    }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+    return map;
   }
 
   @NotNull
@@ -63,21 +100,15 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
     return KEY_DESCRIPTOR;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<HEquations> getValueExternalizer() {
-    return myExternalizer;
+  public boolean hasSnapshotMapping() {
+    return true;
   }
 
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
-      @Override
-      public boolean acceptInput(@NotNull VirtualFile file) {
-        return ourEnabled && super.acceptInput(file);
-      }
-    };
+    return new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE);
   }
 
   @Override
@@ -87,7 +118,14 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
 
   @Override
   public int getVersion() {
-    return ourInternalVersion + (ourEnabled ? 0xFF : 0);
+    return 10;
+  }
+
+  @NotNull
+  static List<HEquations> getEquations(GlobalSearchScope scope, Bytes key) {
+    Project project = ProjectManager.getInstance().getDefaultProject(); // the data is project-independent
+    return ContainerUtil.mapNotNull(FileBasedIndex.getInstance().getContainingFiles(NAME, key, scope),
+                                    file -> ourGist.getFileData(project, file).get(key));
   }
 
   /**
@@ -103,9 +141,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
     @Override
     public Bytes read(@NotNull DataInput in) throws IOException {
       byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
-      for (int i = 0; i < bytes.length; i++) {
-        bytes[i] = in.readByte();
-      }
+      in.readFully(bytes);
       return new Bytes(bytes);
     }
 
@@ -123,9 +159,22 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
   /**
    * Externalizer for compressed equations.
    */
-  public static class HEquationsExternalizer implements DataExternalizer<HEquations> {
+  public static class HEquationsExternalizer implements DataExternalizer<Map<Bytes, HEquations>> {
     @Override
-    public void save(@NotNull DataOutput out, HEquations eqs) throws IOException {
+    public void save(@NotNull DataOutput out, Map<Bytes, HEquations> value) throws IOException {
+      DataInputOutputUtil.writeSeq(out, value.entrySet(), entry -> {
+        KEY_DESCRIPTOR.save(out, entry.getKey());
+        saveEquations(out, entry.getValue());
+      });
+    }
+
+    @Override
+    public Map<Bytes, HEquations> read(@NotNull DataInput in) throws IOException {
+      return DataInputOutputUtil.readSeq(in, () -> Pair.create(KEY_DESCRIPTOR.read(in), readEquations(in))).
+        stream().collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
+    }
+
+    private static void saveEquations(@NotNull DataOutput out, HEquations eqs) throws IOException {
       out.writeBoolean(eqs.stable);
       DataInputOutputUtil.writeINT(out, eqs.results.size());
       for (DirectionResultPair pair : eqs.results) {
@@ -200,16 +249,15 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
       }
     }
 
-    @Override
-    public HEquations read(@NotNull DataInput in) throws IOException {
+    private static HEquations readEquations(@NotNull DataInput in) throws IOException {
       boolean stable = in.readBoolean();
       int size = DataInputOutputUtil.readINT(in);
-      ArrayList<DirectionResultPair> results = new ArrayList<DirectionResultPair>(size);
+      ArrayList<DirectionResultPair> results = new ArrayList<>(size);
       for (int k = 0; k < size; k++) {
         int directionKey = DataInputOutputUtil.readINT(in);
         Direction direction = BytecodeAnalysisConverter.extractDirection(directionKey);
         if (direction == Direction.Pure) {
-          Set<HEffectQuantum> effects = new HashSet<HEffectQuantum>();
+          Set<HEffectQuantum> effects = new HashSet<>();
           int effectsSize = DataInputOutputUtil.readINT(in);
           for (int i = 0; i < effectsSize; i++) {
             int effectMask = DataInputOutputUtil.readINT(in);
@@ -221,9 +269,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
             }
             else if (effectMask == -3){
               byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
-              for (int bi = 0; bi < bytes.length; bi++) {
-                bytes[bi] = in.readByte();
-              }
+              in.readFully(bytes);
               int rawDirKey = DataInputOutputUtil.readINT(in);
               boolean isStable = in.readBoolean();
               HKey key = new HKey(bytes, Math.abs(rawDirKey), isStable, false);
@@ -277,9 +323,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
               HKey[] ids = new HKey[componentSize];
               for (int j = 0; j < componentSize; j++) {
                 byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
-                for (int bi = 0; bi < bytes.length; bi++) {
-                  bytes[bi] = in.readByte();
-                }
+                in.readFully(bytes);
                 int rawDirKey = DataInputOutputUtil.readINT(in);
                 ids[j] = new HKey(bytes, Math.abs(rawDirKey), in.readBoolean(), rawDirKey < 0);
               }

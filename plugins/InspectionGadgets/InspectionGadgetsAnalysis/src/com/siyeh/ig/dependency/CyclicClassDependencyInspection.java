@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
-import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
@@ -51,13 +50,12 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
       return null;
     }
     final RefClass refClass = (RefClass)refEntity;
-    final PsiClass aClass = refClass.getElement();
-    if (aClass == null || aClass.getContainingClass() != null || aClass instanceof PsiAnonymousClass) {
+    if (refClass.isAnonymous() || refClass.isLocalClass() || refClass.isSyntheticJSP()) {
       return null;
     }
     final Set<RefClass> dependencies = DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
     final Set<RefClass> dependents = DependencyUtils.calculateTransitiveDependentsForClass(refClass);
-    final Set<RefClass> mutualDependents = new HashSet<RefClass>(dependencies);
+    final Set<RefClass> mutualDependents = new HashSet<>(dependencies);
     mutualDependents.retainAll(dependents);
     final int numMutualDependents = mutualDependents.size();
     if (numMutualDependents == 0) {
@@ -78,6 +76,10 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
     else {
       errorString = InspectionGadgetsBundle.message("cyclic.class.dependency.problem.descriptor",
                                                     refEntity.getName(), Integer.valueOf(numMutualDependents));
+    }
+    final PsiClass aClass = refClass.getElement();
+    if (aClass == null) {
+      return null;
     }
     final PsiElement anchor = aClass.getNameIdentifier();
     if (anchor == null) return null;

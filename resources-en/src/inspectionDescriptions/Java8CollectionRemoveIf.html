@@ -1,0 +1,17 @@
+<html>
+<body>
+The inspection reports the loops which could be collapsed into single <code>Collection.removeIf</code> call.
+<!-- tooltip end -->
+<p>The loops like this are reported:</p>
+<pre>
+  for (Iterator&lt;String&gt; it = collection.iterator(); it.hasNext(); ) {
+    String aValue = it.next();
+    if(shouldBeRemoved(aValue)) {
+      it.remove();
+    }
+  }
+</pre>
+<p>This conversion is available since Java 8 only.</p>
+<small>New in 2016.3</small>
+</body>
+</html>

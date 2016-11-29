@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -212,6 +211,31 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA153076() throws Exception {
+    doTest();
+  }
+
+  //java 8 error
+  public void testNotPotentiallyCompatibleMethodReference() throws Exception {
+    doTest();
+  }
+
+  public void testSpecificFunctionalInterfaces() throws Exception {
+    doTest();
+  }
+
+  public void testIgnoreStaticCorrectnessDuringOverloadResolution() throws Exception {
+    doTest(false);
+  }
+
+  public void testIgnoreLambdaVoidValueIncompatibilitiesPreferringMethodWithFunctionalTypeToNonFunctionalType() throws Exception {
+    doTest(false);
+  }
+
+  public void testVarargComponentTypesShouldBeExcludedFromBoxingComparison() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }
@@ -219,10 +243,5 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

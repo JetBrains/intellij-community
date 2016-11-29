@@ -46,15 +46,11 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     if (module == null || module.isDisposed()) {  // module has been disposed
       return Collections.emptyList();
     }
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    ModuleFileIndex moduleFileIndex = rootManager.getFileIndex();
 
-    final VirtualFile[] contentRoots = rootManager.getContentRoots();
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>(contentRoots.length + 1);
+    final List<VirtualFile> contentRoots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelModuleRoots(module, getSettings());
+    final List<AbstractTreeNode> children = new ArrayList<>(contentRoots.size());
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     for (final VirtualFile contentRoot : contentRoots) {
-      if (!moduleFileIndex.isInContent(contentRoot)) continue;
-
       if (contentRoot.isDirectory()) {
         PsiDirectory directory = psiManager.findDirectory(contentRoot);
         if (directory != null) {
@@ -68,12 +64,6 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
         }
       }
     }
-
-    /*
-    if (getSettings().isShowLibraryContents()) {
-      children.add(new LibraryGroupNode(getProject(), new LibraryGroupElement(getValue()), getSettings()));
-    }
-    */
     return children;
   }
 

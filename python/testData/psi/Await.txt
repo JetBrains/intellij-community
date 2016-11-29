@@ -20,6 +20,39 @@ PyFile:Await.py
           PyReferenceExpression: x
             PsiElement(Py:IDENTIFIER)('x')
   PsiWhiteSpace('\n\n\n')
+  PyFunction('g')
+    PsiElement(Py:ASYNC_KEYWORD)('async')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('g')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PyNamedParameter('y')
+        PsiElement(Py:IDENTIFIER)('y')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyAssignmentStatement
+        PsiErrorElement:can't assign to await expression
+          PsiElement(Py:AWAIT_KEYWORD)('await')
+          PsiWhiteSpace(' ')
+          PyTargetExpression: x
+            PsiElement(Py:IDENTIFIER)('x')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:EQ)('=')
+        PsiWhiteSpace(' ')
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('5')
+      PsiWhiteSpace('\n    ')
+      PyExpressionStatement
+        PyPrefixExpression
+          PsiElement(Py:AWAIT_KEYWORD)('await')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: y
+            PsiElement(Py:IDENTIFIER)('y')
+  PsiWhiteSpace('\n\n\n')
   PyAssignmentStatement
     PyTargetExpression: await
       PsiElement(Py:IDENTIFIER)('await')

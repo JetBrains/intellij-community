@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.ex;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 
 public class DisableInspectionToolAction extends IntentionAndQuickFixAction implements Iconable {
   private final String myToolId;
@@ -62,33 +59,14 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
+    InspectionProfile inspectionProfile = profileManager.getCurrentProfile();
     InspectionToolWrapper toolWrapper = inspectionProfile.getInspectionTool(myToolId, project);
     return toolWrapper == null || toolWrapper.getDefaultLevel() != HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
   }
 
   @Override
   public void applyFix(@NotNull Project project, final PsiFile file, @Nullable Editor editor) {
-    modifyAndCommitProjectProfile(new Consumer<ModifiableModel>() {
-      @Override
-      public void consume(ModifiableModel modifiableModel) {
-        modifiableModel.disableTool(myToolId, file);
-      }
-    }, project);
-    DaemonCodeAnalyzer.getInstance(project).restart();
-  }
-
-  public static void modifyAndCommitProjectProfile(Consumer<ModifiableModel> action, Project project) {
-    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
-    ModifiableModel model = inspectionProfile.getModifiableModel();
-    action.consume(model);
-    try {
-      model.commit();
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
-    }
+    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> it.disableTool(myToolId, file));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.OriginInfoAwareElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +38,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   protected PsiType myType;
   protected final PsiModifierList myModifierList;
   protected boolean myWritable;
-  private String myOriginInfo = null;
+  private String myOriginInfo;
 
   public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, PsiType type, boolean writable, PsiElement scope) {
     this(manager, nameIdentifier, JavaLanguage.INSTANCE, type, writable, scope);

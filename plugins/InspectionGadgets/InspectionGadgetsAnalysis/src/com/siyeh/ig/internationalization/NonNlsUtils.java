@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2015 Bas Leijdekkers
+ * Copyright 2007-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class NonNlsUtils {
 
-  private static final Key<Boolean> KEY = new Key("IG_NON_NLS_ANNOTATED_USE");
+  private static final Key<Boolean> KEY = new Key<>("IG_NON_NLS_ANNOTATED_USE");
 
   private NonNlsUtils() {
   }

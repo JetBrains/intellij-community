@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,11 +63,11 @@ public class SystemBuilder {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
     mySettings = settings;
-    myMethodCache = new HashMap<PsiElement, Boolean>();
-    myParameters = new HashMap<PsiParameter, PsiParameter>();
-    myMethods = new HashMap<PsiMethod, PsiMethod>();
-    myTypes = new HashMap<PsiElement, PsiType>();
-    myVisitedConstructions = new HashSet<PsiAnchor>();
+    myMethodCache = new HashMap<>();
+    myParameters = new HashMap<>();
+    myMethods = new HashMap<>();
+    myTypes = new HashMap<>();
+    myVisitedConstructions = new HashSet<>();
     myTypeVariableFactory = new PsiTypeVariableFactory();
   }
 
@@ -123,9 +123,7 @@ public class SystemBuilder {
       Boolean good = myMethodCache.get(method);
 
       if (good != null && good.booleanValue()) {
-        if (myMethods.get(method) == null) {
-          myMethods.put(method, method);
-        }
+        myMethods.putIfAbsent(method, method);
 
         if (parameter != null && myParameters.get(parameter) == null) {
           myParameters.put(parameter, parameter);
@@ -138,7 +136,7 @@ public class SystemBuilder {
       keyParameter = parameter;
     }
 
-    final PsiMethod[] overriders = OverridingMethodsSearch.search(keyMethod, true).toArray(PsiMethod.EMPTY_ARRAY);
+    final PsiMethod[] overriders = OverridingMethodsSearch.search(keyMethod).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (final PsiMethod overrider : overriders) {
       final PsiElement e = parameter != null ? overrider.getParameterList().getParameters()[index] : overrider;
@@ -353,7 +351,7 @@ public class SystemBuilder {
         final PsiExpression qualifier =
           expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).getMethodExpression().getQualifierExpression() : null;
 
-        final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(methodTypeParameters));
+        final Set<PsiTypeParameter> typeParameters = new HashSet<>(Arrays.asList(methodTypeParameters));
 
         PsiSubstitutor qualifierSubstitutor = PsiSubstitutor.EMPTY;
         PsiSubstitutor supertypeSubstitutor = PsiSubstitutor.EMPTY;
@@ -398,7 +396,7 @@ public class SystemBuilder {
           }
         }
 
-        final Map<PsiTypeParameter, PsiType> mapping = new HashMap<PsiTypeParameter, PsiType>();
+        final Map<PsiTypeParameter, PsiType> mapping = new HashMap<>();
 
         for (int i = 0; i < Math.min(parameters.length, arguments.length); i++) {
           final PsiType argumentType = evaluateType(arguments[i], system);

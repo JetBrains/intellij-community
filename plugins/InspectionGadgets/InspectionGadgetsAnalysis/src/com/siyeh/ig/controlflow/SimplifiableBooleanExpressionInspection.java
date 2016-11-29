@@ -71,15 +71,8 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     @Override
@@ -190,7 +183,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
       final PsiExpression lhs2 = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
       final PsiExpression rhs1 = ParenthesesUtils.stripParentheses(expression.getROperand());
       final PsiExpression negated = BoolUtils.getNegated(rhs1);
-      if (!EquivalenceChecker.expressionsAreEquivalent(lhs2, negated)) {
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(lhs2, negated)) {
         return;
       }
       registerError(expression, expression);

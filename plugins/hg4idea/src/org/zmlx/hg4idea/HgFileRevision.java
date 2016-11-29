@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
@@ -24,6 +23,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class HgFileRevision implements VcsFileRevision {
@@ -38,11 +38,11 @@ public class HgFileRevision implements VcsFileRevision {
   private final Set<String> myFilesModified;
   private final Set<String> myFilesAdded;
   private final Set<String> myFilesDeleted;
-  private final Map<String, String> myFilesCopied;
+  private final Map<String, String> myFilesMoved; // actually we collect moved and track copied as added
 
   public HgFileRevision(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber vcsRevisionNumber,
                         String branchName, Date revisionDate, String author, String commitMessage,
-                        Set<String> filesModified, Set<String> filesAdded, Set<String> filesDeleted, Map<String, String> filesCopied) {
+                        Set<String> filesModified, Set<String> filesAdded, Set<String> filesDeleted, Map<String, String> filesMoved) {
     myProject = project;
     myFile = hgFile;
     myRevisionNumber = vcsRevisionNumber;
@@ -53,7 +53,7 @@ public class HgFileRevision implements VcsFileRevision {
     myFilesModified = filesModified;
     myFilesAdded = filesAdded;
     myFilesDeleted = filesDeleted;
-    myFilesCopied = filesCopied;
+    myFilesMoved = filesMoved;
   }
 
   @NotNull
@@ -101,8 +101,8 @@ public class HgFileRevision implements VcsFileRevision {
   }
 
   @NotNull
-  public Map<String, String> getCopiedFiles() {
-    return myFilesCopied;
+  public Map<String, String> getMovedFiles() {
+    return myFilesMoved;
   }
 
   @NotNull
@@ -138,6 +138,6 @@ public class HgFileRevision implements VcsFileRevision {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myFile, myRevisionNumber);
+    return Objects.hash(myFile, myRevisionNumber);
   }
 }

@@ -37,26 +37,23 @@ import java.util.*;
  */
 public class ArrangementStandardSettingsManager {
 
-  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWidths  = new TObjectIntHashMap<ArrangementSettingsToken>();
-  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWeights = new TObjectIntHashMap<ArrangementSettingsToken>();
+  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWidths  = new TObjectIntHashMap<>();
+  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWeights = new TObjectIntHashMap<>();
 
-  @NotNull private final Comparator<ArrangementSettingsToken> myComparator = new Comparator<ArrangementSettingsToken>() {
-    @Override
-    public int compare(ArrangementSettingsToken t1, ArrangementSettingsToken t2) {
-      if (myWeights.containsKey(t1)) {
-        if (myWeights.containsKey(t2)) {
-          return myWeights.get(t1) - myWeights.get(t2);
-        }
-        else {
-          return -1;
-        }
-      }
-      else if (myWeights.containsKey(t2)) {
-        return 1;
+  @NotNull private final Comparator<ArrangementSettingsToken> myComparator = (t1, t2) -> {
+    if (myWeights.containsKey(t1)) {
+      if (myWeights.containsKey(t2)) {
+        return myWeights.get(t1) - myWeights.get(t2);
       }
       else {
-        return t1.compareTo(t2);
+        return -1;
       }
+    }
+    else if (myWeights.containsKey(t2)) {
+      return 1;
+    }
+    else {
+      return t1.compareTo(t2);
     }
   };
 

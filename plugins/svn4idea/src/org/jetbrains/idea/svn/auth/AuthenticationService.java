@@ -157,7 +157,7 @@ public class AuthenticationService {
     return requestCredentials(realm, StringUtil.toLowerCase(mode.toString()), new Getter<String>() {
       @Override
       public String get() {
-        final Ref<String> answer = new Ref<String>();
+        final Ref<String> answer = new Ref<>();
 
         Runnable command = new Runnable() {
           public void run() {

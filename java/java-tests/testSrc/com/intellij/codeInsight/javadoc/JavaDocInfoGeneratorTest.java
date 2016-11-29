@@ -45,6 +45,8 @@ import java.util.List;
  * @author yole
  */
 public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
+  private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
+
   private boolean myUseJava8Sdk;
   
   public void testSimpleField() throws Exception {
@@ -162,6 +164,22 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestField();
   }
 
+  public void testFieldInitializedWithLambda() throws Exception {
+    doTestField();
+  }
+
+  public void testFieldInitializedWithArray() throws Exception {
+    doTestField();
+  }
+
+  public void testFieldInitializedWithSizedArray() throws Exception {
+    doTestField();
+  }
+
+  public void testDoubleLt() throws Exception {
+    doTestClass();
+  }
+
   public void testEnumConstantOrdinal() throws Exception {
     PsiClass psiClass = getTestClass();
     PsiField field = psiClass.getFields() [0];
@@ -190,7 +208,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   private static String exampleHtmlFileText(String name) throws IOException {
-    final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/" + name + ".html");
+    final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_FOLDER + name + ".html");
     return StringUtil.convertLineSeparators(FileUtil.loadFile(htmlPath).trim());
   }
 
@@ -208,6 +226,11 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
   public void testLambdaParameter() throws Exception {
     doTestLambdaParameter();
+  }
+
+  private void doTestClass() throws Exception {
+    PsiClass psiClass = getTestClass();
+    verifyJavaDoc(psiClass);
   }
 
   private void doTestField() throws Exception {
@@ -230,7 +253,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   private PsiClass getTestClass() throws Exception{
-    configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
+    configureByFile();
     return ((PsiJavaFile)myFile).getClasses() [0];
   }
 
@@ -239,16 +262,17 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   private void verifyJavaDoc(final PsiElement field, List<String> docUrls) throws IOException {
-    String docInfo = JavaDocInfoGeneratorFactory.create(getProject(), field).generateDocInfo(docUrls);
+    String docInfo = JavaDocumentationProvider.generateExternalJavadoc(field, docUrls);
     assertNotNull(docInfo);
     assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
   }
 
   public void testPackageInfo() throws Exception {
-    final String path = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/";
+    final String path = JavaTestUtil.getJavaTestDataPath() + TEST_DATA_FOLDER;
     final String packageInfo = path + getTestName(true);
     PsiTestUtil.createTestProjectStructure(myProject, myModule, path, myFilesToDelete);
-    final String info = JavaDocInfoGeneratorFactory.create(getProject(), JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true))).generateDocInfo(null);
+    PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true));
+    final String info = JavaDocumentationProvider.generateExternalJavadoc(psiPackage, (List<String>)null);
     String htmlText = FileUtil.loadFile(new File(packageInfo + File.separator + "packageInfo.html"));
     assertNotNull(info);
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), replaceEnvironmentDependentContent(info));
@@ -263,7 +287,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
   
   private void doTestPackageInfo(String caretPositionedAt) throws Exception {
-    final String rootPath = getTestDataPath() + "/codeInsight/javadocIG/";
+    final String rootPath = getTestDataPath() + TEST_DATA_FOLDER;
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
     VirtualFile piFile = root.findFileByRelativePath(getTestName(true) + "/package-info.java");
     assertNotNull(piFile);
@@ -275,7 +299,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   public void testInheritedParameter() throws Exception {
-    configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
+    configureByFile();
     PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
     PsiClass innerClass = outerClass.findInnerClassByName("Impl", false);
     assertNotNull(innerClass);
@@ -285,7 +309,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   
   public void testHtmlLink() throws Exception {
     PsiTestUtil.createTestProjectStructure(myProject, myModule, 
-                                           getTestDataPath() + "/codeInsight/javadocIG/htmlLinkProject", myFilesToDelete);
+                                           getTestDataPath() + TEST_DATA_FOLDER + "htmlLinkProject", myFilesToDelete);
     verifyJavadocFor("htmlLink");
     verifyJavadocFor("pack.htmlLinkDeep");
   }
@@ -293,7 +317,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   private void verifyJavadocFor(String className) throws IOException {
     PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
     assertNotNull(psiClass);
-    String doc = JavaDocInfoGeneratorFactory.create(myProject, psiClass).generateDocInfo(null);
+    String doc = JavaDocumentationProvider.generateExternalJavadoc(psiClass, (List<String>)null);
     assertNotNull(doc);
     PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
     PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");
@@ -308,7 +332,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   
   public void testHtmlLinkToPackageInfo() throws Exception {
     PsiTestUtil.createTestProjectStructure(myProject, myModule,
-                                           getTestDataPath() + "/codeInsight/javadocIG/htmlLinkToPackageInfo", myFilesToDelete);
+                                           getTestDataPath() + TEST_DATA_FOLDER + "htmlLinkToPackageInfo", myFilesToDelete);
     verifyJavadocFor("pack.A");
   }
   
@@ -323,14 +347,14 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
   
   public void testMatchingParameterNameFromParent() throws Exception {
-    configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
+    configureByFile();
     PsiClass psiClass = ((PsiJavaFile)myFile).getClasses()[1];
     PsiMethod method = psiClass.getMethods()[0];
     verifyJavaDoc(method);
   }
 
   public void testMatchingTypeParameterNameFromParent() throws Exception {
-    configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
+    configureByFile();
     PsiClass psiClass = ((PsiJavaFile)myFile).getClasses()[1];
     PsiMethod method = psiClass.getMethods()[0];
     verifyJavaDoc(method);
@@ -341,7 +365,22 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertNotNull(aClass);
     verifyJavaDoc(aClass, Collections.singletonList("dummyUrl"));
   }
-  
+
+  public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() throws Exception {
+    doTestAtCaret();
+  }
+
+  private void doTestAtCaret() throws Exception {
+    configureByFile();
+    String docInfo = JavaExternalDocumentationTest.getDocumentationText(myFile, myEditor.getCaretModel().getOffset());
+    assertNotNull(docInfo);
+    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
+  }
+
+  private void configureByFile() throws Exception {
+    configureByFile(TEST_DATA_FOLDER + getTestName(true) + ".java");
+  }
+
   public void testLibraryPackageDocumentation() throws Exception {
     final VirtualFile libClasses = JavaExternalDocumentationTest.getJarFile("library.jar");
     final VirtualFile libSources = JavaExternalDocumentationTest.getJarFile("library-src.jar");

@@ -52,7 +52,6 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   public final static Key MARKER_KEY = new Key();
   public static final ID<Key,String> NAME = ID.create("xmlProperties");
 
-  private static final EnumeratorStringDescriptor ENUMERATOR_STRING_DESCRIPTOR = new EnumeratorStringDescriptor();
   private static final String HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD = "http://java.sun.com/dtd/properties.dtd";
 
   @NotNull
@@ -76,7 +75,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   @NotNull
   @Override
   public DataExternalizer<String> getValueExternalizer() {
-    return ENUMERATOR_STRING_DESCRIPTOR;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull
@@ -129,13 +128,10 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
       return CharArrayUtil.indexOf(contents, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) != -1 &&
           isAccepted(contents);
     }
-    return !FileBasedIndex.getInstance().processValues(NAME, MARKER_KEY, file.getVirtualFile(),
-                                                       new FileBasedIndex.ValueProcessor<String>() {
-                                                         @Override
-                                                         public boolean process(VirtualFile file, String value) {
-                                                           return false;
-                                                         }
-                                                       }, GlobalSearchScope.allScope(project));
+    return !FileBasedIndex.getInstance().processValues(NAME, MARKER_KEY,
+                                                       file.getVirtualFile(),
+                                                       (file1, value) -> false,
+                                                       GlobalSearchScope.allScope(project));
   }
 
   private static boolean isAccepted(CharSequence bytes) {
@@ -219,7 +215,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     boolean accepted;
     boolean insideEntry;
     String key;
-    private final HashMap<Key, String> myMap = new HashMap<Key, String>();
+    private final HashMap<Key, String> myMap = new HashMap<>();
     private final boolean myStopIfAccepted;
 
     public MyIXMLBuilderAdapter(boolean stopIfAccepted) {

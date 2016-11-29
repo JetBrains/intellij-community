@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -40,10 +41,10 @@ import java.util.*;
 public class SetupTaskIntrospector {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector");
 
-  private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<String, List<SetupTask>>();
-  private static final Map<String, List<SetupTask>> ourSetuptoolsTaskCache = new HashMap<String, List<SetupTask>>();
+  private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<>();
+  private static final Map<String, List<SetupTask>> ourSetuptoolsTaskCache = new HashMap<>();
 
-  private static boolean usesSetuptools(PyFile file) {
+  public static boolean usesSetuptools(@NotNull PyFile file) {
     final List<PyFromImportStatement> imports = file.getFromImports();
     for (PyFromImportStatement anImport : imports) {
       final QualifiedName qName = anImport.getImportSourceQName();
@@ -99,7 +100,7 @@ public class SetupTaskIntrospector {
   private static final Set<String> SKIP_NAMES = ImmutableSet.of(PyNames.INIT_DOT_PY, "alias.py", "setopt.py", "savecfg.py");
 
   private static List<SetupTask> collectTasks(PsiDirectory dir, boolean setuptools) {
-    List<SetupTask> result = new ArrayList<SetupTask>();
+    List<SetupTask> result = new ArrayList<>();
     for (PsiFile commandFile : dir.getFiles()) {
       if (commandFile instanceof PyFile && !SKIP_NAMES.contains(commandFile.getName())) {
         final String taskName = FileUtil.getNameWithoutExtension(commandFile.getName());
@@ -125,7 +126,7 @@ public class SetupTaskIntrospector {
       }
 
       final List<PyExpression> booleanOptions = resolveSequenceValue(taskClass, "boolean_options");
-      final List<String> booleanOptionsList = new ArrayList<String>();
+      final List<String> booleanOptionsList = new ArrayList<>();
       for (PyExpression option : booleanOptions) {
         final String s = PyPsiUtils.strValue(option);
         if (s != null) {
@@ -151,7 +152,7 @@ public class SetupTaskIntrospector {
   }
 
   private static List<PyExpression> resolveSequenceValue(PyClass aClass, String name) {
-    List<PyExpression> result = new ArrayList<PyExpression>();
+    List<PyExpression> result = new ArrayList<>();
     collectSequenceElements(aClass.findClassAttribute(name, true, null), result);
     return result;
   }
@@ -177,7 +178,7 @@ public class SetupTaskIntrospector {
   }
 
   private static Map<String, String> parseNegativeOpt(PyExpression dict) {
-    Map<String, String> result = new HashMap<String, String>();
+    Map<String, String> result = new HashMap<>();
     dict = PyPsiUtils.flattenParens(dict);
     if (dict instanceof PyDictLiteralExpression) {
       final PyKeyValueExpression[] elements = ((PyDictLiteralExpression)dict).getElements();

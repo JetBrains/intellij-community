@@ -105,12 +105,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
           incErrorCount(highlighter, -1);
         }
       });
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          for (RangeHighlighter rangeHighlighter : model.getAllHighlighters()) {
-            incErrorCount(rangeHighlighter, 1);
-          }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        for (RangeHighlighter rangeHighlighter : model.getAllHighlighters()) {
+          incErrorCount(rangeHighlighter, 1);
         }
       });
     }
@@ -118,12 +115,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   private void refresh() {
     int maxIndex = mySeverityRegistrar.getSeverityMaxIndex();
-    if (errorCount != null && maxIndex == errorCount.length) return;
-    int[] newErrors = new int[maxIndex+1];
-    if (errorCount != null) {
-      System.arraycopy(errorCount, 0, newErrors, 0, Math.min(errorCount.length, newErrors.length));
-    }
-    errorCount = newErrors;
+    if (errorCount != null && maxIndex + 1 == errorCount.length) return;
+    errorCount = new int[maxIndex + 1];
   }
 
   static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel,
@@ -160,6 +153,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (!(o instanceof HighlightInfo)) return;
     HighlightInfo info = (HighlightInfo)o;
     HighlightSeverity infoSeverity = info.getSeverity();
+    if (infoSeverity.myVal <= HighlightSeverity.INFORMATION.myVal) return;
     final int severityIdx = mySeverityRegistrar.getSeverityIdx(infoSeverity);
     if (severityIdx != -1) {
       errorCount[severityIdx] += delta;
@@ -248,7 +242,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     fillDaemonCodeAnalyzerErrorsStatus(status, severityRegistrar);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument);
     status.passStati = passes.isEmpty() ? Collections.<ProgressableTextEditorHighlightingPass>emptyList() :
-                       new ArrayList<ProgressableTextEditorHighlightingPass>(passes.size());
+                       new ArrayList<>(passes.size());
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < passes.size(); i++) {
       TextEditorHighlightingPass tepass = passes.get(i);
@@ -305,7 +299,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     statusExtraLine = null;
 
     boolean result = false;
-    if (!status.passStati.equals(new ArrayList<ProgressableTextEditorHighlightingPass>(passes.keySet()))) {
+    if (!status.passStati.equals(new ArrayList<>(passes.keySet()))) {
       // passes set has changed
       rebuildPassesMap(status);
       result = true;
@@ -336,7 +330,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     Icon icon = AllIcons.General.InspectionsOK;
     for (int i = status.errorCount.length - 1; i >= 0; i--) {
-      if (status.errorCount[i] != 0) {
+      if (status.errorCount[i] > 0) {
         icon = SeverityRegistrar.getSeverityRegistrar(project).getRendererIconByIndex(i);
         break;
       }

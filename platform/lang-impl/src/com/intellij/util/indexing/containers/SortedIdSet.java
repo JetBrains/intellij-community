@@ -15,7 +15,7 @@
  */
 package com.intellij.util.indexing.containers;
 
-import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.indexing.IntPredicate;
 import gnu.trove.TIntProcedure;
 
 /**
@@ -89,13 +89,13 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   }
 
   @Override
-  public ValueContainer.IntIterator intIterator() {
+  public IntIdsIterator intIterator() {
     return new Iterator();
   }
 
   @Override
-  public ValueContainer.IntPredicate intPredicate() {
-    return new ValueContainer.IntPredicate() {
+  public IntPredicate intPredicate() {
+    return new IntPredicate() {
 
       @Override
       public boolean contains(int id) {
@@ -104,7 +104,7 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
     };
   }
 
-  private class Iterator implements ValueContainer.IntIterator {
+  private class Iterator implements IntIdsIterator {
     private int myCursor;
 
     Iterator() {
@@ -134,7 +134,7 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
     }
 
     @Override
-    public ValueContainer.IntIterator createCopyInInitialState() {
+    public IntIdsIterator createCopyInInitialState() {
       return new Iterator();
     }
   }

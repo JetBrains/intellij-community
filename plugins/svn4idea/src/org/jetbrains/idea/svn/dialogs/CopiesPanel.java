@@ -125,7 +125,7 @@ public class CopiesPanel {
                 ObjectsConvertor.convert(infoList, new Convertor<WCInfo, OverrideEqualsWrapper<WCInfo>>() {
                   @Override
                   public OverrideEqualsWrapper<WCInfo> convert(WCInfo o) {
-                    return new OverrideEqualsWrapper<WCInfo>(InfoEqualityPolicy.getInstance(), o);
+                    return new OverrideEqualsWrapper<>(InfoEqualityPolicy.getInstance(), o);
                   }
                 }, ObjectsConvertor.NOT_NULL);
 
@@ -186,9 +186,6 @@ public class CopiesPanel {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(holderPanel);
     registerHelp(pane);
     myHolder = pane;
-    final JScrollBar vBar = pane.getVerticalScrollBar();
-    vBar.setBlockIncrement(vBar.getBlockIncrement() * 5);
-    vBar.setUnitIncrement(vBar.getUnitIncrement() * 5);
     myHolder.setBorder(null);
     setFocusableForLinks(myRefreshLabel);
     refreshOnPooled.consume(true);
@@ -372,7 +369,7 @@ public class CopiesPanel {
         String workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
         MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, SVNPathUtil.tail(branchUrl), root);
 
-        new QuickMerge(mergeContext).execute(new QuickMergeInteractionImpl(myProject));
+        new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
       }
     }, "Select branch", mergeLabel);
   }

@@ -14,6 +14,7 @@ import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,11 +29,18 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 class ReplaceUsageViewContext extends UsageViewContext {
-  private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<Usage, ReplacementInfo>();
+  private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<>();
   private final Replacer replacer = new Replacer(mySearchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getOptions());
+  private UsageView myUsageView;
+  private Set<Usage> myExcludedSet;
 
   ReplaceUsageViewContext(SearchContext context, Configuration configuration, Runnable searchStarter) {
     super(configuration, context, searchStarter);
+  }
+
+  @Override
+  public void setUsageView(UsageView usageView) {
+    myUsageView = usageView;
   }
 
   public Replacer getReplacer() {
@@ -50,65 +58,59 @@ class ReplaceUsageViewContext extends UsageViewContext {
 
   @Override
   protected void configureActions() {
-    final Runnable replaceRunnable = new Runnable() {
-      public void run() {
-        LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
+    final Runnable replaceRunnable = () -> {
+      LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
 
-        doReplace();
-        getUsageView().close();
+      doReplace();
+      myUsageView.close();
 
-        labelAction.finish();
-      }
+      labelAction.finish();
     };
 
     //noinspection HardCodedStringLiteral
-    getUsageView().addPerformOperationAction(replaceRunnable, "Replace All", null, SSRBundle.message("do.replace.all.button"));
+    myUsageView.addPerformOperationAction(replaceRunnable, "Replace All", null, SSRBundle.message("do.replace.all.button"));
 
-    final Runnable replaceSelected = new Runnable() {
-      public void run() {
-        final Set<Usage> infos = getUsageView().getSelectedUsages();
-        if (infos == null || infos.isEmpty()) return;
+    final Runnable replaceSelected = () -> {
+      final Set<Usage> infos = myUsageView.getSelectedUsages();
+      if (infos == null || infos.isEmpty()) return;
 
-        LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
+      LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
 
-        for (final Usage info : infos) {
-          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
+      for (final Usage info : infos) {
+        final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
 
-          if (isValid(usage)) {
-            replaceOne(usage, false);
-          }
+        if (isValid(usage)) {
+          replaceOne(usage, false);
         }
+      }
 
-        labelAction.finish();
+      labelAction.finish();
 
-        if (getUsageView().getUsagesCount() > 0) {
-          for (Usage usage : getUsageView().getSortedUsages()) {
-            if (!isExcluded(usage)) {
-              getUsageView().selectUsages(new Usage[]{usage});
-              return;
-            }
+      if (myUsageView.getUsagesCount() > 0) {
+        for (Usage usage : myUsageView.getSortedUsages()) {
+          if (!isExcluded(usage)) {
+            myUsageView.selectUsages(new Usage[]{usage});
+            return;
           }
         }
       }
     };
 
-    getUsageView().addButtonToLowerPane(replaceSelected, SSRBundle.message("replace.selected.button"));
+    myUsageView.addButtonToLowerPane(replaceSelected, SSRBundle.message("replace.selected.button"));
 
-    final Runnable previewReplacement = new Runnable() {
-      public void run() {
-        Set<Usage> selection = getUsageView().getSelectedUsages();
+    final Runnable previewReplacement = () -> {
+      Set<Usage> selection = myUsageView.getSelectedUsages();
 
-        if (selection != null && !selection.isEmpty()) {
-          UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)selection.iterator().next();
+      if (selection != null && !selection.isEmpty()) {
+        UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)selection.iterator().next();
 
-          if (isValid(usage)) {
-            replaceOne(usage, true);
-          }
+        if (isValid(usage)) {
+          replaceOne(usage, true);
         }
       }
     };
 
-    getUsageView().addButtonToLowerPane(previewReplacement, SSRBundle.message("preview.replacement.button"));
+    myUsageView.addButtonToLowerPane(previewReplacement, SSRBundle.message("preview.replacement.button"));
 
     super.configureActions();
   }
@@ -137,18 +139,18 @@ class ReplaceUsageViewContext extends UsageViewContext {
 
     if (approved) {
       ensureFileWritable(info);
-      getUsageView().removeUsage(info);
+      myUsageView.removeUsage(info);
       getReplacer().replace(replacementInfo);
 
-      if (getUsageView().getUsagesCount() == 0) {
-        getUsageView().close();
+      if (myUsageView.getUsagesCount() == 0) {
+        myUsageView.close();
       }
     }
   }
 
   private void doReplace() {
-    List<Usage> infos = getUsageView().getSortedUsages();
-    List<ReplacementInfo> results = new ArrayList<ReplacementInfo>(infos.size());
+    List<Usage> infos = myUsageView.getSortedUsages();
+    List<ReplacementInfo> results = new ArrayList<>(infos.size());
 
     for (final Usage info : infos) {
       UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
@@ -159,5 +161,10 @@ class ReplaceUsageViewContext extends UsageViewContext {
     }
 
     getReplacer().replaceAll(results);
+  }
+
+  private boolean isExcluded(Usage usage) {
+    if (myExcludedSet == null) myExcludedSet = myUsageView.getExcludedUsages();
+    return myExcludedSet.contains(usage);
   }
 }

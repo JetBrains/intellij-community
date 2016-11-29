@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
  * Instances of this class implement language-specific logic of 'move element left/right' actions
  */
 public abstract class MoveElementLeftRightHandler {
-  public static final LanguageExtension<MoveElementLeftRightHandler> EXTENSION = 
-    new LanguageExtension<MoveElementLeftRightHandler>("com.intellij.moveLeftRightHandler");
+  public static final LanguageExtension<MoveElementLeftRightHandler> EXTENSION =
+    new LanguageExtension<>("com.intellij.moveLeftRightHandler");
   
   /**
    * Returns a list of sub-elements (usually children) of given PSI element, which can be moved using 'move element left/right' actions.

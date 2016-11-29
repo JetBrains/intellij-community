@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.util.graph.impl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.*;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -30,20 +28,20 @@ import java.util.*;
 public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @Override
   public <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish) {
-    return new ShortestPathFinder<Node>(graph).findPath(start, finish);
+    return new ShortestPathFinder<>(graph).findPath(start, finish);
   }
 
   @NotNull
   @Override
   public <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
                                                     @NotNull ProgressIndicator progressIndicator) {
-    return new KShortestPathsFinder<Node>(graph, start, finish, progressIndicator).findShortestPaths(k);
+    return new KShortestPathsFinder<>(graph, start, finish, progressIndicator).findShortestPaths(k);
   }
 
   @NotNull
   @Override
   public <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node) {
-    return new CycleFinder<Node>(graph).getNodeCycles(node);
+    return new CycleFinder<>(graph).getNodeCycles(node);
   }
 
   @NotNull
@@ -68,36 +66,31 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @NotNull
   @Override
   public <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull final Graph<Node> graph) {
-    final DFSTBuilder<Node> builder = new DFSTBuilder<Node>(graph);
-    final TIntArrayList sccs = builder.getSCCs();
+    final DFSTBuilder<Node> builder = new DFSTBuilder<>(graph);
 
-    final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>(sccs.size());
-    final Map<Node, Chunk<Node>> nodeToChunkMap = new LinkedHashMap<Node, Chunk<Node>>();
-    sccs.forEach(new TIntProcedure() {
-      int myTNumber = 0;
-      public boolean execute(int size) {
-        final Set<Node> chunkNodes = new LinkedHashSet<Node>();
-        final Chunk<Node> chunk = new Chunk<Node>(chunkNodes);
-        chunks.add(chunk);
-        for (int j = 0; j < size; j++) {
-          final Node node = builder.getNodeByTNumber(myTNumber + j);
-          chunkNodes.add(node);
-          nodeToChunkMap.put(node, chunk);
-        }
-
-        myTNumber += size;
-        return true;
+    final Collection<Collection<Node>> components = builder.getComponents();
+    final List<Chunk<Node>> chunks = new ArrayList<>(components.size());
+    final Map<Node, Chunk<Node>> nodeToChunkMap = new LinkedHashMap<>();
+    for (Collection<Node> component : components) {
+      final Set<Node> chunkNodes = new LinkedHashSet<>();
+      final Chunk<Node> chunk = new Chunk<>(chunkNodes);
+      chunks.add(chunk);
+      for (Node node : component) {
+        chunkNodes.add(node);
+        nodeToChunkMap.put(node, chunk);
       }
-    });
+    }
 
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Chunk<Node>>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Chunk<Node>>() {
+      @Override
       public Collection<Chunk<Node>> getNodes() {
         return chunks;
       }
 
+      @Override
       public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
         final Set<Node> chunkNodes = chunk.getNodes();
-        final Set<Chunk<Node>> ins = new LinkedHashSet<Chunk<Node>>();
+        final Set<Chunk<Node>> ins = new LinkedHashSet<>();
         for (final Node node : chunkNodes) {
           for (Iterator<Node> nodeIns = graph.getIn(node); nodeIns.hasNext(); ) {
             final Node in = nodeIns.next();
@@ -132,7 +125,7 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @NotNull
   @Override
   public <Node> List<List<Node>> removePathsWithCycles(@NotNull List<List<Node>> paths) {
-    final List<List<Node>> result = new ArrayList<List<Node>>();
+    final List<List<Node>> result = new ArrayList<>();
     for (List<Node> path : paths) {
       if (!containsCycle(path)) {
         result.add(path);

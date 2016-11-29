@@ -69,17 +69,15 @@ class XPathUsageSearcher implements UsageSearcher {
     }
 
     public void generate(@NotNull final Processor<Usage> processor) {
-        Runnable runnable = new Runnable() {
-            public void run() {
-                myIndicator.setIndeterminate(true);
-                myIndicator.setText2(findBundleMessage("find.searching.for.string.in.file.occurrences.progress", 0));
-                final CountProcessor counter = new CountProcessor();
-                myScope.iterateContent(myProject, counter);
+        Runnable runnable = () -> {
+            myIndicator.setIndeterminate(true);
+            myIndicator.setText2(findBundleMessage("find.searching.for.string.in.file.occurrences.progress", 0));
+            final CountProcessor counter = new CountProcessor();
+            myScope.iterateContent(myProject, counter);
 
-                myIndicator.setIndeterminate(false);
-                myIndicator.setFraction(0);
-                myScope.iterateContent(myProject, new MyProcessor(processor, counter.getFileCount()));
-            }
+            myIndicator.setIndeterminate(false);
+            myIndicator.setFraction(0);
+            myScope.iterateContent(myProject, new MyProcessor(processor, counter.getFileCount()));
         };
         ApplicationManager.getApplication().runReadAction(runnable);
     }

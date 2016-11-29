@@ -114,12 +114,9 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
       throw new IOException("Destination already exists: " + newParent.getPath() + "/" + getName());
     }
 
-    EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
-      @Override
-      public VirtualFile compute() throws IOException {
-        getFileSystem().moveFile(requestor, NewVirtualFile.this, newParent);
-        return NewVirtualFile.this;
-      }
+    EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
+      getFileSystem().moveFile(requestor, this, newParent);
+      return this;
     });
   }
 

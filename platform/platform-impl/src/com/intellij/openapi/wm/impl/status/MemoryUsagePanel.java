@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -23,6 +22,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -75,13 +75,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
       @Override
       public void showNotify() {
-        myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-          public void run() {
-            if (isDisplayable()) {
-              updateState();
-            }
-          }
-        }, 1, 5, TimeUnit.SECONDS);
+        myFuture = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(MemoryUsagePanel.this::updateState,
+                                                                                            1, 5, TimeUnit.SECONDS);
       }
 
       @Override
@@ -231,12 +226,9 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
     if (total != myLastTotal || used != myLastUsed) {
       myLastTotal = total;
       myLastUsed = used;
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myBufferedImage = null;
-          repaint();
-        }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        myBufferedImage = null;
+        repaint();
       });
 
       setToolTipText(UIBundle.message("memory.usage.panel.statistics.message", total, used));

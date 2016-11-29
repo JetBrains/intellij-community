@@ -29,10 +29,7 @@ import java.util.List;
 * @author Roman.Chernyatchik
 */
 public class ExecutionMode {
-  private static final PairConsumer<ExecutionMode, String> NOOP_CONSUMER = new PairConsumer<ExecutionMode, String>() {
-    @Override
-    public void consume(ExecutionMode mode, String s) {
-    }
+  private static final PairConsumer<ExecutionMode, String> NOOP_CONSUMER = (mode, s) -> {
   };
   private final boolean myCancelable;
   private final String myTitle;

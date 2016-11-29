@@ -134,7 +134,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    if (lastParent == null || lastParent.getParent() != this /*|| lastParent == getIteratedValue()*/)
+    if (lastParent == null || lastParent.getParent() != this || lastParent == getIteratedValue())
       // Parent element should not see our vars
       return true;
 

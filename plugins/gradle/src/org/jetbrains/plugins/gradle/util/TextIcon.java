@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 

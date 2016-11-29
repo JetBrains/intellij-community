@@ -1,0 +1,7 @@
+{
+  "properties": {
+    "smth": {
+      "$ref" : "http://json-schema.org/draft-04/schema#/properties/enum<caret>"
+    }
+  }
+}

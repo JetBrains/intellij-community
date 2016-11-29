@@ -30,9 +30,7 @@ import org.jetbrains.jps.incremental.LineOutputWriter;
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,6 +53,7 @@ public class JavacMain {
                                 final Collection<File> sources,
                                 Collection<File> classpath,
                                 Collection<File> platformClasspath,
+                                Collection<File> modulePath,
                                 Collection<File> sourcePath,
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
@@ -130,7 +129,20 @@ public class JavacMain {
           return false;
         }
       }
-      
+
+      if (!modulePath.isEmpty()) {
+        final JavaFileManager.Location modulePathLocation = StandardLocation.locationFor("MODULE_PATH");
+        if (modulePathLocation != null) { // if this option is supported
+          try {
+            fileManager.setLocation(modulePathLocation, modulePath);
+          }
+          catch (IOException e) {
+            fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+            return false;
+          }
+        }
+      }
+
       try {
         // ensure the source path is set;
         // otherwise, if not set, javac attempts to search both classes and sources in classpath;
@@ -155,9 +167,11 @@ public class JavacMain {
       };
 
       final JavaCompiler.CompilationTask task = compiler.getTask(
-        out, fileManager, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
+        out, wrapWithCallDispatcher(fileManager), diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
-      compilingTool.prepareCompilationTask(task, _options);
+      for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
+        extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
+      }
 
       //if (!IS_VM_6_VERSION) { //todo!
       //  // Do not add the processor for JDK 1.6 because of the bugs in javac
@@ -189,6 +203,25 @@ public class JavacMain {
       }
     }
     return false;
+  }
+
+  // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
+  // do not delegate to corresponding methods of FileManager's base implementation
+  // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
+  private static StandardJavaFileManager wrapWithCallDispatcher(final JavacFileManager fileManager) {
+    //return fileManager;
+    return (StandardJavaFileManager)Proxy.newProxyInstance(fileManager.getClass().getClassLoader(), new Class[]{StandardJavaFileManager.class}, new InvocationHandler() {
+      @Override
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        try {
+          return method.invoke(fileManager.getApiCallHandler(method), args);
+        }
+        catch (InvocationTargetException e) {
+          final Throwable cause = e.getCause();
+          throw cause != null? cause : e;
+        }
+      }
+    });
   }
 
   private static boolean canUseOptimizedFileManager(JavaCompilingTool compilingTool) {

@@ -18,10 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -43,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -83,10 +81,17 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
 
     addArrayTypes(parameters.getPosition(), infos, consumer);
 
-    processInheritors(parameters, extractClassTypes(infos), prefixMatcher, type -> {
+    List<PsiClassType> classTypes = extractClassTypes(infos);
+    boolean arraysWelcome = ContainerUtil.exists(ExpectedTypesGetter.extractTypes(infos, true),
+                                                 t -> t.getDeepComponentType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
+    processInheritors(parameters, classTypes, prefixMatcher, type -> {
       final LookupElement element = addExpectedType(type, parameters);
       if (element != null) {
-        consumer.consume(element);
+        Supplier<PsiClassType> itemType = () -> (PsiClassType)ObjectUtils.assertNotNull(element.as(TypedLookupItem.CLASS_CONDITION_KEY)).getType();
+        JavaConstructorCallElement.wrap(element, (PsiClass)element.getObject(), parameters.getPosition(), itemType).forEach(consumer::consume);
+      }
+      if (arraysWelcome) {
+        consumer.consume(createNewArrayItem(parameters.getPosition(), type.createArrayType()));
       }
     });
   }
@@ -108,7 +113,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   }
 
   private static PsiTypeLookupItem createNewArrayItem(PsiElement context, PsiType type) {
-    return PsiTypeLookupItem.createLookupItem(TypeConversionUtil.erasure(type), context).setShowPackage();
+    return PsiTypeLookupItem.createLookupItem(TypeConversionUtil.erasure(GenericsUtil.getVariableTypeByExpressionType(type)), context).setShowPackage();
   }
 
   private static List<PsiClassType> extractClassTypes(ExpectedTypeInfo[] infos) {

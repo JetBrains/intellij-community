@@ -81,21 +81,14 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       final MemoryKind kind = getOOMErrorKind(throwable);
       if (kind != null) {
         ourOomOccurred = true;
-        SwingUtilities.invokeAndWait(new Runnable() {
-          public void run() {
-            new OutOfMemoryDialog(kind).show();
-          }
-        });
+        SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
       }
       else if (throwable instanceof MappingFailedException) {
         processMappingFailed(event);
       }
       else if (!ourOomOccurred) {
         MessagePool messagePool = MessagePool.getInstance();
-        LogMessage message = messagePool.addIdeFatalMessage(event);
-        if (message != null && ApplicationManager.getApplication() != null) {
-          ErrorNotifier.notifyUi(message, messagePool);
-        }
+        messagePool.addIdeFatalMessage(event);
       }
     }
     catch (Throwable e) {

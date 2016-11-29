@@ -35,12 +35,12 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.usageView.UsageInfo;
@@ -48,10 +48,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnBooleanFix");
@@ -89,14 +86,16 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
 
-    PsiType myReturnType = myReturnTypePointer.getType();
-    return myMethod.isValid()
-        && myMethod.getManager().isInProject(myMethod)
-        && myReturnType != null
-        && myReturnType.isValid()
-        && !TypeConversionUtil.isNullType(myReturnType)
-        && myMethod.getReturnType() != null
-        && !Comparing.equal(myReturnType, myMethod.getReturnType());
+    final PsiType myReturnType = myReturnTypePointer.getType();
+    if (myMethod.isValid() &&
+        myMethod.getManager().isInProject(myMethod) &&
+        myReturnType != null &&
+        myReturnType.isValid() &&
+        !TypeConversionUtil.isNullType(myReturnType)) {
+      final PsiType returnType = myMethod.getReturnType();
+      if (returnType != null && returnType.isValid() && !Comparing.equal(myReturnType, returnType)) return true;
+    }
+    return false;
   }
 
   @Override
@@ -136,7 +135,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
 
     if (statementToSelect != null) {
-      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, statementToSelect.getContainingFile());
+      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, file);
       if (editorForMethod != null) {
         selectReturnValueInEditor(statementToSelect, editorForMethod);
       }
@@ -246,7 +245,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     private final List<PsiMethod> myAffectedMethods;
 
     private MethodSignatureChangeVisitor() {
-      myAffectedMethods = new ArrayList<PsiMethod>();
+      myAffectedMethods = new ArrayList<>();
     }
 
     public void addBase(final PsiMethod baseMethod) {
@@ -309,7 +308,9 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   static void selectReturnValueInEditor(final PsiReturnStatement returnStatement, final Editor editor) {
-    TextRange range = returnStatement.getReturnValue().getTextRange();
+    final PsiExpression returnValue = returnStatement.getReturnValue();
+    LOG.assertTrue(returnValue != null, returnStatement);
+    TextRange range = returnValue.getTextRange();
     int offset = range.getStartOffset();
 
     editor.getCaretModel().moveToOffset(offset);
@@ -344,10 +345,11 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       TypeConversionUtil.getSuperClassSubstitutor(superClass, baseClass, PsiSubstitutor.EMPTY);
     final PsiType superReturnTypeInBaseClassType = superClassSubstitutor.substitute(superReturnType);
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
-    final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(baseClass.getTypeParameters(),
-                                                                           new PsiType[]{superReturnTypeInBaseClassType},
-                                                                           new PsiType[]{returnType},
-                                                                           PsiUtil.getLanguageLevel(superClass));
+    final PsiSubstitutor psiSubstitutor =
+      resolveHelper.inferTypeArguments(PsiTypesUtil.filterUnusedTypeParameters(superReturnTypeInBaseClassType, baseClass.getTypeParameters()),
+                                       new PsiType[]{superReturnTypeInBaseClassType},
+                                       new PsiType[]{returnType},
+                                       PsiUtil.getLanguageLevel(superClass));
 
     final TypeMigrationRules rules = new TypeMigrationRules();
     final PsiSubstitutor compoundSubstitutor =

@@ -103,11 +103,11 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   }
 
   protected void assertStringItems(@NonNls String... items) {
-    assertOrderedEquals(getLookupStrings(new ArrayList<String>()), items);
+    assertOrderedEquals(getLookupStrings(new ArrayList<>()), items);
   }
 
   protected void assertContainsItems(final String... expected) {
-    final Set<String> actual = getLookupStrings(new HashSet<String>());
+    final Set<String> actual = getLookupStrings(new HashSet<>());
     for (String s : expected) {
       assertTrue("Expected '" + s + "' not found in " + actual,
                  actual.contains(s));
@@ -115,7 +115,7 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   }
 
   protected void assertNotContainItems(final String... unexpected) {
-    final Set<String> actual = getLookupStrings(new HashSet<String>());
+    final Set<String> actual = getLookupStrings(new HashSet<>());
     for (String s : unexpected) {
       assertFalse("Unexpected '" + s + "' presented in " + actual,
                   actual.contains(s));

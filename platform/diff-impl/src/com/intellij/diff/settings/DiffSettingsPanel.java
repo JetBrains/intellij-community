@@ -29,6 +29,8 @@ public class DiffSettingsPanel {
   private JPanel myPane;
   private ContextRangePanel myContextRangeComponent;
   private JCheckBox myGoToNextFileOnNextDifferenceCheckbox;
+  private JCheckBox myAutoApplyNonConflictedChangesCheckbox;
+  private JCheckBox myMergeLstGutterMarkers;
 
   @NotNull private TextDiffSettings myTextSettings = TextDiffSettings.getSettings();
   @NotNull private DiffSettings myDiffSettings = DiffSettings.getSettings();
@@ -41,17 +43,23 @@ public class DiffSettingsPanel {
   public boolean isModified() {
     if (myContextRangeComponent.isModified()) return true;
     if (myGoToNextFileOnNextDifferenceCheckbox.isSelected() != myDiffSettings.isGoToNextFileOnNextDifference()) return true;
+    if (myAutoApplyNonConflictedChangesCheckbox.isSelected() != myTextSettings.isAutoApplyNonConflictedChanges()) return true;
+    if (myMergeLstGutterMarkers.isSelected() != myTextSettings.isEnableLstGutterMarkersInMerge()) return true;
     return false;
   }
 
   public void apply() {
     myContextRangeComponent.apply();
     myDiffSettings.setGoToNextFileOnNextDifference(myGoToNextFileOnNextDifferenceCheckbox.isSelected());
+    myTextSettings.setAutoApplyNonConflictedChanges(myAutoApplyNonConflictedChangesCheckbox.isSelected());
+    myTextSettings.setEnableLstGutterMarkersInMerge(myMergeLstGutterMarkers.isSelected());
   }
 
   public void reset() {
     myContextRangeComponent.reset();
     myGoToNextFileOnNextDifferenceCheckbox.setSelected(myDiffSettings.isGoToNextFileOnNextDifference());
+    myAutoApplyNonConflictedChangesCheckbox.setSelected(myTextSettings.isAutoApplyNonConflictedChanges());
+    myMergeLstGutterMarkers.setSelected(myTextSettings.isEnableLstGutterMarkersInMerge());
   }
 
   private void createUIComponents() {
@@ -69,7 +77,7 @@ public class DiffSettingsPanel {
       setPaintLabels(true);
 
       //noinspection UseOfObsoleteCollectionType
-      Dictionary<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
+      Dictionary<Integer, JLabel> sliderLabels = new Hashtable<>();
       for (int i = 0; i < TextDiffSettingsHolder.CONTEXT_RANGE_MODES.length; i++) {
         sliderLabels.put(i, new JLabel(TextDiffSettingsHolder.CONTEXT_RANGE_MODE_LABELS[i]));
       }

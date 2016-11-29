@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,17 +42,17 @@ public class ConvertClosureArgToItIntention extends Intention {
     }
 
     @Override
-    public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
+    public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
             throws IncorrectOperationException {
         final GrClosableBlock closure =
                 (GrClosableBlock) element;
 
         final GrParameterList parameterList = closure.getParameterList();
         final GrParameter parameter = parameterList.getParameters()[0];
-        final Set<GrReferenceExpression> referencesToChange = new HashSet<GrReferenceExpression>();
+        final Set<GrReferenceExpression> referencesToChange = new HashSet<>();
         final GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
             @Override
-            public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+            public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
                 super.visitReferenceExpression(referenceExpression);
                 if (!referenceExpression.getText().equals(parameter.getName())) {
                     return;

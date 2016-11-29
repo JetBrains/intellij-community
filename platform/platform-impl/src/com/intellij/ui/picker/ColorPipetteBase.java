@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
 public abstract class ColorPipetteBase implements ColorPipette {
   private final Alarm myColorListenersNotifier = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
@@ -52,11 +53,21 @@ public abstract class ColorPipetteBase implements ColorPipette {
   @Override
   public void pickAndClose() {
     PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-    Point location = pointerInfo.getLocation();
-    Color pixelColor = myRobot.getPixelColor(location.x, location.y);
+    Color pixelColor = getPixelColor(pointerInfo.getLocation());
     cancelPipette();
     notifyListener(pixelColor, 0);
     setInitialColor(pixelColor);
+  }
+
+  protected Color getPixelColor(Point location) {
+    if (SystemInfo.isMac) {
+      BufferedImage image = MacColorPipette.captureScreen(myPickerFrame, new Rectangle(location.x, location.y, 1, 1));
+      if (image != null) {
+        //noinspection UseJBColor
+        return new Color(image.getRGB(0, 0));
+      }
+    }
+    return myRobot.getPixelColor(location.x, location.y);
   }
 
   @Nullable
@@ -93,12 +104,12 @@ public abstract class ColorPipetteBase implements ColorPipette {
     PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     if (pointerInfo == null) return null;
 
-    Point mouseLoc = pointerInfo.getLocation();
+    Point mouseLocation = pointerInfo.getLocation();
     Dialog pickerDialog = getPickerDialog();
-    if (pickerDialog != null) {
-      pickerDialog.setLocation(mouseLoc.x - pickerDialog.getWidth() / 2, mouseLoc.y - pickerDialog.getHeight() / 2);
+    if (pickerDialog != null && mouseLocation != null) {
+      pickerDialog.setLocation(mouseLocation.x - pickerDialog.getWidth() / 2, mouseLocation.y - pickerDialog.getHeight() / 2);
     }
-    return mouseLoc;
+    return mouseLocation;
   }
 
   @Nullable
@@ -157,12 +168,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
   protected void notifyListener(@NotNull final Color c, int delayMillis) {
     if (!myColorListenersNotifier.isDisposed()) {
       myColorListenersNotifier.cancelAllRequests();
-      myColorListenersNotifier.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myColorListener.colorChanged(c, ColorPipetteBase.this);
-        }
-      }, delayMillis);
+      myColorListenersNotifier.addRequest(() -> myColorListener.colorChanged(c, this), delayMillis);
     }
   }
 

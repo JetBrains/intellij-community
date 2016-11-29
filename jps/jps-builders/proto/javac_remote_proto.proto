@@ -41,6 +41,7 @@ message Message {
     repeated string classpath = 5;
     repeated string sourcepath = 6;
     repeated OutputGroup output = 7;
+    repeated string module_path = 8;
   }
 
   message Response {
@@ -51,6 +52,7 @@ message Message {
       BUILD_COMPLETED = 4;
       REQUEST_ACK = 5;
       SRC_FILE_LOADED = 6;
+      CUSTOM_OUTPUT_OBJECT = 7;
     }
 
     message CompileMessage {

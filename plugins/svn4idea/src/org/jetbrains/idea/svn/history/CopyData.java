@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.google.common.base.MoreObjects;
+
 public class CopyData {
   private final long myCopySourceRevision;
   private final long myCopyTargetRevision;
@@ -36,5 +38,14 @@ public class CopyData {
 
   public boolean isTrunkSupposedCorrect() {
     return myTrunkSupposedCorrect;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+      .add("source", myCopySourceRevision)
+      .add("target", myCopyTargetRevision)
+      .add("correct", myTrunkSupposedCorrect)
+      .toString();
   }
 }

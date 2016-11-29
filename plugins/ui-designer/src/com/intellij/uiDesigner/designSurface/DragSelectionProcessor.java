@@ -93,7 +93,7 @@ public final class DragSelectionProcessor extends EventProcessor {
     else if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
       if (!myDragStarted) {
         if ((Math.abs(e.getX() - myPressPoint.getX()) > TREMOR || Math.abs(e.getY() - myPressPoint.getY()) > TREMOR)) {
-          ArrayList<InputEvent> eventList = new ArrayList<InputEvent>();
+          ArrayList<InputEvent> eventList = new ArrayList<>();
           eventList.add(e);
           myDragGestureRecognizer.setTriggerEvent(e);
           DragGestureEvent dge = new DragGestureEvent(myDragGestureRecognizer,

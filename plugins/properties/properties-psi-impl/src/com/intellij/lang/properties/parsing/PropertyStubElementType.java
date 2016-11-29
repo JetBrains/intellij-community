@@ -44,6 +44,7 @@ public class PropertyStubElementType extends ILightStubElementType<PropertyStub,
     return new PropertyImpl(stub, this);
   }
 
+  @NotNull
   public PropertyStub createStub(@NotNull final Property psi, final StubElement parentStub) {
     return new PropertyStubImpl(parentStub, psi.getKey());
   }

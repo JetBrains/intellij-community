@@ -70,7 +70,7 @@ public class NoScrollPaneInspection extends BaseFormInspection {
 
       SurroundAction action = new SurroundAction(item == null ? JBScrollPane.class.getName() : scrollPane);
 
-      ArrayList<RadComponent> targetList = new ArrayList<RadComponent>(Collections.singletonList(myComponent));
+      ArrayList<RadComponent> targetList = new ArrayList<>(Collections.singletonList(myComponent));
       action.actionPerformed(myEditor, targetList, null);
     }
   }

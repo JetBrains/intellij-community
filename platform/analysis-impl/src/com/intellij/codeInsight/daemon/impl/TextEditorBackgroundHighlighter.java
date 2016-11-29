@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -29,10 +30,12 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter");
   private static final int[] EXCEPT_OVERRIDDEN = {
     Pass.UPDATE_FOLDING,
     Pass.POPUP_HINTS,
@@ -42,10 +45,10 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     Pass.EXTERNAL_TOOLS,
   };
 
+  private final Project myProject;
   private final Editor myEditor;
   private final Document myDocument;
   private PsiFile myFile;
-  private final Project myProject;
   private boolean myCompiled;
 
   public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
@@ -75,7 +78,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   @NotNull
   List<TextEditorHighlightingPass> getPasses(@NotNull int[] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    Document[] uncommitted = PsiDocumentManager.getInstance(myProject).getUncommittedDocuments();
+    LOG.assertTrue(uncommitted.length == 0, "Uncommitted documents: " + Arrays.asList(uncommitted));
     renewFile();
     if (myFile == null) return Collections.emptyList();
     if (myCompiled) {

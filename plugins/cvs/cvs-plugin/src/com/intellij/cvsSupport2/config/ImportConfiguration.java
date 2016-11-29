@@ -47,7 +47,7 @@ public class ImportConfiguration extends AbstractConfiguration {
     if (KEYWORD_SUBSTITUTION_WRAPPERS == null || KEYWORD_SUBSTITUTION_WRAPPERS.length() == 0) {
       return Collections.emptyList();
     }
-    final ArrayList<FileExtension> result = new ArrayList<FileExtension>();
+    final ArrayList<FileExtension> result = new ArrayList<>();
     final String[] wrappers = KEYWORD_SUBSTITUTION_WRAPPERS.split(";");
     for (String wrapper : wrappers) {
       final String[] extAndSubstitution = wrapper.split(" ");

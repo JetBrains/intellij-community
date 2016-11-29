@@ -227,7 +227,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     //noinspection unchecked
     HashMap<String, LwTabbedPane.Constraints> id2Constraints = (HashMap<String, LwTabbedPane.Constraints>)component.getClientProperty(CLIENT_PROP_ID_2_CONSTRAINTS);
     if(id2Constraints == null){
-      id2Constraints = new HashMap<String,LwTabbedPane.Constraints>();
+      id2Constraints = new HashMap<>();
       component.putClientProperty(CLIENT_PROP_ID_2_CONSTRAINTS, id2Constraints);
     }
     return id2Constraints;

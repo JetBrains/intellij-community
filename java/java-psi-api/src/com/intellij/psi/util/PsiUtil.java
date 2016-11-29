@@ -45,6 +45,7 @@ import com.intellij.util.containers.EmptyIterable;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,10 @@ public final class PsiUtil extends PsiUtilCore {
   public static final int ACCESS_LEVEL_PACKAGE_LOCAL = 2;
   public static final int ACCESS_LEVEL_PRIVATE = 1;
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
+
+  private static final Set<String> IGNORED_NAMES = ContainerUtil.newTroveSet(
+    "ignore", "ignore1", "ignore2", "ignore3", "ignore4", "ignore5",
+    "ignored", "ignored1", "ignored2", "ignored3", "ignored4", "ignored5");
 
   private PsiUtil() {}
 
@@ -146,10 +151,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isConstantExpression(@Nullable PsiExpression expression) {
-    if (expression == null) return false;
-    IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
-    expression.accept(visitor);
-    return visitor.myIsConstant;
+    return expression != null && JavaPsiFacade.getInstance(expression.getProject()).isConstantExpression(expression);
   }
 
   // todo: move to PsiThrowsList?
@@ -268,7 +270,14 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isLocalClass(@NotNull PsiClass psiClass) {
     PsiElement parent = psiClass.getParent();
-    return parent instanceof PsiDeclarationStatement && parent.getParent() instanceof PsiCodeBlock;
+    if (parent instanceof PsiDeclarationStatement && parent.getParent() instanceof PsiCodeBlock) {
+      return true;
+    }
+
+    if (parent instanceof PsiClass) {
+      return isLocalOrAnonymousClass((PsiClass)parent);
+    }
+    return false;
   }
 
   public static boolean isAbstractClass(@NotNull PsiClass clazz) {
@@ -447,6 +456,7 @@ public final class PsiUtil extends PsiUtilCore {
     return type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
   }
 
+  @NotNull
   public static PsiClassType.ClassResolveResult resolveGenericsClassInType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType) type;
@@ -617,7 +627,10 @@ public final class PsiUtil extends PsiUtilCore {
    * <code>class Foo&lt;T extends Number&gt;{}</code> types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
    * would be equivalent
    */
-  public static boolean equalOnEquivalentClasses(PsiClassType thisClassType, @NotNull PsiClass aClass, PsiClassType otherClassType, @NotNull PsiClass bClass) {
+  public static boolean equalOnEquivalentClasses(PsiClassType thisClassType,
+                                                 @NotNull PsiClass aClass,
+                                                 PsiClassType otherClassType,
+                                                 @NotNull PsiClass bClass) {
     final PsiClassType capture1 = !PsiCapturedWildcardType.isCapture()
                                   ? thisClassType : (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
     final PsiClassType capture2 = !PsiCapturedWildcardType.isCapture()
@@ -629,17 +642,10 @@ public final class PsiUtil extends PsiUtilCore {
     return equalOnEquivalentClasses(result1.getSubstitutor(), aClass, result2.getSubstitutor(), bClass);
   }
 
-  @Deprecated
-  public static boolean equalOnClass(@NotNull PsiSubstitutor s1, @NotNull PsiSubstitutor s2, @NotNull PsiClass aClass) {
-    return equalOnEquivalentClasses(s1, aClass, s2, aClass);
-  }
-
-  /**
-   * @deprecated to remove in v.16
-   * Checks if substitutors maps are identical. If substitutor map values contain wildcard type, type parameter bounds are IGNORED.
-   * Please use {@link PsiUtil#equalOnEquivalentClasses(PsiClassType, PsiClass, PsiClassType, PsiClass)} instead.
-   */
-  public static boolean equalOnEquivalentClasses(@NotNull PsiSubstitutor s1, @NotNull PsiClass aClass, @NotNull PsiSubstitutor s2, @NotNull PsiClass bClass) {
+  private static boolean equalOnEquivalentClasses(@NotNull PsiSubstitutor s1,
+                                                  @NotNull PsiClass aClass,
+                                                  @NotNull PsiSubstitutor s2,
+                                                  @NotNull PsiClass bClass) {
     // assume generic class equals to non-generic
     if (aClass.hasTypeParameters() != bClass.hasTypeParameters()) return true;
     final PsiTypeParameter[] typeParameters1 = aClass.getTypeParameters();
@@ -661,9 +667,7 @@ public final class PsiUtil extends PsiUtilCore {
     return containingClass1 == null && containingClass2 == null;
   }
 
-  /**
-   * @deprecated use more generic {@link #isCompileTimeConstant(PsiVariable)} instead
-   */
+  /** @deprecated use more generic {@link #isCompileTimeConstant(PsiVariable)} instead */
   public static boolean isCompileTimeConstant(@NotNull final PsiField field) {
     return isCompileTimeConstant((PsiVariable)field);
   }
@@ -760,6 +764,9 @@ public final class PsiUtil extends PsiUtilCore {
     return null;
   }
 
+  /**
+   * Applies capture conversion to the type in context
+   */
   @NotNull
   public static PsiType captureToplevelWildcards(@NotNull final PsiType type, @NotNull final PsiElement context) {
     if (type instanceof PsiClassType) {
@@ -800,10 +807,38 @@ public final class PsiUtil extends PsiUtilCore {
         }
       }
     }
-    else if (type instanceof PsiArrayType) {
-      return captureToplevelWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
-    }
+    return type;
+  }
 
+  /**
+   * Opens top level captured wildcards and remap them according to the context.
+   * The only valid purpose: allow to speculate on non-physical expressions about types, e.g. to detect redundant casts with 'wildcards'
+   */
+  public static PsiType recaptureWildcards(PsiType type, PsiElement context) {
+    if (type instanceof PsiClassType) {
+      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+      final PsiClass aClass = resolveResult.getElement();
+      if (aClass != null) {
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+
+        PsiSubstitutor resultSubstitution = null;
+        for (PsiTypeParameter parameter : substitutor.getSubstitutionMap().keySet()) {
+          final PsiType substitute = substitutor.substitute(parameter);
+          if (substitute instanceof PsiCapturedWildcardType) {
+            if (resultSubstitution == null) resultSubstitution = substitutor;
+            resultSubstitution = resultSubstitution.put(parameter, ((PsiCapturedWildcardType)substitute).getWildcard());
+          }
+        }
+
+        if (resultSubstitution != null) {
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+          return captureToplevelWildcards(factory.createType(aClass, resultSubstitution), context);
+        }
+      }
+    }
+    else if (type instanceof PsiArrayType) {
+      return recaptureWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
+    }
     return type;
   }
 
@@ -838,11 +873,6 @@ public final class PsiUtil extends PsiUtilCore {
     if (!(element instanceof PsiAnnotationMethod)) return false;
     PsiClass psiClass = ((PsiAnnotationMethod)element).getContainingClass();
     return psiClass != null && psiClass.isAnnotationType();
-  }
-
-  @PsiModifier.ModifierConstant
-  public static String getMaximumModifierForMember(final PsiClass aClass) {
-    return getMaximumModifierForMember(aClass, true);
   }
 
   @PsiModifier.ModifierConstant
@@ -929,7 +959,9 @@ public final class PsiUtil extends PsiUtilCore {
     return element instanceof PsiNamedElement && name.equals(((PsiNamedElement)element).getName());
   }
 
-  public static boolean isRawSubstitutor (@NotNull PsiTypeParameterListOwner owner, @NotNull PsiSubstitutor substitutor) {
+  public static boolean isRawSubstitutor(@NotNull PsiTypeParameterListOwner owner, @NotNull PsiSubstitutor substitutor) {
+    if (substitutor == PsiSubstitutor.EMPTY) return false;
+
     for (PsiTypeParameter parameter : typeParametersIterable(owner)) {
       if (substitutor.substitute(parameter) == null) return true;
     }
@@ -1027,12 +1059,14 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
+  @Contract("null, _ -> null")
   @Nullable
   public static PsiType extractIterableTypeParameter(@Nullable PsiType psiType, final boolean eraseTypeParameter) {
     final PsiType type = substituteTypeParameter(psiType, CommonClassNames.JAVA_LANG_ITERABLE, 0, eraseTypeParameter);
     return type != null ? type : substituteTypeParameter(psiType, CommonClassNames.JAVA_UTIL_COLLECTION, 0, eraseTypeParameter);
   }
 
+  @Contract("null, _, _, _ -> null")
   @Nullable
   public static PsiType substituteTypeParameter(@Nullable final PsiType psiType, @NotNull final String superClass, final int typeParamIndex,
                                                 final boolean eraseTypeParameter) {
@@ -1098,24 +1132,13 @@ public final class PsiUtil extends PsiUtilCore {
     return element instanceof PsiParameter && element.getParent() instanceof PsiCatchSection;
   }
 
-  public static boolean isIgnoredName(@Nullable final String name) {
-    return "ignore".equals(name) || "ignored".equals(name);
+  public static boolean isIgnoredName(@Nullable String name) {
+    return name != null && IGNORED_NAMES.contains(name);
   }
+
 
   @Nullable
-  public static PsiMethod getResourceCloserMethod(@NotNull PsiResourceListElement resource) {
-    PsiType resourceType = resource.getType();
-    return resourceType instanceof PsiClassType ? getResourceCloserMethodForType((PsiClassType)resourceType) : null;
-  }
-
-  /** @deprecated use {@link #getResourceCloserMethod(PsiResourceListElement)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  public static PsiMethod getResourceCloserMethod(@NotNull PsiResourceVariable resource) {
-    return getResourceCloserMethod((PsiResourceListElement)resource);
-  }
-
-  @Nullable
-  public static PsiMethod getResourceCloserMethodForType(@NotNull final PsiClassType resourceType) {
+  public static PsiMethod[] getResourceCloserMethodsForType(@NotNull final PsiClassType resourceType) {
     final PsiClass resourceClass = resourceType.resolve();
     if (resourceClass == null) return null;
 
@@ -1127,7 +1150,10 @@ public final class PsiUtil extends PsiUtilCore {
     if (JavaClassSupers.getInstance().getSuperClassSubstitutor(autoCloseable, resourceClass, resourceType.getResolveScope(), PsiSubstitutor.EMPTY) == null) return null;
 
     final PsiMethod[] closes = autoCloseable.findMethodsByName("close", false);
-    return closes.length == 1 ? resourceClass.findMethodBySignature(closes[0], true) : null;
+    if (closes.length == 1) {
+      return resourceClass.findMethodsBySignature(closes[0], true);
+    }
+    return null;
   }
 
   @Nullable
@@ -1181,6 +1207,11 @@ public final class PsiUtil extends PsiUtilCore {
     String className = containingClass.getQualifiedName();
     if (className == null) return null;
     return className + "." + member.getName();
+  }
+
+  public static boolean isFromDefaultPackage(PsiClass aClass) {
+    final PsiFile containingFile = aClass.getContainingFile();
+    return containingFile instanceof PsiClassOwner && StringUtil.isEmpty(((PsiClassOwner)containingFile).getPackageName());
   }
 
   static boolean checkSameExpression(PsiElement templateExpr, final PsiExpression expression) {
@@ -1240,5 +1271,29 @@ public final class PsiUtil extends PsiUtilCore {
         addReturnStatements(vector, child);
       }
     }
+  }
+
+  public static boolean isModuleFile(@NotNull PsiFile file) {
+    return file instanceof PsiJavaFile && ((PsiJavaFile)file).getModuleDeclaration() != null;
+  }
+
+  public static boolean isPackageEmpty(@NotNull PsiDirectory[] directories, @NotNull String packageName) {
+    for (PsiDirectory directory : directories) {
+      for (PsiFile file : directory.getFiles()) {
+        if (file instanceof PsiClassOwner &&
+            packageName.equals(((PsiClassOwner)file).getPackageName()) &&
+            ((PsiClassOwner)file).getClasses().length > 0) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  @NotNull
+  public static PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
+    PsiElement original = element.getOriginalElement();
+    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
   }
 }

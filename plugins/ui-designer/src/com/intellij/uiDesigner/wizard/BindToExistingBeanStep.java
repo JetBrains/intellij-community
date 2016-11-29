@@ -197,7 +197,7 @@ final class BindToExistingBeanStep extends StepAdapter{
       // Fill combobox with available bean's properties
       final String[] rProps = PropertyUtil.getReadableProperties(myData.myBeanClass, true);
       final String[] wProps = PropertyUtil.getWritableProperties(myData.myBeanClass, true);
-      final ArrayList<BeanProperty> rwProps = new ArrayList<BeanProperty>();
+      final ArrayList<BeanProperty> rwProps = new ArrayList<>();
 
       outer: for(int i = rProps.length - 1; i >= 0; i--){
         final String propName = rProps[i];

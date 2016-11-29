@@ -42,7 +42,7 @@ import java.util.List;
   storages = @Storage("mavenServices.xml")
 )
 public class MavenRepositoryServicesManager implements PersistentStateComponent<MavenRepositoryServicesManager> {
-  private final List<String> myUrls = new ArrayList<String>();
+  private final List<String> myUrls = new ArrayList<>();
 
   public MavenRepositoryServicesManager() {
     myUrls.add("https://oss.sonatype.org/service/local/");
@@ -91,7 +91,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
 
   @NotNull
   public static List<MavenRepositoryInfo> getRepositories(String url) {
-    List<MavenRepositoryInfo> result = new SmartList<MavenRepositoryInfo>();
+    List<MavenRepositoryInfo> result = new SmartList<>();
     for (MavenRepositoryService service : getServices()) {
       try {
         result.addAll(service.getRepositories(url));
@@ -105,7 +105,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
 
   @NotNull
   public static List<MavenArtifactInfo> findArtifacts(@NotNull MavenArtifactInfo template, @NotNull String url) {
-    List<MavenArtifactInfo> result = new SmartList<MavenArtifactInfo>();
+    List<MavenArtifactInfo> result = new SmartList<>();
     for (MavenRepositoryService service : getServices()) {
       try {
         result.addAll(service.findArtifacts(url, template));

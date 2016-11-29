@@ -63,7 +63,7 @@ public class ProjectLocatorImpl extends ProjectLocator {
       return Collections.emptyList();
     }
 
-    List<Project> result = new SmartList<Project>();
+    List<Project> result = new SmartList<>();
     for (Project project : openProjects) {
       if (project.isInitialized() && !project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
         result.add(project);

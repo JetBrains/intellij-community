@@ -16,9 +16,9 @@
 package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -32,18 +32,18 @@ import java.util.Set;
 
 public abstract class BaseToolManager<T extends Tool> {
   @NotNull private final ActionManagerEx myActionManager;
-  private final SchemesManager<ToolsGroup<T>, ToolsGroup<T>> mySchemesManager;
+  private final SchemeManager<ToolsGroup<T>> mySchemeManager;
 
-  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemesManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
+  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemeManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
     myActionManager = actionManagerEx;
 
     //noinspection AbstractMethodCallInConstructor
-    mySchemesManager = factory.create(schemePath, createProcessor(), presentableName);
-    mySchemesManager.loadSchemes();
+    mySchemeManager = factory.create(schemePath, createProcessor(), presentableName);
+    mySchemeManager.loadSchemes();
     registerActions();
   }
 
-  protected abstract SchemeProcessor<ToolsGroup<T>> createProcessor();
+  protected abstract SchemeProcessor<ToolsGroup<T>, ToolsGroup<T>> createProcessor();
 
   @Nullable
   public static String convertString(String s) {
@@ -52,7 +52,7 @@ public abstract class BaseToolManager<T extends Tool> {
 
   public List<T> getTools() {
     List<T> result = new SmartList<>();
-    for (ToolsGroup<T> group : mySchemesManager.getAllSchemes()) {
+    for (ToolsGroup<T> group : mySchemeManager.getAllSchemes()) {
       result.addAll(group.getElements());
     }
     return result;
@@ -60,7 +60,7 @@ public abstract class BaseToolManager<T extends Tool> {
 
   @NotNull
   public List<T> getTools(@NotNull String group) {
-    ToolsGroup<T> groupByName = mySchemesManager.findSchemeByName(group);
+    ToolsGroup<T> groupByName = mySchemeManager.findSchemeByName(group);
     if (groupByName == null) {
       return Collections.emptyList();
     }
@@ -79,11 +79,11 @@ public abstract class BaseToolManager<T extends Tool> {
   }
 
   public List<ToolsGroup<T>> getGroups() {
-    return mySchemesManager.getAllSchemes();
+    return mySchemeManager.getAllSchemes();
   }
 
   public void setTools(@NotNull List<ToolsGroup<T>> tools) {
-    mySchemesManager.setSchemes(tools);
+    mySchemeManager.setSchemes(tools);
     registerActions();
   }
 

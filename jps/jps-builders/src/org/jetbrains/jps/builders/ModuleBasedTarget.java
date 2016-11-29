@@ -19,8 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModule;
 
 /**
+ * Base class for all {@link BuildTarget} implementations which are bound to sources of a module and need to be built each time 'Build Module'
+ * action is invoked in IDE. If your target should be built only by explicit action extend {@link BuildTarget} directly instead.
+ *
  * @author Eugene Zhuravlev
- *         Date: 10/27/12
  */
 public abstract class ModuleBasedTarget<R extends BuildRootDescriptor> extends BuildTarget<R> {
   protected final JpsModule myModule;
@@ -35,6 +37,9 @@ public abstract class ModuleBasedTarget<R extends BuildRootDescriptor> extends B
     return myModule;
   }
 
+  /**
+   * @return {@code true} if the target should be built before {@link org.jetbrains.jps.incremental.ModuleBuildTarget} of the corresponding module.
+   */
   public boolean isCompiledBeforeModuleLevelBuilders() {
     return false;
   }

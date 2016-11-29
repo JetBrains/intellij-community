@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.module.Module;
@@ -110,7 +107,7 @@ public class LibraryUtil {
   }
 
   public static VirtualFile[] getLibraryRoots(final Module[] modules, final boolean includeSourceFiles, final boolean includeJdk) {
-    Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    Set<VirtualFile> roots = new HashSet<>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
@@ -140,15 +137,12 @@ public class LibraryUtil {
   @Nullable
   public static Library findLibrary(@NotNull Module module, @NotNull final String name) {
     final Ref<Library> result = Ref.create(null);
-    OrderEnumerator.orderEntries(module).forEachLibrary(new Processor<Library>() {
-      @Override
-      public boolean process(Library library) {
-        if (name.equals(library.getName())) {
-          result.set(library);
-          return false;
-        }
-        return true;
+    OrderEnumerator.orderEntries(module).forEachLibrary(library -> {
+      if (name.equals(library.getName())) {
+        result.set(library);
+        return false;
       }
+      return true;
     });
     return result.get();
   }

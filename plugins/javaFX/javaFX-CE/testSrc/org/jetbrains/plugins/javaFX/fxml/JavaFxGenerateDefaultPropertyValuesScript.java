@@ -2,6 +2,9 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.NamedArg;
+import javafx.beans.value.WritableValue;
+import javafx.event.Event;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
 import javafx.scene.AccessibleRole;
@@ -154,6 +157,7 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
               bindings.add(methodDesc.getName());
             }
           }
+          Map<String, Object> constructorNamedArgValues = constructorNamedArgValues(currentClass);
 
           Object instance = null;
           for (PropertyDescriptor desc : info.getPropertyDescriptors()) {
@@ -162,15 +166,18 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
             if (ourSkippedProperties.contains(propQualifiedName)) continue;
             final Method setter = desc.getWriteMethod();
             final boolean hasBinding = bindings.contains(propName + "Property");
-            if (setter == null || !hasBinding) continue;
-            final Type type = setter.getGenericParameterTypes()[0];
 
-            if (type instanceof Class && isSupportedPropertyType((Class)type)) {
+            final Object value;
+            final Class<?> declaringClass;
+            final Type type;
+            if (setter != null &&
+                hasBinding &&
+                (type = setter.getGenericParameterTypes()[0]) instanceof Class &&
+                isSupportedPropertyType((Class)type)) {
               if (instance == null) {
                 instance = instantiate(currentClass);
                 if (instance == null) break;
               }
-              final Object value;
               final Method getter = desc.getReadMethod();
               try {
                 value = getter.invoke(instance);
@@ -178,29 +185,34 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
               catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException("Can't invoke " + getter + " on " + currentClass, e);
               }
-              if (value != null) {
-                final Class<?> declaringClass = getter.getDeclaringClass();
-                final DefaultValue newValue = new DefaultValue(value, declaringClass.getName());
-                if (declaringClass.getName().startsWith("javafx")) {
-                  defaultPropertyValues
-                    .computeIfAbsent(currentClass.getName(), unused -> new TreeMap<>())
-                    .put(propName, newValue);
-                }
+              declaringClass = getter.getDeclaringClass();
+            }
+            else {
+              value = constructorNamedArgValues.get(propName);
+              if (value == null) continue;
+              declaringClass = currentClass;
+            }
+            if (value != null) {
+              final DefaultValue newValue = new DefaultValue(value, declaringClass.getName());
+              if (declaringClass.getName().startsWith("javafx")) {
+                defaultPropertyValues
+                  .computeIfAbsent(currentClass.getName(), unused -> new TreeMap<>())
+                  .put(propName, newValue);
+              }
 
-                final Map<String, String> shareableProperties =
-                  declaredProperties.computeIfAbsent(declaringClass.getName(), unused -> new TreeMap<>());
-                final String sharedValue = shareableProperties.get(propName);
+              final Map<String, String> shareableProperties =
+                declaredProperties.computeIfAbsent(declaringClass.getName(), unused -> new TreeMap<>());
+              final String sharedValue = shareableProperties.get(propName);
 
-                if (sharedValue == null) {
-                  shareableProperties.put(propName, newValue.getValueText());
-                }
-                else if (!sharedValue.equals(newValue.getValueText())) {
-                  final Set<String> multipleValues = overriddenProperties
-                    .computeIfAbsent(declaringClass.getName(), unused -> new TreeMap<>())
-                    .computeIfAbsent(propName, unused -> new TreeSet<>());
-                  multipleValues.add(sharedValue);
-                  multipleValues.add(newValue.getValueText());
-                }
+              if (sharedValue == null) {
+                shareableProperties.put(propName, newValue.getValueText());
+              }
+              else if (!sharedValue.equals(newValue.getValueText())) {
+                final Set<String> multipleValues = overriddenProperties
+                  .computeIfAbsent(declaringClass.getName(), unused -> new TreeMap<>())
+                  .computeIfAbsent(propName, unused -> new TreeSet<>());
+                multipleValues.add(sharedValue);
+                multipleValues.add(newValue.getValueText());
               }
             }
           }
@@ -268,6 +280,124 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
     System.out.println("-------- Skipped properties ---------");
     ourSkippedProperties.forEach(propName -> System.out.println("-- " + propName));
   }
+
+  private static class Args implements Iterable<String> {
+    final Set<String> names = new TreeSet<>();
+    final Map<String, Set<Type>> types = new TreeMap<>();
+    final Map<String, Set<Object>> values = new TreeMap<>();
+
+    void add(String name, Class<?> type, Object value) {
+      names.add(name);
+      types.computeIfAbsent(name, n -> new HashSet<>()).add(type);
+      values.computeIfAbsent(name, n -> new HashSet<>()).add(value);
+    }
+
+    boolean isEmpty() {
+      return names.isEmpty();
+    }
+
+    @Override
+    public Iterator<String> iterator() {
+      return names.iterator();
+    }
+
+    public Type getType(String name) {
+      final Set<Type> typeSet = types.get(name);
+      if (typeSet != null && typeSet.size() == 1) {
+        return typeSet.iterator().next();
+      }
+      return null;
+    }
+
+    public Object getValue(String name) {
+      final Set<Object> valueSet = values.get(name);
+      if (valueSet != null && valueSet.size() == 1) {
+        return valueSet.iterator().next();
+      }
+      return null;
+    }
+  }
+
+  @NotNull
+  private static Map<String, Object> constructorNamedArgValues(Class<?> aClass) {
+    if (aClass.isInterface() ||
+        aClass.isAnnotation() ||
+        WritableValue.class.isAssignableFrom(aClass) ||
+        Event.class.isAssignableFrom(aClass)) {
+      return Collections.emptyMap();
+    }
+    final Constructor<?>[] constructors = aClass.getConstructors();
+    final Args args = new Args();
+    for (Constructor<?> constructor : constructors) {
+      final Parameter[] parameters = constructor.getParameters();
+      for (Parameter parameter : parameters) {
+        final Class<?> type = parameter.getType();
+        if (type.isPrimitive() || type.isEnum() || type == String.class) {
+          final NamedArg namedArg = parameter.getAnnotation(NamedArg.class);
+          if (namedArg == null) continue;
+          final String name = namedArg.value();
+          if (!name.isEmpty()) {
+            final String defaultValue = namedArg.defaultValue();
+            if ((type == String.class || type.isEnum()) && !defaultValue.isEmpty() && !"\"\"".equals(defaultValue)) {
+              args.add(name, type, defaultValue);
+            }
+            else if (type == boolean.class) {
+              args.add(name, type, Boolean.valueOf(defaultValue));
+            }
+            else if (type == int.class) {
+              try {
+                args.add(name, type, Integer.valueOf(defaultValue));
+              }
+              catch (NumberFormatException e) {
+                args.add(name, type, Integer.valueOf(0));
+              }
+            }
+            else if (type == long.class) {
+              try {
+                args.add(name, type, Long.valueOf(defaultValue));
+              }
+              catch (NumberFormatException e) {
+                args.add(name, type, Long.valueOf(0));
+              }
+            }
+            else if (type == double.class) {
+              try {
+                args.add(name, type, Double.valueOf(defaultValue));
+              }
+              catch (NumberFormatException e) {
+                args.add(name, type, Double.valueOf(0));
+              }
+            }
+            else if (type == float.class) {
+              try {
+                args.add(name, type, Float.valueOf(defaultValue));
+              }
+              catch (NumberFormatException e) {
+                args.add(name, type, Float.valueOf(0));
+              }
+            }
+            else if (!type.isEnum() && type != String.class) {
+              System.err.println("pri " + type);
+            }
+          }
+        }
+      }
+    }
+    if (args.isEmpty()) return Collections.emptyMap();
+
+    Map<String, Object> result = new TreeMap<>();
+    for (String name : args) {
+      final Type type = args.getType(name);
+      if (type != null) {
+        final Object value = args.getValue(name);
+        if (value != null) {
+          result.put(name, value);
+        }
+      }
+    }
+    return result;
+  }
+
 
   private static boolean areValuesEqual(DefaultValue first, DefaultValue second) {
     return second.getValueText().equals(first.getValueText());

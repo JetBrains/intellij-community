@@ -32,7 +32,7 @@ public class IdDataConsumer {
   private final TIntIntHashMap myResult = new TIntIntHashMap();
 
   public Map<IdIndexEntry, Integer> getResult() {
-    final Map<IdIndexEntry, Integer> result = new THashMap<IdIndexEntry, Integer>(myResult.size());
+    final Map<IdIndexEntry, Integer> result = new THashMap<>(myResult.size());
     myResult.forEachEntry(new TIntIntProcedure() {
       @Override
       public boolean execute(final int key, final int value) {

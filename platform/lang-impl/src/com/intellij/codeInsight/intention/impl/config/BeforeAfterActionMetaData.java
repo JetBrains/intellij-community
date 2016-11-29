@@ -71,7 +71,7 @@ public abstract class BeforeAfterActionMetaData {
   @NotNull
   private static TextDescriptor[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix)
     throws MalformedURLException {
-    List<TextDescriptor> urls = new ArrayList<TextDescriptor>();
+    List<TextDescriptor> urls = new ArrayList<>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
       final String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(fileType);

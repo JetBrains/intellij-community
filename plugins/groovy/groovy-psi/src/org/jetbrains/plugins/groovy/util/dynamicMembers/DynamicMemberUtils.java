@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class DynamicMemberUtils {
     ConcurrentHashMap<String, ClassMemberHolder> map = project.getUserData(KEY);
 
     if (map == null) {
-      map = new ConcurrentHashMap<String, ClassMemberHolder>();
+      map = new ConcurrentHashMap<>();
       map = ((UserDataHolderEx)project).putUserDataIfAbsent(KEY, map);
     }
 
@@ -141,11 +141,11 @@ public class DynamicMemberUtils {
       Map<String, String> classCommentMap = parseComment(myClass.getDocComment());
 
       // Collect fields.
-      myFieldMap = new HashMap<String, PsiField[]>();
-      myStaticFieldMap = new HashMap<String, PsiField[]>();
-      myNonStaticFieldMap = new HashMap<String, PsiField[]>();
+      myFieldMap = new HashMap<>();
+      myStaticFieldMap = new HashMap<>();
+      myNonStaticFieldMap = new HashMap<>();
 
-      GrField[] fields = myClass.getFields();
+      GrField[] fields = myClass.getCodeFields();
 
       PsiField[] allFields = new PsiField[fields.length];
 
@@ -180,9 +180,9 @@ public class DynamicMemberUtils {
       // Collect methods..
       checkDuplicatedMethods(myClass);
 
-      MultiMap<String, PsiMethod> multiMap = new MultiMap<String, PsiMethod>();
-      MultiMap<String, PsiMethod> staticMultiMap = new MultiMap<String, PsiMethod>();
-      MultiMap<String, PsiMethod> nonStaticMultiMap = new MultiMap<String, PsiMethod>();
+      MultiMap<String, PsiMethod> multiMap = new MultiMap<>();
+      MultiMap<String, PsiMethod> staticMultiMap = new MultiMap<>();
+      MultiMap<String, PsiMethod> nonStaticMultiMap = new MultiMap<>();
 
       for (GrMethod method : myClass.getCodeMethods()) {
         GrDynamicMethodWithCache dynamicMethod = new GrDynamicMethodWithCache(method, classSource);
@@ -231,7 +231,7 @@ public class DynamicMemberUtils {
 
       if (docTags.length == 0) return Collections.emptyMap();
 
-      Map<String, String> res = new HashMap<String, String>();
+      Map<String, String> res = new HashMap<>();
 
       for (GrDocTag tag : docTags) {
         String tagText = tag.getText().trim();
@@ -249,10 +249,10 @@ public class DynamicMemberUtils {
       return myClass;
     }
 
-    private static void checkDuplicatedMethods(PsiClass psiClass) {
-      Set<String> existingMethods = new HashSet<String>();
+    private static void checkDuplicatedMethods(GrTypeDefinition psiClass) {
+      Set<String> existingMethods = new HashSet<>();
 
-      for (PsiMethod psiMethod : psiClass.getMethods()) {
+      for (PsiMethod psiMethod : psiClass.getCodeMethods()) {
         if (!(psiMethod instanceof GrAccessorMethod) &&
             !(psiMethod instanceof GrReflectedMethod) &&
             !existingMethods.add(psiMethod.getText())) {
@@ -262,7 +262,7 @@ public class DynamicMemberUtils {
     }
 
     private static Map<String, PsiMethod[]> convertMap(MultiMap<String, PsiMethod> multiMap) {
-      Map<String, PsiMethod[]> res = new HashMap<String, PsiMethod[]>();
+      Map<String, PsiMethod[]> res = new HashMap<>();
 
       for (String methodName : multiMap.keySet()) {
         Collection<PsiMethod> m = multiMap.get(methodName);

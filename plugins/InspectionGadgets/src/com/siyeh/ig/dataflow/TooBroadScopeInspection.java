@@ -68,7 +68,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       }
       final PsiVariable variable = (PsiVariable)variableIdentifier.getParent();
       assert variable != null;
-      final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope());
+      final Query<PsiReference> query = ReferencesSearch.search(variable);
       final Collection<PsiReference> referenceCollection = query.findAll();
       final PsiElement[] referenceElements = new PsiElement[referenceCollection.size()];
       int index = 0;
@@ -156,7 +156,13 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       if (name == null) {
         name = "";
       }
-      final String comment = getCommentText(variable) + getCommentText(initializer);
+      final String comment;
+      if (initializer == null || initializer.getParent() == variable) {
+        comment = getCommentText(variable);
+      }
+      else {
+        comment = getCommentText(variable) + getCommentText(initializer);
+      }
       final PsiType type = variable.getType();
       @NonNls final String statementText;
       final String typeText = type.getCanonicalText();

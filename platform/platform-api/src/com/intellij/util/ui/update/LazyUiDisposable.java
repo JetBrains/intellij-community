@@ -57,15 +57,13 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
 
     try {
       findParentDisposable()
-        .done(new Consumer<Disposable>() {
-          public void consume(Disposable parent) {
-            Project project = null;
-            if (ApplicationManager.getApplication() != null) {
-              project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-            }
-            initialize(parent, myChild, project);
-            Disposer.register(parent, myChild);
+        .done(parent -> {
+          Project project = null;
+          if (ApplicationManager.getApplication() != null) {
+            project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
           }
+          initialize(parent, myChild, project);
+          Disposer.register(parent, myChild);
         });
     }
     finally {
@@ -86,7 +84,7 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
   private static Promise<Disposable> findDisposable(Disposable defaultValue, final DataKey<? extends Disposable> key) {
     if (defaultValue == null) {
       if (ApplicationManager.getApplication() != null) {
-        final AsyncPromise<Disposable> result = new AsyncPromise<Disposable>();
+        final AsyncPromise<Disposable> result = new AsyncPromise<>();
         DataManager.getInstance().getDataContextFromFocus()
           .doWhenDone(new Consumer<DataContext>() {
             @Override

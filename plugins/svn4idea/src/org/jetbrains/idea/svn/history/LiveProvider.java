@@ -76,8 +76,8 @@ public class LiveProvider implements BunchProvider {
     }
     final SVNRevision youngRevision = (earliestRevision == -1) ? SVNRevision.HEAD : SVNRevision.create(earliestRevision);
 
-    final Ref<List<CommittedChangeList>> refToList = new Ref<List<CommittedChangeList>>();
-    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
+    final Ref<List<CommittedChangeList>> refToList = new Ref<>();
+    final Ref<VcsException> exceptionRef = new Ref<>();
 
     final Runnable loader = new Runnable() {
       public void run() {

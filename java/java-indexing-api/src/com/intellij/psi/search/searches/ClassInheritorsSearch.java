@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.Function;
+import com.intellij.util.AbstractQuery;
+import com.intellij.util.FilteredQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,15 +40,15 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
   public static class SearchParameters {
-    private final PsiClass myClass;
-    private final SearchScope myScope;
+    @NotNull private final PsiClass myClass;
+    @NotNull private final SearchScope myScope;
     private final boolean myCheckDeep;
     private final boolean myCheckInheritance;
     private final boolean myIncludeAnonymous;
-    private final Condition<String> myNameCondition;
+    @NotNull private final Condition<String> myNameCondition;
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
-      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.<String>alwaysTrue());
+      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.alwaysTrue());
     }
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
@@ -56,6 +57,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       myScope = scope;
       myCheckDeep = checkDeep;
       myCheckInheritance = checkInheritance;
+      assert checkInheritance;
       myIncludeAnonymous = includeAnonymous;
       myNameCondition = nameCondition;
     }
@@ -65,7 +67,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       return myClass;
     }
 
-    @NotNull public Condition<String> getNameCondition() {
+    @NotNull
+    public Condition<String> getNameCondition() {
       return myNameCondition;
     }
 
@@ -73,6 +76,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       return myCheckDeep;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
@@ -84,50 +88,91 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     public boolean isIncludeAnonymous() {
       return myIncludeAnonymous;
     }
+
+    @Override
+    public String toString() {
+      return "'"+myClass.getQualifiedName()+
+             "' scope="+myScope+
+             (myCheckDeep ? " (deep)" : "") +
+             (myCheckInheritance ? " (check inheritance)":"") +
+             (myIncludeAnonymous ? " (anonymous)":"")+
+             (myNameCondition == Conditions.<String>alwaysTrue() ? "" : " condition: "+myNameCondition);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SearchParameters that = (SearchParameters)o;
+
+      if (myCheckDeep != that.myCheckDeep) return false;
+      if (myCheckInheritance != that.myCheckInheritance) return false;
+      if (myIncludeAnonymous != that.myIncludeAnonymous) return false;
+      if (!myClass.equals(that.myClass)) return false;
+      if (!myScope.equals(that.myScope)) return false;
+      return myNameCondition.equals(that.myNameCondition);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myClass.hashCode();
+      result = 31 * result + myScope.hashCode();
+      result = 31 * result + (myCheckDeep ? 1 : 0);
+      result = 31 * result + (myCheckInheritance ? 1 : 0);
+      result = 31 * result + (myIncludeAnonymous ? 1 : 0);
+      result = 31 * result + myNameCondition.hashCode();
+      return result;
+    }
   }
 
   private ClassInheritorsSearch() {}
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
     return search(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
-    return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.<SmartPsiElementPointer<PsiClass>>canonicalStrategy(), new Function<PsiClass, SmartPsiElementPointer<PsiClass>>() {
-      @Override
-      public SmartPsiElementPointer<PsiClass> fun(final PsiClass psiClass) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<SmartPsiElementPointer<PsiClass>>() {
-          @Override
-          public SmartPsiElementPointer<PsiClass> compute() {
-            return SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass);
-          }
-        });
+    if (!parameters.isCheckDeep()) {
+      Query<PsiClass> directQuery = DirectClassInheritorsSearch.search(parameters.getClassToProcess(), parameters.getScope(), parameters.isIncludeAnonymous());
+      if (parameters.getNameCondition() != Conditions.<String>alwaysTrue()) {
+        directQuery = new FilteredQuery<>(directQuery, psiClass -> parameters.getNameCondition()
+          .value(ApplicationManager.getApplication().runReadAction((Computable<String>)psiClass::getName)));
       }
-    });
+      return AbstractQuery.wrapInReadAction(directQuery);
+    }
+    return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.canonicalStrategy(),
+                                             psiClass -> ApplicationManager.getApplication().runReadAction((Computable<SmartPsiElementPointer<PsiClass>>)() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
   }
 
+  /**
+   * @deprecated use {@link #search(PsiClass, SearchScope, boolean)} instead
+   */
+  @NotNull
+  @Deprecated //todo to be removed in IDEA 17
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
     return search(aClass, scope, checkDeep, checkInheritance, true);
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep) {
-    return search(aClass, scope, checkDeep, true);
+    return search(aClass, scope, checkDeep, true, true);
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, final boolean checkDeep) {
-    return search(aClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        if (!aClass.isValid()) {
-          throw new ProcessCanceledException();
-        }
-        return aClass.getUseScope();
+    return search(aClass, ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)() -> {
+      if (!aClass.isValid()) {
+        throw new ProcessCanceledException();
       }
+      return aClass.getUseScope();
     }), checkDeep);
   }
 
+  @NotNull
   public static Query<PsiClass> search(@NotNull PsiClass aClass) {
     return search(aClass, true);
   }
-
 }

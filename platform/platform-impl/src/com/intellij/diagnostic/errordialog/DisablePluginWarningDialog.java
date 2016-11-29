@@ -47,22 +47,14 @@ public class DisablePluginWarningDialog extends DialogWrapper {
 
   public static void disablePlugin(@NotNull PluginId pluginId, @NotNull JComponent parentComponent) {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    final Ref<Boolean> hasDependants = new Ref<Boolean>(false);
-    PluginManagerCore.checkDependants(plugin, new Function<PluginId, IdeaPluginDescriptor>() {
-                                        @Override
-                                        public IdeaPluginDescriptor fun(PluginId pluginId) {
-                                          return PluginManager.getPlugin(pluginId);
-                                        }
-                                      }, new Condition<PluginId>() {
-                                        @Override
-                                        public boolean value(PluginId pluginId) {
-                                          if (PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
-                                            return true;
-                                          }
-                                          hasDependants.set(true);
-                                          return false;
-                                        }
-                                      }
+    final Ref<Boolean> hasDependants = new Ref<>(false);
+    PluginManagerCore.checkDependants(plugin, pluginId1 -> PluginManager.getPlugin(pluginId1), pluginId12 -> {
+      if (PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId12.getIdString())) {
+        return true;
+      }
+      hasDependants.set(true);
+      return false;
+    }
     );
 
     Application app = ApplicationManager.getApplication();

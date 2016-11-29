@@ -95,10 +95,12 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
     });
   }
 
+  @NotNull
   public PsiMethodPattern definedInClass(@NonNls final String qname) {
     return definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(qname));
   }
 
+  @NotNull
   public PsiMethodPattern definedInClass(final ElementPattern<? extends PsiClass> pattern) {
     return with(new PatternConditionPlus<PsiMethod, PsiClass>("definedInClass", pattern) {
 

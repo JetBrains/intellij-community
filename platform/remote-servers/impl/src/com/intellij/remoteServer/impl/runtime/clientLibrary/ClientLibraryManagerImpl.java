@@ -50,7 +50,7 @@ import java.util.*;
 @State(name = "RemoteServerClientLibraries", storages = @Storage("remote-server-client-libraries.xml"))
 public class ClientLibraryManagerImpl extends ClientLibraryManager implements PersistentStateComponent<ClientLibraryManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance(ClientLibraryManagerImpl.class);
-  private Map<String, List<File>> myFiles = new LinkedHashMap<String, List<File>>();
+  private Map<String, List<File>> myFiles = new LinkedHashMap<>();
 
   private EventDispatcher<CloudClientLibraryManagerListener> myEventDispatcher
     = EventDispatcher.create(CloudClientLibraryManagerListener.class);
@@ -76,9 +76,9 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
 
   @Override
   public void loadState(State state) {
-    myFiles = new HashMap<String, List<File>>();
+    myFiles = new HashMap<>();
     for (DownloadedLibraryState libraryState : state.myLibraries) {
-      List<File> files = new ArrayList<File>();
+      List<File> files = new ArrayList<>();
       for (String path : libraryState.myPaths) {
         files.add(new File(path));
       }
@@ -97,7 +97,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
     if (files == null) {
       return Collections.emptyList();
     }
-    List<File> existentFiles = new ArrayList<File>();
+    List<File> existentFiles = new ArrayList<>();
     for (File file : files) {
       if (file.exists()) {
         existentFiles.add(file);
@@ -110,12 +110,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
   public void checkConfiguration(@NotNull final ClientLibraryDescription description, final @Nullable Project project,
                                  final @Nullable JComponent component) throws RuntimeConfigurationError {
     if (!isDownloaded(description)) {
-      throw new RuntimeConfigurationError("Client libraries were not downloaded", new Runnable() {
-        @Override
-        public void run() {
-          download(description, project, component);
-        }
-      });
+      throw new RuntimeConfigurationError("Client libraries were not downloaded", () -> download(description, project, component));
     }
   }
 
@@ -134,15 +129,12 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
   public void download(@NotNull final ClientLibraryDescription libraryDescription, @Nullable Project project, @Nullable JComponent component) {
     final Ref<IOException> exc = Ref.create(null);
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      new Runnable() {
-        @Override
-        public void run() {
-          try {
-            download(libraryDescription);
-          }
-          catch (IOException e) {
-            exc.set(e);
-          }
+      () -> {
+        try {
+          download(libraryDescription);
+        }
+        catch (IOException e) {
+          exc.set(e);
         }
       }, "Downloading Client Libraries", false, project, component);
     if (exc.isNull()) {
@@ -176,7 +168,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
 
     List<File> files = myFiles.get(libraryDescription.getId());
     if (files == null) {
-      files = new ArrayList<File>();
+      files = new ArrayList<>();
       myFiles.put(libraryDescription.getId(), files);
     }
     for (Pair<File, DownloadableFileDescription> pair : downloaded) {
@@ -195,12 +187,12 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
 
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false, elementTag = "file", elementValueAttribute = "path")
-    public List<String> myPaths = new ArrayList<String>();
+    public List<String> myPaths = new ArrayList<>();
   }
 
   public static class State {
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false)
-    public List<DownloadedLibraryState> myLibraries = new ArrayList<DownloadedLibraryState>();
+    public List<DownloadedLibraryState> myLibraries = new ArrayList<>();
   }
 }

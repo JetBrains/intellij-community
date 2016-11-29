@@ -22,7 +22,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   private int myIndent;
   private PsiBuilder.Marker myAfterLastEolMarker;
 
-  private final Stack<TokenSet> myStopTokensStack = new Stack<TokenSet>();
+  private final Stack<TokenSet> myStopTokensStack = new Stack<>();
 
   @NotNull
   public ASTNode parse(@NotNull final IElementType root, @NotNull final PsiBuilder builder) {
@@ -214,12 +214,34 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
   @NotNull
   private IElementType parseMultiLineScalar(final IElementType tokenType) {
+    int indent = -1;
     IElementType type = getTokenType();
+    PsiBuilder.Marker endOfValue = null;
     while (type == tokenType || type == INDENT || type == EOL) {
-      advanceLexer();
+      if (indent == -1 && type == INDENT) {
+        indent = getCurrentTokenLength();
+      }
+      
+      if (type == tokenType || type == INDENT && getCurrentTokenLength() > indent) {
+        advanceLexer();
+        if (endOfValue != null) {
+          endOfValue.drop();
+        }
+        endOfValue = myBuilder.mark();
+      }
+      else {
+        advanceLexer();
+      }
+      
       type = getTokenType();
     }
-    rollBackToEol();
+    if (endOfValue == null) {
+      rollBackToEol();
+    }
+    else {
+      dropEolMarker();
+      endOfValue.rollbackTo();
+    }
     return tokenType == SCALAR_LIST ? YAMLElementTypes.SCALAR_LIST_VALUE : YAMLElementTypes.SCALAR_TEXT_VALUE;
   }
 

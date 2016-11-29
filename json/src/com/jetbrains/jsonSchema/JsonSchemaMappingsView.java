@@ -67,7 +67,7 @@ public class JsonSchemaMappingsView implements Disposable {
 
   private void createUI(final Project project) {
     myProject = project;
-    myTableView = new TableView<JsonSchemaMappingsConfigurationBase.Item>();
+    myTableView = new TableView<>();
     myTableView.getTableHeader().setVisible(false);
     myDecorator = ToolbarDecorator.createDecorator(myTableView);
     myDecorator
@@ -93,16 +93,13 @@ public class JsonSchemaMappingsView implements Disposable {
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     attachNavigateToSchema();
-    myError = SwingHelper.createHtmlLabel("Warning: conflicting mappings. <a href=\"#\">Show details</a>", null, new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        final BalloonBuilder builder = JBPopupFactory.getInstance().
-          createHtmlTextBalloonBuilder(myErrorText, UIUtil.getBalloonWarningIcon(), MessageType.WARNING.getPopupBackground(), null);
-        builder.setDisposable(JsonSchemaMappingsView.this);
-        builder.setHideOnClickOutside(true);
-        builder.setCloseButtonEnabled(true);
-        builder.createBalloon().showInCenterOf(myError);
-      }
+    myError = SwingHelper.createHtmlLabel("Warning: conflicting mappings. <a href=\"#\">Show details</a>", null, s -> {
+      final BalloonBuilder builder = JBPopupFactory.getInstance().
+        createHtmlTextBalloonBuilder(myErrorText, UIUtil.getBalloonWarningIcon(), MessageType.WARNING.getPopupBackground(), null);
+      builder.setDisposable(this);
+      builder.setHideOnClickOutside(true);
+      builder.setCloseButtonEnabled(true);
+      builder.createBalloon().showInCenterOf(myError);
     });
 
     final FormBuilder builder = FormBuilder.createFormBuilder();
@@ -158,7 +155,7 @@ public class JsonSchemaMappingsView implements Disposable {
     myInitialized = true;
     mySchemaField.setText(schemaFilePath);
     myTableView.setModelAndUpdateColumns(
-      new ListTableModel<JsonSchemaMappingsConfigurationBase.Item>(createColumns(), new ArrayList<JsonSchemaMappingsConfigurationBase.Item>(data)));
+      new ListTableModel<>(createColumns(), new ArrayList<>(data)));
   }
 
   public boolean isInitialized() {
@@ -235,21 +232,18 @@ public class JsonSchemaMappingsView implements Disposable {
       builder.setDimensionServiceKey("com.jetbrains.jsonSchema.JsonSchemaMappingsView#add");
       builder.setHelpId(ADD_SCHEMA_MAPPING);
 
-      final Getter<String> textGetter = new Getter<String>() {
-        @Override
-        public String get() {
-          if (radioPattern.isSelected()) {
-            return patternField.getText();
-          }
-
-          final String text;
-          if (radioDirectory.isSelected()) {
-            text = directoryField.getText();
-          } else {
-            text = fileField.getText();
-          }
-          return getRelativePath(myProject, text);
+      final Getter<String> textGetter = () -> {
+        if (radioPattern.isSelected()) {
+          return patternField.getText();
         }
+
+        final String text;
+        if (radioDirectory.isSelected()) {
+          text = directoryField.getText();
+        } else {
+          text = fileField.getText();
+        }
+        return getRelativePath(myProject, text);
       };
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       final Runnable updaterValidator = new Runnable() {

@@ -26,7 +26,7 @@ class StatementCountVisitor extends GroovyRecursiveElementVisitor {
   private int statementCount = 0;
 
   @Override
-  public void visitElement(GroovyPsiElement element) {
+  public void visitElement(@NotNull GroovyPsiElement element) {
     int oldCount = 0;
     if (element instanceof GrMethod) {
       oldCount = statementCount;

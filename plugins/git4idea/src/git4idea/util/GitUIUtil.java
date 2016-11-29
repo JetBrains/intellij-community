@@ -83,7 +83,7 @@ public class GitUIUtil {
       errorMessages = null;
     }
     else {
-      errorMessages = new HashSet<String>(errors.size());
+      errorMessages = new HashSet<>(errors.size());
       for (Exception error : errors) {
         if (error instanceof VcsException) {
           for (String message : ((VcsException)error).getMessages()) {

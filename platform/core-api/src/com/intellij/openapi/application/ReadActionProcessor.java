@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 package com.intellij.openapi.application;
 
-import com.intellij.util.Processor;
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -33,4 +34,19 @@ public abstract class ReadActionProcessor<T> implements Processor<T> {
     });
   }
   public abstract boolean processInReadAction(T t);
+
+  @NotNull
+  public static <T> Processor<T> wrapInReadAction(@NotNull final Processor<T> processor) {
+    return new Processor<T>() {
+      @Override
+      public boolean process(final T t) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return processor.process(t);
+          }
+        });
+      }
+    };
+  }
 }

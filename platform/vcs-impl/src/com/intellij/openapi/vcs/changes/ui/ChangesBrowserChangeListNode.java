@@ -58,8 +58,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
         renderer.append(spaceAndThinSpace() + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       } 
       else if (myClManager.isInUpdate()) {
-        renderer.append((getCountText().isEmpty() ? spaceAndThinSpace() : ", ") + VcsBundle.message("changes.nodetitle.updating"),
-                        SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        appendUpdatingState(renderer);
       }
       if (! myChangeListRemoteState.getState()) {
         renderer.append(spaceAndThinSpace());
@@ -70,6 +69,10 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       renderer.append(getUserObject().getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
       appendCount(renderer);
     }
+  }
+
+  public ChangeListRemoteState getChangeListRemoteState() {
+    return myChangeListRemoteState;
   }
 
   @Override
@@ -97,7 +100,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     final LocalChangeList dropList = (LocalChangeList)getUserObject();
     dragOwner.moveChangesTo(dropList, dragBean.getChanges());
 
-    final List<VirtualFile> toUpdate = new ArrayList<VirtualFile>();
+    final List<VirtualFile> toUpdate = new ArrayList<>();
 
     addIfNotNull(toUpdate, dragBean.getUnversionedFiles());
     addIfNotNull(toUpdate, dragBean.getIgnoredFiles());

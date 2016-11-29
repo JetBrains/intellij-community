@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,13 +38,7 @@ public class OutputLineSplitterTest extends PlatformTestCase {
   private static final List<Key> ALL_COLORS = Arrays.asList(RED, GREEN, BLUE);
 
   private OutputLineSplitter mySplitter;
-  final Map<Key, List<String>> myOutput = new THashMap<Key, List<String>>();
-
-
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
+  final Map<Key, List<String>> myOutput = new THashMap<>();
 
   @Override
   protected void setUp() throws Exception {
@@ -56,7 +51,7 @@ public class OutputLineSplitterTest extends PlatformTestCase {
         synchronized (myOutput) {
           List<String> list = myOutput.get(outputType);
           if (list == null) {
-            myOutput.put(outputType, list = new ArrayList<String>());
+            myOutput.put(outputType, list = new ArrayList<>());
           }
           list.add(text);
         }
@@ -65,28 +60,25 @@ public class OutputLineSplitterTest extends PlatformTestCase {
   }
 
   public void testReadingSeveralStreams() throws Exception {
-    final Map<Key, List<String>> written = new ConcurrentHashMap<Key, List<String>>();
+    final Map<Key, List<String>> written = new ConcurrentHashMap<>();
     for (final Key each : ALL_TYPES) {
-      written.put(each, new ArrayList<String>());
-      execute(new Runnable() {
-        @Override
-        public void run() {
-          Random r = new Random();
-          for (int i = 0; i < 1000; i++) {
-            String s = StringUtil.repeat("A", 100 + r.nextInt(1000));
-            if (r.nextInt(1) == 1) s += "\n";
+      written.put(each, new ArrayList<>());
+      execute(() -> {
+        Random r = new Random();
+        for (int i = 0; i < 1000; i++) {
+          String s = StringUtil.repeat("A", 100 + r.nextInt(1000));
+          if (r.nextInt(1) == 1) s += "\n";
 
-            mySplitter.process(s, each);
-            List<String> list = written.get(each);
-            if (!list.isEmpty()) {
-              String last = list.get(list.size() - 1);
-              if (!last.endsWith("\n")) {
-                list.set(list.size() - 1, last + s);
-                continue;
-              }
+          mySplitter.process(s, each);
+          List<String> list = written.get(each);
+          if (!list.isEmpty()) {
+            String last = list.get(list.size() - 1);
+            if (!last.endsWith("\n")) {
+              list.set(list.size() - 1, last + s);
+              continue;
             }
-            list.add(s);
           }
+          list.add(s);
         }
       }).get();
     }
@@ -99,24 +91,21 @@ public class OutputLineSplitterTest extends PlatformTestCase {
   }
 
   public void testReadingColoredStreams() throws Exception {
-    final Map<Key, List<String>> written = new ConcurrentHashMap<Key, List<String>>();
+    final Map<Key, List<String>> written = new ConcurrentHashMap<>();
     for (final Key each : ALL_TYPES) {
-      written.put(each, new ArrayList<String>());
-      execute(new Runnable() {
-        @Override
-        public void run() {
-          Random r = new Random();
-          for (int i = 0; i < 1000; i++) {
-            String s = StringUtil.repeat("A", 100 + r.nextInt(1000)) + "\n";
+      written.put(each, new ArrayList<>());
+      execute(() -> {
+        Random r = new Random();
+        for (int i = 0; i < 1000; i++) {
+          String s = StringUtil.repeat("A", 100 + r.nextInt(1000)) + "\n";
 
-            if (each == ProcessOutputTypes.STDOUT) {
-              mySplitter.process(s, ALL_COLORS.get(r.nextInt(2)));
-            }
-            else {
-              mySplitter.process(s, each);
-            }
-            written.get(each).add(s);
+          if (each == ProcessOutputTypes.STDOUT) {
+            mySplitter.process(s, ALL_COLORS.get(r.nextInt(2)));
           }
+          else {
+            mySplitter.process(s, each);
+          }
+          written.get(each).add(s);
         }
       }).get();
     }
@@ -133,23 +122,21 @@ public class OutputLineSplitterTest extends PlatformTestCase {
     final Semaphore read = new Semaphore(0);
 
     final AtomicBoolean isFinished = new AtomicBoolean();
-    List<Future<?>> futures = new ArrayList<Future<?>>();
+    List<Future<?>> futures = new ArrayList<>();
 
     for (final Key each : ALL_TYPES) {
-      futures.add(execute(new Runnable() {
-        public void run() {
-          int i = 0;
-          while (!isFinished.get()) {
-            mySplitter.process(StringUtil.repeat("A", 100), each);
-            i++;
-            if (i % 10 == 0) {
-              written.release();
-              try {
-                if (!read.tryAcquire(10, TimeUnit.SECONDS)) throw new TimeoutException();
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
+      futures.add(execute(() -> {
+        int i = 0;
+        while (!isFinished.get()) {
+          mySplitter.process(StringUtil.repeat("A", 100), each);
+          i++;
+          if (i % 10 == 0) {
+            written.release();
+            try {
+              if (!read.tryAcquire(10, TimeUnit.SECONDS)) throw new TimeoutException();
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
             }
           }
         }
@@ -190,6 +177,13 @@ public class OutputLineSplitterTest extends PlatformTestCase {
         e.printStackTrace();
       }
     }
+  }
+
+  public void testPerformanceWithLotsOfFragments() throws Exception {
+    for (int i = 0; i < 10_000; i++) {
+      mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ",  ProcessOutputTypes.STDOUT);
+    }
+    PlatformTestUtil.startPerformanceTest("Flashing lot's of fragments", 10, mySplitter::flush).attempts(1).useLegacyScaling().assertTiming();
   }
 
   private Future<?> execute(final Runnable runnable) {

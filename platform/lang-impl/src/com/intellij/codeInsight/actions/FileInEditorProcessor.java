@@ -26,7 +26,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import java.awt.*;
 
 import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
 import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
@@ -93,24 +96,21 @@ class FileInEditorProcessor {
 
     if (shouldNotify()) {
       myProcessor.setCollectInfo(true);
-      myProcessor.setPostRunnable(new Runnable() {
-        @Override
-        public void run() {
-          String message = prepareMessage();
-          if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
-            HyperlinkListener hyperlinkListener = new HyperlinkAdapter() {
-              @Override
-              protected void hyperlinkActivated(HyperlinkEvent e) {
-                AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
-                DataManager manager = DataManager.getInstance();
-                if (manager != null) {
-                  DataContext context = manager.getDataContext(myEditor.getContentComponent());
-                  action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
-                }
+      myProcessor.setPostRunnable(() -> {
+        String message = prepareMessage();
+        if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
+          HyperlinkListener hyperlinkListener = new HyperlinkAdapter() {
+            @Override
+            protected void hyperlinkActivated(HyperlinkEvent e) {
+              AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
+              DataManager manager = DataManager.getInstance();
+              if (manager != null) {
+                DataContext context = manager.getDataContext(myEditor.getContentComponent());
+                action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
               }
-            };
-            showHint(myEditor, message, hyperlinkListener);
-          }
+            }
+          };
+          showHint(myEditor, message, hyperlinkListener);
         }
       });
     }
@@ -160,7 +160,7 @@ class FileInEditorProcessor {
         builder.append("No lines changed: changes since last revision are already properly formatted").append("<br>");
       }
       else {
-        builder.append("No lines changed: code is already properly formatted").append("<br>");
+        builder.append("No lines changed: content is already properly formatted").append("<br>");
       }
     }
     else {
@@ -206,14 +206,53 @@ class FileInEditorProcessor {
     return firstNotificationLine;
   }
 
+  private static boolean isCaretVisible(Editor editor) {
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Caret currentCaret = editor.getCaretModel().getCurrentCaret();
+    Point caretPoint = editor.visualPositionToXY(currentCaret.getVisualPosition());
+    return visibleArea.contains(caretPoint);
+  }
+
   public static void showHint(@NotNull Editor editor, @NotNull String info, @Nullable HyperlinkListener hyperlinkListener) {
     JComponent component = HintUtil.createInformationLabel(info, hyperlinkListener, null, null);
     LightweightHint hint = new LightweightHint(component);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
-                                                     HintManager.HIDE_BY_ANY_KEY |
-                                                     HintManager.HIDE_BY_TEXT_CHANGE |
-                                                     HintManager.HIDE_BY_SCROLLING,
-                                                     0, false);
+
+    int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+    if (isCaretVisible(editor)) {
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER, flags, 0, false);
+    }
+    else {
+      showHintWithoutScroll(editor, hint, flags);
+    }
+  }
+
+  private static void showHintWithoutScroll(Editor editor, LightweightHint hint, int flags) {
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    
+    short constraint;
+    int y;
+    
+    if (isCaretAboveTop(editor, visibleArea)) {
+      y = visibleArea.y;
+      constraint = HintManager.UNDER;
+    }
+    else {
+      y = visibleArea.y + visibleArea.height;
+      constraint = HintManager.ABOVE;
+    }
+    
+    Point hintPoint = new Point(visibleArea.x + (visibleArea.width / 2), y);
+    
+    JComponent component = HintManagerImpl.getExternalComponent(editor);
+    Point convertedPoint = SwingUtilities.convertPoint(editor.getContentComponent(), hintPoint, component);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, convertedPoint, flags, 0, false, constraint);
+  }
+
+  private static boolean isCaretAboveTop(Editor editor, Rectangle area) {
+    Caret caret = editor.getCaretModel().getCurrentCaret();
+    VisualPosition caretVisualPosition = caret.getVisualPosition();
+    int caretY = editor.visualPositionToXY(caretVisualPosition).y;
+    return caretY < area.y;
   }
 
   private boolean shouldNotify() {

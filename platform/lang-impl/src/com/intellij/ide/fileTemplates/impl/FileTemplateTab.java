@@ -30,7 +30,7 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 abstract class FileTemplateTab {
-  protected final List<FileTemplateBase> myTemplates = new ArrayList<FileTemplateBase>();
+  protected final List<FileTemplateBase> myTemplates = new ArrayList<>();
   private final String myTitle;
   protected static final Color MODIFIED_FOREGROUND = JBColor.BLUE;
 

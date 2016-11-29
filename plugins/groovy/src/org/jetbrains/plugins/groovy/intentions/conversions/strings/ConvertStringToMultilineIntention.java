@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
@@ -59,7 +60,7 @@ public class ConvertStringToMultilineIntention extends Intention {
   public static final String hint = GroovyIntentionsBundle.message("convert.string.to.multiline.intention.name");
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, final Project project, final Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, final Editor editor) throws IncorrectOperationException {
     final List<GrExpression> expressions;
     if (editor.getSelectionModel().hasSelection()) {
       expressions = Collections.singletonList(((GrExpression)element));
@@ -83,16 +84,11 @@ public class ConvertStringToMultilineIntention extends Intention {
     else {
       final Pass<GrExpression> callback = new Pass<GrExpression>() {
         @Override
-        public void pass(@NotNull final GrExpression selectedValue) {
+        public void pass(final GrExpression selectedValue) {
           invokeImpl(selectedValue, project, editor);
         }
       };
-      final Function<GrExpression, String> renderer = new Function<GrExpression, String>() {
-        @Override
-        public String fun(@NotNull GrExpression grExpression) {
-          return grExpression.getText();
-        }
-      };
+      final Function<GrExpression, String> renderer = grExpression -> grExpression.getText();
       IntroduceTargetChooser.showChooser(editor, expressions, callback, renderer);
     }
   }
@@ -162,44 +158,36 @@ public class ConvertStringToMultilineIntention extends Intention {
 
     final StringBuilder buffer = prepareNewLiteralText(literals);
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              final int offset = editor.getCaretModel().getOffset();
-              final TextRange range = element.getTextRange();
-              int shift;
-              if (editor.getSelectionModel().hasSelection()) {
-                shift = 0;
-              }
-              else if (range.getStartOffset() == offset) {
-                shift = 0;
-              }
-              else if (range.getEndOffset() == offset + 1) {
-                shift = -2;
-              }
-              else {
-                shift = 2;
-              }
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        final int offset = editor.getCaretModel().getOffset();
+        final TextRange range = element.getTextRange();
+        int shift;
+        if (editor.getSelectionModel().hasSelection()) {
+          shift = 0;
+        }
+        else if (range.getStartOffset() == offset) {
+          shift = 0;
+        }
+        else if (range.getEndOffset() == offset + 1) {
+          shift = -2;
+        }
+        else {
+          shift = 2;
+        }
 
-              final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
+        final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
 
-              element.replaceWithExpression(newLiteral, true);
+        element.replaceWithExpression(newLiteral, true);
 
-              if (shift != 0) {
-                editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + shift);
-              }
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+        if (shift != 0) {
+          editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + shift);
+        }
       }
-    }, getText(), null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), getText(), null);
   }
 
   private static StringBuilder prepareNewLiteralText(List<GrLiteral> literals) {
@@ -263,6 +251,12 @@ public class ConvertStringToMultilineIntention extends Intention {
                || element instanceof GrBinaryExpression && isAppropriateBinary((GrBinaryExpression)element, null);
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return file;
   }
 
   @Override

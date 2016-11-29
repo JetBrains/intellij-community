@@ -81,7 +81,7 @@ public class GroovyStaticMethodNamingConventionInspection extends ConventionInsp
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(GrMethod grMethod) {
+    public void visitMethod(@NotNull GrMethod grMethod) {
       super.visitMethod(grMethod);
       if (!grMethod.hasModifierProperty(PsiModifier.STATIC)) {
         return;

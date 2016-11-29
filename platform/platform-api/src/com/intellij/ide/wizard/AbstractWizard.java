@@ -58,7 +58,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected JPanel myContentPanel;
   protected TallImageComponent myIcon;
   private Component myCurrentStepComponent;
-  private final Map<Component, String> myComponentToIdMap = new HashMap<Component, String>();
+  private final Map<Component, String> myComponentToIdMap = new HashMap<>();
   private final StepListener myStepListener = new StepListener() {
     public void stateChanged() {
       updateStep();
@@ -67,13 +67,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   public AbstractWizard(final String title, final Component dialogParent) {
     super(dialogParent, true);
-    mySteps = new ArrayList<T>();
+    mySteps = new ArrayList<>();
     initWizard(title);
   }
 
   public AbstractWizard(final String title, @Nullable final Project project) {
     super(project, true);
-    mySteps = new ArrayList<T>();
+    mySteps = new ArrayList<>();
     initWizard(title);
   }
 
@@ -448,12 +448,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   private static void requestFocusTo(final JComponent component) {
-    UiNotifyConnector.doWhenFirstShown(component, new Runnable() {
-      @Override
-      public void run() {
-        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
-        focusManager.requestFocus(component, false);
-      }
+    UiNotifyConnector.doWhenFirstShown(component, () -> {
+      final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
+      focusManager.requestFocus(component, false);
     });
   }
 
@@ -477,6 +474,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     updateButtons(lastStep, lastStep ? canFinish() : canGoNext(), isFirstStep());
   }
 
+  public void updateWizardButtons() {
+    if (!mySteps.isEmpty() && getRootPane() != null)
+      updateButtons();
+  }
+
   public void updateButtons(boolean lastStep, boolean canGoNext, boolean firstStep) {
     if (lastStep) {
       if (mySteps.size() > 1) {
@@ -494,7 +496,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myNextButton.setEnabled(canGoNext);
     }
 
-    if (myNextButton.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myNextButton.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode() && getRootPane() != null) {
       getRootPane().setDefaultButton(myNextButton);
     }
 

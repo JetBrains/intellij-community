@@ -188,7 +188,7 @@ public class ParameterDeclaration {
    */
   private static boolean parseOptionalModifier(PsiBuilder builder, GroovyParser parser) {
 
-    Set<IElementType> modSet = new HashSet<IElementType>();
+    Set<IElementType> modSet = new HashSet<>();
 
     PsiBuilder.Marker marker = builder.mark();
 

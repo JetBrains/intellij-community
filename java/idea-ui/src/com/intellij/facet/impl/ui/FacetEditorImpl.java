@@ -48,7 +48,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
   private JComponent myComponent;
   private @Nullable TabbedPaneWrapper myTabbedPane;
   private final FacetEditorContext myContext;
-  private final Set<FacetEditorTab> myVisitedTabs = new HashSet<FacetEditorTab>();
+  private final Set<FacetEditorTab> myVisitedTabs = new HashSet<>();
   private int mySelectedTabIndex = 0;
   private final Disposable myDisposable = Disposer.newDisposable();
 
@@ -117,11 +117,9 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     if (myVisitedTabs.add(selectedTab)) {
       final JComponent preferredFocusedComponent = selectedTab.getPreferredFocusedComponent();
       if (preferredFocusedComponent != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (preferredFocusedComponent.isShowing()) {
-              preferredFocusedComponent.requestFocus();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (preferredFocusedComponent.isShowing()) {
+            preferredFocusedComponent.requestFocus();
           }
         });
       }

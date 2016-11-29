@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public interface JVMElementFactory {
    *
    * @param name the name of the class to create.
    * @return the created class instance.
-   * @throws com.intellij.util.IncorrectOperationException
+   * @throws IncorrectOperationException
    *          if <code>name</code> is not a valid Java identifier.
    */
   @NotNull
@@ -175,7 +175,7 @@ public interface JVMElementFactory {
    *
    * @param name the name of the annotation type to create.
    * @return the created annotation type instance.
-   * @throws com.intellij.util.IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
    */
   @NotNull
   PsiClass createAnnotationType(@NotNull @NonNls String name) throws IncorrectOperationException;
@@ -201,13 +201,19 @@ public interface JVMElementFactory {
   @NotNull
   PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor);
 
-  /*
-   additional languageLevel parameter to memorize language level for allowing/prohibiting boxing/unboxing
-  */
+  /**
+   * Creates a class type for the specified class, using the specified substitutor
+   * to replace generic type parameters on the class.
+   *
+   * @param resolve       the class for which the class type is created.
+   * @param substitutor   the substitutor to use.
+   * @param languageLevel to memorize language level for allowing/prohibiting boxing/unboxing.
+   * @return the class type instance.
+   */
   @NotNull
   PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel);
 
-  @NotNull
+  /** @deprecated use {@link PsiType#annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
   PsiClassType createType(@NotNull PsiClass resolve,
                           @NotNull PsiSubstitutor substitutor,
                           @NotNull LanguageLevel languageLevel,

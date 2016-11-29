@@ -14,7 +14,7 @@ import java.util.ArrayList;
  */
 public class DocValuesIterator extends NodeIterator {
   private int index;
-  private final ArrayList<PsiElement> tokens = new ArrayList<PsiElement>(2);
+  private final ArrayList<PsiElement> tokens = new ArrayList<>(2);
   private static final IElementType tokenType = JavaDocTokenType.DOC_COMMENT_DATA;
 
   public DocValuesIterator(PsiElement start) {

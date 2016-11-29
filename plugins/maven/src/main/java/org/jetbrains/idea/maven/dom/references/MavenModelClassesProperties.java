@@ -35,7 +35,7 @@ public class MavenModelClassesProperties {
   public static final String MAVEN_MODEL_CLASS = "org.apache.maven.model.Model";
 
   static {
-    Map<String, Map<String, String>> res = new HashMap<String, Map<String, String>>();
+    Map<String, Map<String, String>> res = new HashMap<>();
 
     res.put(MAVEN_PROJECT_CLASS, ContainerUtil.<String, String>immutableMapBuilder()
       .put("parentFile", "java.io.File")

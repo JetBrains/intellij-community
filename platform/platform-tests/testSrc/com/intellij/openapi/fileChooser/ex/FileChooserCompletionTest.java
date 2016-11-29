@@ -16,7 +16,7 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
   private File myParent;
   private LocalFsFinder myFinder;
 
-  private final Map<String, String> myMacros = new HashMap<String, String>();
+  private final Map<String, String> myMacros = new HashMap<>();
   private File myFolder11;
   private File myFolder21;
 
@@ -140,12 +140,7 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
 
     final List<String> expectedList = Arrays.asList(expected);
 
-    Collections.sort(result.myToComplete, new Comparator<FileLookup.LookupFile>() {
-      @Override
-      public int compare(final FileLookup.LookupFile o1, final FileLookup.LookupFile o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Collections.sort(result.myToComplete, (o1, o2) -> o1.getName().compareTo(o2.getName()));
     Collections.sort(expectedList);
 
     assertEquals(asString(expectedList, result), asString(result.myToComplete, result));

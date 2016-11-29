@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.*;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,9 +54,9 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-@SuppressWarnings({"ConstantConditions"})
+@SuppressWarnings("ConstantConditions")
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
-  private final Map<String, ToolWindow> myToolWindows = new HashMap<String, ToolWindow>();
+  private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
 
   public ToolWindowHeadlessManagerImpl(Project project) {
@@ -75,12 +76,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     MockToolWindow tw = new MockToolWindow(myProject);
     myToolWindows.put(id, tw);
     if (parentDisposable != null)  {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          unregisterToolWindow(id);
-        }
-      });
+      Disposer.register(parentDisposable, () -> unregisterToolWindow(id));
     }
     return tw;
   }
@@ -90,7 +86,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public ToolWindow registerToolWindow(@NotNull String id,
                                        @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
-                                       Disposable parentDisposable,
+                                       @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode) {
     return doRegisterToolWindow(id, parentDisposable);
   }
@@ -106,7 +102,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public ToolWindow registerToolWindow(@NotNull String id,
                                        @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
-                                       Disposable parentDisposable,
+                                       @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode,
                                        boolean canCloseContents) {
     return doRegisterToolWindow(id, parentDisposable);
@@ -139,7 +135,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
-                                       final Disposable parentDisposable, final boolean dumbAware) {
+                                       @NotNull final Disposable parentDisposable, final boolean dumbAware) {
     return doRegisterToolWindow(id, parentDisposable);
   }
 
@@ -148,7 +144,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public ToolWindow registerToolWindow(@NotNull String id,
                                        boolean canCloseContent,
                                        @NotNull ToolWindowAnchor anchor,
-                                       Disposable parentDisposable,
+                                       @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode,
                                        boolean secondary) {
     return doRegisterToolWindow(id, parentDisposable);
@@ -222,16 +218,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
 
   }
 
   @Override
-  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l, @NotNull Disposable parentDisposable) {
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener, @NotNull Disposable parentDisposable) {
   }
 
   @Override
-  public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
+  public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
   }
 
   @Override
@@ -270,9 +266,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public void hideToolWindow(@NotNull final String id, final boolean hideSide) {
   }
 
+  @NotNull
   @Override
   public List<String> getIdsOn(@NotNull final ToolWindowAnchor anchor) {
-    return new ArrayList<String>();
+    return new ArrayList<>();
   }
 
   public static class MockToolWindow implements ToolWindowEx {
@@ -330,7 +327,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setAnchor(ToolWindowAnchor anchor, @Nullable Runnable runnable) {
+    public void setAnchor(@NotNull ToolWindowAnchor anchor, @Nullable Runnable runnable) {
     }
 
     @Override
@@ -367,7 +364,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setType(ToolWindowType type, @Nullable Runnable runnable) {
+    public void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable) {
     }
 
     @Override
@@ -500,7 +497,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   private static class MockContentManager implements ContentManager {
     private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
-    private final List<Content> myContents = new ArrayList<Content>();
+    private final List<Content> myContents = new ArrayList<>();
     private Content mySelected;
 
     @NotNull
@@ -511,15 +508,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void addContent(@NotNull final Content content) {
-      myContents.add(content);
-      ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
-      myDispatcher.getMulticaster().contentAdded(e);
-      if (mySelected == null) setSelectedContent(content);
+      addContent(content, -1);
     }
 
     @Override
     public void addContent(@NotNull Content content, int order) {
-      myContents.add(order, content);
+      myContents.add(order == -1 ? myContents.size() : order, content);
+      if (content instanceof ContentImpl && content.getManager() == null) {
+        ((ContentImpl)content).setManager(this);
+      }
+      Disposer.register(this, content);
       ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
       myDispatcher.getMulticaster().contentAdded(e);
       if (mySelected == null) setSelectedContent(content);

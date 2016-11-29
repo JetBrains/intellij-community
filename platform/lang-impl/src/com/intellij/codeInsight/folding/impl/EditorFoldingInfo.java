@@ -38,8 +38,7 @@ import java.util.Map;
 public class EditorFoldingInfo {
   private static final Key<EditorFoldingInfo> KEY = Key.create("EditorFoldingInfo.KEY");
 
-  private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap
-    = new THashMap<FoldRegion, SmartPsiElementPointer<?>>();
+  private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap = new THashMap<>();
 
   @NotNull
   public static EditorFoldingInfo get(@NotNull Editor editor) {
@@ -62,7 +61,7 @@ public class EditorFoldingInfo {
   }
 
   @Nullable
-  public TextRange getPsiElementRange(@NotNull FoldRegion region) {
+  TextRange getPsiElementRange(@NotNull FoldRegion region) {
     PsiElement element = getPsiElement(region);
     if (element == null) return null;
     PsiFile containingFile = element.getContainingFile();
@@ -75,11 +74,11 @@ public class EditorFoldingInfo {
     return range;
   }
 
-  public boolean isLightRegion(@NotNull FoldRegion region) {
+  boolean isLightRegion(@NotNull FoldRegion region) {
     return myFoldRegionToSmartPointerMap.get(region) == null;
   }
 
-  public void addRegion(@NotNull FoldRegion region, @NotNull SmartPsiElementPointer<?> pointer){
+  void addRegion(@NotNull FoldRegion region, @NotNull SmartPsiElementPointer<?> pointer){
     myFoldRegionToSmartPointerMap.put(region, pointer);
   }
 

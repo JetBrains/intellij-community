@@ -1,6 +1,6 @@
 import sys
 import weakref
-from _pydev_imps import _pydev_thread
+from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, dict_iter_items
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 
@@ -109,7 +109,7 @@ class PyDBAdditionalThreadInfoWithoutCurrentFramesSupport(PyDBAdditionalThreadIn
         #Or if the user compiled threadframe (from http://www.majid.info/mylos/stories/2004/06/10/threadframe.html)
 
         #NOT RLock!! (could deadlock if it was)
-        self.lock = _pydev_thread.allocate_lock()
+        self.lock = thread.allocate_lock()
         self._acquire_lock = self.lock.acquire
         self._release_lock = self.lock.release
 

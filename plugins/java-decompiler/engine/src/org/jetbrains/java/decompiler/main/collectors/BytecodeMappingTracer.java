@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,11 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class BytecodeMappingTracer {
+  public static final BytecodeMappingTracer DUMMY = new BytecodeMappingTracer();
+
   private int currentSourceLine;
   private StructLineNumberTableAttribute lineNumberTable = null;
-  private final Map<Integer, Integer> mapping = new HashMap<Integer, Integer>();  // bytecode offset, source line
+  private final Map<Integer, Integer> mapping = new HashMap<>();  // bytecode offset, source line
 
   public BytecodeMappingTracer() { }
 
@@ -79,7 +81,7 @@ public class BytecodeMappingTracer {
     this.lineNumberTable = lineNumberTable;
   }
 
-  private final Set<Integer> unmappedLines = new HashSet<Integer>();
+  private final Set<Integer> unmappedLines = new HashSet<>();
 
   public Set<Integer> getUnmappedLines() {
     return unmappedLines;
@@ -90,7 +92,7 @@ public class BytecodeMappingTracer {
       return Collections.emptyMap();
     }
 
-    Map<Integer, Integer> res = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> res = new HashMap<>();
 
     // first match offsets from line number table
     int[] data = lineNumberTable.getRawData();

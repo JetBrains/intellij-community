@@ -40,11 +40,11 @@ import java.util.*;
 public class LogModel implements Disposable {
   public static final Topic<Runnable> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", Runnable.class, Topic.BroadcastDirection.NONE);
 
-  private final List<Notification> myNotifications = new ArrayList<Notification>();
+  private final List<Notification> myNotifications = new ArrayList<>();
   @SuppressWarnings("unchecked") private final Map<Notification, String> myStatuses = ContainerUtil.createConcurrentWeakMap(TObjectHashingStrategy.IDENTITY);
   private Trinity<Notification, String, Long> myStatusMessage;
   private final Project myProject;
-  final Map<Notification, Runnable> removeHandlers = new THashMap<Notification, Runnable>();
+  final Map<Notification, Runnable> removeHandlers = new THashMap<>();
 
   LogModel(@Nullable Project project, @NotNull Disposable parentDisposable) {
     myProject = project;
@@ -107,7 +107,7 @@ public class LogModel implements Disposable {
 
   public ArrayList<Notification> getNotifications() {
     synchronized (myNotifications) {
-      return new ArrayList<Notification>(myNotifications);
+      return new ArrayList<>(myNotifications);
     }
   }
   public void removeNotification(Notification notification) {
@@ -130,12 +130,7 @@ public class LogModel implements Disposable {
   private void setStatusToImportant() {
     ArrayList<Notification> notifications = getNotifications();
     Collections.reverse(notifications);
-    Notification message = ContainerUtil.find(notifications, new Condition<Notification>() {
-      @Override
-      public boolean value(Notification notification) {
-        return notification.isImportant();
-      }
-    });
+    Notification message = ContainerUtil.find(notifications, notification -> notification.isImportant());
     if (message == null) {
       setStatusMessage(null, 0);
     }

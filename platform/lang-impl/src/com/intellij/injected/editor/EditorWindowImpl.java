@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -70,12 +72,13 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   private final boolean myOneLine;
   private final CaretModelWindow myCaretModelDelegate;
   private final SelectionModelWindow mySelectionModelDelegate;
-  private static final List<EditorWindowImpl> allEditors = new WeakList<EditorWindowImpl>();
+  private static final List<EditorWindowImpl> allEditors = new WeakList<>();
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
   private final MarkupModelWindow myDocumentMarkupModelDelegate;
   private final FoldingModelWindow myFoldingModelWindow;
   private final SoftWrapModelWindow mySoftWrapModel;
+  private final InlayModelWindow myInlayModel;
 
   public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
@@ -114,6 +117,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myDocumentMarkupModelDelegate = new MarkupModelWindow(myDelegate.getFilteredDocumentMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
     mySoftWrapModel = new SoftWrapModelWindow(this);
+    myInlayModel = new InlayModelWindow();
   }
 
   public static void disposeInvalidEditors() {
@@ -137,7 +141,14 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   
   private void checkValid() {
     PsiUtilCore.ensureValid(myInjectedFile);
-    if (!isValid()) throw new AssertionError();
+    if (!isValid()) {
+      StringBuilder reason = new StringBuilder("Not valid");
+      if (myDisposed) reason.append("; editorWindow: disposed");
+      if (!myDocumentWindow.isValid()) reason.append("; documentWindow: invalid");
+      if (myDelegate.isDisposed()) reason.append("; editor: disposed");
+      if (myInjectedFile.getProject().isDisposed()) reason.append("; project: disposed");
+      throw new AssertionError(reason.toString());
+    }
   }
 
   @Override
@@ -292,6 +303,12 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     return myDelegate.getSettings();
   }
 
+  @NotNull
+  @Override
+  public InlayModel getInlayModel() {
+    return myInlayModel;
+  }
+
   @Override
   public void reinitSettings() {
     myDelegate.reinitSettings();
@@ -311,7 +328,9 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @Override
   public EditorHighlighter getHighlighter() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myInjectedFile.getVirtualFile(), scheme, getProject());
+    SyntaxHighlighter syntaxHighlighter =
+      SyntaxHighlighterFactory.getSyntaxHighlighter(myInjectedFile.getLanguage(), getProject(), myInjectedFile.getVirtualFile());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(syntaxHighlighter, scheme);
     highlighter.setText(getDocument().getText());
     highlighter.setEditor(new LightHighlighterClient(getDocument(), getProject()));
     return highlighter;
@@ -449,7 +468,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     return myDelegate.getComponent();
   }
 
-  private final ListenerWrapperMap<EditorMouseListener> myEditorMouseListeners = new ListenerWrapperMap<EditorMouseListener>();
+  private final ListenerWrapperMap<EditorMouseListener> myEditorMouseListeners = new ListenerWrapperMap<>();
   @Override
   public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
     checkValid();
@@ -493,7 +512,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     }
   }
 
-  private final ListenerWrapperMap<EditorMouseMotionListener> myEditorMouseMotionListeners = new ListenerWrapperMap<EditorMouseMotionListener>();
+  private final ListenerWrapperMap<EditorMouseMotionListener> myEditorMouseMotionListeners = new ListenerWrapperMap<>();
   @Override
   public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     checkValid();
@@ -584,21 +603,19 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   }
 
   private int calcOffset(int col, int lineNumber, int lineStartOffset) {
-    if (myDocumentWindow.getTextLength() == 0) return 0;
-
+    CharSequence text = myDocumentWindow.getImmutableCharSequence();
+    int tabSize = EditorUtil.getTabSize(myDelegate);
     int end = myDocumentWindow.getLineEndOffset(lineNumber);
-
-    int x = getDocument().getLineNumber(lineStartOffset) == 0 ? getPrefixTextWidthInPixels() : 0;
-
-    // There is a possible case that target column points inside soft wrap-introduced virtual space.
-    if (col <= 0) {
-      return lineStartOffset;
-    }
-
-    int result = EditorUtil.calcSoftWrapUnawareOffset(this, myDocumentWindow.getCharsSequence(), lineStartOffset, end, col,
-                                                      EditorUtil.getTabSize(myDelegate), x, new int[]{0}, null);
-    if (result >= 0) {
-      return result;
+    int currentColumn = 0;
+    for (int i = lineStartOffset; i < end; i++) {
+      char c = text.charAt(i);
+      if (c == '\t') {
+        currentColumn = (currentColumn / tabSize + 1) * tabSize;
+      }
+      else {
+        currentColumn++;
+      }
+      if (col < currentColumn) return i;
     }
     return end;
   }
@@ -763,14 +780,23 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
 
   @Override
   public int calcColumnNumber(@NotNull final CharSequence text, final int start, final int offset, final int tabSize) {
-    int hostStart = myDocumentWindow.injectedToHost(start);
-    int hostOffset = myDocumentWindow.injectedToHost(offset);
-    return myDelegate.calcColumnNumber(myDelegate.getDocument().getText(), hostStart, hostOffset, tabSize);
+    int column = 0;
+    for (int i = start; i < offset; i++) {
+      char c = text.charAt(i);
+      if (c == '\t') {
+        column = ((column / tabSize) + 1) * tabSize;
+      }
+      else {
+        column++;
+      }
+    }
+    return column;
   }
 
   @Override
   public int calcColumnNumber(int offset, int lineIndex) {
-    return myDelegate.calcColumnNumber(myDocumentWindow.injectedToHost(offset), myDocumentWindow.injectedToHostLine(lineIndex));
+    return calcColumnNumber(myDocumentWindow.getImmutableCharSequence(), myDocumentWindow.getLineStartOffset(lineIndex), offset,
+                            EditorUtil.getTabSize(myDelegate));
   }
 
   @NotNull

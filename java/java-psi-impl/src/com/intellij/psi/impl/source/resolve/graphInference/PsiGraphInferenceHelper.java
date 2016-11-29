@@ -51,7 +51,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
     }
     else {
       final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParameter}, partialSubstitutor, myManager, null);
-      inferenceSession.initExpressionConstraints(parameters, arguments, null, null);
+      inferenceSession.initExpressionConstraints(parameters, arguments, null);
       substitutor = inferenceSession.infer();
     }
     return substitutor.substitute(typeParameter);
@@ -68,7 +68,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                            @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return partialSubstitutor;
 
-    return InferenceSessionContainer.infer(typeParameters, parameters, arguments, partialSubstitutor, parent);
+    return InferenceSessionContainer.infer(typeParameters, parameters, arguments, partialSubstitutor, parent, policy);
   }
 
   @NotNull

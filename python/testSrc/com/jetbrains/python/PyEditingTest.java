@@ -15,16 +15,13 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -75,12 +72,31 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("'' ", doTestTyping(" ", 0, '\''));
   }
 
+  // PY-1779
   public void testAutoCloseTriple() {
     assertEquals("''''''", doTestTyping("''", 2, '\''));
   }
 
+  // PY-1779
   public void testAutoRemoveTriple() {
     doTestBackspace("closedTripleQuoteBackspace", new LogicalPosition(1, 3));
+  }
+  
+  // PY-19084
+  public void testNoAoutoclosingAtTheEnd() {
+    assertEquals("'''docstring'''", doTestTyping("'''docstring''", 14,  '\''));
+  }
+
+  public void testAutoCloseAfterIllegalPrefix() {
+    assertEquals("rrr''", doTestTyping("rrr", 3, '\''));
+  }
+
+  // PY-18972
+  public void testFString() throws Exception {
+    assertEquals("f''", doTestTyping("f", 1, '\''));
+    assertEquals("rf''", doTestTyping("rf", 2, '\''));
+    assertEquals("fr''", doTestTyping("fr", 2, '\''));
+    assertEquals("fr''''''", doTestTyping("fr''", 4, '\''));
   }
 
   public void testOvertypeFromInside() {
@@ -117,13 +133,7 @@ public class PyEditingTest extends PyTestCase {
   public void testUncommentWithSpace() throws Exception {   // PY-980
     myFixture.configureByFile("/editing/uncommentWithSpace.before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 1));
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        CommentByLineCommentAction action = new CommentByLineCommentAction();
-        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
-      }
-    }, "", null);
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_LINE);
     myFixture.checkResultByFile("/editing/uncommentWithSpace.after.py", true);
   }
 
@@ -203,14 +213,15 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterStubInDocstring() {  // CR-PY-144
-    runWithDocStringFormat(DocStringFormat.PLAIN, new Runnable() {
-      public void run() {
-        doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
-                                                   "  \"\"\"\n" +
-                                                   "  \n" +
-                                                   "  \"\"\"");
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.PLAIN, () -> doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
+                                                                                               "  \"\"\"\n" +
+                                                                                               "  \n" +
+                                                                                               "  \"\"\""));
+  }
+
+  // PY-18486
+  public void testTripleQuotesThenEnterInsertsDocstring() {
+    doDocStringTypingTest("\"\"\"\n", DocStringFormat.REST);
   }
 
   public void testEnterDocStringStubInClass() {
@@ -420,42 +431,29 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterBeforeArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      public void run() {
-        doTestEnter("def func() <caret>-> int:\n" +
-                    "    pass",
-                    "def func() \\\n" +
-                    "        -> int:\n" +
-                    "    pass");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() <caret>-> int:\n" +
+                                                               "    pass",
+                "def func() \\\n" +
+                "        -> int:\n" +
+                "    pass"));
   }
 
   // PY-15469
   public void testEnterAfterArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      public void run() {
-        doTestEnter("def func() -><caret> int:\n" +
-                    "    pass",
-                    "def func() ->\\\n" +
-                    "        int:\n" +
-                    "    pass");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -><caret> int:\n" +
+                                                               "    pass",
+                "def func() ->\\\n" +
+                "        int:\n" +
+                "    pass"));
   }
 
   // PY-15469
   public void testEnterDoesNotInsertSlashInsideArrow() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        doTestEnter("def func() -<caret>> int:\n" +
-                    "    pass",
-                    "def func() -\n" +
-                    "> int:\n" +
-                    "    pass");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -<caret>> int:\n" +
+                                                               "    pass",
+                "def func() -\n" +
+                "> int:\n" +
+                "    pass"));
   }
 
   private void doTestEnter(String before, final String after) {
@@ -493,33 +491,22 @@ public class PyEditingTest extends PyTestCase {
   }
 
   private void doDocStringTypingTest(final String text, @NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-      @Override
-      public void run() {
-        doTypingTest(text);
-      }
-    });
+    runWithDocStringFormat(format, () -> doTypingTest(text));
   }
 
   private void doTyping(final char character) {
     final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.getEditor().getCaretModel().moveToOffset(offset);
-        myFixture.type(character);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      myFixture.getEditor().getCaretModel().moveToOffset(offset);
+      myFixture.type(character);
     });
   }
   
   private void doTyping(final String text) {
     final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.getEditor().getCaretModel().moveToOffset(offset);
-        myFixture.type(text);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      myFixture.getEditor().getCaretModel().moveToOffset(offset);
+      myFixture.type(text);
     });
   }
 

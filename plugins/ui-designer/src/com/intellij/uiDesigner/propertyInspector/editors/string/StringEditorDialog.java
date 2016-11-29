@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +61,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.util.*;
 
 /**
@@ -171,29 +170,25 @@ public final class StringEditorDialog extends DialogWrapper{
         final String newKeyName1 = newKeyName;
         CommandProcessor.getInstance().executeCommand(
           module.getProject(),
-          new Runnable() {
-            public void run() {
-              UndoUtil.markPsiFileForUndo(formFile);
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  PsiDocumentManager.getInstance(module.getProject()).commitAllDocuments();
-                  try {
-                    if (newKeyName1 != null) {
-                      propFile.addProperty(newKeyName1, editedValue);
-                    }
-                    else {
-                      final IProperty propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
-                      if (propertyByKey != null) {
-                        propertyByKey.setValue(editedValue);
-                      }
-                    }
-                  }
-                  catch (IncorrectOperationException e) {
-                    LOG.error(e);
+          () -> {
+            UndoUtil.markPsiFileForUndo(formFile);
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              PsiDocumentManager.getInstance(module.getProject()).commitAllDocuments();
+              try {
+                if (newKeyName1 != null) {
+                  propFile.addProperty(newKeyName1, editedValue);
+                }
+                else {
+                  final IProperty propertyByKey1 = propFile.findPropertyByKey(descriptor.getKey());
+                  if (propertyByKey1 != null) {
+                    propertyByKey1.setValue(editedValue);
                   }
                 }
-              });
-            }
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
+            });
           }, UIDesignerBundle.message("command.update.property"), null);
         return newKeyName;
       }
@@ -201,22 +196,16 @@ public final class StringEditorDialog extends DialogWrapper{
     return null;
   }
 
-  private static Collection<PsiReference> findPropertyReferences(final Property pproperty, final Module module) {
+  private static Collection<PsiReference> findPropertyReferences(final Property property, final Module module) {
     final Collection<PsiReference> references = Collections.synchronizedList(new ArrayList<PsiReference>());
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-          new Runnable() {
-        public void run() {
-          ReferencesSearch.search(pproperty).forEach(new Processor<PsiReference>() {
-            public boolean process(final PsiReference psiReference) {
-              PsiMethod method = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethod.class);
-              if (method == null || !AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) {
-                references.add(psiReference);
-              }
-              return true;
-            }
-          });
+      (Runnable)() -> ReferencesSearch.search(property).forEach(psiReference -> {
+        PsiMethod method = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethod.class);
+        if (method == null || !AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) {
+          references.add(psiReference);
         }
-      }, UIDesignerBundle.message("edit.text.searching.references"), false, module.getProject()
+        return true;
+      }), UIDesignerBundle.message("edit.text.searching.references"), false, module.getProject()
     );
     return references;
   }
@@ -252,20 +241,16 @@ public final class StringEditorDialog extends DialogWrapper{
     }
     CommandProcessor.getInstance().executeCommand(
       bundle.getProject(),
-      new Runnable() {
-        public void run() {
-          UndoUtil.markPsiFileForUndo(formFile);
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              try {
-                bundle.addProperty(name, value);
-              }
-              catch (IncorrectOperationException e1) {
-                LOG.error(e1);
-              }
-            }
-          });
-        }
+      () -> {
+        UndoUtil.markPsiFileForUndo(formFile);
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            bundle.addProperty(name, value);
+          }
+          catch (IncorrectOperationException e1) {
+            LOG.error(e1);
+          }
+        });
       }, UIDesignerBundle.message("command.create.property"), null);
     return true;
   }
@@ -366,7 +351,7 @@ public final class StringEditorDialog extends DialogWrapper{
             myTfBundleName.getButton().doClick();
           }
         },
-        KeyStroke.getKeyStroke(myLblBundleName.getDisplayedMnemonic(), KeyEvent.ALT_DOWN_MASK),
+        KeyStroke.getKeyStroke(myLblBundleName.getDisplayedMnemonic(), InputEvent.ALT_DOWN_MASK),
         JComponent.WHEN_IN_FOCUSED_WINDOW
       );
 
@@ -406,7 +391,7 @@ public final class StringEditorDialog extends DialogWrapper{
             myTfKey.getButton().doClick();
           }
         },
-        KeyStroke.getKeyStroke(myLblKey.getDisplayedMnemonic(), KeyEvent.ALT_DOWN_MASK),
+        KeyStroke.getKeyStroke(myLblKey.getDisplayedMnemonic(), InputEvent.ALT_DOWN_MASK),
         JComponent.WHEN_IN_FOCUSED_WINDOW
       );
 

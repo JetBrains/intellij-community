@@ -19,8 +19,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.CreatePropertyFix;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.lang.properties.references.I18nizeQuickFixModel;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -55,16 +54,14 @@ public class JavaCreatePropertyFix extends CreatePropertyFix {
       StringUtil.escapeStringCharacters(key.length(), key, buffer);
       buffer.append('"');
 
-      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(JavaCreatePropertyFix.class);
       try {
-        final PsiExpression newKeyLiteral = JavaPsiFacade.getElementFactory(project).createExpressionFromText(buffer.toString(), null);
-        psiElement.replace(newKeyLiteral);
+        WriteAction.run(() -> {
+          final PsiExpression newKeyLiteral = JavaPsiFacade.getElementFactory(project).createExpressionFromText(buffer.toString(), null);
+          psiElement.replace(newKeyLiteral);
+        });
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
-      }
-      finally {
-        token.finish();
       }
     }
     return result;

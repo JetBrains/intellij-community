@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,10 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
   }
 
   /**
-   * @see {@link com.intellij.openapi.ui.Messages#getInformationIcon()}
-   * @see {@link com.intellij.openapi.ui.Messages#getWarningIcon()}
-   * @see {@link com.intellij.openapi.ui.Messages#getErrorIcon()}
-   * @see {@link com.intellij.openapi.ui.Messages#getQuestionIcon()}
+   * @see Messages#getInformationIcon()
+   * @see Messages#getWarningIcon()
+   * @see Messages#getErrorIcon()
+   * @see Messages#getQuestionIcon()
    */
   public T icon(@Nullable Icon icon) {
     myIcon = icon;
@@ -102,13 +102,14 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
         if (Messages.canShowMacSheetPanel() && !Messages.isApplicationInUnitTestOrHeadless()) {
           return MacMessages.getInstance().showYesNoDialog(myTitle, myMessage, yesText, noText, WindowManager.getInstance().suggestParentWindow(myProject), myDoNotAskOption);
         }
-      } catch (Exception ignored) {}
+      }
+      catch (Exception ignored) {
+      }
 
       return Messages.showDialog(myProject, myMessage, myTitle, new String[]{yesText, noText}, 0, myIcon, myDoNotAskOption) == 0 ? Messages.YES : Messages.NO;
-
     }
 
-    public boolean is() {
+    public boolean isYes() {
       return show() == Messages.YES;
     }
   }

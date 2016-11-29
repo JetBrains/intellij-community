@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.pattern;
 
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -52,7 +52,7 @@ public class VelocityHelper
           if (virtualFile != null) {
             final CopyrightVariablesProvider variablesProvider = CopyrightVariablesProviders.INSTANCE.forFileType(virtualFile.getFileType());
             if (variablesProvider != null) {
-              final Map<String, Object> context = new HashMap<String, Object>();
+              final Map<String, Object> context = new HashMap<>();
               variablesProvider.collectVariables(context, project, module, file);
               for (Map.Entry<String, Object> entry : context.entrySet()) {
                 vc.put(entry.getKey(), entry.getValue());

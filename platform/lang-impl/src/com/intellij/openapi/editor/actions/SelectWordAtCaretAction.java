@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
@@ -53,29 +54,38 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
     @Override
     public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-      int caretOffset = editor.getCaretModel().getOffset();
+      assert caret != null;
       Document document = editor.getDocument();
+
+      if (EditorUtil.isPasswordEditor(editor)) {
+        caret.setSelection(0, document.getTextLength());
+        return;
+      }
+
+      int lineNumber = caret.getLogicalPosition().line;
+      int caretOffset = caret.getOffset();
       if (lineNumber >= document.getLineCount()) {
         return;
       }
-      CharSequence text = document.getCharsSequence();
 
       boolean camel = editor.getSettings().isCamelWords();
-      List<TextRange> ranges = new ArrayList<TextRange>();
+      List<TextRange> ranges = new ArrayList<>();
 
       int textLength = document.getTextLength();
       if (caretOffset == textLength) caretOffset--;
       if (caretOffset < 0) return;
 
-      SelectWordUtil.addWordSelection(camel, text, caretOffset, ranges);
+      SelectWordUtil.addWordOrLexemeSelection(camel, editor, caretOffset, ranges);
+
+      // add whole line selection
+      int line = document.getLineNumber(caretOffset);
+      ranges.add(new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
 
       if (ranges.isEmpty()) return;
 
-      SelectionModel selectionModel = editor.getSelectionModel();
-      final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      final TextRange selectionRange = new TextRange(caret.getSelectionStart(), caret.getSelectionEnd());
 
-      TextRange minimumRange = new TextRange(0, editor.getDocument().getTextLength());
+      TextRange minimumRange = new TextRange(0, document.getTextLength());
       for (TextRange range : ranges) {
         if (range.contains(selectionRange) && !range.equals(selectionRange)) {
           if (minimumRange.contains(range)) {
@@ -84,7 +94,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
         }
       }
 
-      selectionModel.setSelection(minimumRange.getStartOffset(), minimumRange.getEndOffset());
+      caret.setSelection(minimumRange.getStartOffset(), minimumRange.getEndOffset());
     }
   }
 
@@ -99,27 +109,28 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
     @Override
     public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      assert caret != null;
       final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
-      final SelectionModel selectionModel = editor.getSelectionModel();
-      if (guide != null && !selectionModel.hasSelection() && isWhitespaceAtCaret(editor)) {
-        selectWithGuide(editor, guide);
+      if (guide != null && !caret.hasSelection() && isWhitespaceAtCaret(caret)) {
+        selectWithGuide(caret, guide);
       }
       else {
         myDefaultHandler.execute(editor, caret, dataContext);
       }
     }
 
-    private static boolean isWhitespaceAtCaret(Editor editor) {
-      final Document doc = editor.getDocument();
+    private static boolean isWhitespaceAtCaret(Caret caret) {
+      final Document doc = caret.getEditor().getDocument();
 
-      final int offset = editor.getCaretModel().getOffset();
+      final int offset = caret.getOffset();
       if (offset >= doc.getTextLength()) return false;
 
       final char c = doc.getCharsSequence().charAt(offset);
       return c == ' ' || c == '\t' || c == '\n';
     }
 
-    private static void selectWithGuide(Editor editor, IndentGuideDescriptor guide) {
+    private static void selectWithGuide(Caret caret, IndentGuideDescriptor guide) {
+      Editor editor = caret.getEditor();
       final Document doc = editor.getDocument();
       int startOffset = editor.logicalPositionToOffset(new LogicalPosition(guide.startLine, 0));
       int endOffset = guide.endLine >= doc.getLineCount() ? doc.getTextLength() : doc.getLineStartOffset(guide.endLine);
@@ -132,7 +143,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
         int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t\n");
         HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(nonWhitespaceOffset);
         if (BraceMatchingUtil.isRBraceToken(iterator, chars, file.getFileType())) {
-          if (((EditorEx)editor).calcColumnNumber(iterator.getStart(), doc.getLineNumber(iterator.getStart())) == guide.indentLevel) {
+          if (editor.offsetToLogicalPosition(iterator.getStart()).column == guide.indentLevel) {
             endOffset = iterator.getEnd();
             endOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t");
             if (endOffset < chars.length() && chars.charAt(endOffset) == '\n') endOffset++;
@@ -140,7 +151,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
         }
       }
 
-      editor.getSelectionModel().setSelection(startOffset, endOffset);
+      caret.setSelection(startOffset, endOffset);
     }
   }
 }

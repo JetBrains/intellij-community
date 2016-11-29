@@ -144,7 +144,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
             root.insert(nodeManager.createNode(nodeManager.getThreadDescriptor(null, currentThread), evaluationContext), 0);
           }
           List<ThreadReferenceProxyImpl> allThreads = new ArrayList<>(vm.allThreads());
-          Collections.sort(allThreads, ThreadReferenceProxyImpl.ourComparator);
+          allThreads.sort(ThreadReferenceProxyImpl.ourComparator);
 
           for (ThreadReferenceProxyImpl threadProxy : allThreads) {
             if (threadProxy.equals(currentThread)) {
@@ -156,9 +156,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       }
       catch (Exception ex) {
         root.add( MessageDescriptor.DEBUG_INFO_UNAVAILABLE);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(ex);
-        }
+        LOG.debug(ex);
       }
 
       final boolean hasThreadToSelect = suspendContextThread != null; // thread can be null if pause was pressed
@@ -174,13 +172,11 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         groups = Collections.emptyList();
       }
 
-      DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
-        public void run() {
-          getMutableModel().setRoot(root);
-          treeChanged();
-          if (hasThreadToSelect) {
-            selectThread(groups, suspendContextThread, true);
-          }
+      DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+        getMutableModel().setRoot(root);
+        treeChanged();
+        if (hasThreadToSelect) {
+          selectThread(groups, suspendContextThread, true);
         }
       });
     }
@@ -216,11 +212,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
         private void removeListener() {
           final TreeModelAdapter listener = this;
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              getModel().removeTreeModelListener(listener);
-            }
-          });
+          SwingUtilities.invokeLater(() -> getModel().removeTreeModelListener(listener));
         }
 
         public void treeStructureChanged(TreeModelEvent event) {

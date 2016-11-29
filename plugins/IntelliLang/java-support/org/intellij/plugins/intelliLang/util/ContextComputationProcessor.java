@@ -44,7 +44,7 @@ public class ContextComputationProcessor {
 
   @NotNull
   public static List<Object> collectOperands(@NotNull final String prefix, final String suffix, final Ref<Boolean> unparsable, final PsiElement[] operands) {
-    final ArrayList<Object> result = new ArrayList<Object>();
+    final ArrayList<Object> result = new ArrayList<>();
     final ContextComputationProcessor processor = new ContextComputationProcessor(operands[0].getProject());
     addStringFragment(prefix, result);
     PsiElement topParent = ObjectUtils.assertNotNull(PsiTreeUtil.findCommonParent(operands));
@@ -96,7 +96,7 @@ public class ContextComputationProcessor {
       result.add(expression);
     }
     else if (expression instanceof PsiExpression) {
-      final SmartList<PsiExpression> uncomputables = new SmartList<PsiExpression>();
+      final SmartList<PsiExpression> uncomputables = new SmartList<>();
       final Object o = myEvaluationHelper.computeExpression((PsiExpression)expression, uncomputables);
       // in many languages 'null' is a reserved word
       addStringFragment(o == null? "missingValue" : String.valueOf(o), result);

@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.refactoring.typeMigration.usageInfo.OverridenUsageInfo;
+import com.intellij.refactoring.typeMigration.usageInfo.OverriddenUsageInfo;
 import com.intellij.util.ui.UIUtil;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -32,9 +32,9 @@ class MigrateGetterNameSetting {
   private static final String CODE_ALWAYS_NO = "Never Migrate Method Names";
   private static final String[] CODES = new String[]{CODE_ALWAYS_YES, Messages.YES_BUTTON, CODE_ALWAYS_NO, Messages.NO_BUTTON};
 
-  private final AtomicReference<Boolean> myGlobalValue = new AtomicReference<Boolean>();
+  private final AtomicReference<Boolean> myGlobalValue = new AtomicReference<>();
 
-  void askUserIfNeed(final OverridenUsageInfo info, final String newMethodName, final PsiType migrationReturnType) {
+  void askUserIfNeed(final OverriddenUsageInfo info, final String newMethodName, final PsiType migrationReturnType) {
     final Boolean globalValue = myGlobalValue.get();
     if (globalValue == null) {
       final String currentName = ((PsiMethod)info.getElement()).getName();
@@ -42,26 +42,23 @@ class MigrateGetterNameSetting {
                                                currentName,
                                                newMethodName,
                                                migrationReturnType.getCanonicalText());
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          final Boolean globalValue = myGlobalValue.get();
-          if (globalValue == null) {
-            final int code = showChooserDialog(messageText);
-            if (code == 0) {
-              myGlobalValue.set(true);
-              info.setMigrateMethodName(newMethodName);
-            }
-            else if (code == 1) {
-              info.setMigrateMethodName(newMethodName);
-            }
-            else if (code == 2) {
-              myGlobalValue.set(false);
-            }
-          }
-          else if (globalValue.equals(Boolean.TRUE)) {
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        final Boolean globalValue1 = myGlobalValue.get();
+        if (globalValue1 == null) {
+          final int code = showChooserDialog(messageText);
+          if (code == 0) {
+            myGlobalValue.set(true);
             info.setMigrateMethodName(newMethodName);
           }
+          else if (code == 1) {
+            info.setMigrateMethodName(newMethodName);
+          }
+          else if (code == 2) {
+            myGlobalValue.set(false);
+          }
+        }
+        else if (globalValue1.equals(Boolean.TRUE)) {
+          info.setMigrateMethodName(newMethodName);
         }
       });
     }

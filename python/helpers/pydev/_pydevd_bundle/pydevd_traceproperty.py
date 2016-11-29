@@ -1,7 +1,7 @@
 '''For debug purpose we are replacing actual builtin property by the debug property
 '''
 from _pydevd_bundle.pydevd_comm import get_global_debugger
-from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, IS_PY3K
 from _pydevd_bundle import pydevd_tracing
 
 #=======================================================================================================================

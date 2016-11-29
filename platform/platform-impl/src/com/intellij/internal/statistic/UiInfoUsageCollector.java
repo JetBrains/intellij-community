@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ class UiInfoUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
-    Set<UsageDescriptor> set = new THashSet<UsageDescriptor>();
+    Set<UsageDescriptor> set = new THashSet<>();
 
     add(set, "Nav Bar visible", navbar() ? 1 : 0);
     add(set, "Nav Bar floating", navbar() ? 0 : 1);
@@ -52,6 +52,7 @@ class UiInfoUsageCollector extends UsagesCollector {
     add(set, "Recent Files > 50", 50 < recent() ? 1 : 0);
     add(set, "Block cursor", EditorSettingsExternalizable.getInstance().isBlockCursor() ? 1 : 0);
     add(set, "Line Numbers", EditorSettingsExternalizable.getInstance().isLineNumbersShown() ? 1 : 0);
+    add(set, "Gutter Icons", EditorSettingsExternalizable.getInstance().areGutterIconsShown() ? 1 : 0);
     add(set, "Soft Wraps", EditorSettingsExternalizable.getInstance().isUseSoftWraps() ? 1 : 0);
     add(set, "Tabs None", tabPlace() == 0 ? 1 : 0);
     add(set, "Tabs Top", tabPlace() == SwingConstants.TOP ? 1 : 0);

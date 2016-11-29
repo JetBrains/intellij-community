@@ -86,6 +86,11 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
           }
         };
       }
+
+      @Override
+      protected boolean isInplaceAvailableInTestMode() {
+        return true;
+      }
     };
   }
 }

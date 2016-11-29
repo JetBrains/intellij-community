@@ -77,7 +77,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
   @NotNull
   public List<ExternalSystemNode<?>> createNodes(final ExternalProjectsView externalProjectsView,
                                                  final MultiMap<Key<?>, DataNode<?>> dataNodes) {
-    final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
+    final List<ExternalSystemNode<?>> result = new SmartList<>();
 
     addModuleNodes(externalProjectsView, dataNodes, result);
     // add tasks
@@ -111,7 +111,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         //noinspection unchecked
         ModuleDependencyDataExternalSystemNode moduleDependencyDataExternalSystemNode =
           new ModuleDependencyDataExternalSystemNode(externalProjectsView, (DataNode<ModuleDependencyData>)dataNode);
-        if (dataNode.getParent() != null && dataNode.getParent().getData() instanceof ModuleDependencyData) {
+        if (dataNode.getParent() != null && dataNode.getParent().getData() instanceof AbstractDependencyData) {
           result.add(moduleDependencyDataExternalSystemNode);
         }
         else {
@@ -169,7 +169,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     }
   }
 
-  @Order(2)
+  @Order(ExternalSystemNode.BUILTIN_DEPENDENCIES_DATA_NODE_ORDER)
   private static class MyDependenciesNode extends ExternalSystemNode {
     public MyDependenciesNode(ExternalProjectsView externalProjectsView) {
       //noinspection unchecked
@@ -243,7 +243,26 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
           return order1 < order2 ? -1 : 1;
         }
       }
-      return super.compareTo(node);
+
+      String dependencyName = getDependencySimpleName(this);
+      String thatDependencyName = getDependencySimpleName(node);
+      return StringUtil.compare(dependencyName, thatDependencyName, true);
+    }
+
+    @NotNull
+    private static String getDependencySimpleName(@NotNull ExternalSystemNode node) {
+      Object thatData = node.getData();
+      if (thatData instanceof LibraryDependencyData) {
+        LibraryDependencyData dependencyData = (LibraryDependencyData)thatData;
+        String externalName = dependencyData.getExternalName();
+        if (StringUtil.isEmpty(externalName)) {
+          Set<String> paths = dependencyData.getTarget().getPaths(LibraryPathType.BINARY);
+          if (paths.size() == 1) {
+            return new File(paths.iterator().next()).getName();
+          }
+        }
+      }
+      return node.getName();
     }
   }
 

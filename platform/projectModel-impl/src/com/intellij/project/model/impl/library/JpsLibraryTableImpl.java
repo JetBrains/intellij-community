@@ -133,7 +133,7 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
     private final List<JpsLibraryDelegate> myLibraries;
 
     private JpsLibrariesModel(JpsLibraryCollection libraryCollection) {
-      myLibraries = new ArrayList<JpsLibraryDelegate>();
+      myLibraries = new ArrayList<>();
       myJpsLibraries = libraryCollection;
       for (JpsLibrary library : libraryCollection.getLibraries()) {
         myLibraries.add(new JpsLibraryDelegate(library, JpsLibraryTableImpl.this));

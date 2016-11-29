@@ -30,7 +30,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -83,7 +82,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
                                                                                            @Nullable NullableFunction<List<IndexedRelevantResource<String, XsdNamespaceBuilder>>, IndexedRelevantResource<String, XsdNamespaceBuilder>> chooser) {
     return IndexedRelevantResource.getAllResources(NAME, module, project, chooser);
   }
-  
+
   public static final ID<String,XsdNamespaceBuilder> NAME = ID.create("XmlNamespaces");
 
   @Override
@@ -106,7 +105,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
         else {
           builder = XsdNamespaceBuilder.computeNamespace(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         }
-        final HashMap<String, XsdNamespaceBuilder> map = new HashMap<String, XsdNamespaceBuilder>(2);
+        final HashMap<String, XsdNamespaceBuilder> map = new HashMap<>(2);
         String namespace = builder.getNamespace();
         if (namespace != null) {
           map.put(namespace, builder);
@@ -118,49 +117,38 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     };
   }
 
+  private static final String NULL_STRING = "\"\"";
+
   @NotNull
   @Override
   public DataExternalizer<XsdNamespaceBuilder> getValueExternalizer() {
     return new DataExternalizer<XsdNamespaceBuilder>() {
       @Override
       public void save(@NotNull DataOutput out, XsdNamespaceBuilder value) throws IOException {
-        IOUtil.writeUTF(out, value.getNamespace() == null ? "" : value.getNamespace());
-        IOUtil.writeUTF(out, value.getVersion() == null ? "" : value.getVersion());
-        writeList(out, value.getTags());
-        writeList(out, value.getRootTags());
+        IOUtil.writeUTF(out, value.getNamespace() != null ? value.getNamespace() : NULL_STRING);
+        IOUtil.writeUTF(out, value.getVersion() != null ? value.getVersion() : NULL_STRING);
+        IOUtil.writeStringList(out, value.getTags());
+        IOUtil.writeStringList(out, value.getRootTags());
       }
 
       @Override
       public XsdNamespaceBuilder read(@NotNull DataInput in) throws IOException {
+        String namespace = IOUtil.readUTF(in);
+        if (NULL_STRING.equals(namespace)) namespace = null;
+        String version = IOUtil.readUTF(in);
+        if (NULL_STRING.equals(version)) version = null;
 
-        return new XsdNamespaceBuilder(IOUtil.readUTF(in),
-                                       IOUtil.readUTF(in),
-                                       readList(in),
-                                       readList(in));
+        return new XsdNamespaceBuilder(namespace,
+                                       version,
+                                       IOUtil.readStringList(in),
+                                       IOUtil.readStringList(in));
       }
     };
   }
 
-  private static void writeList(@NotNull DataOutput out, List<String> tags) throws IOException {
-    DataInputOutputUtil.writeINT(out, tags.size());
-    for (String s : tags) {
-      IOUtil.writeUTF(out, s);
-    }
-  }
-
-  @NotNull
-  private static ArrayList<String> readList(@NotNull DataInput in) throws IOException {
-    int count;
-    ArrayList<String> tags = new ArrayList<String>(count = DataInputOutputUtil.readINT(in));
-    for (int i = 0; i < count; i++) {
-      tags.add(IOUtil.readUTF(in));
-    }
-    return tags;
-  }
-
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   @Nullable
@@ -178,22 +166,18 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     if (resources.size() == 1) return resources.get(0);
     final String fileName = schemaLocation == null ? null : new File(schemaLocation).getName();
     IndexedRelevantResource<String, XsdNamespaceBuilder> resource =
-      Collections.max(resources, new Comparator<IndexedRelevantResource<String, XsdNamespaceBuilder>>() {
-        @Override
-        public int compare(IndexedRelevantResource<String, XsdNamespaceBuilder> o1,
-                           IndexedRelevantResource<String, XsdNamespaceBuilder> o2) {
-          if (fileName != null) {
-            int i = Comparing.compare(fileName.equals(o1.getFile().getName()), fileName.equals(o2.getFile().getName()));
-            if (i != 0) return i;
-          }
-          if (tagName != null) {
-            int i = Comparing.compare(o1.getValue().hasTag(tagName), o2.getValue().hasTag(tagName));
-            if (i != 0) return i;
-          }
-          int i = o1.compareTo(o2);
+      Collections.max(resources, (o1, o2) -> {
+        if (fileName != null) {
+          int i = Comparing.compare(fileName.equals(o1.getFile().getName()), fileName.equals(o2.getFile().getName()));
           if (i != 0) return i;
-          return o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version);
         }
+        if (tagName != null) {
+          int i = Comparing.compare(o1.getValue().hasTag(tagName), o2.getValue().hasTag(tagName));
+          if (i != 0) return i;
+        }
+        int i = o1.compareTo(o2);
+        if (i != 0) return i;
+        return o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version);
       });
     if (tagName != null && !resource.getValue().hasTag(tagName)) {
       return null;

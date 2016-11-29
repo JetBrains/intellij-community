@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 /**
  * @author yole
  */
@@ -40,7 +42,7 @@ public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValu
     if (value != null) {
       valueType = context.getType(value);
     }
-    return PyTupleType.create(this, new PyType[] {keyType, valueType});
+    return PyTupleType.create(this, Arrays.asList(keyType, valueType));
   }
 
   @NotNull

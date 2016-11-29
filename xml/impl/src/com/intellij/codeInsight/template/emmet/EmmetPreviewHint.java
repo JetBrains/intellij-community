@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -49,7 +50,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class EmmetPreviewHint extends LightweightHint implements Disposable {
-  private static final Key<EmmetPreviewHint> KEY = new Key<EmmetPreviewHint>("emmet.preview");
+  private static final Key<EmmetPreviewHint> KEY = new Key<>("emmet.preview");
   @NotNull private final Editor myParentEditor;
   @NotNull private final Editor myEditor;
   @NotNull private final Alarm myAlarm = new Alarm(this);
@@ -95,7 +96,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       .setShowImmediately(true)
       .setPreferredPosition(position.second == HintManager.ABOVE ? Balloon.Position.above : Balloon.Position.below)
       .setTextBg(myParentEditor.getColorsScheme().getDefaultBackground())
-      .setBorderInsets(new Insets(1, 1, 1, 1));
+      .setBorderInsets(JBUI.insets(1));
 
     int hintFlags = HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myParentEditor, position.first, hintFlags, 0, false, hintHint);
@@ -103,22 +104,14 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
 
   public void updateText(@NotNull final Producer<String> contentProducer) {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!isDisposed) {
-          final String newText = contentProducer.produce();
-          if (StringUtil.isEmpty(newText)) {
-            hide();
-          }
-          else if (!myEditor.getDocument().getText().equals(newText)) {
-            DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-              @Override
-              public void run() {
-                myEditor.getDocument().setText(newText);
-              }
-            });
-          }
+    myAlarm.addRequest(() -> {
+      if (!isDisposed) {
+        final String newText = contentProducer.produce();
+        if (StringUtil.isEmpty(newText)) {
+          hide();
+        }
+        else if (!myEditor.getDocument().getText().equals(newText)) {
+          DocumentUtil.writeInRunUndoTransparentAction(() -> myEditor.getDocument().setText(newText));
         }
       }
     }, 100);
@@ -200,12 +193,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   @Override
   public void hide(boolean ok) {
     super.hide(ok);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(EmmetPreviewHint.this);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(this));
   }
 
   @Override
@@ -234,13 +222,13 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     boolean p1Ok = p1.y + getComponent().getPreferredSize().height < layeredPane.getHeight();
     boolean p2Ok = p2.y >= 0;
 
-    if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
-    if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
+    if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
+    if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;
     return aboveSpace > underSpace
-           ? new Pair<Point, Short>(new Point(p2.x, 0), HintManager.UNDER)
-           : new Pair<Point, Short>(p1, HintManager.ABOVE);
+           ? new Pair<>(new Point(p2.x, 0), HintManager.UNDER)
+           : new Pair<>(p1, HintManager.ABOVE);
   }
 }

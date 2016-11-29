@@ -109,8 +109,8 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void expandAll() {
-    final List<Object> pathsToExpand = new ArrayList<Object>();
-    final List<Object> selectionPaths = new ArrayList<Object>();
+    final List<Object> pathsToExpand = new ArrayList<>();
+    final List<Object> selectionPaths = new ArrayList<>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     int row = 0;
     while (row < getTree().getRowCount()) {
@@ -122,8 +122,8 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   }
 
   void collapseAll() {
-    final List<Object> pathsToExpand = new ArrayList<Object>();
-    final List<Object> selectionPaths = new ArrayList<Object>();
+    final List<Object> pathsToExpand = new ArrayList<>();
+    final List<Object> selectionPaths = new ArrayList<>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     TreeUtil.collapseAll(getTree(), 1);
     getTree().setSelectionPaths(EMPTY_TREE_PATH);

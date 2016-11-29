@@ -18,7 +18,6 @@ package com.intellij.usages.impl;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.UsageViewSettings;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -55,8 +54,8 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     myDetachedMode = presentation.isDetachedMode();
   }
 
-  public static class TargetsRootNode extends DefaultMutableTreeNode {
-    public TargetsRootNode(String name) {
+  static class TargetsRootNode extends DefaultMutableTreeNode {
+    TargetsRootNode(String name) {
       super(name);
     }
   }
@@ -71,15 +70,10 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
       myTargetsNode.add(targetNode);
       myTargetNodes[i] = targetNode;
     }
-    myRootNode.addNode(myTargetsNode, new Consumer<Runnable>() {
-      @Override
-      public void consume(Runnable runnable) {
-        UIUtil.invokeLaterIfNeeded(runnable);
-      }
-    });
+    myRootNode.addNode(myTargetsNode, UIUtil::invokeLaterIfNeeded);
   }
 
-  public UsageNode getFirstUsageNode() {
+  UsageNode getFirstUsageNode() {
     return (UsageNode)getFirstChildOfType(myRootNode, UsageNode.class);
   }
 
@@ -98,7 +92,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     return null;
   }
 
-  public boolean areTargetsValid() {
+  boolean areTargetsValid() {
     if (myTargetNodes == null) return true;
     for (UsageTargetNode targetNode : myTargetNodes) {
       if (!targetNode.isValid()) return false;
@@ -124,11 +118,11 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     }
   }
 
-  public boolean isDetachedMode() {
+  boolean isDetachedMode() {
     return myDetachedMode;
   }
 
-  public boolean isFilterDuplicatedLine() {
+  boolean isFilterDuplicatedLine() {
     return myPresentation.isMergeDupLinesAvailable() && UsageViewSettings.getInstance().isFilterDuplicatedLine();
   }
 }

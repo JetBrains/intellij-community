@@ -28,6 +28,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
@@ -43,6 +44,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EventObject;
 import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
@@ -143,6 +145,14 @@ public abstract class JBListTable {
     }
 
     @Override
+    public boolean isCellEditable(EventObject e) {
+      if (e instanceof MouseEvent && UIUtil.isSelectionButtonDown((MouseEvent)e)) {
+        return false;
+      }
+      return super.isCellEditable(e);
+    }
+
+    @Override
     public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, final int row, int column) {
       final JPanel p = new JPanel(new BorderLayout()) {
         @Override
@@ -213,7 +223,7 @@ public abstract class JBListTable {
     private static final int ANIMATION_STEP_MILLIS = 15;
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
-    private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<RowAnimationState>();
+    private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<>();
     private final Timer myAnimationTimer = UIUtil.createNamedTimer("JBListTableTimer",ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
 
@@ -463,7 +473,7 @@ public abstract class JBListTable {
         editor.setFocusCycleRoot(true);
 
         editor.setFocusTraversalPolicy(new JBListTableFocusTraversalPolicy(editor));
-        MouseSuppressor.install(editor);
+        editor.addMouseListener(MouseEventHandler.CONSUMER);
 
         myCellEditor = new MyCellEditor(editor);
         return myCellEditor;

@@ -16,18 +16,19 @@
 package git4idea.rebase;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import git4idea.DialogManager;
 import git4idea.commands.GitHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The handler for rebase editor request. The handler shows {@link git4idea.rebase.GitRebaseEditor}
@@ -58,7 +59,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   /**
    * The handler number
    */
-  private final int myHandlerNo;
+  @NotNull private final UUID myHandlerNo;
   /**
    * If true, the handler has been closed
    */
@@ -89,7 +90,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     myProject = project;
     myRoot = root;
     myHandler = handler;
-    myHandlerNo = service.registerHandler(this);
+    myHandlerNo = service.registerHandler(this, project);
   }
 
   /**
@@ -107,8 +108,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   public int editCommits(final String path) {
     ensureOpen();
-    final Ref<Boolean> isSuccess = new Ref<Boolean>();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    final Ref<Boolean> isSuccess = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         try {
           myEditorCancelled = false;
@@ -197,7 +198,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   /**
    * @return the handler number
    */
-  public int getHandlerNo() {
+  @NotNull
+  public UUID getHandlerNo() {
     return myHandlerNo;
   }
 

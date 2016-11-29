@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,26 +32,27 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
 import static com.intellij.codeInspection.bytecodeAnalysis.PResults.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
 abstract class PResults {
   // SoP = sum of products
   static Set<Set<Key>> join(Set<Set<Key>> sop1, Set<Set<Key>> sop2) {
-    Set<Set<Key>> sop = new HashSet<Set<Key>>();
+    Set<Set<Key>> sop = new HashSet<>();
     sop.addAll(sop1);
     sop.addAll(sop2);
     return sop;
   }
 
   static Set<Set<Key>> meet(Set<Set<Key>> sop1, Set<Set<Key>> sop2) {
-    Set<Set<Key>> sop = new HashSet<Set<Key>>();
+    Set<Set<Key>> sop = new HashSet<>();
     for (Set<Key> prod1 : sop1) {
       for (Set<Key> prod2 : sop2) {
-        Set<Key> prod = new HashSet<Key>();
+        Set<Key> prod = new HashSet<>();
         prod.addAll(prod1);
         prod.addAll(prod2);
         sop.add(prod);
@@ -92,17 +93,14 @@ abstract class PResults {
     }
 
     public ConditionalNPE(Key key) {
-      sop = new HashSet<Set<Key>>();
-      Set<Key> prod = new HashSet<Key>();
+      sop = new HashSet<>();
+      Set<Key> prod = new HashSet<>();
       prod.add(key);
       sop.add(prod);
     }
 
     static void checkLimit(Set<Set<Key>> sop) throws AnalyzerException {
-      int size = 0;
-      for (Set<Key> keys : sop) {
-        size += keys.size();
-      }
+      int size = sop.stream().mapToInt(Set::size).sum();
       if (size > Analysis.EQUATION_SIZE_LIMIT) {
         throw new AnalyzerException(null, "Equation size is too big");
       }
@@ -203,17 +201,14 @@ class NonNullInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product> components = new HashSet<Product>();
-      for (Set<Key> prod : condNpe.sop) {
-        components.add(new Product(Value.Top, prod));
-      }
+      Set<Product> components = condNpe.sop.stream().map(prod -> new Product(Value.Top, prod)).collect(Collectors.toSet());
       return new Equation(aKey, new Pending(components));
     }
   }
 
-  private int id = 0;
-  private Frame<BasicValue> nextFrame = null;
-  private PResult subResult = null;
+  private int id;
+  private Frame<BasicValue> nextFrame;
+  private PResult subResult;
 
   @NotNull
   protected Equation analyze() throws AnalyzerException {
@@ -243,7 +238,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
         boolean fold = false;
         if (dfsTree.loopEnters[insnIndex]) {
           for (Conf prev : history) {
-            if (AbstractValues.isInstance(conf, prev)) {
+            if (isInstance(conf, prev)) {
               fold = true;
               break;
             }
@@ -374,7 +369,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
       int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<BasicValue>(frame);
+        nextFrame1 = new Frame<>(frame);
         nextFrame1.clearStack();
         nextFrame1.push(ASMUtils.THROWABLE_VALUE);
       }
@@ -383,7 +378,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
   }
 
-  private int pendingTop = 0;
+  private int pendingTop;
 
   private void pendingPush(PendingAction action) throws AnalyzerException {
     if (pendingTop >= STEPS_LIMIT) {
@@ -401,7 +396,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
         subResult = Identity;
         break;
       default:
-        nextFrame = new Frame<BasicValue>(frame);
+        nextFrame = new Frame<>(frame);
         interpreter.reset(false);
         nextFrame.execute(insnNode, interpreter);
         subResult = interpreter.getSubResult();
@@ -429,19 +424,16 @@ class NullableInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product> components = new HashSet<Product>();
-      for (Set<Key> prod : condNpe.sop) {
-        components.add(new Product(Value.Top, prod));
-      }
+      Set<Product> components = condNpe.sop.stream().map(prod -> new Product(Value.Top, prod)).collect(Collectors.toSet());
       return new Equation(aKey, new Pending(components));
     }
   }
 
-  private int id = 0;
-  private Frame<BasicValue> nextFrame = null;
+  private int id;
+  private Frame<BasicValue> nextFrame;
   private PResult myResult = Identity;
   private PResult subResult = Identity;
-  private boolean top = false;
+  private boolean top;
 
   @NotNull
   protected Equation analyze() throws AnalyzerException {
@@ -460,7 +452,7 @@ class NullableInAnalysis extends Analysis<PResult> {
       boolean fold = false;
       if (dfsTree.loopEnters[insnIndex]) {
         for (Conf prev : history) {
-          if (AbstractValues.isInstance(conf, prev)) {
+          if (isInstance(conf, prev)) {
             fold = true;
             break;
           }
@@ -564,7 +556,7 @@ class NullableInAnalysis extends Analysis<PResult> {
     for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<BasicValue>(frame);
+        nextFrame1 = new Frame<>(frame);
         nextFrame1.clearStack();
         nextFrame1.push(ASMUtils.THROWABLE_VALUE);
       }
@@ -573,7 +565,7 @@ class NullableInAnalysis extends Analysis<PResult> {
 
   }
 
-  private int pendingTop = 0;
+  private int pendingTop;
 
   private void pendingPush(State state) throws AnalyzerException {
     if (pendingTop >= STEPS_LIMIT) {
@@ -592,7 +584,7 @@ class NullableInAnalysis extends Analysis<PResult> {
         top = false;
         break;
       default:
-        nextFrame = new Frame<BasicValue>(frame);
+        nextFrame = new Frame<>(frame);
         interpreter.reset(taken);
         nextFrame.execute(insnNode, interpreter);
         subResult = interpreter.getSubResult();
@@ -602,7 +594,7 @@ class NullableInAnalysis extends Analysis<PResult> {
 }
 
 abstract class NullityInterpreter extends BasicInterpreter {
-  boolean top = false;
+  boolean top;
   final boolean nullableAnalysis;
   final int nullityMask;
   private PResult subResult = Identity;

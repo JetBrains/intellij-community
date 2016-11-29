@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.Content;
@@ -45,12 +44,7 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
         final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
         // This invokeLater is required. The problem is setFile does a commit to PSI, but setFile is
         // invoked inside PSI change event. It causes an Exception like "Changes to PSI are not allowed inside event processing"
-        DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
-          @Override
-          public void run() {
-            setFile(psiFile);
-          }
-        });
+        DumbService.getInstance(myProject).smartInvokeLater(() -> setFile(psiFile));
       }
     });
   }
@@ -64,7 +58,6 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
 
     if (file != null && getSelectedFile() == file) return;
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     CurrentFileTodosTreeBuilder builder = (CurrentFileTodosTreeBuilder)myTodoTreeBuilder;
     builder.setFile(file);
     if (myTodoTreeBuilder.isUpdatable()) {

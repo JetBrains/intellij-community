@@ -21,7 +21,6 @@ import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -30,7 +29,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -52,7 +51,6 @@ import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
-import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -111,15 +109,11 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
     MutablePicoContainer appContainer = getApplication().getPicoContainer();
     registerComponentInstance(appContainer, MessageBus.class, getApplication().getMessageBus());
-    registerComponentInstance(appContainer, SchemesManagerFactory.class, new MockSchemesManagerFactory());
+    registerComponentInstance(appContainer, SchemeManagerFactory.class, new MockSchemeManagerFactory());
     final MockEditorFactory editorFactory = new MockEditorFactory();
     registerComponentInstance(appContainer, EditorFactory.class, editorFactory);
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {
-      @Override
-      public Document fun(CharSequence charSequence) {
-        return editorFactory.createDocument(charSequence);
-      }
-    }, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
+    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
+      charSequence -> editorFactory.createDocument(charSequence), FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
     registerComponentInstance(appContainer, PsiDocumentManager.class, new MockPsiDocumentManager());
 
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
@@ -182,6 +176,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     });
   }
 
+  @NotNull
   public MockProjectEx getProject() {
     return myProject;
   }

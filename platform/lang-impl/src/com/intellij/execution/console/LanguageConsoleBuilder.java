@@ -86,13 +86,7 @@ public final class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder processHandler(@NotNull final ProcessHandler processHandler) {
-    executionEnabled = new Condition<LanguageConsoleView>() {
-
-      @Override
-      public boolean value(LanguageConsoleView console) {
-        return !processHandler.isProcessTerminated();
-      }
-    };
+    executionEnabled = console -> !processHandler.isProcessTerminated();
     return this;
   }
 
@@ -178,7 +172,8 @@ public final class LanguageConsoleBuilder {
 
   @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(new MyHelper(project, language.getDisplayName() + " Console", language, psiFileFactory), gutterContentProvider);
+    final MyHelper helper = new MyHelper(project, language.getDisplayName() + " Console", language, psiFileFactory);
+    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(helper, gutterContentProvider);
     if (oneLineInput) {
       consoleView.getConsoleEditor().setOneLineMode(true);
     }
@@ -204,7 +199,10 @@ public final class LanguageConsoleBuilder {
 
     GutteredLanguageConsole console;
 
-    public MyHelper(@NotNull  Project project, @NotNull String title, @NotNull Language language, @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+    public MyHelper(@NotNull  Project project,
+                    @NotNull String title,
+                    @NotNull Language language,
+                    @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
       super(project, new LightVirtualFile(title, language, ""));
       this.psiFileFactory = psiFileFactory;
     }
@@ -318,6 +316,20 @@ public final class LanguageConsoleBuilder {
     @Override
     protected void doAddPromptToHistory() {
       gutterContentProvider.beforeEvaluate(getHistoryViewer());
+    }
+
+    @Override
+    public void dispose() {
+      final PsiFile file = getFile();
+      DaemonCodeAnalyzer.getInstance(file.getProject()).setHighlightingEnabled(file, true);
+
+      super.dispose();
+    }
+
+    @Override
+    public void scrollToEnd() {
+      getComponent().validate();
+      super.scrollToEnd();
     }
 
     private final class GutterUpdateScheduler extends DocumentAdapter implements DocumentBulkUpdateListener {

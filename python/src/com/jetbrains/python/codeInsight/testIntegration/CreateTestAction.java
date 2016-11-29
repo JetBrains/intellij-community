@@ -76,13 +76,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
       }
       else {
         final List<PyFunction> methods = Lists.newArrayList();
-        srcClass.visitMethods(new Processor<PyFunction>() {
-          @Override
-          public boolean process(PyFunction pyFunction) {
-            if (pyFunction.getName() != null && !pyFunction.getName().startsWith("__"))
-              methods.add(pyFunction);
-            return true;
-          }
+        srcClass.visitMethods(pyFunction -> {
+          if (pyFunction.getName() != null && !pyFunction.getName().startsWith("__"))
+            methods.add(pyFunction);
+          return true;
         }, false, null);
 
         d.methodsSize(methods.size());
@@ -106,13 +103,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     if (!d.showAndGet()) {
       return;
     }
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        PsiFile e = PyTestCreator.generateTestAndNavigate(project, d);
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-        documentManager.commitAllDocuments();
-      }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      PsiFile e = PyTestCreator.generateTestAndNavigate(project, d);
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      documentManager.commitAllDocuments();
     }, CodeInsightBundle.message("intention.create.test"), this);
   }
 }

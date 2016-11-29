@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,10 @@ import java.util.*;
 public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.Delegate {
   private final TreeNodeComparator myComparator = new TreeNodeComparator();
   private final CheckedTreeNode myRoot;
-  private final Map<BreakpointItem, BreakpointItemNode> myNodes = new HashMap<BreakpointItem, BreakpointItemNode>();
+  private final Map<BreakpointItem, BreakpointItemNode> myNodes = new HashMap<>();
   private List<XBreakpointGroupingRule> myGroupingRules;
 
-  private final MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup> myGroups = new MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup>();
+  private final MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup> myGroups = new MultiValuesMap<>();
 
   private JTree myTreeView;
   protected boolean myInBuild;
@@ -102,7 +102,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
   private void setGroupingRulesInternal(final Collection<XBreakpointGroupingRule> groupingRules) {
-    myGroupingRules = new ArrayList<XBreakpointGroupingRule>(groupingRules);
+    myGroupingRules = new ArrayList<>(groupingRules);
   }
 
   public void buildTree(@NotNull Collection<? extends BreakpointItem> breakpoints) {
@@ -140,7 +140,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
   private static Collection<XBreakpointGroup> getGroupNodes(CheckedTreeNode parent) {
-    Collection<XBreakpointGroup> nodes = new ArrayList<XBreakpointGroup>();
+    Collection<XBreakpointGroup> nodes = new ArrayList<>();
     Enumeration children = parent.children();
     while (children.hasMoreElements()) {
       Object element = children.nextElement();
@@ -163,14 +163,14 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
         }
       }
     }
-    BreakpointsGroupNode groupNode = new BreakpointsGroupNode<XBreakpointGroup>(group, level);
+    BreakpointsGroupNode groupNode = new BreakpointsGroupNode<>(group, level);
     parent.add(groupNode);
     return groupNode;
   }
 
   public void setGroupingRules(Collection<XBreakpointGroupingRule> groupingRules) {
     setGroupingRulesInternal(groupingRules);
-    rebuildTree(new ArrayList<BreakpointItem>(myNodes.keySet()));
+    rebuildTree(new ArrayList<>(myNodes.keySet()));
   }
 
   public void rebuildTree(Collection<BreakpointItem> items) {
@@ -189,17 +189,15 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     TreePath[] selectionPaths = myTreeView.getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) return Collections.emptyList();
 
-    final ArrayList<BreakpointItem> list = new ArrayList<BreakpointItem>();
+    final ArrayList<BreakpointItem> list = new ArrayList<>();
     for (TreePath selectionPath : selectionPaths) {
       TreeNode startNode = (TreeNode)selectionPath.getLastPathComponent();
       if (traverse) {
-        TreeUtil.traverseDepth(startNode, new TreeUtil.Traverse() {
-          public boolean accept(final Object node) {
-            if (node instanceof BreakpointItemNode) {
-              list.add(((BreakpointItemNode)node).getBreakpointItem());
-            }
-            return true;
+        TreeUtil.traverseDepth(startNode, node -> {
+          if (node instanceof BreakpointItemNode) {
+            list.add(((BreakpointItemNode)node).getBreakpointItem());
           }
+          return true;
         });
       }
       else {

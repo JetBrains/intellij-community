@@ -222,4 +222,23 @@ public class EditorActionTest extends AbstractEditorTest {
     home();
     checkResultByText(" <caret>text with [multiline\nfold region]");
   }
+
+  public void testToggleCaseForTextAfterEscapedSlash() throws IOException {
+    init("class C { String s = \"<selection>ab\\\\cd<caret></selection>\"; }", TestFileType.JAVA);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
+    checkResultByText("class C { String s = \"<selection>AB\\\\CD<caret></selection>\"; }");
+  }
+
+  public void testToggleCaseForEscapedChar() throws IOException {
+    init("class C { String s = \"<selection>ab\\ncd<caret></selection>\"; }", TestFileType.JAVA);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
+    checkResultByText("class C { String s = \"<selection>AB\\nCD<caret></selection>\"; }");
+  }
+
+  public void testJoinSeveralLinesAtDocumentEnd() throws Exception {
+    initText("a\nb\nc");
+    executeAction(IdeActions.ACTION_SELECT_ALL);
+    executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES);
+    checkResultByText("a b c");
+  }
 }

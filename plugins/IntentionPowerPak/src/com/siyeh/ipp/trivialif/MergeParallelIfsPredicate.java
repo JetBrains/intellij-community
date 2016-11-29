@@ -76,8 +76,8 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
     }
     final PsiExpression firstCondition = statement1.getCondition();
     final PsiExpression secondCondition = statement2.getCondition();
-    if (!EquivalenceChecker.expressionsAreEquivalent(firstCondition,
-                                                     secondCondition)) {
+    if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(firstCondition,
+                                                                                  secondCondition)) {
       return false;
     }
     final PsiStatement nextThenBranch = statement2.getThenBranch();
@@ -114,7 +114,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
 
   private static Set<String> calculateTopLevelDeclarations(
     PsiStatement statement) {
-    final Set<String> out = new HashSet<String>();
+    final Set<String> out = new HashSet<>();
     if (statement instanceof PsiDeclarationStatement) {
       addDeclarations((PsiDeclarationStatement)statement, out);
     }
@@ -152,7 +152,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
 
     private DeclarationVisitor(Set<String> declarations) {
       super();
-      this.declarations = new HashSet<String>(declarations);
+      this.declarations = new HashSet<>(declarations);
     }
 
     @Override

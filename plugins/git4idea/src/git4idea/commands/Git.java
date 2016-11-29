@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitCommit;
 import git4idea.branch.GitRebaseParams;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -100,8 +99,12 @@ public interface Git {
   @NotNull
   GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit);
 
+  /**
+   * Create branch without checking it out: <br/>
+   * <pre>    git branch &lt;branchName&gt; &lt;startPoint&gt;</pre>
+   */
   @NotNull
-  GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName);
+  GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint);
 
   @NotNull
   GitCommandResult renameBranch(@NotNull GitRepository repository,
@@ -153,9 +156,6 @@ public interface Git {
   GitCommandResult stashPop(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range);
-
-  @NotNull
   GitCommandResult fetch(@NotNull GitRepository repository,
                          @NotNull GitRemote remote,
                          @NotNull List<GitLineHandlerListener> listeners,
@@ -163,6 +163,15 @@ public interface Git {
 
   @NotNull
   GitCommandResult addRemote(@NotNull GitRepository repository, @NotNull String name, @NotNull String url);
+
+  @NotNull
+  GitCommandResult removeRemote(@NotNull GitRepository repository, @NotNull GitRemote remote);
+
+  @NotNull
+  GitCommandResult renameRemote(@NotNull GitRepository repository, @NotNull String oldName, @NotNull String newName);
+
+  @NotNull
+  GitCommandResult setRemoteUrl(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String newUrl);
 
   @NotNull
   GitCommandResult lsRemote(@NotNull Project project, @NotNull File workingDir, @NotNull String url);

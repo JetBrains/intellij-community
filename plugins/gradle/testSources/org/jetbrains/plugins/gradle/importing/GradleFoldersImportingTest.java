@@ -47,6 +47,18 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertModuleOutput("project_main", getProjectPath() + "/build/classes/main", "");
     assertModuleOutput("project_test", "", getProjectPath() + "/build/classes/test");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+    assertDefaultGradleJavaProjectFoldersForMergedModule("project");
+
+    assertModuleOutputs("project",
+                        getProjectPath() + "/build/classes/main",
+                        getProjectPath() + "/build/resources/main",
+                        getProjectPath() + "/build/classes/test",
+                        getProjectPath() + "/build/resources/test");
+
+    assertModuleOutput("project", getProjectPath() + "/build/classes/main", getProjectPath() + "/build/classes/test");
   }
 
   @Test
@@ -69,6 +81,14 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertModuleOutput("project_main", getProjectPath() + "/build", "");
     assertModuleOutput("project_test", "", getProjectPath() + "/build/classes/test");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertDefaultGradleJavaProjectFoldersForMergedModule("project");
+
+    assertModuleOutput("project", getProjectPath() + "/build", getProjectPath() + "/build/classes/test");
   }
 
   @Test
@@ -92,6 +112,14 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertDefaultGradleJavaProjectFolders("project");
     assertGeneratedSources("project_main", "java");
     assertGeneratedTestSources("project_test", "java");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertDefaultGradleJavaProjectFoldersForMergedModule("project");
+    assertGeneratedSources("project", "src/main/java");
+    assertGeneratedTestSources("project", "src/test/java");
   }
 
   @Test
@@ -115,6 +143,54 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertModuleInheritedOutput("project");
     assertModuleInheritedOutput("project_main");
     assertModuleInheritedOutput("project_test");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertDefaultGradleJavaProjectFoldersForMergedModule("project");
+
+    assertModuleInheritedOutput("project");
+  }
+
+  @Test
+  public void testSourceFoldersMerge() throws Exception {
+
+    importProject(
+      "apply plugin: 'java'\n" +
+      "sourceSets {\n" +
+      "  main {\n" +
+      "    resources.srcDir 'src/resources'\n" +
+      "    java.srcDir 'src'\n" +
+      "  }\n" +
+      "  test {\n" +
+      "    resources.srcDir 'test/resources'\n" +
+      "    java.srcDir 'test'\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project", "project_main", "project_test");
+    assertContentRoots("project", getProjectPath());
+
+    assertExcludes("project", ".gradle", "build");
+    final String mainSourceSetModuleName = "project_main";
+    assertContentRoots(mainSourceSetModuleName, getProjectPath() + "/src");
+    assertSources(mainSourceSetModuleName, "", "main/java");
+    assertResources(mainSourceSetModuleName, "main/resources", "resources");
+    final String testSourceSetModuleName = "project_test";
+    assertContentRoots(testSourceSetModuleName, getProjectPath() + "/test", getProjectPath() + "/src/test");
+    assertTestSources(testSourceSetModuleName, "src/test/java", "test");
+    assertTestResources(testSourceSetModuleName, "src/test/resources", "test/resources");
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+    assertExcludes("project", ".gradle", "build");
+    assertSources("project", "src", "src/main/java");
+    assertResources("project", "src/main/resources", "src/resources");
+    assertTestSources("project", "src/test/java", "test");
+    assertTestResources("project", "src/test/resources", "test/resources");
   }
 
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
@@ -127,5 +203,14 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertContentRoots(testSourceSetModuleName, getProjectPath() + "/src/test");
     assertTestSources(testSourceSetModuleName, "java");
     assertTestResources(testSourceSetModuleName, "resources");
+  }
+
+  protected void assertDefaultGradleJavaProjectFoldersForMergedModule(@NotNull String moduleName) {
+    assertContentRoots(moduleName, getProjectPath());
+    assertExcludes(moduleName, ".gradle", "build");
+    assertSources(moduleName, "src/main/java");
+    assertResources(moduleName, "src/main/resources");
+    assertTestSources(moduleName, "src/test/java");
+    assertTestResources(moduleName, "src/test/resources");
   }
 }

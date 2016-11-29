@@ -107,7 +107,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   
   public final void addCustomUpdater(@NotNull AnActionButtonUpdater updater) {
     if (myUpdaters == null) {
-      myUpdaters = new SmartHashSet<AnActionButtonUpdater>();
+      myUpdaters = new SmartHashSet<>();
     }
     myUpdaters.add(updater);
   }

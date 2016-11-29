@@ -46,7 +46,7 @@ import java.util.TreeMap;
  */
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
-  private final Set<RenameHandler> myHandlers  = new HashSet<RenameHandler>();
+  private final Set<RenameHandler> myHandlers  = new HashSet<>();
   private static final RenameHandlerRegistry INSTANCE = new RenameHandlerRegistry();
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
 
@@ -71,16 +71,14 @@ public class RenameHandlerRegistry {
 
   @Nullable
   public RenameHandler getRenameHandler(DataContext dataContext) {
-    final Map<String, RenameHandler> availableHandlers = new TreeMap<String, RenameHandler>();
+    final Map<String, RenameHandler> availableHandlers = new TreeMap<>();
     for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
       if (renameHandler.isRenaming(dataContext)) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }
     for (RenameHandler renameHandler : myHandlers) {
       if (renameHandler.isRenaming(dataContext)) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }
@@ -94,6 +92,7 @@ public class RenameHandlerRegistry {
     }
     if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
     if (availableHandlers.size() > 1) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return availableHandlers.values().iterator().next();
       final String[] strings = ArrayUtil.toStringArray(availableHandlers.keySet());
       final HandlersChooser chooser = new HandlersChooser(CommonDataKeys.PROJECT.getData(dataContext), strings);
       if (chooser.showAndGet()) {

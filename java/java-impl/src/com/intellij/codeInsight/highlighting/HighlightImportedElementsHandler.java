@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   private final PsiElement myTarget;
   private final PsiImportStatementBase myImportStatement;
   private final boolean myImportStatic;
-  private Map<PsiMember,List<PsiElement>> myClassReferenceListMap = null;
+  private Map<PsiMember,List<PsiElement>> myClassReferenceListMap;
 
   public HighlightImportedElementsHandler(Editor editor, PsiFile file, PsiElement target, PsiImportStatementBase importStatement) {
     super(editor, file);
@@ -74,7 +74,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     if (myClassReferenceListMap.isEmpty()) {
       return Collections.emptyList();
     }
-    return new ArrayList<PsiMember>(myClassReferenceListMap.keySet());
+    return new ArrayList<>(myClassReferenceListMap.keySet());
   }
 
   @Override
@@ -92,7 +92,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
       return;
     }
     Collections.sort(targets, new PsiMemberComparator());
-    final List<Object> model = new ArrayList<Object>();
+    final List<Object> model = new ArrayList<>();
     model.add(CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry"));
     model.addAll(targets);
     final JList list = new JBList(model);
@@ -100,31 +100,25 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     final ListCellRenderer renderer = new NavigationItemListCellRenderer();
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    builder.setFilteringEnabled(new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        if (o instanceof PsiMember) {
-          final PsiMember member = (PsiMember)o;
-          return member.getName();
-        }
-        return o.toString();
+    builder.setFilteringEnabled(o -> {
+      if (o instanceof PsiMember) {
+        final PsiMember member = (PsiMember)o;
+        return member.getName();
       }
+      return o.toString();
     });
     if (myImportStatic) {
       builder.setTitle(CodeInsightBundle.message("highlight.imported.members.chooser.title"));
     } else {
       builder.setTitle(CodeInsightBundle.message("highlight.imported.classes.chooser.title"));
     }
-    builder.setItemChoosenCallback(new Runnable() {
-      @Override
-      public void run() {
-        final int index= list.getSelectedIndex();
-        if (index == 0) {
-          selectionConsumer.consume(targets);
-        }
-        else {
-          selectionConsumer.consume(Collections.singletonList(targets.get(index - 1)));
-        }
+    builder.setItemChoosenCallback(() -> {
+      final int index= list.getSelectedIndex();
+      if (index == 0) {
+        selectionConsumer.consume(targets);
+      }
+      else {
+        selectionConsumer.consume(Collections.singletonList(targets.get(index - 1)));
       }
     });
     final JBPopup popup = builder.createPopup();
@@ -152,7 +146,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
 
   static class ReferenceCollector extends JavaRecursiveElementVisitor {
 
-    private final Map<PsiMember, List<PsiElement>> classReferenceListMap = new HashMap<PsiMember, List<PsiElement>>();
+    private final Map<PsiMember, List<PsiElement>> classReferenceListMap = new HashMap<>();
     private final PsiElement[] myImportTargets;
     private final boolean myOnDemand;
     private final boolean myImportStatic;
@@ -269,7 +263,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     private void addReference(PsiMember referencedMember, PsiJavaCodeReferenceElement reference) {
       List<PsiElement> referenceList = classReferenceListMap.get(referencedMember);
       if (referenceList == null) {
-        referenceList = new ArrayList<PsiElement>();
+        referenceList = new ArrayList<>();
         classReferenceListMap.put(referencedMember, referenceList);
       }
       referenceList.add(reference.getReferenceNameElement());

@@ -114,12 +114,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
         if (path != null) {
           final MethodNodeBase<M> node = (MethodNodeBase)path.getLastPathComponent();
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              updateEditorTexts(node);
-            }
-          }, 300);
+          myAlarm.addRequest(() -> updateEditorTexts(node), 300);
         }
       }
     };
@@ -150,12 +145,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     final String calleeText = node != myRoot ? getText(parentNode.getMethod()) : getEmptyCalleeText();
     final Document calleeDocument = myCalleeEditor.getDocument();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        callerDocument.setText(callerText);
-        calleeDocument.setText(calleeText);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      callerDocument.setText(callerText);
+      calleeDocument.setText(calleeText);
     });
 
     final M caller = callerNode.getMethod();
@@ -182,12 +174,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   protected Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
     Query<PsiReference> references = ReferencesSearch.search(callee, new LocalSearchScope(caller), false);
-    return ContainerUtil.mapNotNull(references, new Function<PsiReference, PsiElement>() {
-      @Override
-      public PsiElement fun(PsiReference psiReference) {
-        return psiReference.getElement();
-      }
-    });
+    return ContainerUtil.mapNotNull(references, psiReference -> psiReference.getElement());
   }
 
   @Override
@@ -243,19 +230,16 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   }
 
   private Tree createTree() {
-    final Runnable cancelCallback = new Runnable() {
-      @Override
-      public void run() {
-        if (myInitDone) {
-          close(CANCEL_EXIT_CODE);
-        }
-        else {
-          throw new ProcessCanceledException();
-        }
+    final Runnable cancelCallback = () -> {
+      if (myInitDone) {
+        close(CANCEL_EXIT_CODE);
+      }
+      else {
+        throw new ProcessCanceledException();
       }
     };
-    final CheckedTreeNode root = createTreeNode(null, new HashSet<M>(), cancelCallback);
-    myRoot = createTreeNode(myMethod, new HashSet<M>(), cancelCallback);
+    final CheckedTreeNode root = createTreeNode(null, new HashSet<>(), cancelCallback);
+    myRoot = createTreeNode(myMethod, new HashSet<>(), cancelCallback);
     root.add(myRoot);
     final CheckboxTree.CheckboxTreeCellRenderer cellRenderer = new CheckboxTree.CheckboxTreeCellRenderer(true, false) {
       @Override
@@ -291,8 +275,8 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private void getSelectedMethodsInner(final MethodNodeBase<M> node, final Set<M> allMethods) {
     if (node.isChecked()) {
       M method = node.getMethod();
-      final M[] superMethods = findDeepestSuperMethods(method);
-      if (superMethods.length == 0) {
+      final M[] superMethods = method == myMethod ? null : findDeepestSuperMethods(method);
+      if (superMethods == null || superMethods.length == 0) {
         allMethods.add(method);
       }
       else {
@@ -307,7 +291,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   }
 
   protected Set<MethodNodeBase<M>> getSelectedNodes() {
-    final Set<MethodNodeBase<M>> nodes = new LinkedHashSet<MethodNodeBase<M>>();
+    final Set<MethodNodeBase<M>> nodes = new LinkedHashSet<>();
     collectSelectedNodes(myRoot, nodes);
     return nodes;
   }
@@ -324,7 +308,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   @Override
   protected void doOKAction() {
-    final Set<M> selectedMethods = new HashSet<M>();
+    final Set<M> selectedMethods = new HashSet<>();
     getSelectedMethods(selectedMethods);
     myCallback.consume(selectedMethods);
     super.doOKAction();

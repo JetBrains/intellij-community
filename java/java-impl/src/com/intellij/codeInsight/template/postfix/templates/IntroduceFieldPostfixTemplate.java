@@ -35,7 +35,7 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     IntroduceFieldHandler handler =
       ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler(expression) : new IntroduceFieldHandler();
-    handler.invoke(expression.getProject(), new PsiElement[]{expression}, null);
+    handler.invoke(expression.getProject(), expression, editor);
   }
 
   @NotNull

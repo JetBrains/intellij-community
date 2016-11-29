@@ -95,7 +95,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       return Collections.emptyList();
     }
 
-    final List<ConfigurationFromContext> enabledConfigurations = new ArrayList<ConfigurationFromContext>();
+    final List<ConfigurationFromContext> enabledConfigurations = new ArrayList<>();
     for (ConfigurationFromContext configurationFromContext : fromContext) {
       if (isEnabledFor(configurationFromContext.getConfiguration())) {
         enabledConfigurations.add(configurationFromContext);
@@ -174,12 +174,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   private void perform(final ConfigurationFromContext configurationFromContext, final ConfigurationContext context) {
     RunnerAndConfigurationSettings configurationSettings = configurationFromContext.getConfigurationSettings();
     context.setConfiguration(configurationSettings);
-    configurationFromContext.onFirstRun(context, new Runnable() {
-      @Override
-      public void run() {
-        perform(context);
-      }
-    });
+    configurationFromContext.onFirstRun(context, () -> perform(context));
   }
 
   protected abstract void perform(ConfigurationContext context);

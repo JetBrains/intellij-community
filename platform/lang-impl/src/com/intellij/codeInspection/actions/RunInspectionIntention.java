@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -39,19 +40,21 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * User: anna
  * Date: 21-Feb-2006
  */
 public class RunInspectionIntention implements IntentionAction, HighPriorityAction {
-  private final String myShortName;
+  private final static Logger LOG = Logger.getInstance(RunInspectionIntention.class);
 
-  public RunInspectionIntention(@NotNull InspectionToolWrapper toolWrapper) {
-    myShortName = toolWrapper.getShortName();
-  }
+  private final String myShortName;
 
   public RunInspectionIntention(final HighlightDisplayKey key) {
     myShortName = key.toString();
@@ -76,7 +79,6 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Module module = file != null ? ModuleUtilCore.findModuleForPsiElement(file) : null;
     AnalysisScope analysisScope = new AnalysisScope(project);
     if (file != null) {
@@ -86,38 +88,60 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
       }
     }
 
+    selectScopeAndRunInspection(myShortName, analysisScope, module, file, project);
+  }
+
+  public static void selectScopeAndRunInspection(@NotNull String toolShortName,
+                                                 @NotNull AnalysisScope customScope,
+                                                 @Nullable Module module,
+                                                 @Nullable PsiElement context,
+                                                 @NotNull Project project) {
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project,
-      analysisScope,
+      customScope,
       module != null ? module.getName() : null,
-      true, AnalysisUIOptions.getInstance(project), file);
+      true, AnalysisUIOptions.getInstance(project), context);
     if (!dlg.showAndGet()) {
       return;
     }
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
-    analysisScope = dlg.getScope(uiOptions, analysisScope, project, module);
-    rerunInspection(LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName), managerEx, analysisScope, file);
+    customScope = dlg.getScope(uiOptions, customScope, project, module);
+    final InspectionToolWrapper wrapper = LocalInspectionToolWrapper.findTool2RunInBatch(project, context, toolShortName);
+    LOG.assertTrue(wrapper != null, "Can't find tool with name = \"" + toolShortName + "\"");
+    rerunInspection(wrapper, (InspectionManagerEx)InspectionManager.getInstance(project), customScope, context);
   }
 
   public static void rerunInspection(@NotNull InspectionToolWrapper toolWrapper,
                                      @NotNull InspectionManagerEx managerEx,
                                      @NotNull AnalysisScope scope,
-                                     PsiElement psiElement) {
+                                     @Nullable PsiElement psiElement) {
     GlobalInspectionContextImpl inspectionContext = createContext(toolWrapper, managerEx, psiElement);
     inspectionContext.doInspections(scope);
   }
 
+  @NotNull
   public static GlobalInspectionContextImpl createContext(@NotNull InspectionToolWrapper toolWrapper,
                                                           @NotNull InspectionManagerEx managerEx,
-                                                          PsiElement psiElement) {
-    final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
-    LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<InspectionToolWrapper>();
+                                                          @Nullable PsiElement psiElement) {
+    final InspectionProfileImpl model = createProfile(toolWrapper, managerEx, psiElement);
+    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
+    inspectionContext.setExternalProfile(model);
+    return inspectionContext;
+  }
+
+  @NotNull
+  public static InspectionProfileImpl createProfile(@NotNull InspectionToolWrapper toolWrapper,
+                                                    @NotNull InspectionManagerEx managerEx,
+                                                    @Nullable PsiElement psiElement) {
+    InspectionProfileImpl rootProfile = InspectionProfileManager.getInstance().getCurrentProfile();
+    LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<>();
     allWrappers.add(toolWrapper);
     rootProfile.collectDependentInspections(toolWrapper, allWrappers, managerEx.getProject());
-    InspectionToolWrapper[] toolWrappers = allWrappers.toArray(new InspectionToolWrapper[allWrappers.size()]);
-    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(), toolWrappers);
+    List<InspectionToolWrapper> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.iterator().next()) : new ArrayList<>(allWrappers);
+    InspectionProfileImpl model = InspectionProfileImpl.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(),
+                                                                     toolWrappers);
     try {
       Element element = new Element("toCopy");
       for (InspectionToolWrapper wrapper : toolWrappers) {
@@ -131,10 +155,8 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     }
     catch (InvalidDataException ignored) {
     }
-    model.setEditable(toolWrapper.getDisplayName());
-    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
-    inspectionContext.setExternalProfile(model);
-    return inspectionContext;
+    model.setSingleTool(toolWrapper.getShortName());
+    return model;
   }
 
   @Override

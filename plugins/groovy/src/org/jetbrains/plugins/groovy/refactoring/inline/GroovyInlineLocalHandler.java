@@ -78,11 +78,8 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final GroovyInlineLocalProcessor processor = new GroovyInlineLocalProcessor(project, localVarSettings, local);
-    processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-      @Override
-      public void run() {
-        //do nothing
-      }
+    processor.setPrepareSuccessfulSwingThreadCallback(() -> {
+      //do nothing
     });
     processor.run();
   }
@@ -149,12 +146,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     else {
       flow = ControlFlowUtils.findControlFlowOwner(variable).getControlFlow();
       initializer = variable.getInitializerGroovy();
-      writeInstr = ContainerUtil.find(flow, new Condition<Instruction>() {
-        @Override
-        public boolean value(Instruction instruction) {
-          return instruction.getElement() == variable;
-        }
-      });
+      writeInstr = ContainerUtil.find(flow, instruction -> instruction.getElement() == variable);
     }
 
     if (initializer == null || writeInstr == null) {

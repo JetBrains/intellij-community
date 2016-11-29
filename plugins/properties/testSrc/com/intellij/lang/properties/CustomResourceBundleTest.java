@@ -16,6 +16,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,12 +24,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Locale;
 
 import static com.intellij.util.containers.ContainerUtil.list;
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -142,7 +141,8 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
     final PsiDirectory newDir = PsiManager.getInstance(getProject()).findDirectory(
       myFixture.getTempDirFixture().findOrCreateDir("new-resources-dir"));
     new MoveFilesOrDirectoriesProcessor(getProject(), new PsiElement[] {file2.getContainingFile()}, newDir, false, false, null, null).run();
-    file3.getContainingFile().delete();
+    ApplicationManager.getApplication().runWriteAction(() -> file3.getContainingFile().delete());
+
 
     assertSize(2, file.getResourceBundle().getPropertiesFiles());
 
@@ -156,12 +156,7 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
     final PsiFile file = myFixture.addFileToProject("Base_Page.properties", "");
     final PsiFile file2 = myFixture.addFileToProject("Base_Page_en.properties", "");
     final String baseName =
-      PropertiesUtil.getDefaultBaseName(map(list(file, file2), new Function<PsiFile, PropertiesFile>() {
-        @Override
-        public PropertiesFile fun(PsiFile psiFile) {
-          return PropertiesImplUtil.getPropertiesFile(file);
-        }
-      }));
+      PropertiesUtil.getDefaultBaseName(map(list(file, file2), psiFile -> PropertiesImplUtil.getPropertiesFile(file)));
     assertEquals("Base_Page", baseName);
   }
 
@@ -182,7 +177,8 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
     final PsiFile someFile = myFixture.addFileToProject("to_remove/asd.txt", "");
     final PsiDirectory toRemove = someFile.getParent();
     assertNotNull(toRemove);
-    toRemove.delete();
+    ApplicationManager.getApplication().runWriteAction(toRemove::delete);
+
     final ResourceBundleManagerState state = resourceBundleManager.getState();
     assertNotNull(state);
     assertSize(1, state.getCustomResourceBundles());
@@ -190,13 +186,15 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
 
     final PsiDirectory directory = propertiesFile.getParent().getParent();
     assertNotNull(directory);
-    directory.delete();
+    ApplicationManager.getApplication().runWriteAction(directory::delete);
+
     assertSize(1, state.getCustomResourceBundles());
     assertSize(0, state.getDissociatedFiles());
 
     final PsiDirectory directory1 = propFile1.getParent().getParent();
     assertNotNull(directory1);
-    directory1.delete();
+    ApplicationManager.getApplication().runWriteAction(directory1::delete);
+
     assertSize(0, state.getCustomResourceBundles());
     assertSize(0, state.getDissociatedFiles());
   }
@@ -219,7 +217,8 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
 
     final PsiDirectory toMove = myFixture.addFileToProject("asd/temp.txt", "").getParent();
     assertNotNull(toMove);
-    MoveFilesOrDirectoriesUtil.doMoveDirectory(propFile1.getParent(), toMove);
+    ApplicationManager.getApplication().runWriteAction(() -> MoveFilesOrDirectoriesUtil.doMoveDirectory(propFile1.getParent(), toMove));
+
     final PsiDirectory movedDir = toMove.findSubdirectory("qwe");
     assertNotNull(movedDir);
 

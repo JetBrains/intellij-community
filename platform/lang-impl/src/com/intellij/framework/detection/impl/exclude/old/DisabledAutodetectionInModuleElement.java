@@ -30,15 +30,11 @@ import java.util.Set;
  */
 @Tag("module")
 public class DisabledAutodetectionInModuleElement {
-  public static final Comparator<DisabledAutodetectionInModuleElement> COMPARATOR = new Comparator<DisabledAutodetectionInModuleElement>() {
-    @Override
-    public int compare(DisabledAutodetectionInModuleElement o1, DisabledAutodetectionInModuleElement o2) {
-      return StringUtil.compare(o1.getModuleName(), o2.getModuleName(), true);
-    }
-  };
+  public static final Comparator<DisabledAutodetectionInModuleElement> COMPARATOR =
+    (o1, o2) -> StringUtil.compare(o1.getModuleName(), o2.getModuleName(), true);
   private String myModuleName;
-  private Set<String> myFiles = new LinkedHashSet<String>();
-  private Set<String> myDirectories = new LinkedHashSet<String>();
+  private Set<String> myFiles = new LinkedHashSet<>();
+  private Set<String> myDirectories = new LinkedHashSet<>();
 
   public DisabledAutodetectionInModuleElement() {
   }

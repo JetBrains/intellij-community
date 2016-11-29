@@ -4,8 +4,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.xdebugger.XDebugProcess;
@@ -15,20 +15,15 @@ import com.intellij.xdebugger.XDebuggerManager;
 import org.intellij.lang.xpath.xslt.run.XsltCommandLineState;
 import org.intellij.lang.xpath.xslt.run.XsltRunConfiguration;
 import org.intellij.plugins.xsltDebugger.impl.XsltDebugProcess;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltDebuggerRunner extends DefaultProgramRunner {
-  static final ThreadLocal<Boolean> ACTIVE = new ThreadLocal<Boolean>();
-
-  @NonNls
-  private static final String ID = "XsltDebuggerRunner";
-
+public class XsltDebuggerRunner extends GenericProgramRunner {
+  static final ThreadLocal<Boolean> ACTIVE = new ThreadLocal<>();
 
   @NotNull
   @Override
   public String getRunnerId() {
-    return ID;
+    return "XsltDebuggerRunner";
   }
 
   @Override
@@ -45,6 +40,7 @@ public class XsltDebuggerRunner extends DefaultProgramRunner {
   protected RunContentDescriptor createContentDescriptor(final RunProfileState runProfileState, final ExecutionEnvironment environment) throws ExecutionException {
     final XDebugSession debugSession =
       XDebuggerManager.getInstance(environment.getProject()).startSession(environment, new XDebugProcessStarter() {
+        @Override
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) throws ExecutionException {
           ACTIVE.set(Boolean.TRUE);

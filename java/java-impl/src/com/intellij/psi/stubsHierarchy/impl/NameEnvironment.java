@@ -17,82 +17,60 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
-public class NameEnvironment extends UserDataHolderBase {
+class NameEnvironment extends UserDataHolderBase {
+  static final int OBJECT_NAME = hashIdentifier("Object");
+  static final int NO_NAME = 0;
+  @QNameHash final static int java_lang = fromString("java.lang");
+  static final QualifiedName java_lang_Enum = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ENUM));
+  static final QualifiedName java_lang_annotation_Annotation =
+    new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
 
-  public final QualifiedName empty;
-  public final QualifiedName java_lang_Object;
-  public final QualifiedName java_lang_Enum;
-  public final QualifiedName[] annotation;
-  public final NamesEnumerator myNamesEnumerator;
-
-  public NameEnvironment() {
-    myNamesEnumerator = new NamesEnumerator();
-    empty = myNamesEnumerator.getFullName(new int[]{}, true);
-    java_lang_Object = fromString("java.lang.Object", true);
-    java_lang_Enum = fromString("java.lang.Enum", true);
-    annotation = new QualifiedName[]{fromString("java.lang.annotation.Annotation", true)};
-  }
-
-  @Nullable
-  public QualifiedName fromString(String s, boolean create) {
-    List<String> comps = StringUtil.split(s, ".");
-    int[] ids = new int[comps.size()];
-    for (int i = 0; i < comps.size(); i++) {
-      int name = simpleName(comps.get(i), create);
-      if (name == NamesEnumerator.NO_NAME) {
-        return null;
-      }
-      ids[i] = name;
+  static @QNameHash int fromString(String s) {
+    int id = 0;
+    for (int shortName : hashQualifiedName(s)) {
+      id = qualifiedName(id, shortName);
     }
-    return myNamesEnumerator.getFullName(ids, create);
+    return id;
   }
 
-  public int simpleName(String s, boolean create) {
-    if (s == null)
-      return NamesEnumerator.NO_NAME;
-    return myNamesEnumerator.getSimpleName(s, create);
-  }
+  static int hashIdentifier(@Nullable String s) {
+    if (StringUtil.isEmpty(s)) return 0;
 
-  public QualifiedName prefix(QualifiedName name) {
-    if (name.myComponents.length <= 1) {
-      return empty;
+    // not using String.hashCode because this way there's less collisions for short package names like 'com'
+    int hash = 0;
+    for (int i = 0; i < s.length(); i++) {
+      hash = hash * 239 + s.charAt(i);
     }
-    return myNamesEnumerator.getFullName(Arrays.copyOf(name.myComponents, name.myComponents.length - 1), true);
+    return hash == 0 ? 1 : hash;
   }
 
-  public QualifiedName qualifiedName(int id) {
-    return myNamesEnumerator.qualifiedName(id);
-  }
+  static int[] hashQualifiedName(@NotNull String qName) {
+    qName = PsiNameHelper.getQualifiedClassName(qName, true);
+    if (qName.isEmpty()) return ArrayUtil.EMPTY_INT_ARRAY;
 
-  public int shortName(QualifiedName name) {
-    int[] ids = name.myComponents;
-    return ids[ids.length - 1];
-  }
-
-  public QualifiedName qualifiedName(Symbol owner, int shortName) {
-    if (shortName == NamesEnumerator.NO_NAME || owner == null || owner.myQualifiedName == null) {
-      return null;
+    List<String> components = StringUtil.split(qName, ".");
+    int[] result = new int[components.size()];
+    for (int i = 0; i < components.size(); i++) {
+      result[i] = hashIdentifier(components.get(i));
     }
-    return qualifiedName(owner.myQualifiedName, shortName, true);
+    return result;
   }
 
-  public QualifiedName qualifiedName(QualifiedName prefix, int shortName, boolean create) {
-    if (shortName == NamesEnumerator.NO_NAME)
-      return null;
-    if (prefix == null || prefix.isEmpty())
-      return myNamesEnumerator.getFullName(new int[]{shortName}, create);
-
-    int[] ids = Arrays.copyOf(prefix.myComponents, prefix.myComponents.length + 1);
-    ids[ids.length - 1] = shortName;
-    return myNamesEnumerator.getFullName(ids, create);
+  static int memberQualifiedName(@QNameHash int ownerName, @ShortName int name) {
+    return name == NO_NAME || ownerName == 0 ? 0 : qualifiedName(ownerName, name);
   }
 
-  QualifiedName concat(int[] ids, boolean create) {
-    return myNamesEnumerator.getFullName(ids, create);
+  static @QNameHash int qualifiedName(@QNameHash int prefix, @ShortName int shortName) {
+    int hash = prefix * 31 + shortName;
+    return hash == 0 ? 1 : hash;
   }
+
 }

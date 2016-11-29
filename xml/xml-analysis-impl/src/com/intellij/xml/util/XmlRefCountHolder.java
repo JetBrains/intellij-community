@@ -50,27 +50,24 @@ public class XmlRefCountHolder {
     new UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object>() {
       @Override
       protected CachedValue<XmlRefCountHolder> compute(final XmlFile file, final Object p) {
-        return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlRefCountHolder>() {
-          @Override
-          public Result<XmlRefCountHolder> compute() {
-            final XmlRefCountHolder holder = new XmlRefCountHolder();
-            final Language language = file.getViewProvider().getBaseLanguage();
-            final PsiFile psiFile = file.getViewProvider().getPsi(language);
-            assert psiFile != null;
-            psiFile.accept(new IdGatheringRecursiveVisitor(holder));
-            return new Result<XmlRefCountHolder>(holder, file);
-          }
+        return CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
+          final XmlRefCountHolder holder = new XmlRefCountHolder();
+          final Language language = file.getViewProvider().getBaseLanguage();
+          final PsiFile psiFile = file.getViewProvider().getPsi(language);
+          assert psiFile != null;
+          psiFile.accept(new IdGatheringRecursiveVisitor(holder));
+          return new CachedValueProvider.Result<>(holder, file);
         }, false);
       }
     };
 
-  private final Map<String, List<Pair<XmlAttributeValue, Boolean>>> myId2AttributeListMap = new HashMap<String, List<Pair<XmlAttributeValue, Boolean>>>();
-  private final Set<XmlAttributeValue> myPossiblyDuplicateIds = new HashSet<XmlAttributeValue>();
-  private final List<XmlAttributeValue> myIdReferences = new ArrayList<XmlAttributeValue>();
-  private final Set<String> myAdditionallyDeclaredIds = new HashSet<String>();
-  private final Set<PsiElement> myDoNotValidateParentsList = new HashSet<PsiElement>();
-  private final Set<String> myUsedPrefixes = new HashSet<String>();
-  private final Set<String> myUsedNamespaces = new HashSet<String>();
+  private final Map<String, List<Pair<XmlAttributeValue, Boolean>>> myId2AttributeListMap = new HashMap<>();
+  private final Set<XmlAttributeValue> myPossiblyDuplicateIds = new HashSet<>();
+  private final List<XmlAttributeValue> myIdReferences = new ArrayList<>();
+  private final Set<String> myAdditionallyDeclaredIds = new HashSet<>();
+  private final Set<PsiElement> myDoNotValidateParentsList = new HashSet<>();
+  private final Set<String> myUsedPrefixes = new HashSet<>();
+  private final Set<String> myUsedNamespaces = new HashSet<>();
 
   @Nullable
   public static XmlRefCountHolder getRefCountHolder(@NotNull XmlFile file) {
@@ -100,7 +97,7 @@ public class XmlRefCountHolder {
   private void registerId(@NotNull final String id, @NotNull final XmlAttributeValue attributeValue, final boolean soft) {
     List<Pair<XmlAttributeValue, Boolean>> list = myId2AttributeListMap.get(id);
     if (list == null) {
-      list = new ArrayList<Pair<XmlAttributeValue, Boolean>>();
+      list = new ArrayList<>();
       myId2AttributeListMap.put(id, list);
     }
     else if (!soft) {
@@ -108,30 +105,28 @@ public class XmlRefCountHolder {
       final boolean html5 = HtmlUtil.isHtml5Context(attributeValue);
 
       // mark as duplicate
-      List<XmlAttributeValue> notSoft = ContainerUtil.mapNotNull(list, new NullableFunction<Pair<XmlAttributeValue, Boolean>, XmlAttributeValue>() {
-        @Override
-        public XmlAttributeValue fun(Pair<XmlAttributeValue, Boolean> pair) {
-          if (html5 && !"id".equalsIgnoreCase(((XmlAttribute)pair.first.getParent()).getName())) {
-            // according to HTML 5 (http://www.w3.org/TR/html5/dom.html#the-id-attribute) spec
-            // only id attribute is unique identifier
-            return null;
-          }
-          if (html && pair.first.getParent().getParent() == attributeValue.getParent().getParent()) {
-            // according to HTML 4 (http://www.w3.org/TR/html401/struct/global.html#adef-id,
-            // http://www.w3.org/TR/html401/struct/links.html#h-12.2.3) spec id and name occupy
-            // same namespace, but having same values on one tag is ok
-            return null;
-          }
-          return pair.second ? null : pair.first;
-        }
-      });
+      List<XmlAttributeValue> notSoft = ContainerUtil.mapNotNull(list,
+                                                                 (NullableFunction<Pair<XmlAttributeValue, Boolean>, XmlAttributeValue>)pair -> {
+                                                                   if (html5 && !"id".equalsIgnoreCase(((XmlAttribute)pair.first.getParent()).getName())) {
+                                                                     // according to HTML 5 (http://www.w3.org/TR/html5/dom.html#the-id-attribute) spec
+                                                                     // only id attribute is unique identifier
+                                                                     return null;
+                                                                   }
+                                                                   if (html && pair.first.getParent().getParent() == attributeValue.getParent().getParent()) {
+                                                                     // according to HTML 4 (http://www.w3.org/TR/html401/struct/global.html#adef-id,
+                                                                     // http://www.w3.org/TR/html401/struct/links.html#h-12.2.3) spec id and name occupy
+                                                                     // same namespace, but having same values on one tag is ok
+                                                                     return null;
+                                                                   }
+                                                                   return pair.second ? null : pair.first;
+                                                                 });
       if (!notSoft.isEmpty()) {
         myPossiblyDuplicateIds.addAll(notSoft);
         myPossiblyDuplicateIds.add(attributeValue);
       }
     }
 
-    list.add(new Pair<XmlAttributeValue, Boolean>(attributeValue, soft));
+    list.add(new Pair<>(attributeValue, soft));
   }
 
   private void registerAdditionalId(@NotNull final String id) {

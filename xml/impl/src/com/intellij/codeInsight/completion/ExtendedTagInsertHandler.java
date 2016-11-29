@@ -113,7 +113,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
   }
 
   protected void doDefault(final InsertionContext context, final LookupElement item) {
-    ExtendedTagInsertHandler.super.handleInsert(context, item);
+    super.handleInsert(context, item);
   }
 
   protected boolean isNamespaceBound(PsiElement psiElement) {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import java.io.File;
 import java.util.Collection;
 
 /**
@@ -25,5 +26,7 @@ public interface ExternalProjectDependency extends ExternalDependency {
 
   String getProjectPath();
 
-  Collection<String> getProjectDependencyArtifacts();
+  String getConfigurationName();
+
+  Collection<File> getProjectDependencyArtifacts();
 }

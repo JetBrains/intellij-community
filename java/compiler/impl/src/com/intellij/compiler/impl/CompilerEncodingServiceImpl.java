@@ -50,19 +50,16 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
 
   public CompilerEncodingServiceImpl(@NotNull Project project) {
     myProject = project;
-    myModuleFileEncodings = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Map<Module, Set<Charset>>>() {
-      @Override
-      public Result<Map<Module, Set<Charset>>> compute() {
-        Map<Module, Set<Charset>> result = computeModuleCharsetMap();
-        return Result.create(result, ProjectRootManager.getInstance(myProject),
-                             ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject)).getModificationTracker());
-      }
+    myModuleFileEncodings = CachedValuesManager.getManager(project).createCachedValue(() -> {
+      Map<Module, Set<Charset>> result = computeModuleCharsetMap();
+      return CachedValueProvider.Result.create(result, ProjectRootManager.getInstance(myProject),
+                                               ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject)).getModificationTracker());
     }, false);
   }
 
   @NotNull
   private Map<Module, Set<Charset>> computeModuleCharsetMap() {
-    final Map<Module, Set<Charset>> map = new THashMap<Module, Set<Charset>>();
+    final Map<Module, Set<Charset>> map = new THashMap<>();
     final Map<VirtualFile, Charset> mappings = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject)).getAllMappings();
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
@@ -77,7 +74,7 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
 
       Set<Charset> set = map.get(module);
       if (set == null) {
-        set = new LinkedHashSet<Charset>();
+        set = new LinkedHashSet<>();
         map.put(module, set);
 
         final VirtualFile sourceRoot = index.getSourceRootForFile(file);
@@ -106,7 +103,7 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
         if (encoding != null) {
           Set<Charset> charsets = map.get(module);
           if (charsets == null) {
-            charsets = new LinkedHashSet<Charset>();
+            charsets = new LinkedHashSet<>();
             map.put(module, charsets);
           }
           charsets.add(encoding);

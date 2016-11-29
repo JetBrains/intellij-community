@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +43,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
   @NonNls public static final String[] PROTOCOLS;
   static {
-    List<String> protocols = new ArrayList<String>();
+    List<String> protocols = new ArrayList<>();
     protocols.add("file");
     protocols.add("jar");
     if (Extensions.getRootArea().hasExtensionPoint(PathMacroExpandableProtocolBean.EP_NAME.getName())) {
@@ -192,25 +190,15 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   @NotNull
   public List<String> getPathIndex() {
     if (myPathsIndex == null || myPathsIndex.size() != myMacroMap.size()) {
-      List<Map.Entry<String, String>> entries = new ArrayList<Map.Entry<String, String>>(myMacroMap.entrySet());
+      List<Map.Entry<String, String>> entries = new ArrayList<>(myMacroMap.entrySet());
 
-      final TObjectIntHashMap<Map.Entry<String, String>> weights = new TObjectIntHashMap<Map.Entry<String, String>>();
+      final TObjectIntHashMap<Map.Entry<String, String>> weights = new TObjectIntHashMap<>();
       for (Map.Entry<String, String> entry : entries) {
         weights.put(entry, getIndex(entry) * 512 + stripPrefix(entry.getKey()));
       }
 
-      ContainerUtil.sort(entries, new Comparator<Map.Entry<String, String>>() {
-        @Override
-        public int compare(final Map.Entry<String, String> o1, final Map.Entry<String, String> o2) {
-          return weights.get(o2) - weights.get(o1);
-        }
-      });
-      myPathsIndex = ContainerUtil.map2List(entries, new Function<Map.Entry<String, String>, String>() {
-        @Override
-        public String fun(Map.Entry<String, String> entry) {
-          return entry.getKey();
-        }
-      });
+      ContainerUtil.sort(entries, (o1, o2) -> weights.get(o2) - weights.get(o1));
+      myPathsIndex = ContainerUtil.map2List(entries, entry -> entry.getKey());
     }
     return myPathsIndex;
   }

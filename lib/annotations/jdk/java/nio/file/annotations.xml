@@ -2,10 +2,19 @@
   <item name='java.nio.file.FileSystem java.nio.file.Path getPath(java.lang.String, java.lang.String...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files byte[] readAllBytes(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.io.InputStream newInputStream(java.nio.file.Path, java.nio.file.OpenOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path getParent()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolve(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>

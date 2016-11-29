@@ -62,7 +62,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
         elements = new PsiElement[]{element};
       }
     }
-    final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    final Collection<AbstractTreeNode> result = new ArrayList<>();
     if (elements != null) {
       for (PsiElement element : elements) {
         if (element instanceof PsiPackage) {
@@ -116,7 +116,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     if (element instanceof PackageElement) {
-      final Set<Boolean> find = new HashSet<Boolean>();
+      final Set<Boolean> find = new HashSet<>();
       final ContentIterator contentIterator = new ContentIterator() {
         @Override
         public boolean processFile(VirtualFile fileOrDir) {

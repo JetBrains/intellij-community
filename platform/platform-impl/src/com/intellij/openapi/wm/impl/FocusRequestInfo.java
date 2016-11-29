@@ -15,42 +15,24 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.util.ExceptionUtil;
-
 import java.awt.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.lang.ref.WeakReference;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class FocusRequestInfo {
-  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss.SSS");
-  private final String when;
-  private final Throwable trace;
-  private final boolean forced;
-  private Component component;
+  public final long timestamp;
+  public final Throwable trace;
+  public final boolean forced;
+  public final String componentString;
+  public final WeakReference<Component> component;
 
   public FocusRequestInfo(Component c, Throwable trace, boolean forced) {
     this.forced = forced;
     this.trace = trace;
-    when = DATE_FORMAT.format(new Date());
-    component = c;
-  }
-
-  public String getStackTrace() {
-    return ExceptionUtil.getThrowableText(trace);
-  }
-
-  public boolean isForced() {
-    return forced;
-  }
-
-  public String getDate() {
-    return when;
-  }
-
-  public Component getComponent() {
-    return component;
+    timestamp = System.currentTimeMillis();
+    componentString = String.valueOf(c);
+    component = new WeakReference<>(c);
   }
 }

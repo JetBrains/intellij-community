@@ -91,7 +91,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
     }
     final PsiReferenceList extendsList = targetClass.getExtendsList();
     if (extendsList != null && extendsList.getReferencedTypes().length > 0) {
-      final List<PsiMethod> methods = new ArrayList<PsiMethod>(Arrays.asList(targetClass.getAllMethods()));
+      final List<PsiMethod> methods = new ArrayList<>(Arrays.asList(targetClass.getAllMethods()));
       final PsiClass objectClass =
         JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));
       if (objectClass == null) return false;
@@ -126,118 +126,88 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       LOG.assertTrue(element instanceof PsiClass);
       targetClass = (PsiClass)element;
     }
-    final Map<PsiFile, Map<PsiField, Set<PsiReference>>> refs = new HashMap<PsiFile, Map<PsiField, Set<PsiReference>>>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            for (PsiField field : targetClass.getAllFields()) {
-              final PsiClass containingClass = field.getContainingClass();
-              for (PsiReference reference : ReferencesSearch.search(field)) {
-                if (reference == null) {
-                  continue;
-                }
-                final PsiElement refElement = reference.getElement();
-                if (encodeQualifier(containingClass, reference, targetClass)) continue;
-                final PsiFile psiFile = refElement.getContainingFile();
-                if (psiFile instanceof PsiJavaFile) {
-                  Map<PsiField, Set<PsiReference>> references = refs.get(psiFile);
-                  if (references == null) {
-                    references = new HashMap<PsiField, Set<PsiReference>>();
-                    refs.put(psiFile, references);
-                  }
-                  Set<PsiReference> fieldsRefs = references.get(field);
-                  if (fieldsRefs == null) {
-                    fieldsRefs = new HashSet<PsiReference>();
-                    references.put(field, fieldsRefs);
-                  }
-                  fieldsRefs.add(reference);
-                }
-              }
-            }
+    final Map<PsiFile, Map<PsiField, Set<PsiReference>>> refs = new HashMap<>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      for (PsiField field : targetClass.getAllFields()) {
+        final PsiClass containingClass = field.getContainingClass();
+        for (PsiReference reference : ReferencesSearch.search(field)) {
+          if (reference == null) {
+            continue;
           }
-        });
+          final PsiElement refElement = reference.getElement();
+          if (encodeQualifier(containingClass, reference, targetClass)) continue;
+          final PsiFile psiFile = refElement.getContainingFile();
+          if (psiFile instanceof PsiJavaFile) {
+            Map<PsiField, Set<PsiReference>> references = refs.get(psiFile);
+            if (references == null) {
+              references = new HashMap<>();
+              refs.put(psiFile, references);
+            }
+            Set<PsiReference> fieldsRefs = references.get(field);
+            if (fieldsRefs == null) {
+              fieldsRefs = new HashSet<>();
+              references.put(field, fieldsRefs);
+            }
+            fieldsRefs.add(reference);
+          }
+        }
       }
-    }, FIND_CONSTANT_FIELD_USAGES, true, project)) {
+    }), FIND_CONSTANT_FIELD_USAGES, true, project)) {
       return;
     }
 
-    final Set<PsiJavaCodeReferenceElement> refs2Unimplement = new HashSet<PsiJavaCodeReferenceElement>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            for (PsiClass psiClass : DirectClassInheritorsSearch.search(targetClass)) {
-              PsiFile containingFile = psiClass.getContainingFile();
-              if (!refs.containsKey(containingFile)) {
-                refs.put(containingFile, new HashMap<PsiField, Set<PsiReference>>());
-              }
-              if (collectExtendsImplements(targetClass, psiClass.getExtendsList(), refs2Unimplement)) continue;
-              collectExtendsImplements(targetClass, psiClass.getImplementsList(), refs2Unimplement);
-            }
-          }
-        });
+    final Set<PsiJavaCodeReferenceElement> refs2Unimplement = new HashSet<>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      for (PsiClass psiClass : DirectClassInheritorsSearch.search(targetClass)) {
+        PsiFile containingFile = psiClass.getContainingFile();
+        if (!refs.containsKey(containingFile)) {
+          refs.put(containingFile, new HashMap<>());
+        }
+        if (collectExtendsImplements(targetClass, psiClass.getExtendsList(), refs2Unimplement)) continue;
+        collectExtendsImplements(targetClass, psiClass.getImplementsList(), refs2Unimplement);
       }
-    }, "Find References in Implement/Extends Lists...", true, project)) {
+    }), "Find References in Implement/Extends Lists...", true, project)) {
       return;
     }
 
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(refs.keySet())) return;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        for (PsiFile psiFile : refs.keySet()) {
-          final Map<PsiField, Set<PsiReference>> map = refs.get(psiFile);
-          for (PsiField psiField : map.keySet()) {
-            final PsiClass containingClass = psiField.getContainingClass();
-            final String fieldName = psiField.getName();
-            for (PsiReference reference : map.get(psiField)) {
-              bindReference(psiFile, psiField, containingClass, fieldName, reference, project);
-            }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (PsiFile psiFile : refs.keySet()) {
+        final Map<PsiField, Set<PsiReference>> map = refs.get(psiFile);
+        for (PsiField psiField : map.keySet()) {
+          final PsiClass containingClass = psiField.getContainingClass();
+          final String fieldName = psiField.getName();
+          for (PsiReference reference : map.get(psiField)) {
+            bindReference(psiFile, psiField, containingClass, fieldName, reference, project);
           }
         }
+      }
 
-        for (PsiJavaCodeReferenceElement referenceElement : refs2Unimplement) {
-          referenceElement.delete();
-        }
+      for (PsiJavaCodeReferenceElement referenceElement : refs2Unimplement) {
+        referenceElement.delete();
       }
     });
 
-    final Map<PsiJavaFile, PsiImportList> redundant = new HashMap<PsiJavaFile, PsiImportList>();
+    final Map<PsiJavaFile, PsiImportList> redundant = new HashMap<>();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            for (PsiFile psiFile : refs.keySet()) {
-              if (psiFile instanceof PsiJavaFile) {
-                final PsiImportList prepared = codeStyleManager.prepareOptimizeImportsResult((PsiJavaFile)psiFile);
-                if (prepared != null) {
-                  redundant.put((PsiJavaFile)psiFile, prepared);
-                }
-              }
-            }
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      for (PsiFile psiFile : refs.keySet()) {
+        if (psiFile instanceof PsiJavaFile) {
+          final PsiImportList prepared = codeStyleManager.prepareOptimizeImportsResult((PsiJavaFile)psiFile);
+          if (prepared != null) {
+            redundant.put((PsiJavaFile)psiFile, prepared);
           }
-        });
+        }
       }
-    }, "Optimize Imports...", true, project)) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        for (PsiJavaFile file : redundant.keySet()) {
-          final PsiImportList importList = redundant.get(file);
-          if (importList != null) {
-            final PsiImportList list = file.getImportList();
-            if (list != null) {
-              list.replace(importList);
-            }
+    }), "Optimize Imports...", true, project)) return;
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (PsiJavaFile file1 : redundant.keySet()) {
+        final PsiImportList importList = redundant.get(file1);
+        if (importList != null) {
+          final PsiImportList list = file1.getImportList();
+          if (list != null) {
+            list.replace(importList);
           }
         }
       }

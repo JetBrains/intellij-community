@@ -1,0 +1,1 @@
+"format: %(fooo)s" % {"boo":1, "fooo"}

@@ -90,6 +90,7 @@ public class VisibilityUtil  {
   }
 
   @PsiModifier.ModifierConstant
+  @NotNull
   public static String getVisibilityModifier(PsiModifierList list) {
     if (list == null) return PsiModifier.PACKAGE_LOCAL;
     for (@PsiModifier.ModifierConstant String modifier : visibilityModifiers) {
@@ -102,7 +103,7 @@ public class VisibilityUtil  {
 
   @NotNull
   @NonNls
-  public static String getVisibilityString(@PsiModifier.ModifierConstant String visibilityModifier) {
+  public static String getVisibilityString(@PsiModifier.ModifierConstant @NotNull String visibilityModifier) {
     if(PsiModifier.PACKAGE_LOCAL.equals(visibilityModifier)) {
       return "";
     }

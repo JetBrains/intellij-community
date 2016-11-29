@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.util.xml.impl.DomApplicationComponent;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -45,7 +46,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance(DomStubBuilder.class);
 
   @Override
-  public boolean acceptsFile(VirtualFile file) {
+  public boolean acceptsFile(@NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     return fileType == XmlFileType.INSTANCE && !FileBasedIndexImpl.isProjectOrWorkspaceFile(file, fileType);
   }

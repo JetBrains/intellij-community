@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ import javax.swing.*;
  * @author max
  */
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
+
   protected static final Icon ourCurrentAction = AllIcons.Diff.CurrentLine;
-  protected static final Icon ourNotCurrentAction = new EmptyIcon(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
-  @NotNull
+  protected static final Icon ourNotCurrentAction = EmptyIcon.create(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
+
   protected String myActionPlace = ActionPlaces.UNKNOWN;
 
   private final boolean myShowPopupWithNoActions;
@@ -58,11 +59,12 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
 
   private void showPopup(AnActionEvent e, DefaultActionGroup group) {
     if (!myShowPopupWithNoActions && group.getChildrenCount() == 0) return;
-    final ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(getPopupTitle(e),
-                              group,
-                              e.getDataContext(), getAidMethod(),
-                              true, myActionPlace);
+    JBPopupFactory.ActionSelectionAid aid = getAidMethod();
+
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+      getPopupTitle(e), group, e.getDataContext(), aid, true, null, -1,
+      (a) -> a.getTemplatePresentation().getIcon() != ourCurrentAction,
+      myActionPlace);
 
     showPopup(e, popup);
   }
@@ -91,5 +93,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null && isEnabled());
   }
 
-  protected abstract boolean isEnabled();
+  protected boolean isEnabled() {
+    return true;
+  }
 }

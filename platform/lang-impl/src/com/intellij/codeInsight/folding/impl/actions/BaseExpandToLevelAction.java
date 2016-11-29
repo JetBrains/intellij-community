@@ -58,33 +58,30 @@ public abstract class BaseExpandToLevelAction extends EditorAction {
         final FoldRegion root = rootRegion;
         final int[] rootLevel = new int[] {root == null ? 1 : -1};
 
-        editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-          @Override
-          public void run() {
-            Iterator<FoldRegion> regionTreeIterator = FoldingUtil.createFoldTreeIterator(editor);
-            Deque<FoldRegion> currentStack = new LinkedList<FoldRegion>();
-            while (regionTreeIterator.hasNext()) {
-              FoldRegion region = regionTreeIterator.next();
-              while (!currentStack.isEmpty() && !isChild(currentStack.peek(), region)) {
-                if (currentStack.remove() == root) {
-                  rootLevel[0] = -1;
-                }
+        editor.getFoldingModel().runBatchFoldingOperation(() -> {
+          Iterator<FoldRegion> regionTreeIterator = FoldingUtil.createFoldTreeIterator(editor);
+          Deque<FoldRegion> currentStack = new LinkedList<>();
+          while (regionTreeIterator.hasNext()) {
+            FoldRegion region = regionTreeIterator.next();
+            while (!currentStack.isEmpty() && !isChild(currentStack.peek(), region)) {
+              if (currentStack.remove() == root) {
+                rootLevel[0] = -1;
               }
-              currentStack.push(region);
-              int currentLevel = currentStack.size();
+            }
+            currentStack.push(region);
+            int currentLevel = currentStack.size();
 
-              if (region == root) {
-                rootLevel[0] = currentLevel;
+            if (region == root) {
+              rootLevel[0] = currentLevel;
+            }
+            if (rootLevel[0] >= 0) {
+              int relativeLevel = currentLevel - rootLevel[0];
+
+              if (relativeLevel < level) {
+                region.setExpanded(true);
               }
-              if (rootLevel[0] >= 0) {
-                int relativeLevel = currentLevel - rootLevel[0];
-
-                if (relativeLevel < level) {
-                  region.setExpanded(true);
-                }
-                else if (relativeLevel == level) {
-                  region.setExpanded(false);
-                }
+              else if (relativeLevel == level) {
+                region.setExpanded(false);
               }
             }
           }

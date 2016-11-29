@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,8 +30,10 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Set;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
 
@@ -65,6 +68,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       .add("java.util.UUID",".*")
       .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparantBounds|hasAnchoringBounds|hitEnd|requireEnd")
       .add("java.util.regex.Pattern",".*")
+      .add("java.util.stream.BaseStream",".*")
       .finishDefault();
   }
 
@@ -135,6 +139,10 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       if (PsiUtilCore.hasErrorElementChild(statement)) {
         return;
       }
+      if (PropertyUtil.isSimpleGetter(method)) {
+        registerMethodCallError(call, aClass);
+        return;
+      }
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
         registerMethodCallError(call, aClass);
         return;
@@ -148,15 +156,48 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         registerMethodCallError(call, aClass);
         return;
       }
-      final PsiAnnotation anno2 =
-        AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton("javax.annotation.CheckReturnValue"));
-      if (anno2 != null) {
-        registerMethodCallError(call, aClass);
+      final PsiAnnotation annotation = findAnnotationInTree(method, null, Collections.singleton("javax.annotation.CheckReturnValue"));
+      if (annotation != null) {
+        final PsiElement owner = (PsiElement)annotation.getOwner();
+        if (findAnnotationInTree(method, owner, Collections.singleton("com.google.errorprone.annotations.CanIgnoreReturnValue")) != null) {
+          return;
+        }
       }
-      if (!myMethodMatcher.matches(method)) {
+      if (!myMethodMatcher.matches(method) && annotation == null) {
         return;
       }
+
       registerMethodCallError(call, aClass);
+    }
+
+    @Nullable
+    private PsiAnnotation findAnnotationInTree(PsiElement element, @Nullable PsiElement stop, @NotNull Set<String> fqAnnotationNames) {
+      while (element != null) {
+        if (element == stop) {
+          return null;
+        }
+        if (element instanceof PsiModifierListOwner) {
+          final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
+          final PsiAnnotation annotation =
+            AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
+          if (annotation != null) {
+            return annotation;
+          }
+        }
+
+        if (element instanceof PsiClassOwner) {
+          final PsiClassOwner classOwner = (PsiClassOwner)element;
+          final String packageName = classOwner.getPackageName();
+          final PsiPackage aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
+          if (aPackage == null) {
+            return null;
+          }
+          return AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+        }
+
+        element = element.getContext();
+      }
+      return null;
     }
   }
 }

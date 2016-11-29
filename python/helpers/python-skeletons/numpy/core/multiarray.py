@@ -129,6 +129,15 @@ class ndarray(object):
         """
         pass
 
+    def __neg__(self, *args, **kwargs): # real signature unknown
+        """
+            x.__neg__() <==> -x
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
     def __rmul__(self, y): # real signature unknown; restored from __doc__
         """
             x.__rmul__(y) <==> y*x
@@ -332,6 +341,16 @@ class ndarray(object):
     def __or__(self, y): # real signature unknown; restored from __doc__
         """
             x.__or__(y) <==> x|y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __pos__(self, *args, **kwargs): # real signature unknown
+        """
+            x.__pos__() <==> +x
 
             Returns
             -------
@@ -722,6 +741,16 @@ class ndarray(object):
     def __riand__(self, y): # real signature unknown; restored from __doc__
         """
             x.__riand__(y) <==> y&=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __invert__(self, *args, **kwargs): # real signature unknown
+        """
+            x.__invert__() <==> ~x
 
             Returns
             -------

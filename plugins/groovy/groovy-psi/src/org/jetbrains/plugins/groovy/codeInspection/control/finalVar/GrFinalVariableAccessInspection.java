@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,7 +56,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitMethod(GrMethod method) {
+      public void visitMethod(@NotNull GrMethod method) {
         super.visitMethod(method);
 
         final GrOpenBlock block = method.getBlock();
@@ -71,7 +70,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       }
 
       @Override
-      public void visitFile(GroovyFileBase file) {
+      public void visitFile(@NotNull GroovyFileBase file) {
         super.visitFile(file);
 
         if (file instanceof GroovyFile && file.isScript()) {
@@ -80,7 +79,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       }
 
       @Override
-      public void visitField(GrField field) {
+      public void visitField(@NotNull GrField field) {
         super.visitField(field);
 
         final GrExpression initializer = field.getInitializerGroovy();
@@ -98,7 +97,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       }
 
       @Override
-      public void visitReferenceExpression(GrReferenceExpression ref) {
+      public void visitReferenceExpression(@NotNull GrReferenceExpression ref) {
         super.visitReferenceExpression(ref);
 
         final PsiElement resolved = ref.resolve();
@@ -129,7 +128,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       }
 
       @Override
-      public void visitClassInitializer(GrClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull GrClassInitializer initializer) {
         super.visitClassInitializer(initializer);
 
         processLocalVars(initializer.getBlock());
@@ -231,12 +230,9 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   @NotNull
   private static List<GrField> getFinalFields(@NotNull GrTypeDefinition clazz) {
     final GrField[] fields = clazz.getCodeFields();
-    return ContainerUtil.filter(fields, new Condition<GrField>() {
-      @Override
-      public boolean value(GrField field) {
-        final GrModifierList list = field.getModifierList();
-        return list != null && list.hasModifierProperty(PsiModifier.FINAL);
-      }
+    return ContainerUtil.filter(fields, field -> {
+      final GrModifierList list = field.getModifierList();
+      return list != null && list.hasModifierProperty(PsiModifier.FINAL);
     });
   }
 
@@ -414,7 +410,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     final MultiMap<PsiElement, GrVariable> scopes = MultiMap.create();
     scope.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitVariable(GrVariable variable) {
+      public void visitVariable(@NotNull GrVariable variable) {
         super.visitVariable(variable);
         if (!(variable instanceof PsiField) && variable.hasModifierProperty(PsiModifier.FINAL)) {
           final PsiElement varScope = findScope(variable);

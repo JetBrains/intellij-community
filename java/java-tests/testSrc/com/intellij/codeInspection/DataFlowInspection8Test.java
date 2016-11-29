@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,13 +45,35 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testMethodReferenceOnNullable() { doTest(); }
   public void testNullableVoidLambda() { doTest(); }
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
+  public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
   public void testOptionalOfNullable() { doTest(); }
   public void testPrimitiveInVoidLambda() { doTest(); }
+  public void testNotNullLambdaParameter() { doTest(); }
+  public void testNotNullOptionalLambdaParameter() { doTest(); }
+
+  public void testNullArgumentIsFailingMethodCall() {
+    doTest();
+  }
+
+  public void testNullArgumentIsNotFailingMethodCall() {
+    doTest();
+  }
+
+  public void testNullArgumentButParameterIsReassigned() {
+    doTest();
+  }
 
   public void testNullableArrayComponent() {
     setupCustomAnnotations();
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.IGNORE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testDontSuggestToMakeLambdaNullable() {
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
@@ -73,9 +95,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
     nnnManager.setNotNulls("foo.NotNull");
     nnnManager.setNullables("foo.Nullable");
-    Disposer.register(myTestRootDisposable, () -> {
+    Disposer.register(getTestRootDisposable(), () -> {
       nnnManager.setNotNulls();
       nnnManager.setNullables();
     });
   }
+
+  public void testCapturedWildcardNotNull() { doTest(); }
 }

@@ -21,10 +21,7 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
@@ -201,7 +198,7 @@ public class IconUtil {
     if (baseIcon == null) {
       return EmptyIcon.ICON_16;
     }
-    return new EmptyIcon(baseIcon.getIconWidth(), baseIcon.getIconHeight());
+    return EmptyIcon.create(baseIcon);
   }
 
   private static class FileIconProviderHolder {
@@ -437,6 +434,22 @@ public class IconUtil {
         return (int)(source.getIconHeight() * scale) / hiDPIscale;
       }
     };
+  }
+
+  /**
+   * Returns a scaled icon instance.
+   *
+   * @param icon the icon to scale
+   * @param scale the scale factor
+   * @param smartScale whether to scale via {@link ScalableIcon#scale(float)} when applicable
+   * @return the scaled icon
+   */
+  @NotNull
+  public static Icon scale(@NotNull Icon icon, float scale, boolean smartScale) {
+    if (smartScale && icon instanceof ScalableIcon) {
+      return ((ScalableIcon)icon).scale(scale);
+    }
+    return scale(icon, scale);
   }
 
   @NotNull

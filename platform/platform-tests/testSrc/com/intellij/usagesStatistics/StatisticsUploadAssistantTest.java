@@ -28,7 +28,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
     }
 
     public void testConvertUsagesWithPriority() {
-        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<>();
 
         createPatchDescriptor(patchedUsages, "low", GroupDescriptor.LOWER_PRIORITY, "l1", 1);
         createPatchDescriptor(patchedUsages, "low", GroupDescriptor.LOWER_PRIORITY, "l2", 1);
@@ -44,7 +44,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
     }
 
     public void testConvertUsagesWithEqualPriority() {
-        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<>();
 
   createPatchDescriptor(patchedUsages, "g4", GroupDescriptor.HIGHER_PRIORITY, "1", 1);
         createPatchDescriptor(patchedUsages, "g2", GroupDescriptor.HIGHER_PRIORITY, "2", 1);
@@ -56,7 +56,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
     }
 
     public void testConvertString() {
-        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<>();
 
         createPatchDescriptor(patchedUsages, "g4", GroupDescriptor.HIGHER_PRIORITY, "1", 1);
         createPatchDescriptor(patchedUsages, "g2", GroupDescriptor.HIGHER_PRIORITY, "2", 1);
@@ -80,7 +80,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
     }
 
     public void testConvertWithTooLongGroupDescriptorId() {
-      final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<GroupDescriptor, Set<PatchedUsage>>();
+      final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = new HashMap<>();
       createPatchDescriptor(patchedUsages, "g1", GroupDescriptor.HIGHER_PRIORITY, "k1", 1);
       createPatchDescriptor(patchedUsages, "g1", GroupDescriptor.HIGHER_PRIORITY, "k2", 2);
 
@@ -123,7 +123,7 @@ public class StatisticsUploadAssistantTest extends TestCase {
         final GroupDescriptor groupDescriptor = GroupDescriptor.create(groupId, priority);
 
         if (!patchedUsages.containsKey(groupDescriptor)){
-            patchedUsages.put(groupDescriptor, new LinkedHashSet<PatchedUsage>());
+            patchedUsages.put(groupDescriptor, new LinkedHashSet<>());
         }
         patchedUsages.get(groupDescriptor).add(new PatchedUsage(key, i));
     }
@@ -134,12 +134,12 @@ public class StatisticsUploadAssistantTest extends TestCase {
     }
 
     protected static Map<GroupDescriptor, Set<UsageDescriptor>> createDescriptors(String... strs) {
-        Map<GroupDescriptor, Set<UsageDescriptor>> set = new LinkedHashMap<GroupDescriptor, Set<UsageDescriptor>>();
+        Map<GroupDescriptor, Set<UsageDescriptor>> set = new LinkedHashMap<>();
         for (String str : strs) {
             final List<String> list = StringUtil.split(str, ":");
             final GroupDescriptor g = GroupDescriptor.create(list.get(0));
             if (!set.containsKey(g)) {
-                set.put(g, new LinkedHashSet<UsageDescriptor>());
+                set.put(g, new LinkedHashSet<>());
             }
             set.get(g).add(createDescriptor(list.get(1), Integer.parseInt(list.get(2))));
         }

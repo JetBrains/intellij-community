@@ -67,7 +67,7 @@ public class Change {
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
     myHash = -1;
-    myOtherLayers = new HashMap<String, Change>(0);
+    myOtherLayers = new HashMap<>(0);
   }
 
   private static FileStatus convertStatus(@Nullable ContentRevision beforeRevision, @Nullable ContentRevision afterRevision) {
@@ -169,9 +169,8 @@ public class Change {
     return revisionHashCode(getBeforeRevision()) * 27 + revisionHashCode(getAfterRevision());
   }
 
-  private static int revisionHashCode(ContentRevision rev) {
-    if (rev == null) return 0;
-    return rev.getFile().getIOFile().getPath().hashCode();
+  private static int revisionHashCode(@Nullable ContentRevision rev) {
+    return rev != null ? rev.getFile().hashCode() : 0;
   }
 
   public boolean affectsFile(File ioFile) {

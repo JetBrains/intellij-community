@@ -1,0 +1,13 @@
+<html>
+<body>
+This inspection reports lambda expressions which can be replaced with anonymous class.
+<p> The quick fix expands lambda expression to the anonymous class.
+<p>For example the lambda expression <code>s -> System.out.println(s)</code> can be expanded to the following class:
+<pre><code>new Consumer&lt;String&gt;() {
+  @Override
+  public void accept(String s) {
+    System.out.println(s);
+  }
+}</code></pre>
+</body>
+</html>

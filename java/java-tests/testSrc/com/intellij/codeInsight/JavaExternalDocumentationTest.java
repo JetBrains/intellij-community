@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,12 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,12 +87,15 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     Matcher imgMatcher = IMG_URL_PATTERN.matcher(text);
     assertTrue(imgMatcher.find());
     String relativeUrl = imgMatcher.group(1);
+
     URL imageUrl = new URL(new URL(baseUrl), relativeUrl);
-    try (InputStream stream = imageUrl.openStream()) {
+    URLConnection connection = imageUrl.openConnection();
+    BuiltInServerManager.getInstance().configureRequestToWebServer(connection);
+    try (InputStream stream = connection.getInputStream()) {
       assertEquals(228, FileUtil.loadBytes(stream).length);
     }
   }
-  
+
   // We're guessing style of references in javadoc by bytecode version of library class file
   // but displaying quick doc should work even if javadoc was generated using a JDK not corresponding to bytecode version
   public void testReferenceStyleDoesntMatchBytecodeVersion() throws Exception {
@@ -100,11 +105,11 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   public void testLinkWithReference() throws Exception {
     doTest("class Foo { com.jetbrains.<caret>ClassWithRefLink field;}");
   }
-  
+
   public void testLinkToPackageSummaryWithReference() throws Exception {
     doTest("class Foo implements com.jetbrains.<caret>SimpleInterface {}");
   }
-  
+
   public void testLinkBetweenMethods() throws Exception {
     doTest("class Foo {{ new com.jetbrains.LinkBetweenMethods().<caret>m1(); }}");
   }
@@ -134,7 +139,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   private static File getDataFile(String name) {
     return new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/documentation/" + name);
   }
-  
+
   @NotNull
   public static VirtualFile getJarFile(String name) {
     VirtualFile file = getVirtualFile(getDataFile(name));
@@ -147,7 +152,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   private String getDocumentationText(String sourceEditorText) throws Exception {
     int caretPosition = sourceEditorText.indexOf(EditorTestUtil.CARET_TAG);
     if (caretPosition >= 0) {
-      sourceEditorText = sourceEditorText.substring(0, caretPosition) + 
+      sourceEditorText = sourceEditorText.substring(0, caretPosition) +
                          sourceEditorText.substring(caretPosition + EditorTestUtil.CARET_TAG.length());
     }
     PsiFile psiFile = PsiFileFactory.getInstance(myProject).createFileFromText(JavaLanguage.INSTANCE, sourceEditorText);
@@ -184,7 +189,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
 
   private static class MockDocumentationComponent extends DocumentationComponent {
     private String myText;
-    
+
     public MockDocumentationComponent(DocumentationManager manager) {
       super(manager);
     }

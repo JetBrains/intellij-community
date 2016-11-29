@@ -64,6 +64,14 @@ public class CommonBundle extends BundleBase {
     return BundleBase.message(bundle, key, params);
   }
 
+  @Nullable
+  public static String messageOfNull(@NotNull ResourceBundle bundle, @NotNull String key,
+                                     @NotNull Object... params) {
+    final String value = messageOrDefault(bundle, key, key, params);
+    if (key.equals(value)) return null;
+    return value;
+  }
+
   @NotNull
   public static String getCancelButtonText() {
     return message("button.cancel");

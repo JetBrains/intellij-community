@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantLock;
 // TODO: Such locking functionality is not required anymore. Likely to be removed (together with SvnProxies).
 public abstract class SvnAbstractWriteOperationLocks {
   private final long myTimeout;
-  private final static Map<String, Lock> myLockMap = new HashMap<String, Lock>();
+  private final static Map<String, Lock> myLockMap = new HashMap<>();
   private final static Object myLock = new Object();
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAbstractWriteOperationLocks");
   private ISqlJetBusyHandler ourBusyHandler;

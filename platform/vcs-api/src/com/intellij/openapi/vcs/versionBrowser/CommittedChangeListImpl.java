@@ -44,7 +44,7 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     myCommitDate = commitDate;
     myName = name;
     myComment = comment;
-    myChanges = new ArrayList<Change>(changes);
+    myChanges = new ArrayList<>(changes);
     myNumber = number;
   }
 

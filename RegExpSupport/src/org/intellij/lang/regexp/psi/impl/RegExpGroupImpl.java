@@ -16,13 +16,16 @@
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
-
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpElementTypes;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpPattern;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   public RegExpGroupImpl(ASTNode astNode) {
@@ -72,5 +75,15 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
     }
     final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
     return nameNode != null ? nameNode.getText() : null;
+  }
+
+  @Override
+  public String getName() {
+    return getGroupName();
+  }
+
+  @Override
+  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
   }
 }

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-
-import com.intellij.openapi.util.text.StringUtil
-import org.apache.tools.ant.BuildException
-import org.jetbrains.jps.gant.LayoutInfo
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.IdeaCommunityBuilder
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
@@ -27,268 +25,35 @@ requireProperty("out", "$home/out")
 
 // "out" has to be canonical, otherwise the ant build fails
 // with mysterious errors
-out = new File(out).getCanonicalPath()
-setProperty("out", out)
-
-class Paths {
-  final sandbox
-  final distWin
-  final distAll
-  final distUnix
-  final distMac
-  final artifacts
-  final artifacts_core
-  final artifacts_jps
-  final ideaSystem
-  final ideaConfig
-
-  def Paths(String out) {
-    sandbox = out
-    distWin = "$sandbox/dist.win.ce"
-    distAll = "$sandbox/dist.all.ce"
-    distUnix = "$sandbox/dist.unix.ce"
-    distMac = "$sandbox/dist.mac.ce"
-    artifacts = "$sandbox/artifacts"
-    artifacts_core = "$artifacts/core"
-    artifacts_jps = "$artifacts/jps"
-    ideaSystem = "$sandbox/system"
-    ideaConfig = "$sandbox/config"
-  }
-}
-
-def paths = new Paths(out)
-setProperty("paths", paths)
-loadProductProperties(home, snapshot)
-
-def loadProductProperties(String home, String buildNumber) {
-  requireProperty("product", "idea")
-  requireProperty("productPropertiesPath", "")
-  if (productPropertiesPath.isEmpty()) {
-    productPropertiesPath = "$home/build/scripts/" + p("product") + "_properties.gant";
-  }
-  if (!new File(productPropertiesPath).exists()) {
-    throw new BuildException("No product specific properties file found at: " + productPropertiesPath)
-  }
-  setProperty("productProperties", includeFile(productPropertiesPath).getProperties(home, buildNumber))
-  productProperties.ideJvmArgs = productProperties.ideJvmArgs != null ?
-                                 productProperties.ideJvmArgs + " -Didea.jre.check=true" :
-                                 "-Didea.jre.check=true"
-}
+String out = new File(out).getCanonicalPath()
 
 target(compile: "Compile project") {
-  projectBuilder.stage("Cleaning up sandbox folder")
-  forceDelete(paths.sandbox)
-
-  loadProject()
-
-  [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts, paths.artifacts_core, paths.artifacts_jps].each {
-    ant.mkdir(dir: it)
-  }
-
-  projectBuilder.targetFolder = "$out/classes"
-  clearBuildCaches()
-  projectBuilder.cleanOutput()
-  bundledJDKs()
-  projectBuilder.buildProduction()
-  projectBuilder.makeModuleTests(findModule("jps-builders"))
-}
-
-private String appInfoFile() {
-  return productProperties.appInfoFile()
+  def options = new BuildOptions()
+  options.outputRootPath = out
+  new IdeaCommunityBuilder(home, binding, options).compileModules()
 }
 
 target('default': 'The default target') {
-  depends([compile])
-
-  // load ApplicationInfo.xml properties
-  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
-
-  zipSources(home, paths.artifacts)
-
-  indexSearchableOptions()
-
-  layoutAll([buildNumber: productProperties.fullBuildNumber(),
-             system_selector: productProperties.systemSelector(),
-             platform_prefix: productProperties.platformPrefix,
-             ide_jvm_args: productProperties.ideJvmArgs,
-             tools_jar: true],
-            home, null, paths, true)
-  String archiveName = productProperties.archiveName()
-  String macZip = "$paths.artifacts/${archiveName}.mac.zip"
-  notifyArtifactBuilt(macZip)
-
-  if (productProperties.buildUpdater) {
-    // Generate updater.jar from the updater module (patch updater)
-    layoutUpdater(out)
-  }
+  def options = new BuildOptions()
+  options.outputRootPath = out
+  options.buildNumber = null //we cannot provide consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
+  new IdeaCommunityBuilder(home, binding, options).buildDistributions()
 }
 
+//todo[nik] do we really need this target? update.xml calls layout.gant directly
 target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
-  loadProject()
-
-  // load ApplicationInfo.xml properties
-  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
-
-  indexSearchableOptions()
-
-  layoutAll([buildNumber: productProperties.fullBuildNumber(),
-             system_selector: productProperties.systemSelector(),
-             platform_prefix: productProperties.platformPrefix,
-             ide_jvm_args: productProperties.ideJvmArgs,
-             tools_jar: true],
-             home, null, paths)
-  String macZipPrefix = productProperties.prefix + productProperties.fullBuildNumber()
-  String macZip = "$paths.artifacts/${macZipPrefix}.mac.zip"
-  notifyArtifactBuilt(macZip)
+  def options = new BuildOptions()
+  options.outputRootPath = out
+  options.useCompiledClassesFromProjectOutput = true
+  new IdeaCommunityBuilder(home, binding, options).buildDistJars()
 }
 
-private void indexSearchableOptions() {
-  buildSearchableOptions("${projectBuilder.moduleOutput(findModule("resources-en"))}/search", [], {
-    ant.pathelement(location: "$jdkHome/lib/tools.jar")
-    ant.pathelement(location: "$home/lib/junit.jar")
-    projectBuilder.moduleRuntimeClasspath(findModule("community-main"), false).each {
-      ant.pathelement(location: it)
-    }
-  })
-}
-
-def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps = false) {
-  Paths paths = _paths != null ? _paths : new Paths(out)
-
-  wireBuildDate(args.buildNumber, appInfoFile())
-  ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
-
-  def layouts = includeFile("$home/build/scripts/layouts.gant")
-  LayoutInfo info = layouts.layoutFull(home, paths.distAll, null)
-  layouts.layout_core(home, paths.artifacts_core)
-  ant.zip(destfile: "${paths.artifacts}/intellij-core-${StringUtil.trimStart(args.buildNumber, "IC-")}.zip") {
-    fileset(dir: paths.artifacts_core)
-  }
-
-  notifyArtifactBuilt(paths.artifacts_core)
-  if (buildJps) {
-    layouts.layoutJps(home, paths.artifacts_jps, args.buildNumber, {})
-    notifyArtifactBuilt(paths.artifacts_jps)
-  }
-
-  layout(paths.distAll) {
-    dir("bin") {
-      fileset(dir: "${home}/bin") {
-        include(name: "*.*")
-      }
-    }
-
-    dir("license") {
-      fileset(dir: "${home}/license") {
-        exclude(name: "placeholder.txt")
-      }
-    }
-    fileset(file: "${home}/LICENSE.txt")
-    fileset(file: "${home}/NOTICE.txt")
-  }
-  patchPropertiesFile(paths.distAll, args + [appendices: ["$home/build/conf/ideaCE.properties"]])
-
-  layoutWin(args, home, paths)
-  layoutMac(args, home, paths)
-  layoutUnix(args, home, paths)
-
-  def macAppRoot = productProperties.macAppRoot()
-  def winAppRoot = productProperties.winAppRoot()
-  def linuxAppRoot = productProperties.linuxAppRoot()
-  def archiveName = productProperties.archiveName()
-
-  List pathsDist = new File("${paths.sandbox}/jdk.win/jre").exists() ? [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"] : [paths.distAll, paths.distWin]
-  buildWinZip("$paths.artifacts/${archiveName}.win.zip", pathsDist, winAppRoot)
-
-  buildCrossPlatformZip("$paths.artifacts/idea${args.buildNumber}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
-                        paths.distWin, paths.distUnix, paths.distMac)
-
-  String macZip = "$paths.artifacts/${archiveName}.mac.zip"
-  buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac, productProperties.extraMacBins)
-
-  buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}-no-jdk.tar", [paths.distAll, paths.distUnix], productProperties.extraLinuxBins)
-  requireProperty("jdk.linux", "false")
-  if (p("jdk.linux") != "false") {
-    buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/jdk.linux"], ["jre/jre/bin/*"] + productProperties.extraLinuxBins)
-  }
-  return info
-}
-
-private layoutWin(Map args, String home, Paths paths) {
-  String target = paths.distWin
-
-  layout(target) {
-    dir("bin") {
-      fileset(dir: "$home/bin/win")
-    }
-  }
-
-  def name = productProperties.prefix
-  def ico = productProperties.ico
-
-  ant.copy(file: ico, tofile: "$target/bin/${name}.ico")
-
-  if (productProperties.includeBatchLauncher) {
-    winScripts(target, home, "${name}.bat", args)
-  }
-  winVMOptions(target, productProperties.includeYourkitAgentInEAP ? args.system_selector : null, "${name}.exe", "${name}64.exe")
-  def appInfoModulePath = productProperties.appInfoModulePath
-
-  List resourcePaths = ["$home/${appInfoModulePath}/src", "$home/platform/icons/src"]
-  buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher.exe", "$target/bin/${name}.exe", appInfoFile(),
-                   productProperties.exe_launcher_properties, productProperties.systemSelector(), resourcePaths)
-  buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher64.exe", "$target/bin/${name}64.exe", appInfoFile(),
-                   productProperties.exe64_launcher_properties, productProperties.systemSelector(), resourcePaths)
-
-  productProperties.customWinLayout(target)
-}
-
-private layoutMac(Map _args, String home, Paths paths) {
-  String target = paths.distMac
-  def prefix = productProperties.prefix
-
-  Map args = new HashMap(_args)
-  args.bundleIdentifier = productProperties.bundleIdentifier
-  args.doc_types = """
-      <dict>
-        <key>CFBundleTypeExtensions</key>
-        <array>
-          <string>ipr</string>
-        </array>
-        <key>CFBundleTypeIconFile</key>
-        <string>${prefix}.icns</string>
-        <key>CFBundleTypeName</key>
-        <string>IntelliJ IDEA Project File</string>
-        <key>CFBundleTypeRole</key>
-        <string>Editor</string>
-      </dict>
-"""
-  args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
-  args."idea.properties" = ["idea.jre.check": true];
-  args.urlSchemes = ["idea"]
-  args.mac_no_yjp = true
-  args.executable = prefix
-  args.icns = productProperties.icns
-  layoutMacApp(target, home, args)
-  productProperties.customMacLayout(target)
-}
-
-private layoutUnix(Map args, String home, Paths paths) {
-  String target = paths.distUnix
-
-  layout(target) {
-    dir("bin") {
-      fileset(dir: "$home/bin/linux")
-    }
-  }
-
-  def name = productProperties.prefix
-  def icon128 = productProperties.icon128
-
-  ant.copy(file: icon128, tofile: "$target/bin/${name}.png")
-
-  unixScripts(target, home, "${name}.sh", args)
-  unixVMOptions(target, "${name}")
-  unixReadme(target, home, args)
-  productProperties.customLinLayout(target)
+target('update-from-sources': 'Update locally installed distribution from compiled classes') {
+  def options = new BuildOptions()
+  options.useCompiledClassesFromProjectOutput = true
+  options.buildStepsToSkip << BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP
+  options.buildStepsToSkip << BuildOptions.SOURCES_ARCHIVE_STEP
+  //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
+  String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
+  new IdeaCommunityBuilder(home, binding, options, projectHome).buildUnpackedDistribution(deploy)
 }

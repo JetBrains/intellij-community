@@ -136,8 +136,8 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     }
     final List<PyTypeChecker.AnalyzeCallResults> results = PyTypeChecker.analyzeCallSite(this, context);
     if (!results.isEmpty()) {
-      final List<PyType> types = new ArrayList<PyType>();
-      final List<PyType> matchedTypes = new ArrayList<PyType>();
+      final List<PyType> types = new ArrayList<>();
+      final List<PyType> matchedTypes = new ArrayList<>();
       for (PyTypeChecker.AnalyzeCallResults result : results) {
         boolean matched = true;
         for (Map.Entry<PyExpression, PyNamedParameter> entry : result.getArguments().entrySet()) {
@@ -146,7 +146,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
           if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
             continue;
           }
-          final Map<PyGenericType, PyType> substitutions = new HashMap<PyGenericType, PyType>();
+          final Map<PyGenericType, PyType> substitutions = new HashMap<>();
           final PyType parameterType = context.getType(parameter);
           final PyType argumentType = context.getType(argument);
           if (!PyTypeChecker.match(parameterType, argumentType, context, substitutions)) {

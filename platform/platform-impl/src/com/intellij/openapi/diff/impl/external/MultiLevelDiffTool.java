@@ -66,12 +66,9 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       }
       final Runnable onOkRunnable = request.getOnOkRunnable();
       if (onOkRunnable != null){
-        builder.setOkOperation(new Runnable() {
-          @Override
-          public void run() {
-            builder.getDialogWrapper().close(0);
-            onOkRunnable.run();
-          }
+        builder.setOkOperation(() -> {
+          builder.getDialogWrapper().close(0);
+          onOkRunnable.run();
         });
       } else {
         builder.removeAllActions();
@@ -151,13 +148,10 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   }
 
   public Map<String, DiffRequest> discloseRequest(DiffRequest request) {
-    final Map<String, DiffRequest> pairs = new TreeMap<String, DiffRequest>(new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        if (ourDefaultTab.equals(o1)) return -1;
-        if (ourDefaultTab.equals(o2)) return 1;
-        return Comparing.compare(o1, o2);
-      }
+    final Map<String, DiffRequest> pairs = new TreeMap<>((o1, o2) -> {
+      if (ourDefaultTab.equals(o1)) return -1;
+      if (ourDefaultTab.equals(o2)) return 1;
+      return Comparing.compare(o1, o2);
     });
     final List<Pair<String, DiffRequest>> layers = request.getOtherLayers();
     for (Pair<String, DiffRequest> layer : layers) {

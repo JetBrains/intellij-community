@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -191,14 +193,14 @@ public class PyChainedComparisonsInspection extends PyInspection {
           if (leftLeft.getText().equals(getLeftExpression(rightExpression, false).getText())) {
             myIsLeft = true;
             myIsRight = true;
-            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
+            isConstantInTheMiddle = leftLeft instanceof PyLiteralExpression;
             return true;
           }
           final PyExpression right = getSmallestRight(rightExpression, false);
           if (right != null && leftLeft.getText().equals(right.getText())) {
             myIsLeft = true;
             myIsRight = false;
-            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
+            isConstantInTheMiddle = leftLeft instanceof PyLiteralExpression;
             return true;
           }
         }
@@ -243,13 +245,6 @@ public class PyChainedComparisonsInspection extends PyInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return ourIgnoreConstantOptionText;
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return ourIgnoreConstantOptionText;
     }
@@ -257,15 +252,8 @@ public class PyChainedComparisonsInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiFile file = descriptor.getStartElement().getContainingFile();
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(new Consumer<ModifiableModel>() {
-        @Override
-        public void consume(ModifiableModel model) {
-          PyChainedComparisonsInspection tool =
-            (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME,
-                                                                   file);
-          tool.ignoreConstantInTheMiddle = false;
-        }
-      });
+      InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it ->
+        ((PyChainedComparisonsInspection)it.getUnwrappedTool(INSPECTION_SHORT_NAME, file)).ignoreConstantInTheMiddle = true);
     }
   }
 }

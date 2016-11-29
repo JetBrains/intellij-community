@@ -8,6 +8,7 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
@@ -65,16 +66,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
       //noinspection SocketOpenedButNotSafelyClosed
       final Socket socket = myServerSocket.accept();
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
-            sendDebuggerPort(socket, myDebugServerSocket, myDebugProcess);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
+          sendDebuggerPort(socket, myDebugServerSocket, myDebugProcess);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
         }
       });
 
@@ -380,18 +378,15 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setBreakpoint(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
-                            @Nullable String logExpression) {
+  public void setBreakpoint(@NotNull String typeId,
+                            @NotNull String file,
+                            int line,
+                            @Nullable String condition,
+                            @Nullable String logExpression,
+                            @Nullable String funcName,
+                            @NotNull SuspendPolicy policy) {
     for (ProcessDebugger d : allDebuggers()) {
-      d.setBreakpoint(typeId, file, line, condition, logExpression);
-    }
-  }
-
-  @Override
-  public void setBreakpointWithFuncName(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
-                                        @Nullable String logExpression, @Nullable String funcName) {
-    for (ProcessDebugger d : allDebuggers()) {
-      d.setBreakpointWithFuncName(typeId, file, line, condition, logExpression, funcName);
+      d.setBreakpoint(typeId, file, line, condition, logExpression, funcName, policy);
     }
   }
 
@@ -399,6 +394,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
     for (ProcessDebugger d : allDebuggers()) {
       d.removeBreakpoint(typeId, file, line);
+    }
+  }
+
+  @Override
+  public void setShowReturnValues(boolean isShowReturnValues) {
+    for (ProcessDebugger d : allDebuggers()) {
+      d.setShowReturnValues(isShowReturnValues);
     }
   }
 
@@ -517,6 +519,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public String getDescription(String threadId, String frameId, String cmd) {
+    return debugger(threadId).getDescription(threadId, frameId, cmd);
+  }
+
+  @Override
   public void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     for (RemoteDebugger d : allDebuggers()) {
       d.execute(factory.createAddCommand(d));
@@ -527,6 +534,14 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     for (RemoteDebugger d : allDebuggers()) {
       d.execute(factory.createRemoveCommand(d));
+    }
+  }
+
+  @Override
+  public void suspendOtherThreads(PyThreadInfo thread) {
+    for (RemoteDebugger d : allDebuggers()) {
+      // we should notify the debugger in each process about suspending all threads
+      d.suspendOtherThreads(thread);
     }
   }
 

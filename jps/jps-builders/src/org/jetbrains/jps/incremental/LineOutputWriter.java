@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.SingleCharSequence;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -27,37 +28,45 @@ import java.io.Writer;
 public abstract class LineOutputWriter extends Writer {
   private final LineParser myLineParser = new LineParser();
 
+  @Override
   public void write(int c) {
     processData(new CharSequenceIterator(c));
   }
 
+  @Override
   public void write(char[] cbuf) {
     processData(new CharSequenceIterator(cbuf));
   }
 
+  @Override
   public void write(String str) {
     processData(new CharSequenceIterator(str));
   }
 
+  @Override
   public void write(String str, int off, int len) {
     processData(new CharSequenceIterator(str.subSequence(off, off + len)));
   }
 
+  @Override
   public Writer append(CharSequence csq) {
     processData(new CharSequenceIterator(csq));
     return this;
   }
 
+  @Override
   public Writer append(CharSequence csq, int start, int end) {
     processData(new CharSequenceIterator(csq.subSequence(start, end)));
     return this;
   }
 
+  @Override
   public Writer append(char c) {
     processData(new CharSequenceIterator(c));
     return this;
   }
 
+  @Override
   public void write(char[] cbuf, int off, int len) {
     processData(new CharSequenceIterator(cbuf, off, len));
   }
@@ -71,9 +80,11 @@ public abstract class LineOutputWriter extends Writer {
   }
 
 
+  @Override
   public void flush() throws IOException {
   }
 
+  @Override
   public void close() throws IOException {
     try {
       if (myLineParser.hasData()) {
@@ -87,14 +98,14 @@ public abstract class LineOutputWriter extends Writer {
 
   protected abstract void lineAvailable(String line);
 
-  private static interface CharIterator {
+  private interface CharIterator {
     char nextChar();
     boolean hasData();
   }
 
   private static class LineParser {
     private final StringBuilder myData = new StringBuilder();
-    private boolean myFoundCR = false;
+    private boolean myFoundCR;
 
     public boolean parse(CharIterator it) {
       while (it.hasData()) {
@@ -117,7 +128,7 @@ public abstract class LineOutputWriter extends Writer {
       return false;
     }
 
-    public boolean hasData() {
+    boolean hasData() {
       return myData.length() > 0;
     }
 
@@ -133,7 +144,7 @@ public abstract class LineOutputWriter extends Writer {
 
   private static class CharSequenceIterator implements CharIterator {
     private final CharSequence myChars;
-    private int myCursor = 0;
+    private int myCursor;
 
     CharSequenceIterator(final int ch) {
       this((char)ch);
@@ -155,35 +166,14 @@ public abstract class LineOutputWriter extends Writer {
       myChars = sequence;
     }
 
+    @Override
     public char nextChar() {
       return myChars.charAt(myCursor++);
     }
 
+    @Override
     public boolean hasData() {
       return myCursor < myChars.length();
-    }
-  }
-
-  private static class SingleCharSequence implements CharSequence {
-    private final char myCh;
-
-    public SingleCharSequence(char ch) {
-      myCh = ch;
-    }
-
-    public int length() {
-      return 1;
-    }
-
-    public char charAt(int index) {
-      if (index != 0) {
-        throw new IndexOutOfBoundsException("Index out of bounds: " + index);
-      }
-      return myCh;
-    }
-
-    public CharSequence subSequence(int start, int end) {
-      throw new RuntimeException("Method subSequence not implemented");
     }
   }
 }

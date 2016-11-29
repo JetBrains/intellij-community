@@ -46,12 +46,15 @@ public class SpellcheckingStrategy {
     }
   };
 
-  public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new TokenizerBase<PsiElement>(PlainTextSplitter.getInstance());
+  public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new TokenizerBase<>(PlainTextSplitter.getInstance());
 
   private static final SpellCheckerQuickFix[] BATCH_FIXES = new SpellCheckerQuickFix[]{new AcceptWordAsCorrect()};
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
+    if (element instanceof PsiWhiteSpace) {
+      return EMPTY_TOKENIZER;
+    }
     if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
       return EMPTY_TOKENIZER;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,11 @@ import java.util.*;
 /**
  * @author yole
  */
-public class CollectionListModel<T> extends AbstractListModel implements EditableModel {
+public class CollectionListModel<T> extends AbstractListModel<T> implements EditableModel {
   private final List<T> myItems;
 
   public CollectionListModel(@NotNull final Collection<? extends T> items) {
-    myItems = new ArrayList<T>(items);
+    myItems = new ArrayList<>(items);
   }
 
   @SuppressWarnings("UnusedParameters")
@@ -41,10 +41,11 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   }
 
   public CollectionListModel(@NotNull final List<? extends T> items) {
-    myItems = new ArrayList<T>(items);
+    myItems = new ArrayList<>(items);
   }
 
-  public CollectionListModel(final T... items) {
+  @SafeVarargs
+  public CollectionListModel(@NotNull T... items) {
     myItems = ContainerUtilRt.newArrayList(items);
   }
 
@@ -75,10 +76,14 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   }
 
   public void add(@NotNull final List<? extends T> elements) {
+    addAll(myItems.size(), elements);
+  }
+
+  public void addAll(int index, @NotNull final List<? extends T> elements) {
     if (elements.isEmpty()) return;
-    int i = myItems.size();
-    myItems.addAll(elements);
-    fireIntervalAdded(this, i, i + elements.size() - 1);
+
+    myItems.addAll(index, elements);
+    fireIntervalAdded(this, index, index + elements.size() - 1);
   }
 
   public void remove(@NotNull T element) {
@@ -157,7 +162,7 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   }
 
   public List<T> toList() {
-    return new ArrayList<T>(myItems);
+    return new ArrayList<>(myItems);
   }
 
   public int getElementIndex(T item) {
@@ -167,4 +172,19 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   public boolean isEmpty() {
     return myItems.isEmpty();
   }
+
+  public boolean contains(T item) {
+    return getElementIndex(item) >= 0;
+  }
+
+  public void removeRange(int fromIndex, int toIndex) {
+    if (fromIndex > toIndex) {
+      throw new IllegalArgumentException("fromIndex must be <= toIndex");
+    }
+    for(int i = toIndex; i >= fromIndex; i--) {
+      itemReplaced(myItems.remove(i), null);
+    }
+    fireIntervalRemoved(this, fromIndex, toIndex);
+  }
+
 }

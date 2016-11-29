@@ -27,7 +27,7 @@ final class ExpandedModules implements ICvsListener, IModuleExpansionListener {
 
   // Fields =================================================================
 
-  private final List<String> modules = new LinkedList<String>();
+  private final List<String> modules = new LinkedList<>();
 
   // Setup ==================================================================
 

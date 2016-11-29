@@ -1,4 +1,4 @@
-# $Id: __init__.py 6364 2010-07-07 14:56:53Z grubert $
+# $Id: __init__.py 7756 2014-07-06 11:48:05Z grubert $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -26,12 +26,6 @@ Modules:
 - statemachine.py: A finite state machine specialized for
   regular-expression-based text filters.
 
-- urischemes.py: Contains a complete mapping of known URI addressing
-  scheme names to descriptions.
-
-- utils.py: Contains the ``Reporter`` system warning class and miscellaneous
-  utilities.
-
 Subpackages:
 
 - languages: Language-specific mappings of terms.
@@ -44,23 +38,42 @@ Subpackages:
 - transforms: Modules used by readers and writers to modify DPS
   doctrees.
 
+- utils: Contains the ``Reporter`` system warning class and miscellaneous
+  utilities used by readers, writers, and transforms.
+
+  utils/urischemes.py: Contains a complete mapping of known URI addressing
+  scheme names to descriptions.
+
+- utils/math: Contains functions for conversion of mathematical notation
+  between different formats (LaTeX, MathML, text, ...).
+
 - writers: Format-specific output translators.
 """
 
 __docformat__ = 'reStructuredText'
 
-__version__ = '0.8'
+__version__ = '0.12'
 """``major.minor.micro`` version number.  The micro number is bumped for API
 changes, for new functionality, and for interim project releases.  The minor
 number is bumped whenever there is a significant project release.  The major
 number will be bumped when the project is feature-complete, and perhaps if
 there is a major change in the design."""
 
-__version_details__ = 'snapshot 2010-09-01, r6395'
+__version_details__ = 'release'
 """Extra version details (e.g. 'snapshot 2005-05-29, r3410', 'repository',
 'release'), modified automatically & manually."""
 
-class ApplicationError(StandardError): pass
+import sys
+
+class ApplicationError(StandardError):
+    # Workaround:
+    # In Python < 2.6, unicode(<exception instance>) calls `str` on the
+    # arg and therefore, e.g., unicode(StandardError(u'\u234')) fails
+    # with UnicodeDecodeError.
+    if sys.version_info < (2,6):
+        def __unicode__(self):
+            return u', '.join(self.args)
+
 class DataError(ApplicationError): pass
 
 

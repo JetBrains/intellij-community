@@ -23,12 +23,7 @@ import javax.swing.*;
 import java.util.ListIterator;
 
 public class TableSpeedSearch extends SpeedSearchBase<JTable> {
-  private static final PairFunction<Object, Cell, String> TO_STRING = new PairFunction<Object, Cell, String>() {
-    @Override
-    public String fun(Object o, Cell cell) {
-      return o == null || o instanceof Boolean ? "" : o.toString();
-    }
-  };
+  private static final PairFunction<Object, Cell, String> TO_STRING = (o, cell) -> o == null || o instanceof Boolean ? "" : o.toString();
   private final PairFunction<Object, Cell, String> myToStringConvertor;
 
   public TableSpeedSearch(JTable table) {
@@ -36,12 +31,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   }
 
   public TableSpeedSearch(JTable table, final Convertor<Object, String> toStringConvertor) {
-    this(table, new PairFunction<Object, Cell, String>() {
-      @Override
-      public String fun(Object o, Cell c) {
-        return toStringConvertor.convert(o);
-      }
-    });
+    this(table, (o, c) -> toStringConvertor.convert(o));
   }
 
   public TableSpeedSearch(JTable table, final PairFunction<Object, Cell, String> toStringConvertor) {

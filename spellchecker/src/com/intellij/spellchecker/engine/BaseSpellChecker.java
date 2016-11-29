@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.engine;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -42,14 +43,14 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
 
   private final Transformation transform = new Transformation();
-  private final Set<EditableDictionary> dictionaries = new HashSet<EditableDictionary>();
+  private final Set<EditableDictionary> dictionaries = new HashSet<>();
   private final List<Dictionary> bundledDictionaries = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
   private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
 
-  public BaseSpellChecker(final Project project) {
+  public BaseSpellChecker(@NotNull Project project) {
     myProject = project;
   }
 
@@ -72,70 +73,55 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       addCompressedFixedDictionary(dictionary);
     }
     else {
-      loadDictionaryAsync(loader, new Consumer<Dictionary>() {
-        @Override
-        public void consume(final Dictionary dictionary) {
-          addCompressedFixedDictionary(dictionary);
-        }
-      });
+      loadDictionaryAsync(loader, this::addCompressedFixedDictionary);
     }
   }
 
   private void loadDictionaryAsync(@NotNull final Loader loader, @NotNull final Consumer<Dictionary> consumer) {
     if (myLoadingDictionaries.compareAndSet(false, true)) {
       LOG.debug("Loading " + loader.getName());
-      _doLoadDictionaryAsync(loader, consumer);
+      doLoadDictionaryAsync(loader, consumer);
     }
     else {
       queueDictionaryLoad(loader, consumer);
     }
   }
 
-  private void _doLoadDictionaryAsync(final Loader loader, final Consumer<Dictionary> consumer) {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        LOG.debug("Loading " + loader.getName());
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            if (ApplicationManager.getApplication().isDisposed()) return;
-            
-            final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
-            LOG.debug(loader.getName() + " loaded!");
-            consumer.consume(dictionary);
+  private void doLoadDictionaryAsync(Loader loader, Consumer<Dictionary> consumer) {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+      LOG.debug("Loading " + loader.getName());
+      Application app = ApplicationManager.getApplication();
+      app.executeOnPooledThread(() -> {
+        if (app.isDisposed()) return;
 
-            while (!myDictionariesToLoad.isEmpty()) {
-              if (ApplicationManager.getApplication().isDisposed()) return;
-              
-              final Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
-              Loader nextDictionaryLoader = nextDictionary.getFirst();
-              CompressedDictionary dictionary1 = CompressedDictionary.create(nextDictionaryLoader, transform);
-              LOG.debug(nextDictionaryLoader.getName() + " loaded!");
-              nextDictionary.getSecond().consume(dictionary1);
+        CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
+        LOG.debug(loader.getName() + " loaded!");
+        consumer.consume(dictionary);
+
+        while (!myDictionariesToLoad.isEmpty()) {
+          if (app.isDisposed()) return;
+
+          Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
+          Loader nextDictionaryLoader = nextDictionary.getFirst();
+          dictionary = CompressedDictionary.create(nextDictionaryLoader, transform);
+          LOG.debug(nextDictionaryLoader.getName() + " loaded!");
+          nextDictionary.getSecond().consume(dictionary);
+        }
+
+        LOG.debug("Loading finished, restarting daemon...");
+        myLoadingDictionaries.set(false);
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (app.isDisposed()) return;
+
+          for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
+            if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
+              DaemonCodeAnalyzer instance = DaemonCodeAnalyzer.getInstance(project);
+              if (instance != null) instance.restart();
             }
-
-            LOG.debug("Loading finished, restarting daemon...");
-            myLoadingDictionaries.set(false);
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                if (ApplicationManager.getApplication().isDisposed()) return;
-                
-                for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
-                  if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
-                    final DaemonCodeAnalyzer instance = DaemonCodeAnalyzer.getInstance(project);
-                    if (instance != null) instance.restart();
-                  }
-                }
-              }
-            });
           }
         });
-      }
-    };
-
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(runnable);
+      });
+    });
   }
 
   private void queueDictionaryLoad(final Loader loader, final Consumer<Dictionary> consumer) {
@@ -167,12 +153,9 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       ((CompressedDictionary)dictionary).getWords(first, i, j, result);
     }
     else {
-      dictionary.traverse(new Consumer<String>() {
-        @Override
-        public void consume(String s) {
-          if (!StringUtil.isEmpty(s) && s.charAt(0) == first && s.length() >= i && s.length() <= j) {
-            result.add(s);
-          }
+      dictionary.traverse(s -> {
+        if (!StringUtil.isEmpty(s) && s.charAt(0) == first && s.length() >= i && s.length() <= j) {
+          result.add(s);
         }
       });
     }
@@ -216,20 +199,20 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     String transformed = transform.transform(word);
     if (transformed == null) return Collections.emptyList();
 
-    List<String> rawSuggestions = new ArrayList<String>();
+    List<String> rawSuggestions = new ArrayList<>();
     restore(transformed.charAt(0), 0, Integer.MAX_VALUE, bundledDictionaries, rawSuggestions);
     restore(word.charAt(0), 0, Integer.MAX_VALUE, dictionaries, rawSuggestions);
     if (rawSuggestions.isEmpty()) return Collections.emptyList();
 
-    List<Suggestion> suggestions = new ArrayList<Suggestion>(rawSuggestions.size());
+    List<Suggestion> suggestions = new ArrayList<>(rawSuggestions.size());
     for (String rawSuggestion : rawSuggestions) {
-      int distance = EditDistance.levenshtein(transformed, rawSuggestion, true);
+      int distance = EditDistance.optimalAlignment(transformed, rawSuggestion, true);
       suggestions.add(new Suggestion(rawSuggestion, distance));
     }
 
     Collections.sort(suggestions);
     int limit = Math.min(maxSuggestions, suggestions.size());
-    List<String> result = new ArrayList<String>(limit);
+    List<String> result = new ArrayList<>(limit);
     int bestMetrics = suggestions.get(0).getMetrics();
     for (int i = 0; i < limit; i++) {
       Suggestion suggestion = suggestions.get(i);
@@ -268,9 +251,6 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   @Nullable
   public Dictionary getBundledDictionaryByName(@NotNull String name) {
-    if (bundledDictionaries == null) {
-      return null;
-    }
     for (Dictionary dictionary : bundledDictionaries) {
       if (name.equals(dictionary.getName())) {
         return dictionary;

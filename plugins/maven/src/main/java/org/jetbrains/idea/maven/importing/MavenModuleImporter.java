@@ -99,74 +99,35 @@ public class MavenModuleImporter {
   }
 
   public void preConfigFacets() {
-    MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
-      public void run() {
-        if (myModule.isDisposed()) return;
+    MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
+      if (myModule.isDisposed()) return;
 
-        final ModuleType moduleType = ModuleType.get(myModule);
+      final ModuleType moduleType = ModuleType.get(myModule);
 
-        for (final MavenImporter importer : getSuitableImporters()) {
-          final MavenProjectChanges changes;
-          if (myMavenProjectChanges == null) {
-            if (importer.processChangedModulesOnly()) continue;
-            changes = MavenProjectChanges.NONE;
-          }
-          else {
-            changes = myMavenProjectChanges;
-          }
+      for (final MavenImporter importer : getSuitableImporters()) {
+        final MavenProjectChanges changes;
+        if (myMavenProjectChanges == null) {
+          if (importer.processChangedModulesOnly()) continue;
+          changes = MavenProjectChanges.NONE;
+        }
+        else {
+          changes = myMavenProjectChanges;
+        }
 
-          if (importer.getModuleType() == moduleType) {
-            importer.preProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
-          }
+        if (importer.getModuleType() == moduleType) {
+          importer.preProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
         }
       }
     });
   }
 
   public void configFacets(final List<MavenProjectsProcessorTask> postTasks) {
-    MavenUtil.smartInvokeAndWait(myModule.getProject(), ModalityState.defaultModalityState(), new Runnable() {
-      public void run() {
-        if (myModule.isDisposed()) return;
+    MavenUtil.smartInvokeAndWait(myModule.getProject(), ModalityState.defaultModalityState(), () -> {
+      if (myModule.isDisposed()) return;
 
-        final ModuleType moduleType = ModuleType.get(myModule);
+      final ModuleType moduleType = ModuleType.get(myModule);
 
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (final MavenImporter importer : getSuitableImporters()) {
-              final MavenProjectChanges changes;
-              if (myMavenProjectChanges == null) {
-                if (importer.processChangedModulesOnly()) continue;
-                changes = MavenProjectChanges.NONE;
-              }
-              else {
-                changes = myMavenProjectChanges;
-              }
-
-              if (importer.getModuleType() == moduleType) {
-                importer.process(myModifiableModelsProvider,
-                                 myModule,
-                                 myRootModelAdapter,
-                                 myMavenTree,
-                                 myMavenProject,
-                                 changes,
-                                 myMavenProjectToModuleName,
-                                 postTasks);
-              }
-            }
-          }
-        });
-      }
-    });
-  }
-
-  public void postConfigFacets() {
-    MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
-      public void run() {
-        if (myModule.isDisposed()) return;
-
-        final ModuleType moduleType = ModuleType.get(myModule);
-
+      ApplicationManager.getApplication().runWriteAction(() -> {
         for (final MavenImporter importer : getSuitableImporters()) {
           final MavenProjectChanges changes;
           if (myMavenProjectChanges == null) {
@@ -178,8 +139,38 @@ public class MavenModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            importer.postProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
+            importer.process(myModifiableModelsProvider,
+                             myModule,
+                             myRootModelAdapter,
+                             myMavenTree,
+                             myMavenProject,
+                             changes,
+                             myMavenProjectToModuleName,
+                             postTasks);
           }
+        }
+      });
+    });
+  }
+
+  public void postConfigFacets() {
+    MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
+      if (myModule.isDisposed()) return;
+
+      final ModuleType moduleType = ModuleType.get(myModule);
+
+      for (final MavenImporter importer : getSuitableImporters()) {
+        final MavenProjectChanges changes;
+        if (myMavenProjectChanges == null) {
+          if (importer.processChangedModulesOnly()) continue;
+          changes = MavenProjectChanges.NONE;
+        }
+        else {
+          changes = myMavenProjectChanges;
+        }
+
+        if (importer.getModuleType() == moduleType) {
+          importer.postProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
         }
       }
     });
@@ -194,7 +185,7 @@ public class MavenModuleImporter {
   }
 
   private void configDependencies() {
-    THashSet<String> dependencyTypesFromSettings = new THashSet<String>();
+    THashSet<String> dependencyTypesFromSettings = new THashSet<>();
 
     AccessToken accessToken = ReadAction.start();
     try {

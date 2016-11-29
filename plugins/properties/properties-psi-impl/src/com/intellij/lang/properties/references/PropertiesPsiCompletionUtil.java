@@ -32,7 +32,7 @@ public class PropertiesPsiCompletionUtil {
                                          final PropertiesFile propertiesFile,
                                          final Set<Object> variants) {
     if (propertiesFile == null) return;
-    if (!ProjectRootManager.getInstance(propertyReference.getElement().getProject()).getFileIndex().isInContent(propertiesFile.getVirtualFile())) return;
+    if (!ProjectRootManager.getInstance(propertiesFile.getProject()).getFileIndex().isInContent(propertiesFile.getVirtualFile())) return;
     List<? extends IProperty> properties = propertiesFile.getProperties();
     for (IProperty property : properties) {
       propertyReference.addKey(property, variants);
@@ -40,7 +40,7 @@ public class PropertiesPsiCompletionUtil {
   }
 
   static Set<Object> getPropertiesKeys(final PropertyReferenceBase propertyReference) {
-    final Set<Object> variants = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
+    final Set<Object> variants = new THashSet<>(new TObjectHashingStrategy<Object>() {
       public int computeHashCode(final Object object) {
         if (object instanceof IProperty) {
           final String key = ((IProperty)object).getKey();

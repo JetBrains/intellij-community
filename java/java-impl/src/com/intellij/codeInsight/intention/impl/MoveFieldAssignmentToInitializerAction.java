@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.editor.Editor;
@@ -68,13 +67,13 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     if (ctrOrInitializer.hasModifierProperty(PsiModifier.STATIC) != field.hasModifierProperty(PsiModifier.STATIC)) return false;
 
     if (!isValidAsFieldInitializer(assignment.getRExpression(), ctrOrInitializer)) return false;
-    if (!isInitializedWithSameExpression(field, assignment, new ArrayList<PsiAssignmentExpression>())) return false;
+    if (!isInitializedWithSameExpression(field, assignment, new ArrayList<>())) return false;
     return true;
   }
 
   private static boolean isValidAsFieldInitializer(final PsiExpression initializer, final PsiModifierListOwner ctrOrInitializer) {
     if (initializer == null) return false;
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -108,8 +107,8 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return false;
 
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
-    final List<PsiAssignmentExpression> totalUsages = new ArrayList<PsiAssignmentExpression>();
+    final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
+    final List<PsiAssignmentExpression> totalUsages = new ArrayList<>();
     containingClass.accept(new JavaRecursiveElementVisitor() {
       private PsiCodeBlock currentInitializingBlock; //ctr or class initializer
 
@@ -174,9 +173,8 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     if (assignment == null) return;
     PsiField field = getAssignedField(assignment);
     if (field == null) return;
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    List<PsiAssignmentExpression> assignments = new ArrayList<PsiAssignmentExpression>();
+    List<PsiAssignmentExpression> assignments = new ArrayList<>();
     if (!isInitializedWithSameExpression(field, assignment, assignments)) return;
     PsiExpression initializer = assignment.getRExpression();
     field.setInitializer(initializer);

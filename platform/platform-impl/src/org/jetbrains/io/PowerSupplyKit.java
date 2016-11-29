@@ -130,13 +130,8 @@ public class PowerSupplyKit {
         //final Notification powerSafeModeSwitchedNotification =
         //  new Notification(POWER_SUPPLY_GROUP_ID, "\"Power Save\" mode ", message, type, listener);
 
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-                ApplicationManager.getApplication().getMessageBus().
-                  syncPublisher(Notifications.TOPIC).notify(automaticPowerSafeModeSwitchNotification);
-            }
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> ApplicationManager.getApplication().getMessageBus().
+          syncPublisher(Notifications.TOPIC).notify(automaticPowerSafeModeSwitchNotification));
 
         powerSupplyKitHasBeenInitialized = true;
     }

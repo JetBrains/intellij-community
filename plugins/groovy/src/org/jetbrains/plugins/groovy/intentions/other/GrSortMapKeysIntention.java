@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,15 @@ import com.intellij.util.IncorrectOperationException;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * Created by Max Medvedev on 10/01/14
@@ -39,7 +38,7 @@ import java.util.Comparator;
 public class GrSortMapKeysIntention extends Intention {
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     PsiElement parent = element.getParent();
 
     if (parent instanceof GrArgumentLabel) {
@@ -63,15 +62,12 @@ public class GrSortMapKeysIntention extends Intention {
 
     builder.append("[");
 
-    Arrays.sort(args, new Comparator<GrNamedArgument>() {
-      @Override
-      public int compare(GrNamedArgument o1, GrNamedArgument o2) {
-        final String l1 = o1.getLabelName();
-        final String l2 = o2.getLabelName();
-        assert l1 != null && l2 != null;
+    Arrays.sort(args, (o1, o2) -> {
+      final String l1 = o1.getLabelName();
+      final String l2 = o2.getLabelName();
+      assert l1 != null && l2 != null;
 
-        return l1.compareTo(l2);
-      }
+      return l1.compareTo(l2);
     });
 
     for (GrNamedArgument arg : args) {

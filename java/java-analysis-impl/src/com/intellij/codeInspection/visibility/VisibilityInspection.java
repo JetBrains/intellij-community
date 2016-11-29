@@ -26,7 +26,6 @@ package com.intellij.codeInspection.visibility;
 
 import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInspection.*;
@@ -38,20 +37,16 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageViewTypeLocation;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.List;
 
@@ -59,7 +54,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.visibility.VisibilityInspection");
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
-  public boolean SUGGEST_PRIVATE_FOR_INNERS = false;
+  public boolean SUGGEST_PRIVATE_FOR_INNERS;
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
   private static final String CAN_BE_PRIVATE = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
@@ -82,24 +77,16 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
       myPackageLocalForMembersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option"));
       myPackageLocalForMembersCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS);
-      myPackageLocalForMembersCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = myPackageLocalForMembersCheckbox.isSelected();
-        }
-      });
+      myPackageLocalForMembersCheckbox.getModel().addChangeListener(
+        e -> SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = myPackageLocalForMembersCheckbox.isSelected());
 
       gc.gridy = 0;
       add(myPackageLocalForMembersCheckbox, gc);
 
       myPackageLocalForTopClassesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option1"));
       myPackageLocalForTopClassesCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES);
-      myPackageLocalForTopClassesCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = myPackageLocalForTopClassesCheckbox.isSelected();
-        }
-      });
+      myPackageLocalForTopClassesCheckbox.getModel().addChangeListener(
+        e -> SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = myPackageLocalForTopClassesCheckbox.isSelected());
 
       gc.gridy = 1;
       add(myPackageLocalForTopClassesCheckbox, gc);
@@ -107,12 +94,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
       myPrivateForInnersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option2"));
       myPrivateForInnersCheckbox.setSelected(SUGGEST_PRIVATE_FOR_INNERS);
-      myPrivateForInnersCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          SUGGEST_PRIVATE_FOR_INNERS = myPrivateForInnersCheckbox.isSelected();
-        }
-      });
+      myPrivateForInnersCheckbox.getModel().addChangeListener(e -> SUGGEST_PRIVATE_FOR_INNERS = myPrivateForInnersCheckbox.isSelected());
 
       gc.gridy = 2;
       gc.weighty = 1;
@@ -311,10 +293,8 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
 
       List children = refClass.getChildren();
-      if (children != null) {
-        for (Object refElement : children) {
-          if (!isAccessible((RefJavaElement)refElement, accessModifier)) return false;
-        }
+      for (Object refElement : children) {
+        if (!isAccessible((RefJavaElement)refElement, accessModifier)) return false;
       }
 
       for (final RefElement refElement : refClass.getInTypeReferences()) {
@@ -395,7 +375,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (modifierList == null) return false;
     final PsiElement toElement = to.getElement();
 
-    final boolean [] resolved = new boolean[] {false};
+    final boolean [] resolved = {false};
     modifierList.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -447,12 +427,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         refEntity.accept(new RefJavaVisitor() {
           @Override public void visitField(@NotNull final RefField refField) {
             if (refField.getAccessModifier() != PsiModifier.PRIVATE) {
-              globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
-                @Override
-                public boolean process(PsiReference psiReference) {
-                  ignoreElement(processor, refField);
-                  return false;
-                }
+              globalContext.enqueueFieldUsagesProcessor(refField, psiReference -> {
+                ignoreElement(processor, refField);
+                return false;
               });
             }
           }
@@ -460,61 +437,44 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
           @Override public void visitMethod(@NotNull final RefMethod refMethod) {
             if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                 !(refMethod instanceof RefImplicitConstructor)) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
-                @Override
-                public boolean process(PsiMethod derivedMethod) {
-                  ignoreElement(processor, refMethod);
-                  return false;
-                }
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+                ignoreElement(processor, refMethod);
+                return false;
               });
 
-              globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
-                @Override
-                public boolean process(PsiReference psiReference) {
-                  ignoreElement(processor, refMethod);
-                  return false;
-                }
+              globalContext.enqueueMethodUsagesProcessor(refMethod, psiReference -> {
+                ignoreElement(processor, refMethod);
+                return false;
               });
-
-              if (entryPointsManager.isAddNonJavaEntries()) {
-                final RefClass ownerClass = refMethod.getOwnerClass();
-                if (refMethod.isConstructor() && ownerClass.getDefaultConstructor() != null) {
-                  final PsiClass psiClass = ownerClass.getElement();
-                  String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
-                  if (qualifiedName != null) {
-                    final Project project = manager.getProject();
-                    PsiSearchHelper.SERVICE.getInstance(project)
-                      .processUsagesInNonJavaFiles(qualifiedName, new PsiNonJavaFileReferenceProcessor() {
-                        @Override
-                        public boolean process(PsiFile file, int startOffset, int endOffset) {
-                          entryPointsManager.addEntryPoint(refMethod, false);
-                          ignoreElement(processor, refMethod);
-                          return false;
-                        }
-                      }, GlobalSearchScope.projectScope(project));
-                  }
-                }
-              }
             }
           }
 
           @Override public void visitClass(@NotNull final RefClass refClass) {
             if (!refClass.isAnonymous()) {
-              globalContext.enqueueDerivedClassesProcessor(refClass, new GlobalJavaInspectionContext.DerivedClassesProcessor() {
-                @Override
-                public boolean process(PsiClass inheritor) {
-                  ignoreElement(processor, refClass);
-                  return false;
-                }
+              globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
+                ignoreElement(processor, refClass);
+                return false;
               });
 
-              globalContext.enqueueClassUsagesProcessor(refClass, new GlobalJavaInspectionContext.UsagesProcessor() {
-                @Override
-                public boolean process(PsiReference psiReference) {
-                  ignoreElement(processor, refClass);
-                  return false;
-                }
+              globalContext.enqueueClassUsagesProcessor(refClass, psiReference -> {
+                ignoreElement(processor, refClass);
+                return false;
               });
+
+              final RefMethod defaultConstructor = refClass.getDefaultConstructor();
+              if (entryPointsManager.isAddNonJavaEntries() && defaultConstructor != null) {
+                final PsiClass psiClass = refClass.getElement();
+                String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
+                if (qualifiedName != null) {
+                  final Project project = manager.getProject();
+                  PsiSearchHelper.SERVICE.getInstance(project)
+                    .processUsagesInNonJavaFiles(qualifiedName, (file, startOffset, endOffset) -> {
+                      entryPointsManager.addEntryPoint(defaultConstructor, false);
+                      ignoreElement(processor, defaultConstructor);
+                      return false;
+                    }, GlobalSearchScope.projectScope(project));
+                }
+              }
             }
           }
         });
@@ -584,39 +544,33 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiModifierListOwner element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiModifierListOwner.class);
       if (element != null) {
         RefElement refElement = null;
         if (myManager != null) {
           refElement = myManager.getReference(element);
         }
-        try {
-          if (element instanceof PsiVariable) {
-            ((PsiVariable)element).normalizeDeclaration();
-          }
+        if (element instanceof PsiVariable) {
+          ((PsiVariable)element).normalizeDeclaration();
+        }
 
-          PsiModifierList list = element.getModifierList();
+        PsiModifierList list = element.getModifierList();
 
-          LOG.assertTrue(list != null);
+        LOG.assertTrue(list != null);
 
-          if (element instanceof PsiMethod) {
-            PsiMethod psiMethod = (PsiMethod)element;
-            PsiClass containingClass = psiMethod.getContainingClass();
-            if (containingClass != null && containingClass.getParent() instanceof PsiFile &&
-                myHint == PsiModifier.PRIVATE &&
-                list.hasModifierProperty(PsiModifier.FINAL)) {
-              list.setModifierProperty(PsiModifier.FINAL, false);
-            }
-          }
-
-          list.setModifierProperty(myHint, true);
-          if (refElement instanceof RefJavaElement) {
-            RefJavaUtil.getInstance().setAccessModifier((RefJavaElement)refElement, myHint);
+        if (element instanceof PsiMethod) {
+          PsiMethod psiMethod = (PsiMethod)element;
+          PsiClass containingClass = psiMethod.getContainingClass();
+          if (containingClass != null && containingClass.getParent() instanceof PsiFile &&
+              myHint == PsiModifier.PRIVATE &&
+              list.hasModifierProperty(PsiModifier.FINAL)) {
+            list.setModifierProperty(PsiModifier.FINAL, false);
           }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+
+        list.setModifierProperty(myHint, true);
+        if (refElement instanceof RefJavaElement) {
+          RefJavaUtil.getInstance().setAccessModifier((RefJavaElement)refElement, myHint);
         }
       }
     }

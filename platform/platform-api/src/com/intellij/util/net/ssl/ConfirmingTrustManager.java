@@ -149,12 +149,9 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
       return true;
     }
-    boolean accepted = askUser && CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
-      @Override
-      public DialogWrapper call() throws Exception {
-        // TODO may be another kind of warning, if default trust store is missing
-        return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint);
-      }
+    boolean accepted = askUser && CertificateManager.showAcceptDialog(() -> {
+      // TODO may be another kind of warning, if default trust store is missing
+      return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint);
     });
     if (accepted) {
       LOG.info("Certificate was accepted by user");
@@ -367,7 +364,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     public List<X509Certificate> getCertificates() {
       myReadLock.lock();
       try {
-        List<X509Certificate> certificates = new ArrayList<X509Certificate>();
+        List<X509Certificate> certificates = new ArrayList<>();
         for (String alias : Collections.list(myKeyStore.aliases())) {
           certificates.add(getCertificate(alias));
         }

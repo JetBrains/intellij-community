@@ -16,7 +16,6 @@
 package com.intellij.util.io.tar;
 
 /** @deprecated use bundled commons-compress library (to be removed in IDEA 17) */
-@SuppressWarnings("unused")
 public interface TarConstants {
 
   /**

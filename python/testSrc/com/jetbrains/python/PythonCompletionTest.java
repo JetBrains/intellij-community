@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -50,7 +51,8 @@ public class PythonCompletionTest extends PyTestCase {
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
-  private List<String> doTestByText(String text) {
+  @Nullable
+  private List<String> doTestByText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.completeBasic();
     return myFixture.getLookupElementStrings();
@@ -416,117 +418,81 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-16877
   public void testSectionNamesInGoogleDocstring() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertContainsElements(variants, "Args", "Keyword Args", "Returns");
-        assertDoesntContain(variants, "Parameters", "Return", "Yield");
-      }
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertContainsElements(variants, "Args", "Keyword Args", "Returns");
+      assertDoesntContain(variants, "Parameters", "Return", "Yield");
     });
   }
 
   // PY-17023
   public void testSectionNamesInNumpyDocstrings() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertContainsElements(variants, "Parameters", "Other Parameters", "Returns");
-        assertDoesntContain(variants, "Args", "Return", "Yield");
-      }
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertContainsElements(variants, "Parameters", "Other Parameters", "Returns");
+      assertDoesntContain(variants, "Args", "Return", "Yield");
     });
   }
 
   // PY-16991
   public void testSecondSectionNameInGoogleDocstring() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, this::doTest);
   }
 
   // PY-16877
   public void testTwoWordsSectionNameInGoogleDocstring() throws Exception {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, this::doTest);
   }
 
   // PY-16870
   public void testParamNameInGoogleDocstring() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertSameElements(variants, "param1", "param2");
-      }
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertSameElements(variants, "param1", "param2");
     });
   }
 
   // PY-16870
   public void testOverrideParamNameInGoogleDocstring() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertSameElements(variants, "param2");
-      }
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertSameElements(variants, "param2");
     });
   }
 
   // PY-16870
   public void testOverrideParamNameInRestDocstring() {
-    runWithDocStringFormat(DocStringFormat.REST, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertSameElements(variants, "param2");
-      }
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertSameElements(variants, "param2");
     });
   }
 
   // PY-16870, PY-16972
   public void testClassNameInDocstring() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
   }
 
   // PY-17002
   public void testParamTypeInGoogleDocstringWithoutClosingParenthesis() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertSameElements(variants, "str", "basestring");
-      }
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertSameElements(variants, "str", "basestring");
     });
   }
 
   // PY-17635
   public void testParamNameInTypeDeclarationInRestDocstring() {
-    runWithDocStringFormat(DocStringFormat.REST, new Runnable() {
-      @Override
-      public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertContainsElements(variants, "foo");
-      }
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      final List<String> variants = doTestByFile();
+      assertNotNull(variants);
+      assertContainsElements(variants, "foo");
     });
   }
 
@@ -635,15 +601,12 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testRelativeImportExcludeToplevel() {  // PY-6304
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.copyDirectoryToProject("relativeImportExcludeToplevel", "");
-        myFixture.configureByFile("pack/subpack/modX.py");
-        myFixture.completeBasic();
-        assertNull(myFixture.getLookupElementStrings());
-        myFixture.checkResult("from ...subpack import");
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      myFixture.copyDirectoryToProject("relativeImportExcludeToplevel", "");
+      myFixture.configureByFile("pack/subpack/modX.py");
+      myFixture.completeBasic();
+      assertNull(myFixture.getLookupElementStrings());
+      myFixture.checkResult("from ...subpack import");
     });
   }
 
@@ -753,18 +716,15 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-4073
   public void testFunctionSpecialAttributes() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
-        assertNotNull(suggested);
-        assertContainsElements(suggested, PyNames.LEGACY_FUNCTION_SPECIAL_ATTRIBUTES);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
+      assertNotNull(suggested);
+      assertContainsElements(suggested, PyNames.LEGACY_FUNCTION_SPECIAL_ATTRIBUTES);
 
-        suggested = doTestByText("def func(): pass; func.__<caret>");
-        assertNotNull(suggested);
-        assertContainsElements(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
-        assertDoesntContain(suggested, PyNames.PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES);
-      }
+      suggested = doTestByText("def func(): pass; func.__<caret>");
+      assertNotNull(suggested);
+      assertContainsElements(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+      assertDoesntContain(suggested, PyNames.PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES);
     });
   }
 
@@ -794,18 +754,8 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-9342
   public void testUnboundMethodSpecialAttributes() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        assertUnderscoredMethodSpecialAttributesSuggested();
-      }
-    });
-    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
-      @Override
-      public void run() {
-        assertUnderscoredFunctionAttributesSuggested();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::assertUnderscoredMethodSpecialAttributesSuggested);
+    runWithLanguageLevel(LanguageLevel.PYTHON32, this::assertUnderscoredFunctionAttributesSuggested);
   }
 
   // PY-9342
@@ -839,7 +789,7 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> suggested = doTestSmartByFile();
     assertNotNull(suggested);
     // Remove duplicates for assertContainsElements(), "append" comes from bytearray
-    assertContainsElements(new HashSet<String>(suggested), "lower", "capitalize", "join", "append");
+    assertContainsElements(new HashSet<>(suggested), "lower", "capitalize", "join", "append");
   }
 
   public void testSmartFromUsedAttributesOfClass() {
@@ -916,29 +866,105 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatString() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatFuncArgument() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatStringFromStarArg() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatStringOutsideBraces() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatStringFromRef() {
     doTest();
+  }
+
+  // PY-3077
+  public void testFormatStringWithFormatModifier() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringWithDictLiteralArg() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringWithDictCallArg() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringWithParenDictCallArg() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringWithModifiers() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringDictLiteralStringKey() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringDictCallStringKey() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringDictLiteralArgument() {
+    doTest();
+  }
+
+  // PY-19839
+  public void testPercentStringDictRefKeys() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictFuncKeys() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithZipCall() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithListArg() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithDictLiteralArg() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
+  }
+
+  // PY-19839
+  public void testPercentStringDictWithPackedDictLiteralArg() {
+    final List<String> variants = doTestByFile();
+    assertNullOrEmpty(variants);
   }
 
   // PY-17437
@@ -979,6 +1005,103 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-12425
   public void testInstanceFromProvidedCallAttr() {
     doMultiFileTest();
+  }
+
+  // PY-18684
+  public void testRPowSignature() {
+    doTest();
+  }
+
+  // PY-20017
+  public void testAncestorHasDunderNewMethod() {
+    doTest();
+  }
+
+  // PY-20279
+  public void testImplicitDunderClass() {
+    final List<String> inClassMethod = doTestByText("class First:\n" +
+                                                    "    def foo(self):\n" +
+                                                    "        print(__cl<caret>)");
+    assertNotNull(inClassMethod);
+    assertDoesntContain(inClassMethod, PyNames.__CLASS__);
+
+    final List<String> inStaticMethod = doTestByText("class First:\n" +
+                                                     "    @staticmethod\n" +
+                                                     "    def foo():\n" +
+                                                     "        print(__cl<caret>)");
+    assertNotNull(inStaticMethod);
+    assertDoesntContain(inStaticMethod, PyNames.__CLASS__);
+
+    final List<String> inClass = doTestByText("class First:\n" +
+                                              "    print(__cl<caret>)");
+    assertNotNull(inClass);
+    assertEmpty(inClass);
+
+    final List<String> inFunction = doTestByText("def abc():\n" +
+                                                 "    print(__cl<caret>)");
+    assertNotNull(inFunction);
+    assertEmpty(inClass);
+  }
+
+  // PY-20768
+  public void testInitSubclassBuiltinMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36,
+                         () -> {
+                           doTestByText("class Cl(object):\n" +
+                                        "  def __init_su<caret>");
+                           myFixture.checkResult("class Cl(object):\n" +
+                                                 "  def __init_subclass__(cls, **kwargs):");
+                         });
+  }
+
+  // PY-20768
+  public void testSetNameBuiltinMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36,
+                         () -> {
+                           doTestByText("class Cl(object):\n" +
+                                        "  def __set_n<caret>");
+                           myFixture.checkResult("class Cl(object):\n" +
+                                                 "  def __set_name__(self, owner, name):");
+                         });
+  }
+
+  // PY-20769
+  public void testFsPathBuiltinMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36,
+                         () -> {
+                           doTestByText("class Cl(object):\n" +
+                                        "  def __fspa<caret>");
+                           myFixture.checkResult("class Cl(object):\n" +
+                                                 "  def __fspath__(self):");
+                         });
+  }
+
+  public void testSixAddMetaclass() {
+    final List<String> suggested = doTestByText("import six\n" +
+                                                "class M(type):\n" +
+                                                "    def baz(self):\n" +
+                                                "        pass\n" +
+                                                "@six.add_metaclass(M)\n" +
+                                                "class C(object):\n" +
+                                                "    def foo(self):\n" +
+                                                "        C.ba<caret>()");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "baz");
+  }
+
+  public void testSixAddMetaclassWithAs() {
+    final List<String> suggested = doTestByText("from six import add_metaclass as a_m\n" +
+                                                "class M(type):\n" +
+                                                "    def baz(self):\n" +
+                                                "        pass\n" +
+                                                "@a_m(M)\n" +
+                                                "class C(object):\n" +
+                                                "    def foo(self):\n" +
+                                                "        C.ba<caret>()");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "baz");
   }
 
   @Override

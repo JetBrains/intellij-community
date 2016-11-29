@@ -84,23 +84,14 @@ public class JdkPopupAction extends AnAction {
 
     if (!isEnabledInCurrentOS() || component == null) return;
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      final ArrayList<Pair<File, String>> jdkLocations = retrieveJDKLocations();
 
-      @Override
-      public void run() {
-        final ArrayList<Pair<File, String>> jdkLocations = retrieveJDKLocations();
-
-        if (jdkLocations.isEmpty()) {
-          return;
-        }
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showPopupMenu(e, jdkLocations, showInMiddle, component);
-          }
-        });
+      if (jdkLocations.isEmpty()) {
+        return;
       }
+
+      ApplicationManager.getApplication().invokeLater(() -> showPopupMenu(e, jdkLocations, showInMiddle, component));
     }, "Looking for JDK locations...", false, e.getProject(), component);
   }
 
@@ -117,7 +108,7 @@ public class JdkPopupAction extends AnAction {
         @NotNull
         @Override
         public AnAction[] getChildren(@Nullable AnActionEvent e) {
-          List<AnAction> result = new ArrayList<AnAction>();
+          List<AnAction> result = new ArrayList<>();
           for (final Pair<File, String> homes : jdkLocations) {
             result.add(new FileChooserAction("", null, null) {
               @Override
@@ -152,7 +143,7 @@ public class JdkPopupAction extends AnAction {
   }
 
   private static ArrayList<Pair<File, String>> retrieveJDKLocations() {
-    ArrayList<Pair<File, String>> jdkLocations = new ArrayList<Pair<File, String>>();
+    ArrayList<Pair<File, String>> jdkLocations = new ArrayList<>();
     Collection<String> homePaths = JavaSdk.getInstance().suggestHomePaths();
     for (final String path : homePaths) {
       try {

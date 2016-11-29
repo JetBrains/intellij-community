@@ -43,7 +43,7 @@ class PropertiesManager extends MembersManager<PyElement> {
   @NotNull
   @Override
   protected List<? extends PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    final List<PyElement> elements = new ArrayList<PyElement>(pyClass.getProperties().size());
+    final List<PyElement> elements = new ArrayList<>(pyClass.getProperties().size());
     for (final Property property : pyClass.getProperties().values()) {
       elements.add(getElement(property));
     }
@@ -110,7 +110,7 @@ class PropertiesManager extends MembersManager<PyElement> {
 
   @NotNull
   private static Collection<PyFunction> getAllFunctions(@NotNull final Property property) {
-    final Collection<PyFunction> result = new ArrayList<PyFunction>(3);
+    final Collection<PyFunction> result = new ArrayList<>(3);
     final PyCallable getter = property.getGetter().valueOrNull();
     final PyCallable setter = property.getSetter().valueOrNull();
     final PyCallable deleter = property.getDeleter().valueOrNull();
@@ -131,7 +131,7 @@ class PropertiesManager extends MembersManager<PyElement> {
   protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
                                               @NotNull final Collection<PyMemberInfo<PyElement>> members,
                                               @NotNull final PyClass... to) {
-    final Collection<PyElement> result = new ArrayList<PyElement>();
+    final Collection<PyElement> result = new ArrayList<>();
 
     final Collection<PyElement> elements = fetchElements(members);
     for (final PyElement element : elements) {
@@ -150,7 +150,7 @@ class PropertiesManager extends MembersManager<PyElement> {
   @NotNull
   @Override
   public PyMemberInfo<PyElement> apply(@NotNull final PyElement input) {
-    return new PyMemberInfo<PyElement>(input, false, getName(input), false, this, false);
+    return new PyMemberInfo<>(input, false, getName(input), false, this, false);
   }
 
   private static String getName(@NotNull final PyElement input) {

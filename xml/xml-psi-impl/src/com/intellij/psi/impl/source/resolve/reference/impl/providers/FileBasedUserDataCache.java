@@ -31,13 +31,8 @@ import com.intellij.psi.util.CachedValuesManager;
 public abstract class FileBasedUserDataCache<T> extends UserDataCache<CachedValue<T>, PsiFile, Object> {
   @Override
   protected CachedValue<T> compute(final PsiFile xmlFile, final Object o) {
-    return CachedValuesManager.getManager(xmlFile.getProject()).createCachedValue(new CachedValueProvider<T>() {
-      @Override
-      public Result<T> compute() {
-
-        return new Result<T>(doCompute(xmlFile), getDependencies(xmlFile));
-      }
-    }, false);
+    return CachedValuesManager.getManager(xmlFile.getProject()).createCachedValue(
+      () -> new CachedValueProvider.Result<>(doCompute(xmlFile), getDependencies(xmlFile)), false);
   }
 
   protected Object[] getDependencies(PsiFile xmlFile) {

@@ -65,12 +65,7 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
       }
       else if (unquotedValue.equals(enumerationDescriptor.getDefaultValue())) {  // todo case insensitive
         return ContainerUtil.map2Array(enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue), PsiReference.class,
-                                       new Function<PsiReference, PsiReference>() {
-                                         @Override
-                                         public PsiReference fun(PsiReference reference) {
-                                           return PsiDelegateReference.createSoft(reference, true);
-                                         }
-                                       });
+                                       reference -> PsiDelegateReference.createSoft(reference, true));
       }
     }
     return PsiReference.EMPTY_ARRAY;

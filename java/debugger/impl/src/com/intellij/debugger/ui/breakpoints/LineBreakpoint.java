@@ -48,7 +48,6 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -57,7 +56,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
-import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,21 +79,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Override
   protected Icon getDisabledIcon(boolean isMuted) {
-    final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    if (isMuted) {
-      return master == null? AllIcons.Debugger.Db_muted_disabled_breakpoint : AllIcons.Debugger.Db_muted_dep_line_breakpoint;
+    if (DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this) != null) {
+      return isMuted ? AllIcons.Debugger.Db_muted_dep_line_breakpoint : AllIcons.Debugger.Db_dep_line_breakpoint;
     }
-    else {
-      return master == null? AllIcons.Debugger.Db_disabled_breakpoint : AllIcons.Debugger.Db_dep_line_breakpoint;
-    }
-  }
-
-  @Override
-  protected Icon getSetIcon(boolean isMuted) {
-    if (isRemoveAfterHit()) {
-      return isMuted ? AllIcons.Debugger.Db_muted_temporary_breakpoint : AllIcons.Debugger.Db_temporary_breakpoint;
-    }
-    return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
+    return null;
   }
 
   @Override
@@ -146,8 +133,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
           if (!acceptLocation(debugProcess, classType, loc)) {
             continue;
           }
-          final BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(this, loc);
-          debugProcess.getRequestsManager().enableRequest(request);
+          createLocationBreakpointRequest(loc, debugProcess);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex() + "; codeIndex=" + loc.codeIndex());
           }
@@ -202,9 +188,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     if (isAnonymousClass(classType)) {
       if ((method.isConstructor() && loc.codeIndex() == 0) || method.isBridge()) return false;
     }
+    SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
+    if (position == null) return false;
+
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
-      SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
-      if (position == null) return false;
       JavaLineBreakpointType type = getXBreakpointType();
       if (type == null) return true;
       return type.matchesPosition(this, position);
@@ -252,12 +239,11 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         if (LOG.isDebugEnabled()) {
           final GlobalSearchScope scope = debugProcess.getSearchScope();
           final boolean contains = scope.contains(breakpointFile);
-          final Project project = getProject();
           List<VirtualFile> files = ContainerUtil.map(
-            JavaFullClassNameIndex.getInstance().get(className.hashCode(), project, scope),
+            JavaFullClassNameIndex.getInstance().get(className.hashCode(), myProject, scope),
             aClass -> aClass.getContainingFile().getVirtualFile());
           List<VirtualFile> allFiles = ContainerUtil.map(
-            JavaFullClassNameIndex.getInstance().get(className.hashCode(), project, new EverythingGlobalScope(project)),
+            JavaFullClassNameIndex.getInstance().get(className.hashCode(), myProject, new EverythingGlobalScope(myProject)),
             aClass -> aClass.getContainingFile().getVirtualFile());
           final VirtualFile contentRoot = fileIndex.getContentRootForFile(breakpointFile);
           final Module module = fileIndex.getModuleForFile(breakpointFile);
@@ -497,40 +483,37 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
     final boolean[] canAdd = new boolean[]{false};
-    XDebuggerUtil.getInstance().iterateLine(project, document, lineIndex, new Processor<PsiElement>() {
-      @Override
-      public boolean process(PsiElement element) {
-        if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
-          return true;
-        }
-        PsiElement child = element;
-        while(element != null) {
+    XDebuggerUtil.getInstance().iterateLine(project, document, lineIndex, element -> {
+      if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
+        return true;
+      }
+      PsiElement child = element;
+      while(element != null) {
 
-          final int offset = element.getTextOffset();
-          if (offset >= 0) {
-            if (document.getLineNumber(offset) != lineIndex) {
-              break;
-            }
+        final int offset = element.getTextOffset();
+        if (offset >= 0) {
+          if (document.getLineNumber(offset) != lineIndex) {
+            break;
           }
-          child = element;
-          element = element.getParent();
         }
+        child = element;
+        element = element.getParent();
+      }
 
-        if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
-          PsiCodeBlock body = ((PsiMethod)child).getBody();
-          if(body == null) {
-            canAdd[0] = false;
-          }
-          else {
-            PsiStatement[] statements = body.getStatements();
-            canAdd[0] = statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == lineIndex;
-          }
+      if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
+        PsiCodeBlock body = ((PsiMethod)child).getBody();
+        if(body == null) {
+          canAdd[0] = false;
         }
         else {
-          canAdd[0] = true;
+          PsiStatement[] statements = body.getStatements();
+          canAdd[0] = statements.length > 0 && document.getLineNumber(statements[0].getTextOffset()) == lineIndex;
         }
-        return false;
       }
+      else {
+        canAdd[0] = true;
+      }
+      return false;
     });
 
     return canAdd[0];

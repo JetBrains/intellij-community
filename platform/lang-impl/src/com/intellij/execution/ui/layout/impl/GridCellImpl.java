@@ -29,7 +29,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -48,15 +47,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public class GridCellImpl implements GridCell {
   private final GridImpl myContainer;
 
-  private final MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
-  private final Set<Content> myMinimizedContents = new HashSet<Content>();
+  private final MutualMap<Content, TabInfo> myContents = new MutualMap<>(true);
+  private final Set<Content> myMinimizedContents = new HashSet<>();
 
   private final JBTabs myTabs;
   private final GridImpl.Placeholder myPlaceholder;
@@ -150,7 +147,7 @@ public class GridCellImpl implements GridCell {
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
       .setStealthTabMode(true).setFocusCycle(false).setPaintFocus(true)
-      .setProvideSwitchTargets(false).setTabDraggingEnabled(true).setSideComponentOnTabs(false);
+      .setTabDraggingEnabled(true).setSideComponentOnTabs(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
       @Override
@@ -197,12 +194,7 @@ public class GridCellImpl implements GridCell {
     if (myContents.containsKey(content)) return;
     myContents.put(content, null);
 
-    revalidateCell(new Runnable() {
-      @Override
-      public void run() {
-        myTabs.addTab(createTabInfoFor(content));
-      }
-    });
+    revalidateCell(() -> myTabs.addTab(createTabInfoFor(content)));
 
     updateSelection(myTabs.getComponent().getRootPane() != null);
   }
@@ -213,12 +205,7 @@ public class GridCellImpl implements GridCell {
     final TabInfo info = getTabFor(content);
     myContents.remove(content);
 
-    revalidateCell(new Runnable() {
-      @Override
-      public void run() {
-        myTabs.removeTab(info);
-      }
-    });
+    revalidateCell(() -> myTabs.removeTab(info));
 
     updateSelection(myTabs.getComponent().getRootPane() != null);
   }
@@ -306,16 +293,6 @@ public class GridCellImpl implements GridCell {
 
   public boolean isMinimized(Content content) {
     return myMinimizedContents.contains(content);
-  }
-
-  public List<SwitchTarget> getTargets(boolean onlyVisible) {
-    if (myTabs.getPresentation().isHideTabs()) return new ArrayList<SwitchTarget>();
-
-    return myTabs.getTargets(onlyVisible, false);
-  }
-
-  public SwitchTarget getTargetForSelection() {
-    return myTabs.getCurrentTarget();
   }
 
   public boolean contains(Component c) {

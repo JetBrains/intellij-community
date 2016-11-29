@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
-public class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
+class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
   private static final String HINT = "Create constructor matching super"
 
   AddConstructorMatchingSuperTest() {
@@ -34,6 +34,7 @@ public class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
 
   void testGroovyToGroovy() {
     doTextTest('''\
+@interface Anno {}
 class Base {
     Base(int p, @Anno int x) throws Exception {}
 }
@@ -41,12 +42,13 @@ class Base {
 class Derived exten<caret>ds Base {
 }
 ''', '''\
+@interface Anno {}
 class Base {
     Base(int p, @Anno int x) throws Exception {}
 }
 
 class Derived extends Base {
-    <caret>Derived(int p, @Anno int x) throws Exception {
+    <caret>Derived(int p, int x) throws Exception {
         super(p, x)
     }
 }
@@ -55,6 +57,7 @@ class Derived extends Base {
 
   void testJavaToGroovy() {
     myFixture.addClass('''\
+@interface Anno {}
 class Base {
     Base(int p, @Anno int x) throws Exception {}
 }
@@ -64,7 +67,7 @@ class Derived exten<caret>ds Base {
 }
 ''', '''\
 class Derived extends Base {
-    <caret>def Derived(int p, @Anno int x) throws Exception {
+    <caret>def Derived(int p, int x) throws Exception {
         super(p, x)
     }
 }
@@ -86,7 +89,7 @@ class Derived exten<caret>ds Base {
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     myFixture.checkResult('''\
 class Derived extends Base {
-    <caret>Derived(int p, @Override int x) throws Exception {
+    <caret>Derived(int p, int x) throws Exception {
         super(p, x);
     }
 }

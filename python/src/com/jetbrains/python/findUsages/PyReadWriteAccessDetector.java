@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,28 +23,31 @@ import com.jetbrains.python.psi.PyDelStatement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyReadWriteAccessDetector extends ReadWriteAccessDetector {
   @Override
-  public boolean isReadWriteAccessible(PsiElement element) {
+  public boolean isReadWriteAccessible(@NotNull PsiElement element) {
     return element instanceof PyTargetExpression || element instanceof PyReferenceExpression;
   }
 
   @Override
-  public boolean isDeclarationWriteAccess(PsiElement element) {
+  public boolean isDeclarationWriteAccess(@NotNull PsiElement element) {
     return element instanceof PyTargetExpression || element.getParent() instanceof PyDelStatement;
   }
 
+  @NotNull
   @Override
-  public Access getReferenceAccess(PsiElement referencedElement, PsiReference reference) {
+  public Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference) {
     return getExpressionAccess(reference.getElement());
   }
 
+  @NotNull
   @Override
-  public Access getExpressionAccess(PsiElement expression) {
+  public Access getExpressionAccess(@NotNull PsiElement expression) {
     if (isDeclarationWriteAccess(expression)) {
       return Access.Write;
     }

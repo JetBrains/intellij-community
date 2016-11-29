@@ -120,7 +120,7 @@ public class TrackCoverageAction extends ToggleModelAction {
     final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
     if (currentSuite != null) {
       final AbstractTestProxy test = myModel.getTreeView().getSelectedTest();
-      List<String> testMethods = new ArrayList<String>();
+      List<String> testMethods = new ArrayList<>();
       if (test != null && !test.isInProgress()) {
         final List<? extends AbstractTestProxy> list = test.getAllTests();
         for (AbstractTestProxy proxy : list) {
@@ -154,11 +154,7 @@ public class TrackCoverageAction extends ToggleModelAction {
       final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
       if (currentSuite != null) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
-          myUpdateCoverageAlarm.addRequest(new Runnable() {
-            public void run() {
-              selectSubCoverage();
-            }
-          }, 300);
+          myUpdateCoverageAlarm.addRequest(() -> selectSubCoverage(), 300);
         } else {
           if (coverageDataManager.isSubCoverageActive()) coverageDataManager.restoreMergedCoverage(currentSuite);
         }

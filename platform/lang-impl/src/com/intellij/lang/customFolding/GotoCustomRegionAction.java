@@ -58,17 +58,14 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
       CommandProcessor processor = CommandProcessor.getInstance();
       processor.executeCommand(
         project,
-        new Runnable() {
-          @Override
-          public void run() {
-            Collection<FoldingDescriptor> foldingDescriptors = getCustomFoldingDescriptors(editor, project);
-            if (foldingDescriptors.size() > 0) {
-              CustomFoldingRegionsPopup regionsPopup = new CustomFoldingRegionsPopup(foldingDescriptors, editor, project);
-              regionsPopup.show();
-            }
-            else {
-              notifyCustomRegionsUnavailable(editor, project);
-            }
+        () -> {
+          Collection<FoldingDescriptor> foldingDescriptors = getCustomFoldingDescriptors(editor, project);
+          if (foldingDescriptors.size() > 0) {
+            CustomFoldingRegionsPopup regionsPopup = new CustomFoldingRegionsPopup(foldingDescriptors, editor, project);
+            regionsPopup.show();
+          }
+          else {
+            notifyCustomRegionsUnavailable(editor, project);
           }
         },
         IdeBundle.message("goto.custom.region.command"),
@@ -89,7 +86,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
 
   @NotNull
   private static Collection<FoldingDescriptor> getCustomFoldingDescriptors(@NotNull Editor editor, @NotNull Project project) {
-    Set<FoldingDescriptor> foldingDescriptors = new HashSet<FoldingDescriptor>();
+    Set<FoldingDescriptor> foldingDescriptors = new HashSet<>();
     final Document document = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     PsiFile file = documentManager != null ? documentManager.getPsiFile(document) : null;

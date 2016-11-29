@@ -92,7 +92,7 @@ public class FontEditorDialog extends DialogWrapper {
     });
     mySwingFontList.setListData(collectSwingFontDescriptors());
     mySwingFontList.setCellRenderer(new ColoredListCellRenderer() {
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         FontDescriptor descriptor = (FontDescriptor) value;
         clear();
         append(descriptor.getSwingFont(),
@@ -143,7 +143,7 @@ public class FontEditorDialog extends DialogWrapper {
   }
 
   private static FontDescriptor[] collectSwingFontDescriptors() {
-    ArrayList<FontDescriptor> result = new ArrayList<FontDescriptor>();
+    ArrayList<FontDescriptor> result = new ArrayList<>();
     UIDefaults defaults = UIManager.getDefaults();
     Enumeration e = defaults.keys ();
     while(e.hasMoreElements()) {
@@ -153,11 +153,7 @@ public class FontEditorDialog extends DialogWrapper {
         result.add(FontDescriptor.fromSwingFont((String) key));
       }
     }
-    Collections.sort(result, new Comparator<FontDescriptor>() {
-      public int compare(final FontDescriptor o1, final FontDescriptor o2) {
-        return o1.getSwingFont().compareTo(o2.getSwingFont());
-      }
-    });
+    Collections.sort(result, (o1, o2) -> o1.getSwingFont().compareTo(o2.getSwingFont()));
     return result.toArray(new FontDescriptor[result.size()]);
   }
 

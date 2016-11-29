@@ -52,7 +52,7 @@ public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAct
   @NotNull
   public static List<AnAction> getSelectedElements(AnActionEvent e) {
     final JList list = getList(e);
-    final List<AnAction> actions = new ArrayList<AnAction>();
+    final List<AnAction> actions = new ArrayList<>();
     if (list != null) {
       for (Object value : list.getSelectedValues()) {
         if (value instanceof AnAction) {

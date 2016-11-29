@@ -102,13 +102,10 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     final JavaMethod getterMethod = getGetterMethod();
     if (getterMethod == null) {
       final Collection<DomElement> collection = ModelMergerUtil.getFilteredImplementations(element);
-      return ContainerUtil.concat(collection, new Function<DomElement, Collection<? extends DomElement>>() {
-        @Override
-        public Collection<? extends DomElement> fun(final DomElement domElement) {
-          final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomInvocationHandler(domElement);
-          assert handler != null : domElement;
-          return handler.getCollectionChildren(CollectionChildDescriptionImpl.this);
-        }
+      return ContainerUtil.concat(collection, (Function<DomElement, Collection<? extends DomElement>>)domElement -> {
+        final DomInvocationHandler<?,?> handler1 = DomManagerImpl.getDomInvocationHandler(domElement);
+        assert handler1 != null : domElement;
+        return handler1.getCollectionChildren(this);
       });
     }
     //noinspection unchecked

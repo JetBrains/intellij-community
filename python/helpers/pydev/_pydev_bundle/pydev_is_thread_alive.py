@@ -1,4 +1,4 @@
-from _pydev_imps import _pydev_threading as threading
+from _pydev_imps._pydev_saved_modules import threading
 
 # Hack for https://sw-brainwy.rhcloud.com/tracker/PyDev/363 (i.e.: calling isAlive() can throw AssertionError under some circumstances)
 # It is required to debug threads started by start_new_thread in Python 3.4

@@ -274,7 +274,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       nameElement = ((XmlAttlistDecl)element).getNameElement();
     }
     else if (element instanceof XmlElementContentSpec) {
-      final List<PsiReference> psiRefs = new ArrayList<PsiReference>();
+      final List<PsiReference> psiRefs = new ArrayList<>();
       element.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(PsiElement child) {

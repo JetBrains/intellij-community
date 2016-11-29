@@ -55,7 +55,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
       refs = Collections.emptyList();
     }
     else {
-      refs = new ArrayList<String>();
+      refs = new ArrayList<>();
       final StringTokenizer tokenizer = new StringTokenizer(s, ",", false);
       while (tokenizer.hasMoreTokens()) {
         final String ref = tokenizer.nextToken();
@@ -86,7 +86,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
     if (refsString == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final List<PsiReference> refs = new ArrayList<PsiReference>();
+    final List<PsiReference> refs = new ArrayList<>();
     final AntDomTargetReference.ReferenceGroup group = new AntDomTargetReference.ReferenceGroup();
     final TextRange wholeStringRange = ElementManipulators.getValueTextRange(valueElement);
     final StringTokenizer tokenizer = new StringTokenizer(refsString, ",", false);

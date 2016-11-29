@@ -116,11 +116,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
       myInnerClassChooser.setText(((PsiClass)initialTargetElement).getQualifiedName());
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          myInnerClassChooser.requestFocus();
-        }
-      }, ModalityState.stateForComponent(myMainPanel));
+      ApplicationManager.getApplication().invokeLater(() -> myInnerClassChooser.requestFocus(), ModalityState.stateForComponent(myMainPanel));
     }
     else if (initialTargetElement instanceof PsiPackage) {
       myClassPackageChooser.setText(((PsiPackage)initialTargetElement).getQualifiedName());
@@ -286,7 +282,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     if (initialTargetDirectory != null && 
         JavaMoveClassesOrPackagesHandler.packageHasMultipleDirectoriesInModule(myProject, initialTargetDirectory)) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      final Set<VirtualFile> initialRoots = new HashSet<VirtualFile>();
+      final Set<VirtualFile> initialRoots = new HashSet<>();
       collectSourceRoots(psiElements, fileIndex, initialRoots);
       if (initialRoots.size() > 1) {
         initialTargetDirectory = null;

@@ -48,10 +48,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,35 +116,32 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
                                                   ApplicationNamesInfo.getInstance().getProductName());
       final int exitCode = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getInformationIcon());
       if (exitCode == Messages.YES) {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            boolean replaceAll = false;
-            for (IncludeDuplicate<T> pair : duplicates) {
-              if (!replaceAll) {
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          boolean replaceAll = false;
+          for (IncludeDuplicate<T> pair : duplicates) {
+            if (!replaceAll) {
 
-                highlightInEditor(project, pair, editor);
+              highlightInEditor(project, pair, editor);
 
-                ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);
-                promptDialog.show();
-                final int promptResult = promptDialog.getExitCode();
-                if (promptResult == FindManager.PromptResult.SKIP) continue;
-                if (promptResult == FindManager.PromptResult.CANCEL) break;
+              ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);
+              promptDialog.show();
+              final int promptResult = promptDialog.getExitCode();
+              if (promptResult == FindManager.PromptResult.SKIP) continue;
+              if (promptResult == FindManager.PromptResult.CANCEL) break;
 
-                if (promptResult == FindManager.PromptResult.OK) {
-                  doReplaceRange(includePath, pair.getStart(), pair.getEnd());
-                }
-                else if (promptResult == FindManager.PromptResult.ALL) {
-                  doReplaceRange(includePath, pair.getStart(), pair.getEnd());
-                  replaceAll = true;
-                }
-                else {
-                  LOG.error("Unknown return status");
-                }
-              }
-              else {
+              if (promptResult == FindManager.PromptResult.OK) {
                 doReplaceRange(includePath, pair.getStart(), pair.getEnd());
               }
+              else if (promptResult == FindManager.PromptResult.ALL) {
+                doReplaceRange(includePath, pair.getStart(), pair.getEnd());
+                replaceAll = true;
+              }
+              else {
+                LOG.error("Unknown return status");
+              }
+            }
+            else {
+              doReplaceRange(includePath, pair.getStart(), pair.getEnd());
             }
           }
         }, RefactoringBundle.message("remove.duplicates.command"), null);
@@ -184,7 +181,16 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    myIncludingFile = file;
+    try {
+      myIncludingFile = file;
+      doInvoke(project, editor, file);
+    }
+    finally {
+      myIncludingFile = null;
+    }
+  }
+
+  protected void doInvoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!editor.getSelectionModel().hasSelection()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("no.selection"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
@@ -213,7 +219,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
       return;
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file) || ApplicationManager.getApplication().isUnitTestMode()) return;
 
     ExtractIncludeDialog dialog = createDialog(file.getContainingDirectory(), getExtractExtension(fileType, children.first));
     dialog.show();
@@ -221,41 +227,24 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
       final PsiDirectory targetDirectory = dialog.getTargetDirectory();
       LOG.assertTrue(targetDirectory != null);
       final String targetfileName = dialog.getTargetFileName();
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                final List<IncludeDuplicate<T>> duplicates = new ArrayList<IncludeDuplicate<T>>();
-                final T first = children.getFirst();
-                final T second = children.getSecond();
-                PsiEquivalenceUtil.findChildRangeDuplicates(first, second, file, new PairConsumer<PsiElement, PsiElement>() {
-                  @Override
-                  public void consume(final PsiElement start, final PsiElement end) {
-                    duplicates.add(new IncludeDuplicate<T>((T) start, (T) end));
-                  }
-                });
-                final String includePath = processPrimaryFragment(first, second, targetDirectory, targetfileName, file);
-                editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          final List<IncludeDuplicate<T>> duplicates = new ArrayList<>();
+          final T first = children.getFirst();
+          final T second = children.getSecond();
+          PsiEquivalenceUtil.findChildRangeDuplicates(first, second, file, (start1, end1) -> duplicates.add(
+            new IncludeDuplicate<>((T)start1, (T)end1)));
+          final String includePath = processPrimaryFragment(first, second, targetDirectory, targetfileName, file);
+          editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
 
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    replaceDuplicates(includePath, duplicates, editor, project);
-                  }
-                });
-              }
-              catch (IncorrectOperationException e) {
-                CommonRefactoringUtil.showErrorMessage(getRefactoringName(), e.getMessage(), null, project);
-              }
-
-              editor.getSelectionModel().removeSelection();
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(includePath, duplicates, editor, project));
         }
-      }, getRefactoringName(), null);
+        catch (IncorrectOperationException e) {
+          CommonRefactoringUtil.showErrorMessage(getRefactoringName(), e.getMessage(), null, project);
+        }
+
+        editor.getSelectionModel().removeSelection();
+      }), getRefactoringName(), null);
 
     }
   }
@@ -272,6 +261,8 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return extractFileType.getDefaultExtension();
   }
 
+  @Deprecated
+  @TestOnly
   public boolean isValidRange(final T firstToExtract, final T lastToExtract) {
     return verifyChildRange(firstToExtract, lastToExtract);
   }

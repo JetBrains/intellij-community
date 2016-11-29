@@ -15,7 +15,12 @@
  */
 package org.jetbrains.debugger
 
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueNode
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.done
+import org.jetbrains.concurrency.rejected
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.values.ObjectValue
 import org.jetbrains.debugger.values.Value
@@ -33,4 +38,14 @@ open class BasicDebuggerViewSupport : MemberFilter, DebuggerViewSupport {
   }
 
   override fun getMemberFilter(context: VariableContext) = defaultMemberFilterPromise
+
+  override fun computeReceiverVariable(context: VariableContext, callFrame: CallFrame, node: XCompositeNode): Promise<*> {
+    return callFrame.receiverVariable
+        .done(node) {
+          node.addChildren(if (it == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(it, context)), true)
+        }
+        .rejected(node) {
+          node.addChildren(XValueChildrenList.EMPTY, true)
+        }
+  }
 }

@@ -19,10 +19,14 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -34,7 +38,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-public abstract class MultilineTreeCellRenderer extends JComponent implements TreeCellRenderer {
+public abstract class MultilineTreeCellRenderer extends JComponent implements Accessible, TreeCellRenderer {
 
   private boolean myWrapsCalculated = false;
   private boolean myTooSmall = false;
@@ -75,7 +79,12 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
         }
       }
     });
+    updateUI();
+  }
 
+  @Override
+  public void updateUI() {
+    UISettings.setupComponentAntialiasing(this);
   }
 
   protected void setMinHeight(int height) {
@@ -132,7 +141,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     }
 
     // fill background
-    if (!(myTree.getUI() instanceof WideSelectionTreeUI) || !((WideSelectionTreeUI)myTree.getUI()).isWideSelection()) {
+    if (!WideSelectionTreeUI.isWideSelection(myTree)) {
       g.setColor(bgColor);
       g.fillRect(borderX, borderY, borderW, borderH);
 
@@ -473,5 +482,42 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
 //      return myDelegatee.getScrollableTracksViewportHeight();
 //    }
 //  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleMultilineTreeCellRenderer();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
+    @Override
+    public String getAccessibleName() {
+      String name = accessibleName;
+      if (name == null) {
+        name = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
+      }
+
+      if (name == null) {
+        StringBuilder sb = new StringBuilder();
+        for (String aLine : myLines) {
+          sb.append(aLine);
+          sb.append(SystemProperties.getLineSeparator());
+        }
+        if (sb.length() > 0) name = sb.toString();
+      }
+
+      if (name == null) {
+        name = super.getAccessibleName();
+      }
+      return name;
+    }
+
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.LABEL;
+    }
+  }
 }
 

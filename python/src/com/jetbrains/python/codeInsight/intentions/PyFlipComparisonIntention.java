@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -39,8 +38,8 @@ import java.util.Map;
  * Date:   26.03.2010
  * Time:   22:01:27
  */
-public class PyFlipComparisonIntention extends BaseIntentionAction {
-  private static final Map<PyElementType, String> FLIPPED_OPERATORS = new HashMap<PyElementType, String>(7);
+public class PyFlipComparisonIntention extends PyBaseIntentionAction {
+  private static final Map<PyElementType, String> FLIPPED_OPERATORS = new HashMap<>(7);
 
   static {
     FLIPPED_OPERATORS.put(PyTokenTypes.EQEQ, "==");
@@ -82,7 +81,7 @@ public class PyFlipComparisonIntention extends BaseIntentionAction {
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
     while (binaryExpression != null) {

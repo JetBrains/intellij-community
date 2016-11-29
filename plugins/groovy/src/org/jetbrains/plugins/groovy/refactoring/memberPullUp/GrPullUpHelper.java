@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,13 +125,13 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
     ((GroovyPsiElement)member).accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+      public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
         if (processRef(referenceExpression)) return;
         super.visitReferenceExpression(referenceExpression);
       }
 
       @Override
-      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+      public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
         if (processRef(refElement)) return;
         super.visitCodeReferenceElement(refElement);
       }
@@ -165,17 +165,17 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
       if (modifierListOwner instanceof GrTypeDefinition) {
         ((GrTypeDefinition)modifierListOwner).accept(new GroovyRecursiveElementVisitor() {
           @Override
-          public void visitMethod(GrMethod method) {
+          public void visitMethod(@NotNull GrMethod method) {
             check(method);
           }
 
           @Override
-          public void visitField(GrField field) {
+          public void visitField(@NotNull GrField field) {
             check(field);
           }
 
           @Override
-          public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+          public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
             check(typeDefinition);
             super.visitTypeDefinition(typeDefinition);
           }
@@ -327,7 +327,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
                                                       final Iterable<PsiTypeParameter> parametersIterable,
                                                       final PsiSubstitutor substitutor,
                                                       final GroovyPsiElementFactory factory) {
-    final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<>();
     for (PsiTypeParameter parameter : parametersIterable) {
       PsiType substitutedType = substitutor.substitute(parameter);
 
@@ -382,9 +382,9 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
 
   private class StaticReferencesCollector extends GrClassMemberReferenceVisitor {
-    private final ArrayList<GrReferenceElement> myReferences = new ArrayList<GrReferenceElement>();
-    private final ArrayList<PsiElement> myReferees = new ArrayList<PsiElement>();
-    private final ArrayList<PsiClass> myRefereeClasses = new ArrayList<PsiClass>();
+    private final ArrayList<GrReferenceElement> myReferences = new ArrayList<>();
+    private final ArrayList<PsiElement> myReferees = new ArrayList<>();
+    private final ArrayList<PsiClass> myRefereeClasses = new ArrayList<>();
     private final Set<PsiMember> myMovedMembers;
 
     private StaticReferencesCollector(Set<PsiMember> movedMembers) {
@@ -426,7 +426,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
     private final GrExpression myThisExpression = GroovyPsiElementFactory.getInstance(myProject).createExpressionFromText("this", null);
 
     @Override
-    public void visitReferenceExpression(GrReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression expression) {
       if(org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isSuperReference(expression.getQualifierExpression())) {
         PsiElement resolved = expression.resolve();
         if (resolved == null || resolved instanceof PsiMethod && shouldFixSuper((PsiMethod) resolved)) {
@@ -439,7 +439,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
     }
 
     @Override
-    public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+    public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
       //do nothing
     }
 
@@ -464,7 +464,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
   private class QualifiedThisSuperAdjuster extends GroovyRecursiveElementVisitor {
     @Override
-    public void visitReferenceExpression(GrReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (expression.getCopyableUserData(SUPER_REF) != null) {
         expression.putCopyableUserData(SUPER_REF, null);
@@ -639,7 +639,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
   private class QualifiedThisSuperSearcher extends GroovyRecursiveElementVisitor {
     @Override
-    public void visitReferenceExpression(GrReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isSuperReference(expression)) {
         final GrExpression qualifier = expression.getQualifier();

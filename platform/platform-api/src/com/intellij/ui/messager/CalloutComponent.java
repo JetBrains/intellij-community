@@ -186,11 +186,9 @@ public class CalloutComponent {
     myFrame.setBounds(frameBounds);
     myFrame.setVisible(true);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        installDisposeListeners();
-        myFrame.setVisible(true);
-      }
+    SwingUtilities.invokeLater(() -> {
+      installDisposeListeners();
+      myFrame.setVisible(true);
     });
   }
 
@@ -206,11 +204,9 @@ public class CalloutComponent {
   }
 
   private void installDisposeListeners() {
-    myKeyEventDispatcher = new KeyEventDispatcher() {
-      public boolean dispatchKeyEvent(KeyEvent e) {
-        dispose();
-        return false;
-      }
+    myKeyEventDispatcher = e -> {
+      dispose();
+      return false;
     };
     myKeyboardFocusManager.addKeyEventDispatcher(myKeyEventDispatcher);
 
@@ -284,23 +280,21 @@ public class CalloutComponent {
 
   private void dispose() {
 
-    Runnable runnable = new Runnable() {
-      public void run() {
-        myFrame.dispose();
+    Runnable runnable = () -> {
+      myFrame.dispose();
 
-        Toolkit.getDefaultToolkit().removeAWTEventListener(myMulticastListener);
-        myKeyboardFocusManager.removeKeyEventDispatcher(myKeyEventDispatcher);
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myMulticastListener);
+      myKeyboardFocusManager.removeKeyEventDispatcher(myKeyEventDispatcher);
 
-        myTargetComponent.removeComponentListener(myComponentListener);
-        myTargetWindow.removeWindowListener(myWindowListener);
-        myTargetWindow.removeWindowStateListener(myWindowStateListener);
+      myTargetComponent.removeComponentListener(myComponentListener);
+      myTargetWindow.removeWindowListener(myWindowListener);
+      myTargetWindow.removeWindowStateListener(myWindowStateListener);
 
-        final Container parent = myPointerComponent.getParent();
-        final Rectangle bounds = myPointerComponent.getBounds();
-        if (parent != null) {
-          parent.remove(myPointerComponent);
-          parent.repaint(bounds.x, bounds.y, bounds.width, bounds.height);
-        }
+      final Container parent = myPointerComponent.getParent();
+      final Rectangle bounds = myPointerComponent.getBounds();
+      if (parent != null) {
+        parent.remove(myPointerComponent);
+        parent.repaint(bounds.x, bounds.y, bounds.width, bounds.height);
       }
     };
 

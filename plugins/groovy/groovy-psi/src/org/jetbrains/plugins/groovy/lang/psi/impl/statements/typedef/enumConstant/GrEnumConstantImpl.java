@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -159,11 +158,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return GrClosableBlock.EMPTY_ARRAY;
   }
 
-  @Override
-  public PsiMethod resolveMethod() {
-    return PsiImplUtil.extractUniqueElement(multiResolve(false));
-  }
-
   @NotNull
   @Override
   public JavaResolveResult resolveMethodGenerics() {
@@ -197,12 +191,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @Override
   public PsiReference getReference() {
     return myReference;
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
   @Override
@@ -284,5 +272,11 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     public boolean isSoft() {
       return false;
     }
+  }
+
+  @Nullable
+  @Override
+  public Object computeConstantValue() {
+    return this;
   }
 }

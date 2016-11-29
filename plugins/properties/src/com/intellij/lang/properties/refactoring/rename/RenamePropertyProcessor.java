@@ -22,7 +22,6 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -36,16 +35,18 @@ import java.util.List;
 import java.util.Map;
 
 public class RenamePropertyProcessor extends RenamePsiElementProcessor {
+  @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof IProperty ||
            (element instanceof PomTargetPsiElement && ((PomTargetPsiElement)element).getTarget() instanceof XmlProperty);
   }
 
+  @Override
   public void prepareRenaming(final PsiElement element, final String newName,
                               final Map<PsiElement, String> allRenames) {
     ResourceBundle resourceBundle = PropertiesImplUtil.getProperty(element).getPropertiesFile().getResourceBundle();
 
-    final Map<PsiElement, String> allRenamesCopy = new LinkedHashMap<PsiElement, String>(allRenames);
+    final Map<PsiElement, String> allRenamesCopy = new LinkedHashMap<>(allRenames);
     allRenames.clear();
     for (final Map.Entry<PsiElement, String> e : allRenamesCopy.entrySet()) {
       final IProperty property = PropertiesImplUtil.getProperty(e.getKey());

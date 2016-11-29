@@ -15,10 +15,16 @@
  */
 package com.intellij.diff;
 
+import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Range;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -35,7 +41,7 @@ public class Block {
   private final int myEnd;
 
   public Block(@NotNull String source, int start, int end) {
-    this(LineTokenizer.tokenize(source, false, false), start, end);
+    this(tokenize(source), start, end);
   }
 
   public Block(@NotNull String[] source, int start, int end) {
@@ -45,44 +51,63 @@ public class Block {
   }
 
   @NotNull
+  public static String[] tokenize(@NotNull String text) {
+    return LineTokenizer.tokenize(text, false, false);
+  }
+
+  @NotNull
   public Block createPreviousBlock(@NotNull String prevContent) {
-    return createPreviousBlock(LineTokenizer.tokenize(prevContent, false, false));
+    return createPreviousBlock(tokenize(prevContent));
   }
 
   @NotNull
   public Block createPreviousBlock(@NotNull String[] prevContent) {
-    int start = -1;
-    int end = -1;
-    int shift = 0;
+    try {
+      FairDiffIterable iterable = ByLine.compare(Arrays.asList(prevContent), Arrays.asList(mySource),
+                                                 ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
 
-    Diff.Change change = Diff.buildChangesSomehow(prevContent, getSource());
-    while (change != null) {
-      int startLine1 = change.line0;
-      int startLine2 = change.line1;
-      int endLine1 = startLine1 + change.deleted;
-      int endLine2 = startLine2 + change.inserted;
+      // empty range should not be transferred to the non-empty range
+      boolean greedy = myStart != myEnd;
 
-      if (Math.max(myStart, startLine2) < Math.min(myEnd, endLine2)) {
-        // ranges intersect
-        if (startLine2 <= myStart) start = startLine1;
-        if (endLine2 > myEnd) end = endLine1;
+      int start = myStart;
+      int end = myEnd;
+      int shift = 0;
+
+      for (Range range : iterable.iterateChanges()) {
+        int changeStart = range.start2 + shift;
+        int changeEnd = range.end2 + shift;
+        int changeShift = (range.end1 - range.start1) - (range.end2 - range.start2);
+
+        DiffUtil.UpdatedLineRange updatedRange =
+          DiffUtil.updateRangeOnModification(start, end, changeStart, changeEnd, changeShift, greedy);
+
+        start = updatedRange.startLine;
+        end = updatedRange.endLine;
+        shift += changeShift;
       }
-      if (startLine2 > myStart) {
-        if (start == -1) start = myStart - shift;
-        if (end == -1 && startLine2 >= myEnd) end = myEnd - shift;
+
+      if (start < 0 || end > prevContent.length || end < start) {
+        LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + prevContent.length);
       }
 
-      shift += change.inserted - change.deleted;
-      change = change.link;
-    }
-    if (start == -1) start = myStart - shift;
-    if (end == -1) end = myEnd - shift;
 
-    if (start < 0 || end > prevContent.length || end < start) {
-      LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + prevContent.length);
-    }
+      // intern strings, reducing memory usage
+      for (Range range : iterable.iterateUnchanged()) {
+        int count = range.end1 - range.start1;
+        for (int i = 0; i < count; i++) {
+          int prevIndex = range.start1 + i;
+          int sourceIndex = range.start2 + i;
+          if (prevContent[prevIndex].equals(mySource[sourceIndex])) {
+            prevContent[prevIndex] = mySource[sourceIndex];
+          }
+        }
+      }
 
-    return new Block(prevContent, start, end);
+      return new Block(prevContent, start, end);
+    }
+    catch (DiffTooBigException e) {
+      return new Block(prevContent, 0, 0);
+    }
   }
 
   @NotNull
@@ -113,11 +138,6 @@ public class Block {
 
   public int getEnd() {
     return myEnd;
-  }
-
-  @NotNull
-  public String[] getSource() {
-    return mySource;
   }
 
   public String toString() {

@@ -29,22 +29,29 @@ public class JavaTestCreator implements TestCreator {
 
   @Override
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    CreateTestAction action = new CreateTestAction();
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-
+    final int offset = editor.getCaretModel().getOffset();
+    PsiElement element = findElement(file, offset);
     return CreateTestAction.isAvailableForElement(element);
   }
 
   public void createTest(Project project, Editor editor, PsiFile file) {
     try {
       CreateTestAction action = new CreateTestAction();
-      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+      PsiElement element = findElement(file, editor.getCaretModel().getOffset());
       if (CreateTestAction.isAvailableForElement(element)) {
-        action.invoke(project, editor, file.getContainingFile());
+        action.invoke(project, editor, element);
       }
     }
     catch (IncorrectOperationException e) {
       LOG.warn(e);
     }
+  }
+
+  private static PsiElement findElement(PsiFile file, int offset) {
+    PsiElement element = file.findElementAt(offset);
+    if (element == null && offset == file.getTextLength()) {
+      element = file.findElementAt(offset - 1);
+    }
+    return element;
   }
 }

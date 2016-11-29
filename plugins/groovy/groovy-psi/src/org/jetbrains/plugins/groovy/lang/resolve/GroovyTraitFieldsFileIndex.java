@@ -27,10 +27,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.FieldVisitor;
-import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -44,7 +41,6 @@ import static com.intellij.util.io.DataInputOutputUtil.writeINT;
 import static com.intellij.util.io.IOUtil.readUTF;
 import static com.intellij.util.io.IOUtil.writeUTF;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
-import static org.jetbrains.org.objectweb.asm.Opcodes.ASM5;
 import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 
 public class GroovyTraitFieldsFileIndex
@@ -105,13 +101,13 @@ public class GroovyTraitFieldsFileIndex
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   private static Collection<TraitFieldDescriptor> index(FileContent inputData) {
     final Collection<TraitFieldDescriptor> values = ContainerUtil.newArrayList();
 
-    new ClassReader(inputData.getContent()).accept(new ClassVisitor(ASM5) {
+    new ClassReader(inputData.getContent()).accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
         processField(access, name, desc, signature);
@@ -211,6 +207,28 @@ public class GroovyTraitFieldsFileIndex
       this.flags = flags;
       this.typeString = typeString;
       this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TraitFieldDescriptor that = (TraitFieldDescriptor)o;
+
+      if (flags != that.flags) return false;
+      if (!typeString.equals(that.typeString)) return false;
+      if (!name.equals(that.name)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int)flags;
+      result = 31 * result + typeString.hashCode();
+      result = 31 * result + name.hashCode();
+      return result;
     }
   }
 }

@@ -43,7 +43,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   private TextRange rangeInHost;
   private final Place myShreds;
   private final List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> myEscapers;
-  final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
+  final Map<LeafElement, String> newTexts = new THashMap<>();
   final StringBuilder catLeafs = new StringBuilder();
 
   LeafPatcher(Place shreds, List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers) {

@@ -30,7 +30,7 @@ public class PreviewInfo<V, C> {
   @NotNull private final V myData;
 
   public static <V, C> PreviewInfo<V, C> create(@NotNull PreviewPanelProvider<V, C> provider, @NotNull V data) {
-    return new PreviewInfo<V, C>(provider, data);
+    return new PreviewInfo<>(provider, data);
   }
 
   public PreviewInfo(@NotNull PreviewPanelProvider<V, C> provider, @NotNull V data) {

@@ -5,7 +5,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,13 +27,8 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   @NotNull private final Map<VirtualFile, Color> myRoots2Colors;
 
   public VcsLogColorManagerImpl(@NotNull Collection<VirtualFile> roots) {
-    myRoots = new ArrayList<VirtualFile>(roots);
-    Collections.sort(myRoots, new Comparator<VirtualFile>() { // TODO add a common util method to sort roots
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    myRoots = new ArrayList<>(roots);
+    Collections.sort(myRoots, (o1, o2) -> o1.getName().compareTo(o2.getName()));
     myRoots2Colors = ContainerUtil.newHashMap();
     int i = 0;
     for (VirtualFile root : myRoots) {
@@ -55,25 +49,15 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
 
   @NotNull
   public static JBColor getBackgroundColor(@NotNull final Color baseRootColor) {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return ColorUtil.mix(baseRootColor, UIUtil.getTableBackground(), 0.75);
-      }
-    });
+    return new JBColor(() -> ColorUtil.mix(baseRootColor, UIUtil.getTableBackground(), 0.75));
   }
 
   @NotNull
   public static JBColor getIndicatorColor(@NotNull final Color baseRootColor) {
     if (Registry.is("vcs.log.square.labels")) return getBackgroundColor(baseRootColor);
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        if (UIUtil.isUnderDarcula()) return baseRootColor;
-        return ColorUtil.darker(ColorUtil.softer(baseRootColor), 2);
-      }
+    return new JBColor(() -> {
+      if (UIUtil.isUnderDarcula()) return baseRootColor;
+      return ColorUtil.darker(ColorUtil.softer(baseRootColor), 2);
     });
   }
 

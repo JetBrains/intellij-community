@@ -23,7 +23,6 @@ package com.intellij.codeInspection.offlineViewer;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
-import com.intellij.util.ArrayUtil;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -48,8 +47,8 @@ public class OfflineViewParseUtil {
   }
 
   public static Map<String, Set<OfflineProblemDescriptor>> parse(final String problems) {
-    final TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<String>();
-    final Map<String, Set<OfflineProblemDescriptor>> package2Result = new THashMap<String, Set<OfflineProblemDescriptor>>();
+    final TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<>();
+    final Map<String, Set<OfflineProblemDescriptor>> package2Result = new THashMap<>();
     final XppReader reader = new XppReader(new StringReader(problems));
     try {
       while(reader.hasMoreChildren()) {
@@ -69,27 +68,6 @@ public class OfflineViewParseUtil {
             int idx = fqName2IdxMap.get(fqName);
             descriptor.setProblemIndex(idx);
             fqName2IdxMap.put(fqName, idx + 1);
-
-            final List<String> parentTypes = new ArrayList<String>();
-            final List<String> parentNames = new ArrayList<String>();
-            int deep = 0;
-            while (true) {
-              if (reader.hasMoreChildren()) {
-                reader.moveDown();
-                parentTypes.add(reader.getAttribute(SmartRefElementPointerImpl.TYPE_ATTR));
-                parentNames.add(reader.getAttribute(SmartRefElementPointerImpl.FQNAME_ATTR));                
-                deep ++;
-              } else {
-                while (deep-- > 0) {
-                  reader.moveUp();
-                }
-                break;
-              }
-            }
-            if (!parentTypes.isEmpty() && !parentNames.isEmpty()) {
-              descriptor.setParentType(ArrayUtil.toStringArray(parentTypes));
-              descriptor.setParentFQName(ArrayUtil.toStringArray(parentNames));
-            }
           }
           if (DESCRIPTION.equals(reader.getNodeName())) {
             descriptor.setDescription(reader.getValue());
@@ -105,7 +83,7 @@ public class OfflineViewParseUtil {
               reader.moveDown();
               List<String> hints = descriptor.getHints();
               if (hints == null) {
-                hints = new ArrayList<String>();
+                hints = new ArrayList<>();
                 descriptor.setHints(hints);
               }
               hints.add(reader.getAttribute("value"));
@@ -141,7 +119,7 @@ public class OfflineViewParseUtil {
                                        final OfflineProblemDescriptor descriptor) {
     Set<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
     if (descriptors == null) {
-      descriptors = new THashSet<OfflineProblemDescriptor>();
+      descriptors = new THashSet<>();
       package2Result.put(packageName, descriptors);
     }
     descriptors.add(descriptor);

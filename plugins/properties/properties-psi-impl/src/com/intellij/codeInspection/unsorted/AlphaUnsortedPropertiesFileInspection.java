@@ -95,13 +95,6 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
       myFilesToSort = toSort;
     }
 
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @NotNull
     @Override
     public String getFamilyName() {
@@ -121,14 +114,9 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   }
 
   private static void sortPropertiesFile(final PropertiesFile file) {
-    final List<IProperty> properties = new ArrayList<IProperty>(file.getProperties());
+    final List<IProperty> properties = new ArrayList<>(file.getProperties());
 
-    Collections.sort(properties, new Comparator<IProperty>() {
-      @Override
-      public int compare(@NotNull IProperty p1, @NotNull IProperty p2) {
-        return Comparing.compare(p1.getKey(), p2.getKey(), String.CASE_INSENSITIVE_ORDER);
-      }
-    });
+    Collections.sort(properties, (p1, p2) -> Comparing.compare(p1.getKey(), p2.getKey(), String.CASE_INSENSITIVE_ORDER));
     final char delimiter = PropertiesCodeStyleSettings.getInstance(file.getProject()).getDelimiter();
     final StringBuilder rawText = new StringBuilder();
     for (int i = 0; i < properties.size(); i++) {
@@ -138,11 +126,14 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
       if (commentAboveProperty != null) {
         rawText.append(commentAboveProperty).append("\n");
       }
-      final String propertyText =
-        PropertiesElementFactory.getPropertyText(property.getKey(), value != null ? value : "", delimiter, null, false);
-      rawText.append(propertyText);
-      if (i != properties.size() - 1) {
-        rawText.append("\n");
+      final String key = property.getKey();
+      final String propertyText;
+      if (key != null) {
+        propertyText = PropertiesElementFactory.getPropertyText(key, value != null ? value : "", delimiter, null, false);
+        rawText.append(propertyText);
+        if (i != properties.size() - 1) {
+          rawText.append("\n");
+        }
       }
     }
 

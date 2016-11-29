@@ -67,7 +67,7 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     if (selectionPaths == null) {
       return VirtualFile.EMPTY_ARRAY;
     }
-    final List<VirtualFile> selected = new ArrayList<VirtualFile>();
+    final List<VirtualFile> selected = new ArrayList<>();
     for (TreePath treePath : selectionPaths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
       final Object nodeDescriptor = node.getUserObject();

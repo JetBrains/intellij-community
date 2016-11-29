@@ -1,0 +1,10 @@
+Types:
+PsiMethod:migrationMethod : void
+PsiMethodCallExpression:migrationMethod() : void
+
+Conversions:
+"" -> $
+migrationMethod() -> $
+
+New expression type changes:
+Fails:

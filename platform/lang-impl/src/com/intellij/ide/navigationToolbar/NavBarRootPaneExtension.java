@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,12 +56,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   public NavBarRootPaneExtension(Project project) {
     myProject = project;
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    myProject.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
-        toggleRunPanel(!source.SHOW_MAIN_TOOLBAR && source.SHOW_NAVIGATION_BAR && !UISettings.getInstance().PRESENTATION_MODE);
+      public void uiSettingsChanged(UISettings uiSettings) {
+        toggleRunPanel(!uiSettings.SHOW_MAIN_TOOLBAR && uiSettings.SHOW_NAVIGATION_BAR && !uiSettings.PRESENTATION_MODE);
       }
-    }, this);
+    });
 
     myNavToolbarGroupExist = runToolbarExists();
 
@@ -116,6 +117,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   public static class NavBarWrapperPanel extends JPanel {
     public NavBarWrapperPanel(LayoutManager layout) {
       super(layout);
+      setName("navbar");
+    }
+
+    @Override
+    protected Graphics getComponentGraphics(Graphics graphics) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
     }
   }
 
@@ -137,7 +144,6 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         final boolean needGap = isNeedGap(toolbarRunGroup);
         final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
         final JComponent component = actionToolbar.getComponent();
-        component.setOpaque(false);
         myRunPanel = new JPanel(new BorderLayout()) {
           @Override
           public void doLayout() {

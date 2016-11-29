@@ -132,4 +132,8 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public boolean isSupportedRootType(JpsModuleSourceRootType type) {
     return true;
   }
+
+  public boolean isMarkInnerSupportedFor(JpsModuleSourceRootType type) {
+    return false;
+  }
 }

@@ -27,6 +27,8 @@ package com.intellij.codeInspection.reference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,9 +62,10 @@ abstract class RefEntityImpl implements RefEntity {
     return myName;
   }
 
+  @NotNull
   @Override
   public synchronized List<RefEntity> getChildren() {
-    return myChildren;
+    return ObjectUtils.notNull(myChildren, ContainerUtil.emptyList());
   }
 
   @Override
@@ -76,7 +79,7 @@ abstract class RefEntityImpl implements RefEntity {
 
   public synchronized void add(@NotNull final RefEntity child) {
     if (myChildren == null) {
-      myChildren = new ArrayList<RefEntity>(1);
+      myChildren = new ArrayList<>(1);
     }
 
     myChildren.add(child);
@@ -106,12 +109,7 @@ abstract class RefEntityImpl implements RefEntity {
 
   @Override
   public void accept(@NotNull final RefVisitor refVisitor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        refVisitor.visitElement(RefEntityImpl.this);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> refVisitor.visitElement(this));
   }
 
   @Override
@@ -119,7 +117,7 @@ abstract class RefEntityImpl implements RefEntity {
     synchronized(this){
       if (myUserMap == null){
         if (value == null) return;
-        myUserMap = new THashMap<Key, Object>();
+        myUserMap = new THashMap<>();
       }
       if (value != null){
         //noinspection unchecked

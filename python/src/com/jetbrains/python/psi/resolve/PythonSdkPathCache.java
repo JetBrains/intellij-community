@@ -42,7 +42,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     synchronized (KEY) {
       Map<Project, PythonSdkPathCache> cacheMap = sdk.getUserData(KEY);
       if (cacheMap == null) {
-        cacheMap = new WeakHashMap<Project, PythonSdkPathCache>();
+        cacheMap = new WeakHashMap<>();
         sdk.putUserData(KEY, cacheMap);
       }
       PythonSdkPathCache cache = cacheMap.get(project);
@@ -56,11 +56,23 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
 
   private final Project myProject;
   private final Sdk mySdk;
-  private final AtomicReference<PyBuiltinCache> myBuiltins = new AtomicReference<PyBuiltinCache>();
+  private final AtomicReference<PyBuiltinCache> myBuiltins = new AtomicReference<>();
 
   public PythonSdkPathCache(@NotNull final Project project, @NotNull final Sdk sdk) {
     myProject = project;
     mySdk = sdk;
+    if (project.isDisposed()) {
+      return;
+    }
+    Disposer.register(project, this);
+    project.getMessageBus().connect(this).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Adapter() {
+      @Override
+      public void jdkRemoved(Sdk jdk) {
+        if (jdk == sdk) {
+          Disposer.dispose(PythonSdkPathCache.this);
+        }
+      }
+    });
     sdk.getRootProvider().addRootSetChangedListener(new RootProvider.RootSetChangedListener() {
       @Override
       public void rootSetChanged(RootProvider wrapper) {
@@ -75,17 +87,6 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
       }
     }, this);
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileAdapter(), this);
-    if (!project.isDisposed()) {
-      project.getMessageBus().connect(this).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Adapter() {
-        @Override
-        public void jdkRemoved(Sdk jdk) {
-          if (jdk == sdk) {
-            Disposer.dispose(PythonSdkPathCache.this);
-          }
-        }
-      });
-      Disposer.register(project, this);
-    }
   }
 
   @Override

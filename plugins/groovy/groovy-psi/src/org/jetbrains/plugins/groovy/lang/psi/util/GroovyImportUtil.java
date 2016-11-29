@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -33,6 +34,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcess
 
 import java.util.Map;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.ImportKind.ON_DEMAND;
 
 public class GroovyImportUtil {
   public static void processFile(@Nullable final PsiFile file,
@@ -166,7 +169,7 @@ public class GroovyImportUtil {
           final ClassResolverProcessor processor =
             new ClassResolverProcessor(refElement.getReferenceName(), refElement, ClassHint.RESOLVE_KINDS_CLASS);
           GroovyImportHelper
-            .processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), true);
+            .processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), ON_DEMAND, null);
           if (!processor.hasCandidates()) {
             return false;
           }
@@ -225,7 +228,7 @@ public class GroovyImportUtil {
     if (annotations != null) {
       ((GroovyFile)file).acceptChildren(new GroovyElementVisitor() {
         @Override
-        public void visitImportStatement(GrImportStatement importStatement) {
+        public void visitImportStatement(@NotNull GrImportStatement importStatement) {
           final String annotationText = importStatement.getAnnotationList().getText();
           if (!StringUtil.isEmptyOrSpaces(annotationText)) {
             final String importRef = getImportReferenceText(importStatement);
@@ -261,7 +264,7 @@ public class GroovyImportUtil {
   }
 
   public static Set<GrImportStatement> findUsedImports(GroovyFile file) {
-    Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
+    Set<GrImportStatement> usedImports = new HashSet<>();
     processFile(file, null, null, usedImports, null, null, null, null, null);
     return usedImports;
   }

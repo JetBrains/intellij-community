@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaFormattingModelBuilder implements FormattingModelBuilder {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaFormattingModelBuilder");
 
   @Override
   @NotNull
-    public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
+  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
     LOG.assertTrue(fileElement != null, "File element should not be null for " + element);
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -93,11 +92,11 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
       return current.getTextRange();
     }
   }
-  
+
   /**
    * Checks if previous non-white space leaf of the given node is error element and combines formatting range relevant for it
    * with the range of the given node.
-   * 
+   *
    * @param node  target node
    * @return      given node range if there is no error-element before it; combined range otherwise
    */
@@ -117,7 +116,7 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
     }
     else {
       return new TextRange(range.getStartOffset(), node.getTextRange().getEndOffset());
-    } 
+    }
   }
 
   @Nullable
@@ -126,7 +125,7 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
     while (result != null) {
       PsiElement psi = result.getPsi();
       if (psi instanceof PsiExpression && !(psi.getParent() instanceof PsiExpression)) {
-        return result;
+        break;
       }
       result = result.getTreeParent();
     }

@@ -28,9 +28,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +42,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.LinkedHashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -87,16 +83,21 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
 
   @NonNls public static final String COMPONENT_NAME = "Certificate Manager";
-  @NonNls private static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
-  @NonNls private static final String DEFAULT_PASSWORD = "changeit";
+  @NonNls public static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
+  @NonNls public static final String DEFAULT_PASSWORD = "changeit";
 
   private static final Logger LOG = Logger.getInstance(CertificateManager.class);
 
   /**
-   * Special version of hostname verifier, that asks user whether he accepts certificate, which subject's common name
-   * doesn't match requested hostname.
+   * Note that deprecated {@link org.apache.http.conn.ssl.BrowserCompatHostnameVerifier} is used intentionally here 
+   * since external clients might expect implementor of {@link org.apache.http.conn.ssl.X509HostnameVerifier} and 
+   * {@link org.apache.http.conn.ssl.DefaultHostnameVerifier} is not.
+   * 
+   * @deprecated To be removed in IDEA 18. Use specific host name verifiers from httpclient-4.x instead.
    */
-  public static final HostnameVerifier HOSTNAME_VERIFIER = new ConfirmingHostnameVerifier(SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+  @Deprecated
+  public static final HostnameVerifier HOSTNAME_VERIFIER = SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
+  
   /**
    * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
    * {@link java.awt.MediaTracker}.
@@ -293,25 +294,22 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     Application app = ApplicationManager.getApplication();
     final CountDownLatch proceeded = new CountDownLatch(1);
     final AtomicBoolean accepted = new AtomicBoolean();
-    final AtomicReference<DialogWrapper> dialogRef = new AtomicReference<DialogWrapper>();
-    Runnable showDialog = new Runnable() {
-      @Override
-      public void run() {
-        // skip if certificate was already rejected due to timeout or interrupt
-        if (proceeded.getCount() == 0) {
-          return;
-        }
-        try {
-          DialogWrapper dialog = dialogFactory.call();
-          dialogRef.set(dialog);
-          accepted.set(dialog.showAndGet());
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        finally {
-          proceeded.countDown();
-        }
+    final AtomicReference<DialogWrapper> dialogRef = new AtomicReference<>();
+    Runnable showDialog = () -> {
+      // skip if certificate was already rejected due to timeout or interrupt
+      if (proceeded.getCount() == 0) {
+        return;
+      }
+      try {
+        DialogWrapper dialog = dialogFactory.call();
+        dialogRef.set(dialog);
+        accepted.set(dialog.showAndGet());
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      finally {
+        proceeded.countDown();
       }
     };
     if (app.isDispatchThread()) {
@@ -355,20 +353,6 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   }
 
   public static class Config {
-    /**
-     * Ensure that request's hostname matches certificate's common name (CN).
-     */
-    public boolean CHECK_HOSTNAME = false;
-    /**
-     * Ensure that certificate is neither expired nor not yet eligible.
-     */
-    public boolean CHECK_VALIDITY = false;
-
-    @Tag("expired")
-    @Property(surroundWithTag = false)
-    @AbstractCollection(elementTag = "commonName")
-    public LinkedHashSet<String> BROKEN_CERTIFICATES = new LinkedHashSet<String>();
-
     /**
      * Do not show the dialog and accept untrusted certificates automatically.
      */

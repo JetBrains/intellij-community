@@ -37,7 +37,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   @NonNls private static final String ELEMENT_NAME = "deploymentDescriptor";
   @NonNls private static final String ID_ATTRIBUTE = "name";
   @NonNls private static final String URL_ATTRIBUTE = "url";
-  private final MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFileInfo>();
+  private final MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> myConfigFiles = new MultiValuesMap<>();
   private @Nullable ConfigFileContainerImpl myContainer;
   private final ConfigFileMetaDataProvider myMetaDataProvider;
 
@@ -121,6 +121,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
         final ConfigFileMetaData metaData = myMetaDataProvider.findMetaData(id);
         if (metaData != null) {
           final String url = child.getAttributeValue(URL_ATTRIBUTE);
+          if (url == null) throw new InvalidDataException(URL_ATTRIBUTE + " attribute not specified for " + id + " descriptor");
           myConfigFiles.put(metaData, new ConfigFileInfo(metaData, url));
         }
       }
@@ -130,13 +131,11 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
-    final TreeSet<ConfigFileInfo> sortedConfigFiles = new TreeSet<ConfigFileInfo>(new Comparator<ConfigFileInfo>() {
-      public int compare(final ConfigFileInfo o1, final ConfigFileInfo o2) {
-        final int id = Comparing.compare(o1.getMetaData().getId(), o2.getMetaData().getId());
-        return id != 0? id : Comparing.compare(o1.getUrl(), o2.getUrl());
-      }
+    final TreeSet<ConfigFileInfo> sortedConfigFiles = new TreeSet<>((o1, o2) -> {
+      final int id = Comparing.compare(o1.getMetaData().getId(), o2.getMetaData().getId());
+      return id != 0 ? id : Comparing.compare(o1.getUrl(), o2.getUrl());
     });
-    sortedConfigFiles.addAll(myConfigFiles.collectValues());
+    sortedConfigFiles.addAll(myConfigFiles.values());
     for (ConfigFileInfo configuration : sortedConfigFiles) {
       final Element child = new Element(ELEMENT_NAME);
       final ConfigFileMetaData metaData = configuration.getMetaData();

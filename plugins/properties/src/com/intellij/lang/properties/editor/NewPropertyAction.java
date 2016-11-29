@@ -16,6 +16,8 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -23,12 +25,14 @@ import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +42,9 @@ import org.jetbrains.annotations.Nullable;
 * @author Dmitry Batkovich
 */
 class NewPropertyAction extends AnAction {
+  private final static Logger LOG = Logger.getInstance(NewPropertyAction.class);
+
+  private final static String ADD_NEW_PROPERTY_AFTER_SELECTED_PROP = "add.property.after.selected";
 
   private final boolean myEnabledForce;
 
@@ -111,12 +118,60 @@ class NewPropertyAction extends AnAction {
         throw new IllegalStateException("unsupported type: " + selectedElement.getClass());
       }
     }
-    Messages.showInputDialog(project,
-                             PropertiesBundle.message("new.property.dialog.name.prompt.text"),
-                             PropertiesBundle.message("new.property.dialog.title"),
-                             Messages.getQuestionIcon(),
-                             null,
-                             new NewPropertyNameValidator(resourceBundleEditor, prefix, separator));
+
+    final ResourceBundlePropertiesUpdateManager propertiesUpdateManager = resourceBundleEditor.getPropertiesInsertDeleteManager();
+    final NewPropertyNameValidator nameValidator = new NewPropertyNameValidator(resourceBundleEditor, prefix, separator);
+    final String keyToInsert;
+
+    final IProperty anchor;
+    IProperty selectedProperty = resourceBundleEditor.getSelectedProperty();
+    if (propertiesUpdateManager.isAlphaSorted() || !propertiesUpdateManager.isSorted() || selectedProperty == null) {
+      keyToInsert = Messages.showInputDialog(project,
+                                             PropertiesBundle.message("new.property.dialog.name.prompt.text"),
+                                             PropertiesBundle.message("new.property.dialog.title"),
+                                             Messages.getQuestionIcon(),
+                                             null,
+                                             nameValidator);
+      anchor = null;
+    } else {
+      final Pair<String, Boolean> keyNameAndInsertPlaceModification =
+        Messages.showInputDialogWithCheckBox(PropertiesBundle.message("new.property.dialog.name.prompt.text"),
+                                             PropertiesBundle.message("new.property.dialog.title"),
+                                             PropertiesBundle.message("new.property.dialog.checkbox.text"),
+                                             PropertiesComponent.getInstance().getBoolean(ADD_NEW_PROPERTY_AFTER_SELECTED_PROP, false),
+                                             true,
+                                             Messages.getQuestionIcon(),
+                                             null,
+                                             nameValidator);
+      keyToInsert = keyNameAndInsertPlaceModification.getFirst();
+      final Boolean insertAfterSelectedProperty = keyNameAndInsertPlaceModification.getSecond();
+      PropertiesComponent.getInstance().setValue(ADD_NEW_PROPERTY_AFTER_SELECTED_PROP, insertAfterSelectedProperty, false);
+      anchor = insertAfterSelectedProperty ? selectedProperty : null;
+    }
+    if (keyToInsert != null) {
+      final ResourceBundlePropertiesUpdateManager updateManager = resourceBundleEditor.getPropertiesInsertDeleteManager();
+      final Runnable insertionAction = () -> {
+        if (anchor == null) {
+          updateManager.insertNewProperty(keyToInsert, "");
+        } else {
+          final String anchorKey = anchor.getKey();
+          LOG.assertTrue(anchorKey != null);
+          updateManager.insertAfter(keyToInsert, "", anchorKey);
+        }
+      };
+      ResourceBundleEditor finalResourceBundleEditor = resourceBundleEditor;
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        WriteCommandAction.runWriteCommandAction(bundle.getProject(), insertionAction);
+        finalResourceBundleEditor.flush();
+      });
+
+      resourceBundleEditor.updateTreeRoot();
+      resourceBundleEditor
+        .getStructureViewComponent()
+        .getTreeBuilder()
+        .queueUpdate()
+        .doWhenDone(() -> finalResourceBundleEditor.selectProperty(keyToInsert));
+    }
   }
 
   @Override
@@ -160,20 +215,6 @@ class NewPropertyAction extends AnAction {
         }
       }
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          WriteCommandAction.runWriteCommandAction(resourceBundle.getProject(), new Runnable() {
-            @Override
-            public void run() {
-              myResourceBundleEditor.getPropertiesInsertDeleteManager().insertNewProperty(newPropertyName, "");
-            }
-          });
-        }
-      });
-
-      myResourceBundleEditor.updateTreeRoot();
-      myResourceBundleEditor.selectProperty(newPropertyName);
       return true;
     }
   }

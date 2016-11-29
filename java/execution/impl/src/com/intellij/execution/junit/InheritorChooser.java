@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,20 @@ import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -60,12 +60,8 @@ public class InheritorChooser {
                                           final Runnable performRunnable,
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass) {
-    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass, new Condition<PsiClass>() {
-      @Override
-      public boolean value(PsiClass psiClass) {
-        return psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
-      }
-    });
+    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass,
+                                    psiClass -> psiClass.hasModifierProperty(PsiModifier.ABSTRACT));
   }
 
   public boolean runMethodInAbstractClass(final ConfigurationContext context,
@@ -84,20 +80,15 @@ public class InheritorChooser {
         return false;
       }
 
-      final List<PsiClass> classes = new ArrayList<PsiClass>();
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          ClassInheritorsSearch.search(containingClass).forEach(new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass aClass) {
-              if (PsiClassUtil.isRunnableClass(aClass, true, true)) {
-                classes.add(aClass);
-              }
-              return true;
-            }
-          });
-        }
+      final List<PsiClass> classes = new ArrayList<>();
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final boolean isJUnit5 = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> JUnitUtil.isJUnit5(containingClass));
+        ClassInheritorsSearch.search(containingClass).forEach(aClass -> {
+          if (isJUnit5 && JUnitUtil.isJUnit5TestClass(aClass, true) || PsiClassUtil.isRunnableClass(aClass, true, true)) {
+            classes.add(aClass);
+          }
+          return true;
+        });
       }, "Search for " + containingClass.getQualifiedName() + " inheritors", true, containingClass.getProject())) {
         return true;
       }
@@ -112,7 +103,7 @@ public class InheritorChooser {
         final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
         final PsiFile containingFile = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(document);
         if (containingFile instanceof PsiClassOwner) {
-          final List<PsiClass> psiClasses = new ArrayList<PsiClass>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));
+          final List<PsiClass> psiClasses = new ArrayList<>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));
           psiClasses.retainAll(classes);
           if (psiClasses.size() == 1) {
             runForClass(psiClasses.get(0), psiMethod, context, performRunnable);
@@ -147,12 +138,10 @@ public class InheritorChooser {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          public void run() {
-            final Object[] values = list.getSelectedValues();
-            if (values == null) return;
-            chooseAndPerform(values, psiMethod, context, performRunnable, classes);
-          }
+        .setItemChoosenCallback(() -> {
+          final Object[] values = list.getSelectedValues();
+          if (values == null) return;
+          chooseAndPerform(values, psiMethod, context, performRunnable, classes);
         }).createPopup().showInBestPositionFor(context.getDataContext());
       return true;
     }
@@ -179,7 +168,7 @@ public class InheritorChooser {
       runForClasses(classes, psiMethod, context, performRunnable);
     }
     else {
-      final List<PsiClass> selectedClasses = new ArrayList<PsiClass>();
+      final List<PsiClass> selectedClasses = new ArrayList<>();
       for (Object value : values) {
         if (value instanceof PsiClass) {
           selectedClasses.add((PsiClass)value);

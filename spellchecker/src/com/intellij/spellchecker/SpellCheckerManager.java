@@ -92,19 +92,16 @@ public class SpellCheckerManager {
     if (settings != null && settings.getDictionaryFoldersPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
       for (String folder : settings.getDictionaryFoldersPaths()) {
-        SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
-          @Override
-          public void consume(final String s) {
-            boolean dictionaryShouldBeLoad =!disabledDictionaries.contains(s);
-            boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(s);
-            if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
-              spellChecker.removeDictionary(s);
-            }
-            else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
-              spellChecker.loadDictionary(new FileLoader(s, s));
-            }
-
+        SPFileUtil.processFilesRecursively(folder, s -> {
+          boolean dictionaryShouldBeLoad =!disabledDictionaries.contains(s);
+          boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(s);
+          if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
+            spellChecker.removeDictionary(s);
           }
+          else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
+            spellChecker.loadDictionary(new FileLoader(s, s));
+          }
+
         });
 
       }
@@ -130,13 +127,10 @@ public class SpellCheckerManager {
   private void fillEngineDictionary() {
     spellChecker.reset();
     final StateLoader stateLoader = new StateLoader(project);
-    stateLoader.load(new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        //do nothing - in this loader we don't worry about word list itself - the whole dictionary will be restored
-      }
+    stateLoader.load(s -> {
+      //do nothing - in this loader we don't worry about word list itself - the whole dictionary will be restored
     });
-    final List<Loader> loaders = new ArrayList<Loader>();
+    final List<Loader> loaders = new ArrayList<>();
     // Load bundled dictionaries from corresponding jars
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       for (String dictionary : provider.getBundledDictionaries()) {
@@ -155,12 +149,9 @@ public class SpellCheckerManager {
     if (settings != null && settings.getDictionaryFoldersPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
       for (String folder : settings.getDictionaryFoldersPaths()) {
-        SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
-          @Override
-          public void consume(final String s) {
-            if (!disabledDictionaries.contains(s)) {
-              loaders.add(new FileLoader(s, s));
-            }
+        SPFileUtil.processFilesRecursively(folder, s -> {
+          if (!disabledDictionaries.contains(s)) {
+            loaders.add(new FileLoader(s, s));
           }
         });
 
@@ -194,7 +185,7 @@ public class SpellCheckerManager {
 
   @NotNull
   public static List<String> getBundledDictionaries() {
-    final ArrayList<String> dictionaries = new ArrayList<String>();
+    final ArrayList<String> dictionaries = new ArrayList<>();
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       ContainerUtil.addAll(dictionaries, provider.getBundledDictionaries());
     }
@@ -222,22 +213,19 @@ public class SpellCheckerManager {
         else if (Strings.isUpperCase(word)) {
           Strings.upperCase(suggestions);
         }
-        Set<String> unique = new LinkedHashSet<String>(suggestions);
-        return unique.size() < suggestions.size() ? new ArrayList<String>(unique) : suggestions;
+        Set<String> unique = new LinkedHashSet<>(suggestions);
+        return unique.size() < suggestions.size() ? new ArrayList<>(unique) : suggestions;
       }
     }
     return Collections.emptyList();
   }
 
   public static void restartInspections() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        for (Project project : projects) {
-          if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
-            DaemonCodeAnalyzer.getInstance(project).restart();
-          }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Project[] projects = ProjectManager.getInstance().getOpenProjects();
+      for (Project project1 : projects) {
+        if (project1.isInitialized() && project1.isOpen() && !project1.isDefault()) {
+          DaemonCodeAnalyzer.getInstance(project1).restart();
         }
       }
     });

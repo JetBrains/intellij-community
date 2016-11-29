@@ -37,7 +37,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
   @NonNls private static final String DIRECTORY = "directory";
   @NonNls private static final String URL = "url";
   @NonNls private static final String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
-  private final Collection<ExcludeEntryDescription> myExcludeEntryDescriptions = new LinkedHashSet<ExcludeEntryDescription>();
+  private final Collection<ExcludeEntryDescription> myExcludeEntryDescriptions = new LinkedHashSet<>();
   private ExcludeEntryDescription[] myCachedDescriptions = null;
 
   @Override

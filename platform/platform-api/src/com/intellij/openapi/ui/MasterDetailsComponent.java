@@ -34,7 +34,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -116,7 +115,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   private final List<ItemsChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final Set<NamedConfigurable> myInitializedConfigurables = new HashSet<NamedConfigurable>();
+  private final Set<NamedConfigurable> myInitializedConfigurables = new HashSet<>();
 
   private boolean myHasDeletedItems;
   protected AutoScrollToSourceHandler myAutoScrollHandler;
@@ -218,7 +217,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   private void updateSelectionFromTree() {
     TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
-      List<NamedConfigurable> selectedConfigurables = new ArrayList<NamedConfigurable>();
+      List<NamedConfigurable> selectedConfigurables = new ArrayList<>();
       for (TreePath path : treePaths) {
         Object lastPathComponent = path.getLastPathComponent();
         if (lastPathComponent instanceof MyNode) {
@@ -301,17 +300,15 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   public boolean isModified() {
     if (myHasDeletedItems) return true;
     final boolean[] modified = new boolean[1];
-    TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        if (node instanceof MyNode) {
-          final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
-          if (isInitialized(configurable) && configurable.isModified()) {
-            modified[0] = true;
-            return false;
-          }
+    TreeUtil.traverseDepth(myRoot, node -> {
+      if (node instanceof MyNode) {
+        final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
+        if (isInitialized(configurable) && configurable.isModified()) {
+          modified[0] = true;
+          return false;
         }
-        return true;
       }
+      return true;
     });
     return modified[0];
   }
@@ -323,22 +320,20 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   public void apply() throws ConfigurationException {
     processRemovedItems();
     final ConfigurationException[] ex = new ConfigurationException[1];
-    TreeUtil.traverse(myRoot, new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        if (node instanceof MyNode) {
-          try {
-            final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
-            if (isInitialized(configurable) && configurable.isModified()) {
-              configurable.apply();
-            }
-          }
-          catch (ConfigurationException e) {
-            ex[0] = e;
-            return false;
+    TreeUtil.traverse(myRoot, node -> {
+      if (node instanceof MyNode) {
+        try {
+          final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
+          if (isInitialized(configurable) && configurable.isModified()) {
+            configurable.apply();
           }
         }
-        return true;
+        catch (ConfigurationException e) {
+          ex[0] = e;
+          return false;
+        }
       }
+      return true;
     });
     if (ex[0] != null) {
       throw ex[0];
@@ -439,17 +434,15 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected void clearChildren() {
-    TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        if (node instanceof MyNode) {
-          final MyNode treeNode = ((MyNode)node);
-          treeNode.getConfigurable().disposeUIResources();
-          if (!(treeNode instanceof MyRootNode)) {
-            treeNode.setUserObject(null);
-          }
+    TreeUtil.traverseDepth(myRoot, node -> {
+      if (node instanceof MyNode) {
+        final MyNode treeNode = ((MyNode)node);
+        treeNode.getConfigurable().disposeUIResources();
+        if (!(treeNode instanceof MyRootNode)) {
+          treeNode.setUserObject(null);
         }
-        return true;
       }
+      return true;
     });
     myRoot.removeAllChildren();
   }
@@ -557,11 +550,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected Comparator<MyNode> getNodeComparator() {
-    return new Comparator<MyNode>() {
-      public int compare(final MyNode o1, final MyNode o2) {
-        return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
-      }
-    };
+    return (o1, o2) -> StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
   }
 
   public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect) {
@@ -620,33 +609,23 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   @Nullable
   protected static MyNode findNodeByName(final TreeNode root, final String profileName) {
     if (profileName == null) return null; //do not suggest root node
-    return findNodeByCondition(root, new Condition<NamedConfigurable>() {
-      public boolean value(final NamedConfigurable configurable) {
-        return Comparing.strEqual(profileName, configurable.getDisplayName());
-      }
-    });
+    return findNodeByCondition(root, configurable -> Comparing.strEqual(profileName, configurable.getDisplayName()));
   }
 
   @Nullable
   public static MyNode findNodeByObject(final TreeNode root, final Object editableObject) {
     if (editableObject == null) return null; //do not suggest root node
-    return findNodeByCondition(root, new Condition<NamedConfigurable>() {
-      public boolean value(final NamedConfigurable configurable) {
-        return Comparing.equal(editableObject, configurable.getEditableObject());
-      }
-    });
+    return findNodeByCondition(root, configurable -> Comparing.equal(editableObject, configurable.getEditableObject()));
   }
 
   protected static MyNode findNodeByCondition(final TreeNode root, final Condition<NamedConfigurable> condition) {
     final MyNode[] nodeToSelect = new MyNode[1];
-    TreeUtil.traverseDepth(root, new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        if (condition.value(((MyNode)node).getConfigurable())) {
-          nodeToSelect[0] = (MyNode)node;
-          return false;
-        }
-        return true;
+    TreeUtil.traverseDepth(root, node -> {
+      if (condition.value(((MyNode)node).getConfigurable())) {
+        nodeToSelect[0] = (MyNode)node;
+        return false;
       }
+      return true;
     });
     return nodeToSelect[0];
   }
@@ -724,7 +703,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                                String title,
                                                Class<? extends NamedConfigurable> configurableClass,
                                                boolean recursively) throws ConfigurationException {
-    final Set<String> names = new HashSet<String>();
+    final Set<String> names = new HashSet<>();
     for (int i = 0; i < rootNode.getChildCount(); i++) {
       final MyNode node = (MyNode)rootNode.getChildAt(i);
       final NamedConfigurable scopeConfigurable = node.getConfigurable();
@@ -756,7 +735,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected void removePaths(final TreePath... paths) {
-    List<MyNode> nodes = new ArrayList<MyNode>();
+    List<MyNode> nodes = new ArrayList<>();
     for (TreePath path : paths) {
       nodes.add((MyNode)path.getLastPathComponent());
     }
@@ -830,12 +809,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
       if (selectionPath != null) {
-        Object[] nodes = ContainerUtil.map2Array(selectionPath, new Function<TreePath, Object>() {
-          @Override
-          public Object fun(TreePath treePath) {
-            return treePath.getLastPathComponent();
-          }
-        });
+        Object[] nodes = ContainerUtil.map2Array(selectionPath, treePath -> treePath.getLastPathComponent());
         if (!myCondition.value(nodes)) return;
         presentation.setEnabled(true);
       }
@@ -847,14 +821,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected static Condition<Object[]> forAll(final Condition<Object> condition) {
-    return new Condition<Object[]>() {
-      @Override
-      public boolean value(Object[] objects) {
-        for (Object object : objects) {
-          if (!condition.value(object)) return false;
-        }
-        return true;
+    return objects -> {
+      for (Object object : objects) {
+        if (!condition.value(object)) return false;
       }
+      return true;
     };
   }
 

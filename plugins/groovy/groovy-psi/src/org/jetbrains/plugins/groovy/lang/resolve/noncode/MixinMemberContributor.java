@@ -53,7 +53,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     final PsiModifierList modifierList = aClass.getModifierList();
     if (modifierList == null) return;
 
-    List<PsiClass> mixins = new ArrayList<PsiClass>();
+    List<PsiClass> mixins = new ArrayList<>();
     for (PsiAnnotation annotation : getAllMixins(modifierList)) {
       final PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
 
@@ -89,7 +89,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
   }
 
   private static List<PsiAnnotation> getAllMixins(PsiModifierList modifierList) {
-    final ArrayList<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+    final ArrayList<PsiAnnotation> result = new ArrayList<>();
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (GroovyCommonClassNames.GROOVY_LANG_MIXIN.equals(annotation.getQualifiedName())) {
         result.add(annotation);

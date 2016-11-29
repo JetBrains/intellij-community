@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,6 +57,9 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   protected void initializeControls(PsiExpression initializerExpression, BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     initializeInitializerPlace(initializerExpression, ourLastInitializerPlace);
     String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
+    if (ourLastVisibility == null) {
+      ourLastVisibility = PsiModifier.PRIVATE;
+    }
     myVisibilityPanel.setVisibility(ourLastVisibility);
     super.initializeControls(initializerExpression, ourLastInitializerPlace);
   }
@@ -245,7 +249,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                             new Insets(0, 0, 0, 0), 0, 0);
+                             JBUI.emptyInsets(), 0, 0);
     panel.add(initializerPlacePanel, constraints);
     panel.add(checkboxPanel, constraints);
     return panel;

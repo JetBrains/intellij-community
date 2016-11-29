@@ -73,25 +73,23 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
     List<PyNamedParameter> params = ParamHelper.collectNamedParameters((PyParameterList) param.getParent());
     final int index = params.indexOf(param);
     if (index < 0) return null;
-    final List<PyType> superMethodParameterTypes = new ArrayList<PyType>();
-    PySuperMethodsSearch.search(func, context).forEach(new Processor<PsiElement>() {
-      public boolean process(final PsiElement psiElement) {
-        if (psiElement instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)psiElement;
-          final PsiParameter[] psiParameters = method.getParameterList().getParameters();
-          int javaIndex = method.hasModifierProperty(PsiModifier.STATIC) ? index : index-1; // adjust for 'self' parameter
-          if (javaIndex < psiParameters.length) {
-            PsiType paramType = psiParameters [javaIndex].getType();
-            if (paramType instanceof PsiClassType) {
-              final PsiClass psiClass = ((PsiClassType)paramType).resolve();
-              if (psiClass != null) {
-                superMethodParameterTypes.add(new PyJavaClassType(psiClass, false));
-              }
+    final List<PyType> superMethodParameterTypes = new ArrayList<>();
+    PySuperMethodsSearch.search(func, context).forEach(psiElement -> {
+      if (psiElement instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)psiElement;
+        final PsiParameter[] psiParameters = method.getParameterList().getParameters();
+        int javaIndex = method.hasModifierProperty(PsiModifier.STATIC) ? index : index-1; // adjust for 'self' parameter
+        if (javaIndex < psiParameters.length) {
+          PsiType paramType = psiParameters [javaIndex].getType();
+          if (paramType instanceof PsiClassType) {
+            final PsiClass psiClass = ((PsiClassType)paramType).resolve();
+            if (psiClass != null) {
+              superMethodParameterTypes.add(new PyJavaClassType(psiClass, false));
             }
           }
         }
-        return true;
       }
+      return true;
     });
     if (superMethodParameterTypes.size() > 0) {
       final PyType type = superMethodParameterTypes.get(0);

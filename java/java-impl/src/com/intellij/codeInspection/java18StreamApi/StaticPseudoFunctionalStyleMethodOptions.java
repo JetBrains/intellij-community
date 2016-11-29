@@ -47,7 +47,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
   private final List<PipelineElement> myElements;
 
   public StaticPseudoFunctionalStyleMethodOptions() {
-    myElements = new ArrayList<PipelineElement>();
+    myElements = new ArrayList<>();
     restoreDefault(myElements);
   }
 
@@ -63,12 +63,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
 
   @NotNull
   public Collection<PipelineElement> findElementsByMethodName(final @NotNull String methodName) {
-    return ContainerUtil.filter(myElements, new Condition<PipelineElement>() {
-      @Override
-      public boolean value(PipelineElement element) {
-        return methodName.equals(element.getMethodName());
-      }
-    });
+    return ContainerUtil.filter(myElements, element -> methodName.equals(element.getMethodName()));
   }
 
   public void readExternal(final @NotNull Element xmlElement) {
@@ -92,7 +87,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
   }
 
   public void writeExternal(final @NotNull Element xmlElement) {
-    final List<PipelineElement> toRemoveElements = new ArrayList<PipelineElement>();
+    final List<PipelineElement> toRemoveElements = new ArrayList<>();
     restoreDefault(toRemoveElements);
     toRemoveElements.removeAll(myElements);
 
@@ -100,7 +95,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       xmlElement.addContent(createXmlElement(element)
                               .setAttribute(DELETE_ATTR, ""));
     }
-    final List<PipelineElement> defaultElements = new ArrayList<PipelineElement>();
+    final List<PipelineElement> defaultElements = new ArrayList<>();
     restoreDefault(defaultElements);
     for (PipelineElement element : myElements) {
       if (!defaultElements.contains(element)) {
@@ -123,7 +118,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
     final JBList list = new JBList(myElements);
     list.setCellRenderer(new ColoredListCellRenderer<PipelineElement>() {
       @Override
-      protected void customizeCellRenderer(JList list, PipelineElement element, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, PipelineElement element, int index, boolean selected, boolean hasFocus) {
         final String classFQName = element.getHandlerClass();
         final String[] split = classFQName.split("\\.");
         final int classShortNameIndex = classFQName.length() - split[split.length - 1].length();
@@ -158,7 +153,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       @Override
       public void run(AnActionButton button) {
         final int[] indices = list.getSelectedIndices();
-        final List<PipelineElement> toRemove = new ArrayList<PipelineElement>(indices.length);
+        final List<PipelineElement> toRemove = new ArrayList<>(indices.length);
         for (int idx : indices) {
           toRemove.add(myElements.get(idx));
         }

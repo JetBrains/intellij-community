@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,20 +45,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseRefactoringAction extends AnAction {
-  private final Condition<Language> myLanguageCondition = new Condition<Language>() {
-    @Override
-    public boolean value(Language language) {
-      return isAvailableForLanguage(language);
-    }
-  };
+  private final Condition<Language> myLanguageCondition = language -> isAvailableForLanguage(language);
 
   protected abstract boolean isAvailableInEditorOnly();
 
   protected abstract boolean isEnabledOnElements(@NotNull PsiElement[] elements);
+
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
 
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return true;
@@ -104,21 +104,16 @@ public abstract class BaseRefactoringAction extends AnAction {
       return;
     }
 
-    if (!InplaceRefactoring.canStartAnotherRefactoring(editor, project, handler, elements)) {
+    InplaceRefactoring activeInplaceRenamer = InplaceRefactoring.getActiveInplaceRenamer(editor);
+    if (!InplaceRefactoring.canStartAnotherRefactoring(editor, project, handler, elements) && activeInplaceRenamer != null) {
       InplaceRefactoring.unableToStartWarning(project, editor);
       return;
     }
 
-    if (InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
+    if (activeInplaceRenamer == null) {
       final LookupEx lookup = LookupManager.getActiveLookup(editor);
       if (lookup instanceof LookupImpl) {
-        Runnable command = new Runnable() {
-          @Override
-          public void run() {
-            ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
-          }
-        };
-        assert editor != null;
+        Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
         Document doc = editor.getDocument();
         DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
         CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
@@ -263,7 +258,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     List<PsiElement> filtered = null;
     for (PsiElement element : psiElements) {
       if (element instanceof SyntheticElement) {
-        if (filtered == null) filtered = new ArrayList<PsiElement>(Arrays.asList(element));
+        if (filtered == null) filtered = new ArrayList<>(Collections.singletonList(element));
         filtered.remove(element);
       }
     }

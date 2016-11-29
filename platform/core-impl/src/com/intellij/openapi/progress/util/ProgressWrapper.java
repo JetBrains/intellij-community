@@ -22,7 +22,7 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
@@ -32,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ProgressWrapper extends AbstractProgressIndicatorBase implements WrappedProgressIndicator, StandardProgressIndicator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWrapper");
-
   private final ProgressIndicator myOriginal;
   private final boolean myCheckCanceledForMe;
   private final int nested;
@@ -43,7 +41,9 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
   }
 
   protected ProgressWrapper(@NotNull ProgressIndicator original, boolean checkCanceledForMe) {
-    assert original instanceof StandardProgressIndicator : "Original indicator must be StandardProcessIndicator";
+    if (!(original instanceof StandardProgressIndicator)) {
+      throw new IllegalArgumentException("Original indicator " + original + " must be StandardProcessIndicator but got: " + original.getClass());
+    }
     myOriginal = original;
     myCheckCanceledForMe = checkCanceledForMe;
     nested = 1 + (original instanceof ProgressWrapper ? ((ProgressWrapper)original).nested : -1);
@@ -91,6 +91,12 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
         break;
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public ModalityState getModalityState() {
+    return myOriginal.getModalityState();
   }
 
   @Override

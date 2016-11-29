@@ -40,7 +40,7 @@ import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.parseGraph
 public class LinearGraphParser {
 
   public static LinearGraph parse(@NotNull String in) {
-    List<GraphNode> graphNodes = new ArrayList<GraphNode>();
+    List<GraphNode> graphNodes = new ArrayList<>();
 
     Map<GraphNode, List<String>> edges = ContainerUtil.newHashMap();
     Map<Integer, Integer> nodeIdToNodeIndex = ContainerUtil.newHashMap();
@@ -110,7 +110,7 @@ public class LinearGraphParser {
   }
 
   private static Pair<Integer, Character> parseNumberWithChar(@NotNull String in) {
-    return new Pair<Integer, Character>(Integer.decode(in.substring(0, in.length() - 2)), in.charAt(in.length() - 1));
+    return new Pair<>(Integer.decode(in.substring(0, in.length() - 2)), in.charAt(in.length() - 1));
   }
 
   private static class TestLinearGraphWithElementsInfo implements LinearGraph {

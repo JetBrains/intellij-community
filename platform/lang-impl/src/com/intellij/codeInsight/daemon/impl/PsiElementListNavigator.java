@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
@@ -36,8 +35,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
+import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +62,16 @@ public class PsiElementListNavigator {
                                  ListCellRenderer listRenderer,
                                  @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
     JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
-    if (popup != null) popup.show(new RelativePoint(e));
+    if (popup != null) {
+      if (listUpdaterTask != null) {
+        Alarm alarm = new Alarm(popup);
+        alarm.addRequest(() -> popup.show(new RelativePoint(e)), 300);
+        ProgressManager.getInstance().run(listUpdaterTask);
+      }
+      else {
+        popup.show(new RelativePoint(e));
+      }
+    }
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
@@ -77,18 +85,18 @@ public class PsiElementListNavigator {
                                                final String findUsagesTitle,
                                                final ListCellRenderer listRenderer,
                                                @Nullable final ListBackgroundUpdaterTask listUpdaterTask) {
-    return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, new Consumer<Object[]>() {
-      @Override
-      public void consume(Object[] selectedElements) {
-        for (Object element : selectedElements) {
-          PsiElement selected = (PsiElement)element;
-          LOG.assertTrue(selected.isValid());
-          ((NavigatablePsiElement)selected).navigate(true);
-        }
+    return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, selectedElements -> {
+      for (Object element : selectedElements) {
+        PsiElement selected = (PsiElement)element;
+        LOG.assertTrue(selected.isValid());
+        ((NavigatablePsiElement)selected).navigate(true);
       }
     });
   }
 
+  /**
+   * listUpdaterTask should be started after alarm is initialized so one-item popup won't blink
+   */
   @Nullable
   public static JBPopup navigateOrCreatePopup(@NotNull final NavigatablePsiElement[] targets,
                                               final String title,
@@ -97,11 +105,11 @@ public class PsiElementListNavigator {
                                               @Nullable final ListBackgroundUpdaterTask listUpdaterTask,
                                               @NotNull final Consumer<Object[]> consumer) {
     if (targets.length == 0) return null;
-    if (targets.length == 1) {
+    if (targets.length == 1 && (listUpdaterTask == null || listUpdaterTask.isFinished())) {
       consumer.consume(targets);
       return null;
     }
-    final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<NavigatablePsiElement>(targets);
+    final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<>(targets);
     final JBListWithHintProvider list = new JBListWithHintProvider(model) {
       @Override
       protected PsiElement getPsiElementForHint(final Object selectedValue) {
@@ -139,32 +147,26 @@ public class PsiElementListNavigator {
       setTitle(title).
       setMovable(true).
       setResizable(true).
-      setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          int[] ids = list.getSelectedIndices();
-          if (ids == null || ids.length == 0) return;
-          Object[] selectedElements = list.getSelectedValues();
-          consumer.consume(selectedElements);
-        }
+      setItemChoosenCallback(() -> {
+        int[] ids = list.getSelectedIndices();
+        if (ids == null || ids.length == 0) return;
+        Object[] selectedElements = list.getSelectedValues();
+        consumer.consume(selectedElements);
       }).
-      setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          HintUpdateSupply.hideHint(list);
-          return true;
+      setCancelCallback(() -> {
+        HintUpdateSupply.hideHint(list);
+        if (listUpdaterTask != null) {
+          listUpdaterTask.cancelTask();
         }
+        return true;
       });
-    final Ref<UsageView> usageView = new Ref<UsageView>();
+    final Ref<UsageView> usageView = new Ref<>();
     if (findUsagesTitle != null) {
-      popupChooserBuilder = popupChooserBuilder.setCouldPin(new Processor<JBPopup>() {
-        @Override
-        public boolean process(JBPopup popup) {
-          final List<NavigatablePsiElement> items = model.getItems();
-          usageView.set(FindUtil.showInUsageView(null, items.toArray(new PsiElement[items.size()]), findUsagesTitle, targets[0].getProject()));
-          popup.cancel();
-          return false;
-        }
+      popupChooserBuilder = popupChooserBuilder.setCouldPin(popup -> {
+        final List<NavigatablePsiElement> items = model.getItems();
+        usageView.set(FindUtil.showInUsageView(null, items.toArray(new PsiElement[items.size()]), findUsagesTitle, targets[0].getProject()));
+        popup.cancel();
+        return false;
       });
     }
 
@@ -175,8 +177,6 @@ public class PsiElementListNavigator {
 
     if (listUpdaterTask != null) {
       listUpdaterTask.init((AbstractPopup)popup, list, usageView);
-
-      ProgressManager.getInstance().run(listUpdaterTask);
     }
     return popup;
   }

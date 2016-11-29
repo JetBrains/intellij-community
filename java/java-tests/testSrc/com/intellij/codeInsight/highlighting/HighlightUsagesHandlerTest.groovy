@@ -24,80 +24,80 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author cdr
  */
-public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
+class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
   final String basePath = JavaTestUtil.relativeJavaTestDataPath
 
-  public void testHighlightImport() {
+  void testHighlightImport() {
     configureFile()
     ctrlShiftF7()
     assertRangeText 'import', 'List', 'List', 'List', 'List', 'List'
     checkUnselect()
   }
 
-  public void testHighlightStaticImport() {
+  void testHighlightStaticImport() {
     configureFile()
     ctrlShiftF7()
     assertRangeText 'import', 'abs', 'abs', 'pow'
     checkUnselect()
   }
 
-  public void testSimpleThrows() {
+  void testSimpleThrows() {
     configureFile()
     ctrlShiftF7()
     assertRangeText 'throws', 'Exception'
     checkUnselect()
   }
 
-  public void testThrowsExpression() {
+  void testThrowsExpression() {
     configureFile()
     ctrlShiftF7()
     assertRangeText 'throws', '(Exception)detail'
     checkUnselect()
   }
 
-  public void testThrowsReference() {
+  void testThrowsReference() {
     configureFile()
     ctrlShiftF7()
     assertRangeText 'throws', 'detail'
     checkUnselect()
   }
 
-  public void testUnselectUsage() {
+  void testUnselectUsage() {
     configureFile()
     ctrlShiftF7()
     assertRangeText 'foo', 'foo', 'foo'
     checkUnselect()
   }
 
-  public void testHighlightOverridden() {
+  void testHighlightOverridden() {
     configureFile()
     ctrlShiftF7()
     assertRangeText 'extends', 'foo'
     checkUnselect()
   }
 
-  public void testHighlightOverriddenImplements() {
+  void testHighlightOverriddenImplements() {
     configureFile()
     ctrlShiftF7()
     assertRangeText 'implements', 'foo'
     checkUnselect()
   }
 
-  public void testHighlightOverriddenNothing() {
+  void testHighlightOverriddenNothing() {
     configureFile()
     ctrlShiftF7()
     assertRangeText()
     checkUnselect()
   }
 
-  public void testHighlightOverriddenMultiple() {
+  void testHighlightOverriddenMultiple() {
     configureFile()
     ctrlShiftF7()
     assertRangeText 'implements', 'foo', 'other'
     checkUnselect()
   }
 
-  public void testIDEADEV28822() {
+  void testIDEADEV28822() {
     myFixture.configureByText 'Foo.java', '''
       public class Foo {
         public String foo(String s) {
@@ -116,7 +116,7 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
     assertRangeText 'return s;'
   }
 
-  public void testReturnsInTryFinally() {
+  void testReturnsInTryFinally() {
     // See IDEADEV-14028
     myFixture.configureByText 'Foo.java', '''
       public class Foo {
@@ -134,7 +134,7 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
     assertRangeText 'return 1;', 'return 2;', 'return 3;'
   }
 
-  public void testReturnsInLambda() {
+  void testReturnsInLambda() {
     // See IDEADEV-14028
     myFixture.configureByText 'Foo.java', '''
       public class Foo {
@@ -149,7 +149,7 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
     assertRangeText 'return;', 'return;'
   }
 
-  public void testSuppressedWarningsHighlights() {
+  void testSuppressedWarningsHighlights() {
     myFixture.configureByText 'Foo.java', '''
       public class Foo {
         @SuppressWarnings({"Sil<caret>lyAssignment"})
@@ -160,10 +160,10 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
       }'''.stripIndent()
     myFixture.enableInspections(new SillyAssignmentInspection())
     ctrlShiftF7()
-    assertRangeText 'i = i'
+    assertRangeText 'i'
   }
 
-  public void "test statically imported overloads from usage"() {
+  void "test statically imported overloads from usage"() {
     myFixture.addClass '''
       class Foo {
         static void foo(int a) {}
@@ -181,7 +181,7 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
     assertRangeText 'foo', 'foo'
   }
 
-  public void "test statically imported overloads from import"() {
+  void "test statically imported overloads from import"() {
     myFixture.addClass '''
       class Foo {
         static void foo(int a) {}
@@ -199,7 +199,7 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
     assertRangeText 'foo', 'foo', 'foo' //import highlighted twice: for each overloaded usage target
   }
 
-  public void "test identifier highlighter for static imports"() {
+  void "test identifier highlighter for static imports"() {
     myFixture.addClass '''
       class Foo {
         static void foo(int a) {}
@@ -223,7 +223,7 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
     }
   }
 
-  public void testExceptionsInTryWithResources() {
+  void testExceptionsInTryWithResources() {
     myFixture.configureByText 'A.java', '''
       import java.io.*;
       class A {
@@ -236,7 +236,7 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
     assertRangeText 'FileInputStream', 'catch'
   }
 
-  public void testExceptionsResourceCloser() {
+  void testExceptionsResourceCloser() {
     myFixture.configureByText 'A.java', '''
       import java.io.*;
       class A {

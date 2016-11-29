@@ -34,13 +34,7 @@ public class MultipleInvalidFacetEditor extends MultipleFacetSettingsEditor {
 
   public MultipleInvalidFacetEditor(FacetEditor[] editors) {
     myHelper = new MultipleFacetEditorHelperImpl();
-    myHelper.bind(myIgnoreFacetsCheckBox, editors, new NotNullFunction<FacetEditor, JCheckBox>() {
-      @NotNull
-      @Override
-      public JCheckBox fun(FacetEditor editor) {
-        return editor.getEditorTab(InvalidFacetEditor.class).getIgnoreCheckBox();
-      }
-    });
+    myHelper.bind(myIgnoreFacetsCheckBox, editors, editor -> editor.getEditorTab(InvalidFacetEditor.class).getIgnoreCheckBox());
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,12 +91,6 @@ public class Mock {
     @Override
     public StructureViewBuilder getStructureViewBuilder() {
       return null;
-    }
-
-    @Override
-    @NotNull
-    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-      return FileEditorState.INSTANCE;
     }
 
     @Override
@@ -262,7 +256,7 @@ public class Mock {
     @Override
     @NotNull
     public VirtualFile[] getSiblings(@NotNull VirtualFile file) {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
@@ -358,13 +352,13 @@ public class Mock {
     @Override
     @NotNull
     public VirtualFile[] getOpenFiles() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
     @NotNull
     public VirtualFile[] getSelectedFiles() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
@@ -495,7 +489,7 @@ public class Mock {
 
     @Override
     public VirtualFile[] getChildren() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @NotNull
@@ -573,7 +567,7 @@ public class Mock {
     public ToolWindow registerToolWindow(@NotNull String id,
                                          @NotNull JComponent component,
                                          @NotNull ToolWindowAnchor anchor,
-                                         Disposable parentDisposable,
+                                         @NotNull Disposable parentDisposable,
                                          boolean canWorkInDumbMode, boolean canCloseContents) {
       throw new RuntimeException();
     }
@@ -583,7 +577,7 @@ public class Mock {
     public ToolWindow registerToolWindow(@NotNull String id,
                                          @NotNull JComponent component,
                                          @NotNull ToolWindowAnchor anchor,
-                                         Disposable parentDisposable,
+                                         @NotNull Disposable parentDisposable,
                                          boolean canWorkInDumbMode) {
       throw new RuntimeException();
     }
@@ -603,7 +597,7 @@ public class Mock {
     @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
-                                         final Disposable parentDisposable, final boolean dumbAware) {
+                                         @NotNull final Disposable parentDisposable, final boolean dumbAware) {
       throw new RuntimeException();
     }
 
@@ -612,7 +606,7 @@ public class Mock {
     public ToolWindow registerToolWindow(@NotNull String id,
                                          boolean canCloseContent,
                                          @NotNull ToolWindowAnchor anchor,
-                                         Disposable parentDisposable,
+                                         @NotNull Disposable parentDisposable,
                                          boolean canWorkInDumbMode,
                                          boolean secondary) {
       throw new RuntimeException();
@@ -708,10 +702,6 @@ public class Mock {
     @NotNull
     public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
     }
 
     @Override

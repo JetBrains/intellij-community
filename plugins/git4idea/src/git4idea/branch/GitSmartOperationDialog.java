@@ -15,14 +15,13 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.UIUtil;
-import git4idea.GitPlatformFacade;
+import git4idea.DialogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,13 +52,10 @@ public class GitSmartOperationDialog extends DialogWrapper {
   static int showAndGetAnswer(@NotNull final Project project, @NotNull final JComponent fileBrowser,
                               @NotNull final String operationTitle, @Nullable final String forceButtonTitle) {
     final AtomicInteger exitCode = new AtomicInteger();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, forceButtonTitle);
-        ServiceManager.getService(project, GitPlatformFacade.class).showDialog(dialog);
-        exitCode.set(dialog.getExitCode());
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, forceButtonTitle);
+      DialogManager.show(dialog);
+      exitCode.set(dialog.getExitCode());
     });
     return exitCode.get();
   }

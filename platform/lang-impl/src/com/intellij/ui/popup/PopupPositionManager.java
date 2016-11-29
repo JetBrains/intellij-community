@@ -216,7 +216,7 @@ public class PopupPositionManager {
       }
       else {
         // ok, popup does not fit, will try to resize it
-        final java.util.List<Rectangle> boxes = new ArrayList<Rectangle>();
+        final java.util.List<Rectangle> boxes = new ArrayList<>();
         // right
         boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y,
                                                    myScreenRect.width, myScreenRect.height)));
@@ -233,12 +233,9 @@ public class PopupPositionManager {
         boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight() + myGap,
                                                    myScreenRect.width, myScreenRect.height)));
 
-        Collections.sort(boxes, new Comparator<Rectangle>() {
-          @Override
-          public int compare(final Rectangle o1, final Rectangle o2) {
-            final int i = new Integer(o1.width).compareTo(o2.width);
-            return i == 0 ? new Integer(o1.height).compareTo(o2.height) : i;
-          }
+        Collections.sort(boxes, (o1, o2) -> {
+          final int i = new Integer(o1.width).compareTo(o2.width);
+          return i == 0 ? new Integer(o1.height).compareTo(o2.height) : i;
         });
 
         final Rectangle suitableBox = boxes.get(boxes.size() - 1);

@@ -15,23 +15,18 @@
  */
 package git4idea.branch;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import git4idea.GitBranch;
+import git4idea.DialogManager;
 import git4idea.GitCommit;
-import git4idea.GitPlatformFacade;
-import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListWithDiffPanel;
 import git4idea.ui.GitRepositoryComboboxListCellRenderer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,56 +49,50 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
 
   private final Project myProject;
   private final Map<GitRepository, List<GitCommit>> myCommits;
-  private final String myBranchToDelete;
-  private final String myBaseBranch;
-  private final List<String> myMergedToBranches;
 
   private final GitCommitListWithDiffPanel myCommitListWithDiffPanel;
   private final Collection<GitRepository> myRepositories;
+  @NotNull private final String myRemovedBranch;
+  @NotNull private final Map<GitRepository, String> myBaseBranches;
   private final GitRepository myInitialRepository;
 
   /**
    * Show the dialog and get user's answer, whether he wants to force delete the branch.
    *
-   * @param commits          the list of commits, which are not merged from the branch being deleted to the current branch,
-   *                         grouped by repository.
-   * @param branchToDelete   the name of the branch which user chose to delete.
-   * @param mergedToBranches the list of branches which the branch is merged to (returned by {@code git branch --merged <branchToDelete>} command.
-   * @param baseBranch       branch which branchToDelete is not merged to. It is either current branch, or the upstream branch.
-   * @return true if user decided to delete the branch.
+   * @param commits      the list of commits, which are not merged from the branch being deleted to the current branch,
+   *                     grouped by repository.
+   * @param baseBranches base branches (which Git reported as not containing commits from the removed branch) per repository.
+   * @return true if user decided to restore the branch.
    */
   public static boolean showAndGetAnswer(@NotNull Project project,
                                          @NotNull Map<GitRepository, List<GitCommit>> commits,
-                                         @NotNull String branchToDelete,
-                                         @NotNull List<String> mergedToBranches,
-                                         @Nullable String baseBranch) {
-    GitBranchIsNotFullyMergedDialog dialog = new GitBranchIsNotFullyMergedDialog(project, commits, branchToDelete, baseBranch, mergedToBranches);
-    ServiceManager.getService(project, GitPlatformFacade.class).showDialog(dialog);
+                                         @NotNull Map<GitRepository, String> baseBranches,
+                                         @NotNull String removedBranch) {
+    GitBranchIsNotFullyMergedDialog dialog = new GitBranchIsNotFullyMergedDialog(project, commits, baseBranches, removedBranch);
+    DialogManager.show(dialog);
     return dialog.isOK();
   }
 
   private GitBranchIsNotFullyMergedDialog(@NotNull Project project,
                                           @NotNull Map<GitRepository, List<GitCommit>> commits,
-                                          @NotNull String branchToDelete,
-                                          @Nullable String baseBranch,
-                                          @NotNull List<String> mergedToBranches) {
+                                          @NotNull Map<GitRepository, String> baseBranches,
+                                          @NotNull String removedBranch) {
     super(project, false);
     myProject = project;
     myCommits = commits;
-    myBranchToDelete = branchToDelete;
-    myBaseBranch = baseBranch;
-    myMergedToBranches = mergedToBranches;
     myRepositories = commits.keySet();
+    myBaseBranches = baseBranches;
+    myRemovedBranch = removedBranch;
 
     myInitialRepository = calcInitiallySelectedRepository();
-    myCommitListWithDiffPanel = new GitCommitListWithDiffPanel(myProject, new ArrayList<GitCommit>(myCommits.get(myInitialRepository)));
+    myCommitListWithDiffPanel = new GitCommitListWithDiffPanel(myProject, new ArrayList<>(myCommits.get(myInitialRepository)));
 
     init();
 
-    setTitle("Branch Is Not Fully Merged");
-    setOKButtonText("Delete");
-    setOKButtonMnemonic('D');
-    setCancelButtonText("Cancel");
+    setTitle("Branch Was Not Fully Merged");
+    setOKButtonText("Restore");
+    setOKButtonMnemonic('R');
+    getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
   }
 
   @NotNull
@@ -116,61 +105,33 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     throw new AssertionError("The dialog shouldn't be shown. Unmerged commits: " + myCommits);
   }
 
-  private String makeDescription() {
-    String currentBranchOrRev;
-    boolean onBranch;
-    if (myRepositories.size() > 1) {
-      LOG.assertTrue(myBaseBranch != null, "Branches have unexpectedly diverged");
-      currentBranchOrRev = myBaseBranch;
-      onBranch = true;
+  @NotNull
+  private String makeDescription(@NotNull GitRepository repository) {
+    String baseBranch = myBaseBranches.get(repository);
+    String description;
+    if (baseBranch == null) {
+      description = String.format("All commits from branch %s were merged", myRemovedBranch);
     }
     else {
-      GitRepository repository = myInitialRepository;
-      if (repository.isOnBranch()) {
-        GitBranch currentBranch = repository.getCurrentBranch();
-        assert currentBranch != null;
-        currentBranchOrRev = currentBranch.getName();
-        onBranch = true;
-      }
-      else {
-        currentBranchOrRev = repository.getCurrentRevision();
-        onBranch = false;
-      }
+      description = String.format("The branch %s was not fully merged to %s.<br/>Below is the list of unmerged commits.",
+                                  myRemovedBranch, baseBranch);
     }
-
-    StringBuilder description = new StringBuilder();
-    if (onBranch) {
-      description.append(GitBundle.message("branch.delete.not_fully_merged.description", myBranchToDelete, myBaseBranch));
-    } else {
-      description.append(GitBundle.message("branch.delete.not_fully_merged.description.not_on_branch", myBranchToDelete, currentBranchOrRev,
-                                           myBaseBranch));
-    }
-    if (!myMergedToBranches.isEmpty()) {
-      String listOfMergedBranches = StringUtil.join(StringUtil.surround(ArrayUtil.toStringArray(myMergedToBranches), "<b>", "</b>"), ", ");
-      description.append("<br>");
-      if (myMergedToBranches.size() == 1) {
-        description.append(GitBundle.message("branch.delete.merged_to.one", myBranchToDelete, listOfMergedBranches));
-      }
-      else {
-        description.append(GitBundle.message("branch.delete.merged_to.many", myBranchToDelete, listOfMergedBranches));
-      }
-    }
-    description.append("<br>").append(GitBundle.message("branch.delete.warning", myBranchToDelete));
-    return description.toString();
+    return XmlStringUtil.wrapInHtml(description);
   }
 
   @Override
   protected JComponent createNorthPanel() {
-    JBLabel descriptionLabel = new JBLabel(XmlStringUtil.wrapInHtml(makeDescription()));
+    JBLabel descriptionLabel = new JBLabel(makeDescription(myInitialRepository));
 
-      final JComboBox repositorySelector = new JComboBox(ArrayUtil.toObjectArray(myRepositories, GitRepository.class));
+    JComboBox repositorySelector = new JComboBox(ArrayUtil.toObjectArray(myRepositories, GitRepository.class));
     repositorySelector.setRenderer(new GitRepositoryComboboxListCellRenderer(repositorySelector));
     repositorySelector.setSelectedItem(myInitialRepository);
     repositorySelector.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        List<GitCommit> commits = myCommits.get((GitRepository)repositorySelector.getSelectedItem());
-        myCommitListWithDiffPanel.setCommits(new ArrayList<GitCommit>(commits));
+        GitRepository selectedRepo = (GitRepository)repositorySelector.getSelectedItem();
+        descriptionLabel.setText(makeDescription(selectedRepo));
+        myCommitListWithDiffPanel.setCommits(myCommits.get(selectedRepo));
       }
     });
 

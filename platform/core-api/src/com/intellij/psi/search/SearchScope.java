@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,4 +42,6 @@ public abstract class SearchScope {
 
   @NotNull public abstract SearchScope intersectWith(@NotNull SearchScope scope2);
   @NotNull public abstract SearchScope union(@NotNull SearchScope scope);
+
+  public abstract boolean contains(@NotNull VirtualFile file);
 }

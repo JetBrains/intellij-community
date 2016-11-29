@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static git4idea.GitCucumberWorld.myProject;
+import static git4idea.GitCucumberWorld.myRepositoryManager;
 import static git4idea.test.GitExecutor.cd;
 import static git4idea.test.GitExecutor.git;
 import static org.junit.Assert.assertNotNull;
@@ -63,7 +64,7 @@ public class GitAddSteps {
   public void file_should_become_ADDED(String filePath) throws Throwable {
     VirtualFile vf = GitCucumberWorld.myProjectDir.findFileByRelativePath(filePath);
     assertNotNull(vf);
-    GitRepository repo = GitCucumberWorld.myPlatformFacade.getRepositoryManager(GitCucumberWorld.myProject).getRepositoryForFile(vf);
+    GitRepository repo = myRepositoryManager.getRepositoryForFile(vf);
     String status = git(repo, "status --porcelain " + vf.getPath());
     assertTrue("File status is not-changed: " + status, !status.isEmpty());
     assertTrue("File status is not added: " + status, 'A' == status.charAt(0));

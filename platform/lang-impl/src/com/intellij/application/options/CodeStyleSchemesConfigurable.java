@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,16 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
 public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract
-  implements OptionsContainingConfigurable, Configurable.NoMargin, Configurable.NoScroll {
+  implements OptionsContainingConfigurable, Configurable.NoMargin, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
 
   private CodeStyleSchemesPanel myRootSchemesPanel;
   private CodeStyleSchemesModel myModel;
@@ -159,23 +158,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       try {
         super.apply();
 
-        for (CodeStyleScheme scheme : new ArrayList<CodeStyleScheme>(myModel.getSchemes())) {
-          final boolean isDefaultModified = CodeStyleSchemesModel.cannotBeModified(scheme) && isSchemeModified(scheme);
-          if (isDefaultModified) {
-            CodeStyleScheme newscheme = myModel.createNewScheme(null, scheme);
-            CodeStyleSettings settingsWillBeModified = scheme.getCodeStyleSettings();
-            CodeStyleSettings notModifiedSettings = settingsWillBeModified.clone();
-            ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(notModifiedSettings);
-            ((CodeStyleSchemeImpl)newscheme).setCodeStyleSettings(settingsWillBeModified);
-            myModel.addScheme(newscheme, false);
-
-            if (myModel.getSelectedScheme() == scheme) {
-              myModel.selectScheme(newscheme, this);
-            }
-
-          }
-        }
-
         for (CodeStyleConfigurableWrapper panel : myPanels) {
           panel.applyPanel();
         }
@@ -191,33 +173,21 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   }
 
-  private boolean isSchemeModified(final CodeStyleScheme scheme) {
-    for (CodeStyleConfigurableWrapper panel : myPanels) {
-      if (panel.isPanelModified(scheme)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   protected Configurable[] buildConfigurables() {
-    myPanels = new ArrayList<CodeStyleConfigurableWrapper>();
+    myPanels = new ArrayList<>();
 
     final List<CodeStyleSettingsProvider> providers =
       Arrays.asList(Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME));
-    Collections.sort(providers, new Comparator<CodeStyleSettingsProvider>() {
-      @Override
-      public int compare(CodeStyleSettingsProvider p1, CodeStyleSettingsProvider p2) {
-        if (!p1.getPriority().equals(p2.getPriority())) {
-          return p1.getPriority().compareTo(p2.getPriority());
-        }
-        String name1 = p1.getConfigurableDisplayName();
-        if (name1 == null) name1 = "";
-        String name2 = p2.getConfigurableDisplayName();
-        if (name2 == null) name2 = "";
-        return name1.compareToIgnoreCase(name2);
+    Collections.sort(providers, (p1, p2) -> {
+      if (!p1.getPriority().equals(p2.getPriority())) {
+        return p1.getPriority().compareTo(p2.getPriority());
       }
+      String name1 = p1.getConfigurableDisplayName();
+      if (name1 == null) name1 = "";
+      String name2 = p2.getConfigurableDisplayName();
+      if (name2 == null) name2 = "";
+      return name1.compareToIgnoreCase(name2);
     });
 
     for (final CodeStyleSettingsProvider provider : providers) {
@@ -316,11 +286,24 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public Set<String> processListOptions() {
-    HashSet<String> result = new HashSet<String>();
+    HashSet<String> result = new HashSet<>();
     for (CodeStyleConfigurableWrapper panel : myPanels) {
       result.addAll(panel.processListOptions());
     }
     return result;
+  }
+
+  @Override
+  public boolean isProjectLevel() {
+    return myModel != null && myModel.isUsePerProjectSettings();
+  }
+
+  @Nullable
+  public SearchableConfigurable findSubConfigurable(final String name) {
+    if (myPanels == null) {
+      buildConfigurables();
+    }
+    return myPanels.stream().filter(panel -> panel.getDisplayName().equals(name)).findFirst().orElse(null);
   }
 
   private class CodeStyleConfigurableWrapper implements SearchableConfigurable, NoMargin, NoScroll, OptionsContainingConfigurable {
@@ -399,8 +382,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       else {
         revert();
       }
-
-
     }
 
     @Override
@@ -410,19 +391,10 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     }
 
     @Override
-    public Runnable enableSearch(final String option) {
-      return null;
-    }
-
-    @Override
     public void disposeUIResources() {
       if (myPanel != null) {
         myPanel.disposeUIResources();
       }
-    }
-
-    public boolean isPanelModified(CodeStyleScheme scheme) {
-      return myPanel != null && myPanel.isModified(scheme);
     }
 
     public boolean isPanelModified() {

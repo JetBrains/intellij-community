@@ -108,7 +108,7 @@ public class SvnRootsDetector {
     }
     clManager.invokeAfterUpdate(new Runnable() {
       public void run() {
-        final List<RootUrlInfo> nestedRoots = new ArrayList<RootUrlInfo>();
+        final List<RootUrlInfo> nestedRoots = new ArrayList<>();
 
         for (NestedCopyInfo info : myNestedCopiesHolder.getAndClear()) {
           if (NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType())) {
@@ -209,7 +209,7 @@ public class SvnRootsDetector {
 
     private RepositoryRoots(final SvnVcs vcs) {
       myVcs = vcs;
-      myRoots = new HashSet<SVNURL>();
+      myRoots = new HashSet<>();
     }
 
     public void register(final SVNURL url) {
@@ -240,9 +240,9 @@ public class SvnRootsDetector {
     @NotNull private final List<RootUrlInfo> myErrorRoots;
 
     public Result() {
-      myTopRoots = new ArrayList<RootUrlInfo>();
-      myErrorRoots = new ArrayList<RootUrlInfo>();
-      myLonelyRoots = new ArrayList<VirtualFile>();
+      myTopRoots = new ArrayList<>();
+      myErrorRoots = new ArrayList<>();
+      myLonelyRoots = new ArrayList<>();
     }
 
     @NotNull

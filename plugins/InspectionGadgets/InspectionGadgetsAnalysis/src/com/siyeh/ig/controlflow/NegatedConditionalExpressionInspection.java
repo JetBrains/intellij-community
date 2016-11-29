@@ -58,14 +58,8 @@ public class NegatedConditionalExpressionInspection extends BaseInspection imple
 
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("negated.conditional.expression.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("negated.conditional.expression.quickfix");
     }
 
     @Override

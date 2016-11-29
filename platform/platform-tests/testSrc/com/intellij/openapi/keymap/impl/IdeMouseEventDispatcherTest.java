@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     keymap.setName(OUR_KEYMAP_NAME);
     keymap.addShortcut(OUR_TEST_ACTION, OUR_SHORTCUT);
     keymap.addShortcut(OUR_TEST_ACTION, OUR_SHORTCUT_WITH_MODIFIER);
-    KeymapManagerEx.getInstanceEx().getSchemesManager().addNewScheme(keymap, false);
+    KeymapManagerEx.getInstanceEx().getSchemeManager().addNewScheme(keymap, false);
     mySavedKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
     KeymapManagerEx.getInstanceEx().setActiveKeymap(keymap);
 
@@ -67,16 +67,21 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    myEventSource.dispose();
-    KeymapManagerEx.getInstanceEx().getSchemesManager().removeScheme(keymap);
-    KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
-    ActionManager.getInstance().unregisterAction(OUR_TEST_ACTION);
-    super.tearDown();
+    try {
+      myEventSource.dispose();
+      KeymapManagerEx.getInstanceEx().getSchemeManager().removeScheme(keymap);
+      KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
+      ActionManager.getInstance().unregisterAction(OUR_TEST_ACTION);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testActionTriggering() throws Exception {
     assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
-    assertTrue(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
+    MouseEvent mouseEvent = new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2);
+    assertTrue(!myDispatcher.dispatchMouseEvent(mouseEvent) && mouseEvent.isConsumed());
     assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
     assertEquals(1, myActionExecutionCount);
   }

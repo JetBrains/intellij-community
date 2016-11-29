@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +97,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSecondCatch() throws Exception { doTest(2, "catch", "finally"); }
   public void testSuper1() throws Exception { doTest(1, "super"); }
   public void testSuper2() throws Exception { doTest(0, "super"); }
-  public void testSuper3() throws Exception { doTest(true); }
+  public void testSuper3() throws Exception { doTest(false); }
   public void testSuper4() throws Exception { doTest(0, "class"); }
   public void testContinue() throws Exception { doTest(false); }
   public void testThrowsOnSeparateLine() throws Exception { doTest(false); }
@@ -126,6 +128,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFinalAfterParameterAnno() throws Exception { doTest(2, "final", "float", "class"); }
   public void testFinalAfterParameterAnno2() throws Exception { doTest(2, "final", "float", "class"); }
   public void testFinalAfterCase() { doTest(3, "final", "float", "class"); }
+  public void testNoCaseInsideWhileInSwitch() { doTest(0, "case", "default"); }
   public void testFinalInCatch() { doTest(1, "final"); }
   public void testFinalInIncompleteCatch() { doTest(1, "final"); }
   public void testFinalInTryWithResources() throws Exception { doTest(1, "final", "float", "class"); }
@@ -138,6 +141,18 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testIntInGenerics() throws Throwable { doTest(2, "int", "char", "final"); }
   public void testIntInGenerics2() throws Throwable { doTest(2, "int", "char", "final"); }
   public void testBreakInLabeledBlock() { doTest(1, "break label", "continue"); }
+
+  public void testPrivateInJava9Interface() throws Exception {
+    LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
+    LanguageLevel oldLevel = levelProjectExtension.getLanguageLevel();
+    try {
+      levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_9);
+      doTest(false);
+    }
+    finally {
+      levelProjectExtension.setLanguageLevel(oldLevel);
+    }
+  }
 
   public void testTryInExpression() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,9 +80,9 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       if (tryBlock == null) {
         return;
       }
-      final Set<PsiType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
+      final Set<PsiClassType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
       ExceptionUtils.calculateExceptionsThrown(statement.getResourceList(), thrownTypes);
-      final Set<PsiType> caughtTypes = new HashSet<PsiType>(thrownTypes.size());
+      final Set<PsiType> caughtTypes = new HashSet<>(thrownTypes.size());
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       boolean runtimeExceptionSeen = false;
       for (final PsiCatchSection catchSection : catchSections) {
@@ -106,7 +106,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       }
     }
 
-    private boolean check(Set<PsiType> thrownTypes, PsiTypeElement caughtTypeElement, boolean runtimeExceptionSeen, Set<PsiType> caughtTypes) {
+    private boolean check(Set<PsiClassType> thrownTypes, PsiTypeElement caughtTypeElement, boolean runtimeExceptionSeen, Set<PsiType> caughtTypes) {
       final PsiType caughtType = caughtTypeElement.getType();
       if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(caughtType.getCanonicalText())) {
         runtimeExceptionSeen = true;
@@ -125,7 +125,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       return runtimeExceptionSeen;
     }
 
-    private List<PsiType> findMaskedExceptions(Set<PsiType> thrownTypes, PsiType caughtType, Set<PsiType> caughtTypes) {
+    private List<PsiType> findMaskedExceptions(Set<PsiClassType> thrownTypes, PsiType caughtType, Set<PsiType> caughtTypes) {
       if (thrownTypes.contains(caughtType)) {
         if (ignoreThrown) {
           return Collections.emptyList();
@@ -138,7 +138,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
           return Collections.emptyList();
         }
       }
-      final List<PsiType> maskedTypes = new ArrayList<PsiType>();
+      final List<PsiType> maskedTypes = new ArrayList<>();
       for (PsiType typeThrown : thrownTypes) {
         if (!caughtTypes.contains(typeThrown) && caughtType.isAssignableFrom(typeThrown)) {
           caughtTypes.add(typeThrown);

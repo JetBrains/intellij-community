@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class GrFieldAlreadyDefinedInspection extends BaseInspection {
 
   private static class MyVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitField(GrField field) {
+    public void visitField(@NotNull GrField field) {
       super.visitField(field);
 
       PsiElement duplicate = ResolveUtil.findDuplicate(field);

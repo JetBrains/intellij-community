@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -38,6 +37,7 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
     if (SystemInfo.isMac && ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
       // It's called from Preferences in App menu.
       e.getPresentation().setVisible(false);
@@ -48,18 +48,16 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
+    Project project = e.getProject();
+    perform(project != null ? project : ProjectManager.getInstance().getDefaultProject());
+  }
 
+  public static void perform(@NotNull Project project) {
     final long startTime = System.nanoTime();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        final long endTime = System.nanoTime();
-        if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-          System.out.println("Displaying settings dialog took " + ((endTime - startTime) / 1000000) + " ms");
-        }
+    SwingUtilities.invokeLater(() -> {
+      final long endTime = System.nanoTime();
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        System.out.println("Displaying settings dialog took " + ((endTime - startTime) / 1000000) + " ms");
       }
     });
     ShowSettingsUtil.getInstance().showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true));

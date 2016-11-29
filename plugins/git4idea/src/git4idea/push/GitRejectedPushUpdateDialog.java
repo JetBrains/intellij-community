@@ -187,7 +187,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
 
   @NotNull
   private Map<GitRepository, GitBranch> getCurrentBranches() {
-    Map<GitRepository, GitBranch> currentBranches = new HashMap<GitRepository, GitBranch>();
+    Map<GitRepository, GitBranch> currentBranches = new HashMap<>();
     for (GitRepository repository : myRepositories) {
       currentBranches.put(repository, getCurrentBranch(repository));
     }

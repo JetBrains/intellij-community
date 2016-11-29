@@ -91,7 +91,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
 
     Enumeration enumeration = root.preorderEnumeration();
-    ArrayList<TreeNode> nodes = new ArrayList<TreeNode>();
+    ArrayList<TreeNode> nodes = new ArrayList<>();
     while (enumeration.hasMoreElements()) {
       TreeNode node = (TreeNode)enumeration.nextElement();
       nodes.add(node);

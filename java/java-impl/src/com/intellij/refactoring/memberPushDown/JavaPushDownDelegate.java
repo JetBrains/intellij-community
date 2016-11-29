@@ -24,6 +24,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -45,10 +46,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JavaPushDownDelegate extends PushDownDelegate {
+public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember> {
   public static final Key<Boolean> REMOVE_QUALIFIER_KEY = Key.create("REMOVE_QUALIFIER_KEY");
   public static final Key<PsiClass> REPLACE_QUALIFIER_KEY = Key.create("REPLACE_QUALIFIER_KEY");
 
@@ -60,7 +62,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
   }
 
   @Override
-  public List<PsiElement> findInheritors(PushDownData pushDownData) {
+  public List<PsiElement> findInheritors(PushDownData<MemberInfo, PsiMember> pushDownData) {
     final List<PsiElement> result = new ArrayList<>();
     final PsiClass aClass = (PsiClass)pushDownData.getSourceClass();
     ClassInheritorsSearch.search(aClass, false).forEach((iClass) -> {
@@ -70,7 +72,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
 
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
     if (interfaceMethod != null) {
-      for (MemberInfoBase<? extends PsiElement> info : pushDownData.getMembersToMove()) {
+      for (MemberInfo info : pushDownData.getMembersToMove()) {
         if (interfaceMethod == info.getMember()) {
           FunctionalExpressionSearch.search(aClass).forEach(expression -> {
             result.add(expression);
@@ -84,27 +86,40 @@ public class JavaPushDownDelegate extends PushDownDelegate {
   }
 
   @Override
-  public void checkSourceClassConflicts(PushDownData pushDownData, MultiMap<PsiElement, String> conflicts) {
-    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), (MemberInfo[])pushDownData.getMembersToMove(), conflicts).checkSourceClassConflicts();
+  public void checkSourceClassConflicts(PushDownData<MemberInfo, PsiMember> pushDownData, MultiMap<PsiElement, String> conflicts) {
+    List<MemberInfo> toMove = pushDownData.getMembersToMove();
+    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), toMove.toArray(new MemberInfo[0]), conflicts).checkSourceClassConflicts();
   }
 
   @Override
-  public void checkTargetClassConflicts(PsiElement targetClass,
-                                        PushDownData pushDownData, 
-                                        boolean checkStatic,
-                                        PsiElement context,
-                                        MultiMap<PsiElement, String> conflicts) {
-    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), (MemberInfo[])pushDownData.getMembersToMove(), conflicts).checkTargetClassConflicts(targetClass, checkStatic, context);
+  public void checkTargetClassConflicts(@Nullable PsiElement targetClass,
+                                        PushDownData<MemberInfo, PsiMember> pushDownData,
+                                        MultiMap<PsiElement, String> conflicts,
+                                        NewSubClassData subClassData) {
+    List<MemberInfo> toMove = pushDownData.getMembersToMove();
+    PsiElement context = targetClass;
+    if (context == null) {
+      assert subClassData != null;
+      Object newClassContext = subClassData.getContext();
+      if (newClassContext instanceof PsiElement) {
+        context = (PsiElement)newClassContext;
+      }
+    }
+    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), toMove.toArray(new MemberInfo[0]), conflicts)
+      .checkTargetClassConflicts(targetClass, context);
   }
 
   @Override
   public NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, String conflictDialogTitle) {
     final PsiClass aClass = (PsiClass)sourceClass;
-    if (aClass.isEnum() || aClass.hasModifierProperty(PsiModifier.FINAL)) {
-      if (Messages.showOkCancelDialog((aClass.isEnum() ? "Enum " + aClass.getQualifiedName() + " doesn't have constants to inline to. " : "Final class " + aClass.getQualifiedName() + "does not have inheritors. ") +
+    final PsiFile containingFile = aClass.getContainingFile();
+    final boolean defaultPackage = StringUtil.isEmptyOrSpaces(containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : "");
+    if (aClass.isEnum() || aClass.hasModifierProperty(PsiModifier.FINAL) || defaultPackage) {
+      if (Messages.showOkCancelDialog((aClass.isEnum() ? "Enum " + aClass.getQualifiedName() + " doesn't have constants to inline to. "
+                                                       : (defaultPackage ? "Class " : "Final class ") + aClass.getQualifiedName() + "does not have inheritors. ") +
                                       "Pushing members down will result in them being deleted. " +
                                       "Would you like to proceed?", conflictDialogTitle, Messages.getWarningIcon()) != Messages.OK) {
-        return NewSubClassData.EMPTY;
+        return NewSubClassData.ABORT_REFACTORING;
       }
     } else {
       String noInheritors = aClass.isInterface() ?
@@ -117,19 +132,19 @@ public class JavaPushDownDelegate extends PushDownDelegate {
         if (classDialog != null) {
           return new NewSubClassData(classDialog.getTargetDirectory(), classDialog.getClassName());
         } else {
-          return NewSubClassData.EMPTY;
+          return NewSubClassData.ABORT_REFACTORING;
         }
       }
       else if (answer != Messages.NO) {
-        return NewSubClassData.EMPTY;
+        return NewSubClassData.ABORT_REFACTORING;
       }
     }
     return null;
   }
 
   @Override
-  public void prepareToPush(PushDownData pushDownData) {
-    final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
+  public void prepareToPush(PushDownData<MemberInfo, PsiMember> pushDownData) {
+    final Set<PsiMember> movedMembers = new HashSet<>();
     for (MemberInfoBase<? extends PsiElement> memberInfo : pushDownData.getMembersToMove()) {
       movedMembers.add((PsiMember)memberInfo.getMember());
     }
@@ -164,7 +179,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
   }
 
   @Override
-  public void pushDownToClass(PsiElement targetElement, PushDownData pushDownData) {
+  public void pushDownToClass(PsiElement targetElement, PushDownData<MemberInfo, PsiMember> pushDownData) {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(pushDownData.getSourceClass().getProject()).getElementFactory();
     final PsiClass targetClass = targetElement instanceof PsiClass ? (PsiClass)targetElement : null;
     if (targetClass == null) {
@@ -174,7 +189,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
     final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(sourceClass, targetClass, PsiSubstitutor.EMPTY);
     for (MemberInfoBase<? extends PsiElement> memberInfo : pushDownData.getMembersToMove()) {
       PsiMember member = (PsiMember)memberInfo.getMember();
-      final List<PsiReference> refsToRebind = new ArrayList<PsiReference>();
+      final List<PsiReference> refsToRebind = new ArrayList<>();
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
       if (list.hasModifierProperty(PsiModifier.STATIC)) {
@@ -206,31 +221,32 @@ public class JavaPushDownDelegate extends PushDownDelegate {
         PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
         if (methodBySignature == null) {
           newMember = (PsiMethod)targetClass.add(method);
-          if (sourceClass.isInterface()) {
-            if (!targetClass.isInterface()) {
-              PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
-              if (newMember.hasModifierProperty(PsiModifier.DEFAULT)) {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
-              }
-              else {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
-              }
+          final PsiMethod oldMethod = (PsiMethod)memberInfo.getMember();
+          if (sourceClass.isInterface() && !targetClass.isInterface()) {
+            PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
+            if (oldMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              RefactoringUtil.makeMethodAbstract(targetClass, (PsiMethod)newMember);
+            }
+            else {
+              PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
             }
           }
-          else if (memberInfo.isToAbstract()) {
+
+          if (memberInfo.isToAbstract()) {
             if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
               PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
             }
+
             pushDownData.getCommentPolicy().processNewJavaDoc(((PsiMethod)newMember).getDocComment());
-          }
-          if (memberInfo.isToAbstract()) {
             OverrideImplementUtil.annotateOnOverrideImplement((PsiMethod)newMember, targetClass, (PsiMethod)memberInfo.getMember());
           }
         }
         else { //abstract method: remove @Override
-          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
-          if (annotation != null && !leaveOverrideAnnotation(sourceClass, substitutor, method)) {
-            annotation.delete();
+          if (!memberInfo.isToAbstract()) {
+            final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
+            if (annotation != null && !leaveOverrideAnnotation(sourceClass, substitutor, method)) {
+              annotation.delete();
+            }
           }
           final PsiDocComment oldDocComment = method.getDocComment();
           if (oldDocComment != null) {
@@ -248,6 +264,9 @@ public class JavaPushDownDelegate extends PushDownDelegate {
         }
       }
       else if (member instanceof PsiClass) {
+        if (sourceClass.isInterface() && !targetClass.isInterface()) {
+          PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
+        }
         if (Boolean.FALSE.equals(memberInfo.getOverrides())) {
           final PsiClass psiClass = (PsiClass)memberInfo.getMember();
           PsiClassType classType = null;
@@ -285,7 +304,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
   }
 
   @Override
-  public void removeFromSourceClass(PushDownData pushDownData) {
+  public void removeFromSourceClass(PushDownData<MemberInfo, PsiMember> pushDownData) {
     for (MemberInfoBase<? extends PsiElement> memberInfo : pushDownData.getMembersToMove()) {
       final PsiElement member = memberInfo.getMember();
 
@@ -297,6 +316,9 @@ public class JavaPushDownDelegate extends PushDownDelegate {
           final PsiMethod method = (PsiMethod)member;
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
             PsiUtil.setModifierProperty(method, PsiModifier.PROTECTED, true);
+          }
+          if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+            PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
           }
           RefactoringUtil.makeMethodAbstract((PsiClass)pushDownData.getSourceClass(), method);
           pushDownData.getCommentPolicy().processOldJavaDoc(method.getDocComment());

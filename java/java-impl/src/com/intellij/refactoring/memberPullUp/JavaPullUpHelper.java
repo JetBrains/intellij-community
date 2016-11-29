@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -60,7 +59,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   private final PsiClass myTargetSuperClass;
   private final boolean myIsTargetInterface;
   private final DocCommentPolicy myJavaDocPolicy;
-  private Set<PsiMember> myMembersAfterMove = null;
+  private Set<PsiMember> myMembersAfterMove;
   private final Set<PsiMember> myMembersToMove;
   private final Project myProject;
 
@@ -222,12 +221,12 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
     Language language = myTargetSuperClass.getLanguage();
-    final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(methodCopy, false);
+    final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySuperSignature(myTargetSuperClass, method.getSignature(substitutor), false);
     if (superClassMethod != null && superClassMethod.findDeepestSuperMethods().length == 0 ||
         method.findSuperMethods(myTargetSuperClass).length == 0) {
       deleteOverrideAnnotationIfFound(methodCopy);
     }
-    boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT);
+    boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (myIsTargetInterface || info.isToAbstract()) {
       ChangeContextUtil.clearContextInfo(method);
 
@@ -235,7 +234,11 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
         //pull as default
         RefactoringUtil.makeMethodDefault(methodCopy);
         isOriginalMethodAbstract = true;
-      } else {
+      }
+      else {
+        if (info.isToAbstract() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
+          PsiUtil.setModifierProperty(methodCopy, PsiModifier.DEFAULT, false);
+        }
         RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
       }
 
@@ -359,12 +362,12 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private void tryToMoveInitializers(PsiMethod constructor, HashSet<PsiMethod> subConstructors, LinkedHashSet<PsiField> movedFields) throws IncorrectOperationException {
-    final LinkedHashMap<PsiField, Initializer> fieldsToInitializers = new LinkedHashMap<PsiField, Initializer>();
+    final LinkedHashMap<PsiField, Initializer> fieldsToInitializers = new LinkedHashMap<>();
     boolean anyFound = false;
 
     for (PsiField field : movedFields) {
       PsiStatement commonInitializer = null;
-      final ArrayList<PsiElement> fieldInitializersToRemove = new ArrayList<PsiElement>();
+      final ArrayList<PsiElement> fieldInitializersToRemove = new ArrayList<>();
       for (PsiMethod subConstructor : subConstructors) {
         commonInitializer = hasCommonInitializer(commonInitializer, subConstructor, field, fieldInitializersToRemove);
         if (commonInitializer == null) break;
@@ -394,11 +397,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
                   return fieldsToInitializers.get(source).movedFieldsUsed;
                 }
               },
-              new Condition<PsiField>() {
-                public boolean value(PsiField object) {
-                  return !initializedFields.contains(object);
-                }
-              }
+              object -> !initializedFields.contains(object)
       );
 
       for (PsiField psiField : unmovable) {
@@ -415,16 +414,14 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     }
 
 
-    ArrayList<PsiField> initializedFields = new ArrayList<PsiField>(fieldsToInitializers.keySet());
+    ArrayList<PsiField> initializedFields = new ArrayList<>(fieldsToInitializers.keySet());
 
-    Collections.sort(initializedFields, new Comparator<PsiField>() {
-      public int compare(PsiField field1, PsiField field2) {
-        Initializer i1 = fieldsToInitializers.get(field1);
-        Initializer i2 = fieldsToInitializers.get(field2);
-        if(i1.movedFieldsUsed.contains(field2)) return 1;
-        if(i2.movedFieldsUsed.contains(field1)) return -1;
-        return 0;
-      }
+    Collections.sort(initializedFields, (field1, field2) -> {
+      Initializer i1 = fieldsToInitializers.get(field1);
+      Initializer i2 = fieldsToInitializers.get(field2);
+      if(i1.movedFieldsUsed.contains(field2)) return 1;
+      if(i2.movedFieldsUsed.contains(field1)) return -1;
+      return 0;
     });
 
     for (final PsiField initializedField : initializedFields) {
@@ -501,7 +498,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     // no write usages afterwards.
     PsiStatement commonInitializerCandidate = null;
     for (PsiStatement statement : statements) {
-      final HashSet<PsiStatement> collectedStatements = new HashSet<PsiStatement>();
+      final HashSet<PsiStatement> collectedStatements = new HashSet<>();
       collectPsiStatements(statement, collectedStatements);
       boolean doLookup = true;
       for (PsiStatement collectedStatement : collectedStatements) {
@@ -554,7 +551,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
       if (doLookup) {
         final PsiReference[] references =
-          ReferencesSearch.search(field, new LocalSearchScope(statement), false).toArray(new PsiReference[0]);
+          ReferencesSearch.search(field, new LocalSearchScope(statement), false).toArray(PsiReference.EMPTY_ARRAY);
         if (commonInitializerCandidate == null && references.length > 0) {
           return null;
         }
@@ -581,11 +578,11 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     private final Set<PsiField> myMovedFields;
     private final Set<PsiField> myUsedFields;
 
-    private final Set<PsiParameter> myUsedParameters = new LinkedHashSet<PsiParameter>();
+    private final Set<PsiParameter> myUsedParameters = new LinkedHashSet<>();
 
     private ParametersAndMovedFieldsUsedCollector(HashSet<PsiField> movedFields) {
       myMovedFields = movedFields;
-      myUsedFields = new HashSet<PsiField>();
+      myUsedFields = new HashSet<>();
     }
 
     public Set<PsiParameter> getUsedParameters() {
@@ -655,9 +652,9 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private HashMap<PsiMethod,HashSet<PsiMethod>> buildConstructorsToSubConstructorsMap(final PsiMethod[] constructors) {
-    final HashMap<PsiMethod,HashSet<PsiMethod>> constructorsToSubConstructors = new HashMap<PsiMethod, HashSet<PsiMethod>>();
+    final HashMap<PsiMethod,HashSet<PsiMethod>> constructorsToSubConstructors = new HashMap<>();
     for (PsiMethod constructor : constructors) {
-      final HashSet<PsiMethod> referencingSubConstructors = new HashSet<PsiMethod>();
+      final HashSet<PsiMethod> referencingSubConstructors = new HashSet<>();
       constructorsToSubConstructors.put(constructor, referencingSubConstructors);
       if (constructor != null) {
         // find references
@@ -722,9 +719,9 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
     private StaticReferencesCollector() {
       super(mySourceClass);
-      myReferees = new ArrayList<PsiElement>();
-      myRefereeClasses = new ArrayList<PsiClass>();
-      myReferences = new ArrayList<PsiJavaCodeReferenceElement>();
+      myReferees = new ArrayList<>();
+      myRefereeClasses = new ArrayList<>();
+      myReferences = new ArrayList<>();
     }
 
     public ArrayList<PsiElement> getReferees() {

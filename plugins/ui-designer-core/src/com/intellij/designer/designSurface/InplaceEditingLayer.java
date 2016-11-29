@@ -60,11 +60,7 @@ public class InplaceEditingLayer extends JComponent {
         return;
       }
       // [vova] we need LaterInvocator here to prevent write-access assertions
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          finishEditing(true);
-        }
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> finishEditing(true), ModalityState.NON_MODAL);
     }
   };
   private final ComponentSelectionListener mySelectionListener = new ComponentSelectionListener() {
@@ -126,7 +122,7 @@ public class InplaceEditingLayer extends JComponent {
         }
       }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myInplaceComponent);
 
-      myEditors = new ArrayList<PropertyEditor>();
+      myEditors = new ArrayList<>();
 
       JComponent componentToFocus = null;
       Font font = null;
@@ -185,11 +181,9 @@ public class InplaceEditingLayer extends JComponent {
       else {
         grabFocus();
         final JComponent finalComponentToFocus = componentToFocus;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            finalComponentToFocus.requestFocusInWindow();
-            myFocusWatcher.install(myInplaceComponent);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          finalComponentToFocus.requestFocusInWindow();
+          myFocusWatcher.install(myInplaceComponent);
         });
       }
 
@@ -206,19 +200,16 @@ public class InplaceEditingLayer extends JComponent {
 
     if (myInplaceComponent != null) {
       if (commit) {
-        myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-          @Override
-          public void run() throws Exception {
-            int size = myProperties.size();
+        myDesigner.getToolProvider().execute(() -> {
+          int size = myProperties.size();
 
-            for (int i = 0; i < size; i++) {
-              Property property = myProperties.get(i);
-              Object oldValue = property.getValue(myRadComponent);
-              Object newValue = myEditors.get(i).getValue();
+          for (int i = 0; i < size; i++) {
+            Property property = myProperties.get(i);
+            Object oldValue = property.getValue(myRadComponent);
+            Object newValue = myEditors.get(i).getValue();
 
-              if (!Comparing.equal(oldValue, newValue)) {
-                property.setValue(myRadComponent, newValue);
-              }
+            if (!Comparing.equal(oldValue, newValue)) {
+              property.setValue(myRadComponent, newValue);
             }
           }
         }, DesignerBundle.message("command.set.property.value"), true);

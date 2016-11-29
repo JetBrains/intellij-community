@@ -148,7 +148,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * usages of the same classes and methods, usage searches are not performed directly, but
    * instead are queued for batch processing through
    * {@link GlobalJavaInspectionContext#enqueueClassUsagesProcessor} and similar methods. The method
-   * can add new problems to <code>problemDescriptionsProcessor</code> or remove some of the problems
+   * can add new problems to {@code problemDescriptionsProcessor} or remove some of the problems
    * collected by {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}
    * by calling {@link ProblemDescriptionsProcessor#ignoreElement(RefEntity)}.
    *
@@ -201,6 +201,16 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   @Nullable
   public JobDescriptor[] getAdditionalJobs() {
     return null;
+  }
+
+  /**
+   * @return JobDescriptors array to show inspection progress correctly. TotalAmount should be set (e.g. in
+   * {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)})
+   * ProgressIndicator should progress with {@link GlobalInspectionContext#incrementJobDoneAmount(JobDescriptor, String)}
+   */
+  @Nullable
+  public JobDescriptor[] getAdditionalJobs(GlobalInspectionContext context) {
+    return getAdditionalJobs();
   }
 
   /**

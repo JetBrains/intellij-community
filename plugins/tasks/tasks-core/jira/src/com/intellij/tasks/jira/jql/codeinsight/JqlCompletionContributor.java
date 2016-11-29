@@ -55,12 +55,7 @@ public class JqlCompletionContributor extends CompletionContributor {
         if (!(element instanceof PsiElement)) return false;
         PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf((PsiElement)element);
         if (prevLeaf == null) return false;
-        PsiElement parent = PsiTreeUtil.findFirstParent(prevLeaf, new Condition<PsiElement>() {
-          @Override
-          public boolean value(PsiElement element) {
-            return pattern.accepts(element);
-          }
-        });
+        PsiElement parent = PsiTreeUtil.findFirstParent(prevLeaf, element1 -> pattern.accepts(element1));
         if (parent == null) return false;
         if (PsiTreeUtil.hasErrorElements(parent)) return false;
         return prevLeaf.getTextRange().getEndOffset() == parent.getTextRange().getEndOffset();

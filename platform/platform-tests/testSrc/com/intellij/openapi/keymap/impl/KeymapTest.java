@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,7 @@ public class KeymapTest extends PlatformTestCase {
     myParent.addShortcut(ACTION_1, shortcut1);
     myParent.addShortcut(ACTION_2, shortcut2);
 
-    myChild = myParent.deriveKeymap();
-    myChild.setName("Child");
+    myChild = myParent.deriveKeymap("Child");
     assertSame(myParent, myChild.getParent());
 
     myChild.addShortcut(ACTION_1, shortcutA);
@@ -211,14 +210,14 @@ public class KeymapTest extends PlatformTestCase {
     try {
       standalone.addShortcut(ACTION_1, shortcut1);
       standalone.addShortcut(BASE1, shortcut1);
-      
+
       assertTrue(standalone.hasOwnActionId(ACTION_1));
       assertFalse(standalone.hasOwnActionId(ACTION_2));
       assertTrue(standalone.hasOwnActionId(BASE1));
       assertFalse(standalone.hasOwnActionId(DEPENDENT1));
       assertFalse(standalone.hasOwnActionId(BASE2));
       assertFalse(standalone.hasOwnActionId(DEPENDENT2));
-      
+
       standalone.removeShortcut(ACTION_1, shortcut1);
       standalone.removeShortcut(ACTION_2, shortcut1); // empty mapping -> should not have any effect
       standalone.removeShortcut(DEPENDENT1, shortcut1);
@@ -605,8 +604,7 @@ public class KeymapTest extends PlatformTestCase {
   public void testLookingForShortcutsInParentFirstAndOnlyThenConsiderBoundActions() throws Exception {
     myParent.clearOwnActionsIds();
     myChild.clearOwnActionsIds();
-    KeymapImpl myGrandChild = myChild.deriveKeymap();
-    myGrandChild.setName("GrandChild");
+    KeymapImpl myGrandChild = myChild.deriveKeymap("GrandChild");
     assertSame(myChild, myGrandChild.getParent());
 
     String BASE = "BASE_ACTION";
@@ -707,7 +705,7 @@ public class KeymapTest extends PlatformTestCase {
       assertFalse(myGrandChild.hasOwnActionId(BASE));
       assertTrue(myGrandChild.hasOwnActionId(DEPENDENT));
 
-      // Now let's try the other way round - redefine base shortcut in children and check that DEPENDENT action uses the correct one   
+      // Now let's try the other way round - redefine base shortcut in children and check that DEPENDENT action uses the correct one
       myChild.clearOwnActionsIds();
       myGrandChild.clearOwnActionsIds();
 
@@ -716,7 +714,7 @@ public class KeymapTest extends PlatformTestCase {
       //  DEPENDENT -> BASE
       // child:
       //  BASE -> shortcut1, +shortcut2 <-- change is here
-      //  DEPENDENT -> child:BASE 
+      //  DEPENDENT -> child:BASE
       // grand-child:
       //  BASE -> child:BASE
       //  DEPENDENT -> child:BASE
@@ -749,10 +747,10 @@ public class KeymapTest extends PlatformTestCase {
       //  DEPENDENT -> BASE
       // child:
       //  BASE -> shortcut1, shortcut2
-      //  DEPENDENT -> child:BASE 
+      //  DEPENDENT -> child:BASE
       // grand-child:
       //  BASE -> shortcut1, shortcut2, +shortcutA <-- change is here
-      //  DEPENDENT -> grand-child:BASE 
+      //  DEPENDENT -> grand-child:BASE
       myGrandChild.addShortcut(BASE, shortcutA);
 
       assertSameElements(myParent.getShortcuts(BASE), shortcut1);
@@ -772,7 +770,7 @@ public class KeymapTest extends PlatformTestCase {
       assertSameElements(myParent.getActionIds(shortcutA));
       assertSameElements(myChild.getActionIds(shortcutA));
       assertSameElements(myGrandChild.getActionIds(shortcutA), BASE, DEPENDENT);
-      
+
       assertTrue(myParent.hasOwnActionId(BASE));
       assertFalse(myParent.hasOwnActionId(DEPENDENT));
       assertTrue(myChild.hasOwnActionId(BASE));

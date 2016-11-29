@@ -54,7 +54,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
       compute(root);
     }
 
-    final List<Pair<String,Integer>> names = new ArrayList<Pair<String, Integer>>(nameCount.size());
+    final List<Pair<String,Integer>> names = new ArrayList<>(nameCount.size());
     nameCount.forEachEntry(new TObjectIntProcedure<String>() {
       @Override
       public boolean execute(String name, int count) {
@@ -62,12 +62,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
         return true;
       }
     });
-    Collections.sort(names, new Comparator<Pair<String, Integer>>() {
-      @Override
-      public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
-        return o2.second - o1.second;
-      }
-    });
+    Collections.sort(names, (o1, o2) -> o2.second - o1.second);
 
     System.out.println("Most frequent names ("+names.size()+" total):");
     int saveByIntern = 0;
@@ -86,7 +81,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
     show(suffixes);
 
 
-    final TObjectIntHashMap<String> save = new TObjectIntHashMap<String>();
+    final TObjectIntHashMap<String> save = new TObjectIntHashMap<>();
     // compute economy
     suffixes.forEachEntry(new TObjectIntProcedure<String>() {
       @Override
@@ -100,7 +95,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
     final List<Pair<String, Integer>> saveSorted = show(save);
 
 
-    final List<String> picked = new ArrayList<String>();
+    final List<String> picked = new ArrayList<>();
     //List<String> candidates = new ArrayList<String>();
     //int i =0;
     //for (Pair<String, Integer> pair : sorted) {
@@ -122,11 +117,8 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
       final String candidate = cp.first;
       picked.add(candidate);
       System.out.println("Candidate: '"+candidate+"', save = "+cp.second);
-      Collections.sort(picked, new Comparator<String>() {
-        @Override
-        public int compare(String o1, String o2) {
-          return o2.length() - o1.length(); // longer first
-        }
+      Collections.sort(picked, (o1, o2) -> {
+        return o2.length() - o1.length(); // longer first
       });
       saveSorted.clear();
 
@@ -145,25 +137,12 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
           return true;
         }
       });
-      Collections.sort(saveSorted, new Comparator<Pair<String, Integer>>() {
-        @Override
-        public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
-          return o2.second.compareTo(o1.second);
-        }
-      });
+      Collections.sort(saveSorted, (o1, o2) -> o2.second.compareTo(o1.second));
     }
 
-    System.out.println("Picked: "+ StringUtil.join(picked, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return "\""+s+"\"";
-      }
-    }, ","));
-    Collections.sort(picked, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return o2.length() - o1.length(); // longer first
-      }
+    System.out.println("Picked: "+ StringUtil.join(picked, s -> "\"" + s + "\"", ","));
+    Collections.sort(picked, (o1, o2) -> {
+      return o2.length() - o1.length(); // longer first
     });
 
     int saved = 0;
@@ -184,7 +163,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
   }
 
   private static List<Pair<String,Integer>> show(final TObjectIntHashMap<String> prefixes) {
-    final List<Pair<String,Integer>> prefs = new ArrayList<Pair<String, Integer>>(prefixes.size());
+    final List<Pair<String,Integer>> prefs = new ArrayList<>(prefixes.size());
     prefixes.forEachEntry(new TObjectIntProcedure<String>() {
       @Override
       public boolean execute(String s, int count) {
@@ -192,12 +171,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
         return true;
       }
     });
-    Collections.sort(prefs, new Comparator<Pair<String, Integer>>() {
-      @Override
-      public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
-        return o2.second.compareTo(o1.second);
-      }
-    });
+    Collections.sort(prefs, (o1, o2) -> o2.second.compareTo(o1.second));
     int i =0;
     for (Pair<String, Integer> pref : prefs) {
       Integer count = pref.second;
@@ -211,8 +185,8 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
   }
 
   //TObjectIntHashMap<String> prefixes = new TObjectIntHashMap<String>();
-  TObjectIntHashMap<String> suffixes = new TObjectIntHashMap<String>();
-  TObjectIntHashMap<String> nameCount = new TObjectIntHashMap<String>();
+  TObjectIntHashMap<String> suffixes = new TObjectIntHashMap<>();
+  TObjectIntHashMap<String> nameCount = new TObjectIntHashMap<>();
   private void compute(VirtualFile root) {
     String name = root.getName();
     if (!nameCount.increment(name)) nameCount.put(name, 1);

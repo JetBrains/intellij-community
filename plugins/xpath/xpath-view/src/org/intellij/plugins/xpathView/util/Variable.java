@@ -81,7 +81,7 @@ public final class Variable implements Cloneable, Copyable<Variable> {
     }
 
     public static Set<String> asSet(Collection<Variable> second) {
-        final HashSet<String> strings = new HashSet<String>();
+        final HashSet<String> strings = new HashSet<>();
         for (Variable variable : second) {
             strings.add(variable.getName());
         }

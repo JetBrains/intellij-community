@@ -22,7 +22,7 @@
       <ant>
         <classpath>
           <classpathItem dir="file://$APPLICATION_HOME_DIR$/lib/ant/lib" />
-          <classpathItem path="file://$APPLICATION_HOME_DIR$/lib/asm.jar" />
+          <classpathItem path="file://$APPLICATION_HOME_DIR$/lib/trove4j.jar" />
           <classpathItem dir="file://$APPLICATION_HOME_DIR$/lib/dev" />
         </classpath>
         <homeDir value="$APPLICATION_HOME_DIR$/lib/ant" />

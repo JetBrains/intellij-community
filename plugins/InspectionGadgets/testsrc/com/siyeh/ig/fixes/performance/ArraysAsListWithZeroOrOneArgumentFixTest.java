@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,18 @@ public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCa
            "import java.util.*;\n" +
            "class X {{\n" +
            "    Collections.emptyList();\n" +
+           "}}");
+  }
+
+  public void testZeroArgumentsWithType() {
+    doTest(InspectionGadgetsBundle.message("arrays.as.list.with.zero.arguments.quickfix"),
+           "import java.util.*;\n" +
+           "class X {{\n" +
+           "    Iterator<String> it = Arrays.<String>/**/asList().iterator();\n" +
+           "}}",
+           "import java.util.*;\n" +
+           "class X {{\n" +
+           "    Iterator<String> it = Collections.<String>emptyList().iterator();\n" +
            "}}");
   }
 

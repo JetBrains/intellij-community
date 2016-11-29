@@ -38,7 +38,7 @@ import java.util.List;
 public class ActionMacro {
   private String myName;
 
-  private final ArrayList<ActionDescriptor> myActions = new ArrayList<ActionDescriptor>();
+  private final ArrayList<ActionDescriptor> myActions = new ArrayList<>();
   @NonNls
   public static final String MACRO_ACTION_PREFIX = "Macro.";
   @NonNls
@@ -211,8 +211,8 @@ public class ActionMacro {
 
     private String myText;
 
-    private final List<Integer> myKeyCodes = new ArrayList<Integer>();
-    private final List<Integer> myModifiers = new ArrayList<Integer>();
+    private final List<Integer> myKeyCodes = new ArrayList<>();
+    private final List<Integer> myModifiers = new ArrayList<>();
 
     public TypedDescriptor(@NotNull String text, List<Integer> keyCodes, List<Integer> modifiers) {
       myText = text;

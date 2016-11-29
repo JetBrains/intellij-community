@@ -1,8 +1,12 @@
 package com.intellij.openapi.externalSystem.model.settings;
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Denis Zhdanov
  * @since 8/9/11 12:12 PM
  */
-public class ExternalSystemExecutionSettings implements Serializable {
+public class ExternalSystemExecutionSettings implements Serializable, UserDataHolder {
 
   public static final String REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY = "external.system.remote.process.idle.ttl.ms";
   private static final int    DEFAULT_REMOTE_PROCESS_TTL_MS     = 60000;
@@ -34,7 +38,9 @@ public class ExternalSystemExecutionSettings implements Serializable {
   @NotNull private final AtomicBoolean myVerboseProcessing        = new AtomicBoolean();
 
   @NotNull private final AtomicReference<ExternalSystemTaskNotificationListener> myNotificationListener =
-    new AtomicReference<ExternalSystemTaskNotificationListener>();
+    new AtomicReference<>();
+
+  @NotNull private transient UserDataHolderBase myUserData = new UserDataHolderBase();
 
   public ExternalSystemExecutionSettings() {
     int ttl = SystemProperties.getIntProperty(REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);
@@ -60,6 +66,17 @@ public class ExternalSystemExecutionSettings implements Serializable {
     myVerboseProcessing.set(verboseProcessing);
   }
 
+  @Nullable
+  @Override
+  public <U> U getUserData(@NotNull Key<U> key) {
+    return myUserData.getUserData(key);
+  }
+
+  @Override
+  public <U> void putUserData(@NotNull Key<U> key, U value) {
+    myUserData.putUserData(key, value);
+  }
+  
   @Override
   public int hashCode() {
     int result = (int)(myRemoteProcessIdleTtlInMs.get() ^ (myRemoteProcessIdleTtlInMs.get() >>> 32));

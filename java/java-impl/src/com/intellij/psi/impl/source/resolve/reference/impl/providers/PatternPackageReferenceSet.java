@@ -40,19 +40,16 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
     if (context == null) return Collections.emptySet();
 
     if (packageName.contains("*")) {
-      final Set<PsiPackage> packages = new LinkedHashSet<PsiPackage>();
+      final Set<PsiPackage> packages = new LinkedHashSet<>();
       int indexOf = packageName.indexOf("*");
       if (indexOf == 0 || context.getQualifiedName().startsWith(packageName.substring(0, indexOf))) {
           final Pattern pattern = PatternUtil.fromMask(packageName);
-          processSubPackages(context, new Processor<PsiPackage>() {
-            @Override
-            public boolean process(PsiPackage psiPackage) {
-              String name = psiPackage.getName();
-              if (name != null && pattern.matcher(name).matches()) {
-                packages.add(psiPackage);
-              }
-              return true;
+          processSubPackages(context, psiPackage -> {
+            String name = psiPackage.getName();
+            if (name != null && pattern.matcher(name).matches()) {
+              packages.add(psiPackage);
             }
+            return true;
           });
         }
 

@@ -48,7 +48,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   HttpVirtualFileImpl(@NotNull HttpFileSystemBase fileSystem, @Nullable HttpVirtualFileImpl parent, String path, @Nullable RemoteFileInfoImpl fileInfo) {
     if (parent != null) {
       if (parent.myChildren == null) {
-        parent.myChildren = new SmartList<VirtualFile>();
+        parent.myChildren = new SmartList<>();
       }
       parent.myChildren.add(this);
     }
@@ -60,14 +60,11 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
       myFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
         @Override
         public void fileDownloaded(final VirtualFile localFile) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              HttpVirtualFileImpl file = HttpVirtualFileImpl.this;
-              FileDocumentManager.getInstance().reloadFiles(file);
-              if (!localFile.getFileType().equals(myInitialFileType)) {
-                FileContentUtilCore.reparseFiles(file);
-              }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            HttpVirtualFileImpl file = HttpVirtualFileImpl.this;
+            FileDocumentManager.getInstance().reloadFiles(file);
+            if (!localFile.getFileType().equals(myInitialFileType)) {
+              FileContentUtilCore.reparseFiles(file);
             }
           });
         }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Jan 3, 2002
- * @author Jeka
- */
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -49,7 +45,6 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,29 +69,28 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfig
 import java.io.File;
 import java.util.*;
 
+import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
+
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEFAULT_BUILD_PROCESS_HEAP_SIZE = 700;
 
-  private static final List<String> DEFAULT_WILDCARD_PATTERNS =
-    Arrays.asList("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
-
   private BackendCompiler myDefaultJavaCompiler;
   private State myState = new State();
 
   // extensions of the files considered as resource files
-  private final List<Pattern> myRegexpResourcePatterns = new ArrayList<Pattern>();
+  private final List<Pattern> myRegexpResourcePatterns = new ArrayList<>();
   // extensions of the files considered as resource files. If present, overrides patterns in old regexp format stored in myRegexpResourcePatterns
-  private final List<String> myWildcardPatterns = new ArrayList<String>();
-  private final List<CompiledPattern> myCompiledPatterns = new ArrayList<CompiledPattern>();
-  private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<CompiledPattern>();
+  private final List<String> myWildcardPatterns = new ArrayList<>();
+  private final List<CompiledPattern> myCompiledPatterns = new ArrayList<>();
+  private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
   private final ExcludesConfigNotificationsWrapper<ExcludedEntriesConfiguration> myExcludesConfiguration;
 
-  private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
+  private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<>();
   private JavacCompiler JAVAC_EXTERNAL_BACKEND;
   private final Perl5Matcher myPatternMatcher = new Perl5Matcher();
 
@@ -106,18 +100,18 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private boolean myAddNotNullAssertions = true;
 
   private final ProcessorConfigProfile myDefaultProcessorsProfile = new ProcessorConfigProfileImpl("Default");
-  private final List<ProcessorConfigProfile> myModuleProcessorProfiles = new ArrayList<ProcessorConfigProfile>();
+  private final List<ProcessorConfigProfile> myModuleProcessorProfiles = new ArrayList<>();
 
   // the map is calculated by module processor profiles list for faster access to module settings
   private Map<Module, ProcessorConfigProfile> myProcessorsProfilesMap = null;
 
   @Nullable
   private String myBytecodeTargetLevel = null;  // null means same as effective language level
-  private final Map<String, String> myModuleBytecodeTarget = new HashMap<String, String>();
+  private final Map<String, String> myModuleBytecodeTarget = new HashMap<>();
 
   public CompilerConfigurationImpl(Project project) {
     myProject = project;
-    myExcludesConfiguration = new ExcludesConfigNotificationsWrapper<ExcludedEntriesConfiguration>(project, new ExcludedEntriesConfiguration());
+    myExcludesConfiguration = new ExcludesConfigNotificationsWrapper<>(project, new ExcludedEntriesConfiguration());
     Disposer.register(project, myExcludesConfiguration.getDelegate());
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
@@ -137,21 +131,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     public String DEFAULT_COMPILER = JavaCompilers.JAVAC_ID;
     public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
-
-    private boolean compilerWasSpecified;
   }
 
   @Override
   public Element getState() {
-    final boolean savingStateInNewFormatAllowed = Registry.is("saving.state.in.new.format.is.allowed", false);
 
     Element state = new Element("state");
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-        if (!savingStateInNewFormatAllowed && myState.compilerWasSpecified && "DEFAULT_COMPILER".equals(accessor.getName())) {
-          return true;
-        }
         return super.accepts(accessor, bean);
       }
     });
@@ -169,12 +157,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     for (String pattern : getRegexpPatterns()) {
       addChild(resourceExtensions, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
     }
-    if (!savingStateInNewFormatAllowed || !JDOMUtil.isEmpty(resourceExtensions)) {
+    if (!JDOMUtil.isEmpty(resourceExtensions)) {
       state.addContent(resourceExtensions);
     }
 
     if ((myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) &&
-        (!savingStateInNewFormatAllowed || !DEFAULT_WILDCARD_PATTERNS.equals(myWildcardPatterns))) {
+        !DEFAULT_WILDCARD_PATTERNS.equals(myWildcardPatterns)) {
       final Element wildcardPatterns = addChild(state, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       for (final String wildcardPattern : myWildcardPatterns) {
         addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY)
@@ -187,20 +175,17 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     Element profileElement = new Element("profile");
     profileElement.setAttribute("default", "true");
     AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, profileElement);
-    if (!savingStateInNewFormatAllowed || !JDOMUtil.isEmpty(profileElement, 2)) {
+    if (!JDOMUtil.isEmpty(profileElement, 2)) {
       annotationProcessingSettings.addContent(profileElement);
     }
 
     for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
       Element element = new Element("profile");
-      if (!savingStateInNewFormatAllowed) {
-        element.setAttribute("default", "false");
-      }
       AnnotationProcessorProfileSerializer.writeExternal(profile, element);
       annotationProcessingSettings.addContent(element);
     }
 
-    if (!savingStateInNewFormatAllowed || !JDOMUtil.isEmpty(annotationProcessingSettings)) {
+    if (!JDOMUtil.isEmpty(annotationProcessingSettings)) {
       state.addContent(annotationProcessingSettings);
     }
 
@@ -210,7 +195,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
       }
       if (!myModuleBytecodeTarget.isEmpty()) {
-        final List<String> moduleNames = new ArrayList<String>(myModuleBytecodeTarget.keySet());
+        final List<String> moduleNames = new ArrayList<>(myModuleBytecodeTarget.keySet());
         Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER);
         for (String name : moduleNames) {
           final Element moduleElement = addChild(bytecodeTarget, JpsJavaCompilerConfigurationSerializer.MODULE);
@@ -382,7 +367,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
     }
 
-    final Set<FileType> types = new HashSet<FileType>();
+    final Set<FileType> types = new HashSet<>();
     for (BackendCompiler compiler : Extensions.getExtensions(BackendCompiler.EP_NAME, myProject)) {
       myRegisteredCompilers.add(compiler);
       types.addAll(compiler.getCompilableFileTypes());
@@ -509,8 +494,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public ProcessorConfigProfile getAnnotationProcessingConfiguration(Module module) {
     Map<Module, ProcessorConfigProfile> map = myProcessorsProfilesMap;
     if (map == null) {
-      map = new HashMap<Module, ProcessorConfigProfile>();
-      final Map<String, Module> namesMap = new HashMap<String, Module>();
+      map = new HashMap<>();
+      final Map<String, Module> namesMap = new HashMap<>();
       for (Module m : ModuleManager.getInstance(module.getProject()).getModules()) {
         namesMap.put(m.getName(), m);
       }
@@ -701,7 +686,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (!myProject.isDefault()) {
       for (Element option : parentNode.getChildren("option")) {
         if ("DEFAULT_COMPILER".equals(option.getAttributeValue("name"))) {
-          myState.compilerWasSpecified = true;
           break;
         }
       }
@@ -735,10 +719,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         }
       }
 
-      removeWildcardPatterns();
       node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       if (node != null) {
         myWildcardPatternsInitialized = true;
+        removeWildcardPatterns();
         for (Element element : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
           String pattern = element.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
           if (!StringUtil.isEmpty(pattern)) {
@@ -802,9 +786,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final boolean isEnabled = Boolean.parseBoolean(processing.getAttributeValue(JpsJavaCompilerConfigurationSerializer.ENABLED, "false"));
     final boolean isUseClasspath = Boolean.parseBoolean(processing.getAttributeValue("useClasspath", "true"));
     final StringBuilder processorPath = new StringBuilder();
-    final Set<String> optionPairs = new HashSet<String>();
-    final Set<String> processors = new HashSet<String>();
-    final List<Couple<String>> modulesToProcess = new ArrayList<Couple<String>>();
+    final Set<String> optionPairs = new HashSet<>();
+    final Set<String> processors = new HashSet<>();
+    final List<Couple<String>> modulesToProcess = new ArrayList<>();
 
     for (Object child : processing.getChildren("processorPath")) {
       final Element pathElement = (Element)child;
@@ -857,12 +841,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       myDefaultProcessorsProfile.addProcessor(processor);
     }
 
-    final Map<String, Set<String>> dirNameToModulesMap = new HashMap<String, Set<String>>();
+    final Map<String, Set<String>> dirNameToModulesMap = new HashMap<>();
     for (Couple<String> moduleDirPair : modulesToProcess) {
       final String dir = moduleDirPair.getSecond();
       Set<String> set = dirNameToModulesMap.get(dir);
       if (set == null) {
-        set = new HashSet<String>();
+        set = new HashSet<>();
         dirNameToModulesMap.put(dir, set);
       }
       set.add(moduleDirPair.getFirst());
@@ -973,7 +957,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private boolean doConvertPatterns() throws MalformedPatternException {
     final String[] regexpPatterns = getRegexpPatterns();
-    final List<String> converted = new ArrayList<String>();
+    final List<String> converted = new ArrayList<>();
     final Pattern multipleExtensionsPatternPattern = compilePattern("\\.\\+\\\\\\.\\((\\w+(?:\\|\\w+)*)\\)");
     final Pattern singleExtensionPatternPattern = compilePattern("\\.\\+\\\\\\.(\\w+)");
     final Perl5Matcher matcher = new Perl5Matcher();

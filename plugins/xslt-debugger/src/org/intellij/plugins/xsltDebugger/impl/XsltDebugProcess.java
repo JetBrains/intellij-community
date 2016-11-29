@@ -121,17 +121,17 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   }
 
   @Override
-  public void startStepOver() {
+  public void startStepOver(@Nullable XSuspendContext context) {
     myDebuggerSession.stepOver();
   }
 
   @Override
-  public void startStepInto() {
+  public void startStepInto(@Nullable XSuspendContext context) {
     myDebuggerSession.stepInto();
   }
 
   @Override
-  public void startStepOut() {
+  public void startStepOut(@Nullable XSuspendContext context) {
     myDebuggerSession.stepOver();
   }
 
@@ -155,7 +155,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   }
 
   @Override
-  public void resume() {
+  public void resume(@Nullable XSuspendContext context) {
     myDebuggerSession.resume();
   }
 
@@ -164,7 +164,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   }
 
   @Override
-  public void runToPosition(@NotNull XSourcePosition position) {
+  public void runToPosition(@NotNull XSourcePosition position, @Nullable XSuspendContext context) {
     final PsiFile psiFile = PsiManager.getInstance(getSession().getProject()).findFile(position.getFile());
     assert psiFile != null;
     if (myDebuggerSession.canRunTo(position)) {

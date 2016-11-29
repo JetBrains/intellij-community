@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.MethodCellRenderer;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +41,7 @@ import java.util.List;
 public class EnclosingMethodSelectionDialog extends DialogWrapper {
   private final List<PsiMethod> myEnclosingMethods;
 
-  private JList myEnclosingMethodsList = null;
+  private JList myEnclosingMethodsList;
   private final JCheckBox myCbReplaceInstanceOf = new JCheckBox(RefactoringBundle.message("use.interface.superclass.in.instanceof"));
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
 
@@ -78,7 +78,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 8);
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 1;
     gbConstraints.gridy = 0;

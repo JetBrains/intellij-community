@@ -22,14 +22,14 @@ import java.util.Map;
 
 public class EncodingManager extends FileDocumentManagerAdapter {
   // Handles the following EditorConfig settings:
-  private static final String charsetKey = "charset";
+  public static final String charsetKey = "charset";
 
   private final Project myProject;
 
-  private static final Map<String, Charset> encodingMap;
+  public static final Map<String, Charset> encodingMap;
 
   static {
-    Map<String, Charset> map = new HashMap<String, Charset>();
+    Map<String, Charset> map = new HashMap<>();
     map.put("latin1", Charset.forName("ISO-8859-1"));
     map.put("utf-8", CharsetToolkit.UTF8_CHARSET);
     map.put("utf-16be", CharsetToolkit.UTF_16BE_CHARSET);

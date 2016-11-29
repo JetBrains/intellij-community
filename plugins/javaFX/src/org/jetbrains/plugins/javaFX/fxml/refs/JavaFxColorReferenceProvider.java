@@ -41,12 +41,9 @@ class JavaFxColorReferenceProvider extends PsiReferenceProvider {
       final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
       if (descriptor instanceof JavaFxPropertyAttributeDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
-        if (declaration instanceof PsiField) {
-          final PsiField field = (PsiField)declaration;
-          final PsiClassType propertyClassType = JavaFxPsiUtil.getPropertyClassType(field);
-          if (propertyClassType != null && InheritanceUtil.isInheritor(propertyClassType, JavaFxCommonNames.JAVAFX_SCENE_PAINT)) {
-            return new PsiReference[] {new JavaFxColorReference(attributeValue)};
-          }
+        final PsiClassType propertyClassType = JavaFxPsiUtil.getPropertyClassType(declaration);
+        if (propertyClassType != null && InheritanceUtil.isInheritor(propertyClassType, JavaFxCommonNames.JAVAFX_SCENE_PAINT)) {
+          return new PsiReference[] {new JavaFxColorReference(attributeValue)};
         }
       }
     }

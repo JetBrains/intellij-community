@@ -18,7 +18,7 @@ public class SimpleMatch {
   public SimpleMatch(@NotNull final PsiElement start, @NotNull final PsiElement endElement) {
     myStartElement = start;
     myEndElement = endElement;
-    myChangedParameters = new HashMap<String, String>();
+    myChangedParameters = new HashMap<>();
   }
 
   public PsiElement getStartElement() {

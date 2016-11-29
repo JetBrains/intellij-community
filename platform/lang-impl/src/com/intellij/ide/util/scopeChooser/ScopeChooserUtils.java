@@ -37,8 +37,8 @@ import java.util.List;
 
 public class ScopeChooserUtils {
 
-  private static final String OPEN_FILES_SCOPE_NAME = "Open Files";
   private static final String CURRENT_FILE_SCOPE_NAME = IdeBundle.message("scope.current.file");
+  private static final String OPEN_FILES_SCOPE_NAME = IdeBundle.message("scope.open.files");
 
   private ScopeChooserUtils() {
   }

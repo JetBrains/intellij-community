@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class StoringPropertyContainer extends AbstractProperty.AbstractPropertyContainer<AbstractProperty<Boolean>> {
-  private final Map<AbstractProperty<Boolean>, Boolean> myValues = new HashMap<AbstractProperty<Boolean>, Boolean>();
+  private final Map<AbstractProperty<Boolean>, Boolean> myValues = new HashMap<>();
   private final Storage myStorage;
 
   public StoringPropertyContainer(String groupName, PropertiesComponent propertiesComponent) {

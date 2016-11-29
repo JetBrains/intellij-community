@@ -32,14 +32,14 @@ public class AutoMatchIterator {
   public AutoMatchIterator(final Project project) {
     myProject = project;
     final VirtualFile baseDir = myProject.getBaseDir();
-    myStrategies = new LinkedList<AutoMatchStrategy>();
+    myStrategies = new LinkedList<>();
     myStrategies.add(new OneBaseStrategy(baseDir));
     myStrategies.add(new IndividualPiecesStrategy(baseDir));
     myStrategies.add(new DefaultPatchStrategy(baseDir));
   }
 
   public List<TextFilePatchInProgress> execute(final List<TextFilePatch> list) {
-    final List<TextFilePatch> creations = new LinkedList<TextFilePatch>();
+    final List<TextFilePatch> creations = new LinkedList<>();
 
     final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);
     for (TextFilePatch patch : list) {

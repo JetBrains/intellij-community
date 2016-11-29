@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.openapi.updateSettings;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.updateSettings.impl.ChannelStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Override this service in your IDE to customize update behavior. It isn't supposed to be overridden in plugins.
@@ -29,10 +31,7 @@ public class UpdateStrategyCustomization {
     return true;
   }
 
-  /**
-   * Whether the updater will allow patch updates to cross major version boundaries.
-   */
-  public boolean allowMajorVersionUpdate() {
-    return false;
+  public boolean isChannelActive(@NotNull ChannelStatus channel) {
+    return channel != ChannelStatus.MILESTONE;
   }
 }

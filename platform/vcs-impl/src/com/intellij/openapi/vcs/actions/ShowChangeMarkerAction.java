@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
@@ -55,11 +54,6 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     };
   }
 
-  @Override
-  protected boolean forceSyncUpdate(final AnActionEvent e) {
-    return true;
-  }
-
   public ShowChangeMarkerAction() {
     myChangeMarkerContext = new ChangeMarkerContext() {
       @Override
@@ -95,7 +89,7 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
   }
 
   @Override
-  protected void update(VcsContext context, Presentation presentation) {
+  protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
     LineStatusTracker tracker = myChangeMarkerContext.getLineStatusTracker(context);
     if (tracker == null || !tracker.isValid() || tracker.isSilentMode()) {
       presentation.setEnabledAndVisible(false);

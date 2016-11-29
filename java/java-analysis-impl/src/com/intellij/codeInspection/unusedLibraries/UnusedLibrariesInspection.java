@@ -27,7 +27,6 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -39,7 +38,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,11 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class UnusedLibrariesInspection extends GlobalInspectionTool {
-
-  @Override
-  public boolean isGraphNeeded() {
-    return true;
-  }
 
   @Nullable
   @Override
@@ -74,22 +67,17 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final Set<VirtualFile> usedRoots = refModule.getUserData(UnusedLibraryGraphAnnotator.USED_LIBRARY_ROOTS);
 
-      final List<CommonProblemDescriptor> result = new ArrayList<CommonProblemDescriptor>();
+      final List<CommonProblemDescriptor> result = new ArrayList<>();
       for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
         if (entry instanceof LibraryOrderEntry && !((LibraryOrderEntry)entry).isExported()) {
           if (usedRoots == null) {
             String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
             result.add(manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, entry, null)));
           } else {
-            final Set<VirtualFile> files = new HashSet<VirtualFile>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
+            final Set<VirtualFile> files = new HashSet<>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
             files.removeAll(usedRoots);
             if (!files.isEmpty()) {
-              final String unusedLibraryRoots = StringUtil.join(files, new Function<VirtualFile, String>() {
-                @Override
-                public String fun(final VirtualFile file) {
-                  return file.getPresentableName();
-                }
-              }, ",");
+              final String unusedLibraryRoots = StringUtil.join(files, file -> file.getPresentableName(), ",");
               String message =
                 InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
               processor.addProblemElement(refModule,
@@ -143,44 +131,33 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
     }
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final CommonProblemDescriptor descriptor) {
       final Module module = myRefModule.getModule();
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-          for (OrderEntry entry : model.getOrderEntries()) {
-            if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), myOrderEntry.getPresentableName())) {
-              if (myFiles == null) {
-                model.removeOrderEntry(entry);
+      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      for (OrderEntry entry : model.getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), myOrderEntry.getPresentableName())) {
+          if (myFiles == null) {
+            model.removeOrderEntry(entry);
+          }
+          else {
+            final Library library = ((LibraryOrderEntry)entry).getLibrary();
+            if (library != null) {
+              final Library.ModifiableModel modifiableModel = library.getModifiableModel();
+              for (VirtualFile file : myFiles) {
+                modifiableModel.removeRoot(file.getUrl(), OrderRootType.CLASSES);
               }
-              else {
-                final Library library = ((LibraryOrderEntry)entry).getLibrary();
-                if (library != null) {
-                  final Library.ModifiableModel modifiableModel = library.getModifiableModel();
-                  for (VirtualFile file : myFiles) {
-                    modifiableModel.removeRoot(file.getUrl(), OrderRootType.CLASSES);
-                  }
-                  modifiableModel.commit();
-                }
-              }
+              modifiableModel.commit();
             }
           }
-          model.commit();
         }
-      });
+      }
+      model.commit();
     }
   }
 
@@ -208,7 +185,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
               if (refModule != null) {
                 Set<VirtualFile> modules = refModule.getUserData(USED_LIBRARY_ROOTS);
                 if (modules == null){
-                  modules = new HashSet<VirtualFile>();
+                  modules = new HashSet<>();
                   refModule.putUserData(USED_LIBRARY_ROOTS, modules);
                 }
                 modules.add(libraryClassRoot);

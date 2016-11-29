@@ -57,7 +57,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
       young = (young == -1) ? myRevisions.get(myRevisions.size() - 1) : young;
       final long old = toIncluding.getNumber();
 
-      final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+      final List<CommittedChangeList> result = new ArrayList<>();
 
       int cnt = -1;
       // from back
@@ -103,10 +103,10 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
 
   private Iterator<ChangesBunch> createCommittedIterator(final int bunchSize, final List<Long> revisions) {
-    final List<ChangesBunch> list = new ArrayList<ChangesBunch>();
+    final List<ChangesBunch> list = new ArrayList<>();
     for (int i = revisions.size() - 1; i >= 0; i -= bunchSize) {
       final int j = (bunchSize > i) ? -1 : (i - bunchSize);
-      final List<CommittedChangeList> subList = new ArrayList<CommittedChangeList>();
+      final List<CommittedChangeList> subList = new ArrayList<>();
       for (int k = i; k > j; -- k) {
         subList.add(createList(revisions.get(k)));
       }
@@ -128,8 +128,8 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
       checkBounds(bound, startRevision, step);
     }
 
-    final List<Long> liveRevisions = new ArrayList<Long>();
-    final List<Long> committedRevisions = new ArrayList<Long>();
+    final List<Long> liveRevisions = new ArrayList<>();
+    final List<Long> committedRevisions = new ArrayList<>();
     for (long i = startRevision; i <= endRevision; i += step) {
       liveRevisions.add(i);
       if (committedBounds != null) {
@@ -140,12 +140,12 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     }
 
     // each pair corresponds to interval
-    final List<Long> internalRevisions = new ArrayList<Long>();
+    final List<Long> internalRevisions = new ArrayList<>();
     LoadedRevisionsCache.Bunch bindTo = null;
     for (int i = 0; i < internalBounds.size(); i++) {
       final Pair<Long, Long> bound = internalBounds.get(i);
       final boolean consistent = (i != 0) && (internalBounds.get(i - 1).second + step == bound.first);
-      final List<Long> revisions = new ArrayList<Long>();
+      final List<Long> revisions = new ArrayList<>();
       for (long j = bound.first; j <= bound.second; j += step) {
         revisions.add(j);
         internalRevisions.add(j);
@@ -162,7 +162,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
                                             new MockCachedProvider(myInternalManager.iterator(myLocation.getURL()), Origin.INTERNAL);
 
     final BunchFactory factory = new BunchFactory(internalProvider, committedProvider, liveProvider);
-    Ref<Boolean> myYoungestRead = new Ref<Boolean>(Boolean.FALSE);
+    Ref<Boolean> myYoungestRead = new Ref<>(Boolean.FALSE);
     long i = endRevision;
     for (; i >= startRevision; i -= step * PAGE) {
       assert (! Boolean.TRUE.equals(myYoungestRead.get()));
@@ -176,7 +176,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   private void checkFragments(final long earlyRevision, final List<Long> internally, final List<Long> committed,
                               final List<Fragment> fragments, final int step) {
-    final List<Long> expectedRevisions = new ArrayList<Long>();
+    final List<Long> expectedRevisions = new ArrayList<>();
     for (long i = earlyRevision; i > (earlyRevision - PAGE * step); i -= step) {
       expectedRevisions.add(i);
     }
@@ -204,7 +204,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
 
   private List<CommittedChangeList> revisionsToLists(final List<Long> revisions) {
-    final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> lists = new ArrayList<>();
     for (Long revision : revisions) {
       lists.add(createList(revision));
     }
@@ -223,37 +223,37 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   public void testLiveAndSimpleInternalProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, null, Collections.singletonList(new Pair<Long, Long>(109L, 117L)), 121 + i);
+      performTest(11, 2, null, Collections.singletonList(new Pair<>(109L, 117L)), 121 + i);
     }
   }
 
   public void testLiveAndSimpleCommittedProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<Long, Long>(19L, 117L), Collections.<Pair<Long, Long>>emptyList(), 121 + i);
+      performTest(11, 2, new Pair<>(19L, 117L), Collections.<Pair<Long, Long>>emptyList(), 121 + i);
     }
   }
 
   public void testLiveAndTwoInternalsProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, null, Arrays.asList(new Pair<Long, Long>(101L, 111L), new Pair<Long, Long>(113L, 117L)), 121 + i);
+      performTest(11, 2, null, Arrays.asList(new Pair<>(101L, 111L), new Pair<>(113L, 117L)), 121 + i);
     }
   }
 
   public void testCommittedAndSeveralInternalsProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<Long, Long>(11L, 17L), Arrays.asList(new Pair<Long, Long>(19L, 23L), new Pair<Long, Long>(25L, 37L + i)), 37 + i);
+      performTest(11, 2, new Pair<>(11L, 17L), Arrays.asList(new Pair<>(19L, 23L), new Pair<>(25L, 37L + i)), 37 + i);
     }
   }
 
   public void testAllThreeProviders() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<Long, Long>(11L, 17L), Arrays.asList(new Pair<Long, Long>(23L, 37L), new Pair<Long, Long>(45L, 57L)), 87 + i);
+      performTest(11, 2, new Pair<>(11L, 17L), Arrays.asList(new Pair<>(23L, 37L), new Pair<>(45L, 57L)), 87 + i);
     }
   }
 
   public void testShift() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<Long, Long>(11L, 15L), Arrays.asList(new Pair<Long, Long>(17L, 25L), new Pair<Long, Long>(27L, 35L)), 37 + i);
+      performTest(11, 2, new Pair<>(11L, 15L), Arrays.asList(new Pair<>(17L, 25L), new Pair<>(27L, 35L)), 37 + i);
     }
   }
 
@@ -262,14 +262,14 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
 
   public void testShortInternal() throws Exception {
-    performTest(11, 2, null, Collections.singletonList(new Pair<Long, Long>(11L, 15L)), 15);
+    performTest(11, 2, null, Collections.singletonList(new Pair<>(11L, 15L)), 15);
   }
   
   public void testShortCommitted() throws Exception {
-    performTest(11, 2, new Pair<Long, Long>(11L, 15L), Collections.<Pair<Long, Long>>emptyList(), 15);
+    performTest(11, 2, new Pair<>(11L, 15L), Collections.<Pair<Long, Long>>emptyList(), 15);
   }
 
   public void testThreeByOne() throws Exception {
-    performTest(11, 2, new Pair<Long, Long>(11L, 11L), Collections.singletonList(new Pair<Long, Long>(13L, 13L)), 15);
+    performTest(11, 2, new Pair<>(11L, 11L), Collections.singletonList(new Pair<>(13L, 13L)), 15);
   }
 }

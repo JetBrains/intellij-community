@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.ui.EditorComboBox;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +60,7 @@ import java.util.List;
  * Date: 25-Mar-2008
  */
 public abstract class TypeMigrationDialog extends RefactoringDialog {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog");
+  private static final Logger LOG = Logger.getInstance(TypeMigrationDialog.class);
 
   public static final String REFACTORING_NAME = "Type Migration";
 
@@ -68,7 +69,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   private final ScopeChooserCombo myScopeChooserCombo;
 
   public TypeMigrationDialog(@NotNull Project project,
-                             PsiElement roots[],
+                             PsiElement[] roots,
                              TypeMigrationRules rules) {
     super(project, false);
     myRoots = roots;
@@ -110,9 +111,9 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
-                                                         GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 0), 0, 0);
+                                                         GridBagConstraints.HORIZONTAL, JBUI.insets(5, 5, 0, 0), 0, 0);
     appendMigrationTypeEditor(panel, gc);
-    LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<ScopeChooserCombo>();
+    LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<>();
     scopeChooserComponent.setComponent(myScopeChooserCombo);
     scopeChooserComponent.setText("Choose scope where change signature may occur");
     panel.add(scopeChooserComponent, gc);
@@ -150,14 +151,16 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     private final EditorComboBox myToTypeEditor;
 
     public SingleElement(@NotNull Project project,
-                         PsiElement root,
+                         PsiElement[] roots,
                          PsiType migrationType,
                          TypeMigrationRules rules) {
-      super(project, new PsiElement[]{root}, rules);
+      super(project, roots, rules);
+      LOG.assertTrue(roots.length > 0);
       final PsiType rootType = getRootType();
       final String text = migrationType != null ? migrationType.getCanonicalText(true) :
                           rootType != null ? rootType.getCanonicalText(true) : "";
       int flags = 0;
+      PsiElement root = roots[0];
       if (root instanceof PsiParameter) {
         final PsiElement scope = ((PsiParameter)root).getDeclarationScope();
         if (scope instanceof PsiMethod) {
@@ -167,6 +170,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
           flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
         }
       }
+      flags |= JavaCodeFragmentFactory.ALLOW_VOID;
       myTypeCodeFragment = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(text, root, true, flags);
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -189,6 +193,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     protected void canRun() throws ConfigurationException {
       super.canRun();
       if (!checkType(getMigrationType())) throw new ConfigurationException("\'" + myTypeCodeFragment.getText() + "\' is invalid type");
+      if (isVoidVariableMigration()) throw new ConfigurationException("\'void\' is not applicable");
     }
 
     @Override
@@ -210,7 +215,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;
       }
 
-      final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+      final List<PsiExpression> expressions = new ArrayList<>();
       for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile()))) {
         final PsiElement element = reference.getElement();
         final PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
@@ -308,6 +313,15 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
 
       return element.toString();
     }
+
+    private boolean isVoidVariableMigration() {
+      if (!PsiType.VOID.equals(getMigrationType())) return false;
+      for (PsiElement root : myRoots) {
+        if (root instanceof PsiVariable) return true;
+      }
+      return false;
+    }
+
     private static boolean checkType(final PsiType type) {
       if (type == null) return false;
       if (!type.isValid()) return false;

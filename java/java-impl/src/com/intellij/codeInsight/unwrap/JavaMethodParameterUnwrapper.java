@@ -86,7 +86,9 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
   @Override
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
     element = adjustElementToTheLeft(element);
-    PsiElement methodCall = isTopLevelCall(element) ? element.getParent() : element.getParent().getParent();
+    PsiElement parent = element.getParent();
+    if (parent == null) return;
+    PsiElement methodCall = isTopLevelCall(element) ? parent : parent.getParent();
     final PsiElement extractedElement = isTopLevelCall(element) ? getArg(element) : element;
     context.extractElement(extractedElement, methodCall);
     if (methodCall.getParent() instanceof PsiExpressionList) {

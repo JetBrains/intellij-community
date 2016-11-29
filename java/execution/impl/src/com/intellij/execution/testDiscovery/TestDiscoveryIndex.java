@@ -15,24 +15,29 @@
  */
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
-import com.intellij.util.io.*;
+import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.IOUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.io.DataOutputStream;
-import java.util.*;
-import java.util.concurrent.ScheduledFuture;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Maxim.Mossienko on 7/9/2015.
@@ -40,93 +45,227 @@ import java.util.concurrent.ScheduledFuture;
 public class TestDiscoveryIndex implements ProjectComponent {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
 
-  private static final int REMOVED_MARKER = -1;
-  private final Object ourLock = new Object();
   private final Project myProject;
-  private volatile Holder myHolder;
+
+  //private volatile TestInfoHolder mySystemHolder;
+  private final TestDataController myLocalTestRunDataController;
+  private final TestDataController myRemoteTestRunDataController;
 
   public TestDiscoveryIndex(Project project) {
+    this(project, TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
+  }
+
+  public TestDiscoveryIndex(final Project project, final String basePath) {
     myProject = project;
 
-    String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
+    myLocalTestRunDataController = new TestDataController(basePath, false);
+    myRemoteTestRunDataController = new TestDataController(null, true);
 
-    if (new File(path).exists()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              getHolder(); // proactively init with maybe io costly compact
-            }
-          });
-        }
-      });
+    if (new File(basePath).exists()) {
+      StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        myLocalTestRunDataController.getHolder(); // proactively init with maybe io costly compact
+      }));
     }
+
+    //{
+    //  setRemoteTestRunDataPath("C:\\ultimate\\system\\testDiscovery\\145.save");
+    //}
   }
 
   public boolean hasTestTrace(@NotNull String testName) throws IOException {
-    synchronized (ourLock) {
-      Holder holder = null;
-      try {
-        holder = getHolder();
-        final int testNameId = holder.myTestNameEnumerator.tryEnumerate(testName);
-        if (testNameId == 0) return false;
-        return holder.myTestNameToUsedClassesAndMethodMap.get(testNameId) != null;
-      } catch (Throwable throwable) {
-        thingsWentWrongLetsReinitialize(holder, throwable);
-        return false;
+    Boolean result = myLocalTestRunDataController.withTestDataHolder(localHolder -> {          // todo: remote run data
+      final int testNameId = localHolder.myTestNameEnumerator.tryEnumerate(testName);
+      if (testNameId == 0) {
+        return myRemoteTestRunDataController.withTestDataHolder(remoteHolder -> {
+          final int testNameId1 = remoteHolder.myTestNameEnumerator.tryEnumerate(testName);
+          return testNameId1 != 0 && remoteHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId1) != null;
+        }) != null;
       }
-    }
+      return localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId) != null;
+    });
+    return result == Boolean.TRUE;
   }
 
   public void removeTestTrace(@NotNull String testName) throws IOException {
-    synchronized (ourLock) {
-      Holder holder = null;
-      try {
-        holder = getHolder();
-
-        final int testNameId = holder.myTestNameEnumerator.tryEnumerate(testName);
-        if (testNameId == 0) return;
-        doUpdateFromDiff(holder, testNameId, null, holder.myTestNameToUsedClassesAndMethodMap.get(testNameId));
-      } catch (Throwable throwable) {
-        thingsWentWrongLetsReinitialize(holder, throwable);
+    myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Void, IOException>() {
+      @Override
+      public Void convert(TestInfoHolder localHolder) throws IOException {
+        final int testNameId = localHolder.myTestNameEnumerator.tryEnumerate(testName);  // todo remove remote data isn't possible
+        if (testNameId != 0) {
+          localHolder.doUpdateFromDiff(testNameId, null,
+                                  localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId),
+                                  null);
+        }
+        return null;
       }
+    });
+  }
+
+  public void setRemoteTestRunDataPath(String path) {
+    if(!TestInfoHolder.isValidPath(path)) {
+      path = null;
     }
+    myRemoteTestRunDataController.init(path);
+    // todo: should we remove our local run data ?
   }
 
   public Collection<String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName) throws IOException {
-    synchronized (ourLock) {
-      Holder holder = null;
-      try {
-        holder = getHolder();
-        final TIntArrayList list = holder.myMethodQNameToTestNames.get(
-          createKey(
+    return myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Collection<String>, IOException>() {
+      @Override
+      public Collection<String> convert(TestInfoHolder localHolder) throws IOException {
+        TIntArrayList remoteList = myRemoteTestRunDataController.withTestDataHolder(
+          remoteHolder -> remoteHolder.myMethodQNameToTestNames.get(
+            TestInfoHolder.createKey(
+              remoteHolder.myClassEnumerator.enumerate(classFQName),
+              remoteHolder.myMethodEnumerator.enumerate(methodName)
+            )
+          )
+        );
+
+        final TIntArrayList localList = localHolder.myMethodQNameToTestNames.get(
+          TestInfoHolder.createKey(
+            localHolder.myClassEnumerator.enumerate(classFQName),
+            localHolder.myMethodEnumerator.enumerate(methodName)
+          )
+        );
+
+        if (remoteList == null) {
+          return testIdsToTestNames(localList, localHolder);
+        }
+
+        Collection<String> testsFromRemote =
+          myRemoteTestRunDataController.withTestDataHolder(
+            remoteHolder -> testIdsToTestNames(remoteList, remoteHolder)
+          );
+
+        if (localList == null) return testsFromRemote;
+        THashSet<String> setOfStrings = new THashSet<>(testsFromRemote);
+
+        for (int testNameId : localList.toNativeArray()) {
+          if (testNameId < 0) {
+            setOfStrings.remove(localHolder.myTestNameEnumerator.valueOf(-testNameId));
+            continue;
+          }
+          setOfStrings.add(localHolder.myTestNameEnumerator.valueOf(testNameId));
+        }
+
+        return setOfStrings;
+      }
+
+      private Collection<String> testIdsToTestNames(TIntArrayList localList, TestInfoHolder localHolder) throws IOException {
+        if (localList == null) return Collections.emptyList();
+
+        final ArrayList<String> result = new ArrayList<>(localList.size());
+        for (int testNameId : localList.toNativeArray()) {
+          if (testNameId < 0) {
+            int a = 1;
+            continue;
+          }
+          result.add(localHolder.myTestNameEnumerator.valueOf(testNameId));
+        }
+        return result;
+      }
+    });
+  }
+
+
+  public Collection<String> getTestModulesByMethodName(@NotNull String classFQName, @NotNull String methodName, String prefix) throws IOException {
+    return myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Collection<String>, IOException>() {
+      @Override
+      public Collection<String> convert(TestInfoHolder localHolder) throws IOException {
+        List<String> modules = getTestModules(localHolder);
+        List<String> modulesFromRemote = myRemoteTestRunDataController.withTestDataHolder(
+          this::getTestModules);
+        THashSet<String> modulesSet = new THashSet<>(modules);
+        if (modulesFromRemote != null) modulesSet.addAll(modulesFromRemote);
+        return modulesSet;
+      }
+
+      private List<String> getTestModules(TestInfoHolder holder) throws IOException {
+        // todo merging with remote
+        final TIntArrayList list = holder.myTestNameToNearestModule.get(
+          TestInfoHolder.createKey(
             holder.myClassEnumerator.enumerate(classFQName),
             holder.myMethodEnumerator.enumerate(methodName)
           )
         );
         if (list == null) return Collections.emptyList();
-        final ArrayList<String> result = new ArrayList<String>(list.size());
-        for (int testNameId : list.toNativeArray()) result.add(holder.myTestNameEnumerator.valueOf(testNameId));
+        final ArrayList<String> result = new ArrayList<>(list.size());
+        for (int moduleNameId : list.toNativeArray()) {
+          final String moduleNameWithPrefix = holder.myModuleNameEnumerator.valueOf(moduleNameId);
+          if (moduleNameWithPrefix != null && moduleNameWithPrefix.startsWith(prefix)) {
+            result.add(moduleNameWithPrefix.substring(prefix.length()));
+          }
+        }
         return result;
-      } catch (Throwable throwable) {
-        thingsWentWrongLetsReinitialize(holder, throwable);
-        return Collections.emptyList();
       }
-    }
+    });
   }
 
-  private Holder getHolder() {
-    Holder holder = myHolder;
+  static class TestDataController {
+    private final Object myLock = new Object();
+    private String myBasePath;
+    private final boolean myReadOnly;
+    private volatile TestInfoHolder myHolder;
 
-    if (holder == null) {
-      synchronized (ourLock) {
-        holder = myHolder;
-        if (holder == null) holder = myHolder = new Holder();
+    TestDataController(String basePath, boolean readonly) {
+      myReadOnly = readonly;
+      init(basePath);
+    }
+
+    void init(String basePath) {
+      if (myHolder != null) dispose();
+
+      synchronized (myLock) {
+        myBasePath = basePath;
       }
     }
-    return holder;
+
+    private TestInfoHolder getHolder() {
+      TestInfoHolder holder = myHolder;
+
+      if (holder == null) {
+        synchronized (myLock) {
+          holder = myHolder;
+          if (holder == null && myBasePath != null) holder = myHolder = new TestInfoHolder(myBasePath, myReadOnly, myLock);
+        }
+      }
+      return holder;
+    }
+
+    private void dispose() {
+      synchronized (myLock) {
+        TestInfoHolder holder = myHolder;
+        if (holder != null) {
+          holder.dispose();
+          myHolder = null;
+        }
+      }
+    }
+
+    private void thingsWentWrongLetsReinitialize(@Nullable TestInfoHolder holder, Throwable throwable) throws IOException {
+      LOG.error("Unexpected problem", throwable);
+      if (holder != null) holder.dispose();
+      final File versionFile = TestInfoHolder.getVersionFile(myBasePath);
+      FileUtil.delete(versionFile);
+
+      myHolder = null;
+      if (throwable instanceof IOException) throw (IOException) throwable;
+    }
+
+    public <R> R withTestDataHolder(ThrowableConvertor<TestInfoHolder, R, IOException> action) throws IOException {
+      synchronized (myLock) {
+        TestInfoHolder holder = getHolder();
+        if (holder == null || holder.isDisposed()) return null;
+        try {
+          return action.convert(holder);
+        } catch (Throwable throwable) {
+          if (!myReadOnly) thingsWentWrongLetsReinitialize(holder, throwable);
+          else LOG.error(throwable);
+        }
+        return null;
+      }
+    }
   }
 
   public static TestDiscoveryIndex getInstance(Project project) {
@@ -139,13 +278,8 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
   @Override
   public void disposeComponent() {
-    synchronized (ourLock) {
-      Holder holder = myHolder;
-      if (holder != null) {
-        holder.dispose();
-        myHolder = null;
-      }
-    }
+    myLocalTestRunDataController.dispose();
+    myRemoteTestRunDataController.dispose();
   }
 
   @NotNull
@@ -162,427 +296,63 @@ public class TestDiscoveryIndex implements ProjectComponent {
   public void projectClosed() {
   }
 
-  private static final int VERSION = 2;
-
-  private final class Holder {
-    final PersistentHashMap<Long, TIntArrayList> myMethodQNameToTestNames;
-    final PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>> myTestNameToUsedClassesAndMethodMap;
-    final PersistentStringEnumerator myClassEnumerator;
-    final CachingEnumerator<String> myClassEnumeratorCache;
-    final PersistentStringEnumerator myMethodEnumerator;
-    final CachingEnumerator<String> myMethodEnumeratorCache;
-    final PersistentStringEnumerator myTestNameEnumerator;
-    final List<PersistentEnumeratorDelegate> myConstructedDataFiles = new ArrayList<PersistentEnumeratorDelegate>(4);
-
-    private ScheduledFuture<?> myFlushingFuture;
-    private boolean myDisposed;
-
-    Holder() {
-      String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
-      final File versionFile = getVersionFile(path);
-      versionFile.getParentFile().mkdirs();
-      final File methodQNameToTestNameFile = new File(path + File.separator + "methodQNameToTestName.data");
-      final File testNameToUsedClassesAndMethodMapFile = new File(path + File.separator + "testToCalledMethodNames.data");
-      final File classNameEnumeratorFile = new File(path + File.separator + "classNameEnumerator.data");
-      final File methodNameEnumeratorFile = new File(path + File.separator + "methodNameEnumerator.data");
-      final File testNameEnumeratorFile = new File(path + File.separator + "testNameEnumerator.data");
-
-      try {
-        int version = readVersion(versionFile);
-        if (version != VERSION) {
-          LOG.info("TestDiscoveryIndex was rewritten due to version change");
-          deleteAllIndexDataFiles(methodQNameToTestNameFile, testNameToUsedClassesAndMethodMapFile, classNameEnumeratorFile, methodNameEnumeratorFile, testNameEnumeratorFile);
-
-          writeVersion(versionFile);
-        }
-
-        PersistentHashMap<Long, TIntArrayList> methodQNameToTestNames;
-        PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>> testNameToUsedClassesAndMethodMap;
-        PersistentStringEnumerator classNameEnumerator;
-        PersistentStringEnumerator methodNameEnumerator;
-        PersistentStringEnumerator testNameEnumerator;
-
-        int iterations = 0;
-
-        while(true) {
-          ++iterations;
-
-          try {
-            methodQNameToTestNames = new PersistentHashMap<Long, TIntArrayList>(
-              methodQNameToTestNameFile,
-              new MethodQNameSerializer(),
-              new TestNamesExternalizer()
-            );
-            myConstructedDataFiles.add(methodQNameToTestNames);
-
-            testNameToUsedClassesAndMethodMap = new PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>>(
-              testNameToUsedClassesAndMethodMapFile,
-              EnumeratorIntegerDescriptor.INSTANCE,
-              new ClassesAndMethodsMapDataExternalizer()
-            );
-            myConstructedDataFiles.add(testNameToUsedClassesAndMethodMap);
-
-            classNameEnumerator = new PersistentStringEnumerator(classNameEnumeratorFile);
-            myConstructedDataFiles.add(classNameEnumerator);
-
-            methodNameEnumerator = new PersistentStringEnumerator(methodNameEnumeratorFile);
-            myConstructedDataFiles.add(methodNameEnumerator);
-
-            testNameEnumerator = new PersistentStringEnumerator(testNameEnumeratorFile);
-            myConstructedDataFiles.add(testNameEnumerator);
-
-            break;
-          } catch (Throwable throwable) {
-            LOG.info("TestDiscoveryIndex problem", throwable);
-            closeAllConstructedFiles(true);
-            myConstructedDataFiles.clear();
-
-            deleteAllIndexDataFiles(methodQNameToTestNameFile, testNameToUsedClassesAndMethodMapFile, classNameEnumeratorFile, methodNameEnumeratorFile,
-                                    testNameEnumeratorFile);
-            // try another time
-          }
-
-          if (iterations >= 3) {
-            LOG.error("Unexpected circular initialization problem");
-            assert false;
-          }
-        }
-
-        myMethodQNameToTestNames = methodQNameToTestNames;
-        myTestNameToUsedClassesAndMethodMap = testNameToUsedClassesAndMethodMap;
-        myClassEnumerator = classNameEnumerator;
-        myMethodEnumerator = methodNameEnumerator;
-        myTestNameEnumerator = testNameEnumerator;
-        myMethodEnumeratorCache = new CachingEnumerator<String>(methodNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
-        myClassEnumeratorCache = new CachingEnumerator<String>(classNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
-
-        myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
-          @Override
-          public void run() {
-            synchronized (ourLock) {
-              if (myDisposed) {
-                myFlushingFuture.cancel(false);
-                return;
-              }
-              for(PersistentEnumeratorDelegate dataFile:myConstructedDataFiles) {
-                if (dataFile.isDirty()) {
-                  dataFile.force();
-                }
-              }
-              myClassEnumeratorCache.clear();
-              myMethodEnumeratorCache.clear();
-            }
-          }
-        });
-      }
-      catch (IOException ex) {
-        throw new RuntimeException(ex);
-      }
-    }
-
-    private void closeAllConstructedFiles(boolean ignoreCloseProblem) {
-      for(Closeable closeable:myConstructedDataFiles) {
-        try {
-          closeable.close();
-        } catch (Throwable throwable) {
-          if (!ignoreCloseProblem) throw new RuntimeException(throwable);
-        }
-      }
-    }
-
-    private void deleteAllIndexDataFiles(File methodQNameToTestNameFile,
-                                         File testNameToUsedClassesAndMethodMapFile,
-                                         File classNameEnumeratorFile, File methodNameEnumeratorFile, File testNameEnumeratorFile) {
-      IOUtil.deleteAllFilesStartingWith(methodQNameToTestNameFile);
-      IOUtil.deleteAllFilesStartingWith(testNameToUsedClassesAndMethodMapFile);
-      IOUtil.deleteAllFilesStartingWith(classNameEnumeratorFile);
-      IOUtil.deleteAllFilesStartingWith(methodNameEnumeratorFile);
-      IOUtil.deleteAllFilesStartingWith(testNameEnumeratorFile);
-    }
-
-    private void writeVersion(File versionFile) throws IOException {
-      final DataOutputStream versionOut = new DataOutputStream(new FileOutputStream(versionFile));
-
-      try {
-        DataInputOutputUtil.writeINT(versionOut, VERSION);
-      } finally {
-        try { versionOut.close(); } catch (IOException ignore) {}
-      }
-    }
-
-    private int readVersion(File versionFile) throws IOException {
-      if (!versionFile.exists()) return 0;
-      final DataInputStream versionInput = new DataInputStream(new FileInputStream(versionFile));
-      int version;
-      try {
-        version = DataInputOutputUtil.readINT(versionInput);
-      } finally {
-        try { versionInput.close(); } catch (IOException ignore) {}
-      }
-      return version;
-    }
-
-    void dispose() {
-      assert Thread.holdsLock(ourLock);
-      try {
-        closeAllConstructedFiles(false);
-      }
-      finally {
-        myDisposed = true;
-      }
-    }
-
-    private class TestNamesExternalizer implements DataExternalizer<TIntArrayList> {
-      public void save(@NotNull DataOutput dataOutput, TIntArrayList testNameIds) throws IOException {
-        for (int testNameId : testNameIds.toNativeArray()) DataInputOutputUtil.writeINT(dataOutput, testNameId);
-      }
-
-      public TIntArrayList read(@NotNull DataInput dataInput) throws IOException {
-        TIntHashSet result = new TIntHashSet();
-
-        while (((InputStream)dataInput).available() > 0) {
-          int id = DataInputOutputUtil.readINT(dataInput);
-          if (REMOVED_MARKER == id) {
-            id = DataInputOutputUtil.readINT(dataInput);
-            result.remove(id);
-          }
-          else {
-            result.add(id);
-          }
-        }
-
-        return new TIntArrayList(result.toArray());
-      }
-    }
-
-    private class ClassesAndMethodsMapDataExternalizer implements DataExternalizer<TIntObjectHashMap<TIntArrayList>> {
-      public void save(@NotNull final DataOutput dataOutput, TIntObjectHashMap<TIntArrayList> classAndMethodsMap)
-        throws IOException {
-        DataInputOutputUtil.writeINT(dataOutput, classAndMethodsMap.size());
-        final int[] classNameIds = classAndMethodsMap.keys();
-        Arrays.sort(classNameIds);
-
-        int prevClassNameId = 0;
-        for(int classNameId:classNameIds) {
-          DataInputOutputUtil.writeINT(dataOutput, classNameId - prevClassNameId);
-          TIntArrayList value = classAndMethodsMap.get(classNameId);
-          DataInputOutputUtil.writeINT(dataOutput, value.size());
-
-          final int[] methodNameIds = value.toNativeArray();
-          Arrays.sort(methodNameIds);
-          int prevMethodNameId = 0;
-          for (int methodNameId : methodNameIds) {
-            DataInputOutputUtil.writeINT(dataOutput, methodNameId - prevMethodNameId);
-            prevMethodNameId = methodNameId;
-          }
-          prevClassNameId = classNameId;
-        }
-      }
-
-      public TIntObjectHashMap<TIntArrayList> read(@NotNull DataInput dataInput) throws IOException {
-        int numberOfClasses = DataInputOutputUtil.readINT(dataInput);
-        TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<TIntArrayList>();
-        int prevClassNameId = 0;
-
-        while (numberOfClasses-- > 0) {
-          int classNameId = DataInputOutputUtil.readINT(dataInput) + prevClassNameId;
-          int numberOfMethods = DataInputOutputUtil.readINT(dataInput);
-          TIntArrayList methodNameIds = new TIntArrayList(numberOfMethods);
-
-          int prevMethodNameId = 0;
-          while (numberOfMethods-- > 0) {
-            final int methodNameId = DataInputOutputUtil.readINT(dataInput) + prevMethodNameId;
-            methodNameIds.add(methodNameId);
-            prevMethodNameId = methodNameId;
-          }
-
-          result.put(classNameId, methodNameIds);
-          prevClassNameId = classNameId;
-        }
-        return result;
-      }
-    }
-  }
-
-  private static class MethodQNameSerializer implements KeyDescriptor<Long> {
-    public static final MethodQNameSerializer INSTANCE = new MethodQNameSerializer();
-
-    @Override
-    public void save(@NotNull DataOutput out, Long value) throws IOException {
-      out.writeLong(value);
-    }
-
-    @Override
-    public Long read(@NotNull DataInput in) throws IOException {
-      return in.readLong();
-    }
-
-    @Override
-    public int getHashCode(Long value) {
-      return value.hashCode();
-    }
-
-    @Override
-    public boolean isEqual(Long val1, Long val2) {
-      return val1.equals(val2);
-    }
-  }
-  
-  public void updateFromTestTrace(@NotNull File file) throws IOException {
+  public void updateFromTestTrace(@NotNull File file,
+                                  @Nullable final String moduleName,
+                                  @NotNull final String frameworkPrefix) throws IOException {
     int fileNameDotIndex = file.getName().lastIndexOf('.');
     final String testName = fileNameDotIndex != -1 ? file.getName().substring(0, fileNameDotIndex) : file.getName();
-    doUpdateFromTestTrace(file, testName);
+    doUpdateFromTestTrace(file, testName, moduleName != null ? frameworkPrefix + moduleName : null);
   }
 
-  private void doUpdateFromTestTrace(File file, final String testName) throws IOException {
-    synchronized (ourLock) {
-      Holder holder = getHolder();
-      if (holder.myDisposed) return;
-      try {
-        final int testNameId = holder.myTestNameEnumerator.enumerate(testName);
-        TIntObjectHashMap<TIntArrayList> classData = loadClassAndMethodsMap(file, holder);
-        TIntObjectHashMap<TIntArrayList> previousClassData = holder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
-
-        doUpdateFromDiff(holder, testNameId, classData, previousClassData);
-      } catch (Throwable throwable) {
-        thingsWentWrongLetsReinitialize(holder, throwable);
-      }
-    }
-  }
-
-  private void doUpdateFromDiff(Holder holder,
-                                final int testNameId,
-                                @Nullable TIntObjectHashMap<TIntArrayList> classData,
-                                @Nullable TIntObjectHashMap<TIntArrayList> previousClassData) throws IOException {
-    ValueDiff valueDiff = new ValueDiff(classData, previousClassData);
-
-    if (valueDiff.hasRemovedDelta()) {
-      for (int classQName : valueDiff.myRemovedClassData.keys()) {
-        for (int methodName : valueDiff.myRemovedClassData.get(classQName).toNativeArray()) {
-          holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
-                                                     new PersistentHashMap.ValueDataAppender() {
-                                                       @Override
-                                                       public void append(DataOutput dataOutput) throws IOException {
-                                                         DataInputOutputUtil.writeINT(dataOutput, REMOVED_MARKER);
-                                                         DataInputOutputUtil.writeINT(dataOutput, testNameId);
-                                                       }
-                                                     }
-          );
+  private void doUpdateFromTestTrace(File file, final String testName, @Nullable final String moduleName) throws IOException {
+    myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Void, IOException>() {
+      @Override
+      public Void convert(TestInfoHolder localHolder) throws IOException {
+        final int testNameId = localHolder.myTestNameEnumerator.enumerate(testName);
+        TIntObjectHashMap<TIntArrayList> classData = loadClassAndMethodsMap(file, localHolder);
+        TIntObjectHashMap<TIntArrayList> previousClassData = localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
+        if (previousClassData == null) {
+          previousClassData = myRemoteTestRunDataController.withTestDataHolder(
+            remoteDataHolder -> {
+              TIntObjectHashMap<TIntArrayList> remoteClassData = remoteDataHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
+              if (remoteClassData == null) return null;
+              TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>(remoteClassData.size());
+              Ref<IOException> exceptionRef = new Ref<>();
+              boolean processingResult = remoteClassData.forEachEntry((remoteClassKey, remoteClassMethodIds) -> {
+                try {
+                  int localClassKey =
+                    localHolder.myClassEnumeratorCache.enumerate(remoteDataHolder.myClassEnumeratorCache.valueOf(remoteClassKey));
+                  TIntArrayList localClassIds = new TIntArrayList(remoteClassMethodIds.size());
+                  for (int methodId : remoteClassMethodIds.toNativeArray()) {
+                    localClassIds
+                      .add(localHolder.myMethodEnumeratorCache.enumerate(remoteDataHolder.myMethodEnumeratorCache.valueOf(methodId)));
+                  }
+                  result.put(localClassKey, localClassIds);
+                  return true;
+                } catch (IOException ex) {
+                  exceptionRef.set(ex);
+                  return false;
+                }
+              });
+              if (!processingResult) throw exceptionRef.get();
+              return result;
+            });
         }
-      }
-    }
 
-    if (valueDiff.hasAddedDelta()) {
-      for (int classQName : valueDiff.myAddedOrChangedClassData.keys()) {
-        for (int methodName : valueDiff.myAddedOrChangedClassData.get(classQName).toNativeArray()) {
-          holder.myMethodQNameToTestNames.appendData(createKey(classQName, methodName),
-                                                     new PersistentHashMap.ValueDataAppender() {
-                                                       @Override
-                                                       public void append(DataOutput dataOutput) throws IOException {
-                                                         DataInputOutputUtil.writeINT(dataOutput, testNameId);
-                                                       }
-                                                     });
-        }
+        localHolder.doUpdateFromDiff(testNameId, classData, previousClassData, moduleName != null ? localHolder.myModuleNameEnumerator.enumerate(moduleName) : null);
+        return null;
       }
-    }
-
-    if ((valueDiff.hasAddedDelta() || valueDiff.hasRemovedDelta())) {
-      if(classData != null) {
-        holder.myTestNameToUsedClassesAndMethodMap.put(testNameId, classData);
-      } else {
-        holder.myTestNameToUsedClassesAndMethodMap.remove(testNameId);
-      }
-    }
+    });
   }
 
   @NotNull
-  private static File getVersionFile(String path) {
-    return new File(path + File.separator + "index.version");
-  }
-
-  private void thingsWentWrongLetsReinitialize(@Nullable Holder holder, Throwable throwable) throws IOException {
-    LOG.error("Unexpected problem", throwable);
-    if (holder != null) holder.dispose();
-    String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
-    final File versionFile = getVersionFile(path);
-    FileUtil.delete(versionFile);
-
-    myHolder = null;
-    if (throwable instanceof IOException) throw (IOException) throwable;
-  }
-
-  private static long createKey(int classQName, int methodName) {
-    return ((long)classQName << 32) | methodName;
-  }
-
-  static class ValueDiff {
-    final TIntObjectHashMap<TIntArrayList> myAddedOrChangedClassData;
-    final TIntObjectHashMap<TIntArrayList> myRemovedClassData;
-
-    ValueDiff(@Nullable TIntObjectHashMap<TIntArrayList> classData, @Nullable TIntObjectHashMap<TIntArrayList> previousClassData) {
-      TIntObjectHashMap<TIntArrayList> addedOrChangedClassData = classData;
-      TIntObjectHashMap<TIntArrayList> removedClassData = previousClassData;
-
-      if (previousClassData != null && !previousClassData.isEmpty()) {
-        removedClassData = new TIntObjectHashMap<TIntArrayList>();
-        addedOrChangedClassData = new TIntObjectHashMap<TIntArrayList>();
-
-        if (classData != null) {
-          for (int classQName : classData.keys()) {
-            TIntArrayList currentMethods = classData.get(classQName);
-            TIntArrayList previousMethods = previousClassData.get(classQName);
-
-            if (previousMethods == null) {
-              addedOrChangedClassData.put(classQName, currentMethods);
-              continue;
-            }
-
-            final int[] previousMethodIds = previousMethods.toNativeArray();
-            TIntHashSet previousMethodsSet = new TIntHashSet(previousMethodIds);
-            final int[] currentMethodIds = currentMethods.toNativeArray();
-            TIntHashSet currentMethodsSet = new TIntHashSet(currentMethodIds);
-            currentMethodsSet.removeAll(previousMethodIds);
-            previousMethodsSet.removeAll(currentMethodIds);
-
-            if (!currentMethodsSet.isEmpty()) {
-              addedOrChangedClassData.put(classQName, new TIntArrayList(currentMethodsSet.toArray()));
-            }
-            if (!previousMethodsSet.isEmpty()) {
-              removedClassData.put(classQName, new TIntArrayList(previousMethodsSet.toArray()));
-            }
-          }
-        }
-        if (classData != null) {
-          for (int classQName : previousClassData.keys()) {
-            if (classData.containsKey(classQName)) continue;
-
-            TIntArrayList previousMethods = previousClassData.get(classQName);
-            removedClassData.put(classQName, previousMethods);
-          }
-        }
-      }
-
-      myAddedOrChangedClassData = addedOrChangedClassData;
-      myRemovedClassData = removedClassData;
-    }
-
-    public boolean hasRemovedDelta() {
-      return myRemovedClassData != null && !myRemovedClassData.isEmpty();
-    }
-
-    public boolean hasAddedDelta() {
-      return myAddedOrChangedClassData != null && !myAddedOrChangedClassData.isEmpty();
-    }
-  }
-
-  @NotNull
-  private static TIntObjectHashMap<TIntArrayList> loadClassAndMethodsMap(File file, Holder holder) throws IOException {
+  private static TIntObjectHashMap<TIntArrayList> loadClassAndMethodsMap(File file, TestInfoHolder holder) throws IOException {
     DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(file), 64 * 1024));
     byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
 
     try {
       int numberOfClasses = DataInputOutputUtil.readINT(inputStream);
-      TIntObjectHashMap<TIntArrayList> classData = new TIntObjectHashMap<TIntArrayList>(numberOfClasses);
+      TIntObjectHashMap<TIntArrayList> classData = new TIntObjectHashMap<>(numberOfClasses);
       while (numberOfClasses-- > 0) {
         String classQName = IOUtil.readUTFFast(buffer, inputStream);
         int classId = holder.myClassEnumeratorCache.enumerate(classQName);

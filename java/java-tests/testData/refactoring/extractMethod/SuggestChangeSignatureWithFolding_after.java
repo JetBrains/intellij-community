@@ -4,7 +4,7 @@ class Test {
       newMethod("world, " + args[i]);
   }
 
-    private static void newMethod(String x) {
-        System.out.println(x);
+    private static void newMethod(String s) {
+        System.out.println(s);
     }
 }

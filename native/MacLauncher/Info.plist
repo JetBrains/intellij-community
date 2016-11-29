@@ -48,8 +48,6 @@
 			<string>~/Library/Application Support/IntelliJIdea10CE/</string>
 			<key>idea.system.path</key>
 			<string>~/Library/Caches/IntelliJIdea10CE/</string>
-			<key>idea.use.default.antialiasing.in.editor</key>
-			<string>true</string>
 		</dict>
 		<key>VMOptions</key>
 		<string>-ea</string>

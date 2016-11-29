@@ -45,7 +45,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
   public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
                                                                                                                                       @NotNull Collection<VirtualFile> files) {
     final List<ModuleDescriptor> descriptors = getModuleDescriptors();
-    MultiMap<ModuleDescriptor, VirtualFile> filesByModule = new MultiMap<ModuleDescriptor, VirtualFile>();
+    MultiMap<ModuleDescriptor, VirtualFile> filesByModule = new MultiMap<>();
     for (VirtualFile file : files) {
       final File ioFile = VfsUtil.virtualToIoFile(file);
       ModuleDescriptor descriptor = findDescriptorByFile(descriptors, ioFile);
@@ -54,7 +54,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
       }
     }
 
-    final List<DetectedFrameworkDescription> result = new ArrayList<DetectedFrameworkDescription>();
+    final List<DetectedFrameworkDescription> result = new ArrayList<>();
     final FacetType<F,C> facetType = detector.getFacetType();
     for (ModuleDescriptor module : filesByModule.keySet()) {
       if (!facetType.isSuitableModuleType(module.getModuleType())) {
@@ -64,8 +64,8 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
       final List<Pair<C, Collection<VirtualFile>>> pairs =
         detector.createConfigurations(filesByModule.get(module), Collections.<C>emptyList());
       for (Pair<C, Collection<VirtualFile>> pair : pairs) {
-        result.add(new FacetBasedDetectedFrameworkDescriptionInWizard<F, C>(module, detector, pair.getFirst(),
-                                                                            new HashSet<VirtualFile>(pair.getSecond())));
+        result.add(new FacetBasedDetectedFrameworkDescriptionInWizard<>(module, detector, pair.getFirst(),
+                                                                        new HashSet<>(pair.getSecond())));
       }
     }
     return result;

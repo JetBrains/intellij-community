@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.maddyhome.idea.copyright.CopyrightProfile;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,16 +33,14 @@ public class ExternalOptionHelper {
   @Nullable
   public static List<CopyrightProfile> loadOptions(File file) {
     try {
-      List<CopyrightProfile> profiles = new ArrayList<CopyrightProfile>();
-      Document doc = JDOMUtil.loadDocument(file);
-      Element root = doc.getRootElement();
+      List<CopyrightProfile> profiles = new ArrayList<>();
+      Element root = JDOMUtil.load(file);
       if (root.getName().equals("component")) {
         final Element copyrightElement = root.getChild("copyright");
         if (copyrightElement != null) extractNewNoticeAndKeyword(copyrightElement, profiles);
-      } else {
-        List list = root.getChildren("component");
-        for (Object element : list) {
-          Element component = (Element)element;
+      }
+      else {
+        for (Element component : root.getChildren("component")) {
           String name = component.getAttributeValue("name");
           if (name.equals("CopyrightManager")) {
             for (Object o : component.getChildren("copyright")) {

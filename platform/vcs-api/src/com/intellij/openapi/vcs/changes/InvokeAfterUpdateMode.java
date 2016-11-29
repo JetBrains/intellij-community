@@ -16,22 +16,31 @@
 package com.intellij.openapi.vcs.changes;
 
 public enum InvokeAfterUpdateMode {
-  SILENT(false, true, false, true),
-  BACKGROUND_CANCELLABLE(true, false, false, true),
-  BACKGROUND_NOT_CANCELLABLE(false, false, false, true),
-  SYNCHRONOUS_CANCELLABLE(true, false, true, true),
-  SYNCHRONOUS_NOT_CANCELLABLE(false, false, true, true),
-  SILENT_CALLBACK_POOLED(false, true, false, false),
-  BACKGROUND_NOT_CANCELLABLE_NOT_AWT(false, false, false, false);
+  SILENT(true),
+  BACKGROUND_CANCELLABLE(true, false),
+  BACKGROUND_NOT_CANCELLABLE(false, false),
+  SYNCHRONOUS_CANCELLABLE(true, true),
+  SYNCHRONOUS_NOT_CANCELLABLE(false, true),
+  SILENT_CALLBACK_POOLED(false);
 
   private final boolean myCancellable;
-  private final boolean mySilently;
+  private final boolean mySilent;
   private final boolean mySynchronous;
   private final boolean myCallbackOnAwt;
 
-  InvokeAfterUpdateMode(final boolean cancellable, final boolean silently, final boolean synchronous, final boolean callbackOnAwt) {
+  // Constructor for silent mode options
+  InvokeAfterUpdateMode(boolean callbackOnAwt) {
+    this(false, true, false, callbackOnAwt);
+  }
+
+  // Constructor for interactive mode options
+  InvokeAfterUpdateMode(boolean cancellable, boolean synchronous) {
+    this(cancellable, false, synchronous, true);
+  }
+
+  InvokeAfterUpdateMode(boolean cancellable, boolean silent, boolean synchronous, boolean callbackOnAwt) {
     myCancellable = cancellable;
-    mySilently = silently;
+    mySilent = silent;
     mySynchronous = synchronous;
     myCallbackOnAwt = callbackOnAwt;
   }
@@ -40,8 +49,8 @@ public enum InvokeAfterUpdateMode {
     return myCancellable;
   }
 
-  public boolean isSilently() {
-    return mySilently;
+  public boolean isSilent() {
+    return mySilent;
   }
 
   public boolean isSynchronous() {

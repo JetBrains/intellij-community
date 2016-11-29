@@ -75,7 +75,7 @@ public class FP {
    * Same as {@link #map}, but non-lazy an returns a modifiable List.
    */
   public static <S, R> List<R> mapList(@NotNull final Lambda1<S, R> lambda, @NotNull final Iterable<S> source) {
-    List<R> ret = new ArrayList<R>(source instanceof Collection? ((Collection)source).size() : 10);
+    List<R> ret = new ArrayList<>(source instanceof Collection ? ((Collection)source).size() : 10);
     for (R what : map(lambda, source)) ret.add(what);
     return ret;
   }
@@ -127,7 +127,7 @@ public class FP {
    * Same as {@link #zip(Iterable, Iterable)}, but non-lazy and returns a modifiable List.
    */
   public static <R1, R2> List<Pair<R1, R2>> zipList(Iterable<R1> one, Iterable<R2> two) {
-    List<Pair<R1, R2>> ret = new ArrayList<Pair<R1, R2>>(proposeZippedListLength(one, two, false, false));
+    List<Pair<R1, R2>> ret = new ArrayList<>(proposeZippedListLength(one, two, false, false));
     for (Pair<R1, R2>what : zipInternal(one, two, null, null, false, false)) ret.add(what);
     return ret;
   }
@@ -150,7 +150,7 @@ public class FP {
    * Same as {@link #zip(Iterable, Iterable, Object)}, but non-lazy and returns a modifiable List.
    */
   public static <R1, R2> List<Pair<R1, R2>> zipList(Iterable<R1> one, Iterable<R2> two, R2 filler) {
-    List<Pair<R1, R2>> ret = new ArrayList<Pair<R1, R2>>(proposeZippedListLength(one, two, false, true));
+    List<Pair<R1, R2>> ret = new ArrayList<>(proposeZippedListLength(one, two, false, true));
     for (Pair<R1, R2>what : zipInternal(one, two, null, filler, false, true)) ret.add(what);
     return ret;
   }
@@ -174,7 +174,7 @@ public class FP {
    * Same as {@link #zip(Iterable, Iterable, Object, Object)}, but non-lazy and returns a modifiable List.
    */
   public static <R1, R2> List<Pair<R1, R2>> zipList(Iterable<R1> one, Iterable<R2> two, R1 filler1, R2 filler2) {
-    List<Pair<R1, R2>> ret = new ArrayList<Pair<R1, R2>>(proposeZippedListLength(one, two, true, true));
+    List<Pair<R1, R2>> ret = new ArrayList<>(proposeZippedListLength(one, two, true, true));
     for (Pair<R1, R2>what : zipInternal(one, two, filler1, filler2, true, true)) ret.add(what);
     return ret;
   }

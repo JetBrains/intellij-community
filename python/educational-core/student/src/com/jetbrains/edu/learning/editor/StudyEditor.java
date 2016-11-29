@@ -5,9 +5,9 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.EduDocumentListener;
-import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduDocumentListener;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -19,7 +19,12 @@ import java.util.Map;
  */
 public class StudyEditor extends PsiAwareTextEditorImpl {
   private final TaskFile myTaskFile;
-  private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<Document, EduDocumentListener>();
+  private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<>();
+
+  public StudyEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
+    super(project, file, TextEditorProvider.getInstance());
+    myTaskFile = StudyUtils.getTaskFile(project, file);
+  }
 
   public TaskFile getTaskFile() {
     return myTaskFile;
@@ -28,11 +33,6 @@ public class StudyEditor extends PsiAwareTextEditorImpl {
   public static void addDocumentListener(@NotNull final Document document, @NotNull final EduDocumentListener listener) {
     document.addDocumentListener(listener);
     myDocumentListeners.put(document, listener);
-  }
-
-  public StudyEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
-    super(project, file, TextEditorProvider.getInstance());
-    myTaskFile = StudyUtils.getTaskFile(project, file);
   }
 
   public static void removeListener(Document document) {

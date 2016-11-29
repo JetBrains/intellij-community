@@ -38,8 +38,8 @@ public class JBTerminalSchemeColorPalette extends ColorPalette {
 
   @Override
   public Color[] getIndexColors() {
-    Color[] result = XTERM_PALETTE.getIndexColors();
-    for (int i = 1; i < 7; i++) {
+    Color[] result = new Color[ 16 ];
+    for (int i = 0; i < result.length; i++) {
       result[i] = myColorsScheme.getAttributes(ColoredOutputTypeRegistry.getAnsiColorKey(i)).getForegroundColor();
     }
     return result;

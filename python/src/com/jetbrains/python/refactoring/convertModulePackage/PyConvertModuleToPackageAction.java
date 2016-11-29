@@ -59,16 +59,14 @@ public class PyConvertModuleToPackageAction extends PyBaseConvertModulePackageAc
       showFileExistsErrorMessage(existing, ID, file.getProject());
       return;
     }
-    WriteCommandAction.runWriteCommandAction(file.getProject(), new Runnable() {
-      public void run() {
-        try {
-          final VirtualFile packageDir = parentDir.createChildDirectory(PyConvertModuleToPackageAction.this, newPackageName);
-          vFile.move(PyConvertModuleToPackageAction.this, packageDir);
-          vFile.rename(PyConvertModuleToPackageAction.this, PyNames.INIT_DOT_PY);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+    WriteCommandAction.runWriteCommandAction(file.getProject(), () -> {
+      try {
+        final VirtualFile packageDir = parentDir.createChildDirectory(this, newPackageName);
+        vFile.move(this, packageDir);
+        vFile.rename(this, PyNames.INIT_DOT_PY);
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     });
   }

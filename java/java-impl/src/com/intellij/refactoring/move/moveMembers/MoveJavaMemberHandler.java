@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +34,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -77,10 +82,10 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
 
   @Override
   public void checkConflictsOnUsage(@NotNull MoveMembersProcessor.MoveMembersUsageInfo usageInfo,
-                                    @Nullable String newVisibility,
                                     @Nullable PsiModifierList modifierListCopy,
                                     @NotNull PsiClass targetClass,
                                     @NotNull Set<PsiMember> membersToMove,
+                                    @NotNull MoveMembersOptions moveMembersOptions,
                                     @NotNull MultiMap<PsiElement, String> conflicts) {
     final PsiElement element = usageInfo.getElement();
     if (element == null) return;
@@ -94,6 +99,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       }
 
       if (!JavaResolveUtil.isAccessible(member, targetClass, modifierListCopy, element, accessObjectClass, null)) {
+        String newVisibility = moveMembersOptions.getExplicitMemberVisibility();
         String visibility = newVisibility != null ? newVisibility : VisibilityUtil.getVisibilityStringToDisplay(member);
         String message = RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                                    RefactoringUIUtil.getDescription(member, false),
@@ -120,10 +126,25 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       conflicts.putValue(usageInfo.member, "final variable initializer won't be available after move.");
     }
 
+    if (toBeConvertedToEnum(moveMembersOptions, member, targetClass) && !isEnumAcceptable(element, targetClass)) {
+      conflicts.putValue(element, "Enum type won't be applicable in the current context");
+    }
+
     final PsiReference reference = usageInfo.getReference();
     if (reference != null) {
       RefactoringConflictsUtil.checkAccessibilityConflicts(reference, member, modifierListCopy, targetClass, membersToMove, conflicts);
     }
+  }
+
+  private static boolean isEnumAcceptable(PsiElement element, PsiClass targetClass) {
+    if (element instanceof PsiExpression) {
+      ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes((PsiExpression)element, false);
+      if (types.length == 1) {
+        PsiType type = types[0].getType();
+        return type.isAssignableFrom(JavaPsiFacade.getElementFactory(element.getProject()).createType(targetClass));
+      }
+    }
+    return false;
   }
 
   @Override
@@ -216,9 +237,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     ChangeContextUtil.encodeContextInfo(member, true);
 
     final PsiMember memberCopy;
-    if (options.makeEnumConstant() &&
-        member instanceof PsiVariable &&
-        EnumConstantsUtil.isSuitableForEnumConstant(((PsiVariable)member).getType(), targetClass)) {
+    if (toBeConvertedToEnum(options, member, targetClass)) {
       memberCopy = EnumConstantsUtil.createEnumConstant(targetClass, member.getName(), ((PsiVariable)member).getInitializer());
     }
     else {
@@ -237,6 +256,14 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     return anchor != null ? (PsiMember)targetClass.addAfter(memberCopy, anchor) : (PsiMember)targetClass.add(memberCopy);
   }
 
+  private static boolean toBeConvertedToEnum(@NotNull MoveMembersOptions options,
+                                             @NotNull PsiMember member,
+                                             @NotNull PsiClass targetClass) {
+    return options.makeEnumConstant() &&
+           member instanceof PsiVariable &&
+           EnumConstantsUtil.isSuitableForEnumConstant(((PsiVariable)member).getType(), targetClass);
+  }
+
   @Override
   public void decodeContextInfo(@NotNull PsiElement scope) {
     ChangeContextUtil.decodeContextInfo(scope, null, null);
@@ -246,7 +273,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
   @Nullable
   public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass, final Set<PsiMember> membersToMove) {
     if (member instanceof PsiField && member.hasModifierProperty(PsiModifier.STATIC)) {
-      final List<PsiField> afterFields = new ArrayList<PsiField>();
+      final List<PsiField> afterFields = new ArrayList<>();
       final PsiExpression psiExpression = ((PsiField)member).getInitializer();
       if (psiExpression != null) {
         psiExpression.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -265,15 +292,11 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       }
 
       if (!afterFields.isEmpty()) {
-        Collections.sort(afterFields, new Comparator<PsiField>() {
-          public int compare(final PsiField o1, final PsiField o2) {
-            return -PsiUtilCore.compareElementsByPosition(o1, o2);
-          }
-        });
+        Collections.sort(afterFields, (o1, o2) -> -PsiUtilCore.compareElementsByPosition(o1, o2));
         return afterFields.get(0);
       }
 
-      final List<PsiField> beforeFields = new ArrayList<PsiField>();
+      final List<PsiField> beforeFields = new ArrayList<>();
       for (PsiReference psiReference : ReferencesSearch.search(member, new LocalSearchScope(targetClass))) {
         final PsiField fieldWithReference = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiField.class);
         if (fieldWithReference != null && !afterFields.contains(fieldWithReference) && fieldWithReference.getContainingClass() == targetClass) {

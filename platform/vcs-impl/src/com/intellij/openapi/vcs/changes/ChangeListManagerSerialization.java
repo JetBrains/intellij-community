@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class ChangeListManagerSerialization {
   @NonNls static final String ATT_ID = "id";
@@ -54,7 +55,7 @@ class ChangeListManagerSerialization {
   }
 
   @SuppressWarnings({"unchecked"})
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readExternal(final Element element) {
     final List<Element> listNodes = element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
       readChangeList(listNode);
@@ -64,7 +65,7 @@ class ChangeListManagerSerialization {
       readFileToIgnore(ignoredNode);
     }
     Element manuallyRemovedFromIgnoredTag = element.getChild(MANUALLY_REMOVED_FROM_IGNORED);
-    Set<String> manuallyRemovedFromIgnoredPaths = new HashSet<String>();
+    Set<String> manuallyRemovedFromIgnoredPaths = new HashSet<>();
     if (manuallyRemovedFromIgnoredTag != null) {
       for (Element tag : manuallyRemovedFromIgnoredTag.getChildren(DIRECTORY_TAG)) {
         manuallyRemovedFromIgnoredPaths.add(tag.getAttributeValue(ATT_PATH));
@@ -116,9 +117,8 @@ class ChangeListManagerSerialization {
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    final List<LocalChangeList> changeListList = myWorker.getListsCopy();
-    for (LocalChangeList list : changeListList) {
+  public static void writeExternal(@NotNull Element element, @NotNull IgnoredFilesComponent ignoredFilesComponent, @NotNull ChangeListWorker worker) {
+    for (LocalChangeList list : worker.getListsCopy()) {
       Element listNode = new Element(NODE_LIST);
       element.addContent(listNode);
       if (list.isDefault()) {
@@ -134,14 +134,14 @@ class ChangeListManagerSerialization {
       if (comment != null) {
         listNode.setAttribute(ATT_COMMENT, comment);
       }
-      List<Change> changes = new ArrayList<Change>(list.getChanges());
-      Collections.sort(changes, new ChangeComparator());
+      List<Change> changes = new ArrayList<>(list.getChanges());
+      changes.sort((o1, o2) -> Comparing.compare(o1.toString(), o2.toString()));
       for (Change change : changes) {
         writeChange(listNode, change);
       }
     }
-    final IgnoredFileBean[] filesToIgnore = myIgnoredIdeaLevel.getFilesToIgnore();
-    for (IgnoredFileBean bean : filesToIgnore) {
+
+    for (IgnoredFileBean bean : ignoredFilesComponent.getFilesToIgnore()) {
       Element fileNode = new Element(NODE_IGNORED);
       element.addContent(fileNode);
       String path = bean.getPath();
@@ -153,20 +153,14 @@ class ChangeListManagerSerialization {
         fileNode.setAttribute("mask", mask);
       }
     }
-    Set<String> manuallyRemovedFromIgnored = myIgnoredIdeaLevel.getDirectoriesManuallyRemovedFromIgnored();
+
+    Set<String> manuallyRemovedFromIgnored = ignoredFilesComponent.getDirectoriesManuallyRemovedFromIgnored();
     if (!manuallyRemovedFromIgnored.isEmpty()) {
       Element list = new Element(MANUALLY_REMOVED_FROM_IGNORED);
       for (String path : manuallyRemovedFromIgnored) {
         list.addContent(new Element(DIRECTORY_TAG).setAttribute(ATT_PATH, path));
       }
       element.addContent(list);
-    }
-  }
-
-  private static class ChangeComparator implements Comparator<Change> {
-    @Override
-    public int compare(@NotNull Change o1, @NotNull Change o2) {
-      return Comparing.compare(o1.toString(), o2.toString());
     }
   }
 

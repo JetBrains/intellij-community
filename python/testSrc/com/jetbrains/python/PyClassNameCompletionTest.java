@@ -72,6 +72,11 @@ public class PyClassNameCompletionTest extends PyTestCase {
     }
   }
 
+  // PY-18688
+  public void testTypeComment() {
+    doTest();
+  }
+
   private void doTest() {
     final String path = "/completion/className/" + getTestName(true);
     myFixture.copyDirectoryToProject(path, "");

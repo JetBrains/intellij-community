@@ -32,7 +32,7 @@ public class StructExceptionsAttribute extends StructGeneralAttribute {
     DataInputStream data = stream();
     int len = data.readUnsignedShort();
     if (len > 0) {
-      throwsExceptions = new ArrayList<Integer>(len);
+      throwsExceptions = new ArrayList<>(len);
       for (int i = 0; i < len; i++) {
         throwsExceptions.add(data.readUnsignedShort());
       }

@@ -169,7 +169,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
     }
 
     private static PsiFile[] getFiles(@NotNull PsiFile file, @NotNull MavenDomProjectModel model, @NotNull Set<MavenDomDependency> usages) {
-      Set<PsiFile> files = new HashSet<PsiFile>();
+      Set<PsiFile> files = new HashSet<>();
 
       files.add(file);
       XmlElement xmlElement = model.getXmlElement();
@@ -216,13 +216,11 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
     private static Function<MavenDomProjectModel, Set<MavenDomDependency>> getOccurencesFunction(final MavenDomDependency dependency) {
 
-      return new Function<MavenDomProjectModel, Set<MavenDomDependency>>() {
-        public Set<MavenDomDependency> fun(MavenDomProjectModel model) {
-          DependencyConflictId dependencyId = DependencyConflictId.create(dependency);
-          if (dependencyId == null) return Collections.emptySet();
+      return model -> {
+        DependencyConflictId dependencyId = DependencyConflictId.create(dependency);
+        if (dependencyId == null) return Collections.emptySet();
 
-          return MavenDomProjectProcessorUtils.searchDependencyUsages(model, dependencyId, Collections.singleton(dependency));
-        }
+        return MavenDomProjectProcessorUtils.searchDependencyUsages(model, dependencyId, Collections.singleton(dependency));
       };
     }
 

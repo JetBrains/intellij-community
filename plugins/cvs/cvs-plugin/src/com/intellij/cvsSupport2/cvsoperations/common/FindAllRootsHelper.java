@@ -58,7 +58,7 @@ public class FindAllRootsHelper {
     private final List<VirtualFile> myFound;
 
     private MyProcessor() {
-      myFound = new LinkedList<VirtualFile>();
+      myFound = new LinkedList<>();
     }
 
     public Boolean convert(VirtualFile o) {

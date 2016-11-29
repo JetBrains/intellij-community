@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,13 +55,26 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
+  public void testConcatCME() {
+    List<Integer> a1 = new ArrayList<>(Arrays.asList(0, 1));
+    List<Integer> l = ContainerUtil.concat(a1, Arrays.asList(2, 3), ContainerUtil.emptyList());
+    assertEquals(4, l.size());
+    for (int i = 0; i < l.size(); i++) {
+      int at = l.get(i);
+      assertEquals(i, at);
+    }
+
+    try {
+      a1.clear();
+      l.get(3);
+      fail();
+    }
+    catch (ConcurrentModificationException ignore) {
+    }
+  }
+
   public void testIterateWithCondition() throws Exception {
-    Condition<Integer> cond = new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer > 2;
-      }
-    };
+    Condition<Integer> cond = integer -> integer > 2;
 
     asserIterating(Arrays.asList(1, 4, 2, 5), cond, 4, 5);
     asserIterating(Arrays.asList(1, 2), cond);
@@ -71,7 +84,7 @@ public class ContainerUtilTest extends TestCase {
 
   private static void asserIterating(List<Integer> collection, Condition<Integer> condition, Integer... expected) {
     Iterable<Integer> it = ContainerUtil.iterate(collection, condition);
-    List<Integer> actual = new ArrayList<Integer>();
+    List<Integer> actual = new ArrayList<>();
     for (Integer each : it) {
       actual.add(each);
     }
@@ -79,7 +92,7 @@ public class ContainerUtilTest extends TestCase {
   }
 
   public void testIteratingBackward() throws Exception {
-    List<String> ss = new ArrayList<String>();
+    List<String> ss = new ArrayList<>();
     ss.add("a");
     ss.add("b");
     ss.add("c");
@@ -118,8 +131,8 @@ public class ContainerUtilTest extends TestCase {
   }
 
   public void testLockFreeSingleThreadPerformance() {
-    final List<Object> my = new LockFreeCopyOnWriteArrayList<Object>();
-    final List<Object> stock = new CopyOnWriteArrayList<Object>();
+    final List<Object> my = new LockFreeCopyOnWriteArrayList<>();
+    final List<Object> stock = new CopyOnWriteArrayList<>();
 
     measure(stock);
     measure(my);

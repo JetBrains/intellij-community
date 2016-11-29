@@ -37,7 +37,7 @@ public abstract class AntDomPropertyDefiningElement extends AntDomElement implem
   @NotNull 
   public final Iterator<String> getNamesIterator() {
     final List<GenericAttributeValue<String>> attribs = getPropertyDefiningAttributes();
-    final List<String> result = new ArrayList<String>(attribs.size());
+    final List<String> result = new ArrayList<>(attribs.size());
     for (GenericAttributeValue<String> attribValue : attribs) {
       final String name = attribValue.getStringValue();
       if (name != null && name.length() > 0) {

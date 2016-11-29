@@ -18,11 +18,11 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -37,6 +37,7 @@ public class MethodContract {
     this.returnValue = returnValue;
   }
 
+  @NotNull
   static ValueConstraint[] createConstraintArray(int paramCount) {
     ValueConstraint[] args = new ValueConstraint[paramCount];
     for (int i = 0; i < args.length; i++) {
@@ -46,13 +47,31 @@ public class MethodContract {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof MethodContract)) return false;
+
+    MethodContract contract = (MethodContract)o;
+
+    if (!Arrays.equals(arguments, contract.arguments)) return false;
+    if (returnValue != contract.returnValue) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 0;
+    for (ValueConstraint argument : arguments) {
+      result = 31 * result + argument.ordinal();
+    }
+    result = 31 * result + returnValue.ordinal();
+    return result;
+  }
+
+  @Override
   public String toString() {
-    return StringUtil.join(arguments, new Function<ValueConstraint, String>() {
-      @Override
-      public String fun(ValueConstraint constraint) {
-        return constraint.toString();
-      }
-    }, ", ") + " -> " + returnValue;
+    return StringUtil.join(arguments, constraint -> constraint.toString(), ", ") + " -> " + returnValue;
   }
 
   public enum ValueConstraint {

@@ -87,12 +87,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
 
     final List<PsiMethod> constructors = choose(filterIfFieldAlreadyAssigned(myField, myClass.getConstructors()), project);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        addFieldInitialization(constructors, myField, project, editor);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> addFieldInitialization(constructors, myField, project, editor));
   }
 
   private static void addFieldInitialization(@NotNull List<PsiMethod> constructors,
@@ -101,7 +96,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
                                              @Nullable Editor editor) {
     if (constructors.isEmpty()) return;
 
-    final List<PsiExpression> rExpressions = new ArrayList<PsiExpression>(constructors.size());
+    final List<PsiExpression> rExpressions = new ArrayList<>(constructors.size());
     final LookupElement[] suggestedInitializers = AddVariableInitializerFix.suggestInitializer(field);
 
     for (PsiMethod constructor : constructors) {
@@ -153,7 +148,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     }
 
     if (ctors.length > 1) {
-      final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(toPsiMethodMemberArray(ctors), false, true, project);
+      final MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(toPsiMethodMemberArray(ctors), false, true, project);
       chooser.setTitle(QuickFixBundle.message("initialize.final.field.in.constructor.choose.dialog.title"));
       chooser.show();
 
@@ -185,16 +180,11 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
 
   private static void createDefaultConstructor(PsiClass psiClass, @NotNull final Project project, final Editor editor, final PsiFile file) {
     final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(psiClass);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        defaultConstructorFix.invoke(project, editor, file);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
   }
 
   private static PsiMethod[] filterIfFieldAlreadyAssigned(@NotNull PsiField field, @NotNull PsiMethod[] ctors) {
-    final List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(ctors));
+    final List<PsiMethod> result = new ArrayList<>(Arrays.asList(ctors));
     for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(ctors))) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {

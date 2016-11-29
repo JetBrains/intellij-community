@@ -5,15 +5,16 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="jediterm-pty">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jediterm-pty-2.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jediterm-pty-2.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -25,5 +26,6 @@
     <orderEntry type="library" name="purejavacomm" level="project" />
     <orderEntry type="module" module-name="remote-servers-api" />
     <orderEntry type="module" module-name="remote-servers-impl" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
   </component>
 </module>

@@ -32,8 +32,20 @@ import java.awt.image.BufferedImage;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ImageComponentUI extends ComponentUI {
-    private static final ImageComponentUI ui = new ImageComponentUI();
+    private BufferedImage pattern;
 
+    private ImageComponentUI(JComponent c) {
+        c.addPropertyChangeListener(evt -> {
+            String name = evt.getPropertyName();
+            if (ImageComponent.TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP.equals(name) ||
+                ImageComponent.TRANSPARENCY_CHESSBOARD_WHITE_COLOR_PROP.equals(name) ||
+                ImageComponent.TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP.equals(name)) {
+                pattern = null;
+            }
+        });
+    }
+
+    @Override
     public void paint(Graphics g, JComponent c) {
         ImageComponent ic = (ImageComponent)c;
         if (ic != null) {
@@ -46,7 +58,7 @@ public class ImageComponentUI extends ComponentUI {
                 Graphics igc = g.create(2, 2, size.width, size.height);
 
                 // Transparency chessboard
-                if (ic.isTransparencyChessboardVisible()) {
+                if (ic.isTransparencyChessboardVisible() && image.getTransparency() != Transparency.OPAQUE) {
                     paintChessboard(igc, ic);
                 }
 
@@ -62,7 +74,7 @@ public class ImageComponentUI extends ComponentUI {
         }
     }
 
-    private void paintBorder(Graphics g, ImageComponent ic) {
+    private static void paintBorder(Graphics g, ImageComponent ic) {
         Dimension size = ic.getSize();
         g.setColor(ic.getTransparencyChessboardBlackColor());
         g.drawRect(0, 0, size.width - 1, size.height - 1);
@@ -73,34 +85,45 @@ public class ImageComponentUI extends ComponentUI {
         // Create pattern
         int cellSize = ic.getTransparencyChessboardCellSize();
         int patternSize = 2 * cellSize;
-        BufferedImage pattern = UIUtil.createImage(patternSize, patternSize, BufferedImage.TYPE_INT_ARGB);
-        Graphics imageGraphics = pattern.getGraphics();
-        imageGraphics.setColor(ic.getTransparencyChessboardWhiteColor());
-        imageGraphics.fillRect(0, 0, patternSize, patternSize);
-        imageGraphics.setColor(ic.getTransparencyChessboardBlackColor());
-        imageGraphics.fillRect(0, cellSize, cellSize, cellSize);
-        imageGraphics.fillRect(cellSize, 0, cellSize, cellSize);
+
+        if (pattern == null) {
+            pattern = UIUtil.createImage(patternSize, patternSize, BufferedImage.TYPE_INT_ARGB);
+            Graphics imageGraphics = pattern.getGraphics();
+            imageGraphics.setColor(ic.getTransparencyChessboardWhiteColor());
+            imageGraphics.fillRect(0, 0, patternSize, patternSize);
+            imageGraphics.setColor(ic.getTransparencyChessboardBlackColor());
+            imageGraphics.fillRect(0, cellSize, cellSize, cellSize);
+            imageGraphics.fillRect(cellSize, 0, cellSize, cellSize);
+        }
 
         ((Graphics2D)g).setPaint(new TexturePaint(pattern, new Rectangle(0, 0, patternSize, patternSize)));
         g.fillRect(0, 0, size.width, size.height);
     }
 
-    private void paintImage(Graphics g, ImageComponent ic) {
+    private static void paintImage(Graphics g, ImageComponent ic) {
         ImageDocument document = ic.getDocument();
         Dimension size = ic.getCanvasSize();
 
         Graphics2D g2d = (Graphics2D)g;
         RenderingHints oldHints = g2d.getRenderingHints();
-  
-        // disable any kind of source image manipulation when resizing
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        g.drawImage(document.getRenderer(), 0, 0, size.width, size.height, ic);
-      
+
+        BufferedImage image = ic.getDocument().getValue();
+        Image renderer = document.getValue();
+
+        if (size.width > image.getWidth() && size.height > image.getHeight()) {
+            // disable any kind of source image manipulation when resizing
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        } else {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        }
+        g.drawImage(renderer, 0, 0, size.width, size.height, ic);
+
         g2d.setRenderingHints(oldHints);
     }
 
-    private void paintGrid(Graphics g, ImageComponent ic) {
+    private static void paintGrid(Graphics g, ImageComponent ic) {
         Dimension size = ic.getCanvasSize();
         BufferedImage image = ic.getDocument().getValue();
         int imageWidth = image.getWidth();
@@ -122,6 +145,6 @@ public class ImageComponentUI extends ComponentUI {
 
     @SuppressWarnings({"UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
-        return ui;
+        return new ImageComponentUI(c);
     }
 }

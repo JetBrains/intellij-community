@@ -13,6 +13,8 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +25,7 @@ public class RollbackLineStatusRangeAction extends RollbackLineStatusAction {
   @NotNull private final Range myRange;
 
   public RollbackLineStatusRangeAction(@NotNull LineStatusTracker tracker, @NotNull Range range, @Nullable Editor editor) {
+    ActionUtil.copyFrom(this, IdeActions.SELECTED_CHANGES_ROLLBACK);
     myTracker = tracker;
     myEditor = editor;
     myRange = range;

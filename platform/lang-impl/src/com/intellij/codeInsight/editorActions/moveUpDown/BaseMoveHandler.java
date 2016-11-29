@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -41,38 +42,31 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
+  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
     final Project project = editor.getProject();
+    assert project != null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
+    documentManager.commitDocument(document);
     PsiFile file = getRoot(documentManager.getPsiFile(document), editor);
 
     if (file != null) {
       final MoverWrapper mover = getSuitableMover(editor, file);
-      if (mover != null) {
-        mover.move(editor,file);
+      if (mover != null && mover.getInfo().toMove2 != null) {
+        LineRange range = mover.getInfo().toMove;
+        if ((range.startLine > 0 || isDown) && (range.endLine < document.getLineCount() || !isDown)) {
+          mover.move(editor, file);
+        }
       }
     }
   }
 
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (editor.isViewer() || editor.isOneLineMode()) return false;
     final Project project = editor.getProject();
     if (project == null || project.isDisposed()) return false;
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final Document document = editor.getDocument();
-    documentManager.commitDocument(document);
-    PsiFile psiFile = documentManager.getPsiFile(document);
-    PsiFile file = getRoot(psiFile, editor);
-    if (file == null) return false;
-    final MoverWrapper mover = getSuitableMover(editor, file);
-    if (mover == null || mover.getInfo().toMove2 == null) return false;
-    final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    final LineRange range = mover.getInfo().toMove;
-    if (range.startLine == 0 && !isDown) return false;
-
-    return range.endLine <= maxLine || !isDown;
+    return true;
   }
 
   @Nullable

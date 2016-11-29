@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.diff.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.vcs.AbstractDataProviderPanel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,16 +41,9 @@ public class ErrorDiffViewer implements DiffViewer {
   protected ErrorDiffViewer(Window window, @NotNull DiffRequest request) {
     myRequest = request;
 
-    myPanel = new AbstractDataProviderPanel(new BorderLayout(), false) {
-      @Override
-      public void calcData(DataKey key, DataSink sink) {
-        final Object data = myRequest.getGenericData().get(key.getName());
-        if (data != null) {
-          sink.put(key, data);
-        }
-      }
-    };
+    myPanel = new JPanel(new BorderLayout());
     myPanel.setFocusable(true);
+    DataManager.registerDataProvider(myPanel, dataId -> myRequest.getGenericData().get(dataId));
 
     final ActionManager actionManager = ActionManager.getInstance();
     myToolbar = new DiffToolbarComponent(myPanel);
@@ -117,7 +109,7 @@ public class ErrorDiffViewer implements DiffViewer {
     label.setForeground(UIUtil.getInactiveTextColor());
     final JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(label,
-                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0));
+                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.insets(1), 0, 0));
     return wrapper;
   }
 

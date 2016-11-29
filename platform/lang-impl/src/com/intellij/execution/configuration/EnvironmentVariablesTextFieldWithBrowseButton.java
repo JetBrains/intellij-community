@@ -128,7 +128,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
 
   public static void showParentEnvironmentDialog(@NotNull Component parent) {
     EnvVariablesTable table = new EnvVariablesTable();
-    table.setValues(convertToVariables(new TreeMap<String, String>(new GeneralCommandLine().getParentEnvironment()), true));
+    table.setValues(convertToVariables(new TreeMap<>(new GeneralCommandLine().getParentEnvironment()), true));
     table.getActionsPanel().setVisible(false);
     DialogBuilder builder = new DialogBuilder(parent);
     builder.setTitle(ExecutionBundle.message("environment.variables.system.dialog.title"));
@@ -138,15 +138,10 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   private static List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {
-    return ContainerUtil.map(map.entrySet(), new Function<Map.Entry<String, String>, EnvironmentVariable>() {
+    return ContainerUtil.map(map.entrySet(), entry -> new EnvironmentVariable(entry.getKey(), entry.getValue(), readOnly) {
       @Override
-      public EnvironmentVariable fun(Map.Entry<String, String> entry) {
-        return new EnvironmentVariable(entry.getKey(), entry.getValue(), readOnly) {
-          @Override
-          public boolean getNameIsWriteable() {
-            return !readOnly;
-          }
-        };
+      public boolean getNameIsWriteable() {
+        return !readOnly;
       }
     });
   }
@@ -190,7 +185,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     @Override
     protected void doOKAction() {
       myEnvVariablesTable.stopEditing();
-      final Map<String, String> envs = new LinkedHashMap<String, String>();
+      final Map<String, String> envs = new LinkedHashMap<>();
       for (EnvironmentVariable variable : myEnvVariablesTable.getEnvironmentVariables()) {
         envs.put(variable.getName(), variable.getValue());
       }

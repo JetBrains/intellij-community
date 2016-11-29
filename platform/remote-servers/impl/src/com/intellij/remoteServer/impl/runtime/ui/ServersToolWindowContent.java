@@ -21,11 +21,10 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionListener;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,13 +61,13 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final Tree myTree;
   private final CardLayout myPropertiesPanelLayout;
   private final JPanel myPropertiesPanel;
-  private final JLabel myMessageLabel;
-  private final Map<String, JComponent> myLogComponents = new HashMap<String, JComponent>();
+  private final JBPanelWithEmptyText myMessagePanel;
+  private final Map<String, JComponent> myLogComponents = new HashMap<>();
 
   private final DefaultTreeModel myTreeModel;
   private TreeBuilderBase myBuilder;
   private AbstractTreeNode<?> myLastSelection;
-  private Set<Object> myCollapsedTreeNodeValues = new HashSet<Object>();
+  private Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
 
   private final Project myProject;
   private final RemoteServersViewContribution myContribution;
@@ -91,8 +90,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
     myPropertiesPanelLayout = new CardLayout();
     myPropertiesPanel = new JPanel(myPropertiesPanelLayout);
-    myMessageLabel = new JLabel(EMPTY_SELECTION_MESSAGE, SwingConstants.CENTER);
-    myPropertiesPanel.add(MESSAGE_CARD, new Wrapper(myMessageLabel));
+    myMessagePanel = new JBPanelWithEmptyText().withEmptyText(EMPTY_SELECTION_MESSAGE);
+    myPropertiesPanel.add(MESSAGE_CARD, myMessagePanel);
     splitter.setSecondComponent(myPropertiesPanel);
     getMainPanel().add(splitter, BorderLayout.CENTER);
 
@@ -205,8 +204,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     }
   }
 
-  private void showMessageLabel(final String text) {
-    myMessageLabel.setText(UIUtil.toHtml(text));
+  private void showMessageLabel(String text) {
+    myMessagePanel.getEmptyText().setText(text);
     myPropertiesPanelLayout.show(myPropertiesPanel, MESSAGE_CARD);
   }
 
@@ -252,21 +251,11 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   }
 
   private static void pollDeployments(final ServerConnection connection) {
-    connection.computeDeployments(new Runnable() {
-
-      @Override
-      public void run() {
-        new Alarm().addRequest(new Runnable() {
-
-          @Override
-          public void run() {
-            if (connection == ServerConnectionManager.getInstance().getConnection(connection.getServer())) {
-              pollDeployments(connection);
-            }
-          }
-        }, POLL_DEPLOYMENTS_DELAY, ModalityState.any());
+    connection.computeDeployments(() -> new Alarm().addRequest(() -> {
+      if (connection == ServerConnectionManager.getInstance().getConnection(connection.getServer())) {
+        pollDeployments(connection);
       }
-    });
+    }, POLL_DEPLOYMENTS_DELAY, ModalityState.any()));
   }
 
   private JComponent createToolbar() {
@@ -319,28 +308,20 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   }
 
   public void select(@NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
-    myBuilder.getUi().queueUpdate(connection).doWhenDone(new Runnable() {
+    myBuilder.getUi().queueUpdate(connection).doWhenDone(() -> myBuilder.select(ServersTreeStructure.DeploymentNodeImpl.class, new TreeVisitor<ServersTreeStructure.DeploymentNodeImpl>() {
       @Override
-      public void run() {
-        myBuilder.select(ServersTreeStructure.DeploymentNodeImpl.class, new TreeVisitor<ServersTreeStructure.DeploymentNodeImpl>() {
-          @Override
-          public boolean visit(@NotNull ServersTreeStructure.DeploymentNodeImpl node) {
-            return isDeploymentNodeMatch(node, connection, deploymentName);
-          }
-        }, null, false);
+      public boolean visit(@NotNull ServersTreeStructure.DeploymentNodeImpl node) {
+        return isDeploymentNodeMatch(node, connection, deploymentName);
       }
-    });
+    }, null, false));
   }
 
   public void select(@NotNull final ServerConnection<?> connection,
                      @NotNull final String deploymentName,
                      @NotNull final String logName) {
-    myBuilder.getUi().queueUpdate(connection).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        TreeNodeSelector nodeSelector = myContribution.createLogNodeSelector(connection, deploymentName, logName);
-        myBuilder.select(nodeSelector.getNodeClass(), nodeSelector, null, false);
-      }
+    myBuilder.getUi().queueUpdate(connection).doWhenDone(() -> {
+      TreeNodeSelector nodeSelector = myContribution.createLogNodeSelector(connection, deploymentName, logName);
+      myBuilder.select(nodeSelector.getNodeClass(), nodeSelector, null, false);
     });
   }
 

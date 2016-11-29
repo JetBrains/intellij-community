@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,31 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
  * @author vlan
  */
 public class DumbAwareHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
+
   @Override
   public void visitPyFunction(PyFunction node) {
-    highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+    if (node.isAsyncAllowed()) {
+      highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+    }
+    else {
+      Optional
+        .ofNullable(node.getNode())
+        .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
+        .ifPresent(asyncNode -> getHolder().createErrorAnnotation(asyncNode, "function \"" + node.getName() + "\" cannot be async"));
+    }
   }
 
   @Override
@@ -50,12 +63,26 @@ public class DumbAwareHighlightingAnnotator extends PyAnnotator implements Highl
   }
 
   @Override
+  public void visitPyComprehensionElement(PyComprehensionElement node) {
+    highlightKeywords(node, PyTokenTypes.ASYNC_KEYWORD);
+  }
+
+  @Override
   public boolean isForceHighlightParents(@NotNull PsiFile file) {
     return file instanceof PyFile;
   }
 
   private void highlightKeyword(@NotNull PsiElement node, @NotNull PyElementType elementType) {
-    final ASTNode astNode = node.getNode().findChildByType(elementType);
+    highlightAsKeyword(node.getNode().findChildByType(elementType));
+  }
+
+  private void highlightKeywords(@NotNull PsiElement node, @NotNull PyElementType elementType) {
+    for (ASTNode astNode : node.getNode().getChildren(TokenSet.create(elementType))) {
+      highlightAsKeyword(astNode);
+    }
+  }
+
+  private void highlightAsKeyword(@Nullable ASTNode astNode) {
     if (astNode != null) {
       final Annotation annotation = getHolder().createInfoAnnotation(astNode, null);
       annotation.setTextAttributes(PyHighlighter.PY_KEYWORD);

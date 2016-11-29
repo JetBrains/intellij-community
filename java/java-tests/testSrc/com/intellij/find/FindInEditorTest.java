@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,12 +45,12 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myOutputStream = new ByteArrayOutputStream();
     LivePreview.ourTestOutput = new PrintStream(myOutputStream);
     EditorHintListener listener = (project, hint, flags) -> LivePreview.processNotFound();
-    ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(EditorHintListener.TOPIC, listener);
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, listener);
   }
 
   private void initFind() {
     SearchResults searchResults = new SearchResults(getEditor(), getProject());
-    myLivePreviewController = new LivePreviewController(searchResults, null);
+    myLivePreviewController = new LivePreviewController(searchResults, null, getTestRootDisposable());
     myFindModel.addObserver(findModel -> myLivePreviewController.updateInBackground(myFindModel, true));
     myLivePreviewController.on();
   }
@@ -60,6 +60,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     initFind();
     myFindModel.setStringToFind("a");
     checkResults();
+    myFindModel.setStringToFind("a2");
+    assertTrue(!myEditor.getSelectionModel().hasSelection());
   }
 
   public void testEmacsLikeFallback() throws Exception {
@@ -90,6 +92,17 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     new EditorMouseFixture((EditorImpl)myEditor).doubleClickAt(0, 3);
     invokeFind();
     checkResultByText("a <selection>b<caret></selection> b a");
+  }
+
+  public void testSecondRegexReplaceShowsPopup() throws Exception {
+    configureFromText("<caret> aba");
+    initFind();
+    myFindModel.setRegularExpressions(true);
+    myFindModel.setStringToFind("a");
+    myFindModel.setStringToReplace("c");
+    myFindModel.setReplaceState(true);
+    myLivePreviewController.performReplace();
+    checkResults();
   }
 
   private static void invokeFind() {

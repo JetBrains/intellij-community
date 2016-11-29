@@ -1,6 +1,20 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.javascript.boilerplate;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.gson.JsonArray;
@@ -17,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 public class GithubTagListProvider {
@@ -58,43 +73,35 @@ public class GithubTagListProvider {
   }
 
   private Runnable createUpdateTagListAction(@NotNull final GithubProjectGeneratorPeer peer) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          peer.onTagsUpdated(Collections.<GithubTagInfo>emptySet());
+    return () -> {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        peer.onTagsUpdated(Collections.emptySet());
+        return;
+      }
+      final String[] urls = formatTagListDownloadUrls();
+      String firstErrorMessage = null;
+      for (String url : urls) {
+        String errorMessage;
+        try {
+          final ImmutableSet<GithubTagInfo> tags = fetchGithubTagsByUrl(url);
+          LOG.info(getGeneratorName() + "Cache has been successfully updated");
+          UIUtil.invokeLaterIfNeeded(() -> peer.onTagsUpdated(tags));
           return;
         }
-        final String[] urls = formatTagListDownloadUrls();
-        String firstErrorMessage = null;
-        for (String url : urls) {
-          String errorMessage;
-          try {
-            final ImmutableSet<GithubTagInfo> tags = fetchGithubTagsByUrl(url);
-            LOG.info(getGeneratorName() + "Cache has been successfully updated");
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                peer.onTagsUpdated(tags);
-              }
-            });
-            return;
-          }
-          catch (IOException e) {
-            errorMessage = "Can not fetch tags from " + url;
-            LOG.warn(getGeneratorName() + errorMessage, e);
-          }
-          catch (GeneratorException e) {
-            errorMessage = "Malformed JSON received from " + url;
-            LOG.warn(getGeneratorName() + errorMessage, e);
-          }
-          if (firstErrorMessage == null) {
-            firstErrorMessage = errorMessage;
-          }
+        catch (IOException e) {
+          errorMessage = "Can not fetch tags from " + url;
+          LOG.warn(getGeneratorName() + errorMessage, e);
         }
-        if (firstErrorMessage != null) {
-          peer.onTagsUpdateError(firstErrorMessage);
+        catch (GeneratorException e) {
+          errorMessage = "Malformed JSON received from " + url;
+          LOG.warn(getGeneratorName() + errorMessage, e);
         }
+        if (firstErrorMessage == null) {
+          firstErrorMessage = errorMessage;
+        }
+      }
+      if (firstErrorMessage != null) {
+        peer.onTagsUpdateError(firstErrorMessage);
       }
     };
   }
@@ -114,7 +121,7 @@ public class GithubTagListProvider {
   private ImmutableSet<GithubTagInfo> readTagsFromFile(@NotNull File file) throws GeneratorException {
     final String content;
     try {
-      content = Files.toString(file, Charsets.UTF_8);
+      content = Files.toString(file, StandardCharsets.UTF_8);
     }
     catch (IOException e) {
       throw new GeneratorException("Can not read '" + file.getAbsolutePath() + "'!", e);

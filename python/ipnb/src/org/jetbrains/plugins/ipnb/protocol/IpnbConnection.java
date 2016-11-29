@@ -15,7 +15,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author vlan
@@ -44,7 +47,7 @@ public class IpnbConnection {
   private volatile boolean myIsIOPubOpen = false;
   protected volatile boolean myIsOpened = false;
 
-  private ArrayList<IpnbOutputCell> myOutput = new ArrayList<IpnbOutputCell>();
+  private IpnbOutputCell myOutput;
   private int myExecCount;
 
 
@@ -96,7 +99,7 @@ public class IpnbConnection {
   }
 
   public boolean isAlive() {
-    return myShellClient.isOpen() && myIOPubClient.isOpen() ;
+    return myShellClient.isOpen() && myIOPubClient.isOpen();
   }
 
   @NotNull
@@ -283,48 +286,49 @@ public class IpnbConnection {
     }
   }
 
-  protected static void addCellOutput(@NotNull final PyContent content, ArrayList<IpnbOutputCell> output) {
+  protected void addCellOutput(@NotNull final PyContent content) {
     if (content instanceof PyErrContent) {
-      output.add(new IpnbErrorOutputCell(((PyErrContent)content).getEvalue(),
-                                         ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null, null));
+      myOutput = new IpnbErrorOutputCell(((PyErrContent)content).getEvalue(),
+                                         ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null, null);
     }
     else if (content instanceof PyStreamContent) {
       final String data = ((PyStreamContent)content).getData();
-      output.add(new IpnbStreamOutputCell(((PyStreamContent)content).getName(), Lists.newArrayList(data), null, null));
+      myOutput = new IpnbStreamOutputCell(((PyStreamContent)content).getName(), Lists.newArrayList(data), null, null);
     }
     else if (content instanceof PyOutContent) {
       final Map<String, Object> data = ((PyOutContent)content).getData();
       final String plainText = (String)data.get("text/plain");
       if (data.containsKey("text/latex")) {
         final String text = (String)data.get("text/latex");
-        output.add(new IpnbLatexOutputCell(Lists.newArrayList(text), null, Lists.newArrayList(plainText), null));
+        myOutput = new IpnbLatexOutputCell(Lists.newArrayList(text), null, Lists.newArrayList(plainText), null);
       }
       else if (data.containsKey("text/html")) {
         final String html = (String)data.get("text/html");
-        output.add(new IpnbHtmlOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(html)),
+        myOutput = new IpnbHtmlOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(html)),
                                           Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(html)),
-                                          ((PyOutContent)content).getExecutionCount(), null));
+                                          ((PyOutContent)content).getExecutionCount(), null);
       }
       else if (data.containsKey("image/png")) {
         final String png = (String)data.get("image/png");
-        output.add(new IpnbPngOutputCell(png, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null));
+        myOutput = new IpnbPngOutputCell(png, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null);
       }
       else if (data.containsKey("image/jpeg")) {
         final String jpeg = (String)data.get("image/jpeg");
-        output.add(new IpnbJpegOutputCell(jpeg, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null));
+        myOutput = new IpnbJpegOutputCell(jpeg, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null);
       }
       else if (data.containsKey("image/svg")) {
         final String svg = (String)data.get("image/svg");
-        output.add(new IpnbSvgOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(svg)),
-                                         Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null));
+        myOutput = new IpnbSvgOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(svg)),
+                                         Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null);
       }
-      else if (plainText != null){
-        output.add(new IpnbOutOutputCell(Lists.newArrayList(plainText), ((PyOutContent)content).getExecutionCount(), null));
+      else if (plainText != null) {
+        myOutput = new IpnbOutOutputCell(Lists.newArrayList(plainText), ((PyOutContent)content).getExecutionCount(), null);
       }
     }
   }
 
-  private interface PyContent {}
+  private interface PyContent {
+  }
 
   @SuppressWarnings("UnusedDeclaration")
   protected static class Payload {
@@ -451,7 +455,8 @@ public class IpnbConnection {
       final String messageType = header.getMessageType();
       if ("pyout".equals(messageType) || "display_data".equals(messageType) || "execute_result".equals(messageType)) {
         final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
-        addCellOutput(content, myOutput);
+        addCellOutput(content);
+        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
       }
       if ("execute_reply".equals(messageType)) {
         final PyExecuteReplyContent content = gson.fromJson(msg.getContent(), PyExecuteReplyContent.class);
@@ -462,27 +467,24 @@ public class IpnbConnection {
             myListener.onPayload(payload.text, parentHeader.getMessageId());
           }
         }
+        if ("ok".equals(content.status) || "error".equals(content.status)) {
+          myListener.onFinished(IpnbConnection.this, parentHeader.getMessageId());
+        }
       }
       else if ("pyerr".equals(messageType) || "error".equals(messageType)) {
         final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
-        addCellOutput(content, myOutput);
+        addCellOutput(content);
+        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
       }
       else if ("stream".equals(messageType)) {
         final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
-        addCellOutput(content, myOutput);
+        addCellOutput(content);
+        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
       }
       else if ("pyin".equals(messageType) || "execute_input".equals(messageType)) {
         final JsonElement executionCount = msg.getContent().get("execution_count");
         if (executionCount != null) {
           myExecCount = executionCount.getAsInt();
-        }
-      }
-      else if ("status".equals(messageType)) {
-        final PyStatusContent content = gson.fromJson(msg.getContent(), PyStatusContent.class);
-        final String executionState = content.getExecutionState();
-        if ("idle".equals(executionState)) {
-          myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
-          myOutput.clear();
         }
       }
     }
@@ -498,12 +500,11 @@ public class IpnbConnection {
     }
   }
 
-  public ArrayList<IpnbOutputCell> getOutput() {
+  public IpnbOutputCell getOutput() {
     return myOutput;
   }
 
   public int getExecCount() {
     return myExecCount;
   }
-
 }

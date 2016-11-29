@@ -57,7 +57,7 @@ public class Key<T> implements Serializable, Comparable<Key<?>> {
 
   @NotNull
   public static <T> Key<T> create(@NotNull Class<T> dataClass, int processingWeight) {
-    return new Key<T>(dataClass.getName(), processingWeight);
+    return new Key<>(dataClass.getName(), processingWeight);
   }
 
   public String getDataType() {

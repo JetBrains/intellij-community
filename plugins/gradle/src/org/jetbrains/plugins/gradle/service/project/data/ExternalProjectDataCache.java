@@ -82,13 +82,10 @@ public class ExternalProjectDataCache {
       LOG.debug("Can not find data for project at: " + projectRootDir);
       LOG.debug("Existing imported projects paths: " + ContainerUtil.map(
         myExternalRootProjects.entrySet(),
-        new Function<Map.Entry<Pair<ProjectSystemId, File>, ExternalProject>, Object>() {
-          @Override
-          public Object fun(Map.Entry<Pair<ProjectSystemId, File>, ExternalProject> entry) {
-            //noinspection ConstantConditions
-            if (!(entry.getValue() instanceof ExternalProject)) return null;
-            return Pair.create(entry.getKey(), entry.getValue().getProjectDir());
-          }
+        (Function<Map.Entry<Pair<ProjectSystemId, File>, ExternalProject>, Object>)entry -> {
+          //noinspection ConstantConditions
+          if (!(entry.getValue() instanceof ExternalProject)) return null;
+          return Pair.create(entry.getKey(), entry.getValue().getProjectDir());
         }));
     }
     return externalProject;
@@ -117,15 +114,16 @@ public class ExternalProjectDataCache {
     while (!queue.isEmpty()) {
       final ExternalProject externalProject = queue.remove();
       final String projectId = externalProject.getQName();
+      boolean isRelatedProject = projectId.equals(externalProjectId);
       final Map<String, ExternalSourceSet> result = ContainerUtil.newHashMap();
       for (Map.Entry<String, ExternalSourceSet> sourceSetEntry : externalProject.getSourceSets().entrySet()) {
         final String sourceSetName = sourceSetEntry.getKey();
         final String sourceSetId = projectId + ":" + sourceSetName;
-        if (externalProjectId.equals(sourceSetId)) {
+        if (isRelatedProject || externalProjectId.equals(sourceSetId)) {
           result.put(sourceSetName, sourceSetEntry.getValue());
         }
       }
-      if(!result.isEmpty() || projectId.equals(externalProjectId)) return result;
+      if(!result.isEmpty() || isRelatedProject) return result;
 
       queue.addAll(externalProject.getChildProjects().values());
     }

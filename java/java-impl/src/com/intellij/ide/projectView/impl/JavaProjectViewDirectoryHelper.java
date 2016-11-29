@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,11 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
+import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.TreeViewUtil;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
@@ -70,10 +69,6 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   @Nullable
   @Override
   public String getNodeName(final ViewSettings settings, final Object parentValue, final PsiDirectory directory) {
-    if (JrtFileSystem.isRoot(directory.getVirtualFile())) {
-      return LangBundle.message("jrt.node.short");
-    }
-
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
 
     PsiPackage parentPackage;
@@ -97,8 +92,11 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   }
 
   @Override
-  public boolean isEmptyMiddleDirectory(final PsiDirectory directory, final boolean strictlyEmpty) {
-    return JavaDirectoryService.getInstance().getPackage(directory) != null && TreeViewUtil.isEmptyMiddlePackage(directory, strictlyEmpty);
+  public boolean isEmptyMiddleDirectory(final PsiDirectory directory,
+                                        final boolean strictlyEmpty,
+                                        @Nullable PsiFileSystemItemFilter filter) {
+    return JavaDirectoryService.getInstance().getPackage(directory) != null &&
+           TreeViewUtil.isEmptyMiddlePackage(directory, strictlyEmpty, filter);
   }
 
   @Override

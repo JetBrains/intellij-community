@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,22 +100,19 @@ class SlideComponent extends JComponent {
       }
     });
 
-    addMouseWheelListener(new MouseWheelListener() {
-      @Override
-      public void mouseWheelMoved(MouseWheelEvent e) {
-        final int amount = e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
-                           e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount();
-        int pointerValue = myPointerValue + amount;
-        pointerValue = pointerValue < OFFSET ? OFFSET : pointerValue;
-        int size = myVertical ? getHeight() : getWidth();
-        pointerValue = pointerValue > (size - 12) ? size - 12 : pointerValue;
+    addMouseWheelListener(event -> {
+      int units = event.getUnitsToScroll();
+      if (units == 0) return;
+      int pointerValue = myPointerValue + units;
+      pointerValue = pointerValue < OFFSET ? OFFSET : pointerValue;
+      int size = myVertical ? getHeight() : getWidth();
+      pointerValue = pointerValue > (size - 12) ? size - 12 : pointerValue;
 
-        myPointerValue = pointerValue;
-        myValue = pointerValueToValue(myPointerValue);
+      myPointerValue = pointerValue;
+      myValue = pointerValueToValue(myPointerValue);
 
-        repaint();
-        fireValueChanged();
-      }
+      repaint();
+      fireValueChanged();
     });
 
     addComponentListener(new ComponentAdapter() {
@@ -196,7 +193,7 @@ class SlideComponent extends JComponent {
     pointerValue -= OFFSET;
     final int size = myVertical ? getHeight() : getWidth();
     float proportion = (size - 23) / 255f;
-    return (int)(pointerValue / proportion);
+    return Math.round((pointerValue / proportion));
   }
 
   private int valueToPointerValue(int value) {

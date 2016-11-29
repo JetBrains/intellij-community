@@ -49,8 +49,9 @@
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with Branch..." />
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
+      <reference id="Vcs.Show.Graph.History"/>
       <separator/>
-      <action id="Git.Revert" class="git4idea.actions.GitRevert" icon="AllIcons.Actions.Rollback" text="Revert..."/>
+      <reference id="ChangesView.Revert" />
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
     </group>
 
@@ -62,6 +63,7 @@
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="AllIcons.Actions.Reset"/>
       <separator/>
+      <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction" text="Remotes..." />
       <action id="Git.Clone" class="git4idea.actions.GitCloneAction" text="Clone..." />
       <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch"/>
       <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull..." icon="AllIcons.Actions.CheckOut"/>
@@ -101,6 +103,8 @@
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." />
+    <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
+            description="Undo last commit and put its changes into selected changelist"/>
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -111,11 +115,12 @@
       <reference id="Git.BranchOperationGroup"/>
       <separator/>
       <reference id="Git.Reset.In.Log" />
+      <reference id="Git.Uncommit" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
     </group>
 
     <group id="Git.Log.Toolbar">
-      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight non-picked commits"
+      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight Non-Picked Commits"
               icon="Git4ideaIcons.DeepCompare"
               description="Dims those commits which have equivalent changes in the current branch"/>
       <add-to-group group-id="Vcs.Log.Toolbar" />

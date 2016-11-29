@@ -59,7 +59,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private final boolean myWatchRecursively;
     private boolean myDominated;
 
-    public WatchRequestImpl(String rootPath, boolean watchRecursively) {
+    WatchRequestImpl(String rootPath, boolean watchRecursively) {
       myFSRootPath = rootPath;
       myWatchRecursively = watchRecursively;
     }
@@ -83,7 +83,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private static class TreeNode {
     private WatchRequestImpl watchRequest;
-    private final Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
+    private final Map<String, TreeNode> nodes = new THashMap<>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
   public LocalFileSystemImpl(@NotNull Application app, @NotNull ManagingFS managingFS) {
@@ -116,9 +116,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   private List<WatchRequestImpl> normalizeRootsForRefresh() {
-    final List<WatchRequestImpl> result = new ArrayList<WatchRequestImpl>();
+    List<WatchRequestImpl> result = new ArrayList<>();
 
-    // no need to call for a read action here since we're only called with it on hands already
     synchronized (myLock) {
       TreeNode rootNode = new TreeNode();
       for (WatchRequestImpl request : myRootsToWatch) {
@@ -126,7 +125,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
         String rootPath = request.getRootPath();
 
         TreeNode currentNode = rootNode;
-        MainLoop:
         for (String subPath : splitPath(rootPath)) {
           TreeNode nextNode = currentNode.nodes.get(subPath);
           if (nextNode != null) {
@@ -134,7 +132,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
             if (currentNode.watchRequest != null && currentNode.watchRequest.isToWatchRecursively()) {
               // a parent path of this request is already being watched recursively - do not need to add this one
               request.myDominated = true;
-              break MainLoop;
+              break;
             }
           }
           else {
@@ -159,24 +157,18 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
         if (currentNode.watchRequest.isToWatchRecursively() && !currentNode.nodes.isEmpty()) {
           // since we are watching this node recursively, we can remove it's children
-          visitTree(currentNode, new Consumer<TreeNode>() {
-            @Override
-            public void consume(final TreeNode node) {
-              if (node.watchRequest != null) {
-                node.watchRequest.myDominated = true;
-              }
+          visitTree(currentNode, node -> {
+            if (node.watchRequest != null) {
+              node.watchRequest.myDominated = true;
             }
           });
           currentNode.nodes.clear();
         }
       }
 
-      visitTree(rootNode, new Consumer<TreeNode>() {
-        @Override
-        public void consume(final TreeNode node) {
-          if (node.watchRequest != null) {
-            result.add(node.watchRequest);
-          }
+      visitTree(rootNode, node -> {
+        if (node.watchRequest != null) {
+          result.add(node.watchRequest);
         }
       });
       myNormalizedTree = rootNode;
@@ -281,7 +273,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
     if (myWatcher.isOperational()) {
       for (String root : myWatcher.getManualWatchRoots()) {
-        final VirtualFile suspiciousRoot = findFileByPathIfCached(root);
+        VirtualFile suspiciousRoot = findFileByPathIfCached(root);
         if (suspiciousRoot != null) {
           ((NewVirtualFile)suspiciousRoot).markDirtyRecursively();
         }
@@ -296,76 +288,23 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  private void setUpFileWatcher() {
-    Application app = ApplicationManager.getApplication();
-    app.assertReadAccessAllowed();
-    if (app.isDisposeInProgress() || !myWatcher.isOperational()) return;
-
-    synchronized (myLock) {
-      List<String> recursiveRoots = new ArrayList<>();
-      List<String> flatRoots = new ArrayList<>();
-
-      for (WatchRequestImpl request : normalizeRootsForRefresh()) {
-        (request.isToWatchRecursively() ? recursiveRoots : flatRoots).add(request.myFSRootPath);
-      }
-
-      myWatcher.setWatchRoots(recursiveRoots, flatRoots);
-    }
-  }
-
-  @Override
-  @NotNull
-  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean watchRecursively) {
-    if (rootPaths.isEmpty() || !myWatcher.isOperational()) {
-      return Collections.emptySet();
-    }
-    else if (watchRecursively) {
-      return replaceWatchedRoots(Collections.emptySet(), rootPaths, null);
-    }
-    else {
-      return replaceWatchedRoots(Collections.emptySet(), null, rootPaths);
-    }
-  }
-
-  @Override
-  public void removeWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests) {
-    if (watchRequests.isEmpty()) return;
-
-    ApplicationManager.getApplication().runReadAction(() -> {
-      synchronized (myLock) {
-        boolean update = doRemoveWatchedRoots(watchRequests);
-        if (update) {
-          myNormalizedTree = null;
-          setUpFileWatcher();
-        }
-      }
-    });
-  }
-
   @NotNull
   @Override
   public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
-                                               @Nullable Collection<String> _recursiveRoots,
-                                               @Nullable Collection<String> _flatRoots) {
-    Collection<String> recursiveRoots = ObjectUtils.notNull(_recursiveRoots, Collections.<String>emptyList());
-    Collection<String> flatRoots = ObjectUtils.notNull(_flatRoots, Collections.<String>emptyList());
+                                               @Nullable Collection<String> recursiveRoots,
+                                               @Nullable Collection<String> flatRoots) {
+    recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());
+    flatRoots = ObjectUtils.notNull(flatRoots, Collections.emptyList());
 
-    if (recursiveRoots.isEmpty() && flatRoots.isEmpty() || !myWatcher.isOperational()) {
-      removeWatchedRoots(watchRequests);
-      return Collections.emptySet();
-    }
-
-    Set<WatchRequest> result = new HashSet<WatchRequest>();
-    ApplicationManager.getApplication().runReadAction(() -> {
-      synchronized (myLock) {
-        boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result) |
-                         doRemoveWatchedRoots(watchRequests);
-        if (update) {
-          myNormalizedTree = null;
-          setUpFileWatcher();
-        }
+    Set<WatchRequest> result = new HashSet<>();
+    synchronized (myLock) {
+      boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result) |
+                       doRemoveWatchedRoots(watchRequests);
+      if (update) {
+        myNormalizedTree = null;
+        setUpFileWatcher();
       }
-    });
+    }
     return result;
   }
 
@@ -413,7 +352,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return new WatchRequestImpl(rootFile.getAbsolutePath(), recursively);
   }
 
-  private boolean doRemoveWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests) {
+  private boolean doRemoveWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
     boolean update = false;
 
     for (WatchRequest watchRequest : watchRequests) {
@@ -425,17 +364,26 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return update;
   }
 
+  private void setUpFileWatcher() {
+    if (!ApplicationManager.getApplication().isDisposeInProgress() && myWatcher.isOperational()) {
+      List<String> recursiveRoots = new ArrayList<>();
+      List<String> flatRoots = new ArrayList<>();
+
+      for (WatchRequestImpl request : normalizeRootsForRefresh()) {
+        (request.isToWatchRecursively() ? recursiveRoots : flatRoots).add(request.myFSRootPath);
+      }
+
+      myWatcher.setWatchRoots(recursiveRoots, flatRoots);
+    }
+  }
+
   @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
-    Runnable heavyRefresh = new Runnable() {
-      @Override
-      public void run() {
-        for (VirtualFile root : myManagingFS.getRoots(LocalFileSystemImpl.this)) {
-          ((NewVirtualFile)root).markDirtyRecursively();
-        }
-
-        refresh(asynchronous);
+    Runnable heavyRefresh = () -> {
+      for (VirtualFile root : myManagingFS.getRoots(this)) {
+        ((NewVirtualFile)root).markDirtyRecursively();
       }
+      refresh(asynchronous);
     };
 
     if (asynchronous && myWatcher.isOperational()) {
@@ -455,6 +403,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   public void cleanupForNextTest() {
     FileDocumentManager.getInstance().saveAllDocuments();
     PersistentFS.getInstance().clearIdCache();
-    myRootsToWatch.clear();
+    synchronized (myLock) {
+      myRootsToWatch.clear();
+      myNormalizedTree = null;
+    }
   }
 }

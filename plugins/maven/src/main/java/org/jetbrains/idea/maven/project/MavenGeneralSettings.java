@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.Set;
 
 public class MavenGeneralSettings implements Cloneable {
   private boolean workOffline = false;
-  private String mavenHome = "";
+  private String mavenHome = MavenServerManager.BUNDLED_MAVEN_3;
   private String mavenSettingsFile = "";
   private String overriddenLocalRepository = "";
   private boolean printErrorStackTraces = false;
@@ -195,7 +195,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public List<VirtualFile> getEffectiveSettingsFiles() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>(2);
+    List<VirtualFile> result = new ArrayList<>(2);
     VirtualFile file = getEffectiveUserSettingsFile();
     if (file != null) result.add(file);
     file = getEffectiveGlobalSettingsFile();
@@ -247,7 +247,7 @@ public class MavenGeneralSettings implements Cloneable {
     Set<String> result = myDefaultPluginsCache;
     if (result != null) return result;
 
-    result = new THashSet<String>();
+    result = new THashSet<>();
 
     VirtualFile effectiveSuperPom = getEffectiveSuperPom();
     if (effectiveSuperPom != null) {

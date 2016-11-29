@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,11 +37,11 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
       return;
     }
     PsiElement file = elements.get(0).getContainingFile();
-    final RunContextAction runAction = new RunContextAction(DefaultRunExecutor.getRunExecutorInstance());
+    final RunContextAction runAction = new PyStudyRunContextAction(DefaultRunExecutor.getRunExecutorInstance());
     final PyExecuteFileExtensionPoint[] extensions =
       ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
 
-    final List<AnAction> actions = new ArrayList<AnAction>();
+    final List<AnAction> actions = new ArrayList<>();
     final DefaultActionGroup group = new DefaultActionGroup();
     if (PlatformUtils.isPyCharmEducational()) {
       group.add(runAction);
@@ -61,13 +60,10 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
 
     Icon icon = PlatformUtils.isPyCharmEducational() ? AllIcons.Actions.Execute : actions.get(0).getTemplatePresentation().getIcon();
     final LineMarkerInfo<PsiElement> markerInfo = new LineMarkerInfo<PsiElement>(
-      file, file.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS,
-      new Function<PsiElement, String>() {
-        @Override
-        public String fun(PsiElement e) {
-          String text = "Execute '" + e.getContainingFile().getName() + "'";
-          return PlatformUtils.isPyCharmEducational() ? text : actions.get(0).getTemplatePresentation().getText();
-        }
+      file, file.getTextRange(), icon, Pass.LINE_MARKERS,
+      e -> {
+        String text = "Execute '" + e.getContainingFile().getName() + "'";
+        return PlatformUtils.isPyCharmEducational() ? text : actions.get(0).getTemplatePresentation().getText();
       }, null,
       GutterIconRenderer.Alignment.RIGHT) {
       @Nullable

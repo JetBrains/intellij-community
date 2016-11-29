@@ -16,7 +16,7 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.actions.NavigationContextChecker;
+import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -36,14 +36,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
@@ -53,7 +51,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
 
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
+  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   public SimpleOnesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -72,7 +70,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
@@ -88,7 +86,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(Separator.getInstance());
     group.add(new MyIgnorePolicySettingAction().getPopupGroup());
@@ -122,32 +120,20 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   @Override
   @NotNull
   protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
-    indicator.checkCanceled();
+    return () -> {
+      clearDiffPresentation();
 
-    return new Runnable() {
-      @Override
-      public void run() {
-        clearDiffPresentation();
+      boolean shouldHighlight = getTextSettings().getHighlightPolicy() != HighlightPolicy.DO_NOT_HIGHLIGHT;
+      if (shouldHighlight) {
+        final DocumentContent content = getContent();
+        final Document document = content.getDocument();
 
-        boolean shouldHighlight = getTextSettings().getHighlightPolicy() != HighlightPolicy.DO_NOT_HIGHLIGHT;
-        if (shouldHighlight) {
-          final DocumentContent content = getContent();
-          final Document document = content.getDocument();
+        TextDiffType type = getSide().select(TextDiffType.DELETED, TextDiffType.INSERTED);
 
-          TextDiffType type = getSide().select(TextDiffType.DELETED, TextDiffType.INSERTED);
-
-          myHighlighters.addAll(DiffDrawUtil.createHighlighter(getEditor(), 0, getLineCount(document), type, false));
-
-          int startLine = 0;
-          int endLine = getLineCount(document);
-
-          if (startLine != endLine) {
-            myHighlighters.addAll(DiffDrawUtil.createLineMarker(getEditor(), startLine, endLine, type, false));
-          }
-        }
-
-        myInitialScrollHelper.onRediff();
+        myHighlighters.addAll(DiffDrawUtil.createHighlighter(getEditor(), 0, getLineCount(document), type, false));
       }
+
+      myInitialScrollHelper.onRediff();
     };
   }
 
@@ -173,9 +159,8 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   protected boolean doScrollToContext(@NotNull DiffNavigationContext context) {
     if (getSide().isLeft()) return false;
 
-    AllLinesIterator allLinesIterator = new AllLinesIterator();
-    NavigationContextChecker checker2 = new NavigationContextChecker(allLinesIterator, context);
-    int line = checker2.contextMatchCheck();
+    AllLinesIterator allLinesIterator = new AllLinesIterator(getEditor().getDocument());
+    int line = context.contextMatchCheck(allLinesIterator);
     if (line == -1) return false;
 
     scrollToLine(line);
@@ -224,42 +209,6 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
     @Override
     protected void onSettingsChanged() {
       rediff();
-    }
-  }
-
-  //
-  // Scroll from annotate
-  //
-
-  private class AllLinesIterator implements Iterator<Pair<Integer, CharSequence>> {
-    @NotNull private final Document myDocument;
-    private int myLine = 0;
-
-    private AllLinesIterator() {
-      myDocument = getEditor().getDocument();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return myLine < getLineCount(myDocument);
-    }
-
-    @Override
-    public Pair<Integer, CharSequence> next() {
-      int offset1 = myDocument.getLineStartOffset(myLine);
-      int offset2 = myDocument.getLineEndOffset(myLine);
-
-      CharSequence text = myDocument.getImmutableCharSequence().subSequence(offset1, offset2);
-
-      Pair<Integer, CharSequence> pair = new Pair<Integer, CharSequence>(myLine, text);
-      myLine++;
-
-      return pair;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
     }
   }
 

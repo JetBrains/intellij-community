@@ -122,12 +122,7 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
     return perform(new RetriableCancelable<Collection<MavenServerExecutionResult>>() {
       @Override
       public Collection<MavenServerExecutionResult> execute() throws RemoteException, MavenServerProcessCanceledException {
-        final List<File> ioFiles = ContainerUtil.map(files, new Function<VirtualFile, File>() {
-          @Override
-          public File fun(VirtualFile file) {
-            return new File(file.getPath());
-          }
-        });
+        final List<File> ioFiles = ContainerUtil.map(files, file -> new File(file.getPath()));
         return getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles);
       }
     });
@@ -141,7 +136,7 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
       @Override
       public String execute() throws RemoteException, MavenServerProcessCanceledException {
         return getOrCreateWrappee()
-          .evaluateEffectivePom(new File(file.getPath()), new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles));
+          .evaluateEffectivePom(new File(file.getPath()), new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles));
       }
     });
   }
@@ -207,6 +202,15 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
     catch (MavenServerProcessCanceledException e) {
       throw new MavenProcessCanceledException();
     }
+  }
+
+  public MavenModel readModel(final File file) throws MavenProcessCanceledException {
+    return perform(new RetriableCancelable<MavenModel>() {
+      @Override
+      public MavenModel execute() throws RemoteException, MavenServerProcessCanceledException {
+        return getOrCreateWrappee().readModel(file);
+      }
+    });
   }
 
   @NotNull

@@ -60,10 +60,10 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   private void cleanup() {
-    for (final VirtualFile file : new ArrayList<VirtualFile>(myMappings.keySet())) {
-      if (file != null //PROJECT, top-level
-          && !file.isValid()) {
-        myMappings.remove(file);
+    for (Iterator<VirtualFile> i = myMappings.keySet().iterator(); i.hasNext();) {
+      VirtualFile file = i.next();
+      if (file != null /* PROJECT, top-level */ && !file.isValid()) {
+        i.remove();
       }
     }
   }
@@ -195,13 +195,10 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     synchronized (myMappings) {
       cleanup();
       final Element element = new Element("x");
-      final List<VirtualFile> files = new ArrayList<VirtualFile>(myMappings.keySet());
-      Collections.sort(files, new Comparator<VirtualFile>() {
-        @Override
-        public int compare(final VirtualFile o1, final VirtualFile o2) {
-          if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
-          return o1.getPath().compareTo(o2.getPath());
-        }
+      final List<VirtualFile> files = new ArrayList<>(myMappings.keySet());
+      Collections.sort(files, (o1, o2) -> {
+        if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
+        return o1.getPath().compareTo(o2.getPath());
       });
       for (VirtualFile file : files) {
         final T dialect = myMappings.get(file);
@@ -230,7 +227,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Override
   public void loadState(final Element state) {
     synchronized (myMappings) {
-      final THashMap<String, T> dialectMap = new THashMap<String, T>();
+      final THashMap<String, T> dialectMap = new THashMap<>();
       for (T dialect : getAvailableValues()) {
         String key = serialize(dialect);
         if (key != null) {

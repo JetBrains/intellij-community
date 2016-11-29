@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SearchTextField;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -78,7 +79,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
       final JLabel label = new JLabel(text);
       //label.setFont(label.getFont().deriveFont(Font.ITALIC));
       label.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
-      label.setBorder(BorderFactory.createEmptyBorder(0,3,0,0));
+      label.setBorder(JBUI.Borders.emptyLeft(3));
       myComponent.add(label);
     }
     myComponent.add(myField);

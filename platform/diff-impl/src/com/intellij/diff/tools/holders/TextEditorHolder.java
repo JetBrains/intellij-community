@@ -19,9 +19,14 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.components.panels.Wrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +35,26 @@ import java.awt.event.FocusListener;
 
 public class TextEditorHolder extends EditorHolder {
   @NotNull protected final EditorEx myEditor;
+  @NotNull protected final Wrapper myPanel;
 
-  public TextEditorHolder(@NotNull EditorEx editor) {
+  public TextEditorHolder(@Nullable Project project, @NotNull EditorEx editor) {
     myEditor = editor;
+    myPanel = new Wrapper(myEditor.getComponent());
+
+    DataManager.registerDataProvider(myPanel, (dataId) -> {
+      if (project != null && !project.isDisposed() && Registry.is("diff.pass.rich.editor.context")) {
+        final Object o = FileEditorManager.getInstance(project).getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
+        if (o != null) return o;
+      }
+
+      if (CommonDataKeys.EDITOR.is(dataId)) {
+        return editor;
+      }
+      else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return editor.getVirtualFile();
+      }
+      return null;
+    });
   }
 
   @NotNull
@@ -48,7 +70,7 @@ public class TextEditorHolder extends EditorHolder {
   @NotNull
   @Override
   public JComponent getComponent() {
-    return myEditor.getComponent();
+    return myPanel;
   }
 
   @Override
@@ -66,19 +88,20 @@ public class TextEditorHolder extends EditorHolder {
   // Build
   //
 
+  @NotNull
+  public static TextEditorHolder create(@Nullable Project project, @NotNull DocumentContent content) {
+    EditorEx editor = DiffUtil.createEditor(content.getDocument(), project, false, true);
+    DiffUtil.configureEditor(editor, content, project);
+    return new TextEditorHolder(project, editor);
+  }
+
   public static class TextEditorHolderFactory extends EditorHolderFactory<TextEditorHolder> {
     public static TextEditorHolderFactory INSTANCE = new TextEditorHolderFactory();
 
     @Override
     @NotNull
     public TextEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
-      if (!(content instanceof DocumentContent)) throw new IllegalArgumentException(content.toString());
-      Project project = context.getProject();
-      DocumentContent documentContent = (DocumentContent)content;
-
-      EditorEx editor = DiffUtil.createEditor(documentContent.getDocument(), project, false, true);
-      DiffUtil.configureEditor(editor, documentContent, project);
-      return new TextEditorHolder(editor);
+      return TextEditorHolder.create(context.getProject(), (DocumentContent)content);
     }
 
     @Override

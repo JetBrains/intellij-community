@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * @author Bas Leijdekkers
  */
@@ -77,12 +75,8 @@ public class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection 
       if (LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {
         return;
       }
-      final List<HierarchicalMethodSignature> candidates = LambdaUtil.findFunctionCandidates(aClass);
-      if (candidates == null || candidates.size() != 1) {
-        return;
-      }
-      final MethodSignature signature = candidates.get(0);
-      if (signature.getTypeParameters().length > 0) {
+      MethodSignature signature = LambdaUtil.getFunction(aClass);
+      if (signature == null || signature.getTypeParameters().length > 0) {
         return;
       }
       registerClassError(aClass, aClass);

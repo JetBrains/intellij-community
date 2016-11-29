@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,17 +159,15 @@ public class GrUnresolvedAccessChecker {
       GrNewExpression newExpression = (GrNewExpression)refElement.getParent();
       if (resolved instanceof PsiClass) {
         PsiClass clazz = (PsiClass)resolved;
-        if (newExpression.getQualifier() == null) {
-          final PsiClass outerClass = clazz.getContainingClass();
-          if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) &&
-              outerClass != null &&
-              newExpression.getArgumentList() != null &&
-              !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
-              !hasEnclosingInstanceInArgList(newExpression.getArgumentList(), outerClass)) {
-            String qname = clazz.getQualifiedName();
-            LOG.assertTrue(qname != null, clazz.getText());
-            return createAnnotationForRef(refElement, inStaticContext, GroovyBundle.message("cannot.reference.non.static", qname));
-          }
+        final PsiClass outerClass = clazz.getContainingClass();
+        if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) &&
+            outerClass != null &&
+            newExpression.getArgumentList() != null &&
+            !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
+            !hasEnclosingInstanceInArgList(newExpression.getArgumentList(), outerClass)) {
+          String qname = clazz.getQualifiedName();
+          LOG.assertTrue(qname != null, clazz.getText());
+          return createAnnotationForRef(refElement, inStaticContext, GroovyBundle.message("cannot.reference.non.static", qname));
         }
       }
     }
@@ -306,7 +304,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean doCheckContainer(final PsiMethod patternMethod, PsiElement container, final String name) {
-    final Ref<Boolean> result = new Ref<Boolean>(false);
+    final Ref<Boolean> result = new Ref<>(false);
     PsiScopeProcessor processor = new GrScopeProcessorWithHints(name, ClassHint.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -582,7 +580,7 @@ public class GrUnresolvedAccessChecker {
 
     if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return false;
 
-    CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
+    CollectConsumer<PomTarget> consumer = new CollectConsumer<>();
     for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
       searcher.findDeclarationsAt(referenceExpression, 0, consumer);
       if (!consumer.getResult().isEmpty()) return false;

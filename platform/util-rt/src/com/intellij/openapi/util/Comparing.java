@@ -179,13 +179,15 @@ public class Comparing {
   }
 
   public static <T extends Comparable<T>> int compare(@Nullable T o1, @Nullable T o2) {
-    if (o1 == null) return o2 == null ? 0 : -1;
+    if (o1 == o2) return 0;
+    if (o1 == null) return -1;
     if (o2 == null) return 1;
     return o1.compareTo(o2);
   }
 
   public static <T> int compare(@Nullable T o1, @Nullable T o2, @NotNull Comparator<T> notNullComparator) {
-    if (o1 == null) return o2 == null ? 0 : -1;
+    if (o1 == o2) return 0;
+    if (o1 == null) return -1;
     if (o2 == null) return 1;
     return notNullComparator.compare(o1, o2);
   }

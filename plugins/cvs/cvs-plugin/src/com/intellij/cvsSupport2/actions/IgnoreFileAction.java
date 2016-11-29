@@ -96,7 +96,7 @@ public class IgnoreFileAction extends AnAction implements DumbAware {
     final Refreshable refreshablePanel = context.getRefreshableDialog();
     if (refreshablePanel != null) refreshablePanel.saveState();
     final int[] refreshedParents = new int[]{0};
-    final Collection<VirtualFile> createdCvsIgnoreFiles = new ArrayList<VirtualFile>();
+    final Collection<VirtualFile> createdCvsIgnoreFiles = new ArrayList<>();
     for (final VirtualFile parent : parentToSelectedChildren.keySet()) {
       final Runnable runnable = new Runnable() {
         public void run() {

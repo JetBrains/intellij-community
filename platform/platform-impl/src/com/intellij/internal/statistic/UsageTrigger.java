@@ -37,7 +37,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
   final static class State {
     @Tag("counts")
     @MapAnnotation(surroundWithTag = false, keyAttributeName = "feature", valueAttributeName = "count")
-    public Map<String, Integer> myValues = new HashMap<String, Integer>();
+    public Map<String, Integer> myValues = new HashMap<>();
   }
 
   private State myState = new State();
@@ -82,11 +82,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
     public Set<UsageDescriptor> getUsages() {
       State state = getInstance().getState();
       assert state != null;
-      return ContainerUtil.map2Set(state.myValues.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
-        public UsageDescriptor fun(final Map.Entry<String, Integer> e) {
-          return new UsageDescriptor(e.getKey(), e.getValue());
-        }
-      });
+      return ContainerUtil.map2Set(state.myValues.entrySet(), e -> new UsageDescriptor(e.getKey(), e.getValue()));
     }
 
     @NotNull

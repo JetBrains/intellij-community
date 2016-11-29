@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  * @author Max Medvedev
  */
 class ResolveWithDelegatesToTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() { null }
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  void setUp() throws Exception {
+    super.setUp()
 
     myFixture.addClass('''\
 package groovy.lang;
@@ -321,7 +319,7 @@ def test() {
 }
 
 test()
-''', 'LinkedHashMap'
+''', 'java.util.LinkedHashMap'
   }
 
   void testEllipsisArgs() {
@@ -345,8 +343,9 @@ def test() {
 
 test()
 
-''', 'LinkedHashMap'
+''', 'java.util.LinkedHashMap'
   }
+
   void testShouldChooseMethodFromOwnerInJava() {
     myFixture.configureByText("Abc.java", '''\
 import groovy.lang.Closure;
@@ -574,7 +573,7 @@ def test() {
 }
 
 test()
-''', 'LinkedHashMap'
+''', 'java.util.LinkedHashMap'
   }
 
   void testEllipsisArgsInJava() {
@@ -605,7 +604,7 @@ def test() {
 
 test()
 
-''', 'LinkedHashMap'
+''', 'java.util.LinkedHashMap'
   }
 
   void testTarget() {
@@ -615,7 +614,7 @@ def foo(@DelegatesTo.Target def o, @DelegatesTo Closure c) {}
 foo(4) {
   intVal<caret>ue()
 }
-''', 'Integer')
+''', 'java.lang.Integer')
   }
 
   void testTarget2() {
@@ -625,7 +624,7 @@ def foo(@DelegatesTo.Target('t') def o, @DelegatesTo(target = 't') Closure c) {}
 foo(4) {
   intVal<caret>ue()
 }
-''', 'Integer')
+''', 'java.lang.Integer')
   }
 
   void testGenericTypeIndex() {
@@ -635,7 +634,7 @@ public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTy
 foo([1:'ab', 2:'cde']) {
   sub<caret>string(1)
 }
-''', 'String')
+''', 'java.lang.String')
   }
 
   void testGenericTypeIndex1() {
@@ -643,9 +642,9 @@ foo([1:'ab', 2:'cde']) {
 public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 0) Closure c) {}
 
 foo([1:'ab', 2:'cde']) {
-  sub<caret>string(1)
+  int<caret>Value(1)
 }
-''', 'String')
+''', 'java.lang.Integer')
   }
 
   void testDelegateAndDelegatesTo() {
@@ -673,7 +672,7 @@ def staticOnWrapper() {
     }
     assert wrapper.list == [1]
 }
-''', 'List')
+''', 'java.util.List')
   }
 
   void testClassTest() {
@@ -734,7 +733,97 @@ doX {
 
     final ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     final resolved = assertInstanceOf(ref.resolve(), PsiMethod)
-    final containingClass = resolved.containingClass.name
+    final containingClass = resolved.containingClass.qualifiedName
     assertEquals(resolvedClass, containingClass)
+  }
+
+  void 'test delegate within implicit call()'() {
+    assertScript '''\
+class A {
+    def call(@DelegatesTo(Boo) Closure c) {}
+}
+
+class Boo {
+    def foo() {}
+}
+
+def a = new A()
+a {
+    f<caret>oo()
+}
+''', 'Boo'
+  }
+
+  void 'test delegate within index property'() {
+    assertScript '''\
+class A {
+    def getAt(@DelegatesTo(Boo) Closure c) {}
+}
+
+class Boo {
+    def foo() {}
+}
+
+def a = new A()
+a[{
+    fo<caret>o()
+}]
+''', 'Boo'
+  }
+
+  void 'test delegate within constructor argument'() {
+    assertScript '''\
+class A {
+    A(@DelegatesTo(Boo) Closure c) {}
+}
+
+class Boo {
+    def foo() {}
+}
+
+new A({
+    fo<caret>o()
+})
+''', 'Boo'
+  }
+
+  void 'test @DelegatesTo type'() {
+    assertScript '''\
+def foo(@DelegatesTo(type = 'String') Closure datesProcessor) {}
+
+foo {
+  toUppe<caret>rCase()
+}
+''', 'java.lang.String'
+  }
+
+  void 'test @DelegatesTo type with generics'() {
+    assertScript '''\
+def foo(@DelegatesTo(type = 'List<Date>') Closure datesProcessor) {}
+foo {
+  get(0).aft<caret>er(null)
+}
+''', 'java.util.Date'
+  }
+
+  void 'test @DelegateTo in trait method'() {
+    assertScript '''\
+trait T {
+  def foo(@DelegatesTo(String) Closure c) {}
+}
+class A implements T {}
+new A().foo {
+  toUpp<caret>erCase()
+}
+''', 'java.lang.String'
+    assertScript '''\
+trait T {
+  def foo(@DelegatesTo(type = 'List<String>') Closure c) {}
+}
+class A implements T {}
+new A().foo {
+  get(0).toUpp<caret>erCase()
+}
+''', 'java.lang.String'
   }
 }

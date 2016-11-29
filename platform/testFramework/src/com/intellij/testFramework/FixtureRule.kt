@@ -20,7 +20,6 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -30,14 +29,13 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.util.SmartList
-import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.systemIndependentPath
+import com.intellij.project.stateStore
+import com.intellij.util.containers.forEachGuaranteed
+import com.intellij.util.io.systemIndependentPath
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -132,7 +130,6 @@ class ProjectRule() : ApplicationRule() {
 
   val module: Module
     get() {
-      var project = project
       var result = sharedModule
       if (result == null) {
         runInEdtAndWait {
@@ -140,9 +137,6 @@ class ProjectRule() : ApplicationRule() {
             override fun moduleCreated(module: Module) {
               result = module
               sharedModule = module
-            }
-
-            override fun sourceRootCreated(sourceRoot: VirtualFile) {
             }
           })
         }
@@ -187,6 +181,10 @@ class EdtRule : TestRule {
   }
 }
 
+class InitInspectionRule : TestRule {
+  override fun apply(base: Statement, description: Description) = statement { runInInitMode { base.evaluate() } }
+}
+
 private inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
   override fun evaluate() {
     runnable()
@@ -216,7 +214,7 @@ class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
  * So must be a strong reason to explicitly use this method.
  */
 inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
-  val store = stateStore as IProjectStore
+  val store = stateStore
   val isModeDisabled = store.isOptimiseTestLoadSpeed
   if (isModeDisabled) {
     store.isOptimiseTestLoadSpeed = false
@@ -228,6 +226,19 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
     if (isModeDisabled) {
       store.isOptimiseTestLoadSpeed = true
     }
+  }
+}
+
+fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false) = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
+
+fun Project.use(task: (Project) -> Unit) {
+  val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
+  try {
+    runInEdtAndWait { projectManager.openTestProject(this) }
+    task(this)
+  }
+  finally {
+    runInEdtAndWait { projectManager.closeProject(this, false, true, false) }
   }
 }
 
@@ -255,22 +266,6 @@ class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResourc
       }
     }
   }
-}
-
-inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit): Unit {
-  var errors: MutableList<Throwable>? = null
-  for (element in this) {
-    try {
-      operation(element)
-    }
-    catch (e: Throwable) {
-      if (errors == null) {
-        errors = SmartList()
-      }
-      errors.add(e)
-    }
-  }
-  CompoundRuntimeException.throwIfNotEmpty(errors)
 }
 
 /**

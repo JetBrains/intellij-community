@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.border;
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public class CustomLineBorder implements Border {
   }
 
   public CustomLineBorder(@Nullable Color color, int top, int left, int bottom, int right) {
-    this(color, new Insets(top, left, bottom, right));
+    this(color, JBUI.insets(top, left, bottom, right));
   }
 
   public CustomLineBorder(@NotNull Insets insets) {
@@ -43,7 +44,7 @@ public class CustomLineBorder implements Border {
   }
 
   public CustomLineBorder(int top, int left, int bottom, int right) {
-    this(new Insets(top, left, bottom, right));
+    this(JBUI.insets(top, left, bottom, right));
   }
 
   @Override
@@ -51,10 +52,10 @@ public class CustomLineBorder implements Border {
     final Color oldColor = g.getColor();
     g.setColor(getColor());
 
-    if (myInsets.left > 0) g.fillRect(x, y, x + myInsets.left, y + h);
-    if (myInsets.bottom > 0) g.fillRect(x, y + h - myInsets.bottom, x + w, y + h);
-    if (myInsets.right> 0) g.fillRect(x + w - myInsets.right, y, x + w, y + h);
-    if (myInsets.top > 0) g.fillRect(x, y, x + w, y + myInsets.top);
+    if (myInsets.left > 0) g.fillRect(x, y, myInsets.left, h);
+    if (myInsets.bottom > 0) g.fillRect(x, y + h - myInsets.bottom, w, myInsets.bottom);
+    if (myInsets.right> 0) g.fillRect(x + w - myInsets.right, y, myInsets.right, h);
+    if (myInsets.top > 0) g.fillRect(x, y, w, myInsets.top);
 
     g.setColor(oldColor);
   }

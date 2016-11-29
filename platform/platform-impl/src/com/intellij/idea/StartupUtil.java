@@ -15,10 +15,12 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startupWizard.StartupWizard;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
@@ -37,10 +39,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
-import com.sun.jna.Native;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 
@@ -75,11 +77,6 @@ public class StartupUtil {
     }
   }
 
-  public static int getAcquiredPort() {
-    BuiltInServer server = getServer();
-    return server == null ? -1 : server.getPort();
-  }
-
   @Nullable
   public synchronized static BuiltInServer getServer() {
     return ourSocketLock == null ? null : ourSocketLock.getServer();
@@ -87,6 +84,8 @@ public class StartupUtil {
 
   interface AppStarter {
     void start(boolean newConfigFolder);
+
+    default void beforeImportConfigs() {}
   }
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
@@ -119,11 +118,17 @@ public class StartupUtil {
     if (!checkSystemFolders()) {
       System.exit(Main.DIR_CHECK_FAILED);
     }
-    if (!lockSystemFolders(args)) {
+
+    ActivationResult result = lockSystemFolders(args);
+    if (result == ActivationResult.ACTIVATED) {
+      System.exit(0);
+    }
+    else if (result != ActivationResult.STARTED) {
       System.exit(Main.INSTANCE_CHECK_FAILED);
     }
 
     if (newConfigFolder) {
+      appStarter.beforeImportConfigs();
       ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
     }
 
@@ -136,6 +141,7 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
+      AppUIUtil.showPrivacyPolicy();
     }
 
     appStarter.start(newConfigFolder);
@@ -273,7 +279,9 @@ public class StartupUtil {
     }
   }
 
-  private synchronized static boolean lockSystemFolders(String[] args) {
+  private enum ActivationResult { STARTED, ACTIVATED, FAILED }
+
+  private synchronized static @NotNull ActivationResult lockSystemFolders(String[] args) {
     if (ourSocketLock != null) {
       throw new AssertionError();
     }
@@ -286,33 +294,30 @@ public class StartupUtil {
     }
     catch (Exception e) {
       Main.showMessage("Cannot Lock System Folders", e);
-      return false;
+      return ActivationResult.FAILED;
     }
 
     if (status == SocketLock.ActivateStatus.NO_INSTANCE) {
-      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-        @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-        @Override
-        public void run() {
-          synchronized (StartupUtil.class) {
-            ourSocketLock.dispose();
-            ourSocketLock = null;
-          }
+      ShutDownTracker.getInstance().registerShutdownTask(() -> {
+        //noinspection SynchronizeOnThis
+        synchronized (StartupUtil.class) {
+          ourSocketLock.dispose();
+          ourSocketLock = null;
         }
       });
-      return true;
+      return ActivationResult.STARTED;
+    }
+    else if (status == SocketLock.ActivateStatus.ACTIVATED) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("Already running");
+      return ActivationResult.ACTIVATED;
     }
     else if (Main.isHeadless() || status == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
       String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
       Main.showMessage("Too Many Instances", message, true);
     }
 
-    if (status == SocketLock.ActivateStatus.ACTIVATED) {
-      System.out.println("Already running");
-      System.exit(0);
-    }
-
-    return false;
+    return ActivationResult.FAILED;
   }
 
   private static void fixProcessEnvironment(Logger log) {
@@ -339,8 +344,7 @@ public class StartupUtil {
       System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
     try {
-      long t = System.currentTimeMillis();
-      log.info("JNA library loaded (" + (Native.POINTER_SIZE * 8) + "-bit) in " + (System.currentTimeMillis() - t) + " ms");
+      JnaLoader.load(log);
     }
     catch (Throwable t) {
       logError(log, "Unable to load JNA library", t);
@@ -383,7 +387,7 @@ public class StartupUtil {
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:ss", Locale.US).format(appInfo.getBuildDate().getTime());
-    log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asStringWithAllDetails() + ", " + buildDate + ")");
+    log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
     log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")");
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");
@@ -422,8 +426,18 @@ public class StartupUtil {
         return;
       }
 
+      CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+      if (configProvider != null) {
+        configProvider.beforeStartupWizard();
+      }
+
       new CustomizeIDEWizardDialog(provider).show();
+
       PluginManagerCore.invalidatePlugins();
+      if (configProvider != null) {
+        configProvider.startupWizardFinished();
+      }
+
       return;
     }
 

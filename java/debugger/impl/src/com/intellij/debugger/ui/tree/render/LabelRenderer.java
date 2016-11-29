@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +39,7 @@ import javax.swing.*;
  * Date: Sep 20, 2003
  * Time: 10:27:12 PM
  */
-public class LabelRenderer extends ReferenceRenderer implements ValueLabelRenderer{
+public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer{
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.ClassLabelRenderer");
 
@@ -69,7 +68,6 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
     throws EvaluateException {
 
     final Value value = descriptor.getValue();
-    LOG.assertTrue(!(value instanceof PrimitiveValue));
 
     String result;
     final DebugProcess debugProcess = evaluationContext.getDebugProcess();

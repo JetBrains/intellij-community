@@ -34,7 +34,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private static final String FILE_ELEMENT = "file";
   private static final String PATH_ATTR = "url";
 
-  private final Set<VirtualFile> myFiles = new THashSet<VirtualFile>();
+  private final Set<VirtualFile> myFiles = new THashSet<>();
   
   protected boolean addFile(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
@@ -59,14 +59,9 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
 
   @NotNull
   private Collection<VirtualFile> getSortedFiles() {
-    List<VirtualFile> sortedFiles = new ArrayList<VirtualFile>();
+    List<VirtualFile> sortedFiles = new ArrayList<>();
     sortedFiles.addAll(myFiles);
-    Collections.sort(sortedFiles, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(final VirtualFile file1, final VirtualFile file2) {
-        return file1.getPath().toLowerCase().compareTo(file2.getPath().toLowerCase());
-      }
-    });
+    Collections.sort(sortedFiles, (file1, file2) -> file1.getPath().toLowerCase().compareTo(file2.getPath().toLowerCase()));
     return sortedFiles;
   }
   

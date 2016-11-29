@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class StubIndexState {
-  public List<String> registeredIndices = new ArrayList<String>();
+  public List<String> registeredIndices = new ArrayList<>();
 
   public StubIndexState() {
   }

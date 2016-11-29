@@ -34,9 +34,9 @@ public class SvnMapping {
   private List<VirtualFile> myPreCalculatedUnderVcsRoots;
 
   public SvnMapping() {
-    myFile2UrlMap = new TreeMap<String, RootUrlInfo>(FilePathsComparator.getInstance());
-    myUrl2FileMap = new HashMap<String, RootUrlInfo>();
-    myLonelyRoots = new ArrayList<VirtualFile>();
+    myFile2UrlMap = new TreeMap<>(FilePathsComparator.getInstance());
+    myUrl2FileMap = new HashMap<>();
+    myLonelyRoots = new ArrayList<>();
 
     myPreCalculatedUnderVcsRoots = null;
 
@@ -79,7 +79,7 @@ public class SvnMapping {
 
   public List<VirtualFile> getUnderVcsRoots() {
     if (myPreCalculatedUnderVcsRoots == null) {
-      myPreCalculatedUnderVcsRoots = new ArrayList<VirtualFile>();
+      myPreCalculatedUnderVcsRoots = new ArrayList<>();
       for (RootUrlInfo info : myFile2UrlMap.values()) {
         myPreCalculatedUnderVcsRoots.add(info.getVirtualFile());
       }
@@ -88,7 +88,7 @@ public class SvnMapping {
   }
 
   public List<RootUrlInfo> getAllCopies() {
-    return new ArrayList<RootUrlInfo>(myFile2UrlMap.values());
+    return new ArrayList<>(myFile2UrlMap.values());
   }
 
   @Nullable

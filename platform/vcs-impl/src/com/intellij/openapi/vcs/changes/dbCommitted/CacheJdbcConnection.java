@@ -47,14 +47,14 @@ public class CacheJdbcConnection {
     myDbFile = dbFile;
     myInitDbScript = initDbScript;
     myLock = new Object();
-    myPreparedStatementsMap = new HashMap<String, PreparedStatement>();
+    myPreparedStatementsMap = new HashMap<>();
   }
 
   public void closeConnection() {
     final HashMap<String, PreparedStatement> copyMap;
     final Connection connection;
     synchronized (myLock) {
-      copyMap = new HashMap<String, PreparedStatement>(myPreparedStatementsMap);
+      copyMap = new HashMap<>(myPreparedStatementsMap);
       connection = myConnection;
       myConnection = null;
       myPreparedStatementsMap.clear();

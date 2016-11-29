@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import java.io.DataInputStream;
@@ -19,11 +34,15 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    Runner.logger.info("building PatchFile");
+    Runner.logger().info("building PatchFile");
     patchOutput.putNextEntry(new ZipEntry(myPath));
     if (!newerFile.isDirectory()) {
-      writeExecutableFlag(patchOutput, newerFile);
-      Utils.copyFileToStream(newerFile, patchOutput);
+      if (Utils.isLink(newerFile)) {
+        writeLinkInfo(newerFile, patchOutput);
+      } else {
+        writeExecutableFlag(patchOutput, newerFile);
+        Utils.copyFileToStream(newerFile, patchOutput);
+      }
     }
 
     patchOutput.closeEntry();
@@ -64,9 +83,14 @@ public class CreateAction extends PatchAction {
     } else {
       InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry);
       try {
-        boolean executable = readExecutableFlag(in);
-        Utils.copyStreamToFile(in, toFile);
-        Utils.setExecutable(toFile, executable);
+        int filePermissions = in.read();
+        if (filePermissions > 1 ) {
+          Utils.createLink(readLinkInfo(in, filePermissions), toFile);
+        }
+        else {
+          Utils.copyStreamToFile(in, toFile);
+          Utils.setExecutable(toFile, filePermissions == 1 );
+        }
       }
       finally {
         in.close();

@@ -54,7 +54,7 @@ public class GroovyReturnFromFinallyBlockInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitReturnStatement(GrReturnStatement returnStatement) {
+    public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
 
       super.visitReturnStatement(returnStatement);
       if (!ControlFlowUtils.isInFinallyBlock(returnStatement)) {

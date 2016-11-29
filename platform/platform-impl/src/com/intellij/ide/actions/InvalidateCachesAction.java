@@ -56,7 +56,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
       options[3] = "&Just Restart";
     }
 
-    List<String> descriptions = new SmartList<String>();
+    List<String> descriptions = new SmartList<>();
     descriptions.add("Local History");
     for (CachesInvalidator invalidater : CachesInvalidator.EP_NAME.getExtensions()) {
       ContainerUtil.addIfNotNull(descriptions, invalidater.getDescription());
@@ -69,12 +69,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     }
     else {
       warnings += "The following items will also be cleared:\n"
-                  + StringUtil.join(descriptions, new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return "  " + s;
-        }
-      }, "\n");
+                  + StringUtil.join(descriptions, s -> "  " + s, "\n");
     }
     
     String message = "The caches will be invalidated and rebuilt on the next startup.\n\n" +

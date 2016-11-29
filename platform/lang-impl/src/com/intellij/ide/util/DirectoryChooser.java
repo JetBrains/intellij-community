@@ -63,7 +63,7 @@ public class DirectoryChooser extends DialogWrapper {
   private final DirectoryChooserView myView;
   private boolean myFilterExisting;
   private PsiDirectory myDefaultSelection;
-  private final List<ItemWrapper> myItems = new ArrayList<ItemWrapper>();
+  private final List<ItemWrapper> myItems = new ArrayList<>();
   private PsiElement mySelection;
   private final TabbedPaneWrapper myTabbedPaneWrapper;
   private final ChooseByNamePanel myChooseByNamePanel;
@@ -134,12 +134,7 @@ public class DirectoryChooser extends DialogWrapper {
     toolbarComponent.setBorder(null);
     panel.add(toolbarComponent, BorderLayout.NORTH);
 
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        enableButtons();
-      }
-    };
+    final Runnable runnable = () -> enableButtons();
     myView.onSelectionChange(runnable);
     final JComponent component = myView.getComponent();
     final JScrollPane jScrollPane = ScrollPaneFactory.createScrollPane(component);
@@ -194,7 +189,7 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
   private void buildFragments() {
-    ArrayList<String[]> pathes = new ArrayList<String[]>();
+    ArrayList<String[]> pathes = new ArrayList<>();
     for (int i = 0; i < myView.getItemsSize(); i++) {
       ItemWrapper item = myView.getItemByIndex(i);
       pathes.add(ArrayUtil.toStringArray(FileUtil.splitPath(item.getPresentableUrl())));
@@ -248,7 +243,7 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
   private static PathFragment[] createFragments(String head, String special, String tail) {
-    ArrayList<PathFragment> list = new ArrayList<PathFragment>(3);
+    ArrayList<PathFragment> list = new ArrayList<>(3);
     if (head != null) {
       if (special != null || tail != null) list.add(new PathFragment(head + File.separatorChar, true));
       else return new PathFragment[]{new PathFragment(head, true)};

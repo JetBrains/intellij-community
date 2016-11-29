@@ -41,11 +41,11 @@ import java.util.*;
  * @author yole
  */
 public class NativeIconProvider extends IconProvider implements DumbAware {
-  private final Map<Ext, Icon> myIconCache = new HashMap<Ext, Icon>();
+  private final Map<Ext, Icon> myIconCache = new HashMap<>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
   private final Set<Ext> myCustomIconExtensions =
-    SystemInfo.isWindows ? new HashSet<Ext>(Arrays.asList(new Ext("exe"), new Ext("ico"))) : new HashSet<Ext>();
-  private final Map<String, Icon> myCustomIconCache = new HashMap<String, Icon>();
+    SystemInfo.isWindows ? new HashSet<>(Arrays.asList(new Ext("exe"), new Ext("ico"))) : new HashSet<>();
+  private final Map<String, Icon> myCustomIconCache = new HashMap<>();
 
   private static final Ext NO_EXT = new Ext(null);
 
@@ -80,33 +80,30 @@ public class NativeIconProvider extends IconProvider implements DumbAware {
     if (icon != null) {
       return icon;
     }
-    return new DeferredIconImpl<VirtualFile>(ElementBase.ICON_PLACEHOLDER.getValue(), file, false, new Function<VirtualFile, Icon>() {
-      @Override
-      public Icon fun(VirtualFile virtualFile) {
-        final File f = new File(filePath);
-        if (!f.exists()) {
-          return null;
-        }
-        Icon icon;
-        try { // VM will ensure lock to init -static final field--, note we should have no read access here, to avoid deadlock with EDT needed to init component
-          assert SwingComponentHolder.ourFileChooser != null || !ApplicationManager.getApplication().isReadAccessAllowed();
-          icon = getNativeIcon(f);
-        }
-        catch (Exception e) {      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174
-          return null;
-        }
-        if (ext != null) {
-          synchronized (myIconCache) {
-            if (!myCustomIconExtensions.contains(ext)) {
-              myIconCache.put(ext, icon);
-            }
-            else if (filePath != null) {
-              myCustomIconCache.put(filePath, icon);
-            }
+    return new DeferredIconImpl<>(ElementBase.ICON_PLACEHOLDER.getValue(), file, false, virtualFile -> {
+      final File f = new File(filePath);
+      if (!f.exists()) {
+        return null;
+      }
+      Icon icon1;
+      try { // VM will ensure lock to init -static final field--, note we should have no read access here, to avoid deadlock with EDT needed to init component
+        assert SwingComponentHolder.ourFileChooser != null || !ApplicationManager.getApplication().isReadAccessAllowed();
+        icon1 = getNativeIcon(f);
+      }
+      catch (Exception e) {      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174
+        return null;
+      }
+      if (ext != null) {
+        synchronized (myIconCache) {
+          if (!myCustomIconExtensions.contains(ext)) {
+            myIconCache.put(ext, icon1);
+          }
+          else if (filePath != null) {
+            myCustomIconCache.put(filePath, icon1);
           }
         }
-        return icon;
       }
+      return icon1;
     });
   }
 

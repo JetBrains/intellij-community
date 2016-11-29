@@ -15,9 +15,16 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class UnnecessaryFinalOnLocalVariableOrParameterInspectionTest extends IGInspectionTestCase {
+  @Override
+  protected Sdk getTestProjectSdk() {
+    // effectively final rules are different in jdk 8
+    return IdeaTestUtil.getMockJdk17();
+  }
 
   public void test() throws Exception {
     doTest("com/siyeh/igtest/style/unnecessary_final_on_local_variable_or_parameter",

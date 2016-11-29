@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class VcsRootChecker {
 
   @NonNls public static final ExtensionPointName<VcsRootChecker> EXTENSION_POINT_NAME =
-    new ExtensionPointName<VcsRootChecker>("com.intellij.vcsRootChecker");
+    new ExtensionPointName<>("com.intellij.vcsRootChecker");
 
   /**
    * @param path path to check if it is vcs root directory

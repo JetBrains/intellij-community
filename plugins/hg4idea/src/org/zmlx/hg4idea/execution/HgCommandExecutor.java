@@ -98,7 +98,7 @@ public class HgCommandExecutor {
 
   public void execute(@Nullable final VirtualFile repo, @NotNull final String operation, @Nullable final List<String> arguments,
                       @Nullable final HgCommandResultHandler handler) {
-    HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
+    HgUtil.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
@@ -106,7 +106,7 @@ public class HgCommandExecutor {
           handler.process(result);
         }
       }
-    });
+    }, myProject);
   }
 
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
@@ -158,7 +158,7 @@ public class HgCommandExecutor {
 
     logCommand(operation, arguments);
 
-    final List<String> cmdLine = new LinkedList<String>();
+    final List<String> cmdLine = new LinkedList<>();
     cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
     if (repo != null) {
       cmdLine.add("--repository");

@@ -21,7 +21,7 @@ public class CmdChangeListClient extends BaseSvnClient implements ChangeListClie
 
   @Override
   public void add(@NotNull String changeList, @NotNull File path, @Nullable String[] changeListsToOperate) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     parameters.add(changeList);
     CommandUtil.put(parameters, path);
@@ -37,7 +37,7 @@ public class CmdChangeListClient extends BaseSvnClient implements ChangeListClie
 
   @Override
   public void remove(@NotNull File path) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     parameters.add("--remove");
     CommandUtil.put(parameters, path);

@@ -36,7 +36,7 @@ public abstract class FileIndexCompileScope extends ExportableUserDataHolderBase
 
   @NotNull
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     final FileIndex[] fileIndices = getFileIndices();
     for (final FileIndex fileIndex : fileIndices) {
       fileIndex.iterateContent(new CompilerContentIterator(fileType, fileIndex, inSourceOnly, files));

@@ -16,7 +16,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
@@ -45,8 +48,8 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
            "<foo><<caret>\n" +
            "<foo><<caret>\n" +
            "</bar>", '/', "<bar>\n" +
-                          "<foo></foo><caret>\n" +
-                          "<foo></foo><caret>\n" +
+                          "    <foo></foo><caret>\n" +
+                          "    <foo></foo><caret>\n" +
                           "</bar>");
   }
 
@@ -65,8 +68,8 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
            "<foo><<caret>\n" +
            "<fiz><<caret>\n" +
            "</bar>", '/', "<bar>\n" +
-                          "<foo></foo><caret>\n" +
-                          "<fiz></fiz><caret>\n" +
+                          "    <foo></foo><caret>\n" +
+                          "    <fiz></fiz><caret>\n" +
                           "</bar>");
   }
 
@@ -92,6 +95,32 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
     finally {
       WebEditorOptions.getInstance().setInsertQuotesForAttributeValue(true);
+    }
+  }
+
+  public void testSingleQuotes() {
+    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
+    try {
+      settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
+      myFixture.configureByText(HtmlFileType.INSTANCE, "<foo bar<caret>");
+      myFixture.type('=');
+      myFixture.checkResult("<foo bar='<caret>'");
+    } finally {
+      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
+    }
+  }
+
+  public void testNoneQuotes() {
+    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
+    try {
+      settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;
+      myFixture.configureByText(HtmlFileType.INSTANCE, "<foo bar<caret>>text");
+      myFixture.type('=');
+      myFixture.checkResult("<foo bar=<caret>>text");
+    } finally {
+      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
     }
   }
 
@@ -136,6 +165,24 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     doTest("<<caret>", '?', "<?<caret> ?>");
     doTest("<caret>", '?', "?");
     doTest("<<caret> ?>", '?', "<?<caret> ?>");
+  }
+
+  public void testAutoindentEndTag() throws Exception {
+    doTest(
+      "<div>\n" +
+      "    <p>\n" +
+      "        Some text\n" +
+      "    </p>\n" +
+      "    <<caret>",
+
+      '/',
+
+      "<div>\n" +
+      "    <p>\n" +
+      "        Some text\n" +
+      "    </p>\n" +
+      "</div><caret>"
+    );
   }
 
   private void doTest(String text, char c, String result) {

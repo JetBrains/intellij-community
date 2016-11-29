@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.application;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseActionRunnable<T> {
-
   private boolean mySilentExecution;
 
   public boolean isSilentExecution() {
@@ -30,23 +29,19 @@ public abstract class BaseActionRunnable<T> {
   @NotNull
   public abstract RunResult<T> execute();
 
-  protected boolean canWriteNow() {
-    return getApplication().isWriteAccessAllowed();
-  }
-
-  protected boolean canReadNow() {
-    return getApplication().isReadAccessAllowed();
-  }
-
-  protected Application getApplication() {
-    return ApplicationManager.getApplication();
-  }
-
-  /** Same as execute() but do not log error if exception occurred. */
+  /**
+   * Same as {@link #execute()}, but does not log an error if an exception occurs.
+   */
   @NotNull
   public final RunResult<T> executeSilently() {
     mySilentExecution = true;
     return execute();
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link ApplicationManager#getApplication()} (to be removed in IDEA 2018) */
+  protected Application getApplication() {
+    return ApplicationManager.getApplication();
+  }
+  //</editor-fold>
 }

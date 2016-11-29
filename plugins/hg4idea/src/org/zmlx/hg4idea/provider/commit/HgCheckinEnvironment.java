@@ -12,7 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.commit;
 
-import com.intellij.dvcs.DvcsCommitAdditionalComponent;
+import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -28,11 +27,13 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,7 @@ import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.HgCurrentBinaryContentRevision;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -54,6 +56,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
 
@@ -99,7 +104,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
                                    String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
-    List<VcsException> exceptions = new LinkedList<VcsException>();
+    List<VcsException> exceptions = new LinkedList<>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
     addRepositoriesWithoutChanges(repositoriesMap);
     for (Map.Entry<HgRepository, Set<HgFile>> entry : repositoriesMap.entrySet()) {
@@ -144,7 +149,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         command.setFiles(selectedFiles);
       }
       try {
-        command.execute();
+        command.executeInCurrentThread();
       }
       catch (HgCommandException e) {
         exceptions.add(new VcsException(e));
@@ -157,11 +162,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
       final List<HgRepository> preselectedRepositories = ContainerUtil.newArrayList(repositoriesMap.keySet());
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show();
-        }
-      });
+      GuiUtils.invokeLaterIfNeeded(() ->
+                                     new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show(),
+                                   ModalityState.defaultModalityState());
     }
 
     return exceptions;
@@ -176,9 +179,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     HgStatusCommand statusCommand =
       new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.get(0)).build(myProject);
-    Set<HgChange> allChangedFilesInRepo = statusCommand.execute(repo);
+    Set<HgChange> allChangedFilesInRepo = statusCommand.executeInCurrentThread(repo);
 
-    Set<HgFile> filesNotIncluded = new HashSet<HgFile>();
+    Set<HgFile> filesNotIncluded = new HashSet<>();
 
     for (HgChange change : allChangedFilesInRepo) {
       HgFile beforeFile = change.beforeFile();
@@ -205,7 +208,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         );
       }
     };
-    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(runnable);
     return choice[0] == Messages.OK;
   }
 
@@ -214,7 +217,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
-    final List<HgFile> filesWithRoots = new ArrayList<HgFile>();
+    final List<HgFile> filesWithRoots = new ArrayList<>();
     for (FilePath filePath : files) {
       VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
       if (vcsRoot == null) {
@@ -222,11 +225,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       }
       filesWithRoots.add(new HgFile(vcsRoot, filePath));
     }
-    new Task.Backgroundable(myProject, "Removing files...") {
+    new Task.Backgroundable(myProject, "Removing Files...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        HgRemoveCommand command = new HgRemoveCommand(myProject);
-        command.execute(filesWithRoots);
+        new HgRemoveCommand(myProject).executeInCurrentThread(filesWithRoots);
       }
     }.queue();
     return null;
@@ -248,7 +250,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private Map<HgRepository, Set<HgFile>> getFilesByRepository(List<Change> changes) {
-    Map<HgRepository, Set<HgFile>> result = new HashMap<HgRepository, Set<HgFile>>();
+    Map<HgRepository, Set<HgFile>> result = new HashMap<>();
     for (Change change : changes) {
       ContentRevision afterRevision = change.getAfterRevision();
       ContentRevision beforeRevision = change.getBeforeRevision();
@@ -275,7 +277,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     Set<HgFile> hgFiles = result.get(repo);
     if (hgFiles == null) {
-      hgFiles = new HashSet<HgFile>();
+      hgFiles = new HashSet<>();
       result.put(repo, hgFiles);
     }
 
@@ -310,50 +312,47 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   /**
    * Commit options for hg
    */
-  private class HgCommitAdditionalComponent extends DvcsCommitAdditionalComponent {
+  public class HgCommitAdditionalComponent implements RefreshableOnComponent {
+    @NotNull private final JPanel myPanel;
+    @NotNull private final AmendComponent myAmend;
     @NotNull private final JCheckBox myCommitSubrepos;
 
-    public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      super(project, panel);
-      HgVcs myVcs = HgVcs.getInstance(myProject);
-      myAmend.setEnabled(myVcs != null && myVcs.getVersion().isAmendSupported());
-      myAmend.setText(myAmend.getText() + " (QRefresh)");
-      final Insets insets = new Insets(2, 2, 2, 2);
-      // add commit subrepos checkbox
-      GridBagConstraints c = new GridBagConstraints();
-      c.anchor = GridBagConstraints.CENTER;
-      c.insets = insets;
-      c.gridx = 1;
-      c.gridy = 2;
-      c.weightx = 1;
-      c.fill = GridBagConstraints.HORIZONTAL;
+    HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
+      HgVcs vcs = assertNotNull(HgVcs.getInstance(myProject));
+
+      myAmend = new MyAmendComponent(project, getRepositoryManager(project), panel, "Amend Commit (QRefresh)");
+      myAmend.getComponent().setEnabled(vcs.getVersion().isAmendSupported());
+
       myCommitSubrepos = new JCheckBox("Commit subrepositories", false);
       myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(
         "Commit all subrepos for selected repositories.<br>" +
         " <code>hg ci <i><b>files</b></i> -S <i><b>subrepos</b></i></code>"));
       myCommitSubrepos.setMnemonic('s');
-      myPanel.add(myCommitSubrepos, c);
-      Collection<HgRepository> repos =
-        HgActionUtil.collectRepositoriesFromFiles(HgUtil.getRepositoryManager(myProject), myCheckinPanel.getRoots());
-      myCommitSubrepos.setVisible(ContainerUtil.exists(repos, new Condition<HgRepository>() {
-        @Override
-        public boolean value(HgRepository repository) {
-          return repository.hasSubrepos();
-        }
-      }));
-      myCommitSubrepos.addActionListener(new MySelectionListener(myAmend));
-      myAmend.addActionListener(new MySelectionListener(myCommitSubrepos));
+      Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(getRepositoryManager(myProject), panel.getRoots());
+      myCommitSubrepos.setVisible(ContainerUtil.exists(repos, HgRepository::hasSubrepos));
+
+      myCommitSubrepos.addActionListener(new MySelectionListener(myAmend.getCheckBox()));
+      myAmend.getCheckBox().addActionListener(new MySelectionListener(myCommitSubrepos));
+
+      GridBag gb = new GridBag().
+        setDefaultInsets(JBUI.insets(2)).
+        setDefaultAnchor(GridBagConstraints.WEST).
+        setDefaultWeightX(1).
+        setDefaultFill(GridBagConstraints.HORIZONTAL);
+      myPanel = new JPanel(new GridBagLayout());
+      myPanel.add(myAmend.getComponent(), gb.nextLine().next());
+      myPanel.add(myCommitSubrepos, gb.nextLine().next());
     }
 
     @Override
     public void refresh() {
-      super.refresh();
+      myAmend.refresh();
       restoreState();
     }
 
     @Override
     public void saveState() {
-      myNextCommitAmend = myAmend.isSelected();
+      myNextCommitAmend = isAmend();
       myShouldCommitSubrepos = myCommitSubrepos.isSelected();
     }
 
@@ -363,23 +362,41 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       myShouldCommitSubrepos = false;
     }
 
-    @NotNull
     @Override
-    protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
-      return HgUtil.hgRoots(myProject, filePaths);
+    public JComponent getComponent() {
+      return myPanel;
     }
 
-    @Nullable
-    @Override
-    protected String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException {
-      HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
-      List<String> args = new ArrayList<String>();
-      args.add("-r");
-      args.add(".");
-      args.add("--template");
-      args.add("{desc}");
-      HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "log", args);
-      return result == null ? "" : result.getRawOutput();
+    public boolean isAmend() {
+      return myAmend.isAmend();
+    }
+
+    private class MyAmendComponent extends AmendComponent {
+      public MyAmendComponent(@NotNull Project project,
+                              @NotNull HgRepositoryManager repoManager,
+                              @NotNull CheckinProjectPanel panel,
+                              @NotNull String title) {
+        super(project, repoManager, panel, title);
+      }
+
+      @NotNull
+      @Override
+      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
+        return HgUtil.hgRoots(myProject, filePaths);
+      }
+
+      @Nullable
+      @Override
+      protected String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException {
+        HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+        List<String> args = new ArrayList<>();
+        args.add("-r");
+        args.add(".");
+        args.add("--template");
+        args.add("{desc}");
+        HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "log", args);
+        return result == null ? "" : result.getRawOutput();
+      }
     }
 
     private class MySelectionListener implements ActionListener {

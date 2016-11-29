@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>Plugin DevKit</name>
   <id>DevKit</id>
   <version>1.0</version>
@@ -11,7 +11,6 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
-  <depends>com.intellij.java-i18n</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
@@ -44,7 +43,7 @@
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
-    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.references.RegistryImplicitPropertyUsageProvider"/>
+    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
@@ -54,7 +53,7 @@
     <lang.documentationProvider language="XML"
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
-    <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity"
+    <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
     <localInspection language="JAVA" shortName="ComponentNotRegistered"
@@ -80,24 +79,12 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
-    <localInspection language="XML" shortName="InspectionMappingConsistency"
+    <localInspection language="XML" shortName="InspectionMappingConsistency" applyToDialects="false"
                      groupKey="inspections.group.name"
                      displayName="&lt;inspection&gt; tag consistency"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
-    <localInspection language="XML" shortName="ExtensionPointBeanClass"
-                     groupKey="inspections.group.name"
-                     displayName="&lt;extensionPoint&gt; beanClass specification"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionPointBeanClassInspection"/>
-    <localInspection language="JAVA"
-                     groupKey="inspections.group.name"
-                     displayName="Default StubBasedPsiElementBase.getParent() implementation"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.StubBasedPsiElementBaseGetParentInspection"/>
 
     <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
                      groupKey="inspections.group.name"
@@ -119,6 +106,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"/>
+    <localInspection language="JAVA" shortName="UseDPIAwareInsets" displayName="Use DPI-aware insets"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsInspection"/>
     <localInspection language="JAVA" shortName="UseCouple" displayName="Use Couple instead of Pair"
                      groupKey="inspections.group.name"
                      enabledByDefault="false" level="WARNING"
@@ -147,12 +138,16 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="false" isInternal="true"
                      level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="QuickFixGetFamilyNameViolation"
+    <localInspection language="JAVA" shortName="QuickFixGetFamilyNameViolation"
                      displayName="QuickFix's getFamilyName() implementation must not depend on a specific context"
                      groupKey="inspections.group.name"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspection"/>
+    <localInspection language="JAVA" shortName="PsiElementConcatenation"
+                     displayName="Using PsiElement string representation to generate new expression is incorrect"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
 
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
@@ -162,6 +157,7 @@
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
+    <stacktrace.fold substring="at com.intellij.ide.IdeEventQueue"/>
     <stacktrace.fold substring="at com.intellij.util.messages.impl.MessageBus"/>
     <stacktrace.fold substring="com.intellij.openapi.command.WriteCommandAction"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction("/>
@@ -182,8 +178,13 @@
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionPointDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.implementedAtRuntime implementation="org.jetbrains.idea.devkit.inspections.DevKitImplementedAtRuntimeCondition"/>
 
+    <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
+
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
+
+    <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
+    <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
   </extensions>
 
   <project-components>

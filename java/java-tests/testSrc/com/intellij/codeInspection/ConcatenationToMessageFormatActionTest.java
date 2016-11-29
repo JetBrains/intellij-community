@@ -15,7 +15,7 @@ public class ConcatenationToMessageFormatActionTest extends LightIdeaTestCase {
   public void doTest(String expressionText, String messageFormatText, String... foundExpressionTexts) {
     final PsiExpression expression = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(expressionText, null);
     final StringBuilder result = new StringBuilder();
-    final ArrayList<PsiExpression> args = new ArrayList<PsiExpression>();
+    final ArrayList<PsiExpression> args = new ArrayList<>();
     PsiConcatenationUtil.buildFormatString(expression, result, args, false);
     assertEquals(messageFormatText, result.toString());
     assertEquals(foundExpressionTexts.length, args.size());

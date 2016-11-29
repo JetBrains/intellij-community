@@ -44,6 +44,7 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testVarargInferred() { doTest(); }
   public void testDoubleParameter() { doTest(); }
   public void testReturnPrimitiveArray() { doTest(); }
+  public void testCheckConstructorContracts() { doTest(); }
 
   public void testPassingVarargsToDelegate() { doTest(); }
 }

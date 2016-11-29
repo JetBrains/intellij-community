@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,14 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   @NotNull
+  @Contract(pure = true)
   private static Sdk retainRtJarOnlyAndSetVersion(Sdk jdk) {
+    try {
+      jdk = (Sdk)jdk.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
     final SdkModificator modificator = jdk.getSdkModificator();
     VirtualFile rtJar = null;
     for (VirtualFile root : modificator.getRoots(OrderRootType.CLASSES)) {
@@ -139,6 +147,6 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   protected VirtualFile getAsmJar() {
-    return getJarFromLibDir("asm.jar");
+    return getJarFromLibDir("asm-all.jar");
   }
 }

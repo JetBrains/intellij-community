@@ -23,6 +23,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -38,7 +39,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +48,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
+
+import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboard;
 
 /**
  * @author yole
@@ -68,11 +69,6 @@ public class AnalyzeStacktraceUtil {
       consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
       consoleView.scrollTo(0);
     }
-  }
-
-  @Nullable
-  public static String getTextInClipboard() {
-    return CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
   }
 
   public interface ConsoleFactory {
@@ -109,6 +105,7 @@ public class AnalyzeStacktraceUtil {
       toolbarActions.add(action);
     }
     final ConsoleViewImpl console = (ConsoleViewImpl)consoleView;
+    ConsoleViewUtil.enableReplaceActionForConsoleViewEditor(console.getEditor());
     console.getEditor().getSettings().setCaretRowShown(true);
     toolbarActions.add(new AnnotateStackTraceAction(console.getEditor(), console.getHyperlinks()));
     toolbarActions.add(new CloseAction(executor, descriptor, project));
@@ -173,18 +170,10 @@ public class AnalyzeStacktraceUtil {
     }
 
     public final void setText(@NotNull final String text) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              final Document document = myEditor.getDocument();
-              document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
-            }
-          });
-        }
-      };
+      Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        final Document document = myEditor.getDocument();
+        document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
+      });
       CommandProcessor.getInstance().executeCommand(myProject, runnable, "", this);
     }
 

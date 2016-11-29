@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -44,7 +46,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.Set;
+import java.util.Collection;
+
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * @author Max Medvedev
@@ -57,11 +62,9 @@ public class SubstitutorComputer {
   private final PsiType myThisType;
   @Nullable private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
-
-  private final GrControlFlowOwner myFlowOwner;
   private final PsiElement myPlaceToInferContext;
+  private final NotNullLazyValue<Collection<PsiElement>> myExitPoints;
   private final PsiResolveHelper myHelper;
-
 
   public SubstitutorComputer(PsiType thisType,
                              @Nullable PsiType[] argumentTypes,
@@ -73,29 +76,36 @@ public class SubstitutorComputer {
     myTypeArguments = typeArguments;
     myPlace = place;
     myPlaceToInferContext = placeToInferContext;
-
-    if (canBeExitPoint(place)) {
-      myFlowOwner = ControlFlowUtils.findControlFlowOwner(place);
-    }
-    else {
-      myFlowOwner = null;
-    }
+    myExitPoints = VolatileNotNullLazyValue.createValue(() -> {
+      if (canBeExitPoint(place)) {
+        GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(place);
+        return newHashSet(ControlFlowUtils.collectReturns(flowOwner));
+      }
+      else {
+        return emptyList();
+      }
+    });
 
     myHelper = JavaPsiFacade.getInstance(myPlace.getProject()).getResolveHelper();
-
   }
 
   @Nullable
   protected PsiType inferContextType() {
     final PsiElement parent = myPlaceToInferContext.getParent();
-    if (parent instanceof GrReturnStatement || exitsContains(myPlaceToInferContext)) {
+    if (parent instanceof GrReturnStatement || myExitPoints.getValue().contains(myPlaceToInferContext)) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class, true, GrClosableBlock.class);
       if (method != null) {
         return method.getReturnType();
       }
     }
     else if (parent instanceof GrAssignmentExpression && myPlaceToInferContext.equals(((GrAssignmentExpression)parent).getRValue())) {
-      return ((GrAssignmentExpression)parent).getLValue().getType();
+      PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)parent).getLValue(), false);
+      if ((lValue instanceof GrExpression) && !(lValue instanceof GrIndexProperty)) {
+        return ((GrExpression)lValue).getType();
+      }
+      else {
+        return null;
+      }
     }
     else if (parent instanceof GrVariable) {
       return ((GrVariable)parent).getDeclaredType();
@@ -155,7 +165,7 @@ public class SubstitutorComputer {
                                                    @NotNull PsiType[] argTypes) {
     if (typeParameters.length == 0 || myArgumentTypes == null) return partialSubstitutor;
 
-    final GrClosureSignature erasedSignature = GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method);
+    final GrClosureSignature erasedSignature = GrClosureSignatureUtil.createSignature(method, partialSubstitutor, true);
 
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, partialSubstitutor);
     final GrClosureParameter[] params = signature.getParameters();
@@ -263,16 +273,6 @@ public class SubstitutorComputer {
       return substitutor.put(typeParameter, inferred);
     }
     return substitutor;
-  }
-
-  private Set<PsiElement> myExitPoints;
-  protected boolean exitsContains(PsiElement place) {
-    if (myFlowOwner == null) return false;
-    if (myExitPoints == null) {
-      myExitPoints = new HashSet<PsiElement>();
-      myExitPoints.addAll(ControlFlowUtils.collectReturns(myFlowOwner));
-    }
-    return myExitPoints.contains(place);
   }
 
   public PsiType[] getTypeArguments() {

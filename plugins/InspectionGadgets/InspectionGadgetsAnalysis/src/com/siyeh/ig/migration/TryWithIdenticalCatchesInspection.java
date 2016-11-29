@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.refactoring.util.duplicates.ReturnStatementReturnValue;
+import com.intellij.refactoring.util.duplicates.ReturnValue;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -66,6 +68,18 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
   }
 
   @Override
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
+    if (element instanceof PsiCatchSection) {
+      final PsiCatchSection catchSection = (PsiCatchSection)element;
+      final PsiParameter parameter = catchSection.getParameter();
+      if (parameter != null && super.isSuppressedFor(parameter)) {
+        return true;
+      }
+    }
+    return super.isSuppressedFor(element);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TryWithIdenticalCatchesVisitor();
   }
@@ -99,7 +113,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
                                                                  new LocalSearchScope(catchBlock),
                                                                  false);
         final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{catchBlock},
-                                                             inputVariables, null, Collections.<PsiVariable>emptyList());
+                                                             inputVariables, null, Collections.emptyList());
         for (int j = i + 1; j < catchSections.length; j++) {
           if (duplicates[j]) {
             continue;
@@ -110,12 +124,30 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
             continue;
           }
           final Match match = finder.isDuplicate(otherCatchBlock, true);
-          if (match == null || match.getReturnValue() != null) {
+          if (match == null) {
+            continue;
+          }
+          final ReturnValue returnValue = match.getReturnValue();
+          if (returnValue != null && !(returnValue instanceof ReturnStatementReturnValue)) {
             continue;
           }
           final List<PsiElement> parameterValues = match.getParameterValues(parameter);
-          if (parameterValues != null && (parameterValues.size() != 1 || !(parameterValues.get(0) instanceof PsiReferenceExpression))) {
-            continue;
+          if (parameterValues != null) {
+            if (parameterValues.size() != 1) {
+              continue;
+            }
+            final PsiElement element = parameterValues.get(0);
+            if (!(element instanceof PsiReferenceExpression)) {
+              continue;
+            }
+            final PsiElement target = ((PsiReferenceExpression)element).resolve();
+            if (!(target instanceof PsiParameter)) {
+              continue;
+            }
+            final PsiElement scope = ((PsiParameter)target).getDeclarationScope();
+            if (!otherSection.equals(scope)) {
+              continue;
+            }
           }
           if (j > i ? !canCollapse(parameters, i, j) : !canCollapse(parameters, j, i)) {
             continue;
@@ -161,14 +193,8 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
     }
 
     @Override
@@ -197,7 +223,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         collapseInto.delete();
         return;
       }
-      final List<PsiType> types = new ArrayList();
+      final List<PsiType> types = new ArrayList<>();
       collectDisjunctTypes(type1, types);
       collectDisjunctTypes(type2, types);
       final StringBuilder typeText = new StringBuilder();

@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.FilePathChangesTreeList;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -72,7 +73,7 @@ class UndoApplyPatchDialog extends DialogWrapper {
         }
       };
       browser.setChangesToDisplay(myFailedFilePaths);
-      panel.add(browser, BorderLayout.CENTER);
+      panel.add(ScrollPaneFactory.createScrollPane(browser), BorderLayout.CENTER);
     }
     return panel;
   }

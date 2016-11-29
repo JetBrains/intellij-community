@@ -110,22 +110,14 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       config = nodeByName.getConfigurable();
     }
 
-    final ActionCallback result = new ActionCallback().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myAutoScrollEnabled = true;
-      }
-    });
+    final ActionCallback result = new ActionCallback().doWhenDone(() -> myAutoScrollEnabled = true);
 
     myAutoScrollEnabled = false;
     myAutoScrollHandler.cancelAllRequests();
     final MyNode nodeToSelect = node != null ? node : nodeByName;
-    selectNodeInTree(nodeToSelect, requestFocus).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        setSelectedNode(nodeToSelect);
-        Place.goFurther(config, place, requestFocus).notifyWhenDone(result);
-      }
+    selectNodeInTree(nodeToSelect, requestFocus).doWhenDone(() -> {
+      setSelectedNode(nodeToSelect);
+      Place.goFurther(config, place, requestFocus).notifyWhenDone(result);
     });
 
     return result;
@@ -283,7 +275,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @Override
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
-    final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    final ArrayList<AnAction> result = new ArrayList<>();
     AbstractAddGroup addAction = createAddAction();
     if (addAction != null) {
       result.add(addAction);
@@ -323,7 +315,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @NotNull
   private MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<MyNode> nodes) {
     List<? extends RemoveConfigurableHandler<?>> handlers = getRemoveHandlers();
-    MultiMap<RemoveConfigurableHandler, MyNode> grouped = new LinkedMultiMap<RemoveConfigurableHandler, MyNode>();
+    MultiMap<RemoveConfigurableHandler, MyNode> grouped = new LinkedMultiMap<>();
     for (MyNode node : nodes) {
       final NamedConfigurable<?> configurable = node.getConfigurable();
       if (configurable == null) continue;
@@ -347,10 +339,11 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   protected class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction() {
+      //noinspection Convert2Lambda
       super(new Condition<Object[]>() {
         @Override
         public boolean value(final Object[] objects) {
-          List<MyNode> nodes = new ArrayList<MyNode>();
+          List<MyNode> nodes = new ArrayList<>();
           for (Object object : objects) {
             if (!(object instanceof MyNode)) return false;
             nodes.add((MyNode)object);
@@ -377,16 +370,13 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     private List<MyNode> removeFromModel(final TreePath[] paths) {
-      List<MyNode> nodes = ContainerUtil.mapNotNull(paths, new Function<TreePath, MyNode>() {
-        @Override
-        public MyNode fun(TreePath path) {
-          Object node = path.getLastPathComponent();
-          return node instanceof MyNode ? (MyNode)node : null;
-        }
+      List<MyNode> nodes = ContainerUtil.mapNotNull(paths, path -> {
+        Object node = path.getLastPathComponent();
+        return node instanceof MyNode ? (MyNode)node : null;
       });
       MultiMap<RemoveConfigurableHandler, MyNode> grouped = groupNodes(nodes);
 
-      List<MyNode> removedNodes = new ArrayList<MyNode>();
+      List<MyNode> removedNodes = new ArrayList<>();
       for (Map.Entry<RemoveConfigurableHandler, Collection<MyNode>> entry : grouped.entrySet()) {
         //noinspection unchecked
         boolean removed = entry.getKey().remove(getEditableObjects(entry.getValue()));
@@ -399,7 +389,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   private static List<?> getEditableObjects(Collection<MyNode> value) {
-    List<Object> objects = new ArrayList<Object>();
+    List<Object> objects = new ArrayList<>();
     for (MyNode node : value) {
       objects.add(node.getConfigurable().getEditableObject());
     }

@@ -61,9 +61,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.DimensionUIResource;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.InsetsUIResource;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.synth.Region;
@@ -166,13 +165,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       // do not sort LaFs on mac - the order is determined as Default, Darcula.
       // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
 
-      Arrays.sort(myLaFs, new Comparator<UIManager.LookAndFeelInfo>() {
-        @Override
-        public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
-          String name1 = obj1.getName();
-          String name2 = obj2.getName();
-          return name1.compareToIgnoreCase(name2);
-        }
+      Arrays.sort(myLaFs, (obj1, obj2) -> {
+        String name1 = obj1.getName();
+        String name2 = obj2.getName();
+        return name1.compareToIgnoreCase(name2);
       });
     }
 
@@ -237,12 +233,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         @Override
         public void propertyChange(final PropertyChangeEvent evt) {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              fixGtkPopupStyle();
-              patchGtkDefaults(UIManager.getLookAndFeelDefaults());
-            }
+          SwingUtilities.invokeLater(() -> {
+            fixGtkPopupStyle();
+            patchGtkDefaults(UIManager.getLookAndFeelDefaults());
           });
         }
       };
@@ -307,7 +300,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     return myCurrentLaf;
   }
 
-  private UIManager.LookAndFeelInfo getDefaultLaf() {
+  public UIManager.LookAndFeelInfo getDefaultLaf() {
     String wizardLafName = WelcomeWizardUtil.getWizardLAF();
     if (wizardLafName != null) {
       UIManager.LookAndFeelInfo laf = findLaf(wizardLafName);
@@ -538,20 +531,34 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   private static void patchHiDPI(UIDefaults defaults) {
     Object prevScaleVal = defaults.get("hidpi.scaleFactor");
+    // used to normalize previously patched values
     float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
-    if (prevScale == JBUI.scale(1f)) return;
+    if (prevScale == JBUI.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
-                                           "Tree.rightChildIndent");
+                                           "Tree.rightChildIndent",
+                                           "Tree.rowHeight");
+
+    List<String> myDimensionKeys = Arrays.asList("Slider.horizontalSize",
+                                                 "Slider.verticalSize",
+                                                 "Slider.minimumHorizontalSize",
+                                                 "Slider.minimumVerticalSize");
+
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
       String key = entry.getKey().toString();
-      if (value instanceof DimensionUIResource) {
-        entry.setValue(JBUI.size((DimensionUIResource)value).asUIResource());
-      } else if (value instanceof InsetsUIResource) {
-        entry.setValue(JBUI.insets(((InsetsUIResource)value)).asUIResource());
-      } else if (value instanceof Integer) {
+      if (value instanceof Dimension) {
+        if (value instanceof UIResource || myDimensionKeys.contains(key)) {
+          entry.setValue(JBUI.size((Dimension)value).asUIResource());
+        }
+      }
+      else if (value instanceof Insets) {
+        if (value instanceof UIResource) {
+          entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
+        }
+      }
+      else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
           int normValue = (int)((Integer)value / prevScale);
           entry.setValue(Integer.valueOf(JBUI.scale(normValue)));
@@ -729,7 +736,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
-      JBUI.setScaleFactor(uiSettings.FONT_SIZE/12f);
+      JBUI.setScaleFactor(uiSettings.FONT_SIZE/UIUtil.DEF_SYSTEM_FONT_SIZE);
       initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
     }
     else {
@@ -745,14 +752,14 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/12f);
+    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/UIUtil.DEF_SYSTEM_FONT_SIZE);
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {
     UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults == null) {
-      lfDefaults = new HashMap<String, Object>();
+      lfDefaults = new HashMap<>();
       for (String resource : ourPatchableFontResources) {
         lfDefaults.put(resource, defaults.get(resource));
       }
@@ -761,13 +768,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void updateUI(Window window) {
-    if (!window.isDisplayable()) {
-      return;
-    }
     IJSwingUtilities.updateComponentTreeUI(window);
     Window[] children = window.getOwnedWindows();
-    for (Window aChildren : children) {
-      updateUI(aChildren);
+    for (Window w : children) {
+      IJSwingUtilities.updateComponentTreeUI(w);
     }
   }
 
@@ -837,7 +841,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  static void initFontDefaults(UIDefaults defaults, int fontSize, FontUIResource uiFont) {
+  public static void initFontDefaults(UIDefaults defaults, int fontSize, FontUIResource uiFont) {
     defaults.put("Tree.ancestorInputMap", null);
     FontUIResource textFont = new FontUIResource("Serif", Font.PLAIN, fontSize);
     FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, fontSize);
@@ -846,7 +850,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put(fontResource, uiFont);
     }
 
-    defaults.put("PasswordField.font", monoFont);
+    if (!SystemInfo.isMac) {
+      defaults.put("PasswordField.font", monoFont);
+    }
     defaults.put("TextArea.font", monoFont);
     defaults.put("TextPane.font", textFont);
     defaults.put("EditorPane.font", textFont);

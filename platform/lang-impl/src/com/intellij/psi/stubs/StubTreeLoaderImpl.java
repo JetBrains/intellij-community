@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -58,7 +59,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
         // but don't reuse psiFile itself to avoid loading its contents. If we load AST, the stub will be thrown out anyway.
       }
-      Stub element = StubTreeBuilder.buildStubTree(fc);
+      Stub element = RecursionManager.doPreventingRecursion(vFile, false, () -> StubTreeBuilder.buildStubTree(fc));
       if (element instanceof PsiFileStub) {
         StubTree tree = new StubTree((PsiFileStub)element);
         tree.setDebugInfo("created from file content");
@@ -75,7 +76,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   @Override
   @Nullable
   public ObjectStubTree readFromVFile(Project project, final VirtualFile vFile) {
-    if (DumbService.getInstance(project).isDumb()) {
+    if (DumbService.getInstance(project).isDumb() || NoAccessDuringPsiEvents.isInsideEventProcessing()) {
       return null;
     }
 
@@ -129,7 +130,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     if (vFile.getFileType().isBinary()) {
       return -1;
     }
-    PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().getCachedPsiFile(vFile);
+    PsiFile psiFile = PsiManagerEx.getInstanceEx(project).getFileManager().getCachedPsiFile(vFile);
     if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
       return psiFile.getTextLength();
     }
@@ -143,13 +144,10 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   private static ObjectStubTree processError(final VirtualFile vFile, String message, @Nullable Exception e) {
     LOG.error(message, e);
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
-        if (doc != null) {
-          FileDocumentManager.getInstance().saveDocument(doc);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
+      if (doc != null) {
+        FileDocumentManager.getInstance().saveDocument(doc);
       }
     }, ModalityState.NON_MODAL);
 
@@ -171,7 +169,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     VirtualFile file = virtualFile;
     int count = 0;
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().findCachedViewProvider(file) != null) {
+      if (PsiManagerEx.getInstanceEx(project).getFileManager().findCachedViewProvider(file) != null) {
         count++;
       }
     }

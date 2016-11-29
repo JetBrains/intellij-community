@@ -20,6 +20,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -41,7 +42,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.type.associations.detected");
   private final Project myProject;
   private final EditorNotifications myNotifications;
-  private final Set<String> myEnabledExtensions = new HashSet<String>();
+  private final Set<String> myEnabledExtensions = new HashSet<>();
 
   public PluginAdvertiserEditorNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
@@ -57,7 +58,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
-    if (file.getFileType() != PlainTextFileType.INSTANCE) return null;
+    if (file.getFileType() != PlainTextFileType.INSTANCE && !(file.getFileType() instanceof AbstractFileType)) return null;
 
     final String extension = file.getExtension();
     final String fileName = file.getName();
@@ -94,29 +95,21 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     panel.setText("Plugins supporting " + extension + " files are found");
     final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
-      panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", new Runnable() {
-        @Override
-        public void run() {
-          myEnabledExtensions.add(extension);
-          myNotifications.updateAllNotifications();
-          PluginsAdvertiser.enablePlugins(myProject, Collections.singletonList(disabledPlugin));
-        }
+      panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", () -> {
+        myEnabledExtensions.add(extension);
+        myNotifications.updateAllNotifications();
+        PluginsAdvertiser.enablePlugins(myProject, Collections.singletonList(disabledPlugin));
       });
     } else if (hasNonBundledPlugin(plugins)) {
-      panel.createActionLabel("Install plugins", new Runnable() {
-        @Override
-        public void run() {
-          Set<String> pluginIds = new HashSet<String>();
-          for (PluginsAdvertiser.Plugin plugin : plugins) {
-            pluginIds.add(plugin.myPluginId);
-          }
-          PluginsAdvertiser.installAndEnablePlugins(pluginIds, new Runnable() {
-            public void run() {
-              myEnabledExtensions.add(extension);
-              myNotifications.updateAllNotifications();
-            }
-          });
+      panel.createActionLabel("Install plugins", () -> {
+        Set<String> pluginIds = new HashSet<>();
+        for (PluginsAdvertiser.Plugin plugin : plugins) {
+          pluginIds.add(plugin.myPluginId);
         }
+        PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> {
+          myEnabledExtensions.add(extension);
+          myNotifications.updateAllNotifications();
+        });
       });
     } else if (PluginsAdvertiser.hasBundledPluginToInstall(plugins) != null){
       if (PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
@@ -124,30 +117,21 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       }
       panel.setText(extension + " files are supported by " + PluginsAdvertiser.IDEA_ULTIMATE_EDITION);
 
-      panel.createActionLabel(PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE, new Runnable() {
-        @Override
-        public void run() {
-          myEnabledExtensions.add(extension);
-          PluginsAdvertiser.openDownloadPage();
-        }
+      panel.createActionLabel(PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE, () -> {
+        myEnabledExtensions.add(extension);
+        PluginsAdvertiser.openDownloadPage();
       });
 
-      panel.createActionLabel(PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION, new Runnable() {
-        @Override
-        public void run() {
-          PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");
-          myNotifications.updateAllNotifications();
-        }
+      panel.createActionLabel(PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION, () -> {
+        PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");
+        myNotifications.updateAllNotifications();
       });
     } else {
       return null;
     }
-    panel.createActionLabel("Ignore extension", new Runnable() {
-      @Override
-      public void run() {
-        UnknownFeaturesCollector.getInstance(myProject).ignoreFeature(createExtensionFeature(extension));
-        myNotifications.updateAllNotifications();
-      }
+    panel.createActionLabel("Ignore extension", () -> {
+      UnknownFeaturesCollector.getInstance(myProject).ignoreFeature(createExtensionFeature(extension));
+      myNotifications.updateAllNotifications();
     });
     return panel;
   }

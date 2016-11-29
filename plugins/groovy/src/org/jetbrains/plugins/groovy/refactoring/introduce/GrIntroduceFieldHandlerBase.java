@@ -67,7 +67,7 @@ public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSe
       }
     };
 
-    NavigationUtil.getPsiElementPopup(scopes, new PsiClassListCellRenderer(), "Choose class to introduce field", processor).showInBestPositionFor(editor);
+    NavigationUtil.getPsiElementPopup(scopes, PsiClassListCellRenderer.INSTANCE, "Choose class to introduce field", processor).showInBestPositionFor(editor);
   }
 
   @NotNull

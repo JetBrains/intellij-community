@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,31 +103,38 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
 
     final JLabel label = new JLabel(text);
     label.setUI(new MultiLineLabelUI());
-    panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
+    panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                            JBUI.insets(8, 10, 0, 10), 0, 0));
 
     myRbCreateSource = new JRadioButton(IdeBundle.message("radio.create.source.directory"), true);
-    panel.add(myRbCreateSource, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
+    panel.add(myRbCreateSource, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                       JBUI.insets(8, 10, 0, 10), 0, 0));
 
     myTfSourceDirectoryName = new JTextField(suggestSourceDirectoryName());
     final JLabel srcPathLabel = new JLabel(IdeBundle.message("prompt.enter.relative.path.to.module.content.root", File.separator));
-    panel.add(srcPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 30, 0, 0), 0, 0));
+    panel.add(srcPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                   JBUI.insets(8, 30, 0, 0), 0, 0));
     final FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     chooserDescriptor.withTreeRootVisible(true);
     final FieldPanel fieldPanel = createFieldPanel(myTfSourceDirectoryName, null, new BrowsePathListener(myTfSourceDirectoryName, chooserDescriptor));
-    panel.add(fieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 30, 0, 10), 0, 0));
+    panel.add(fieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                 JBUI.insets(8, 30, 0, 10), 0, 0));
 
     myRbNoSource = new JRadioButton(IdeBundle.message("radio.do.not.create.source.directory"), true);
-    panel.add(myRbNoSource, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
+    panel.add(myRbNoSource, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                   JBUI.insets(8, 10, 0, 10), 0, 0));
 
     final JLabel fullPathLabel = new JLabel(IdeBundle.message("label.source.directory"));
-    panel.add(fullPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
+    panel.add(fullPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE,
+                                                    JBUI.insets(8, 10, 0, 10), 0, 0));
 
     myTfFullPath = new JTextField();
     myTfFullPath.setEditable(false);
     myTfFullPath.setOpaque(false);
     final Insets borderInsets = myTfFullPath.getBorder().getBorderInsets(myTfFullPath);
     myTfFullPath.setBorder(BorderFactory.createEmptyBorder(borderInsets.top, borderInsets.left, borderInsets.bottom, borderInsets.right));
-    panel.add(myTfFullPath, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 8, 10), 0, 0));
+    panel.add(myTfFullPath, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.HORIZONTAL,
+                                                   JBUI.insets(8, 10), 0, 0));
 
     ButtonGroup group = new ButtonGroup();
     group.add(myRbCreateSource);
@@ -188,14 +196,18 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     final String text = IdeBundle.message("label.java.source.files.have.been.found");
     final JLabel label = new JLabel(text);
     label.setUI(new MultiLineLabelUI());
-    panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
-    panel.add(mySourcePathsChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(8, 10, 8, 10), 0, 0));
+    panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                            JBUI.insets(8, 10, 0, 10), 0, 0));
+    panel.add(mySourcePathsChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                           JBUI.insets(8, 10), 0, 0));
 
     final JButton markAllButton = new JButton(IdeBundle.message("button.mark.all"));
-    panel.add(markAllButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 8, 2), 0, 0));
+    panel.add(markAllButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                    JBUI.insets(0, 10, 8, 2), 0, 0));
 
     final JButton unmarkAllButton = new JButton(IdeBundle.message("button.unmark.all"));
-    panel.add(unmarkAllButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 8, 10), 0, 0));
+    panel.add(unmarkAllButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                      JBUI.insets(0, 0, 8, 10), 0, 0));
 
     markAllButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -220,7 +232,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
       final List<JavaModuleSourceRoot> selectedElements = mySourcePathsChooser.getMarkedElements();
       if (selectedElements.size() > 0) {
-        paths = new ArrayList<Pair<String, String>>(selectedElements.size());
+        paths = new ArrayList<>(selectedElements.size());
 
         for (final JavaModuleSourceRoot root : selectedElements) {
           paths.add(Pair.create(FileUtil.toSystemIndependentName(root.getDirectory().getAbsolutePath()), root.getPackagePrefix()));
@@ -240,7 +252,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
       myBuilder.setSourcePaths(paths);
     }
     else {
-      myBuilder.setSourcePaths(new ArrayList<Pair<String, String>>());
+      myBuilder.setSourcePaths(new ArrayList<>());
     }
   }
 
@@ -328,7 +340,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   }
 
   protected List<JavaModuleSourceRoot> calculate() {
-    return new ArrayList<JavaModuleSourceRoot>(calculateSourceRoots(getContentRootPath()));
+    return new ArrayList<>(calculateSourceRoots(getContentRootPath()));
   }
 
   @NotNull

@@ -60,7 +60,6 @@
       <codeInsight.externalLibraryResolver implementation="com.theoryinpractice.testng.intention.TestNGExternalLibraryResolver"/>
       <standardResource url="http://testng.org/testng-1.0.dtd" path="resources/standardSchemas/testng-1.0.dtd"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
-      <forcedElementWeigher implementation="com.theoryinpractice.testng.TestNGForcedElementWeigher"/>
       <gotoRelatedProvider implementation="com.theoryinpractice.testng.TestNGRelatedFilesProvider"/>
       <methodReferencesSearch implementation="com.theoryinpractice.testng.DataProviderSearcher"/>
       <stacktrace.fold substring="at org.testng.internal."/>
@@ -73,7 +72,12 @@
       <programRunner implementation="com.theoryinpractice.testng.configuration.TestNGDebuggerRunner"/>
       <runConfigurationProducer
           implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationProducer"/>
-      <configurationType implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationType"/>
+      <localInspection implementationClass="com.theoryinpractice.testng.inspection.SimplifiedTestNGAssertionInspection"
+                       groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
+                       key="simplifiable.testng.assertion.display.name" groupName="TestNG"
+                       enabledByDefault="false" level="WARNING"/>
+      <localInspection groupPath="Java" language="JAVA" shortName="ConstantTestNGAssertArgument" displayName="Constant TestNG assert argument"
+                       groupName="TestNG" enabledByDefault="false" level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.ConstantTestNGAssertArgumentInspection"/>
     </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="org.testng.TestNGTestDiscoveryListener"/>

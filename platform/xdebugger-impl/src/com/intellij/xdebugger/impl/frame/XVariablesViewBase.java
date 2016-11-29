@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -44,6 +46,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,26 +57,29 @@ import java.awt.*;
  * @author nik
  */
 public abstract class XVariablesViewBase extends XDebugView {
-  protected final XDebuggerTreePanel myDebuggerTreePanel;
+  private final XDebuggerTreePanel myTreePanel;
   private XDebuggerTreeState myTreeState;
-  private Object myFrameEqualityObject;
   private XDebuggerTreeRestorer myTreeRestorer;
+
+  private Object myFrameEqualityObject;
   private MySelectionListener mySelectionListener;
 
   protected XVariablesViewBase(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @Nullable XValueMarkers<?, ?> markers) {
-    myDebuggerTreePanel = new XDebuggerTreePanel(project, editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
-    myDebuggerTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
-    DnDManager.getInstance().registerSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
+    myTreePanel = new XDebuggerTreePanel(
+      project, editorsProvider, this, null, this instanceof XWatchesView ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
+    getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
+    DnDManager.getInstance().registerSource(myTreePanel, getTree());
   }
 
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
-    XDebuggerTree tree = myDebuggerTreePanel.getTree();
-    final XSourcePosition position = stackFrame.getSourcePosition();
+    XSourcePosition position = stackFrame.getSourcePosition();
+    XDebuggerTree tree = getTree();
     tree.setSourcePosition(position);
-    tree.setRoot(new XStackFrameNode(tree, stackFrame), false);
+    createNewRootNode(stackFrame);
     final Project project = tree.getProject();
     project.putUserData(XVariablesView.DEBUG_VARIABLES, new XVariablesView.InlineVariablesInfo());
-    project.putUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS, new ObjectLongHashMap<VirtualFile>());
+    project.putUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS, new ObjectLongHashMap<>());
+    clearInlays(tree);
     Object newEqualityObject = stackFrame.getEqualityObject();
     if (myFrameEqualityObject != null && newEqualityObject != null && myFrameEqualityObject.equals(newEqualityObject)
         && myTreeState != null) {
@@ -83,6 +89,22 @@ public abstract class XVariablesViewBase extends XDebugView {
     if (position != null && Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
       registerInlineEvaluator(stackFrame, position, project);
     }
+  }
+
+  protected static void clearInlays(XDebuggerTree tree) {
+    if (Registry.is("debugger.show.values.inplace")) XDebuggerInlayUtil.clearInlays(tree.getProject());
+  }
+
+  protected XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {
+    XValueContainerNode root;
+    if (stackFrame == null) {
+      root = new XValueContainerNode<XValueContainer>(getTree(), null, new XValueContainer() {}) {};
+    }
+    else {
+      root = new XStackFrameNode(getTree(), stackFrame);
+    }
+    getTree().setRoot(root, false);
+    return root;
   }
 
   private void registerInlineEvaluator(final XStackFrame stackFrame,
@@ -99,10 +121,12 @@ public abstract class XVariablesViewBase extends XDebugView {
   }
 
   protected void saveCurrentTreeState(@Nullable XStackFrame stackFrame) {
-    disposeTreeRestorer();
     removeSelectionListener();
     myFrameEqualityObject = stackFrame != null ? stackFrame.getEqualityObject() : null;
-    myTreeState = XDebuggerTreeState.saveState(myDebuggerTreePanel.getTree());
+    if (myTreeRestorer == null || myTreeRestorer.isFinished()) {
+      myTreeState = XDebuggerTreeState.saveState(getTree());
+    }
+    disposeTreeRestorer();
   }
 
   private void removeSelectionListener() {
@@ -124,19 +148,20 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
   }
 
-  public XDebuggerTree getTree() {
-    return myDebuggerTreePanel.getTree();
+  @NotNull
+  public final XDebuggerTree getTree() {
+    return myTreePanel.getTree();
   }
 
   public JComponent getPanel() {
-    return myDebuggerTreePanel.getMainPanel();
+    return myTreePanel.getMainPanel();
   }
 
   @Override
   public void dispose() {
     disposeTreeRestorer();
     removeSelectionListener();
-    DnDManager.getInstance().unregisterSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
+    DnDManager.getInstance().unregisterSource(myTreePanel, getTree());
   }
 
   private class MySelectionListener implements SelectionListener {

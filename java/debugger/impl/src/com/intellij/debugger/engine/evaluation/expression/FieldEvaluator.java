@@ -47,11 +47,7 @@ public class FieldEvaluator implements Evaluator {
   private Field myEvaluatedField;
 
   public interface TargetClassFilter {
-    TargetClassFilter ALL = new TargetClassFilter() {
-      public boolean acceptClass(final ReferenceType refType) {
-        return true;
-      }
-    };
+    TargetClassFilter ALL = refType -> true;
     boolean acceptClass(ReferenceType refType);
   }
   

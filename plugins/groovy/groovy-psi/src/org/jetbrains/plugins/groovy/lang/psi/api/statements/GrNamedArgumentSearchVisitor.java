@@ -42,7 +42,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
 
   private static final List<String> METHOD_NAMES = Arrays.asList("containsKey", "remove", "get");
 
-  private final Map<String, NamedArgumentDescriptor> myResult = new HashMap<String, NamedArgumentDescriptor>();
+  private final Map<String, NamedArgumentDescriptor> myResult = new HashMap<>();
 
   private final String myFirstArgumentName;
 
@@ -73,7 +73,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
   }
 
   @Override
-  public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+  public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
     if (myFirstArgumentName.equals(referenceExpression.getReferenceName()) && !referenceExpression.isQualified()) {
       PsiElement parent = referenceExpression.getParent();
 

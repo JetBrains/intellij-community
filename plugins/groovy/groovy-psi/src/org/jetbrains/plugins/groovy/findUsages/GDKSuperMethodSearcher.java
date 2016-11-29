@@ -69,7 +69,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final MethodSignature signature = method.getHierarchicalMethodSignature();
-    List<PsiMethod> goodSupers = new ArrayList<PsiMethod>();
+    List<PsiMethod> goodSupers = new ArrayList<>();
 
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
@@ -83,22 +83,19 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     if (goodSupers.isEmpty()) return true;
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>(goodSupers.size());
+    List<PsiMethod> result = new ArrayList<>(goodSupers.size());
     result.add(goodSupers.get(0));
 
-    final Comparator<PsiMethod> comparator = new Comparator<PsiMethod>() {
-      @Override
-      public int compare(PsiMethod o1, PsiMethod o2) { //compare by first parameter type
-        final PsiType type1 = getRealType(o1);
-        final PsiType type2 = getRealType(o2);
-        if (TypesUtil.isAssignableByMethodCallConversion(type1, type2, o1)) {
-          return -1;
-        }
-        else if (TypesUtil.isAssignableByMethodCallConversion(type2, type1, o1)) {
-          return 1;
-        }
-        return 0;
+    final Comparator<PsiMethod> comparator = (o1, o2) -> { //compare by first parameter type
+      final PsiType type1 = getRealType(o1);
+      final PsiType type2 = getRealType(o2);
+      if (TypesUtil.isAssignableByMethodCallConversion(type1, type2, o1)) {
+        return -1;
       }
+      else if (TypesUtil.isAssignableByMethodCallConversion(type2, type1, o1)) {
+        return 1;
+      }
+      return 0;
     };
 
     Outer:

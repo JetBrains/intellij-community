@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -27,38 +26,33 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.Collection;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
 public class SimpleBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String SIMPLE_STRATEGY_NAME = "SimpleStrategy";
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
-    collector.addAll(collect(clazz).getMethods());
-  }
-
-  @NotNull
-  public Members collect(@NotNull GrTypeDefinition typeDefinition) {
+  public void applyTransformation(@NotNull TransformationContext context) {
+    GrTypeDefinition typeDefinition = context.getCodeClass();
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(typeDefinition, BUILDER_FQN);
-    if (!isApplicable(annotation, SIMPLE_STRATEGY_NAME)) return Members.EMPTY;
-    final Members result = Members.create();
+    if (!isApplicable(annotation, SIMPLE_STRATEGY_NAME)) return;
     for (GrField field : typeDefinition.getCodeFields()) {
-      result.getMethods().add(createFieldSetter(typeDefinition, field, annotation));
+      context.addMethod(createFieldSetter(typeDefinition, field, annotation));
     }
-    return result;
   }
 
   @NotNull
-  public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass, @NotNull GrVariable field, @NotNull PsiAnnotation annotation) {
+  public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass,
+                                                     @NotNull GrVariable field,
+                                                     @NotNull PsiAnnotation annotation) {
     final String name = field.getName();
     final LightMethodBuilder fieldSetter = new LightMethodBuilder(builderClass.getManager(), getFieldMethodName(annotation, name));
     fieldSetter.addModifier(PsiModifier.PUBLIC);
     fieldSetter.addParameter(name, field.getType(), false);
-    fieldSetter.setContainingClass(builderClass);
     fieldSetter.setMethodReturnType(createType(builderClass));
     fieldSetter.setNavigationElement(field);
     fieldSetter.setOriginInfo(ORIGIN_INFO);

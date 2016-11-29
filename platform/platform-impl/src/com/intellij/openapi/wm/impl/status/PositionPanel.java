@@ -77,25 +77,21 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   }
 
   public Consumer<MouseEvent> getClickConsumer() {
-    return new Consumer<MouseEvent>() {
-      public void consume(MouseEvent mouseEvent) {
-        final Project project = getProject();
-        if (project == null) return;
-        final Editor editor = getEditor();
-        if (editor == null) return;
-        final CommandProcessor processor = CommandProcessor.getInstance();
-        processor.executeCommand(
-          project, new Runnable() {
-            public void run() {
-              final GotoLineNumberDialog dialog = new GotoLineNumberDialog(project, editor);
-              dialog.show();
-              IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-            }
-          },
-          UIBundle.message("go.to.line.command.name"),
-          null
-        );
-      }
+    return mouseEvent -> {
+      final Project project = getProject();
+      if (project == null) return;
+      final Editor editor = getEditor();
+      if (editor == null) return;
+      final CommandProcessor processor = CommandProcessor.getInstance();
+      processor.executeCommand(
+        project, () -> {
+          final GotoLineNumberDialog dialog = new GotoLineNumberDialog(project, editor);
+          dialog.show();
+          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+        },
+        UIBundle.message("go.to.line.command.name"),
+        null
+      );
     };
   }
 
@@ -112,7 +108,9 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   }
 
   public void caretPositionChanged(final CaretEvent e) {
-    updatePosition(e.getEditor());
+    Editor editor = e.getEditor();
+    // When multiple carets exist in editor, we don't show information about caret positions
+    if (editor.getCaretModel().getCaretCount() == 1) updatePosition(editor);
   }
 
   @Override

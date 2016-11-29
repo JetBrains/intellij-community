@@ -47,23 +47,17 @@ public class DomIncludesTest extends LightCodeInsightFixtureTestCase {
                             "</root>");
     createFile("b.xml", "<xxx><child xxx=\"b\"/></xxx>");
     final List<DomIncludesTest.Child> children = rootElement.getChildren();
-    Consumer<MyElement> consumer1 = new Consumer<MyElement>() {
-      @Override
-      public void consume(final MyElement element) {
-        assertFalse(element.getXmlElement().isPhysical());
-        assertEquals(rootElement, element.getParent());
-        assertEquals(DomUtil.getFileElement(rootElement), DomUtil.getFileElement(element));
-        assertEquals("b", element.getXxx().getValue());
-      }
+    Consumer<MyElement> consumer1 = element -> {
+      assertFalse(element.getXmlElement().isPhysical());
+      assertEquals(rootElement, element.getParent());
+      assertEquals(DomUtil.getFileElement(rootElement), DomUtil.getFileElement(element));
+      assertEquals("b", element.getXxx().getValue());
     };
-    Consumer<MyElement> consumer2 = new Consumer<MyElement>() {
-      @Override
-      public void consume(final MyElement element) {
-        assertTrue(element.getXmlElement().isPhysical());
-        assertEquals(rootElement, element.getParent());
-        assertEquals(DomUtil.getFileElement(rootElement), DomUtil.getFileElement(element));
-        assertEquals("a", element.getXxx().getValue());
-      }
+    Consumer<MyElement> consumer2 = element -> {
+      assertTrue(element.getXmlElement().isPhysical());
+      assertEquals(rootElement, element.getParent());
+      assertEquals(DomUtil.getFileElement(rootElement), DomUtil.getFileElement(element));
+      assertEquals("a", element.getXxx().getValue());
     };
     assertOrderedCollection(children, consumer1, consumer2);
   }
@@ -77,22 +71,16 @@ public class DomIncludesTest extends LightCodeInsightFixtureTestCase {
 
     createFile("b.xml", "<xxx xmlns:foo=\"foo\"><foo:boy xxx=\"b\"/></xxx>");
     final List<Boy> children = rootElement.getBoys();
-    assertOrderedCollection(children, new Consumer<Boy>() {
-      @Override
-      public void consume(final Boy element) {
-        assertFalse(element.getXmlElement().isPhysical());
-        assertEquals(rootElement, element.getParent());
-        assertEquals(DomUtil.getFileElement(rootElement), DomUtil.getFileElement(element));
-        assertEquals("b", element.getXxx().getValue());
-      }
-    }, new Consumer<Boy>() {
-      @Override
-      public void consume(final Boy element) {
-        assertTrue(element.getXmlElement().isPhysical());
-        assertEquals(rootElement, element.getParent());
-        assertEquals(DomUtil.getFileElement(rootElement), DomUtil.getFileElement(element));
-        assertEquals("a", element.getXxx().getValue());
-      }
+    assertOrderedCollection(children, element -> {
+      assertFalse(element.getXmlElement().isPhysical());
+      assertEquals(rootElement, element.getParent());
+      assertEquals(DomUtil.getFileElement(rootElement), DomUtil.getFileElement(element));
+      assertEquals("b", element.getXxx().getValue());
+    }, element -> {
+      assertTrue(element.getXmlElement().isPhysical());
+      assertEquals(rootElement, element.getParent());
+      assertEquals(DomUtil.getFileElement(rootElement), DomUtil.getFileElement(element));
+      assertEquals("a", element.getXxx().getValue());
     });
   }
 
@@ -117,67 +105,52 @@ public class DomIncludesTest extends LightCodeInsightFixtureTestCase {
     System.out.println("iterationCount = " + iterationCount);
 
     final CountDownLatch finished = new CountDownLatch(threadCount);
-    final AtomicReference<Exception> ex = new AtomicReference<Exception>();
+    final AtomicReference<Exception> ex = new AtomicReference<>();
 
     for (int j = 0; j < threadCount; j++) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            for (int k = 0; k < iterationCount; k++) {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  final List<Boy> boys = rootElement.getBoys();
-                  Thread.yield();
-                  final List<Child> children = rootElement.getChildren();
-                  Thread.yield();
-                  assertEquals(boys, rootElement.getBoys());
-                  assertEquals(children, rootElement.getChildren());
-                }
-              });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          for (int k = 0; k < iterationCount; k++) {
+            ApplicationManager.getApplication().runReadAction(() -> {
+              final List<Boy> boys = rootElement.getBoys();
               Thread.yield();
-            }
+              final List<Child> children = rootElement.getChildren();
+              Thread.yield();
+              assertEquals(boys, rootElement.getBoys());
+              assertEquals(children, rootElement.getChildren());
+            });
+            Thread.yield();
           }
-          catch (Exception e) {
-            ex.set(e);
-          }
-          finally {
-            finished.countDown();
-          }
+        }
+        catch (Exception e) {
+          ex.set(e);
+        }
+        finally {
+          finished.countDown();
         }
       });
     }
 
     for (int i = 0; i < iterationCount; i++) {
-      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-        @Override
-        public void run() {
-          fileB.getViewProvider().getDocument().insertString(0, " ");
-          fileD.getViewProvider().getDocument().insertString(0, " ");
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
-        }
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        fileB.getViewProvider().getDocument().insertString(0, " ");
+        fileD.getViewProvider().getDocument().insertString(0, " ");
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
       });
       Thread.sleep(10);
-      WriteCommandAction.runWriteCommandAction(null, new Runnable(){
-        @Override
-        public void run() {
-          fileC.getViewProvider().getDocument().insertString(0, " ");
-          fileE.getViewProvider().getDocument().insertString(0, " ");
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
-        }
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        fileC.getViewProvider().getDocument().insertString(0, " ");
+        fileE.getViewProvider().getDocument().insertString(0, " ");
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
       });
       Thread.sleep(10);
-      WriteCommandAction.runWriteCommandAction(null, new Runnable(){
-        @Override
-        public void run() {
+      WriteCommandAction.runWriteCommandAction(null, () -> {
 
-          fileB.getViewProvider().getDocument().setText(textB);
-          fileC.getViewProvider().getDocument().setText(textC);
-          fileD.getViewProvider().getDocument().setText(textD);
-          fileE.getViewProvider().getDocument().setText(textE);
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
-        }
+        fileB.getViewProvider().getDocument().setText(textB);
+        fileC.getViewProvider().getDocument().setText(textC);
+        fileD.getViewProvider().getDocument().setText(textD);
+        fileE.getViewProvider().getDocument().setText(textE);
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
       });
     }
 

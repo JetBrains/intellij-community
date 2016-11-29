@@ -51,7 +51,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> roots = new ArrayList<>();
     Module myModule = getValue().getModule();
     if (myModule == null) {
       final Module[] modules = ModuleManager.getInstance(getProject()).getModules();

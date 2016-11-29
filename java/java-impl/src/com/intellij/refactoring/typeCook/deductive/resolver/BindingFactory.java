@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class BindingFactory {
       return new PsiClass[]{bClass};
     }
 
-    final Set<PsiClass> descendants = new LinkedHashSet<PsiClass>();
+    final Set<PsiClass> descendants = new LinkedHashSet<>();
 
     new Object() {
       public void getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass, final Set<PsiClass> descendants) {
@@ -81,14 +81,14 @@ public class BindingFactory {
     private boolean myCyclic;
 
     BindingImpl(final PsiTypeVariable var, final PsiType type) {
-      myBindings = new TIntObjectHashMap<PsiType>();
+      myBindings = new TIntObjectHashMap<>();
       myCyclic = type instanceof PsiTypeVariable;
 
       myBindings.put(var.getIndex(), type);
     }
 
     BindingImpl(final int index, final PsiType type) {
-      myBindings = new TIntObjectHashMap<PsiType>();
+      myBindings = new TIntObjectHashMap<>();
       myCyclic = type instanceof PsiTypeVariable;
 
       myBindings.put(index, type);
@@ -105,7 +105,7 @@ public class BindingFactory {
     }
 
     BindingImpl() {
-      myBindings = new TIntObjectHashMap<PsiType>();
+      myBindings = new TIntObjectHashMap<>();
       myCyclic = false;
     }
 
@@ -481,7 +481,7 @@ public class BindingFactory {
 
         if (type != null) {
           class Verifier extends PsiExtendedTypeVisitor<Void> {
-            boolean myFlag = false;
+            boolean myFlag;
 
             @Override public Void visitTypeVariable(final PsiTypeVariable var) {
               if (var.getIndex() == index) {
@@ -565,7 +565,7 @@ public class BindingFactory {
 
     public int getWidth() {
       class MyProcecure implements TObjectProcedure<PsiType> {
-        int width = 0;
+        int width;
         public boolean execute(PsiType type) {
           if (substitute(type)  != null) width++;
           return true;
@@ -993,7 +993,7 @@ public class BindingFactory {
   }
 
   public LinkedList<Pair<PsiType, Binding>> union(final PsiType x, final PsiType y) {
-    final LinkedList<Pair<PsiType, Binding>> list = new LinkedList<Pair<PsiType, Binding>>();
+    final LinkedList<Pair<PsiType, Binding>> list = new LinkedList<>();
 
     new Object() {
       void union(final PsiType x, final PsiType y, final LinkedList<Pair<PsiType, Binding>> list) {
@@ -1044,7 +1044,7 @@ public class BindingFactory {
   }
 
   public LinkedList<Pair<PsiType, Binding>> intersect(final PsiType x, final PsiType y) {
-    final LinkedList<Pair<PsiType, Binding>> list = new LinkedList<Pair<PsiType, Binding>>();
+    final LinkedList<Pair<PsiType, Binding>> list = new LinkedList<>();
 
     new Object() {
       void intersect(final PsiType x, final PsiType y, final LinkedList<Pair<PsiType, Binding>> list) {

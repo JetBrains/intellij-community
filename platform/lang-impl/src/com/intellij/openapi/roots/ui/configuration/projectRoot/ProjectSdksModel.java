@@ -48,7 +48,7 @@ import java.util.LinkedHashMap;
 public class ProjectSdksModel implements SdkModel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel");
 
-  private final HashMap<Sdk, Sdk> myProjectSdks = new HashMap<Sdk, Sdk>();
+  private final HashMap<Sdk, Sdk> myProjectSdks = new HashMap<>();
   private final EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(Listener.class);
 
   private boolean myModified = false;
@@ -130,48 +130,40 @@ public class ProjectSdksModel implements SdkModel {
       throw new ConfigurationException(errorString[0]);
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        doApply();
-      }
-    });
+    doApply();
     myModified = false;
   }
 
   private void doApply() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ArrayList<Sdk> itemsInTable = new ArrayList<Sdk>();
-        final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-        final Sdk[] allFromTable = jdkTable.getAllJdks();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final ArrayList<Sdk> itemsInTable = new ArrayList<>();
+      final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+      final Sdk[] allFromTable = jdkTable.getAllJdks();
 
-        // Delete removed and fill itemsInTable
-        for (final Sdk tableItem : allFromTable) {
-          if (myProjectSdks.containsKey(tableItem)) {
-            itemsInTable.add(tableItem);
-          }
-          else {
-            jdkTable.removeJdk(tableItem);
-          }
+      // Delete removed and fill itemsInTable
+      for (final Sdk tableItem : allFromTable) {
+        if (myProjectSdks.containsKey(tableItem)) {
+          itemsInTable.add(tableItem);
         }
-        
-        // Now all removed items are deleted from table, itemsInTable contains all items in table
-        for (Sdk originalJdk : itemsInTable) {
-          final Sdk modifiedJdk = myProjectSdks.get(originalJdk);
-          LOG.assertTrue(modifiedJdk != null);
-          LOG.assertTrue(originalJdk != modifiedJdk);
-          jdkTable.updateJdk(originalJdk, modifiedJdk);
+        else {
+          jdkTable.removeJdk(tableItem);
         }
-        // Add new items to table
-        final Sdk[] allJdks = jdkTable.getAllJdks();
-        for (final Sdk projectJdk : myProjectSdks.keySet()) {
-          LOG.assertTrue(projectJdk != null);
-          if (ArrayUtilRt.find(allJdks, projectJdk) == -1) {
-            jdkTable.addJdk(projectJdk);
-            jdkTable.updateJdk(projectJdk, myProjectSdks.get(projectJdk));
-          }
+      }
+
+      // Now all removed items are deleted from table, itemsInTable contains all items in table
+      for (Sdk originalJdk : itemsInTable) {
+        final Sdk modifiedJdk = myProjectSdks.get(originalJdk);
+        LOG.assertTrue(modifiedJdk != null);
+        LOG.assertTrue(originalJdk != modifiedJdk);
+        jdkTable.updateJdk(originalJdk, modifiedJdk);
+      }
+      // Add new items to table
+      final Sdk[] allJdks = jdkTable.getAllJdks();
+      for (final Sdk projectJdk : myProjectSdks.keySet()) {
+        LOG.assertTrue(projectJdk != null);
+        if (ArrayUtilRt.find(allJdks, projectJdk) == -1) {
+          jdkTable.addJdk(projectJdk);
+          jdkTable.updateJdk(projectJdk, myProjectSdks.get(projectJdk));
         }
       }
     });
@@ -179,14 +171,14 @@ public class ProjectSdksModel implements SdkModel {
 
   private boolean canApply(String[] errorString, @Nullable MasterDetailsComponent rootConfigurable, boolean addedOnly) throws ConfigurationException {
 
-    LinkedHashMap<Sdk, Sdk> sdks = new LinkedHashMap<Sdk, Sdk>(myProjectSdks);
+    LinkedHashMap<Sdk, Sdk> sdks = new LinkedHashMap<>(myProjectSdks);
     if (addedOnly) {
       Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
       for (Sdk jdk : allJdks) {
         sdks.remove(jdk);
       }
     }
-    ArrayList<String> allNames = new ArrayList<String>();
+    ArrayList<String> allNames = new ArrayList<>();
     Sdk itemWithError = null;
     for (Sdk currItem : sdks.values()) {
       String currName = currItem.getName();
@@ -264,27 +256,21 @@ public class ProjectSdksModel implements SdkModel {
   public void doAdd(@NotNull JComponent parent, @NotNull final SdkType type, @NotNull final Consumer<Sdk> callback) {
     myModified = true;
     if (type.supportsCustomCreateUI()) {
-      type.showCustomCreateUI(this, parent, new Consumer<Sdk>() {
-        @Override
-        public void consume(Sdk sdk) {
-          setupSdk(sdk, callback);
-        }
-      });
+      type.showCustomCreateUI(this, parent, sdk -> setupSdk(sdk, callback));
     }
     else {
-      SdkConfigurationUtil.selectSdkHome(type, new Consumer<String>() {
-        @Override
-        public void consume(final String home) {
-          String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
-          final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
-          newJdk.setHomePath(home);
-          setupSdk(newJdk, callback);
-        }
-      });
+      SdkConfigurationUtil.selectSdkHome(type, home -> addSdk(type, home, callback));
     }
   }
 
-  private void setupSdk(Sdk newJdk, Consumer<Sdk> callback) {
+  public void addSdk(@NotNull SdkType type, @NotNull String home, @Nullable Consumer<Sdk> callback) {
+    String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
+    final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
+    newJdk.setHomePath(home);
+    setupSdk(newJdk, callback);
+  }
+
+  private void setupSdk(Sdk newJdk, @Nullable Consumer<Sdk> callback) {
     String home = newJdk.getHomePath();
     SdkType sdkType = (SdkType)newJdk.getSdkType();
     if (!sdkType.setupSdkPaths(newJdk, this)) return;

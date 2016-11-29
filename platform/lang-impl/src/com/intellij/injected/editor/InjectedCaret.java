@@ -247,4 +247,15 @@ public class InjectedCaret implements Caret {
   public boolean isAtBidiRunBoundary() {
     return myDelegate.isAtBidiRunBoundary();
   }
+
+  @NotNull
+  @Override
+  public CaretVisualAttributes getVisualAttributes() {
+    return myDelegate.getVisualAttributes();
+  }
+
+  @Override
+  public void setVisualAttributes(@NotNull CaretVisualAttributes attributes) {
+    myDelegate.setVisualAttributes(attributes);
+  }
 }

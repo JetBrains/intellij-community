@@ -20,14 +20,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import org.codehaus.groovy.runtime.GroovyCategorySupport;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
 * @author peter
@@ -35,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GroovyClassDescriptor {
   static {
     try {
-      final AtomicInteger integer = GroovyCategorySupport.getCategoryNameUsage("aaa");
+      GroovyCategorySupport.getCategoryNameUsage("aaa");
     }
     catch (NoSuchMethodError e) {
       throw new RuntimeException("Incompatible Groovy JAR in classpath: " + GroovyCategorySupport.class.getResource("/") + ", please remove it");
@@ -45,16 +42,14 @@ public class GroovyClassDescriptor {
   private final PsiType myPsiType;
   private final PsiElement myPlace;
   private final PsiFile myFile;
-  private final String myTypeText;
 
   @SuppressWarnings({"SetReplaceableByEnumSet"}) //order is important
-  final Set<Factor> affectingFactors = new LinkedHashSet<Factor>();
+  final Set<Factor> affectingFactors = new LinkedHashSet<>();
 
   public GroovyClassDescriptor(@NotNull PsiType psiType, PsiElement place, final PsiFile placeFile) {
     myPsiType = psiType;
     myPlace = place;
     myFile = placeFile;
-    myTypeText = myPsiType.getCanonicalText();
   }
 
   public Project getProject() {
@@ -64,16 +59,6 @@ public class GroovyClassDescriptor {
   public GlobalSearchScope getResolveScope() {
     //affectingFactors.add(Factor.placeFile);
     return myPlace.getResolveScope();
-  }
-
-  @Nullable
-  public String getTypeText() {
-    affectingFactors.add(Factor.qualifierType);
-    return myTypeText;
-  }
-
-  public boolean isInheritor(String qname) {
-    return InheritanceUtil.isInheritor(getPsiType(), qname);
   }
 
   public PsiElement getPlace() {

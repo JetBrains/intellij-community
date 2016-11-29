@@ -267,10 +267,9 @@ public class MacUIUtil {
     }
   }
 
+  @Deprecated
   public static void doNotFillBackground(@NotNull final JTree tree, @NotNull final DefaultTreeCellRenderer renderer) {
-    TreeUI ui = tree.getUI();
-    if (ui instanceof WideSelectionTreeUI) {
-      if (((WideSelectionTreeUI)ui).isWideSelection()) {
+    if (WideSelectionTreeUI.isWideSelection(tree)) {
         renderer.setOpaque(false);
         try {
           final Field fillBackground = DefaultTreeCellRenderer.class.getDeclaredField("fillBackground");
@@ -280,7 +279,6 @@ public class MacUIUtil {
         catch (Exception e) {
           // nothing
         }
-      }
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   @Override
-  protected GrInplaceVariableIntroducer getIntroducer(@NotNull GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
+  protected GrInplaceVariableIntroducer getIntroducer(@NotNull GrIntroduceContext context, @NotNull OccurrencesChooser.ReplaceChoice choice) {
 
     final Ref<GrIntroduceContext> contextRef = Ref.create(context);
 
@@ -158,12 +158,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return new GrInplaceVariableIntroducer(getRefactoringName(), choice, contextRef.get()) {
       @Override
       protected GrVariable runRefactoring(GrIntroduceContext context, GroovyIntroduceVariableSettings settings, boolean processUsages) {
-        if (processUsages) {
-          return processExpression(context, settings);
-        }
-        else {
-          return addVariable(context, settings);
-        }
+        return refactorInWriteAction(() -> processUsages ? processExpression(context, settings) : addVariable(context, settings));
       }
 
       @Override

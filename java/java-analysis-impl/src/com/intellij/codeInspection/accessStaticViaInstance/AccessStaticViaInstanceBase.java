@@ -88,7 +88,7 @@ public class AccessStaticViaInstanceBase extends BaseJavaBatchLocalInspectionToo
                                                    JavaHighlightUtil.formatType(qualifierExpression.getType()),
                                                    HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));
     if (!onTheFly) {
-      if (RemoveUnusedVariableUtil.checkSideEffects(qualifierExpression, null, new ArrayList<PsiElement>())) {
+      if (RemoveUnusedVariableUtil.checkSideEffects(qualifierExpression, null, new ArrayList<>())) {
         holder.registerProblem(expr, description);
         return;
       }

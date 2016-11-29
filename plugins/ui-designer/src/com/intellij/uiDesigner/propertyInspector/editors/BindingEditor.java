@@ -65,12 +65,8 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
         if (!myCbx.isPopupVisible()) {
           fireEditingCancelled();
           SwingUtilities.invokeLater(
-            new Runnable(){
-              public void run(){
-                DesignerToolWindowManager.getInstance(DesignerToolWindowManager.getInstance(project).getActiveFormEditor())
-                  .getPropertyInspector().requestFocus();
-              }
-            }
+            () -> DesignerToolWindowManager.getInstance(DesignerToolWindowManager.getInstance(project).getActiveFormEditor())
+              .getPropertyInspector().requestFocus()
           );
         }
       }
@@ -78,7 +74,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
   }
 
   private static String[] getFieldNames(final RadComponent component, final String currentName) {
-    final ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<>();
     if (currentName != null){
       result.add(currentName);
     }

@@ -31,6 +31,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyReferenceOwner;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
+    PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(this));
     if (visitor instanceof PyElementVisitor) {
       acceptPyVisitor(((PyElementVisitor)visitor));
     }
@@ -151,7 +153,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     if (element == null || element instanceof OuterLanguageElement) return null;
     offset = getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
-    List<PsiReference> referencesList = new ArrayList<PsiReference>();
+    List<PsiReference> referencesList = new ArrayList<>();
     final PsiFile file = element.getContainingFile();
     final PyResolveContext resolveContext = file != null ?
                                      PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file.getProject(), file)) :

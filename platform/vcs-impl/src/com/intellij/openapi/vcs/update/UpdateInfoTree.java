@@ -67,7 +67,7 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
-public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Disposable {
+public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private VirtualFile mySelectedFile;
   private String mySelectedUrl;
   private final Tree myTree = new Tree();
@@ -127,7 +127,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   }
 
   public void dispose() {
-    super.dispose();
     Disposer.dispose(myRoot);
     if (myFileStatusListener != null) {
       myFileStatusManager.removeFileStatusListener(myFileStatusListener);
@@ -332,7 +331,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   }
 
   private VirtualFile[] getVirtualFileArray() {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> result = new ArrayList<>();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths != null) {
       for (TreePath selectionPath : selectionPaths) {
@@ -345,7 +344,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
 
   @Nullable
   private File[] getFileArray() {
-    ArrayList<File> result = new ArrayList<File>();
+    ArrayList<File> result = new ArrayList<>();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths != null) {
       for (TreePath selectionPath : selectionPaths) {

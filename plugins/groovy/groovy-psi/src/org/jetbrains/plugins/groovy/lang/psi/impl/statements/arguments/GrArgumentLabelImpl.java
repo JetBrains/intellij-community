@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -80,7 +81,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     }
 
     GrCall call = PsiUtil.getCallByNamedParameter((GrNamedArgument)namedArgument);
-    if (call == null) return null;
+    if (call == null) return NamedArgumentUtilKt.getReferenceFromDescriptor(this);
 
     String labelName = getName();
 
@@ -150,9 +151,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   @Nullable
   public String getName() {
     final PsiElement element = getNameElement();
-    if (element instanceof GrLiteral) {
-      return convertToString(((GrLiteral)element).getValue());
-    }
     if (element instanceof GrExpression) {
       final Object value = JavaPsiFacade.getInstance(getProject()).getConstantEvaluationHelper().computeConstantExpression(element);
       if (value instanceof String) {
@@ -279,6 +277,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   public GrExpression getExpression() {
     final PsiElement nameElement = getNameElement();
     if (nameElement instanceof GrParenthesizedExpression) return ((GrParenthesizedExpression)nameElement).getOperand();
+    if (nameElement instanceof GrExpression) return (GrExpression)nameElement;
     return null;
   }
 

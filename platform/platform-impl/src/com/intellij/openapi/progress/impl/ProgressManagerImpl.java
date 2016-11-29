@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.util.Disposer;
@@ -71,7 +72,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  protected boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
+  public boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
     final long start = System.currentTimeMillis();
     final boolean result = super.runProcessWithProgressSynchronously(task, parentComponent);
     if (result) {
@@ -121,43 +122,51 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     TaskContainer action = new TaskContainer(task) {
       @Override
       public void run() {
-        boolean canceled = false;
+        boolean processCanceled = false;
+        Throwable exception = null;
+
         final long start = System.currentTimeMillis();
         try {
           ProgressManager.getInstance().runProcess(process, progressIndicator);
         }
         catch (ProcessCanceledException e) {
-          canceled = true;
+          processCanceled = true;
+        }
+        catch (Throwable e) {
+          exception = e;
         }
         final long end = System.currentTimeMillis();
-        final long time = end - start;
 
-        if (canceled || progressIndicator.isCanceled()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              task.onCancel();
-            }
-          }, modalityState);
-        }
-        else {
+        final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
+        final Throwable finalException = exception;
+
+        if (!finalCanceled) {
           final Task.NotificationInfo notificationInfo = task.notifyFinished();
+          final long time = end - start;
           if (notificationInfo != null && time > 5000) { // snow notification if process took more than 5 secs
             final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
             if (window == null || notificationInfo.isShowWhenFocused()) {
               systemNotify(notificationInfo);
             }
           }
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              task.onSuccess();
-            }
-          }, modalityState);
         }
+
+        ApplicationManager.getApplication().invokeLater(() -> finishTask(task, finalCanceled, finalException), modalityState);
       }
     };
 
     return ApplicationManager.getApplication().executeOnPooledThread(action);
+  }
+
+  @Override
+  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      throw new AssertionError("runInReadActionWithWriteActionPriority shouldn't be invoked from read action");
+    }
+    boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action);
+    if (!success) {
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
+    }
+    return success;
   }
 }

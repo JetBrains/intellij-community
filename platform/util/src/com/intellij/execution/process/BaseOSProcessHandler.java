@@ -26,6 +26,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
+import com.intellij.util.io.BaseOutputReader.Options;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,13 @@ import java.util.concurrent.TimeUnit;
 
 public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance(BaseOSProcessHandler.class);
+
+  private static final Options ADAPTIVE_NON_BLOCKING = new Options() {
+    @Override
+    public BaseDataReader.SleepingPolicy policy() {
+      return new BaseDataReader.AdaptiveSleepingPolicy();
+    }
+  };
 
   protected final Process myProcess;
   protected final String myCommandLine;
@@ -66,8 +74,8 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
    * @param task a task to run
    */
   @NotNull
-  protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
-    return AppExecutorUtil.getAppExecutorService().submit(task);
+  protected Future<?> executeOnPooledThread(@NotNull final Runnable task) {
+    return ProcessIOExecutorService.INSTANCE.submit(task);
   }
 
   @Override
@@ -81,17 +89,31 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return myProcess;
   }
 
+  /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 18) */
   protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() {
     return false;
   }
 
-  /**
-   * Override this method to read process output and error streams in blocking mode
-   *
-   * @return true to read non-blocking but sleeping, false for blocking read
-   */
+  /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 18) */
   protected boolean useNonBlockingRead() {
     return !Registry.is("output.reader.blocking.mode", false);
+  }
+
+  /**
+   * Override this method to fine-tune {@link BaseOutputReader} behavior.
+   */
+  @NotNull
+  @SuppressWarnings("deprecation")
+  protected Options readerOptions() {
+    if (!useNonBlockingRead()) {
+      return Options.BLOCKING;
+    }
+    else if (useAdaptiveSleepingPolicyWhenReadingOutput()) {
+      return ADAPTIVE_NON_BLOCKING;
+    }
+    else {
+      return Options.NON_BLOCKING;
+    }
   }
 
   protected boolean processHasSeparateErrorStream() {
@@ -108,8 +130,9 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          final BaseDataReader stdOutReader = createOutputDataReader(getPolicy());
-          final BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader(getPolicy()) : null;
+          Options options = readerOptions();
+          @SuppressWarnings("deprecation") final BaseDataReader stdOutReader = createOutputDataReader(options.policy());
+          @SuppressWarnings("deprecation") final BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader(options.policy()) : null;
 
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
@@ -140,25 +163,24 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     super.startNotify();
   }
 
-  @NotNull
-  private BaseDataReader.SleepingPolicy getPolicy() {
-    if (useNonBlockingRead()) {
-      return useAdaptiveSleepingPolicyWhenReadingOutput() ? new BaseDataReader.AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
-    }
-    else {
-      //use blocking read policy
-      return BaseDataReader.SleepingPolicy.BLOCKING;
-    }
+  /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 18) */
+  protected BaseDataReader createErrorDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
+    return createErrorDataReader();
+  }
+
+  /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 18) */
+  protected BaseDataReader createOutputDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
+    return createOutputDataReader();
   }
 
   @NotNull
-  protected BaseDataReader createErrorDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy, "error stream of " + myPresentableName);
+  protected BaseDataReader createErrorDataReader() {
+    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, readerOptions(), "error stream of " + myPresentableName);
   }
 
   @NotNull
-  protected BaseDataReader createOutputDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy, "output stream of " + myPresentableName);
+  protected BaseDataReader createOutputDataReader() {
+    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, readerOptions(), "output stream of " + myPresentableName);
   }
 
   protected void onOSProcessTerminated(final int exitCode) {
@@ -177,18 +199,9 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
 
   @NotNull
   private Reader createInputStreamReader(@NotNull InputStream streamToRead) {
-    Charset charset = charsetNotNull();
-    return new BaseInputStreamReader(streamToRead, charset);
-  }
-
-  @NotNull
-  private Charset charsetNotNull() {
     Charset charset = getCharset();
-    if (charset == null) {
-      // use default charset
-      charset = Charset.defaultCharset();
-    }
-    return charset;
+    if (charset == null) charset = Charset.defaultCharset();
+    return new BaseInputStreamReader(streamToRead, charset);
   }
 
   @Override
@@ -250,8 +263,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   public static class ExecutorServiceHolder {
-    /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 16) */
-    @Deprecated
+    /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 17) */
     public static Future<?> submit(@NotNull Runnable task) {
       LOG.warn("Deprecated method. Please use com.intellij.execution.process.BaseOSProcessHandler.executeTask() instead", new Throwable());
       return AppExecutorUtil.getAppExecutorService().submit(task);
@@ -261,9 +273,9 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   private class SimpleOutputReader extends BaseOutputReader {
     private final Key myProcessOutputType;
 
-    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy, @NotNull String presentableName) {
-      super(reader, sleepingPolicy);
-      myProcessOutputType = processOutputType;
+    private SimpleOutputReader(Reader reader, Key outputType, Options options, @NotNull String presentableName) {
+      super(reader, options);
+      myProcessOutputType = outputType;
       start(presentableName);
     }
 

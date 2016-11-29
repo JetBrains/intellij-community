@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class OverriderUsageInfo extends UsageInfo {
+public class OverriderUsageInfo extends UsageInfo implements OverriderMethodUsageInfo<PsiMethod> {
   private final PsiMethod myBaseMethod;
   private final boolean myToInsertArgs;
   private final boolean myToCatchExceptions;
@@ -44,6 +44,7 @@ public class OverriderUsageInfo extends UsageInfo {
     return myBaseMethod;
   }
 
+  @Override
   public PsiMethod getOverridingMethod() {
     return myOverridingMethod;
   }

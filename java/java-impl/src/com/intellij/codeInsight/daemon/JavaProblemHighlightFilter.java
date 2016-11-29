@@ -28,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
 public class JavaProblemHighlightFilter extends ProblemHighlightFilter {
   @Override
   public boolean shouldHighlight(@NotNull PsiFile psiFile) {
-    return psiFile.getFileType() != JavaFileType.INSTANCE || !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile) || (psiFile.getViewProvider().getFileType() ==  ScratchFileType.INSTANCE);
+    return psiFile.getFileType() != JavaFileType.INSTANCE ||
+           !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile) ||
+           psiFile.getViewProvider().getFileType() == ScratchFileType.INSTANCE;
   }
 
   @Override

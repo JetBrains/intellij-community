@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +47,8 @@ public class HelpManagerImpl extends HelpManager {
   private WeakReference<IdeaHelpBroker> myBrokerReference = null;
 
   public void invokeHelp(@Nullable String id) {
+    id = StringUtil.notNullize(id, "top");
+    
     UsageTrigger.trigger("ide.help." + id);
 
     if (MacHelpUtil.isApplicable() && MacHelpUtil.invokeHelp(id)) {
@@ -57,23 +60,28 @@ public class HelpManagerImpl extends HelpManager {
       HelpSet set = createHelpSet();
       if (set != null) {
         broker = new IdeaHelpBroker(set);
-        myBrokerReference = new WeakReference<IdeaHelpBroker>(broker);
+        myBrokerReference = new WeakReference<>(broker);
       }
     }
 
     if (broker == null) {
       ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-      String url = info.getWebHelpUrl() + "?";
-      if (PlatformUtils.isCLion()) {
-        url += "Keyword=" + id;
-        url += "&ProductVersion=" + info.getMajorVersion() + "." + info.getMinorVersion();
-        
-        if (info.isEAP()) {
-          url += "&EAP"; 
-        }
-      } else {
-        url += id;
+      String minorVersion = info.getMinorVersion();
+      int dot = minorVersion.indexOf('.');
+      if (dot != -1) {
+        minorVersion = minorVersion.substring(0, dot);
       }
+      String productVersion = info.getMajorVersion() + "." + minorVersion;
+
+      String url = info.getWebHelpUrl() + "/" + productVersion + "/?" + id;
+      
+      if (PlatformUtils.isJetBrainsProduct()) {
+        String productCode = info.getBuild().getProductCode();
+        if(!StringUtil.isEmpty(productCode)) {
+          url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=" + productCode + "&utm_content=" + productVersion;
+        }
+      }
+
       BrowserUtil.browse(url);
       return;
     }
@@ -81,14 +89,12 @@ public class HelpManagerImpl extends HelpManager {
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     broker.setActivationWindow(activeWindow);
 
-    if (id != null) {
-      try {
-        broker.setCurrentID(id);
-      }
-      catch (BadIDException e) {
-        Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
-        return;
-      }
+    try {
+      broker.setCurrentID(id);
+    }
+    catch (BadIDException e) {
+      Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
+      return;
     }
     broker.setDisplayed(true);
   }

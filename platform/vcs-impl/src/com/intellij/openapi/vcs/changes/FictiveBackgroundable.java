@@ -20,28 +20,29 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class FictiveBackgroundable extends Task.Backgroundable {
-  private final Waiter myWaiter;
-  private final ModalityState myState;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
-  FictiveBackgroundable(@Nullable final Project project, @NotNull final Runnable runnable, final boolean cancellable, final String title,
-                        final ModalityState state) {
+class FictiveBackgroundable extends Task.Backgroundable {
+  @NotNull private final Waiter myWaiter;
+  @Nullable private final ModalityState myState;
+
+  FictiveBackgroundable(@NotNull Project project,
+                        @NotNull Runnable runnable,
+                        String title,
+                        boolean cancellable,
+                        @Nullable ModalityState state) {
     super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
     myState = state;
-    myWaiter = new Waiter(project, runnable, state, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
+    myWaiter = new Waiter(project, runnable, title, cancellable);
   }
 
-  public void run(@NotNull final ProgressIndicator indicator) {
+  public void run(@NotNull ProgressIndicator indicator) {
     myWaiter.run(indicator);
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-        public void run() {
-          myWaiter.onSuccess();
-        }
-      }, myState == null ? ModalityState.NON_MODAL : myState, myProject);
+    runOrInvokeLaterAboveProgress(() -> myWaiter.onSuccess(), notNull(myState, ModalityState.NON_MODAL), myProject);
   }
 
   @Override

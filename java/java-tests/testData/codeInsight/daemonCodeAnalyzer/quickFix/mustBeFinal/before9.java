@@ -1,4 +1,4 @@
-// "Copy 'i' to temp final variable" "false"
+// "Copy 'i' to final temp variable" "false"
 interface I {
     int f();
 }

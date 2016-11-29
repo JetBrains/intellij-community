@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -88,7 +89,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       return;
     }
 
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     final HighlightDisplayKey unusedDefKey = HighlightDisplayKey.find(GroovyUnusedDeclarationInspection.SHORT_NAME);
     final boolean deadCodeEnabled = profile.isToolEnabled(unusedDefKey, myFile);
     final UnusedDeclarationInspectionBase deadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
@@ -109,14 +110,18 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       }
     };
 
-    final List<HighlightInfo> unusedDeclarations = new ArrayList<HighlightInfo>();
+    final List<HighlightInfo> unusedDeclarations = new ArrayList<>();
 
-    final Map<GrParameter, Boolean> usedParams = new HashMap<GrParameter, Boolean>();
+    final Map<GrParameter, Boolean> usedParams = new HashMap<>();
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        if (element instanceof GrReferenceElement) {
-          for (GroovyResolveResult result : ((GrReferenceElement)element).multiResolve(true)) {
+        if (element instanceof GrReferenceExpression && !((GrReferenceElement)element).isQualified()) {
+          GroovyResolveResult[] results = ((GrReferenceExpression)element).multiResolve(false);
+          if (results.length == 0) {
+            results = ((GrReferenceExpression)element).multiResolve(true);
+          }
+          for (GroovyResolveResult result : results) {
             PsiElement resolved = result.getElement();
             if (resolved instanceof GrParameter && resolved.getContainingFile() == myFile) {
               usedParams.put((GrParameter)resolved, Boolean.TRUE);
@@ -166,7 +171,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         super.visitElement(element);
       }
     });
-    final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(PsiUtil.getValidImportStatements(myFile));
+    final Set<GrImportStatement> unusedImports = new HashSet<>(PsiUtil.getValidImportStatements(myFile));
     unusedImports.removeAll(GroovyImportUtil.findUsedImports(myFile));
     myUnusedImports = unusedImports;
 
@@ -235,7 +240,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     }
 
     AnnotationHolder annotationHolder = new AnnotationHolderImpl(new AnnotationSession(myFile));
-    List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myUnusedDeclarations);
+    List<HighlightInfo> infos = new ArrayList<>(myUnusedDeclarations);
     for (GrImportStatement unusedImport : myUnusedImports) {
       Annotation annotation = annotationHolder.createWarningAnnotation(calculateRangeToUse(unusedImport), GroovyInspectionBundle.message("unused.import"));
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);

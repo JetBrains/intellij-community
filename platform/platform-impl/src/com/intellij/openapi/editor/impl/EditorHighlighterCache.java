@@ -44,7 +44,7 @@ public class EditorHighlighterCache {
   }
 
   public static void rememberEditorHighlighterForCachesOptimization(Document document, @NotNull final EditorHighlighter highlighter) {
-    document.putUserData(ourSomeEditorSyntaxHighlighter, new WeakReference<EditorHighlighter>(highlighter));
+    document.putUserData(ourSomeEditorSyntaxHighlighter, new WeakReference<>(highlighter));
   }
 
   @Nullable

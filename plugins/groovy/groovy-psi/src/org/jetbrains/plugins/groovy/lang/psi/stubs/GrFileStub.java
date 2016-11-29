@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -27,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
  * @author ilyas
  */
 public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
-  private final String[] myAnnotations;
+  private final @NotNull String[] myAnnotations;
   private final StringRef myName;
   private final boolean isScript;
 
@@ -38,18 +39,20 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
     final GrPackageDefinition definition = file.getPackageDefinition();
     if (definition != null) {
       myAnnotations = GrStubUtils.getAnnotationNames(definition);
-    } else {
+    }
+    else {
       myAnnotations = ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }
 
-  public GrFileStub(StringRef name, boolean isScript, String[] annotations) {
+  public GrFileStub(StringRef name, boolean isScript, @NotNull String[] annotations) {
     super(null);
     myName = name;
     this.isScript = isScript;
     myAnnotations = annotations;
   }
 
+  @NotNull
   @Override
   public IStubFileElementType getType() {
     return GroovyParserDefinition.GROOVY_FILE;
@@ -63,6 +66,7 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
     return isScript;
   }
 
+  @NotNull
   public String[] getAnnotations() {
     return myAnnotations;
   }

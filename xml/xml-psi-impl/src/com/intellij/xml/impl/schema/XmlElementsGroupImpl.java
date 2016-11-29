@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class XmlElementsGroupImpl extends XmlElementsGroupBase {
 
-  private final static Map<String, XmlElementsGroup.Type> TYPES = new HashMap<String, XmlElementsGroup.Type>();
+  private final static Map<String, XmlElementsGroup.Type> TYPES = new HashMap<>();
   static {
     TYPES.put("sequence", XmlElementsGroup.Type.SEQUENCE);
     TYPES.put("choice", XmlElementsGroup.Type.CHOICE);
@@ -37,7 +37,7 @@ public class XmlElementsGroupImpl extends XmlElementsGroupBase {
     TYPES.put("group", XmlElementsGroup.Type.GROUP);
   }
 
-  private final List<XmlElementsGroup> mySubGroups = new ArrayList<XmlElementsGroup>();
+  private final List<XmlElementsGroup> mySubGroups = new ArrayList<>();
 
   public XmlElementsGroupImpl(XmlTag tag, XmlElementsGroup parent, XmlTag ref) {
     super(tag, parent, ref);

@@ -19,22 +19,16 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -72,48 +66,25 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
 
     //ensure fork when whole project is used
     persistentData.setScope(TestSearchScope.WHOLE_PROJECT);
-    final RegistryValue smRunnerProperty = Registry.get("junit_sm");
-    final boolean oldValue = smRunnerProperty.asBoolean();
-    try {
-      //check old format
-      smRunnerProperty.setValue(false);
-      aPackage.createSearchingForTestsTask().startSearch();
-      workingDirsFile = aPackage.getWorkingDirsFile();
-      assertNotNull(workingDirsFile);
-      String file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
-      assertEquals("p\n" +
-                   "MODULE_1\n" +
-                   "mod1\n" +
-                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
-                   "1\n" +
-                   "p.T1\n" +
-                   "MODULE_2\n" +
-                   "mod2\n" +
-                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
-                   "1\n" +
-                   "p.T2\n", file);
-
-      //check sm runner
-      smRunnerProperty.setValue(true);
-      aPackage.createSearchingForTestsTask().startSearch();
-      workingDirsFile = aPackage.getWorkingDirsFile();
-      assertNotNull(workingDirsFile);
-      file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
-      assertEquals("p\n" +
-                   "MODULE_1\n" +
-                   "mod1\n" +
-                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
-                   "1\n" +
-                   "p.T1\n" +
-                   "MODULE_2\n" +
-                   "mod2\n" +
-                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
-                   "1\n" +
-                   "p.T2\n", file);
-    }
-    finally {
-      smRunnerProperty.setValue(oldValue);
-    }
+    aPackage.createSearchingForTestsTask().startSearch();
+    workingDirsFile = aPackage.getWorkingDirsFile();
+    assertNotNull(workingDirsFile);
+    String file;
+    aPackage.createSearchingForTestsTask().startSearch();
+    workingDirsFile = aPackage.getWorkingDirsFile();
+    assertNotNull(workingDirsFile);
+    file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
+    assertEquals("p\n" +
+                 "MODULE_1\n" +
+                 "mod1\n" +
+                 "CLASSPATH\n" +
+                 "1\n" +
+                 "p.T1\n" +
+                 "MODULE_2\n" +
+                 "mod2\n" +
+                 "CLASSPATH\n" +
+                 "1\n" +
+                 "p.T2", file);
   }
 
   public void testNoWorkingDirsFileWhenOnlyOneModuleExist() throws Exception {
@@ -156,16 +127,14 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
     fileContent = FileUtil.toSystemIndependentName(fileContent);
     fileContent = replace(fileContent, ModuleRootManager.getInstance(mod1).getContentRoots()[0].getPath(), "MODULE_1");
     fileContent = replace(fileContent, ModuleRootManager.getInstance(mod2).getContentRoots()[0].getPath(), "MODULE_2");
-    fileContent = replace(fileContent, PathUtil.getJarPathForClass(ServiceMessageTypes.class), "SERVICE_MESSAGES");
-    fileContent = fileContent.replaceAll(FileUtil.toSystemIndependentName(PathUtil.getJarPathForClass(JUnitStarter.class)) + File.pathSeparator, "");
-    fileContent = fileContent.replaceAll(FileUtil.toSystemIndependentName(JavaSdkUtil.getIdeaRtJarPath()) + File.pathSeparator, "");
-    fileContent = replace(fileContent, PathManager.getHomePath() + "/community", "IDEA_HOME");
-    fileContent = replace(fileContent, PathManager.getHomePath(), "IDEA_HOME");
-    fileContent = fileContent.replaceAll(File.pathSeparator, ";");
-    return StringUtil.convertLineSeparators(fileContent);
+    fileContent = StringUtil.convertLineSeparators(fileContent);
+    final String[] lines = fileContent.split("\n");
+    lines[3] = "CLASSPATH";
+    lines[8] = "CLASSPATH";
+    return StringUtil.join(lines, "\n");
   }
 
   private static String replace(String fileContent, String regex, String home) {
-    return fileContent.replaceAll(FileUtil.toSystemIndependentName(regex), home);
+    return fileContent.replaceAll(StringUtil.escapePattern(FileUtil.toSystemIndependentName(regex)), home);
   }
 }

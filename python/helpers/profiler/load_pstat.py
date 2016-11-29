@@ -1,25 +1,26 @@
-import sys
 import pstats
+import sys
 
-from prof_util import statsToResponse
-
-from _prof_imports import TSerialization
-from _prof_imports import TBinaryProtocol
-from _prof_imports import ProfilerResponse
 from _prof_imports import IS_PY3K
-
+from _prof_imports import ProfilerResponse
+from _prof_imports import TBinaryProtocolFactory
+from _prof_imports import serialize
+from prof_util import stats_to_response
 
 if __name__ == '__main__':
 
-    file_name = sys.argv[1]
-
-    stats = pstats.Stats(file_name)
+    filename = sys.argv[1]
 
     m = ProfilerResponse(id=0)
 
-    statsToResponse(stats.stats, m)
+    if filename.endswith('.prof'):
+        import vmprof_profiler
+        vmprof_profiler.tree_stats_to_response(filename, m)
+    else:
+        stats = pstats.Stats(filename)
+        stats_to_response(stats.stats, m)
 
-    data = TSerialization.serialize(m, TBinaryProtocol.TBinaryProtocolFactory())
+    data = serialize(m, TBinaryProtocolFactory())
 
     # setup stdout to write binary data to it
     if IS_PY3K:

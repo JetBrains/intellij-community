@@ -18,11 +18,12 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -65,18 +66,16 @@ public abstract class CachedEvaluator {
   protected Cache initEvaluatorAndChildrenExpression(final Project project) {
     final Cache cache = new Cache();
     try {
-      final PsiClass contextClass = DebuggerUtils.findClass(getClassName(), project, GlobalSearchScope.allScope(project));
-      if(contextClass == null) {
+      Pair<PsiElement, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(getClassName(), project);
+      if (psiClassAndType.first == null) {
         throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
       }
-      final PsiType contextType = DebuggerUtils.getType(getClassName(), project);
       cache.myPsiChildrenExpression = null;
-      JavaCodeFragment codeFragment = myDefaultFragmentFactory.createCodeFragment(myReferenceExpression, contextClass, project);
-      codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
-      codeFragment.setThisType(contextType);
+      JavaCodeFragment codeFragment = myDefaultFragmentFactory.createCodeFragment(myReferenceExpression, psiClassAndType.first, project);
+      codeFragment.setThisType(psiClassAndType.second);
       DebuggerUtils.checkSyntax(codeFragment);
-      cache.myPsiChildrenExpression = ((PsiExpressionCodeFragment)codeFragment).getExpression();
-      cache.myEvaluator = myDefaultFragmentFactory.getEvaluatorBuilder().build(cache.myPsiChildrenExpression, null);
+      cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment ? ((PsiExpressionCodeFragment)codeFragment).getExpression() : null;
+      cache.myEvaluator = myDefaultFragmentFactory.getEvaluatorBuilder().build(codeFragment, null);
     }
     catch (EvaluateException e) {
       cache.myException = e;
@@ -89,11 +88,7 @@ public abstract class CachedEvaluator {
   protected ExpressionEvaluator getEvaluator(final Project project) throws EvaluateException {
     Cache cache = myCache.get();
     if(cache == null) {
-      cache = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<Cache>() {
-        public Cache compute() {
-          return initEvaluatorAndChildrenExpression(project);
-        }
-      });
+      cache = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> initEvaluatorAndChildrenExpression(project));
     }
 
     if(cache.myException != null) {
@@ -103,9 +98,10 @@ public abstract class CachedEvaluator {
     return cache.myEvaluator;
   }
 
+  @Nullable
   protected PsiExpression getPsiExpression(final Project project) {
     Cache cache = myCache.get();
-    if(cache == null) {
+    if (cache == null) {
       cache = initEvaluatorAndChildrenExpression(project);
     }
 

@@ -122,7 +122,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
   private void assertArchetypeExists(String archetypeId) {
     Set<MavenArchetype> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
-    List<String> actualNames = new ArrayList<String>();
+    List<String> actualNames = new ArrayList<>();
     for (MavenArchetype each : achetypes) {
       actualNames.add(each.groupId + ":" + each.artifactId + ":" + each.version);
     }

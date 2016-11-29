@@ -76,20 +76,13 @@ public class CvsCheckoutProvider implements CheckoutProvider {
   public void refreshAfterCheckout(final Listener listener, final CvsElement[] selectedElements, final File checkoutDirectory,
                                    final boolean useAlternateCheckoutPath) {
 
-    VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            for (CvsElement element : selectedElements) {
-              final File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
-              listener.directoryCheckedOut(path, CvsVcs2.getKey());
-            }
-            listener.checkoutCompleted();
-          }
-        });
+    VirtualFileManager.getInstance().asyncRefresh(() -> ApplicationManager.getApplication().invokeLater(() -> {
+      for (CvsElement element : selectedElements) {
+        final File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
+        listener.directoryCheckedOut(path, CvsVcs2.getKey());
       }
-    });
+      listener.checkoutCompleted();
+    }));
   }
 
   private static String[] collectCheckoutPaths(final CvsElement[] mySelectedElements) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,12 +83,6 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Override
   public String getId() {
     return "preferences.startup.tasks";
-  }
-
-  @Nullable
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   @Nls
@@ -240,28 +234,18 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           }
         };
         final List<ConfigurationType> factoriesList = ContainerUtil.filter(Arrays.asList(factories), filter);
-        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(factoriesList, "", new Consumer<ConfigurationFactory>() {
-          @Override
-          public void consume(final ConfigurationFactory factory) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
-                if (dialog.showAndGet()) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
-                      if (configuration != null) {
-                        addConfiguration(configuration);
-                      }
-                    }
-                  }, ModalityState.any(), project.getDisposed());
-                }
-              }
-            }, ModalityState.any(), project.getDisposed());
-          }
-        }, null, EmptyRunnable.getInstance(), false);
+        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(factoriesList, "",
+                                                                        factory -> ApplicationManager.getApplication().invokeLater(() -> {
+                                                                          final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
+                                                                          if (dialog.showAndGet()) {
+                                                                            ApplicationManager.getApplication().invokeLater(() -> {
+                                                                              RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
+                                                                              if (configuration != null) {
+                                                                                addConfiguration(configuration);
+                                                                              }
+                                                                            }, ModalityState.any(), project.getDisposed());
+                                                                          }
+                                                                        }, ModalityState.any(), project.getDisposed()), null, EmptyRunnable.getInstance(), false);
         showPopup(button, popup);
       }
 
@@ -292,7 +276,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   private void selectAndAddConfiguration(final AnActionButton button) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = new ArrayList<ChooseRunConfigurationPopup.ItemWrapper>();
+    final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = new ArrayList<>();
     wrappers.add(createNewWrapper(button));
     final ChooseRunConfigurationPopup.ItemWrapper[] allSettings =
       ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
@@ -301,7 +285,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           return executor;
         }
       }, false);
-    final Set<RunnerAndConfigurationSettings> existing = new HashSet<RunnerAndConfigurationSettings>(myModel.getAllConfigurations());
+    final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
         final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)setting.getValue();
@@ -313,7 +297,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     final JBList list = new JBList(wrappers);
     list.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
           setIcon(((ChooseRunConfigurationPopup.ItemWrapper)value).getIcon());
           append(((ChooseRunConfigurationPopup.ItemWrapper)value).getText());
@@ -322,18 +306,15 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     });
     final JBPopup popup = JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          final int index = list.getSelectedIndex();
-          if (index < 0) return;
-          final ChooseRunConfigurationPopup.ItemWrapper at = (ChooseRunConfigurationPopup.ItemWrapper)list.getModel().getElementAt(index);
-          if (at.getValue() instanceof RunnerAndConfigurationSettings) {
-            final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
-            addConfiguration(added);
-          } else {
-            at.perform(myProject, executor, button.getDataContext());
-          }
+      .setItemChoosenCallback(() -> {
+        final int index = list.getSelectedIndex();
+        if (index < 0) return;
+        final ChooseRunConfigurationPopup.ItemWrapper at = (ChooseRunConfigurationPopup.ItemWrapper)list.getModel().getElementAt(index);
+        if (at.getValue() instanceof RunnerAndConfigurationSettings) {
+          final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
+          addConfiguration(added);
+        } else {
+          at.perform(myProject, executor, button.getDataContext());
         }
       })
       .createPopup();
@@ -353,8 +334,8 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Override
   public boolean isModified() {
     final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
-    final Set<RunnerAndConfigurationSettings> shared = new HashSet<RunnerAndConfigurationSettings>(projectStartupTaskManager.getSharedConfigurations());
-    final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(shared);
+    final Set<RunnerAndConfigurationSettings> shared = new HashSet<>(projectStartupTaskManager.getSharedConfigurations());
+    final List<RunnerAndConfigurationSettings> list = new ArrayList<>(shared);
     list.addAll(projectStartupTaskManager.getLocalConfigurations());
     Collections.sort(list, ProjectStartupTasksTableModel.RunnerAndConfigurationSettingsComparator.getInstance());
 
@@ -365,8 +346,8 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void apply() throws ConfigurationException {
-    final List<RunnerAndConfigurationSettings> shared = new ArrayList<RunnerAndConfigurationSettings>();
-    final List<RunnerAndConfigurationSettings> local = new ArrayList<RunnerAndConfigurationSettings>();
+    final List<RunnerAndConfigurationSettings> shared = new ArrayList<>();
+    final List<RunnerAndConfigurationSettings> local = new ArrayList<>();
 
     final Set<RunnerAndConfigurationSettings> sharedSet = myModel.getSharedConfigurations();
     final List<RunnerAndConfigurationSettings> allConfigurations = myModel.getAllConfigurations();

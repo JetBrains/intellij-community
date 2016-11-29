@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class JDOMExternalizerUtil {
 
   @Nullable
   public static String readField(@NotNull Element parent, @NotNull @NonNls String fieldName) {
-    for (Element element : JDOMUtil.getChildren(parent, "option")) {
+    for (Element element : parent.getChildren("option")) {
       String childName = element.getAttributeValue("name");
       if (Comparing.strEqual(childName, fieldName)) {
         return element.getAttributeValue("value");
@@ -55,7 +55,7 @@ public class JDOMExternalizerUtil {
   }
 
   public static Element getOption(@NotNull Element parent, @NotNull @NonNls String fieldName) {
-    for (Element element : JDOMUtil.getChildren(parent, "option")) {
+    for (Element element : parent.getChildren("option")) {
       String childName = element.getAttributeValue("name");
       if (Comparing.strEqual(childName, fieldName)) {
         return element;

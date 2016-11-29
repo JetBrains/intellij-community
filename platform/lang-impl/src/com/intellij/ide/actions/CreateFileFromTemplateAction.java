@@ -21,8 +21,6 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,14 +44,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
   }
 
   protected PsiFile createFileFromTemplate(final String name, final FileTemplate template, final PsiDirectory dir) {
-    final PsiFile[] file = new PsiFile[1];
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        file[0] = createFileFromTemplate(name, template, dir, getDefaultTemplateProperty(), true);
-      }
-    });
-    return file[0];
+    return createFileFromTemplate(name, template, dir, getDefaultTemplateProperty(), true);
   }
 
   @Nullable

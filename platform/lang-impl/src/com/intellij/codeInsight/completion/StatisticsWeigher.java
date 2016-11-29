@@ -88,13 +88,8 @@ public class StatisticsWeigher extends CompletionWeigher {
       List<LookupElement> initialList = getInitialNoStatElements(source, context);
 
       //noinspection unchecked
-      final THashSet<LookupElement> initialSet = new THashSet<LookupElement>(initialList, TObjectHashingStrategy.IDENTITY);
-      final Condition<LookupElement> notInInitialList = new Condition<LookupElement>() {
-        @Override
-        public boolean value(LookupElement element) {
-          return !initialSet.contains(element);
-        }
-      };
+      final THashSet<LookupElement> initialSet = new THashSet<>(initialList, TObjectHashingStrategy.IDENTITY);
+      final Condition<LookupElement> notInInitialList = element -> !initialSet.contains(element);
 
       return ContainerUtil.concat(initialList, new Iterable<LookupElement>() {
         @Override
@@ -110,7 +105,7 @@ public class StatisticsWeigher extends CompletionWeigher {
     }
 
     private List<LookupElement> getInitialNoStatElements(Iterable<LookupElement> source, ProcessingContext context) {
-      List<LookupElement> initialList = new ArrayList<LookupElement>();
+      List<LookupElement> initialList = new ArrayList<>();
       for (LookupElement next : myNext.classify(source, context)) {
         if (myNoStats.contains(next)) {
           initialList.add(next);
@@ -123,12 +118,12 @@ public class StatisticsWeigher extends CompletionWeigher {
     }
 
     private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<LookupElement> source, ProcessingContext context) {
-      TreeMap<Integer, List<LookupElement>> map = new TreeMap<Integer, List<LookupElement>>();
+      TreeMap<Integer, List<LookupElement>> map = new TreeMap<>();
       for (LookupElement element : source) {
         final int weight = getWeight(element, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)).getScalar();
         List<LookupElement> list = map.get(weight);
         if (list == null) {
-          map.put(weight, list = new SmartList<LookupElement>());
+          map.put(weight, list = new SmartList<>());
         }
         list.add(element);
       }
@@ -159,12 +154,7 @@ public class StatisticsWeigher extends CompletionWeigher {
     @Override
     public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull final ProcessingContext context) {
       checkPrefixChanged(context);
-      return ContainerUtil.map(items, new Function<LookupElement, Pair<LookupElement, Object>>() {
-        @Override
-        public Pair<LookupElement, Object> fun(LookupElement lookupElement) {
-          return new Pair<LookupElement, Object>(lookupElement, getWeight(lookupElement, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)));
-        }
-      });
+      return ContainerUtil.map(items, lookupElement -> new Pair<LookupElement, Object>(lookupElement, getWeight(lookupElement, context.get(CompletionLookupArranger.WEIGHING_CONTEXT))));
     }
 
     @Override
@@ -216,7 +206,7 @@ public class StatisticsWeigher extends CompletionWeigher {
    * @param forWriting controls whether this stat-info will be used for incrementing usage count or for its retrieval (for sorting)
    */
   public static StatisticsInfo composeStatsWithPrefix(StatisticsInfo info, final String fullPrefix, boolean forWriting) {
-    ArrayList<StatisticsInfo> infos = new ArrayList<StatisticsInfo>((fullPrefix.length() + 3) * info.getConjuncts().size());
+    ArrayList<StatisticsInfo> infos = new ArrayList<>((fullPrefix.length() + 3) * info.getConjuncts().size());
     for (StatisticsInfo conjunct : info.getConjuncts()) {
       if (forWriting) {
         // some completion contributors may need pure statistical information to speed up searching for frequently chosen items

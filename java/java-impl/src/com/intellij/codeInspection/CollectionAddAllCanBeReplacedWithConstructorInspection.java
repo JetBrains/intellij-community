@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.performance.CollectionsListSettings;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -196,8 +196,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
         return Pair.create(true, null);
       }
       for (PsiAssignmentExpression expression : PsiTreeUtil.findChildrenOfType(currentStatement, PsiAssignmentExpression.class)) {
-        final PsiExpression lExpression = expression.getLExpression();
-        if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).isReferenceTo(localVariable)) {
+        if (ExpressionUtils.isReferenceTo(expression.getLExpression(), localVariable)) {
           final PsiExpression rExpression = expression.getRExpression();
           final boolean isValid = checkLocalVariableAssignmentOrInitializer(rExpression);
           return Pair.create(isValid, isValid ? (PsiNewExpression)rExpression : null);
@@ -207,7 +206,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     return Pair.create(true, null);
   }
 
-  private boolean isAddAllReplaceable(final PsiExpression addAllExpression, PsiNewExpression newExpression) {
+  private static boolean isAddAllReplaceable(final PsiExpression addAllExpression, PsiNewExpression newExpression) {
     final boolean[] isReplaceable = new boolean[]{true};
     final PsiFile newExpressionContainingFile = newExpression.getContainingFile();
     final TextRange newExpressionTextRange = newExpression.getTextRange();
@@ -239,13 +238,6 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       myAssignmentExpression = smartPointerManager.createSmartPsiElementPointer(assignmentExpression);
     }
 
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @NotNull
     @Override
     public String getFamilyName() {
@@ -255,12 +247,8 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression methodCallExpression = myMethodCallExpression.getElement();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(methodCallExpression)) {
-        return;
-      }
 
       LOG.assertTrue(methodCallExpression != null);
-      if (!CodeInsightUtil.preparePsiElementsForWrite(methodCallExpression.getContainingFile())) return;
 
       final PsiElement parameter = methodCallExpression.getArgumentList().getExpressions()[0].copy();
       final PsiNewExpression element = myAssignmentExpression.getElement();
@@ -275,17 +263,11 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
   private static List<PsiElement> extractReferencedElementsFromParameter(PsiMethodCallExpression expression) {
     final PsiExpression psiExpression = expression.getArgumentList().getExpressions()[0];
     final Collection<PsiReferenceExpression> references =
-      new ArrayList<PsiReferenceExpression>(PsiTreeUtil.findChildrenOfType(psiExpression, PsiReferenceExpression.class));
+      new ArrayList<>(PsiTreeUtil.findChildrenOfType(psiExpression, PsiReferenceExpression.class));
     if (psiExpression instanceof PsiReferenceExpression) {
       references.add((PsiReferenceExpression)psiExpression);
     }
-    return ContainerUtil.mapNotNull(references, new NullableFunction<PsiReferenceExpression, PsiElement>() {
-      @Nullable
-      @Override
-      public PsiElement fun(PsiReferenceExpression expression) {
-        return expression.resolve();
-      }
-    });
+    return ContainerUtil.mapNotNull(references, (NullableFunction<PsiReferenceExpression, PsiElement>)expression1 -> expression1.resolve());
   }
 
   private static boolean isReferenceToOneOf(PsiReferenceExpression reference, List<PsiElement> elements) {

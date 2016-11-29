@@ -49,7 +49,7 @@ public class SelectPropertiesStep extends ModuleWizardStep {
   private MavenEnvironmentForm myEnvironmentForm;
   private MavenPropertiesPanel myMavenPropertiesPanel;
 
-  private Map<String, String> myAvailableProperties = new HashMap<String, String>();
+  private Map<String, String> myAvailableProperties = new HashMap<>();
 
   public SelectPropertiesStep(@Nullable Project project, MavenModuleBuilder builder) {
     myProjectOrNull = project;
@@ -74,7 +74,7 @@ public class SelectPropertiesStep extends ModuleWizardStep {
   public void updateStep() {
     MavenArchetype archetype = myBuilder.getArchetype();
 
-    Map<String, String> props = new LinkedHashMap<String, String>();
+    Map<String, String> props = new LinkedHashMap<>();
 
     MavenId projectId = myBuilder.getProjectId();
 

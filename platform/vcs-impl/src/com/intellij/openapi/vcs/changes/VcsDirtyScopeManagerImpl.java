@@ -72,12 +72,16 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myVcsManager.addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, new Runnable() {
       @Override
       public void run() {
+        boolean ready = false;
         synchronized (LOCK) {
           if (!myProject.isDisposed()) {
-            myReady = true;
+            myReady = ready = true;
           }
         }
-        markEverythingDirty();
+        if (ready) {
+          VcsDirtyScopeVfsListener.install(myProject);
+          markEverythingDirty();
+        }
       }
     });
   }
@@ -243,7 +247,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       scope.addDirtyData(dirs.get(key), files.get(key));
     }
 
-    return new VcsInvalidated(new ArrayList<VcsDirtyScope>(scopes.values()), dirt.isEverythingDirty());
+    return new VcsInvalidated(new ArrayList<>(scopes.values()), dirt.isEverythingDirty());
   }
 
   @NotNull

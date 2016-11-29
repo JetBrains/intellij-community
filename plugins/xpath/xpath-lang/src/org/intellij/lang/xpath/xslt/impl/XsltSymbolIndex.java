@@ -29,7 +29,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumDataDescriptor;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -78,7 +81,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
                 if (CharArrayUtil.indexOf(inputDataContentAsText, XsltSupport.XSLT_NS, 0) == -1) {
                   return Collections.emptyMap();
                 }
-                final HashMap<String, Kind> map = new HashMap<String, Kind>();
+                final HashMap<String, Kind> map = new HashMap<>();
                 NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
                     NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
                     int depth;
@@ -119,13 +122,13 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
     @NotNull
     @Override
     public DataExternalizer<Kind> getValueExternalizer() {
-        return new EnumDataDescriptor<Kind>(Kind.class);
+        return new EnumDataDescriptor<>(Kind.class);
     }
 
     @NotNull
     @Override
     public KeyDescriptor<String> getKeyDescriptor() {
-        return new EnumeratorStringDescriptor();
+        return EnumeratorStringDescriptor.INSTANCE;
     }
 
     @NotNull
@@ -201,7 +204,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         private final PsiManager myMgr;
         private final String myName;
 
-        private final Collection<NavigationItem> myResult = new ArrayList<NavigationItem>();
+        private final Collection<NavigationItem> myResult = new ArrayList<>();
 
         public SymbolCollector(String name, Project project, GlobalSearchScope scope) {
             myMgr = PsiManager.getInstance(project);

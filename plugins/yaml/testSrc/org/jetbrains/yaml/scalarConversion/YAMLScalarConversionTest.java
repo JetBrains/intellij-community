@@ -16,6 +16,7 @@
 package org.jetbrains.yaml.scalarConversion;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.ElementManipulator;
@@ -51,6 +52,10 @@ public class YAMLScalarConversionTest extends LightPlatformCodeInsightFixtureTes
   public void testSimpleTwoLines() {
     doTest(YAMLPlainTextImpl.class);
   }
+  
+  public void testRubyCode() {
+    doTest(YAMLPlainTextImpl.class);
+  }
 
   private void doTest(Class<? extends YAMLScalar> ...unsupportedClasses) {
     final PsiFile file = myFixture.configureByFile("sampleDocument.yml");
@@ -80,10 +85,12 @@ public class YAMLScalarConversionTest extends LightPlatformCodeInsightFixtureTes
       final ElementManipulator<YAMLScalar> manipulator = ElementManipulators.getManipulator(scalar);
       assertNotNull(manipulator);
 
-      final YAMLScalar newElement = manipulator.handleContentChange(scalar, text);
-      assertEquals(isUnsupported + ";" + newElement.getClass() + ";" + scalar.getClass(),
-                   isUnsupported, newElement.getClass() != scalar.getClass());
-      assertEquals("Failed at " + scalar.getClass() + ": ", text, newElement.getTextValue());
+      WriteCommandAction.runWriteCommandAction(getProject(), ()->{
+        final YAMLScalar newElement = manipulator.handleContentChange(scalar, text);
+        assertEquals(isUnsupported + ";" + newElement.getClass() + ";" + scalar.getClass(),
+                     isUnsupported, newElement.getClass() != scalar.getClass());
+        assertEquals("Failed at " + scalar.getClass() + " (became " + newElement.getClass() + "): ", text, newElement.getTextValue());
+      });
     }
   }
 }

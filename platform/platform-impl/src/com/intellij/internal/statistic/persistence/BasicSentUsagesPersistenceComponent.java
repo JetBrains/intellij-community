@@ -30,7 +30,7 @@ public class BasicSentUsagesPersistenceComponent extends SentUsagesPersistence {
     public BasicSentUsagesPersistenceComponent() {
     }
 
-    protected Map<GroupDescriptor, Set<UsageDescriptor>> mySentDescriptors = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
+    protected Map<GroupDescriptor, Set<UsageDescriptor>> mySentDescriptors = new HashMap<>();
     @NonNls
     private long mySentTime = 0;
 

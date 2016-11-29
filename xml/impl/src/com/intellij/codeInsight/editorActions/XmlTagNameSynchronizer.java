@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
@@ -69,9 +69,9 @@ import java.util.Set;
  */
 public class XmlTagNameSynchronizer extends CommandAdapter implements NamedComponent {
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
-  private static final Set<String> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE.getID(),
-                                                                           XMLLanguage.INSTANCE.getID(),
-                                                                           XHTMLLanguage.INSTANCE.getID());
+  private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
+                                                                             XMLLanguage.INSTANCE,
+                                                                             XHTMLLanguage.INSTANCE);
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
   private final FileDocumentManager myFileDocumentManager;
@@ -101,8 +101,10 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
     final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
     if (psiFile != null) {
       for (Language language : psiFile.getViewProvider().getLanguages()) {
-        if ( SUPPORTED_LANGUAGES.contains(language.getID()) ||
-             HtmlUtil.supportsXmlTypedHandlers(psiFile)) return language;
+        if ((ContainerUtil.find(SUPPORTED_LANGUAGES, language::isKindOf) != null || HtmlUtil.supportsXmlTypedHandlers(psiFile)) &&
+            !(language instanceof TemplateLanguage)) {
+          return language;
+        }
       }
     }
     return null;
@@ -119,12 +121,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
     if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return TagNameSynchronizer.EMPTY;
     final Editor[] editors = EditorFactory.getInstance().getEditors(document);
 
-    return ContainerUtil.mapNotNull(editors, new Function<Editor, TagNameSynchronizer>() {
-      @Override
-      public TagNameSynchronizer fun(Editor editor) {
-        return editor.getUserData(SYNCHRONIZER_KEY);
-      }
-    }, TagNameSynchronizer.EMPTY);
+    return ContainerUtil.mapNotNull(editors, editor -> editor.getUserData(SYNCHRONIZER_KEY), TagNameSynchronizer.EMPTY);
   }
 
   @Override
@@ -144,7 +141,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
 
     private final Editor myEditor;
     private State myState = State.INITIAL;
-    private final List<Couple<RangeMarker>> myMarkers = new SmartList<Couple<RangeMarker>>();
+    private final List<Couple<RangeMarker>> myMarkers = new SmartList<>();
 
     public TagNameSynchronizer(Editor editor, Project project, Language language) {
       myEditor = editor;
@@ -188,7 +185,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
         final PsiFile file = myDocumentManager.getPsiFile(document);
         if (file == null || myDocumentManager.getSynchronizer().isInSynchronization(document)) return;
 
-        final SmartList<RangeMarker> leaders = new SmartList<RangeMarker>();
+        final SmartList<RangeMarker> leaders = new SmartList<>();
         for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
           final RangeMarker leader = createTagNameMarker(caret);
           if (leader == null) {
@@ -297,27 +294,23 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
       myState = State.APPLYING;
 
       final Document document = myEditor.getDocument();
-      final Runnable apply = new Runnable() {
-        @Override
-        public void run() {
-          for (Couple<RangeMarker> couple : myMarkers) {
-            final RangeMarker leader = couple.first;
-            final RangeMarker support = couple.second;
-            final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
+      final Runnable apply = () -> {
+        for (Couple<RangeMarker> couple : myMarkers) {
+          final RangeMarker leader = couple.first;
+          final RangeMarker support = couple.second;
+          final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
+          if (!name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
             document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
           }
         }
       };
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-          if (lookup != null) {
-            lookup.performGuardedChange(apply);
-          }
-          else {
-            apply.run();
-          }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+        if (lookup != null) {
+          lookup.performGuardedChange(apply);
+        }
+        else {
+          apply.run();
         }
       });
 

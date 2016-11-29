@@ -17,7 +17,6 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -96,15 +95,12 @@ public abstract class SafeDeleteDialog extends DialogWrapper {
       return;
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
+    NonProjectFileWritingAccessProvider.disableChecksDuring(() ->{
         if (myCallback != null && isSafeDelete()) {
-          myCallback.run(SafeDeleteDialog.this);
-        }
-        else {
-          SafeDeleteDialog.super.doOKAction();
-        }
+          myCallback.run(this);
+        } else {
+          super.doOKAction();
+
       }
     });
 

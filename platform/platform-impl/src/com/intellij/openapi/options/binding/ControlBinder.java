@@ -32,7 +32,7 @@ public class ControlBinder {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.options.binding.ControlBinder");
 
   private final Object myBean;
-  private final List<Pair<ControlValueAccessor, BeanValueAccessor>> myBindings = new ArrayList<Pair<ControlValueAccessor, BeanValueAccessor>>();
+  private final List<Pair<ControlValueAccessor, BeanValueAccessor>> myBindings = new ArrayList<>();
 
   public ControlBinder(Object bean) {
     myBean = bean;
@@ -57,11 +57,7 @@ public class ControlBinder {
     final Pair<ControlValueAccessor, BeanValueAccessor> binding = Pair.create(controlAccessor, beanAccessor);
     myBindings.add(binding);
     if (instant) {
-      controlAccessor.addChangeListener(new Runnable() {
-        public void run() {
-          apply(binding);
-        }
-      });
+      controlAccessor.addChangeListener(() -> apply(binding));
     }
   }
 

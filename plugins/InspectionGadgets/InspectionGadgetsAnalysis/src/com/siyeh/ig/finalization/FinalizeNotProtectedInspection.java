@@ -18,11 +18,11 @@ package com.siyeh.ig.finalization;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FinalizeNotProtectedInspection extends BaseInspection {
@@ -52,15 +52,10 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
   }
 
   private static class ProtectedFinalizeFix extends InspectionGadgetsFix {
-     @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("make.protected.quickfix");
     }
 
@@ -80,12 +75,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      final String methodName = method.getName();
-      if (!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
+      if (!MethodUtils.isFinalize(method)) {
         return;
       }
       if (method.hasModifierProperty(PsiModifier.PROTECTED)) {

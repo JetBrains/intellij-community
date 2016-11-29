@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -54,7 +53,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       merged.addValue(inputId, value);
     }
 
-    if (myAdded == null) myAdded = new ValueContainerImpl<Value>();
+    if (myAdded == null) myAdded = new ValueContainerImpl<>();
     myAdded.addValue(inputId, value);
   }
 
@@ -80,24 +79,6 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   @Override
   public ValueIterator<Value> getValueIterator() {
     return getMergedData().getValueIterator();
-  }
-
-  @NotNull
-  @Override
-  public List<Value> toValueList() {
-    return getMergedData().toValueList();
-  }
-
-  @NotNull
-  @Override
-  public IntPredicate getValueAssociationPredicate(Value value) {
-    return getMergedData().getValueAssociationPredicate(value);
-  }
-
-  @NotNull
-  @Override
-  public IntIterator getInputIdsIterator(final Value value) {
-    return getMergedData().getInputIdsIterator(value);
   }
 
   public void dropMergedData() {
@@ -127,9 +108,11 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
         newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().copy();
       }
 
-      if (myAdded != null && newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD) {
+      if ((myAdded != null || myInvalidated != null) &&
+          (newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD ||
+           (myAdded != null && myAdded.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD))) {
         // Calculate file ids that have Value mapped to avoid O(NumberOfValuesInMerged) during removal
-        fileId2ValueMapping = new FileId2ValueMapping<Value>(newMerged);
+        fileId2ValueMapping = new FileId2ValueMapping<>(newMerged);
       }
       final FileId2ValueMapping<Value> finalFileId2ValueMapping = fileId2ValueMapping;
       if (myInvalidated != null) {
@@ -162,7 +145,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
           }
         });
       }
-      setNeedsCompacting(fromDisk.needsCompacting());
+      setNeedsCompacting(((UpdatableValueContainer)fromDisk).needsCompacting());
 
       myMerged = newMerged;
       return newMerged;
@@ -175,7 +158,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
            needsCompacting();
   }
 
-  public @Nullable ValueContainer<Value> getAddedDelta() {
+  public @Nullable UpdatableValueContainer<Value> getAddedDelta() {
     return myAdded;
   }
 
@@ -191,7 +174,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
         }
       }
 
-      final ValueContainer<Value> toAppend = getAddedDelta();
+      final UpdatableValueContainer<Value> toAppend = getAddedDelta();
       if (toAppend != null && toAppend.size() > 0) {
         toAppend.saveTo(out, externalizer);
       }

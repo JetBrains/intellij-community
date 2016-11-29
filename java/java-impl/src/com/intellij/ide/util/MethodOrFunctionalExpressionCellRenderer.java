@@ -15,15 +15,17 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 
 import javax.swing.*;
 
 public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCellRenderer<NavigatablePsiElement> {
-  private final PsiClassListCellRenderer myClassListCellRenderer = new PsiClassListCellRenderer();
   private final MethodCellRenderer myMethodCellRenderer;
   
   public MethodOrFunctionalExpressionCellRenderer(boolean showMethodNames) {
@@ -34,8 +36,8 @@ public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCell
   }
 
   public String getElementText(NavigatablePsiElement element) {
-    return element instanceof PsiMethod ? myMethodCellRenderer.getElementText((PsiMethod)element) 
-                                        : PsiExpressionTrimRenderer.render((PsiExpression)element);
+    return element instanceof PsiMethod ? myMethodCellRenderer.getElementText((PsiMethod)element)
+                                        : ClassPresentationUtil.getFunctionalExpressionPresentation((PsiFunctionalExpression)element, false);
   }
 
   protected Icon getIcon(PsiElement element) {
@@ -48,6 +50,6 @@ public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCell
   }
 
   public int getIconFlags() {
-    return myClassListCellRenderer.getIconFlags();
+    return PsiClassListCellRenderer.INSTANCE.getIconFlags();
   }
 }

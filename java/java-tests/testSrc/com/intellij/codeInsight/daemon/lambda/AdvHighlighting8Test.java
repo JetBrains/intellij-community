@@ -48,4 +48,8 @@ public class AdvHighlighting8Test extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/IDEA67842/pck/IDEA67842.java", BASE_PATH + "/IDEA67842", false, false);
   }
 
+  public void testUnrelatedConcreteInConstructors() throws Exception {
+    doTest(BASE_PATH + "/unrelatedConcreteInConstructors/B.java", BASE_PATH + "/unrelatedConcreteInConstructors", false, false);
+  }
+
 }

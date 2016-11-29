@@ -76,15 +76,9 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
     extends InspectionGadgetsFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.constructor.remove.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

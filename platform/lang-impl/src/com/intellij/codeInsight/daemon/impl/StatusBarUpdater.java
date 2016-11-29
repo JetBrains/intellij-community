@@ -80,6 +80,7 @@ public class StatusBarUpdater implements Disposable {
   public void dispose() {
   }
 
+  private static final HighlightSeverity MIN = new HighlightSeverity("min", HighlightSeverity.INFORMATION.myVal + 1);
   private void updateStatus() {
     Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     if (editor == null || !editor.getContentComponent().hasFocus()){
@@ -91,7 +92,7 @@ public class StatusBarUpdater implements Disposable {
 
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, false, HighlightSeverity.WARNING);
+    HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, false, MIN);
     String text = info != null && info.getDescription() != null ? info.getDescription() : "";
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getContentComponent(), myProject);

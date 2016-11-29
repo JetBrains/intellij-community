@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,9 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer, MatcherHolder {
-
-  private Matcher myMatcher;
+public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer {
 
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());
@@ -67,7 +65,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     final boolean hasRightRenderer = UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION;
     final ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
 
-    final ColoredListCellRenderer left = createColoredListCellRenderer(hasRightRenderer, factory);
+    final ColoredListCellRenderer left = createColoredListCellRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
     add(leftCellRendererComponent, BorderLayout.WEST);
@@ -93,13 +91,8 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
   }
 
   @NotNull
-  public ColoredListCellRenderer createColoredListCellRenderer(boolean hasRightRenderer, ModuleRendererFactory factory) {
-    return new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), myMatcher);
-  }
-
-  @Override
-  public void setPatternMatcher(final Matcher matcher) {
-    myMatcher = matcher;
+  public ColoredListCellRenderer createColoredListCellRenderer(boolean renderLocation, Matcher matcher) {
+    return new LeftRenderer(renderLocation, matcher);
   }
 
   protected static Color getBackgroundColor(@Nullable Object value) {
@@ -130,7 +123,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
 
     @Override
     protected void customizeCellRenderer(
-      JList list,
+      @NotNull JList list,
       Object value,
       int index,
       boolean selected,
@@ -192,13 +185,13 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
           String containerText = presentation.getLocationString();
 
           if (containerText != null && containerText.length() > 0) {
-            append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+            append(" " + containerText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
           }
         }
       }
       else {
         setIcon(IconUtil.getEmptyIcon(false));
-        append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
+        append(value == null ? "" : value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);

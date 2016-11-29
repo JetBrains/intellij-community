@@ -78,25 +78,20 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
 
   public boolean execute(final DataContext context, final long executionId) {
     final Semaphore targetDone = new Semaphore();
-    final Ref<Boolean> result = new Ref<Boolean>(false);
+    final Ref<Boolean> result = new Ref<>(false);
 
     try {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
-            public void startNotified(final ProcessEvent event) {
-              targetDone.down();
-            }
-
-            @Override
-            public void processTerminated(ProcessEvent event) {
-              result.set(event.getExitCode() == 0);
-              targetDone.up();
-            }
-          });
+      ApplicationManager.getApplication().invokeAndWait(() -> ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
+        public void startNotified(final ProcessEvent event) {
+          targetDone.down();
         }
-      }, ModalityState.NON_MODAL);
+
+        @Override
+        public void processTerminated(ProcessEvent event) {
+          result.set(event.getExitCode() == 0);
+          targetDone.up();
+        }
+      }), ModalityState.NON_MODAL);
     }
     catch (Exception e) {
       LOG.error(e);

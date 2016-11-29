@@ -31,12 +31,12 @@ public final class History {
 
   public static DataKey<History> KEY = DataKey.create("History");
 
-  private final List<Place> myHistory = new ArrayList<Place>();
+  private final List<Place> myHistory = new ArrayList<>();
   private int myCurrentPos;
   private final Place.Navigator myRoot;
 
   private boolean myNavigatedNow;
-  private final CopyOnWriteArraySet<HistoryListener> myListeners = new CopyOnWriteArraySet<HistoryListener>();
+  private final CopyOnWriteArraySet<HistoryListener> myListeners = new CopyOnWriteArraySet<>();
 
   public History(@NotNull Place.Navigator root) {
     myRoot = root;
@@ -104,17 +104,9 @@ public final class History {
     fireStarted(from, next);
     try {
       final ActionCallback callback = myRoot.navigateTo(next, false);
-      callback.doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          myCurrentPos = nextPos;
-        }
-      }).doWhenProcessed(new Runnable() {
-        @Override
-        public void run() {
-          myNavigatedNow = false;
-          fireFinished(from, next);
-        }
+      callback.doWhenDone(() -> myCurrentPos = nextPos).doWhenProcessed(() -> {
+        myNavigatedNow = false;
+        fireFinished(from, next);
       });
     }
     catch (Throwable e) {

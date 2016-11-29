@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
@@ -182,10 +183,10 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(containingFile.getProject()).getAntBuildFile(containingFile);
     if (buildFile != null) {
       String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(buildFile.getAllOptions());
-      if (jdkName == null || jdkName.length() == 0) {
+      if (StringUtil.isEmptyOrSpaces(jdkName)) {
         jdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(buildFile.getAllOptions());
       }
-      if (jdkName != null && jdkName.length() > 0) {
+      if (!StringUtil.isEmptyOrSpaces(jdkName)) {
         return ProjectJdkTable.getInstance().findJdk(jdkName);
       }
     }
@@ -232,7 +233,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
   private Map<String, String> loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
-    final Map<String, String> destination = new HashMap<String, String>();
+    final Map<String, String> destination = new HashMap<>();
     if (properties != null) {
       final Enumeration props = properties.keys();
       while (props.hasMoreElements()) {
@@ -265,14 +266,11 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
         try {
           basedir = new File(containigFileDir, basedir).getCanonicalPath();
         }
-        catch (IOException e) {
-          // ignore
+        catch (IOException ignored) {
         }
       }
     }
-    if (basedir != null) {
-      appendProperty(destination, "basedir", FileUtil.toSystemIndependentName(basedir));
-    }
+    appendProperty(destination, "basedir", FileUtil.toSystemIndependentName(basedir));
 
     final AntInstallation installation = getAntInstallation();
     final String homeDir = installation.getHomeDir();

@@ -17,6 +17,7 @@ package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Set;
 
 import static com.intellij.vcs.log.VcsLogProvider.Requirements;
@@ -38,5 +39,5 @@ public interface VcsLogProviderRequirementsEx extends Requirements {
    * Returns the refs which were in the log before the refresh request.
    */
   @NotNull
-  Set<VcsRef> getPreviousRefs();
+  Collection<VcsRef> getPreviousRefs();
 }

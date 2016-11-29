@@ -180,8 +180,8 @@ public class PyImportReference extends PyReferenceImpl {
       PsiFile currentFile = myElement.getContainingFile();
       currentFile = currentFile.getOriginalFile();
       myCurrentFile = currentFile;
-      myNamesAlready = new HashSet<String>();
-      myObjects = new ArrayList<Object>();
+      myNamesAlready = new HashSet<>();
+      myObjects = new ArrayList<>();
     }
 
     public Object[] execute() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,101 +15,124 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.net.NetUtils;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.InetSocketAddress;
+import java.net.StandardSocketOptions;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousChannelGroup;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author ven
  */
 class ProcessProxyImpl implements ProcessProxy {
-  public static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
+  static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
 
-  @NonNls public static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
-  @NonNls public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
-  @NonNls public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
+  private final AsynchronousChannelGroup myGroup;
+  private final int myPort;
 
-  @NonNls private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
-  private static final int SOCKET_NUMBER_START = 7532;
-  private static final int SOCKET_NUMBER = 100;
-  private static final boolean[] ourUsedSockets = new boolean[SOCKET_NUMBER];
+  private final Object myLock = new Object();
+  private AsynchronousSocketChannel myConnection;
+  private int myPid;
 
-  private final int myPortNumber;
-  private PrintWriter myWriter;
-  private Socket mySocket;
+  ProcessProxyImpl(String mainClass) throws IOException {
+    myGroup = AsynchronousChannelGroup.withFixedThreadPool(1, r -> new Thread(r, "Process Proxy: " + mainClass));
+    AsynchronousServerSocketChannel channel = AsynchronousServerSocketChannel.open(myGroup)
+      .bind(new InetSocketAddress("127.0.0.1", 0))
+      .setOption(StandardSocketOptions.SO_REUSEADDR, true);
+    myPort = ((InetSocketAddress)channel.getLocalAddress()).getPort();
 
-  public static class NoMoreSocketsException extends Exception {
-  }
-
-  public ProcessProxyImpl() throws NoMoreSocketsException {
-    myPortNumber = findFreePort();
-    if (myPortNumber == -1) throw new NoMoreSocketsException();
-  }
-
-  private static int findFreePort() {
-    synchronized (ourUsedSockets) {
-      for (int j = 0; j < SOCKET_NUMBER; j++) {
-        if (ourUsedSockets[j]) continue;
-        try {
-          ServerSocket s = new ServerSocket(j + SOCKET_NUMBER_START);
-          s.close();
-          ourUsedSockets[j] = true;
-          return j + SOCKET_NUMBER_START;
+    channel.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
+      @Override
+      public void completed(AsynchronousSocketChannel channel, Void attachment) {
+        synchronized (myLock) {
+          myConnection = channel;
         }
-        catch (IOException ignore) { }
       }
-    }
-    return -1;
+
+      @Override
+      public void failed(Throwable t, Void attachment) { }
+    });
+  }
+
+  int getPortNumber() {
+    return myPort;
   }
 
   @Override
-  public int getPortNumber() {
-    return myPortNumber;
-  }
-
-  @Override
-  @SuppressWarnings("FinalizeDeclaration")
-  protected synchronized void finalize() throws Throwable {
-    if (myWriter != null) {
-      myWriter.close();
-    }
-    ourUsedSockets[myPortNumber - SOCKET_NUMBER_START] = false;
-    super.finalize();
-  }
-
-  @Override
-  public void attach(final ProcessHandler processHandler) {
+  public void attach(@NotNull ProcessHandler processHandler) {
     processHandler.putUserData(KEY, this);
+    execute(() -> {
+      int pid = -1;
+      if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
+        pid = UnixProcessManager.getProcessPid(((BaseOSProcessHandler)processHandler).getProcess());
+      }
+      synchronized (myLock) {
+        myPid = pid;
+      }
+    });
   }
 
-  @SuppressWarnings({"SocketOpenedButNotSafelyClosed", "IOResourceOpenedButNotSafelyClosed"})
-  private synchronized void writeLine(@NonNls final String s) {
-    if (myWriter == null) {
-      try {
-        if (mySocket == null) {
-          mySocket = new Socket(NetUtils.getLoopbackAddress(), myPortNumber);
-        }
-        myWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mySocket.getOutputStream())));
+  private void writeLine(String s) {
+    execute(() -> {
+      ByteBuffer out = ByteBuffer.wrap((s + '\n').getBytes("US-ASCII"));
+      synchronized (myLock) {
+        myConnection.write(out);
       }
-      catch (IOException e) {
-        return;
+    });
+  }
+
+  @Override
+  public boolean canSendBreak() {
+    if (SystemInfo.isWindows) {
+      synchronized (myLock) {
+        if (myConnection == null) return false;
+      }
+      return new File(PathManager.getBinPath(), "breakgen.dll").exists();
+    }
+
+    if (SystemInfo.isUnix) {
+      synchronized (myLock) {
+        return myPid > 0;
       }
     }
-    myWriter.println(s);
-    myWriter.flush();
+
+    return false;
+  }
+
+  @Override
+  public boolean canSendStop() {
+    synchronized (myLock) {
+      return myConnection != null;
+    }
   }
 
   @Override
   public void sendBreak() {
-    writeLine("BREAK");
+    if (SystemInfo.isWindows) {
+      writeLine("BREAK");
+    }
+    else if (SystemInfo.isUnix) {
+      int pid;
+      synchronized (myLock) {
+        pid = myPid;
+      }
+      UnixProcessManager.sendSignal(pid, 3);  // SIGQUIT
+    }
   }
 
   @Override
@@ -117,7 +140,27 @@ class ProcessProxyImpl implements ProcessProxy {
     writeLine("STOP");
   }
 
-  public static boolean useLauncher() {
-    return !Boolean.valueOf(System.getProperty(DONT_USE_LAUNCHER_PROPERTY));
+  @Override
+  public void destroy() {
+    execute(() -> {
+      synchronized (myLock) {
+        if (myConnection != null) {
+          myConnection.close();
+        }
+      }
+    });
+    execute(() -> {
+      myGroup.shutdownNow();
+      myGroup.awaitTermination(1, TimeUnit.SECONDS);
+    });
+  }
+
+  private static void execute(ThrowableRunnable<Exception> block) {
+    try {
+      block.run();
+    }
+    catch (Exception e) {
+      Logger.getInstance(ProcessProxy.class).warn(e);
+    }
   }
 }

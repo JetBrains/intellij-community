@@ -79,7 +79,7 @@ public class DomGenPanel {
                 final XmlTag rootTag = xml.getRootTag();
                 if (rootTag != null) {
                   String target = null;
-                  ArrayList<String> ns = new ArrayList<String>();
+                  ArrayList<String> ns = new ArrayList<>();
                   for (XmlAttribute attr : rootTag.getAttributes()) {
                     if ("targetNamespace".equals(attr.getName())) {
                       target = attr.getValue();

@@ -26,10 +26,12 @@ import java.util.List;
 
 public class SelectionManager {
   @NotNull private final SearchResults mySearchResults;
-  private final List<FoldRegion> myRegionsToRestore = new ArrayList<FoldRegion>();
+  private final boolean myHadSelectionInitially;
+  private final List<FoldRegion> myRegionsToRestore = new ArrayList<>();
 
   public SelectionManager(@NotNull SearchResults results) {
     mySearchResults = results;
+    myHadSelectionInitially = results.getEditor().getSelectionModel().hasSelection();
   }
 
   public void updateSelection(boolean removePreviousSelection, boolean removeAllPreviousSelections) {
@@ -39,6 +41,7 @@ public class SelectionManager {
     }
     final FindResult cursor = mySearchResults.getCursor();
     if (cursor == null) {
+      if (removePreviousSelection && !myHadSelectionInitially) editor.getSelectionModel().removeSelection();
       return;
     }
     if (mySearchResults.getFindModel().isGlobal()) {
@@ -46,20 +49,17 @@ public class SelectionManager {
         FoldingModel foldingModel = editor.getFoldingModel();
         final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
 
-        foldingModel.runBatchFoldingOperation(new Runnable() {
-          @Override
-          public void run() {
-            for (FoldRegion region : myRegionsToRestore) {
-              if (region.isValid()) region.setExpanded(false);
-            }
-            myRegionsToRestore.clear();
-            for (FoldRegion region : allRegions) {
-              if (!region.isValid()) continue;
-              if (cursor.intersects(TextRange.create(region))) {
-                if (!region.isExpanded()) {
-                  region.setExpanded(true);
-                  myRegionsToRestore.add(region);
-                }
+        foldingModel.runBatchFoldingOperation(() -> {
+          for (FoldRegion region : myRegionsToRestore) {
+            if (region.isValid()) region.setExpanded(false);
+          }
+          myRegionsToRestore.clear();
+          for (FoldRegion region : allRegions) {
+            if (!region.isValid()) continue;
+            if (cursor.intersects(TextRange.create(region))) {
+              if (!region.isExpanded()) {
+                region.setExpanded(true);
+                myRegionsToRestore.add(region);
               }
             }
           }

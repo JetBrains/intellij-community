@@ -70,7 +70,7 @@ import java.util.TreeMap;
 /**
  * @author ven
  */
-public class CoverageLineMarkerRenderer implements LineMarkerRendererEx, ActiveGutterRenderer {
+public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMarkerRendererWithErrorStripe {
   private static final int THICKNESS = 8;
   private final TextAttributesKey myKey;
   private final String myClassName;
@@ -251,14 +251,12 @@ public class CoverageLineMarkerRenderer implements LineMarkerRendererEx, ActiveG
     editor.getCaretModel().moveToOffset(firstOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
-    editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-      public void run() {
-        Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(firstOffset));
-        EditorGutterComponentEx editorComponent = (EditorGutterComponentEx)editor.getGutter();
-        JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-        p = SwingUtilities.convertPoint(editorComponent, THICKNESS, p.y, layeredPane);
-        showHint(editor, p, lineNumber);
-      }
+    editor.getScrollingModel().runActionOnScrollingFinished(() -> {
+      Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(firstOffset));
+      EditorGutterComponentEx editorComponent = (EditorGutterComponentEx)editor.getGutter();
+      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+      p = SwingUtilities.convertPoint(editorComponent, THICKNESS, p.y, layeredPane);
+      showHint(editor, p, lineNumber);
     });
   }
 
@@ -349,7 +347,7 @@ public class CoverageLineMarkerRenderer implements LineMarkerRendererEx, ActiveG
 
     @Nullable
     private Integer getLineEntry() {
-      final ArrayList<Integer> list = new ArrayList<Integer>(myLines.keySet());
+      final ArrayList<Integer> list = new ArrayList<>(myLines.keySet());
       Collections.sort(list);
       final LineData data = getLineData(myLineNumber);
       final int currentStatus = data != null ? data.getStatus() : LineCoverage.NONE;

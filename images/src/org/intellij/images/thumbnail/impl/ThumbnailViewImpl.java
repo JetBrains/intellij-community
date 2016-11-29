@@ -184,11 +184,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
 
   private final class LazyScroller implements Runnable {
     public void run() {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          getUI().scrollToSelection();
-        }
-      });
+      SwingUtilities.invokeLater(() -> getUI().scrollToSelection());
     }
   }
 }

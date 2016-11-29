@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,7 +52,7 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements FileE
   public JComponent getComponent() {
     JComponent result = SoftReference.dereference(myComponent);
     if (result == null) {
-      myComponent = new WeakReference<JComponent>(result = createComponent());
+      myComponent = new WeakReference<>(result = createComponent());
     }
     return result;
   }
@@ -63,11 +63,11 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements FileE
     splitter.setSecondComponent(wrapWithTitle(myFile.getAfterFile().getName(), myAfterEditor));
     return splitter;
   }
-  
+
   private static JComponent wrapWithTitle(String name, final FileEditor beforeEditor) {
     JPanel panel = new JPanel(new BorderLayout());
     final JLabel label = new JLabel(name);
-    label.setBorder(BorderFactory.createEmptyBorder(1, 4, 2, 0));
+    label.setBorder(JBUI.Borders.empty(1, 4, 2, 0));
     label.setFont(label.getFont().deriveFont(Font.BOLD));
     panel.add(BorderLayout.NORTH, label);
     panel.add(BorderLayout.CENTER, beforeEditor.getComponent());
@@ -81,11 +81,6 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements FileE
   @NotNull
   public String getName() {
     return myFile.getName();
-  }
-
-  @NotNull
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    return FileEditorState.INSTANCE;
   }
 
   public void setState(@NotNull FileEditorState state) {

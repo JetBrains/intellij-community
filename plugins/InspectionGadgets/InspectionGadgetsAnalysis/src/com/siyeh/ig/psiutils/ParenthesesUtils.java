@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class ParenthesesUtils {
 
-  public static final Map<IElementType, IElementType> tokenMap = new HashMap<IElementType, IElementType>();
+  public static final Map<IElementType, IElementType> tokenMap = new HashMap<>();
 
   private ParenthesesUtils() {}
 
@@ -50,7 +50,7 @@ public class ParenthesesUtils {
   public static final int ASSIGNMENT_PRECEDENCE = 16;
   public static final int NUM_PRECEDENCES = 17;
 
-  private static final Map<IElementType, Integer> s_binaryOperatorPrecedence = new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
+  private static final Map<IElementType, Integer> s_binaryOperatorPrecedence = new HashMap<>(NUM_PRECEDENCES);
 
 
   static {
@@ -277,7 +277,7 @@ public class ParenthesesUtils {
     }
     final PsiElement parent = parenthesizedExpression.getParent();
     if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression ||
-        parent instanceof PsiArrayInitializerExpression) {
+        parent instanceof PsiArrayInitializerExpression || parent instanceof PsiLambdaExpression) {
       final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
       removeParentheses(newExpression, ignoreClarifyingParentheses);
       return;
@@ -461,6 +461,9 @@ public class ParenthesesUtils {
 
   public static boolean areParenthesesNeeded(PsiParenthesizedExpression expression, boolean ignoreClarifyingParentheses) {
     final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiLambdaExpression) {
+      return false;
+    }
     if (!(parent instanceof PsiExpression)) {
       return false;
     }

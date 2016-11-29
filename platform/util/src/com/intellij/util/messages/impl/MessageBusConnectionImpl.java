@@ -58,7 +58,6 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public <L> void subscribe(@NotNull Topic<L> topic) throws IllegalStateException {
     if (myDefaultHandler == null) {
       throw new IllegalStateException("Connection must have default handler installed prior to any anonymous subscriptions. "
@@ -69,6 +68,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
                                       topic.getListenerClass() + "', actual: '" + myDefaultHandler.getClass() + "'");
     }
 
+    //noinspection unchecked
     subscribe(topic, (L)myDefaultHandler);
   }
 
@@ -134,14 +134,24 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     }
   }
 
-  void scheduleMessageDelivery(Message message) {
+  void scheduleMessageDelivery(@NotNull Message message) {
     myPendingMessages.get().offer(message);
+  }
+
+  boolean containsMessage(@NotNull Topic topic) {
+    for (Message message : myPendingMessages.get()) {
+      if (message.getTopic() == topic) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public String toString() {
     return mySubscriptions.toString();
   }
 
+  @NotNull
   MessageBusImpl getBus() {
     return myBus;
   }

@@ -64,14 +64,8 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("call.to.string.concat.can.be.replaced.by.operator.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("call.to.string.concat.can.be.replaced.by.operator.quickfix");
     }
 
     @Override

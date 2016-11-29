@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -38,7 +39,7 @@ import javax.swing.*;
 /**
  * @author Maxim.Medvedev
  */
-public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTool {
+public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTool implements UnfairLocalInspectionTool {
   private static final String SHORT_NAME = "GrUnresolvedAccess";
 
   public boolean myHighlightIfGroovyObjectOverridden = true;
@@ -77,7 +78,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
   @NotNull
   private static InspectionProfile getInspectionProfile(@NotNull Project project) {
-    return InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    return InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
   }
 
   @Override

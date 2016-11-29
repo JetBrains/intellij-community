@@ -25,7 +25,6 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -78,12 +77,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
   }
 
   public static boolean hasMoreImportantReference(@NotNull PsiReference[] references, @NotNull PropertyReference propertyReference) {
-    return propertyReference.isSoft() && ContainerUtil.or(references, new Condition<PsiReference>() {
-      @Override
-      public boolean value(PsiReference reference) {
-        return !reference.isSoft();
-      }
-    });
+    return propertyReference.isSoft() && ContainerUtil.or(references, reference -> !reference.isSoft());
   }
 
   public static final LookupElementRenderer<LookupElement> LOOKUP_ELEMENT_RENDERER = new LookupElementRenderer<LookupElement>() {
@@ -136,12 +130,9 @@ public class PropertiesCompletionContributor extends CompletionContributor {
   }
 
   public static LookupElement[] getVariants(Set<Object> variants) {
-    List<LookupElement> elements = ContainerUtil.mapNotNull(variants, new NullableFunction<Object, LookupElement>() {
-      @Override
-      public LookupElement fun(Object o) {
-        if (o instanceof String) return LookupElementBuilder.create((String)o).withIcon(PlatformIcons.PROPERTY_ICON);
-        return createVariant((IProperty)o);
-      }
+    List<LookupElement> elements = ContainerUtil.mapNotNull(variants, (NullableFunction<Object, LookupElement>)o -> {
+      if (o instanceof String) return LookupElementBuilder.create((String)o).withIcon(PlatformIcons.PROPERTY_ICON);
+      return createVariant((IProperty)o);
     });
     return elements.toArray(new LookupElement[elements.size()]);
   }

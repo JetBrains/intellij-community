@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +82,7 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
       ControlFlow controlFlow = ControlFlowFactory.getInstance(thenBranch.getProject()).getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
       int startOffset = controlFlow.getStartOffset(thenBranch);
       int endOffset = controlFlow.getEndOffset(thenBranch);
-      return startOffset != -1 && endOffset != -1 && !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset);
+      return startOffset != -1 && endOffset != -1 && !BitUtil.isSet(ControlFlowUtil.getCompletionReasons(controlFlow, startOffset, endOffset), ControlFlowUtil.NORMAL_COMPLETION_REASON);
     }
     catch (AnalysisCanceledException e) {
       return false;
@@ -91,7 +91,6 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
     LOG.assertTrue(ifStatement != null && ifStatement.getElseBranch() != null);
     PsiStatement elseBranch = ifStatement.getElseBranch();

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -76,21 +75,16 @@ public class UnBoxingEvaluator implements Evaluator{
     return value;
   }
                                           
-  @Nullable
-  public Modifier getModifier() {
-    return null;
-  }
-
   private static Value convertToPrimitive(EvaluationContextImpl context, ObjectReference value, final String conversionMethodName,
                                           String conversionMethodSignature) throws EvaluateException {
     final DebugProcessImpl process = context.getDebugProcess();
     final ClassType wrapperClass = (ClassType)value.referenceType();
-    final List<Method> methods = wrapperClass.methodsByName(conversionMethodName, conversionMethodSignature);
-    if (methods.size() == 0) { 
+    Method method = wrapperClass.concreteMethodByName(conversionMethodName, conversionMethodSignature);
+    if (method == null) {
       throw new EvaluateException("Cannot convert to primitive value of type " + value.type() + ": Unable to find method " +
                                   conversionMethodName + conversionMethodSignature);
     }
 
-    return process.invokeMethod(context, value, methods.get(0), Collections.emptyList());
+    return process.invokeMethod(context, value, method, Collections.emptyList());
   }
 }

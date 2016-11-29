@@ -6,7 +6,7 @@ public class InfiniteLoopStatement {
         int x = 0;
         c:
         b:
-        while (true) {
+        <warning descr="'while' statement cannot complete without throwing an exception">while</warning> (true) {
             if (x == 0) {
                 a:
                 while (true) { // A warning issued here

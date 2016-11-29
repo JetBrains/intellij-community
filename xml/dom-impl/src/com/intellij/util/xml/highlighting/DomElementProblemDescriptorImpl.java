@@ -48,7 +48,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   private final LocalQuickFix[] myFixes;
   private List<Annotation> myAnnotations;
   private Pair<TextRange, PsiElement> myPair;
-  public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<TextRange, PsiElement>(null, null);
+  public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<>(null, null);
   private final ProblemHighlightType myHighlightType;
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, final String message, final HighlightSeverity type) {
@@ -137,7 +137,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     else if (psiElement != null) {
       assert psiElement.isValid() : psiElement;
       final XmlTag tag = (XmlTag)(psiElement instanceof XmlTag ? psiElement : psiElement.getParent());
-      myPair = new Pair<TextRange, PsiElement>(new TextRange(0, tag.getTextLength()), tag);
+      myPair = new Pair<>(new TextRange(0, tag.getTextLength()), tag);
     }
   }
 

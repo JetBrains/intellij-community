@@ -60,7 +60,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     myServerName = myServer.getName();
     C configuration = server.getConfiguration();
     C innerConfiguration = XmlSerializerUtil.createCopy(configuration);
-    myInnerServer = new RemoteServerImpl<C>("<temp inner server>", server.getType(), innerConfiguration);
+    myInnerServer = new RemoteServerImpl<>("<temp inner server>", server.getType(), innerConfiguration);
     myInnerApplied = false;
     myUncheckedApply = false;
 
@@ -166,7 +166,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
   @Nullable
   @Override
   public String getHelpTopic() {
-    return HELP_TOPIC_ID;
+    return myServer.getType().getHelpTopic();
   }
 
   @Override
@@ -210,7 +210,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
 
     public void testConnection() {
       final ServerConnection connection = ServerConnectionManager.getInstance().createTemporaryConnection(myInnerServer);
-      final AtomicReference<Boolean> connectedRef = new AtomicReference<Boolean>(null);
+      final AtomicReference<Boolean> connectedRef = new AtomicReference<>(null);
       final Semaphore semaphore = new Semaphore();
       semaphore.down();
       connection.connectIfNeeded(new ServerConnector.ConnectionCallback() {
@@ -242,13 +242,9 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
           if (connected == null) {
             return;
           }
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-
-            @Override
-            public void run() {
-              if (myConnectionTester == ConnectionTester.this) {
-                setConnectionStatus(!connected, connected, connected ? "Connection successful" : "Cannot connect: " + connection.getStatusText());
-              }
+          UIUtil.invokeLaterIfNeeded(() -> {
+            if (myConnectionTester == ConnectionTester.this) {
+              setConnectionStatus(!connected, connected, connected ? "Connection successful" : "Cannot connect: " + connection.getStatusText());
             }
           });
         }

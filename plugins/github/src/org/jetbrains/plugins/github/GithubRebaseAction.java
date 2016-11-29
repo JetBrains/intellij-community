@@ -26,8 +26,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThrowableConvertor;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
 import git4idea.commands.*;
@@ -44,9 +42,8 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubFullPath;
-import org.jetbrains.plugins.github.api.GithubRepoDetailed;
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
@@ -54,7 +51,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
-import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
  * Created by IntelliJ IDEA.
@@ -74,22 +70,22 @@ public class GithubRebaseAction extends DumbAwareAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault()) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
     if (gitRepository == null) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     if (!GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override
@@ -112,7 +108,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
     BasicAction.saveAll();
 
-    new Task.Backgroundable(project, "Rebasing GitHub fork...") {
+    new Task.Backgroundable(project, "Rebasing GitHub Fork...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         gitRepository.update();
@@ -201,14 +197,8 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
 
     try {
-      return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator,
-                                new ThrowableConvertor<GithubConnection, GithubRepoDetailed, IOException>() {
-                                  @NotNull
-                                  @Override
-                                  public GithubRepoDetailed convert(@NotNull GithubConnection connection) throws IOException {
-                                    return GithubApiUtil.getDetailedRepoInfo(connection, userAndRepo.getUser(), userAndRepo.getRepository());
-                                  }
-                                });
+      return GithubUtil.runTask(project, GithubAuthDataHolder.createFromSettings(), indicator, connection ->
+        GithubApiUtil.getDetailedRepoInfo(connection, userAndRepo.getUser(), userAndRepo.getRepository()));
     }
     catch (IOException e) {
       GithubNotifications.showError(project, "Can't load repository info", e);
@@ -231,18 +221,14 @@ public class GithubRebaseAction extends DumbAwareAction {
                                           @NotNull final GitRepository gitRepository,
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
-    final GitPlatformFacade facade = ServiceManager.getService(project, GitPlatformFacade.class);
     AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       List<VirtualFile> rootsToSave = Collections.singletonList(gitRepository.getRoot());
-      GitPreservingProcess process = new GitPreservingProcess(project, facade, git, rootsToSave, "Rebasing", "upstream/master",
+      GitPreservingProcess process = new GitPreservingProcess(project, git, rootsToSave, "Rebasing", "upstream/master",
                                                               GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
-        new Runnable() {
-          @Override
-          public void run() {
-            doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
-          }
-        });
+                                                              () -> {
+                                                                doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
+                                                              });
       process.execute();
     }
     finally {

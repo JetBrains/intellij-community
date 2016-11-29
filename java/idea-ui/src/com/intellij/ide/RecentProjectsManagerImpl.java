@@ -20,7 +20,6 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
@@ -48,8 +47,9 @@ public class RecentProjectsManagerImpl extends RecentProjectsManagerBase {
 
   @Override
   protected void doOpenProject(@NotNull String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
-    if (new File(projectPath).isDirectory() && !new File(projectPath, Project.DIRECTORY_STORE_FOLDER).exists()) {
-      VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath));
+    File projectFile = new File(projectPath);
+    if (projectFile.isDirectory() && !new File(projectFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
+      VirtualFile projectDir = LocalFileSystem.getInstance().findFileByIoFile(projectFile);
       PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
       if (projectDir != null && processor != null) {
         processor.doOpenProject(projectDir, projectToClose, forceOpenInNewFrame);

@@ -1,8 +1,11 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +23,9 @@ public abstract class FileIndexBase implements FileIndex {
 
   @NotNull
   protected DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file) {
+    if (file instanceof VirtualFileWindow) {
+      file = ((VirtualFileWindow)file).getDelegate();
+    }
     return myDirectoryIndex.getInfoForFile(file);
   }
 
@@ -28,5 +34,10 @@ public abstract class FileIndexBase implements FileIndex {
     return !file.isDirectory() &&
            !myFileTypeRegistry.isFileIgnored(file) &&
            isInSourceContent(file);
+  }
+
+  @NotNull
+  protected static VirtualFile[][] getModuleContentAndSourceRoots(Module module) {
+    return new VirtualFile[][]{ModuleRootManager.getInstance(module).getContentRoots(), ModuleRootManager.getInstance(module).getSourceRoots()};
   }
 }

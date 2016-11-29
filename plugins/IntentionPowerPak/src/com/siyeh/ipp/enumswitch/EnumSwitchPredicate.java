@@ -55,7 +55,7 @@ class EnumSwitchPredicate implements PsiElementPredicate {
     if (body == null) {
       return true;
     }
-    final Set<String> enumElements = new HashSet<String>(fields.length);
+    final Set<String> enumElements = new HashSet<>(fields.length);
     for (final PsiField field : fields) {
       final PsiType fieldType = field.getType();
       if (!fieldType.equals(type)) {

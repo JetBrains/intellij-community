@@ -28,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public abstract class UsageToPsiElementProvider {
-  public static final ExtensionPointName<UsageToPsiElementProvider> EP_NAME = new ExtensionPointName<UsageToPsiElementProvider>("com.intellij.usageToPsiElementProvider");
+  public static final ExtensionPointName<UsageToPsiElementProvider> EP_NAME =
+    new ExtensionPointName<>("com.intellij.usageToPsiElementProvider");
 
   @Nullable
   public abstract PsiElement getAppropriateParentFrom(PsiElement element);

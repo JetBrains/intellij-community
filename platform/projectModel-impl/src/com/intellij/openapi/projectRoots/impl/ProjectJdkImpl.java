@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
-import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
@@ -42,25 +41,25 @@ import java.util.List;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
-  private final ProjectRootContainerImpl myRootContainer;
+  final ProjectRootContainerImpl myRootContainer;
   private String myName;
   private String myVersionString;
-  private boolean myVersionDefined = false;
+  private boolean myVersionDefined;
   private String myHomePath = "";
   private final MyRootProvider myRootProvider = new MyRootProvider();
-  private ProjectJdkImpl myOrigin = null;
-  private SdkAdditionalData myAdditionalData = null;
+  private ProjectJdkImpl myOrigin;
+  private SdkAdditionalData myAdditionalData;
   private SdkTypeId mySdkType;
   @NonNls public static final String ELEMENT_NAME = "name";
   @NonNls public static final String ATTRIBUTE_VALUE = "value";
   @NonNls public static final String ELEMENT_TYPE = "type";
-  @NonNls public static final String ELEMENT_VERSION = "version";
+  @NonNls private static final String ELEMENT_VERSION = "version";
   @NonNls private static final String ELEMENT_ROOTS = "roots";
   @NonNls private static final String ELEMENT_ROOT = "root";
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String VALUE_JDKHOME = "jdkHome";
   @NonNls private static final String ATTRIBUTE_FILE = "file";
-  @NonNls public static final String ELEMENT_HOMEPATH = "homePath";
+  @NonNls private static final String ELEMENT_HOMEPATH = "homePath";
   @NonNls private static final String ELEMENT_ADDITIONAL = "additional";
 
   public ProjectJdkImpl(String name, SdkTypeId sdkType) {
@@ -232,7 +231,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
 
   @Override
   @NotNull
-  public Object clone() {
+  public ProjectJdkImpl clone() {
     ProjectJdkImpl newJdk = new ProjectJdkImpl("", mySdkType);
     copyTo(newJdk);
     return newJdk;
@@ -244,30 +243,26 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     return myRootProvider;
   }
 
-  public void copyTo(ProjectJdkImpl dest) {
+  void copyTo(ProjectJdkImpl dest) {
     final String name = getName();
     dest.setName(name);
     dest.setHomePath(getHomePath());
-    if (myVersionDefined) {
-      dest.setVersionString(getVersionString());
-    }
-    else {
-      dest.resetVersionString();
-    }
+    dest.myVersionDefined = myVersionDefined;
+    dest.myVersionString = myVersionString;
     dest.setSdkAdditionalData(getSdkAdditionalData());
+    copyRoots(myRootContainer, dest);
+  }
+
+  static void copyRoots(@NotNull ProjectRootContainerImpl rootContainer, @NotNull ProjectJdkImpl dest) {
     dest.myRootContainer.startChange();
     dest.myRootContainer.removeAllRoots();
     for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-      copyRoots(myRootContainer, dest.myRootContainer, rootType);
+      final ProjectRoot[] newRoots = rootContainer.getRoots(rootType);
+      for (ProjectRoot newRoot : newRoots) {
+        dest.myRootContainer.addRoot(newRoot, rootType);
+      }
     }
     dest.myRootContainer.finishChange();
-  }
-
-  private static void copyRoots(ProjectRootContainer srcContainer, ProjectRootContainer destContainer, OrderRootType type) {
-    final ProjectRoot[] newRoots = srcContainer.getRoots(type);
-    for (ProjectRoot newRoot : newRoots) {
-      destContainer.addRoot(newRoot, type);
-    }
   }
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
@@ -275,7 +270,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     @NotNull
     public String[] getUrls(@NotNull OrderRootType rootType) {
       final ProjectRoot[] rootFiles = myRootContainer.getRoots(rootType);
-      final ArrayList<String> result = new ArrayList<String>();
+      final ArrayList<String> result = new ArrayList<>();
       for (ProjectRoot rootFile : rootFiles) {
         ContainerUtil.addAll(result, rootFile.getUrls());
       }
@@ -301,12 +296,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     @Override
     public void addRootSetChangedListener(@NotNull final RootSetChangedListener listener, @NotNull Disposable parentDisposable) {
       super.addRootSetChangedListener(listener, parentDisposable);
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          removeRootSetChangedListener(listener);
-        }
-      });
+      Disposer.register(parentDisposable, () -> removeRootSetChangedListener(listener));
     }
 
     @Override
@@ -320,12 +310,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
       if (myListeners.isEmpty()) {
         return;
       }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          fireRootSetChanged();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(this::fireRootSetChanged);
     }
   }
 
@@ -361,7 +346,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @Override
   public VirtualFile[] getRoots(OrderRootType rootType) {
     final ProjectRoot[] roots = myRootContainer.getRoots(rootType); // use getRoots() cause the data is most up-to-date there
-    final List<VirtualFile> files = new ArrayList<VirtualFile>(roots.length);
+    final List<VirtualFile> files = new ArrayList<>(roots.length);
     for (ProjectRoot root : roots) {
       ContainerUtil.addAll(files, root.getVirtualFiles());
     }
@@ -404,6 +389,6 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
 
   @Override
   public String toString() {
-    return getName() + ": " + getVersionString() + " (" + getHomePath() + ")";
+    return myName + (myVersionDefined ? ": " + myVersionString : "") + " (" + myHomePath + ")";
   }
 }

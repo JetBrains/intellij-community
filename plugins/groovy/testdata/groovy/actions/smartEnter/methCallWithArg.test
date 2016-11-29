@@ -2,8 +2,7 @@ def () {
     a(<caret>
 }
 -----
-def ()
-{
+def () {
     a()
     <caret>
 }

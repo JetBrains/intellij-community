@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,17 @@ public abstract class PyResolveTestCase extends PyTestCase {
     return assertResolveResult(element, aClass, name, containingFilePath);
   }
 
+  protected void assertUnresolved() {
+    final PsiElement element;
+    try {
+      element = doResolve();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    assertNull(element);
+  }
+
   public static <T extends PsiElement> T assertResolveResult(PsiElement element,
                                                              Class<T> aClass,
                                                              String name) {
@@ -126,14 +137,14 @@ public abstract class PyResolveTestCase extends PyTestCase {
         offset = document.getLineStartOffset(i-1) + index;
       }
     }
-    assert offset != -1;
+    assertTrue("<ref> in test file not found", offset >= 0);
     return offset;
   }
 
   @NotNull
   public static PsiReference findReferenceByMarker(PsiFile psiFile) {
     final PsiReference ref = psiFile.findReferenceAt(findMarkerOffset(psiFile));
-    assertNotNull("<ref> in test file not found", ref);
+    assertNotNull("No reference found at <ref> position", ref);
     return ref;
   }
 }

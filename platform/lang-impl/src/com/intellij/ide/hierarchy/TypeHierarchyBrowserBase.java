@@ -166,7 +166,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected static class BaseOnThisTypeAction extends BaseOnThisElementAction {
 
     public BaseOnThisTypeAction() {
-      super("", IdeActions.ACTION_TYPE_HIERARCHY, DATA_KEY.getName(), LanguageTypeHierarchy.INSTANCE);
+      super("", DATA_KEY.getName(), LanguageTypeHierarchy.INSTANCE);
     }
 
     @Override

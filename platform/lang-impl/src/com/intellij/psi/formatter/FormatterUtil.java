@@ -378,7 +378,7 @@ public class FormatterUtil {
       if (treePrev.getElementType() == TokenType.WHITE_SPACE) {
         return treePrev;
       }
-      else if (treePrev.getTextLength() == 0) {
+      else if (treePrev.getTextLength() == 0 && isSpaceBeforeEmptyElement(treePrev)) {
         return getWsCandidate(treePrev);
       }
       else {
@@ -393,6 +393,14 @@ public class FormatterUtil {
     else {
       return getWsCandidate(treeParent);
     }
+  }
+
+  private static boolean isSpaceBeforeEmptyElement(ASTNode node) {
+    if (node.getElementType().isLeftBound()) {
+      final ASTNode parent = node.getTreeParent();
+      return parent != null && parent.getFirstChildNode() == node;
+    }
+    return true;
   }
 
   private static StringBuilder createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {

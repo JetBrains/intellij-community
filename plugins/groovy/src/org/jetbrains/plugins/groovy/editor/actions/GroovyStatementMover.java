@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -36,7 +35,9 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
@@ -118,16 +119,11 @@ public class GroovyStatementMover extends StatementUpDownMover {
       element = PsiTreeUtil.nextVisibleLeaf(element);
     }
 
-    return (GroovyPsiElement)PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element11) {
-        return isMoveable(element11);
-      }
-    });
+    return (GroovyPsiElement)PsiTreeUtil.findFirstParent(element, element11 -> isMoveable(element11));
   }
 
   private List<LineRange> allRanges(final GroovyPsiElement scope, final boolean stmtLevel, final boolean topLevel) {
-    final ArrayList<LineRange> result = new ArrayList<LineRange>();
+    final ArrayList<LineRange> result = new ArrayList<>();
     scope.accept(new PsiRecursiveElementVisitor() {
       int lastStart = -1;
 
@@ -248,6 +244,18 @@ public class GroovyStatementMover extends StatementUpDownMover {
       final GrDocComment comment = ((GrDocCommentOwner)pivot).getDocComment();
       if (comment != null) {
         return new LineRange(comment, pivot);
+      }
+    }
+    else if (pivot instanceof GrVariableDeclaration && pivot.getParent() instanceof GrTypeDefinitionBody) {
+      GrVariable[] variables = ((GrVariableDeclaration)pivot).getVariables();
+      if (variables.length > 0) {
+        GrVariable variable = variables[0];
+        if (variable instanceof GrField) {
+          GrDocComment comment = ((GrField)variable).getDocComment();
+          if (comment != null) {
+            return new LineRange(comment, pivot);
+          }
+        }
       }
     }
 

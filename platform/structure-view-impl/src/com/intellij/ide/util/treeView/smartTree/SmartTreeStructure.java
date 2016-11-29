@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,12 @@ public class SmartTreeStructure extends AbstractTreeStructure {
   @Override
   public void commit() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+  }
+
+  @NotNull
+  @Override
+  public ActionCallback asyncCommit() {
+    return asyncCommitDocuments(myProject);
   }
 
   @Override

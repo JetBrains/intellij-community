@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
@@ -141,8 +141,8 @@ public class DetectedRootsChooser {
   private final EventDispatcher<RootSelectionListener> myDispatcher = EventDispatcher.create(RootSelectionListener.class);
 
   public DetectedRootsChooser() {
-    myModel = new ListTableModel<DetectedRootData>();
-    myTable = new TableView<DetectedRootData>(myModel);
+    myModel = new ListTableModel<>();
+    myTable = new TableView<>(myModel);
     myTable.setTableHeader(null);
     myTable.setShowGrid(false);
     myComponent = ScrollPaneFactory.createScrollPane(myTable);
@@ -193,7 +193,7 @@ public class DetectedRootsChooser {
   }
 
   public List<DetectedRootData> getMarkedElements() {
-    final List<DetectedRootData> result = new ArrayList<DetectedRootData>();
+    final List<DetectedRootData> result = new ArrayList<>();
     for (DetectedRootData data : myModel.getItems()) {
       if (data.isIncluded()) {
         result.add(data);
@@ -203,7 +203,7 @@ public class DetectedRootsChooser {
   }
 
   public void setElements(List<? extends DetectedRootData> roots) {
-    Set<String> rootTypes = new HashSet<String>();
+    Set<String> rootTypes = new HashSet<>();
     for (DetectedRootData root : roots) {
       for (DetectedProjectRoot projectRoot : root.getAllRoots()) {
         rootTypes.add(projectRoot.getRootTypeName());
@@ -219,13 +219,8 @@ public class DetectedRootsChooser {
     column.setPreferredWidth(width);
     column.setMaxWidth(width);
     myTable.updateColumnSizes();
-    List<DetectedRootData> sortedRoots = new ArrayList<DetectedRootData>(roots);
-    Collections.sort(sortedRoots, new Comparator<DetectedRootData>() {
-      @Override
-      public int compare(DetectedRootData o1, DetectedRootData o2) {
-        return o1.getDirectory().compareTo(o2.getDirectory());
-      }
-    });
+    List<DetectedRootData> sortedRoots = new ArrayList<>(roots);
+    Collections.sort(sortedRoots, Comparator.comparing(DetectedRootData::getDirectory));
     myModel.setItems(sortedRoots);
   }
 

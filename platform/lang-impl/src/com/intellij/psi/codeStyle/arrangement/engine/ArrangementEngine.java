@@ -137,22 +137,19 @@ public class ArrangementEngine {
       DumbService.getInstance(file.getProject()).setAlternativeResolveEnabled(false);
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (documentEx != null) {
+        //documentEx.setInBulkUpdate(true);
+      }
+      try {
+        doArrange(context);
+        if (callback != null) {
+          callback.afterArrangement(context.moveInfos);
+        }
+      }
+      finally {
         if (documentEx != null) {
-          //documentEx.setInBulkUpdate(true);
-        }
-        try {
-          doArrange(context);
-          if (callback != null) {
-            callback.afterArrangement(context.moveInfos);
-          }
-        }
-        finally {
-          if (documentEx != null) {
-            //documentEx.setInBulkUpdate(false);
-          }
+          //documentEx.setInBulkUpdate(false);
         }
       }
     });
@@ -218,8 +215,8 @@ public class ArrangementEngine {
     //    --------------------------
     //      arrange 'Entry1 Entry2'
 
-    List<ArrangementEntryWrapper<E>> entries = new ArrayList<ArrangementEntryWrapper<E>>();
-    Stack<StackEntry> stack = new Stack<StackEntry>();
+    List<ArrangementEntryWrapper<E>> entries = new ArrayList<>();
+    Stack<StackEntry> stack = new Stack<>();
     entries.addAll(context.wrappers);
     stack.push(new StackEntry(0, context.wrappers.size()));
     while (!stack.isEmpty()) {
@@ -272,15 +269,15 @@ public class ArrangementEngine {
           arranged.add(entry);
         }
         else {
-          Set<ArrangementEntry> first = new HashSet<ArrangementEntry>(dependencies);
+          Set<ArrangementEntry> first = new HashSet<>(dependencies);
           dependent.add(Pair.create(first, entry));
         }
       }
     }
 
-    Set<E> matched = new HashSet<E>();
+    Set<E> matched = new HashSet<>();
 
-    MultiMap<ArrangementMatchRule, E> elementsByRule = new MultiMap<ArrangementMatchRule, E>();
+    MultiMap<ArrangementMatchRule, E> elementsByRule = new MultiMap<>();
     for (ArrangementMatchRule rule : rulesByPriority) {
       matched.clear();
       for (E entry : unprocessed) {
@@ -352,28 +349,25 @@ public class ArrangementEngine {
     if (entries.size() < 2) {
       return;
     }
-    final TObjectIntHashMap<E> weights = new TObjectIntHashMap<E>();
+    final TObjectIntHashMap<E> weights = new TObjectIntHashMap<>();
     int i = 0;
     for (E e : entries) {
       weights.put(e, ++i);
     }
-    ContainerUtil.sort(entries, new Comparator<E>() {
-      @Override
-      public int compare(E e1, E e2) {
-        String name1 = e1 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e1).getName() : null;
-        String name2 = e2 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e2).getName() : null;
-        if (name1 != null && name2 != null) {
-          return name1.compareTo(name2);
-        }
-        else if (name1 == null && name2 == null) {
-          return weights.get(e1) - weights.get(e2);
-        }
-        else if (name2 == null) {
-          return -1;
-        }
-        else {
-          return 1;
-        }
+    ContainerUtil.sort(entries, (e1, e2) -> {
+      String name1 = e1 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e1).getName() : null;
+      String name2 = e2 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e2).getName() : null;
+      if (name1 != null && name2 != null) {
+        return name1.compareTo(name2);
+      }
+      else if (name1 == null && name2 == null) {
+        return weights.get(e1) - weights.get(e2);
+      }
+      else if (name2 == null) {
+        return -1;
+      }
+      else {
+        return 1;
       }
     });
   }
@@ -444,7 +438,7 @@ public class ArrangementEngine {
 
     private static <E extends ArrangementEntry> NewSectionInfo create(@NotNull List<E> arranged,
                                                                       @NotNull Map<E, ArrangementSectionRule> entryToSection) {
-      final NewSectionInfo<E> info = new NewSectionInfo<E>();
+      final NewSectionInfo<E> info = new NewSectionInfo<>();
 
       boolean sectionIsOpen = false;
       ArrangementSectionRule prevSection = null;
@@ -555,10 +549,10 @@ public class ArrangementEngine {
                                                                @NotNull CodeStyleSettings codeStyleSettings)
     {
       Collection<T> entries = rearranger.parse(root, document, ranges, arrangementSettings);
-      Collection<ArrangementEntryWrapper<T>> wrappers = new ArrayList<ArrangementEntryWrapper<T>>();
+      Collection<ArrangementEntryWrapper<T>> wrappers = new ArrayList<>();
       ArrangementEntryWrapper<T> previous = null;
       for (T entry : entries) {
-        ArrangementEntryWrapper<T> wrapper = new ArrangementEntryWrapper<T>(entry);
+        ArrangementEntryWrapper<T> wrapper = new ArrangementEntryWrapper<>(entry);
         if (previous != null) {
           previous.setNext(wrapper);
           wrapper.setPrevious(previous);
@@ -575,7 +569,7 @@ public class ArrangementEngine {
       }
       final List<? extends ArrangementMatchRule> rulesByPriority = arrangementSettings.getRulesSortedByPriority();
       final List<ArrangementSectionRule> sectionRules = ArrangementUtil.getExtendedSectionRules(arrangementSettings);
-      return new Context<T>(rearranger, wrappers, document, sectionRules, rulesByPriority, codeStyleSettings, changer);
+      return new Context<>(rearranger, wrappers, document, sectionRules, rulesByPriority, codeStyleSettings, changer);
     }
   }
 
@@ -728,7 +722,7 @@ public class ArrangementEngine {
         return;
       }
 
-      Deque<ArrangementEntryWrapper<E>> parents = new ArrayDeque<ArrangementEntryWrapper<E>>();
+      Deque<ArrangementEntryWrapper<E>> parents = new ArrayDeque<>();
       do {
         parents.add(parent);
         parent.setEndOffset(parent.getEndOffset() + lineFeedsDiff);
@@ -786,7 +780,7 @@ public class ArrangementEngine {
 
   private static class RangeMarkerAwareChanger<E extends ArrangementEntry> extends Changer<E> {
 
-    @NotNull private final List<ArrangementEntryWrapper<E>> myWrappers = new ArrayList<ArrangementEntryWrapper<E>>();
+    @NotNull private final List<ArrangementEntryWrapper<E>> myWrappers = new ArrayList<>();
     @NotNull private final DocumentEx myDocument;
 
     RangeMarkerAwareChanger(@NotNull DocumentEx document) {
@@ -867,7 +861,7 @@ public class ArrangementEngine {
         return;
       }
 
-      Deque<ArrangementEntryWrapper<E>> parents = new ArrayDeque<ArrangementEntryWrapper<E>>();
+      Deque<ArrangementEntryWrapper<E>> parents = new ArrayDeque<>();
       do {
         parents.add(parentWrapper);
         parentWrapper.setEndOffset(parentWrapper.getEndOffset() + lineFeedsDiff);

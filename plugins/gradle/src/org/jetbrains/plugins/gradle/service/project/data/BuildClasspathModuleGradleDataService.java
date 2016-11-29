@@ -37,13 +37,13 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -82,16 +82,19 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
     AbstractExternalSystemLocalSettings localSettings = manager.getLocalSettingsProvider().fun(project);
 
     final String linkedExternalProjectPath = projectData.getLinkedExternalProjectPath();
+    final File gradleHomeDir = toImport.iterator().next().getData().getGradleHomeDir();
+    final GradleLocalSettings gradleLocalSettings = GradleLocalSettings.getInstance(project);
+    if (gradleHomeDir != null) {
+      gradleLocalSettings.setGradleHome(linkedExternalProjectPath, gradleHomeDir.getPath());
+    }
+    final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
+
     final NotNullLazyValue<Set<String>> externalProjectGradleSdkLibs = new NotNullLazyValue<Set<String>>() {
       @NotNull
       @Override
       protected Set<String> compute() {
-        GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
-        if (settings == null || settings.getDistributionType() == null) return Collections.emptySet();
-
         final Set<String> gradleSdkLibraries = ContainerUtil.newLinkedHashSet();
-        File gradleHome =
-          gradleInstallationManager.getGradleHome(settings.getDistributionType(), linkedExternalProjectPath, settings.getGradleHome());
+        File gradleHome = gradleInstallationManager.getGradleHome(project, linkedExternalProjectPath);
         if (gradleHome != null && gradleHome.isDirectory()) {
           final Collection<File> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
           if (libraries != null) {
@@ -108,7 +111,7 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
       @NotNull
       @Override
       protected Set<String> compute() {
-        Set<String> result = new LinkedHashSet<String>();
+        Set<String> result = new LinkedHashSet<>();
         //// add main java root of buildSrc project
         result.add(linkedExternalProjectPath + "/buildSrc/src/main/java");
         //// add main groovy root of buildSrc project
@@ -116,12 +119,7 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
         for (Module module : modelsProvider.getModules(projectData)) {
           final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
           if(projectPath != null && StringUtil.startsWith(projectPath, linkedExternalProjectPath + "/buildSrc")) {
-            final List<String> sourceRoots = ContainerUtil.map(modelsProvider.getSourceRoots(module, false), new Function<VirtualFile, String>() {
-              @Override
-              public String fun(VirtualFile file) {
-                return file.getPath();
-              }
-            });
+            final List<String> sourceRoots = ContainerUtil.map(modelsProvider.getSourceRoots(module, false), VirtualFile::getPath);
             result.addAll(sourceRoots);
           }
         }
@@ -137,7 +135,6 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
         if (moduleDataNode == null) continue;
 
         String externalModulePath = moduleDataNode.getData().getLinkedExternalProjectPath();
-        GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
         if (settings == null || settings.getDistributionType() == null) {
           LOG.warn("Gradle SDK distribution type was not configured for the project at " + linkedExternalProjectPath);
         }
@@ -157,9 +154,7 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
         ExternalProjectBuildClasspathPojo projectBuildClasspathPojo = localProjectBuildClasspath.get(linkedExternalProjectPath);
         if (projectBuildClasspathPojo == null) {
           projectBuildClasspathPojo = new ExternalProjectBuildClasspathPojo(
-            moduleDataNode.getData().getExternalName(),
-            ContainerUtil.<String>newArrayList(),
-            ContainerUtil.<String, ExternalModuleBuildClasspathPojo>newHashMap());
+            moduleDataNode.getData().getExternalName(), ContainerUtil.newArrayList(), ContainerUtil.newHashMap());
           localProjectBuildClasspath.put(linkedExternalProjectPath, projectBuildClasspathPojo);
         }
 

@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class FrameworkSupportUtil {
                                                                      @Nullable Module module,
                                                                      @NotNull FacetsProvider facetsProvider) {
     List<FrameworkSupportInModuleProvider> allProviders = getAllProviders();
-    ArrayList<FrameworkSupportInModuleProvider> result = new ArrayList<FrameworkSupportInModuleProvider>();
+    ArrayList<FrameworkSupportInModuleProvider> result = new ArrayList<>();
     for (FrameworkSupportInModuleProvider provider : allProviders) {
       if (provider.isEnabledForModuleType(moduleType) && (module == null || provider.canAddSupport(module, facetsProvider))) {
         result.add(provider);
@@ -64,7 +65,7 @@ public class FrameworkSupportUtil {
   }
 
   public static List<FrameworkSupportInModuleProvider> getAllProviders() {
-    List<FrameworkSupportInModuleProvider> allTypes = new ArrayList<FrameworkSupportInModuleProvider>();
+    List<FrameworkSupportInModuleProvider> allTypes = new ArrayList<>();
     for (FrameworkSupportProvider provider : FrameworkSupportProvider.EXTENSION_POINT.getExtensions()) {
       allTypes.add(new OldFrameworkSupportProviderWrapper(provider));
     }
@@ -75,7 +76,7 @@ public class FrameworkSupportUtil {
   }
 
   public static List<FrameworkSupportInModuleProvider> getProviders(@NotNull ModuleBuilder builder) {
-    List<FrameworkSupportInModuleProvider> result = new ArrayList<FrameworkSupportInModuleProvider>();
+    List<FrameworkSupportInModuleProvider> result = new ArrayList<>();
     for (FrameworkSupportInModuleProvider type : getAllProviders()) {
       if (type.isEnabledForModuleBuilder(builder)) {
         result.add(type);
@@ -96,7 +97,7 @@ public class FrameworkSupportUtil {
 
   public static Comparator<FrameworkSupportInModuleProvider> getFrameworkSupportProvidersComparator(final List<FrameworkSupportInModuleProvider> types) {
     DFSTBuilder<FrameworkSupportInModuleProvider>
-      builder = new DFSTBuilder<FrameworkSupportInModuleProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(types))));
+      builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(new ProvidersGraph(types))));
     if (!builder.isAcyclic()) {
       Couple<FrameworkSupportInModuleProvider> pair = builder.getCircularDependency();
       LOG.error("Circular dependency between types '" + pair.getFirst().getFrameworkType().getId() + "' and '" + pair.getSecond().getFrameworkType().getId() + "' was found.");
@@ -122,11 +123,11 @@ public class FrameworkSupportUtil {
     return null;
   }
 
-  private static class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportInModuleProvider> {
+  private static class ProvidersGraph implements InboundSemiGraph<FrameworkSupportInModuleProvider> {
     private final List<FrameworkSupportInModuleProvider> myFrameworkSupportProviders;
 
     public ProvidersGraph(final List<FrameworkSupportInModuleProvider> frameworkSupportProviders) {
-      myFrameworkSupportProviders = new ArrayList<FrameworkSupportInModuleProvider>(frameworkSupportProviders);
+      myFrameworkSupportProviders = new ArrayList<>(frameworkSupportProviders);
     }
 
     public Collection<FrameworkSupportInModuleProvider> getNodes() {
@@ -134,7 +135,7 @@ public class FrameworkSupportUtil {
     }
 
     public Iterator<FrameworkSupportInModuleProvider> getIn(final FrameworkSupportInModuleProvider provider) {
-      List<FrameworkSupportInModuleProvider> dependencies = new ArrayList<FrameworkSupportInModuleProvider>();
+      List<FrameworkSupportInModuleProvider> dependencies = new ArrayList<>();
       String underlyingId = provider.getFrameworkType().getUnderlyingFrameworkTypeId();
       if (underlyingId != null) {
         FrameworkSupportInModuleProvider underlyingProvider = findProvider(underlyingId, myFrameworkSupportProviders);

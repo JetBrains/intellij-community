@@ -101,8 +101,8 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
     }
 
     final VcsBackgroundableComputable<T> backgroundableComputable =
-      new VcsBackgroundableComputable<T>(project, title, errorTitle, backgroundable, awtSuccessContinuation, awtErrorContinuation,
-                                  handler, actionParameter);
+      new VcsBackgroundableComputable<>(project, title, errorTitle, backgroundable, awtSuccessContinuation, awtErrorContinuation,
+                                        handler, actionParameter);
     backgroundableComputable.setSilent(silent);
     if (handler != null) {
       handler.register(actionParameter);

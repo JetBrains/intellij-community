@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -10,8 +11,8 @@ import javax.swing.*;
  */
 public class DefaultFrameEditorComponentProvider implements FrameEditorComponentProvider {
   @Override
-  public JComponent createEditorComponent(Project project) {
+  public JComponent createEditorComponent(@NotNull Project project) {
     FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
-    return  editorManager.getComponent();
+    return editorManager.getComponent();
   }
 }

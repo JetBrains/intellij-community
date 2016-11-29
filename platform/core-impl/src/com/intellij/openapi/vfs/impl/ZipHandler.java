@@ -26,14 +26,17 @@ import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ZipHandler extends ArchiveHandler {
-  private volatile String myCanonicalPathToZip = null;
+  private volatile String myCanonicalPathToZip;
   private volatile long myFileStamp;
   private volatile long myFileLength;
 
@@ -45,22 +48,15 @@ public class ZipHandler extends ArchiveHandler {
     @Override
     protected ZipFile createAccessor(ZipHandler key) throws IOException {
       final String canonicalPathToZip = key.getCanonicalPathToZip();
-      FileAttributes attributes = FileSystemUtil.getAttributes(canonicalPathToZip);
-      key.myFileStamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
-      key.myFileLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
+      setFileStampAndLength(key, canonicalPathToZip);
 
       return new ZipFile(canonicalPathToZip);
     }
 
     @Override
-    protected void disposeAccessor(final ZipFile fileAccessor) {
+    protected void disposeAccessor(final ZipFile fileAccessor) throws IOException {
       // todo: ZipFile isn't disposable for Java6, replace the code below with 'disposeCloseable(fileAccessor);'
-      disposeCloseable(new Closeable() {
-        @Override
-        public void close() throws IOException {
-          fileAccessor.close();
-        }
-      });
+      fileAccessor.close();
     }
 
     @Override
@@ -68,6 +64,13 @@ public class ZipHandler extends ArchiveHandler {
       return val1 == val2; // reference equality to handle different jars for different ZipHandlers on the same path
     }
   };
+
+  protected static synchronized void setFileStampAndLength(ZipHandler zipHandler, String pathToZip) {
+    FileAttributes attributes = FileSystemUtil.getAttributes(pathToZip);
+
+    zipHandler.myFileStamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
+    zipHandler.myFileLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
+  }
 
   @NotNull
   private String getCanonicalPathToZip() throws IOException {
@@ -81,30 +84,35 @@ public class ZipHandler extends ArchiveHandler {
   @NotNull
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
-    FileAccessorCache.Handle<ZipFile> zipRef = getZipFileHandle();
+    FileAccessorCache.Handle<ZipFile> existingZipRef = getCachedZipFileHandle(true);
+    assert existingZipRef != null;
     try {
-      ZipFile zip = zipRef.get();
-
-      Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
-      map.put("", createRootEntry());
-
-      Enumeration<? extends ZipEntry> entries = zip.entries();
-      while (entries.hasMoreElements()) {
-        getOrCreate(entries.nextElement(), map, zip);
-      }
-
-      return map;
+      return buildEntryMapForZipFile(existingZipRef.get());
     }
     finally {
-      zipRef.release();
+      existingZipRef.release();
     }
   }
 
   @NotNull
-  private FileAccessorCache.Handle<ZipFile> getZipFileHandle() throws IOException {
-    FileAccessorCache.Handle<ZipFile> handle = ourZipFileFileAccessorCache.get(this);
+  protected Map<String, EntryInfo> buildEntryMapForZipFile(ZipFile zip) {
+    Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
+    map.put("", createRootEntry());
 
-    if (getFile() == getFileToUse()) { // files are canonicalized
+    Enumeration<? extends ZipEntry> entries = zip.entries();
+    while (entries.hasMoreElements()) {
+      getOrCreate(entries.nextElement(), map, zip);
+    }
+
+    return map;
+  }
+
+  @Nullable
+  protected FileAccessorCache.Handle<ZipFile> getCachedZipFileHandle(boolean createHandleIfNeeded) throws IOException {
+    FileAccessorCache.Handle<ZipFile> handle = createHandleIfNeeded ? ourZipFileFileAccessorCache.get(this) : ourZipFileFileAccessorCache.getIfCached(this);
+
+    // check handle is valid
+    if (handle != null && getFile() == getFileToUse()) { // files are canonicalized
       // IDEA-148458, http://bugs.java.com/view_bug.do?bug_id=4425695, JVM crashes on use of opened ZipFile after it was updated
       // Reopen file if the file has been changed
       FileAttributes attributes = FileSystemUtil.getAttributes(getCanonicalPathToZip());
@@ -202,7 +210,7 @@ public class ZipHandler extends ArchiveHandler {
     FileAccessorCache.Handle<ZipFile> zipRef;
 
     try {
-      zipRef = getZipFileHandle();
+      zipRef = getCachedZipFileHandle(true);
     }
     catch (RuntimeException ex) {
       Throwable cause = ex.getCause();

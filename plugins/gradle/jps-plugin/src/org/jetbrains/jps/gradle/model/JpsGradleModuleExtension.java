@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.gradle.model;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 
 /**
@@ -22,4 +23,6 @@ import org.jetbrains.jps.model.JpsElement;
  * @since 7/10/2014
  */
 public interface JpsGradleModuleExtension extends JpsElement {
+  @Nullable
+  String getModuleType();
 }

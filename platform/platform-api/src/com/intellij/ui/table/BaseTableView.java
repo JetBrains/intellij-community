@@ -77,7 +77,7 @@ public class BaseTableView extends JBTable {
   public static void restore(final Storage storage, final JTable table) {
     final TableColumnModel columnModel = table.getTableHeader().getColumnModel();
     int index = 0;
-    final ArrayList<String> columnIndices = new ArrayList<String>();
+    final ArrayList<String> columnIndices = new ArrayList<>();
     while (true) {
       final String order = storage.get(orderPropertyName(index));
       if (order == null) break;

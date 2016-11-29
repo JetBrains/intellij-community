@@ -41,7 +41,7 @@ public abstract class EclipseNatureImporter {
   public abstract void doImport(@NotNull Project project, @NotNull List<Module> modules);
 
   public static Set<String> getAllDefinedCons() {
-    final Set<String> allCons = new HashSet<String>();
+    final Set<String> allCons = new HashSet<>();
     allCons.add(EclipseXml.GROOVY_SUPPORT);
     allCons.add(EclipseXml.GROOVY_DSL_CONTAINER);
 

@@ -41,7 +41,7 @@ public class ElementUtils {
     public static List<FieldElement> getOnlyAsFieldElements(Collection<? extends PsiMember> members,
                                                             Collection<? extends PsiMember> selectedNotNullMembers,
                                                             boolean useAccessors) {
-        List<FieldElement> fieldElementList = new ArrayList<FieldElement>();
+        List<FieldElement> fieldElementList = new ArrayList<>();
 
         for (PsiMember member : members) {
             if (member instanceof PsiField) {
@@ -64,7 +64,7 @@ public class ElementUtils {
      * @return a filtered list of only the methods as a {@link MethodElement} objects.
      */
     public static List<MethodElement> getOnlyAsMethodElements(Collection<? extends PsiMember> members) {
-        List<MethodElement> methodElementList = new ArrayList<MethodElement>();
+        List<MethodElement> methodElementList = new ArrayList<>();
 
         for (PsiMember member : members) {
             if (member instanceof PsiMethod) {
@@ -88,7 +88,7 @@ public class ElementUtils {
     public static List<Element> getOnlyAsFieldAndMethodElements(Collection<? extends PsiMember> members,
                                                                 Collection<? extends PsiMember> selectedNotNullMembers,
                                                                 boolean useAccessors) {
-        List<Element> elementList = new ArrayList<Element>();
+        List<Element> elementList = new ArrayList<>();
 
         for (PsiMember member : members) {
             AbstractElement element = null;

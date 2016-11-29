@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -47,7 +48,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return XmlBundle.message("xml.inspections.replace.tag.empty.body.with.empty.end");
   }
 
@@ -55,12 +56,6 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return getName();
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
     return getName();
   }
 
@@ -78,13 +73,24 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    applyFix(project, getTag(editor, file));
+    XmlTag tag = getTag(editor, file);
+    if (tag != null) {
+      applyFix(project, tag);
+    }
   }
 
   private static XmlTag getTag(Editor editor, PsiFile file) {
+
+    int offset = editor.getCaretModel().getOffset();
     FileViewProvider provider = file.getViewProvider();
-    PsiElement element = provider.findElementAt(editor.getCaretModel().getOffset(), provider.getBaseLanguage());
-    return PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+    for (Language language : provider.getLanguages()) {
+      PsiElement element = provider.findElementAt(offset, language);
+      XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+      if (tag != null && XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode()) != null) {
+        return tag;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -92,7 +98,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
     return false;
   }
 
-  private static void applyFix(@NotNull final Project project, final PsiElement tag) {
+  private static void applyFix(@NotNull final Project project, @NotNull final PsiElement tag) {
     if (!FileModificationService.getInstance().prepareFileForWrite(tag.getContainingFile())) {
       return;
     }

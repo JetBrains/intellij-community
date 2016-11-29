@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
@@ -53,26 +52,17 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
         if (EncodingManager.PROP_NATIVE2ASCII_SWITCH.equals(propertyName) ||
             EncodingManager.PROP_PROPERTIES_FILES_ENCODING.equals(propertyName)
           ) {
-          DumbService.getInstance(myProject).smartInvokeLater(new Runnable(){
-            @Override
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable(){
-                @Override
-                public void run() {
-                  Collection<VirtualFile> filesToRefresh = FileBasedIndex.getInstance()
-                    .getContainingFiles(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, GlobalSearchScope.allScope(myProject));
-                  VirtualFile[] virtualFiles = VfsUtilCore.toVirtualFileArray(filesToRefresh);
-                  FileDocumentManager.getInstance().saveAllDocuments();
+          DumbService.getInstance(myProject).smartInvokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+            Collection<VirtualFile> filesToRefresh = FileTypeIndex.getFiles(PropertiesFileType.INSTANCE, GlobalSearchScope.allScope(myProject));
+            VirtualFile[] virtualFiles = VfsUtilCore.toVirtualFileArray(filesToRefresh);
+            FileDocumentManager.getInstance().saveAllDocuments();
 
-                  //force to re-detect encoding
-                  for (VirtualFile virtualFile : virtualFiles) {
-                    virtualFile.setCharset(null);
-                  }
-                  FileDocumentManager.getInstance().reloadFiles(virtualFiles);
-                }
-              });
+            //force to re-detect encoding
+            for (VirtualFile virtualFile : virtualFiles) {
+              virtualFile.setCharset(null);
             }
-          });
+            FileDocumentManager.getInstance().reloadFiles(virtualFiles);
+          }));
         }
       }
     };

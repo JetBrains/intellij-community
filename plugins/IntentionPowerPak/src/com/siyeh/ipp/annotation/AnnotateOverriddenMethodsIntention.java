@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Bas Leijdekkers
+ * Copyright 2011-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,18 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -52,6 +53,11 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
     else {
       return IntentionPowerPackBundle.message("annotate.overridden.methods.intention.parameters.name", annotationText);
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override
@@ -102,33 +108,41 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
       parameterIndex = -1;
       method = (PsiMethod)grandParent;
     }
-    final Collection<PsiMethod> overridingMethods =
-      OverridingMethodsSearch.search(method,
-                                     GlobalSearchScope.allScope(project), true).findAll();
-    final PsiNameValuePair[] attributes =
-      annotation.getParameterList().getAttributes();
+    final Collection<PsiMethod> overridingMethods = OverridingMethodsSearch.search(method).findAll();
+    final List<PsiMethod> prepare = new ArrayList<>();
+    final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     for (PsiMethod overridingMethod : overridingMethods) {
-      if (parameterIndex == -1) {
-        annotate(overridingMethod, annotationName, attributes, element, annotationsToRemove);
-      }
-      else {
-        final PsiParameterList parameterList =
-          overridingMethod.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        final PsiParameter parameter = parameters[parameterIndex];
-        annotate(parameter, annotationName, attributes, element, annotationsToRemove);
+      if (annotationsManager.chooseAnnotationsPlace(overridingMethod) == ExternalAnnotationsManager.AnnotationPlace.IN_CODE) {
+        prepare.add(overridingMethod);
       }
     }
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(prepare)) {
+      return;
+    }
+    WriteAction.run(() -> {
+      final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+      for (PsiMethod overridingMethod : overridingMethods) {
+        if (parameterIndex == -1) {
+          annotate(overridingMethod, annotationName, attributes, annotationsToRemove, annotationsManager);
+        }
+        else {
+          final PsiParameterList parameterList = overridingMethod.getParameterList();
+          final PsiParameter[] parameters = parameterList.getParameters();
+          final PsiParameter parameter = parameters[parameterIndex];
+          annotate(parameter, annotationName, attributes, annotationsToRemove, annotationsManager);
+        }
+      }
+      if (!prepare.isEmpty()) {
+        UndoUtil.markPsiFileForUndo(annotation.getContainingFile());
+      }
+    });
   }
 
   private static void annotate(PsiModifierListOwner modifierListOwner,
                                String annotationName,
                                PsiNameValuePair[] attributes,
-                               PsiElement context,
-                               List<String> annotationsToRemove) {
-    final Project project = context.getProject();
-    final ExternalAnnotationsManager annotationsManager =
-      ExternalAnnotationsManager.getInstance(project);
+                               List<String> annotationsToRemove,
+                               ExternalAnnotationsManager annotationsManager) {
     final PsiModifierList modifierList =
       modifierListOwner.getModifierList();
     if (modifierList == null) {
@@ -142,21 +156,15 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
         ExternalAnnotationsManager.AnnotationPlace.NOWHERE) {
       return;
     }
-    final PsiFile fromFile = context.getContainingFile();
     if (annotationAnnotationPlace ==
         ExternalAnnotationsManager.AnnotationPlace.EXTERNAL) {
       for (String annotationToRemove : annotationsToRemove) {
         annotationsManager.deannotate(modifierListOwner, annotationToRemove);
       }
       annotationsManager.annotateExternally(modifierListOwner,
-                                            annotationName, fromFile, attributes);
+                                            annotationName, modifierListOwner.getContainingFile(), attributes);
     }
     else {
-      final PsiFile containingFile =
-        modifierListOwner.getContainingFile();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(containingFile)) {
-        return;
-      }
       for (String annotationToRemove : annotationsToRemove) {
         final PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierListOwner, annotationToRemove);
         if (annotation != null) {
@@ -170,11 +178,8 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
                                            pair.getValue());
       }
       final JavaCodeStyleManager codeStyleManager =
-        JavaCodeStyleManager.getInstance(project);
+        JavaCodeStyleManager.getInstance(modifierListOwner.getProject());
       codeStyleManager.shortenClassReferences(inserted);
-      if (containingFile != fromFile) {
-        UndoUtil.markPsiFileForUndo(fromFile);
-      }
     }
   }
 }

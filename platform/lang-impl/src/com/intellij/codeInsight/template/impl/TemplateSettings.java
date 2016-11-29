@@ -23,13 +23,15 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
@@ -81,7 +83,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @NonNls private static final String DEFAULT_VALUE = "defaultValue";
   @NonNls private static final String ALWAYS_STOP_AT = "alwaysStopAt";
 
-  @NonNls private static final String CONTEXT = "context";
+  @NonNls static final String CONTEXT = "context";
   @NonNls private static final String TO_REFORMAT = "toReformat";
   @NonNls private static final String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
   @NonNls private static final String USE_STATIC_IMPORT = "useStaticImport";
@@ -96,11 +98,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
 
-  private final Map<String, Template> myTemplatesById = new LinkedHashMap<String, Template>();
-  private final Map<TemplateKey, TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
+  private final Map<String, Template> myTemplatesById = new LinkedHashMap<>();
+  private final Map<TemplateKey, TemplateImpl> myDefaultTemplates = new LinkedHashMap<>();
 
   private int myMaxKeyLength = 0;
-  private final SchemesManager<TemplateGroup, TemplateGroup> mySchemeManager;
+  private final SchemeManager<TemplateGroup> mySchemeManager;
 
   private State myState = new State();
 
@@ -128,7 +130,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     @OptionTag(nameAttribute = "", valueAttribute = "shortcut", converter = ShortcutConverter.class)
     public char defaultShortcut = TAB_CHAR;
 
-    public List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<TemplateKey>();
+    public List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
   }
 
   public static class TemplateKey {
@@ -186,34 +188,35 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private TemplateKey myLastSelectedTemplate;
 
-  public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
-    mySchemeManager = schemesManagerFactory.create(TEMPLATES_DIR_PATH, new SchemeProcessor<TemplateGroup>() {
+  public TemplateSettings(@NotNull SchemeManagerFactory schemeManagerFactory) {
+    mySchemeManager = schemeManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup, TemplateGroup>() {
       @Nullable
       @Override
-      public TemplateGroup readScheme(@NotNull Element element) {
+      public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
         return readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
       }
 
       @NotNull
       @Override
-      public State getState(@NotNull TemplateGroup template) {
+      public SchemeState getState(@NotNull TemplateGroup template) {
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
-            return State.POSSIBLY_CHANGED;
+            return SchemeState.POSSIBLY_CHANGED;
           }
         }
-        return State.NON_PERSISTENT;
+        return SchemeState.NON_PERSISTENT;
       }
 
+      @NotNull
       @Override
       public Element writeScheme(@NotNull TemplateGroup template) {
         Element templateSetElement = new Element(TEMPLATE_SET);
         templateSetElement.setAttribute(GROUP, template.getName());
 
         for (TemplateImpl t : template.getElements()) {
-          if (differsFromDefault(t)) {
-            TemplateImpl def = getDefaultTemplate(t);
-            templateSetElement.addContent(serializeTemplate(t, def == null ? null : def.getTemplateContext()));
+          TemplateImpl defaultTemplate = getDefaultTemplate(t);
+          if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
+            templateSetElement.addContent(serializeTemplate(t, defaultTemplate));
           }
         }
 
@@ -280,7 +283,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   void applyNewDeletedTemplates() {
     for (TemplateKey templateKey : myState.deletedKeys) {
       if (templateKey.groupName == null) {
-        for (TemplateImpl template : new ArrayList<TemplateImpl>(myTemplates.get(templateKey.key))) {
+        for (TemplateImpl template : new ArrayList<>(myTemplates.get(templateKey.key))) {
           removeTemplate(template);
         }
       }
@@ -408,7 +411,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  private static TemplateImpl createTemplate(String key, String string, String group, String description, String shortcut, String id) {
+  @NotNull
+  private static TemplateImpl createTemplate(@NotNull String key, String string, @NotNull String group, String description, @Nullable String shortcut, String id) {
     TemplateImpl template = new TemplateImpl(key, string, group);
     template.setId(id);
     template.setDescription(description);
@@ -453,7 +457,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private void readDefTemplate(DefaultLiveTemplatesProvider provider, String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
     if (inputStream != null) {
-      TemplateGroup group = readTemplateFile(JDOMUtil.load(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
+      TemplateGroup group = readTemplateFile(JdomKt.loadElement(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
       if (group != null && group.getReplace() != null) {
         for (TemplateImpl template : myTemplates.get(group.getReplace())) {
           removeTemplate(template);
@@ -474,14 +478,24 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
 
     String groupName = element.getAttributeValue(GROUP);
-    if (groupName == null || groupName.isEmpty()) groupName = defGroupName;
+    if (StringUtil.isEmpty(groupName)) {
+      groupName = defGroupName;
+    }
 
     TemplateGroup result = new TemplateGroup(groupName, element.getAttributeValue("REPLACE"));
 
-    Map<String, TemplateImpl> created = new LinkedHashMap<String,  TemplateImpl>();
+    Map<String, TemplateImpl> created = new LinkedHashMap<>();
 
     for (Element child : element.getChildren(TEMPLATE)) {
-      TemplateImpl template = readTemplateFromElement(groupName, child, classLoader);
+      TemplateImpl template;
+      try {
+        template = readTemplateFromElement(groupName, child, classLoader);
+      }
+      catch (Exception e) {
+        LOG.warn("failed to load template " + element.getAttributeValue(NAME), e);
+        continue;
+      }
+
       if (isDefault) {
         myDefaultTemplates.put(TemplateKey.keyOf(template), template);
       }
@@ -539,6 +553,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     else {
       description = element.getAttributeValue(DESCRIPTION);
     }
+
     String shortcut = element.getAttributeValue(SHORTCUT);
     TemplateImpl template = createTemplate(name, value, groupName, description, shortcut, id);
 
@@ -568,7 +583,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @NotNull
-  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateContext defaultContext) {
+  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {
@@ -578,9 +593,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     element.setAttribute(VALUE, template.getString());
     if (template.getShortcutChar() == TAB_CHAR) {
       element.setAttribute(SHORTCUT, TAB);
-    } else if (template.getShortcutChar() == ENTER_CHAR) {
+    }
+    else if (template.getShortcutChar() == ENTER_CHAR) {
       element.setAttribute(SHORTCUT, ENTER);
-    } else if (template.getShortcutChar() == SPACE_CHAR) {
+    }
+    else if (template.getShortcutChar() == SPACE_CHAR) {
       element.setAttribute(SHORTCUT, SPACE);
     }
     if (template.getDescription() != null) {
@@ -589,8 +606,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     element.setAttribute(TO_REFORMAT, Boolean.toString(template.isToReformat()));
     element.setAttribute(TO_SHORTEN_FQ_NAMES, Boolean.toString(template.isToShortenLongNames()));
     if (template.getValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE)
-        != Template.getDefaultValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE))
-    {
+        != Template.getDefaultValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE)) {
       element.setAttribute(USE_STATIC_IMPORT, Boolean.toString(template.getValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE)));
     }
     if (template.isDeactivated()) {
@@ -606,11 +622,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       element.addContent(variableElement);
     }
 
-    try {
-      Element contextElement = new Element(CONTEXT);
-      template.getTemplateContext().writeTemplateContext(contextElement, defaultContext);
+    Element contextElement = template.getTemplateContext().writeTemplateContext(defaultTemplate == null ? null : defaultTemplate.getTemplateContext());
+    if (contextElement != null) {
       element.addContent(contextElement);
-    } catch (WriteExternalException ignore) {
     }
     return element;
   }
@@ -622,7 +636,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       myState.deletedKeys.add(TemplateKey.keyOf(template));
     }
     myMaxKeyLength = 0;
-    List<TemplateGroup> schemes = new SmartList<TemplateGroup>();
+    List<TemplateGroup> schemes = new SmartList<>();
     for (TemplateGroup group : newGroups) {
       if (!group.isEmpty()) {
         schemes.add(group);
@@ -641,7 +655,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   public List<TemplateImpl> collectMatchingCandidates(String key, @Nullable Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
-    List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
+    List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated()) {
         continue;

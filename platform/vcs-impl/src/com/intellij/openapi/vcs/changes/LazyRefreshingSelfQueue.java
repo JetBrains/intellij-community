@@ -56,15 +56,15 @@ public class LazyRefreshingSelfQueue<T> {
     myUpdateInterval = updateInterval;
     myShouldUpdateOldChecker = shouldUpdateOldChecker;
     myUpdater = updater;
-    myQueue = new LinkedList<Pair<Long, T>>();
-    myInProgress = new HashSet<T>();
+    myQueue = new LinkedList<>();
+    myInProgress = new HashSet<>();
     myLock = new Object();
   }
 
   // adds item that should be updated at next updateStep() call
   public void addRequest(@NotNull final T t) {
     synchronized (myLock) {
-      myQueue.addFirst(new Pair<Long,T>(null, t));
+      myQueue.addFirst(new Pair<>(null, t));
     }
   }
 
@@ -99,7 +99,7 @@ public class LazyRefreshingSelfQueue<T> {
 
     // do not ask under lock
     final Boolean shouldUpdateOld = onlyAbsolute ? false : myShouldUpdateOldChecker.compute();
-    final List<T> dirty = new LinkedList<T>();
+    final List<T> dirty = new LinkedList<>();
 
     synchronized (myLock) {
       // adds all pairs with pair.First == null to dirty
@@ -134,7 +134,7 @@ public class LazyRefreshingSelfQueue<T> {
         // output value of remove() is tracked not to process items that were removed from myInProgress in forceRemove()
         // TODO: Probably more clear logic should be implemented
         if (myInProgress.remove(t)) {
-          myQueue.addLast(new Pair<Long,T>(System.currentTimeMillis(), t));
+          myQueue.addLast(new Pair<>(System.currentTimeMillis(), t));
         }
       }
     }

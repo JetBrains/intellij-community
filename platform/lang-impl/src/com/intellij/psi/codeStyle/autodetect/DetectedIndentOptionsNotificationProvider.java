@@ -65,18 +65,15 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
         Document document = editor.getDocument();
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
         PsiFile psiFile = documentManager.getPsiFile(document);
-        final Ref<FileIndentOptionsProvider> indentOptionsProviderRef = new Ref<FileIndentOptionsProvider>();
+        final Ref<FileIndentOptionsProvider> indentOptionsProviderRef = new Ref<>();
         if (psiFile != null) {
           CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
           CommonCodeStyleSettings.IndentOptions userOptions = settings.getIndentOptions(psiFile.getFileType());
           CommonCodeStyleSettings.IndentOptions detectedOptions = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(
             psiFile, null, false,
-            new Processor<FileIndentOptionsProvider>() {
-              @Override
-              public boolean process(FileIndentOptionsProvider provider) {
-                indentOptionsProviderRef.set(provider);
-                return false;
-              }
+            provider -> {
+              indentOptionsProviderRef.set(provider);
+              return false;
             });
           final FileIndentOptionsProvider provider = indentOptionsProviderRef.get();
           EditorNotificationInfo info = provider != null && !provider.isAcceptedWithoutWarning(project, file) && !userOptions.equals(detectedOptions)
@@ -89,12 +86,9 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
               panel.icon(info.getIcon());
             }
             for (final ActionLabelData actionLabelData : info.getLabelAndActions()) {
-              Runnable onClickAction = new Runnable() {
-                @Override
-                public void run() {
-                  actionLabelData.action.run();
-                  EditorNotifications.getInstance(project).updateAllNotifications();
-                }
+              Runnable onClickAction = () -> {
+                actionLabelData.action.run();
+                EditorNotifications.getInstance(project).updateAllNotifications();
               };
               panel.createActionLabel(actionLabelData.label, onClickAction);
             }

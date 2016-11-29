@@ -83,9 +83,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final ConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
     if (communication != null) {
       if (qualifier != null) {
-        return new PydevConsoleReference(this, communication, qualifier.getText() + ".");
+        return new PydevConsoleReference(this, communication, qualifier.getText() + ".", context.allowRemote());
       }
-      return new PydevConsoleReference(this, communication, "");
+      return new PydevConsoleReference(this, communication, "", context.allowRemote());
     }
 
     if (qualifier != null) {
@@ -135,12 +135,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public QualifiedResolveResult followAssignmentsChain(PyResolveContext resolveContext) {
     PyReferenceExpression seeker = this;
     QualifiedResolveResult ret = null;
-    List<PyExpression> qualifiers = new ArrayList<PyExpression>();
+    List<PyExpression> qualifiers = new ArrayList<>();
     PyExpression qualifier = seeker.getQualifier();
     if (qualifier != null) {
       qualifiers.add(qualifier);
     }
-    Set<PsiElement> visited = new HashSet<PsiElement>();
+    Set<PsiElement> visited = new HashSet<>();
     visited.add(this);
     SEARCH:
     while (ret == null) {
@@ -229,14 +229,15 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       final PsiPolyVariantReference reference = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
       final List<PsiElement> targets = PyUtil.multiResolveTopPriority(reference);
 
-      final List<PyType> members = new ArrayList<PyType>();
+      final List<PyType> members = new ArrayList<>();
       for (PsiElement target : targets) {
         if (target == this || target == null) {
           continue;
         }
         if (!target.isValid()) {
-          LOG.error("Reference " + this + " resolved to invalid element " + target + " (text=" + target.getText() + ")");
-          continue;
+          /*LOG.error("Reference " + this + " resolved to invalid element " + target + " (text=" + target.getText() + ")");
+          continue;*/
+          throw new PsiInvalidElementAccessException(this);
         }
         members.add(getTypeFromTarget(target, context, this));
       }

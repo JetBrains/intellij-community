@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,9 @@ public class AnnotationTargetUtil {
         return PACKAGE_TARGETS;
       }
       if (element instanceof PsiClass) {
+        if (((PsiClass)element).getModifierList() != owner){
+          return TargetType.EMPTY_ARRAY;
+        }
         if (((PsiClass)element).isAnnotationType()) {
           return ANNOTATION_TARGETS;
         }
@@ -135,6 +138,17 @@ public class AnnotationTargetUtil {
 
   @Nullable
   private static TargetType translateTargetRef(@NotNull PsiReference reference) {
+    if (reference instanceof PsiJavaCodeReferenceElement) {
+      String name = ((PsiJavaCodeReferenceElement)reference).getReferenceName();
+      if (name != null) {
+        try {
+          return TargetType.valueOf(name);
+        }
+        catch (IllegalArgumentException ignore) {
+        }
+      }
+    }
+
     PsiElement field = reference.resolve();
     if (field instanceof PsiEnumConstant) {
       String name = ((PsiEnumConstant)field).getName();

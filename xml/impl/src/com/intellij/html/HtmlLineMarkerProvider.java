@@ -36,7 +36,7 @@ import java.util.Map;
  *         Time: 11:38:46 PM
  */
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
-  private final Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders = new THashMap<Language, LineMarkerProvider>();
+  private final Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders = new THashMap<>();
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
@@ -74,17 +74,17 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
 
       if (!(language instanceof XMLLanguage)) {
         if(localEmbeddedLanguagesLineMarkerProviders == null) {
-          localEmbeddedLanguagesLineMarkerProviders = new THashMap<Language, LineMarkerProvider>();
+          localEmbeddedLanguagesLineMarkerProviders = new THashMap<>();
         }
 
         final LineMarkerProvider lineMarkerProvider = getLineMarkerProviderFromLanguage(language, localEmbeddedLanguagesLineMarkerProviders);
 
         if (lineMarkerProvider != null) {
-          if (embeddedLineMarkersWorkItems == null) embeddedLineMarkersWorkItems = new THashMap<LineMarkerProvider, List<PsiElement>>();
+          if (embeddedLineMarkersWorkItems == null) embeddedLineMarkersWorkItems = new THashMap<>();
           List<PsiElement> elementList = embeddedLineMarkersWorkItems.get(lineMarkerProvider);
 
           if (elementList == null) {
-            elementList = new ArrayList<PsiElement>(5);
+            elementList = new ArrayList<>(5);
             embeddedLineMarkersWorkItems.put(lineMarkerProvider, elementList);
           }
 

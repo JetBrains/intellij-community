@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ import java.util.concurrent.Future
 
 internal class AutoSyncManager(private val icsManager: IcsManager) {
   private @Volatile var autoSyncFuture: Future<*>? = null
+
+  @Volatile var enabled = true
 
   fun waitAutoSync(indicator: ProgressIndicator) {
     val autoFuture = autoSyncFuture
@@ -90,13 +92,14 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   }
 
   fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
-    if (!icsManager.repositoryActive || (!force && !icsManager.settings.autoSync)) {
+    if (!enabled || !icsManager.repositoryActive || (!force && !icsManager.settings.autoSync)) {
       return
     }
 
-    var future = autoSyncFuture
-    if (future != null && !future.isDone) {
-      return
+    autoSyncFuture?.let {
+      if (!it.isDone) {
+        return
+      }
     }
 
     val app = ApplicationManagerEx.getApplicationEx() as ApplicationImpl
@@ -110,20 +113,17 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       return
     }
 
-    future = app.executeOnPooledThread {
-      if (autoSyncFuture == future) {
+    autoSyncFuture = app.executeOnPooledThread {
+      try {
         // to ensure that repository will not be in uncompleted state and changes will be pushed
         ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread())
-        try {
-          sync(app, onAppExit)
-        }
-        finally {
-          autoSyncFuture = null
-          ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread())
-        }
+        sync(app, onAppExit)
+      }
+      finally {
+        autoSyncFuture = null
+        ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread())
       }
     }
-    autoSyncFuture = future
   }
 
   private fun sync(app: ApplicationImpl, onAppExit: Boolean) {
@@ -145,9 +145,12 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
         app.invokeAndWait({
           catchAndLog {
             val updateResult = updater.merge()
-            if (!onAppExit && !app.isDisposeInProgress && updateResult != null && updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult, app.messageBus)) {
+            if (!onAppExit &&
+                !app.isDisposeInProgress &&
+                updateResult != null &&
+                updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult, app.messageBus)) {
               // force to avoid saveAll & confirmation
-              app.exit(true, true, true, true)
+              app.exit(true, true, true)
             }
           }
         }, ModalityState.NON_MODAL)
@@ -160,14 +163,13 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   }
 }
 
-inline internal fun catchAndLog(runnable: () -> Unit) {
+inline internal fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit) {
   try {
     runnable()
   }
-  catch (e: ProcessCanceledException) {
-  }
+  catch (e: ProcessCanceledException) { }
   catch (e: Throwable) {
-    if (e is AuthenticationException || e is NoRemoteRepositoryException) {
+    if (asWarning || e is AuthenticationException || e is NoRemoteRepositoryException) {
       LOG.warn(e)
     }
     else {

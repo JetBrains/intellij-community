@@ -22,44 +22,42 @@ import java.util.List;
  */
 public class ResponseProcessor<R extends AbstractResponse> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.ResponseProcessor");
-  private final TIntObjectHashMap<AbstractResponseToRequestHandler<?>> myHandlers = new TIntObjectHashMap<AbstractResponseToRequestHandler<?>>();
-  private final MultiValuesMap<Class<? extends R>, AbstractResponseHandler<? extends R>> myClassHandlers = new MultiValuesMap<Class<? extends R>, AbstractResponseHandler<? extends R>>();
-  private final TIntObjectHashMap<TimeoutHandler> myTimeoutHandlers = new TIntObjectHashMap<TimeoutHandler>();
+  private final TIntObjectHashMap<AbstractResponseToRequestHandler<?>> myHandlers = new TIntObjectHashMap<>();
+  private final MultiValuesMap<Class<? extends R>, AbstractResponseHandler<? extends R>> myClassHandlers = new MultiValuesMap<>();
+  private final TIntObjectHashMap<TimeoutHandler> myTimeoutHandlers = new TIntObjectHashMap<>();
   private boolean myStopped;
   private final Object myLock = new Object();
   private Thread myThread;
   private final Alarm myTimeoutAlarm;
 
-  public ResponseProcessor(SocketConnection<?, R> connection) {
-    myTimeoutAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, connection);
+  public ResponseProcessor(@NotNull SocketConnection<?, R> connection) {
+    myTimeoutAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, connection);
   }
 
   public void startReading(final ResponseReader<R> reader) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        myThread = Thread.currentThread();
-        try {
-          while (true) {
-            final R r = reader.readResponse();
-            if (r == null) break;
-            if (r instanceof ResponseToRequest) {
-              final int requestId = ((ResponseToRequest)r).getRequestId();
-              processResponse(requestId, r);
-            }
-            else {
-              processResponse(r);
-            }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      myThread = Thread.currentThread();
+      try {
+        while (true) {
+          final R r = reader.readResponse();
+          if (r == null) break;
+          if (r instanceof ResponseToRequest) {
+            final int requestId = ((ResponseToRequest)r).getRequestId();
+            processResponse(requestId, r);
+          }
+          else {
+            processResponse(r);
           }
         }
-        catch (InterruptedException ignored) {
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-        finally {
-          synchronized (myLock) {
-            myStopped = true;
-          }
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+      finally {
+        synchronized (myLock) {
+          myStopped = true;
         }
       }
     });
@@ -93,7 +91,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
     synchronized (myLock) {
       final Collection<AbstractResponseHandler<? extends R>> responseHandlers = myClassHandlers.get(responseClass);
       if (responseHandlers == null) return;
-      handlers = new SmartList<AbstractResponseHandler<?>>(responseHandlers);
+      handlers = new SmartList<>(responseHandlers);
     }
 
     for (AbstractResponseHandler handler : handlers) {
@@ -127,7 +125,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
 
   public void checkTimeout() {
     LOG.debug("Checking timeout");
-    final List<TimeoutHandler> timedOut = new ArrayList<TimeoutHandler>();
+    final List<TimeoutHandler> timedOut = new ArrayList<>();
     synchronized (myLock) {
       final long time = System.currentTimeMillis();
       myTimeoutHandlers.retainEntries(new TIntObjectProcedure<TimeoutHandler>() {
@@ -162,11 +160,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
     LOG.debug("schedule timeout check in " + delay + "ms");
     if (delay > 10) {
       myTimeoutAlarm.cancelAllRequests();
-      myTimeoutAlarm.addRequest(new Runnable() {
-        public void run() {
-          checkTimeout();
-        }
-      }, delay);
+      myTimeoutAlarm.addRequest(() -> checkTimeout(), delay);
     }
     else {
       checkTimeout();

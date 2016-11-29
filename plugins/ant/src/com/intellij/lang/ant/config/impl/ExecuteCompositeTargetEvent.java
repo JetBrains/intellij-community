@@ -41,7 +41,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     }
     myCompositeName = compositeName;
     final StringTokenizer tokenizer = new StringTokenizer(compositeName.substring(1, compositeName.length() - 1), ",", false);
-    final List<String> targetNames = new ArrayList<String>();
+    final List<String> targetNames = new ArrayList<>();
     while (tokenizer.hasMoreTokens()) {
       targetNames.add(tokenizer.nextToken().trim());
     }

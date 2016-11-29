@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,18 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class InsertSuperFix implements IntentionAction, HighPriorityAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.InsertSuperFix");
-
   private final PsiMethod myConstructor;
 
   public InsertSuperFix(@NotNull PsiMethod constructor) {
@@ -59,29 +54,29 @@ public class InsertSuperFix implements IntentionAction, HighPriorityAction {
     ;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myConstructor;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(myConstructor.getContainingFile())) return;
-    try {
-      PsiStatement superCall =
-        JavaPsiFacade.getInstance(myConstructor.getProject()).getElementFactory().createStatementFromText("super();",null);
+    PsiStatement superCall =
+      JavaPsiFacade.getInstance(myConstructor.getProject()).getElementFactory().createStatementFromText("super();",null);
 
-      PsiCodeBlock body = myConstructor.getBody();
-      PsiJavaToken lBrace = body.getLBrace();
-      body.addAfter(superCall, lBrace);
-      lBrace = (PsiJavaToken) new PsiMatcherImpl(body)
-                .firstChild(PsiMatchers.hasClass(PsiExpressionStatement.class))
-                .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
-                .firstChild(PsiMatchers.hasClass(PsiExpressionList.class))
-                .firstChild(PsiMatchers.hasClass(PsiJavaToken.class))
-                .dot(PsiMatchers.hasText("("))
-                .getElement();
-      editor.getCaretModel().moveToOffset(lBrace.getTextOffset()+1);
-      UndoUtil.markPsiFileForUndo(file);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    PsiCodeBlock body = myConstructor.getBody();
+    PsiJavaToken lBrace = body.getLBrace();
+    body.addAfter(superCall, lBrace);
+    lBrace = (PsiJavaToken) new PsiMatcherImpl(body)
+              .firstChild(PsiMatchers.hasClass(PsiExpressionStatement.class))
+              .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
+              .firstChild(PsiMatchers.hasClass(PsiExpressionList.class))
+              .firstChild(PsiMatchers.hasClass(PsiJavaToken.class))
+              .dot(PsiMatchers.hasText("("))
+              .getElement();
+    editor.getCaretModel().moveToOffset(lBrace.getTextOffset()+1);
+    UndoUtil.markPsiFileForUndo(file);
   }
 
   @Override

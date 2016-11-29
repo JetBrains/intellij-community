@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intellij.util.xml.converters.values;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -62,7 +62,7 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
     if (file == null) {
       return ProjectScope.getAllScope(project);
     }
-    final boolean inTests = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(file);
+    final boolean inTests = TestSourcesFilter.isTestSources(file, project);
 
     return module.getModuleRuntimeScope(inTests);
   }

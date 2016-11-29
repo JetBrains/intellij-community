@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -38,18 +39,20 @@ public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiM
   public static final AllOverridingMethodsSearch INSTANCE = new AllOverridingMethodsSearch();
 
   public static class SearchParameters {
-    private final PsiClass myClass;
-    private final SearchScope myScope;
+    @NotNull private final PsiClass myClass;
+    @NotNull private final SearchScope myScope;
 
-    public SearchParameters(final PsiClass aClass, SearchScope scope) {
+    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
       myClass = aClass;
       myScope = scope;
     }
 
+    @NotNull
     public PsiClass getPsiClass() {
       return myClass;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
@@ -58,12 +61,14 @@ public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiM
   private AllOverridingMethodsSearch() {
   }
 
-  public static Query<Pair<PsiMethod, PsiMethod>> search(final PsiClass aClass, SearchScope scope) {
+  @NotNull
+  public static Query<Pair<PsiMethod, PsiMethod>> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) return EmptyQuery.getEmptyQuery(); // Optimization
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
   }
 
-  public static Query<Pair<PsiMethod, PsiMethod>> search(final PsiClass aClass) {
+  @NotNull
+  public static Query<Pair<PsiMethod, PsiMethod>> search(@NotNull PsiClass aClass) {
     return search(aClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass)));
   }
 }

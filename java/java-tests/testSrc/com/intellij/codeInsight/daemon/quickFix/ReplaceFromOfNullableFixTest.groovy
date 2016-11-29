@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,29 @@
  */
 
 package com.intellij.codeInsight.daemon.quickFix
+
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.dataFlow.DataFlowInspection
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.annotations.NotNull
 
-public class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase {
+class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return [new DataFlowInspection()] as LocalInspectionTool[]
   }
 
-  public void test() throws Exception {
-     doAllTests();
+  void test() throws Exception {
+     doAllTests()
    }
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceFromOfNullable";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceFromOfNullable"
   }
 
   static void addGuavaOptional(Disposable parent) {
@@ -48,7 +47,7 @@ public class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTest
         .createChildDirectory(this, "google")
         .createChildDirectory(this, "common")
         .createChildDirectory(this, "base")
-        .createChildData(this, "Optional.java");
+        .createChildData(this, "Optional.java")
       VfsUtil.saveText(optional, """
 package com.google.common.base;
 public abstract class Optional<T> {
@@ -82,8 +81,4 @@ public abstract class Optional<T> {
     super.afterActionCompleted(testName, contents)
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
-  }
 }

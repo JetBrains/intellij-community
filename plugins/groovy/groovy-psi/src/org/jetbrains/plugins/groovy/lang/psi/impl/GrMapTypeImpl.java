@@ -61,7 +61,7 @@ public class GrMapTypeImpl extends GrMapType {
   @Override
   @NotNull
   protected PsiType[] getAllKeyTypes() {
-    Set<PsiType> result = new HashSet<PsiType>();
+    Set<PsiType> result = new HashSet<>();
     if (!myStringEntries.isEmpty()) {
       result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, getResolveScope()));
     }
@@ -75,7 +75,7 @@ public class GrMapTypeImpl extends GrMapType {
   @Override
   @NotNull
   protected PsiType[] getAllValueTypes() {
-    Set<PsiType> result = new HashSet<PsiType>();
+    Set<PsiType> result = new HashSet<>();
     result.addAll(myStringEntries.values());
     for (Couple<PsiType> entry : myOtherEntries) {
       result.add(entry.second);

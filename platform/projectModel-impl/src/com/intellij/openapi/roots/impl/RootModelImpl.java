@@ -33,6 +33,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ import java.util.*;
 public class RootModelImpl extends RootModelBase implements ModifiableRootModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
 
-  private final Set<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);
+  private final Set<ContentEntry> myContent = new TreeSet<>(ContentComparator.INSTANCE);
 
   private final List<OrderEntry> myOrderEntries = new Order();
   // cleared by myOrderEntries modification, see Order
@@ -57,7 +58,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private boolean myWritable;
   private final VirtualFilePointerManager myFilePointerManager;
   private boolean myDisposed = false;
-  private final Set<ModuleExtension> myExtensions = new TreeSet<ModuleExtension>();
+  private final Set<ModuleExtension> myExtensions = new TreeSet<>();
 
   private final RootConfigurationAccessor myConfigurationAccessor;
 
@@ -225,7 +226,14 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   public LibraryOrderEntry addLibraryEntry(@NotNull Library library) {
     assertWritable();
     final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(library, this, myProjectRootManager);
-    assert libraryOrderEntry.isValid();
+    if (!libraryOrderEntry.isValid()) {
+      LibraryEx libraryEx = ObjectUtils.tryCast(library, LibraryEx.class);
+      boolean libraryDisposed = libraryEx != null ? libraryEx.isDisposed() : Disposer.isDisposed(library);
+      throw new AssertionError("Invalid libraryOrderEntry, library: " + library
+                               + " of type " + library.getClass()
+                               + ", disposed: " + libraryDisposed
+                               + ", kind: " + (libraryEx != null ? libraryEx.getKind() : "<undefined>"));
+    }
     myOrderEntries.add(libraryOrderEntry);
     return libraryOrderEntry;
   }
@@ -301,7 +309,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     if (newEntries.length != myOrderEntries.size()) {
       return "Size mismatch: old size=" + myOrderEntries.size() + "; new size=" + newEntries.length;
     }
-    Set<OrderEntry> set = new HashSet<OrderEntry>();
+    Set<OrderEntry> set = new HashSet<>();
     for (OrderEntry newEntry : newEntries) {
       if (!myOrderEntries.contains(newEntry)) {
         return "Trying to add nonexisting order entry " + newEntry;

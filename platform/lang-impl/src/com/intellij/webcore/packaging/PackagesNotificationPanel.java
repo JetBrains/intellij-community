@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class PackagesNotificationPanel {
   private final JEditorPane myHtmlViewer;
-  private final Map<String, Runnable> myLinkHandlers = new HashMap<String, Runnable>();
+  private final Map<String, Runnable> myLinkHandlers = new HashMap<>();
   private String myErrorTitle;
   private PackageManagementService.ErrorDescription myErrorDescription;
 

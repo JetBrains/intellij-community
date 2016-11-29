@@ -44,7 +44,7 @@ public class WiseSplitter implements Disposable {
     myInnerSplitter = new ThreeComponentsSplitter(false);
     Disposer.register(this, myInnerSplitter);
     myInnerSplitter.setHonorComponentsMinimumSize(true);
-    myInnerSplitterContents = new HashMap<CommittedChangesFilterKey, Integer>();
+    myInnerSplitterContents = new HashMap<>();
     updateBorders();
   }
 
@@ -98,7 +98,7 @@ public class WiseSplitter implements Disposable {
     if (idx == null) {
       return;
     }
-    final Map<CommittedChangesFilterKey, Integer> tmp = new HashMap<CommittedChangesFilterKey, Integer>();
+    final Map<CommittedChangesFilterKey, Integer> tmp = new HashMap<>();
     for (Map.Entry<CommittedChangesFilterKey, Integer> entry : myInnerSplitterContents.entrySet()) {
       if (entry.getValue() < idx) {
         tmp.put(entry.getKey(), entry.getValue());

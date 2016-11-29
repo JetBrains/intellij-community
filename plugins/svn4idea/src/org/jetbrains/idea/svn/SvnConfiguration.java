@@ -75,8 +75,8 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
 
-  private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
-  private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
+  private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<>();
+  private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<>();
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
   private IdeaSVNConfigFile myServersFile;
   private SVNConfigFile myConfigFile;

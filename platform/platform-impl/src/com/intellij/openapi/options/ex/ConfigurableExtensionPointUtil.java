@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class ConfigurableExtensionPointUtil {
 
 
   public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions, @Nullable ConfigurableFilter filter) {
-    final List<Configurable> result = new ArrayList<Configurable>();
+    final List<Configurable> result = new ArrayList<>();
     final Map<String, ConfigurableWrapper> idToConfigurable = ContainerUtil.newHashMap();
     List<String> idsInEpOrder = ContainerUtil.newArrayList();
     for (ConfigurableEP<Configurable> ep : extensions) {
@@ -56,7 +56,7 @@ public class ConfigurableExtensionPointUtil {
       }
       else {
 //        dumpConfigurable(configurablesExtensionPoint, ep, configurable);
-        ContainerUtil.addIfNotNull(configurable, result);
+        ContainerUtil.addIfNotNull(result, configurable);
       }
     }
 
@@ -379,9 +379,6 @@ public class ConfigurableExtensionPointUtil {
     if (configurable == null) {
       return false;
     }
-    if (ConfigurableWrapper.cast(Configurable.Assistant.class, configurable) != null) {
-      return false;
-    }
     OptionalConfigurable optional = ConfigurableWrapper.cast(OptionalConfigurable.class, configurable);
     if (optional != null && !optional.needDisplay()) {
       return false;
@@ -552,7 +549,7 @@ public class ConfigurableExtensionPointUtil {
     private static <I, V> Node<V> get(Map<I, Node<V>> tree, I id) {
       Node<V> node = tree.get(id);
       if (node == null) {
-        node = new Node<V>();
+        node = new Node<>();
         tree.put(id, node);
       }
       return node;

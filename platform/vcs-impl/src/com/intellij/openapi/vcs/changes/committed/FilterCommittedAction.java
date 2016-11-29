@@ -40,10 +40,10 @@ public class FilterCommittedAction extends AnAction implements DumbAware {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);
-      e.getPresentation().setVisible(panel != null && panel.getRepositoryLocation() != null);
+      e.getPresentation().setEnabledAndVisible(panel != null && panel.getRepositoryLocation() != null);
     }
     else {
-      e.getPresentation().setVisible(false);
+      e.getPresentation().setEnabledAndVisible(false);
     }
   }
 }

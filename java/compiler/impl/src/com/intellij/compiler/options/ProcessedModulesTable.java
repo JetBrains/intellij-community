@@ -185,7 +185,7 @@ public class ProcessedModulesTable extends JPanel {
   }
 
   public List<Module> getSelectedElements() {
-    final List<Module> elements = new ArrayList<Module>();
+    final List<Module> elements = new ArrayList<>();
     final int[] selectedRows = myTable.getSelectedRows();
     for (int selectedRow : selectedRows) {
       if (selectedRow < 0) {
@@ -218,7 +218,7 @@ public class ProcessedModulesTable extends JPanel {
 
   public List<Pair<Module, String>> getAllModules() {
     final int count = myTableModel.getRowCount();
-    List<Pair<Module, String>> elements = new ArrayList<Pair<Module, String>>();
+    List<Pair<Module, String>> elements = new ArrayList<>();
     for (int idx = 0; idx < count; idx++) {
       final Module module = myTableModel.getModuleAt(idx);
       elements.add(Pair.create(module, myTableModel.getGenDirName(module)));
@@ -260,8 +260,8 @@ public class ProcessedModulesTable extends JPanel {
   }
 
   private final class MyTableModel extends AbstractTableModel implements EditableModel {
-    private final List<Module> myElements = new ArrayList<Module>();
-    private final Map<Module, String> myDirNameMap = new HashMap<Module, String>();
+    private final List<Module> myElements = new ArrayList<>();
+    private final Map<Module, String> myDirNameMap = new HashMap<>();
     public final int ELEMENT_COLUMN_INDEX = 0;
     public final int DIRNAME_COLUMN_INDEX = 1;
     private final Project myProject;
@@ -298,10 +298,10 @@ public class ProcessedModulesTable extends JPanel {
 
     @Override
     public void addRow() {
-      final Set<Module> projectModules = new HashSet<Module>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
+      final Set<Module> projectModules = new HashSet<>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
       projectModules.removeAll(getAllModules());
       final ChooseModulesDialog chooser =
-        new ChooseModulesDialog(ProcessedModulesTable.this, new ArrayList<Module>(projectModules), "ChooseModule");
+        new ChooseModulesDialog(ProcessedModulesTable.this, new ArrayList<>(projectModules), "ChooseModule");
       if (chooser.showAndGet()) {
         final List<Module> chosen = chooser.getChosenElements();
         for (Module module : chosen) {

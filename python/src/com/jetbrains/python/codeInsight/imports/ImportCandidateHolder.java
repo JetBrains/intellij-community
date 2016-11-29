@@ -19,13 +19,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ import java.util.List;
  * @author dcheryasov
  */
 // visibility is intentionally package-level
-class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
+public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private final PsiElement myImportable;
   private final PyImportElement myImportElement;
   private final PsiFileSystemItem myFile;
@@ -140,12 +140,8 @@ class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
       sb.append(((PyFunction)myImportable).getParameterList().getPresentableText(false));
     }
     else if (myImportable instanceof PyClass) {
-      final List<String> supers = ContainerUtil.mapNotNull(((PyClass)myImportable).getSuperClasses(null), new Function<PyClass, String>() {
-          @Override
-          public String fun(PyClass cls) {
-            return PyUtil.isObjectClass(cls) ? null : cls.getName();
-          }
-        });
+      final List<String> supers = ContainerUtil.mapNotNull(((PyClass)myImportable).getSuperClasses(null),
+                                                           cls -> PyUtil.isObjectClass(cls) ? null : cls.getName());
       if (!supers.isEmpty()) {
         sb.append("(");
         StringUtil.join(supers, ", ", sb);
@@ -164,17 +160,20 @@ class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
     return sb.toString();
   }
 
-  public int compareTo(@NotNull ImportCandidateHolder rhs) {
+  public int compareTo(@NotNull ImportCandidateHolder other) {
     final int lRelevance = getRelevance();
-    final int rRelevance = rhs.getRelevance();
+    final int rRelevance = other.getRelevance();
     if (rRelevance != lRelevance) {
       return rRelevance - lRelevance;
     }
-    // prefer shorter paths
-    if (myPath != null && rhs.myPath != null) {
-      return myPath.getComponentCount() - rhs.myPath.getComponentCount();
+    if (myPath != null && other.myPath != null) {
+      // prefer shorter paths
+      final int lengthDiff = myPath.getComponentCount() - other.myPath.getComponentCount();
+      if (lengthDiff != 0) {
+        return lengthDiff;
+      }
     }
-    return 0;
+    return Comparing.compare(myPath, other.myPath);
   }
 
   int getRelevance() {

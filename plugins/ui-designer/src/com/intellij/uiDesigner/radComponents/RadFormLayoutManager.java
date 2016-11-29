@@ -760,7 +760,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       return;
     }
     FormLayout layout = (FormLayout) container.getLayout();
-    List<RadComponent> componentsToMove = new ArrayList<RadComponent>();
+    List<RadComponent> componentsToMove = new ArrayList<>();
     FormSpec oldSpec = isRow ? layout.getRowSpec(cell+1) : layout.getColumnSpec(cell+1);
     for(RadComponent c: container.getComponents()) {
       if (c.getConstraints().getCell(isRow) == cell) {

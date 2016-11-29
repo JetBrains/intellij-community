@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,12 +66,8 @@ public class JavaDocCommentFixer implements DocCommentFixer {
    */
   @NotNull private static final Set<String> CARET_ANCHOR_TAGS = ContainerUtilRt.newHashSet(PARAM_TAG, "@throws", "@return");
 
-  @NotNull private static final Comparator<PsiElement> COMPARATOR = new Comparator<PsiElement>() {
-    @Override
-    public int compare(PsiElement e1, PsiElement e2) {
-      return e2.getTextRange().getEndOffset() - e1.getTextRange().getEndOffset();
-    }
-  };
+  @NotNull private static final Comparator<PsiElement> COMPARATOR =
+    (e1, e2) -> e2.getTextRange().getEndOffset() - e1.getTextRange().getEndOffset();
 
   @NotNull private static final String PARAM_TAG_NAME = "param";
 
@@ -82,7 +78,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     }
 
     PsiDocComment docComment = (PsiDocComment)comment;
-    PsiDocCommentOwner owner = docComment.getOwner();
+    PsiJavaDocumentedElement owner = docComment.getOwner();
     if (owner == null) {
       return;
     }
@@ -159,13 +155,13 @@ public class JavaDocCommentFixer implements DocCommentFixer {
   }
 
   /**
-   * This fixer is based on existing javadoc inspections - there are two of them. One detects invalid references (to unexisted
+   * This fixer is based on existing javadoc inspections - there are two of them. One detects invalid references (to nonexistent
    * method parameter or non-declared checked exception). Another one handles all other cases (parameter documentation is missing;
    * parameter doesn't have a description etc). This method handles result of the second exception
    * 
    * @param problems  detected problems
    * @param comment   target comment to fix
-   * @param document  target document which contains text of the commen being fixed
+   * @param document  target document which contains text of the comment being fixed
    * @param project   current project
    */
   @SuppressWarnings("unchecked")
@@ -174,7 +170,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
                                         @NotNull final Document document,
                                         @NotNull Project project)
   {
-    List<PsiElement> toRemove = new ArrayList<PsiElement>();
+    List<PsiElement> toRemove = new ArrayList<>();
     for (ProblemDescriptor problem : problems) {
       PsiElement element = problem.getPsiElement();
       if (element == null) {
@@ -236,8 +232,8 @@ public class JavaDocCommentFixer implements DocCommentFixer {
 
   private static void ensureContentOrdered(@NotNull PsiDocComment comment, @NotNull Document document) {
     //region Parse existing doc comment parameters.
-    List<String> current = new ArrayList<String>();
-    Map<String, Pair<TextRange, String>> tagInfoByName = new HashMap<String, Pair<TextRange, String>>();
+    List<String> current = new ArrayList<>();
+    Map<String, Pair<TextRange, String>> tagInfoByName = new HashMap<>();
     for (PsiDocTag tag : comment.getTags()) {
       if (!PARAM_TAG_NAME.equals(tag.getName())) {
         continue;
@@ -256,8 +252,8 @@ public class JavaDocCommentFixer implements DocCommentFixer {
 
 
     //region Calculate desired parameters order
-    List<String> ordered = new ArrayList<String>();
-    PsiDocCommentOwner owner = comment.getOwner();
+    List<String> ordered = new ArrayList<>();
+    PsiJavaDocumentedElement owner = comment.getOwner();
     if ((owner instanceof PsiMethod)) {
       PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
       for (PsiParameter parameter : parameters) {

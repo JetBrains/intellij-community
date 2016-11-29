@@ -37,7 +37,7 @@ public class TestFinderHelper {
   }
 
   public static Collection<PsiElement> findTestsForClass(PsiElement element) {
-    Collection<PsiElement> result = new LinkedHashSet<PsiElement>();
+    Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
       result.addAll(each.findTestsForClass(element));
     }
@@ -45,7 +45,7 @@ public class TestFinderHelper {
   }
 
   public static Collection<PsiElement> findClassesForTest(PsiElement element) {
-    Collection<PsiElement> result = new LinkedHashSet<PsiElement>();
+    Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
       result.addAll(each.findClassesForTest(element));
     }
@@ -79,18 +79,15 @@ public class TestFinderHelper {
   public static List<PsiElement> getSortedElements(final List<Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
                                                    final boolean weightsAscending,
                                                    @Nullable final Comparator<PsiElement> sameNameComparator) {
-    Collections.sort(elementsWithWeights, new Comparator<Pair<? extends PsiNamedElement, Integer>>() {
-      @Override
-      public int compare(Pair<? extends PsiNamedElement, Integer> o1, Pair<? extends PsiNamedElement, Integer> o2) {
-        int result = weightsAscending ? o1.second.compareTo(o2.second) : o2.second.compareTo(o1.second);
-        if (result == 0) result = Comparing.compare(o1.first.getName(), o2.first.getName());
-        if (result == 0 && sameNameComparator != null) result = sameNameComparator.compare(o1.first, o2.first);
+    Collections.sort(elementsWithWeights, (o1, o2) -> {
+      int result = weightsAscending ? o1.second.compareTo(o2.second) : o2.second.compareTo(o1.second);
+      if (result == 0) result = Comparing.compare(o1.first.getName(), o2.first.getName());
+      if (result == 0 && sameNameComparator != null) result = sameNameComparator.compare(o1.first, o2.first);
 
-        return result;
-      }
+      return result;
     });
 
-    final List<PsiElement> result = new ArrayList<PsiElement>(elementsWithWeights.size());
+    final List<PsiElement> result = new ArrayList<>(elementsWithWeights.size());
     for (Pair<? extends PsiNamedElement, Integer> each : elementsWithWeights) {
       result.add(each.first);
     }
@@ -100,12 +97,12 @@ public class TestFinderHelper {
 
   public static List<Pair<String, Integer>> collectPossibleClassNamesWithWeights(String testName) {
     String[] words = NameUtil.splitNameIntoWords(testName);
-    List<Pair<String, Integer>> result = new ArrayList<Pair<String, Integer>>();
+    List<Pair<String, Integer>> result = new ArrayList<>();
 
     for (int from = 0; from < words.length; from++) {
       for (int to = from; to < words.length; to++) {
-        result.add(new Pair<String, Integer>(StringUtil.join(words, from, to + 1, ""),
-                                             words.length - from + to));
+        result.add(new Pair<>(StringUtil.join(words, from, to + 1, ""),
+                              words.length - from + to));
       }
     }
 

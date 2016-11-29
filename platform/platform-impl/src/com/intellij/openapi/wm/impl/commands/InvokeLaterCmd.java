@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.commands;
 
 
+import com.intellij.util.ui.EdtInvocationManager;
 
 /**
  * @author Vladimir Kondratyev
@@ -29,11 +30,14 @@ public final class InvokeLaterCmd extends FinalizableCommand{
   }
 
   public void run(){
-    try{
-      myRunnable.run();
-    }finally{
-      finish();
-    }
+    EdtInvocationManager.getInstance().invokeLater(() -> {
+     try {
+        myRunnable.run();
+      }
+      finally {
+        finish();
+      }
+    });
   }
 
   @Override

@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 
 public class MergeFilterChainActionTest extends LightIntentionActionTestCase {
 
@@ -26,10 +24,5 @@ public class MergeFilterChainActionTest extends LightIntentionActionTestCase {
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/mergeFilter";
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

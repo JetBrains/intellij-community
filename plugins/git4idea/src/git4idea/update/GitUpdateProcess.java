@@ -35,12 +35,12 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.config.UpdateMethod;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
@@ -68,23 +68,20 @@ public class GitUpdateProcess {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final Collection<GitRepository> myRepositories;
   private final boolean myCheckRebaseOverMergeProblem;
   private final UpdatedFiles myUpdatedFiles;
   @NotNull private final ProgressIndicator myProgressIndicator;
   private final GitMerger myMerger;
 
-  private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
+  private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<>();
 
   public GitUpdateProcess(@NotNull Project project,
-                          @NotNull GitPlatformFacade platformFacade,
                           @Nullable ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories,
                           @NotNull UpdatedFiles updatedFiles,
                           boolean checkRebaseOverMergeProblem) {
     myProject = project;
-    myPlatformFacade = platformFacade;
     myRepositories = repositories;
     myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
     myGit = ServiceManager.getService(Git.class);
@@ -193,7 +190,7 @@ public class GitUpdateProcess {
     final Ref<GitUpdateResult> compoundResult = Ref.create();
     final Map<VirtualFile, GitUpdater> finalUpdaters = updaters;
 
-    new GitPreservingProcess(myProject, myPlatformFacade, myGit, myRootsToSave, "Update", "Remote",
+    new GitPreservingProcess(myProject, myGit, myRootsToSave, "Update", "Remote",
                              GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, new Runnable() {
       @Override
       public void run() {
@@ -227,7 +224,8 @@ public class GitUpdateProcess {
         return !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
       }
     });
-    return compoundResult.get();
+    // GitPreservingProcess#save may fail due index.lock presence
+    return ObjectUtils.notNull(compoundResult.get(), GitUpdateResult.ERROR);
   }
 
   @NotNull 
@@ -248,7 +246,7 @@ public class GitUpdateProcess {
 
   @NotNull
   private Map<VirtualFile, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<VirtualFile, GitUpdater> updaters) {
-    Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<VirtualFile, GitUpdater>();
+    Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<>();
     Map<VirtualFile, Collection<Change>> changesUnderRoots =
       new LocalChangesUnderRoots(ChangeListManager.getInstance(myProject), ProjectLevelVcsManager.getInstance(myProject)).
         getChangesUnderRoots(updaters.keySet());
@@ -270,7 +268,7 @@ public class GitUpdateProcess {
 
   @NotNull
   private Map<VirtualFile, GitUpdater> defineUpdaters(@NotNull UpdateMethod updateMethod) throws VcsException {
-    final Map<VirtualFile, GitUpdater> updaters = new HashMap<VirtualFile, GitUpdater>();
+    final Map<VirtualFile, GitUpdater> updaters = new HashMap<>();
     LOG.info("updateImpl: defining updaters...");
     for (GitRepository repository : myRepositories) {
       VirtualFile root = repository.getRoot();
@@ -320,11 +318,14 @@ public class GitUpdateProcess {
       if (trackInfo == null) {
         final String branchName = branch.getName();
         LOG.info(String.format("checkTrackedBranchesConfigured: no track info for current branch %s in %s", branch, repository));
+        String recommendedCommand = String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository.getVcs().getVersion()) ?
+                                                  "git branch --set-upstream-to origin/%1$s %1$s" :
+                                                  "git branch --set-upstream %1$s origin/%1$s", branchName);
         notifyImportantError(myProject, "Can't update: no tracked branch",
                              "No tracked branch configured for branch " + code(branchName) +
                              rootStringIfNeeded(root) +
                              "To make your branch track a remote branch call, for example,<br/>" +
-                             "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
+                             "<code>" + recommendedCommand + "</code>");
         return false;
       }
       myTrackedBranches.put(root, new GitBranchPair(branch, trackInfo.getRemoteBranch()));
@@ -387,7 +388,7 @@ public class GitUpdateProcess {
     params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
     params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
     params.setReverse(true);
-    return !new GitConflictResolver(myProject, myGit, ServiceManager.getService(GitPlatformFacade.class), rebasingRoots, params) {
+    return !new GitConflictResolver(myProject, myGit, rebasingRoots, params) {
       @Override protected boolean proceedIfNothingToMerge() {
         return rebaser.continueRebase(rebasingRoots);
       }

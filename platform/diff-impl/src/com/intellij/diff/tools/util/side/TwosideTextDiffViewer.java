@@ -32,20 +32,18 @@ import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.Function;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -70,13 +68,13 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   public TwosideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
 
-    new MyFocusOppositePaneAction(true).setupAction(myPanel);
-    new MyFocusOppositePaneAction(false).setupAction(myPanel);
+    new MyFocusOppositePaneAction(true).install(myPanel);
+    new MyFocusOppositePaneAction(false).install(myPanel);
 
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
-    new MyOpenInEditorWithMouseAction().register(getEditors());
+    new MyOpenInEditorWithMouseAction().install(getEditors());
 
     myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
 
@@ -115,10 +113,8 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
     Side.LEFT.select(holders).getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
 
-    if (Registry.is("diff.divider.repainting.disable.blitting")) {
-      for (TextEditorHolder holder : holders) {
-        holder.getEditor().getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-      }
+    for (TextEditorHolder holder : holders) {
+      DiffUtil.disableBlitting(holder.getEditor());
     }
 
     return holders;
@@ -167,6 +163,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     SyncScrollSupport.SyncScrollable scrollable = getSyncScrollable();
     if (scrollable != null) {
       mySyncScrollSupport = new TwosideSyncScrollSupport(getEditors(), scrollable);
+      myEditorSettingsAction.setSyncScrollSupport(mySyncScrollSupport);
     }
   }
 
@@ -203,12 +200,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   @NotNull
   public List<? extends EditorEx> getEditors() {
     if (myEditors == null) {
-      myEditors = ContainerUtil.map(getEditorHolders(), new Function<TextEditorHolder, EditorEx>() {
-        @Override
-        public EditorEx fun(TextEditorHolder holder) {
-          return holder.getEditor();
-        }
-      });
+      myEditors = ContainerUtil.map(getEditorHolders(), holder -> holder.getEditor());
     }
     return myEditors;
   }
@@ -270,10 +262,10 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   @CalledInAwt
   @NotNull
-  protected LogicalPosition transferPosition(@NotNull Side baseSide, @NotNull LogicalPosition position) {
+  protected LineCol transferPosition(@NotNull Side baseSide, @NotNull LineCol position) {
     if (mySyncScrollSupport == null) return position;
     int line = mySyncScrollSupport.getScrollable().transfer(baseSide, position.line);
-    return new LogicalPosition(line, position.column);
+    return new LineCol(line, position.column);
   }
 
   @CalledInAwt
@@ -291,15 +283,15 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   @Nullable
   @Override
-  protected OpenFileDescriptor getOpenFileDescriptor() {
+  protected Navigatable getNavigatable() {
     Side side = getCurrentSide();
-    int offset = getEditor(side).getCaretModel().getOffset();
-    OpenFileDescriptor descriptor = getContent(side).getOpenFileDescriptor(offset);
-    if (descriptor != null) return descriptor;
 
-    LogicalPosition otherPosition = transferPosition(side, getEditor(side).getCaretModel().getLogicalPosition());
-    int otherOffset = getEditor(side.other()).logicalPositionToOffset(otherPosition);
-    return getContent(side.other()).getOpenFileDescriptor(otherOffset);
+    LineCol position = LineCol.fromCaret(getEditor(side));
+    Navigatable navigatable = getContent(side).getNavigatable(position);
+    if (navigatable != null) return navigatable;
+
+    LineCol otherPosition = transferPosition(side, position);
+    return getContent(side.other()).getNavigatable(otherPosition);
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -324,12 +316,12 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
       EditorEx targetEditor = getEditor(targetSide);
 
       if (myScrollToPosition) {
-        LogicalPosition position = transferPosition(currentSide, currentEditor.getCaretModel().getLogicalPosition());
-        targetEditor.getCaretModel().moveToLogicalPosition(position);
+        LineCol position = transferPosition(currentSide, LineCol.fromCaret(currentEditor));
+        targetEditor.getCaretModel().moveToOffset(position.toOffset(targetEditor));
       }
 
       setCurrentSide(targetSide);
-      currentEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      targetEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
       DiffUtil.requestFocus(getProject(), getPreferredFocusedComponent());
     }
@@ -337,12 +329,11 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
     @Override
-    protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
+    protected Navigatable getNavigatable(@NotNull Editor editor, int line) {
       Side side = Side.fromValue(getEditors(), editor);
       if (side == null) return null;
 
-      int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
-      return getContent(side).getOpenFileDescriptor(offset);
+      return getContent(side).getNavigatable(new LineCol(line));
     }
   }
 
@@ -369,12 +360,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       if (mySyncScrollSupport != null) mySyncScrollSupport.visibleAreaChanged(e);
-      if (Registry.is("diff.divider.repainting.fix")) {
-        myContentPanel.repaint();
-      }
-      else {
-        myContentPanel.repaintDivider();
-      }
+      myContentPanel.repaint();
     }
   }
 

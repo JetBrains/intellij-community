@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,12 +45,14 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected AbstractPopup myPopup;
   protected T myComponent;
   private Ref<UsageView> myUsageView;
-  private final List<PsiElement> myData = new ArrayList<PsiElement>();
+  private final List<PsiElement> myData = new ArrayList<>();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Object lock = new Object();
 
-  private volatile boolean myCanceled = false;
+  private volatile boolean myCanceled;
+  private volatile boolean myFinished;
+  private volatile ProgressIndicator myIndicator;
 
   public BackgroundUpdaterTask(Project project, String title, boolean canBeCancelled) {
     super(project, title, canBeCancelled);
@@ -91,12 +93,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   public boolean updateComponent(final PsiElement element, @Nullable final Comparator comparator) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element)));
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(() -> view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element))));
       return true;
     }
 
@@ -109,23 +106,20 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
       myData.add(element);
     }
 
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        myAlarm.cancelAllRequests();
-        if (myCanceled) return;
-        if (myPopup.isDisposed()) return;
-        ArrayList<PsiElement> data = new ArrayList<PsiElement>();
-        synchronized (lock) {
-          if (comparator != null) {
-            Collections.sort(myData, comparator);
-          }
-          data.addAll(myData);
+    myAlarm.addRequest(() -> {
+      myAlarm.cancelAllRequests();
+      if (myCanceled) return;
+      if (myPopup.isDisposed()) return;
+      ArrayList<PsiElement> data = new ArrayList<>();
+      synchronized (lock) {
+        if (comparator != null) {
+          Collections.sort(myData, comparator);
         }
-        replaceModel(data);
-        myPopup.setCaption(getCaption(getCurrentSize()));
-        myPopup.pack(true, true);
+        data.addAll(myData);
       }
+      replaceModel(data);
+      myPopup.setCaption(getCaption(getCurrentSize()));
+      myPopup.pack(true, true);
     }, 200, ModalityState.stateForComponent(content));
     return true;
   }
@@ -139,11 +133,39 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     paintBusy(true);
+    myIndicator = indicator;
   }
 
   @Override
   public void onSuccess() {
     myPopup.setCaption(getCaption(getCurrentSize()));
     paintBusy(false);
+  }
+
+  @Override
+  public void onFinished() {
+    myFinished = true;
+  }
+
+  @Nullable
+  protected PsiElement getTheOnlyOneElement() {
+    synchronized (lock) {
+      if (myData.size() == 1) {
+        return myData.get(0);
+      }
+    }
+    return null;
+  }
+
+  public boolean isFinished() {
+    return myFinished;
+  }
+
+  public boolean cancelTask() {
+    ProgressIndicator indicator = myIndicator;
+    if (indicator != null) {
+      indicator.cancel();
+    }
+    return setCanceled();
   }
 }

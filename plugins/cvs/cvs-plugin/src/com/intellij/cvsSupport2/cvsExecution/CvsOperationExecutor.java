@@ -77,63 +77,52 @@ public class CvsOperationExecutor {
   public void performActionSync(final CvsHandler handler, final CvsOperationExecutorCallback callback) {
     final CvsTabbedWindow tabbedWindow = myIsQuietOperation ? null : openTabbedWindow(handler);
 
-    final Runnable finish = new Runnable() {
-      @Override
-      public void run() {
+    final Runnable finish = () -> {
+      try {
+        myResult.addAllErrors(handler.getErrorsExceptAborted());
+        handler.finish();
+        if (myProject == null || !myProject.isDisposed()) {
+          showErrors(handler, tabbedWindow);
+        }
+      }
+      finally {
         try {
-          myResult.addAllErrors(handler.getErrorsExceptAborted());
-          handler.finish();
-          if (myProject == null || !myProject.isDisposed()) {
-            showErrors(handler, tabbedWindow);
+          if (myResult.finishedUnsuccessfully(handler)) {
+            callback.executionFinished(false);
+          }
+          else {
+            if (handler.getErrors().isEmpty()) callback.executionFinishedSuccessfully();
+            callback.executionFinished(true);
           }
         }
         finally {
-          try {
-            if (myResult.finishedUnsuccessfully(handler)) {
-              callback.executionFinished(false);
-            }
-            else {
-              if (handler.getErrors().isEmpty()) callback.executionFinishedSuccessfully();
-              callback.executionFinished(true);
-            }
-          }
-          finally {
-            if (myProject != null && handler != CvsHandler.NULL) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  StatusBar.Info.set(getStatusMessage(handler), myProject);
-                }
-              });
-            }
+          if (myProject != null && handler != CvsHandler.NULL) {
+            ApplicationManager.getApplication().invokeLater(() -> StatusBar.Info.set(getStatusMessage(handler), myProject));
           }
         }
       }
     };
 
-    final Runnable cvsAction = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (handler == CvsHandler.NULL) return;
-          setText(CvsBundle.message("progress.text.preparing.for.login"));
+    final Runnable cvsAction = () -> {
+      try {
+        if (handler == CvsHandler.NULL) return;
+        setText(CvsBundle.message("progress.text.preparing.for.login"));
 
-          handler.beforeLogin();
+        handler.beforeLogin();
 
-          if (myResult.finishedUnsuccessfully(handler)) return;
+        if (myResult.finishedUnsuccessfully(handler)) return;
 
-          setText(CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
+        setText(CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
 
-          handler.run(myProject, myExecutor);
-          if (myResult.finishedUnsuccessfully(handler)) return;
+        handler.run(myProject, myExecutor);
+        if (myResult.finishedUnsuccessfully(handler)) return;
 
-        }
-        catch (ProcessCanceledException ex) {
-          myResult.setIsCanceled();
-        }
-        finally {
-          callback.executeInProgressAfterAction(myExecutor);
-        }
+      }
+      catch (ProcessCanceledException ex) {
+        myResult.setIsCanceled();
+      }
+      finally {
+        callback.executeInProgressAfterAction(myExecutor);
       }
     };
 
@@ -193,7 +182,7 @@ public class CvsOperationExecutor {
     if (!myShowErrors || myIsQuietOperation) return;
     if (tabbedWindow == null) {
       if (errors.isEmpty()) return;
-      final List<String> messages = new ArrayList<String>();
+      final List<String> messages = new ArrayList<>();
       for (VcsException error : errors) {
         if (! StringUtil.isEmptyOrSpaces(error.getMessage())) {
           messages.add(error.getMessage());
@@ -233,12 +222,7 @@ public class CvsOperationExecutor {
     if (myProject != null && myProject.isDefault()) return null;
     if (myProject != null) {
       if (myConfiguration != null && myConfiguration.SHOW_OUTPUT && !myIsQuietOperation) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            connectToOutput(output);
-          }
-        }, ModalityState.defaultModalityState());
+        ApplicationManager.getApplication().invokeAndWait(() -> connectToOutput(output));
       }
       if (!myProject.isDisposed()) {
         return CvsTabbedWindow.getInstance(myProject);

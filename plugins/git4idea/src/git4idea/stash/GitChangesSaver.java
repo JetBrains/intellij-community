@@ -23,8 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
@@ -45,7 +45,6 @@ public abstract class GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitChangesSaver.class);
 
   @NotNull protected final Project myProject;
-  @NotNull protected final GitPlatformFacade myPlatformFacade;
   @NotNull protected final ChangeListManagerEx myChangeManager;
   @NotNull protected final Git myGit;
   @NotNull protected final ProgressIndicator myProgressIndicator;
@@ -59,25 +58,23 @@ public abstract class GitChangesSaver {
    */
   @NotNull
   public static GitChangesSaver getSaver(@NotNull Project project,
-                                         @NotNull GitPlatformFacade platformFacade,
                                          @NotNull Git git,
                                          @NotNull ProgressIndicator progressIndicator,
                                          @NotNull String stashMessage,
                                          @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
     if (saveMethod == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
-      return new GitShelveChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
+      return new GitShelveChangesSaver(project, git, progressIndicator, stashMessage);
     }
-    return new GitStashChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
+    return new GitStashChangesSaver(project, git, progressIndicator, stashMessage);
   }
 
-  protected GitChangesSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
+  protected GitChangesSaver(@NotNull Project project, @NotNull Git git,
                             @NotNull ProgressIndicator indicator, @NotNull String stashMessage) {
     myProject = project;
-    myPlatformFacade = platformFacade;
     myGit = git;
     myProgressIndicator = indicator;
     myStashMessage = stashMessage;
-    myChangeManager = platformFacade.getChangeListManager(project);
+    myChangeManager = ChangeListManagerImpl.getInstanceImpl(project);
   }
 
   /**

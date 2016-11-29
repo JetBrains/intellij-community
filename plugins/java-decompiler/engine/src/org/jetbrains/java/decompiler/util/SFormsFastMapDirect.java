@@ -353,7 +353,7 @@ public class SFormsFastMapDirect {
   }
 
   public List<Entry<Integer, FastSparseSet<Integer>>> entryList() {
-    List<Entry<Integer, FastSparseSet<Integer>>> list = new ArrayList<Entry<Integer, FastSparseSet<Integer>>>();
+    List<Entry<Integer, FastSparseSet<Integer>>> list = new ArrayList<>();
 
     for (int i = 2; i >= 0; i--) {
       int ikey = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Nov 13, 2002
- * Time: 3:26:50 PM
- * To change this template use Options | File Templates.
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -62,12 +55,15 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
     }
 
     @Override
-    public boolean areTypesConvertible(PsiType exprType, PsiType parameterType, final PsiElement context) {
+    public boolean areTypesConvertible(@NotNull PsiType exprType, @NotNull PsiType parameterType, @NotNull final PsiElement context) {
       if (exprType instanceof PsiClassType && parameterType instanceof PsiPrimitiveType) {
         parameterType = ((PsiPrimitiveType)parameterType).getBoxedType(context); //unboxing from type of cast expression will take place at runtime
         if (parameterType == null) return false;
       }
       if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
+        if (PsiType.NULL.equals(exprType)) {
+          return true;
+        }
         parameterType = PsiPrimitiveType.getUnboxedType(parameterType);
         if (parameterType == null) return false;
       }

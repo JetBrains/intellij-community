@@ -21,8 +21,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Manages common code style settings for every language using them.
@@ -45,7 +44,7 @@ public class CommonCodeStyleSettingsManager {
 
   @NotNull private final CodeStyleSettings myParentSettings;
 
-  @NonNls private static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
+  @NonNls static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
 
   CommonCodeStyleSettingsManager(@NotNull CodeStyleSettings parentSettings) {
@@ -128,9 +127,9 @@ public class CommonCodeStyleSettingsManager {
   }
 
   private Map<Language, CommonCodeStyleSettings> initCommonSettingsMap() {
-    Map<Language, CommonCodeStyleSettings> map = new LinkedHashMap<Language, CommonCodeStyleSettings>();
+    Map<Language, CommonCodeStyleSettings> map = new LinkedHashMap<>();
     myCommonSettingsMap = map;
-    myUnknownSettingsMap = new LinkedHashMap<String, Content>();
+    myUnknownSettingsMap = new LinkedHashMap<>();
     return map;
   }
 
@@ -194,20 +193,15 @@ public class CommonCodeStyleSettingsManager {
         return;
       }
 
-      final Map<String, Language> id2lang = new THashMap<>();
+      final Map<String, Language> idToLang = new THashMap<>();
       for (Language language : myCommonSettingsMap.keySet()) {
-        id2lang.put(language.getID(), language);
+        idToLang.put(language.getID(), language);
       }
 
-      final Set<String> langIdList = new THashSet<>();
-      langIdList.addAll(myUnknownSettingsMap.keySet());
-      langIdList.addAll(id2lang.keySet());
-
-      final String[] languages = ArrayUtil.toStringArray(langIdList);
-      Arrays.sort(languages, String::compareTo);
-
-      for (final String id : languages) {
-        final Language language = id2lang.get(id);
+      String[] languages = ArrayUtil.toStringArray(ContainerUtil.union(myUnknownSettingsMap.keySet(), idToLang.keySet()));
+      Arrays.sort(languages);
+      for (String id : languages) {
+        final Language language = idToLang.get(id);
         if (language != null) {
           final CommonCodeStyleSettings commonSettings = myCommonSettingsMap.get(language);
           Element commonSettingsElement = new Element(COMMON_SETTINGS_TAG);

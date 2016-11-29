@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.annotator.GrKeywordAndDeclarationHighlightFa
 import org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 import org.jetbrains.plugins.groovy.annotator.checkers.*;
+import org.jetbrains.plugins.groovy.builder.XmlMarkupBuilderNonCodeMemberContributor;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyClsCustomNavigationPolicy;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspectionFilter;
@@ -65,7 +66,6 @@ import org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperMapContentProvide
 import org.jetbrains.plugins.groovy.configSlurper.GroovyMapValueTypeEnhancer;
 import org.jetbrains.plugins.groovy.dgm.DGMImplicitPropertyUsageProvider;
 import org.jetbrains.plugins.groovy.dgm.DGMMemberContributor;
-import org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider;
 import org.jetbrains.plugins.groovy.dsl.DslActivationStatus;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
@@ -92,16 +92,25 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.*;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.*;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.LoggingContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.ExternalBuilderStrategySupport;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.InitializerBuilderStrategySupport;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuilderStrategySupport;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
-import org.jetbrains.plugins.groovy.markup.XmlMarkupBuilderNonCodeMemberContributor;
 import org.jetbrains.plugins.groovy.spock.SpockMemberContributor;
 import org.jetbrains.plugins.groovy.spock.SpockPomDeclarationSearcher;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor;
+import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
+import org.jetbrains.plugins.groovy.transformations.impl.*;
+import org.jetbrains.plugins.groovy.transformations.impl.autoClone.AutoCloneTransformationSupport;
 
 /**
  * Upsource
@@ -132,16 +141,25 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(NonCodeMembersContributor.EP_NAME, new DGMMemberContributor());
       appEnvironment.addExtension(NonCodeMembersContributor.EP_NAME, new SwingBuilderNonCodeMemberContributor());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), DefaultImportContributor.EP_NAME,
-                                                        DefaultImportContributor.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrImportContributor.EP_NAME, GrImportContributor.class);
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), AstTransformContributor.EP_NAME, AstTransformContributor.class);
-      appEnvironment.addExtension(AstTransformContributor.EP_NAME, new AutoCloneContributor());
-      appEnvironment.addExtension(AstTransformContributor.EP_NAME, new AutoExternalizeContributor());
-      appEnvironment.addExtension(AstTransformContributor.EP_NAME, new ConstructorAnnotationsProcessor());
-      appEnvironment.addExtension(AstTransformContributor.EP_NAME, new DelegatedMethodsContributor());
-      appEnvironment.addExtension(AstTransformContributor.EP_NAME, new GrInheritConstructorContributor());
-      appEnvironment.addExtension(AstTransformContributor.EP_NAME, new LoggingContributor());
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), AstTransformationSupport.EP_NAME, AstTransformationSupport.class);
+
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new AutoExternalizeContributor());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new AutoCloneTransformationSupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new ConstructorAnnotationsProcessor());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new InheritConstructorContributor());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new DefaultBuilderStrategySupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new SimpleBuilderStrategySupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new ExternalBuilderStrategySupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new InitializerBuilderStrategySupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new BindableTransformationSupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new VetoableTransformationSupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new LoggingContributor());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new CategoryTransformationSupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new DelegateTransformationSupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new DefaultTransformationSupport());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new TraitTransformationSupport());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClosureMissingMethodContributor.EP_NAME,
                                                         ClosureMissingMethodContributor.class);
@@ -340,7 +358,6 @@ public class GroovyCoreEnvironment {
       project.registerService(GroovyPsiManager.class, GroovyPsiManager.class);
       project.registerService(GroovyCodeStyleManager.class, CoreGroovyCodeStyleManager.class);
       project.registerService(GroovyCodeStyleSettingsFacade.class, CoreGroovyCodeStyleSettingsFacade.class);
-      project.registerService(GroovyExtensionProvider.class, GroovyExtensionProvider.class);
       projectEnvironment.addProjectExtension(PsiShortNamesCache.EP_NAME, new GroovyShortNamesCache(project));
       projectEnvironment.addProjectExtension(PsiElementFinder.EP_NAME, new GroovyClassFinder(project));
       TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);

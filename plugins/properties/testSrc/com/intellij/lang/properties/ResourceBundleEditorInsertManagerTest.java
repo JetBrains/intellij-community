@@ -18,6 +18,7 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.editor.ResourceBundlePropertiesUpdateManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -99,8 +100,8 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
     final ResourceBundle bundle = basePropertiesFile.getResourceBundle();
     final ResourceBundlePropertiesUpdateManager manager = new ResourceBundlePropertiesUpdateManager(bundle);
     assertInstanceOf(manager, ResourceBundlePropertiesUpdateManager.class);
-    testAction.doTestAction(basePropertiesFile, PropertiesImplUtil.getPropertiesFile(translationFile),
-                            manager);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> testAction.doTestAction(basePropertiesFile, PropertiesImplUtil.getPropertiesFile(translationFile),
+                                              manager));
     myFixture.checkResultByFile(getTestName(true) + "/p.properties", getTestName(true) + "/p-after.properties", true);
     myFixture.checkResultByFile(getTestName(true) + "/p_en.properties", getTestName(true) + "/p-after_en.properties",true);
   }

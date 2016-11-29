@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -34,6 +35,7 @@ import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
@@ -200,37 +202,46 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         new MoveDirectoryWithClassesProcessor(project, directories, (PsiDirectory)targetContainer,
                                               refactoringSettings.RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE,
                                               refactoringSettings.RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE, true, callback);
-      processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-        @Override
-        public void run() {
-        }
+      processor.setPrepareSuccessfulSwingThreadCallback(() -> {
       });
       processor.run();
     }
     else {
       final boolean containsJava = hasJavaFiles(directories[0]);
       if (!containsJava) {
-        MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{directories[0]}, new PsiElement[]{targetContainer}, callback);
+        MoveFilesOrDirectoriesUtil.doMove(project, directories, new PsiElement[]{targetContainer}, callback);
         return;
       }
       final MoveClassesOrPackagesToNewDirectoryDialog dlg =
-        new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], new PsiElement[0], false, callback) {
+        new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], PsiElement.EMPTY_ARRAY, false, callback) {
           @Override
           protected BaseRefactoringProcessor createRefactoringProcessor(Project project,
                                                                         final PsiDirectory targetDirectory,
                                                                         PsiPackage aPackage,
                                                                         boolean searchInComments,
                                                                         boolean searchForTextOccurences) {
+            final MoveDestination destination = createDestination(aPackage, targetDirectory);
             try {
               for (PsiDirectory dir: directories) {
-                MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(dir, targetDirectory);
+                MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(dir, WriteAction.compute(() -> destination.getTargetDirectory(dir)));
               }
             }
             catch (IncorrectOperationException e) {
               Messages.showErrorDialog(project, e.getMessage(), RefactoringBundle.message("cannot.move"));
               return null;
             }
-            return new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences, true, callback);
+            return new MoveDirectoryWithClassesProcessor(project, directories, null, searchInComments, searchForTextOccurences, true, callback) {
+              @Override
+              public TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
+                final PsiDirectory targetDirectory = destination.getTargetDirectory(dir);
+                return new TargetDirectoryWrapper(targetDirectory);
+              }
+
+              @Override
+              protected String getTargetName() {
+                return targetDirectory.getName();
+              }
+            };
           }
         };
       dlg.show();
@@ -372,7 +383,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
        JPanel panel = new JPanel(new BorderLayout());
 
 
-       final HashSet<String> packages = new HashSet<String>();
+       final HashSet<String> packages = new HashSet<>();
        for (PsiDirectory directory : myDirectories) {
          packages.add(JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName());
        }

@@ -26,15 +26,11 @@ import java.util.Map;
  * @author nik
  */
 public class FrameworkTypeUtil {
-  public static final Comparator<FrameworkType> FRAMEWORK_TYPE_COMPARATOR = new Comparator<FrameworkType>() {
-    @Override
-    public int compare(FrameworkType o1, FrameworkType o2) {
-      return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
-    }
-  };
+  public static final Comparator<FrameworkType> FRAMEWORK_TYPE_COMPARATOR =
+    (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
 
   public static Map<String, FrameworkType> computeFrameworkTypeByIdMap() {
-    Map<String, FrameworkType> frameworkTypes = new HashMap<String, FrameworkType>();
+    Map<String, FrameworkType> frameworkTypes = new HashMap<>();
     for (FrameworkTypeEx type : FrameworkTypeEx.EP_NAME.getExtensions()) {
       frameworkTypes.put(type.getId(), type);
     }

@@ -27,7 +27,7 @@ import java.util.List;
 public class SetupTask implements ChooseByNameItem {
   private final String name;
   private String description;
-  private final List<Option> options = new ArrayList<Option>();
+  private final List<Option> options = new ArrayList<>();
 
   SetupTask(String name) {
     this.name = name;

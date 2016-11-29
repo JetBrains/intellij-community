@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -32,7 +33,7 @@ public class ColorIconCache {
   private static final SoftFactoryMap<Color, Map<Integer, Icon>> ourCache = new SoftFactoryMap<Color, Map<Integer, Icon>>() {
     @Override
     protected Map<Integer, Icon> create(Color key) {
-      return new HashMap<Integer, Icon>();
+      return new HashMap<>();
     }
   };
 
@@ -65,6 +66,17 @@ public class ColorIconCache {
     public ColorIcon(final int size, final Color[] colours) {
       super(size);
       myColours = colours;
+    }
+
+    protected ColorIcon(ColorIcon icon) {
+      super(icon);
+      myColor = icon.myColor;
+      if (icon.myColours != null) myColours = Arrays.copyOf(icon.myColours, icon.myColours.length);
+    }
+
+    @Override
+    protected ColorIcon copy() {
+      return new ColorIcon(this);
     }
 
     @Override

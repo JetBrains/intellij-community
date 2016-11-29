@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,9 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   private int myCommandLevel = 0;
 
   private boolean myAnotherProjectCommand = false;
-  static final Key<AbstractVcs> FILE_VCS = new Key<AbstractVcs>("File VCS");
+  static final Key<AbstractVcs> FILE_VCS = new Key<>("File VCS");
 
+  @Override
   public void commandStarted(CommandEvent event) {
     myCommandLevel++;
     if (myCommandLevel == 1) {
@@ -57,12 +58,16 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     }
   }
 
+  @Override
   public void beforeCommandFinished(CommandEvent event) {}
 
+  @Override
   public void undoTransparentActionStarted() {}
 
+  @Override
   public void undoTransparentActionFinished() {}
 
+  @Override
   public void commandFinished(CommandEvent event) {
     myCommandLevel--;
     if (LOG.isDebugEnabled()) {
@@ -71,6 +76,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     execute();
   }
 
+  @Override
   public void init(Project project, boolean sync) {
     myProject = project;
     initializeDeletedStorage();
@@ -82,6 +88,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     myIsActive = true;
   }
 
+  @Override
   public void dispose() {
     VirtualFileManager.getInstance().removeVirtualFileListener(this);
     CvsEntriesManager.getInstance().unregisterAsVirtualFileListener();
@@ -92,8 +99,6 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     myProject = null;
   }
 
-  public void beforeFileDeletion(@NotNull VirtualFileEvent event) {}
-
   public DeleteHandler getDeleteHandler() {
     if (myDeleteHandler == null) {
       myDeleteHandler = myDeletedStorage.createDeleteHandler(myProject, this);
@@ -101,6 +106,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return myDeleteHandler;
   }
 
+  @Override
   public void fileDeleted(@NotNull VirtualFileEvent event) {}
 
   private boolean shouldProcessEvent(VirtualFileEvent event, boolean parentShouldBeUnderCvs) {
@@ -122,8 +128,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return CvsUtil.fileIsUnderCvs(file.getParent());
   }
 
-  public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {}
-
+  @Override
   public void fileMoved(@NotNull VirtualFileMoveEvent event) {
     fileCreated(event);
   }
@@ -148,12 +153,14 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) != CvsVcs2.getInstance(myProject);
   }
 
+  @Override
   public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
     if (!event.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
     if (!CvsUtil.fileIsUnderCvs(event.getFile())) return;
     beforeFileDeletion(event);
   }
 
+  @Override
   public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
     if (processMoveOrRename()) {
       fileDeleted(event);
@@ -161,6 +168,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     }
   }
 
+  @Override
   public void fileCreated(@NotNull final VirtualFileEvent event) {
     if (!shouldProcessEvent(event, false)) return;
     final Project project = myProject;
@@ -170,7 +178,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     if (myDeleteHandler != null) {
       myDeleteHandler.removeDeletedRoot(file);
     }
-    myDeletedStorage.checkNeedForPurge(VfsUtil.virtualToIoFile(file));
+    myDeletedStorage.checkNeedForPurge(VfsUtilCore.virtualToIoFile(file));
     deleteIfAdminDirCreated(file);
     getAddHandler().addFile(file);
 
@@ -221,6 +229,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     return PeriodicalTasksCloser.getInstance().safeGetService(project, CvsStorageComponent.class);
   }
 
+  @Override
   public void deleteIfAdminDirCreated(VirtualFile addedFile) {
     myDeletedStorage.deleteIfAdminDirCreated(addedFile);
   }

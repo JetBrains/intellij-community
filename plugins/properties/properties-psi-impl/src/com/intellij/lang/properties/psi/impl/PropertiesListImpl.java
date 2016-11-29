@@ -35,4 +35,5 @@ public class PropertiesListImpl extends PropertiesStubElementImpl<PropertiesList
   public String toString() {
     return "PropertiesList";
   }
+
 }

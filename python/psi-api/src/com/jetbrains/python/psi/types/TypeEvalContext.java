@@ -45,18 +45,18 @@ public class TypeEvalContext {
   private List<String> myTrace;
   private String myTraceIndent = "";
 
-  private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<PyTypedElement, PyType>();
-  private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<PyCallable, PyType>();
+  private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<>();
+  private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<>();
   private final ThreadLocal<Set<PyTypedElement>> myEvaluating = new ThreadLocal<Set<PyTypedElement>>() {
     @Override
     protected Set<PyTypedElement> initialValue() {
-      return new HashSet<PyTypedElement>();
+      return new HashSet<>();
     }
   };
   private final ThreadLocal<Set<PyCallable>> myEvaluatingReturn = new ThreadLocal<Set<PyCallable>>() {
     @Override
     protected Set<PyCallable> initialValue() {
-      return new HashSet<PyCallable>();
+      return new HashSet<>();
     }
   };
 
@@ -152,7 +152,7 @@ public class TypeEvalContext {
 
   public TypeEvalContext withTracing() {
     if (myTrace == null) {
-      myTrace = new ArrayList<String>();
+      myTrace = new ArrayList<>();
     }
     return this;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatements
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 
@@ -33,25 +34,27 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class VarVersionsProcessor {
-
-  private Map<Integer, Integer> mapOriginalVarIndices = new HashMap<Integer, Integer>();
+  private final StructMethod method;
+  private Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
   private VarTypeProcessor typeProcessor;
 
-  public void setVarVersions(RootStatement root) {
-    StructMethod mt = (StructMethod)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD);
+  public VarVersionsProcessor(StructMethod mt, MethodDescriptor md) {
+    method = mt;
+    typeProcessor = new VarTypeProcessor(mt, md);
+  }
 
+  public void setVarVersions(RootStatement root) {
     SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();
-    ssa.splitVariables(root, mt);
+    ssa.splitVariables(root, method);
 
     FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
     DirectGraph graph = flattenHelper.buildDirectGraph(root);
 
     mergePhiVersions(ssa, graph);
 
-    typeProcessor = new VarTypeProcessor();
     typeProcessor.calculateVarTypes(root, graph);
 
-    simpleMerge(typeProcessor, graph, mt);
+    simpleMerge(typeProcessor, graph, method);
 
     // FIXME: advanced merging
 
@@ -62,9 +65,9 @@ public class VarVersionsProcessor {
 
   private static void mergePhiVersions(SSAConstructorSparseEx ssa, DirectGraph graph) {
     // collect phi versions
-    List<Set<VarVersionPair>> lst = new ArrayList<Set<VarVersionPair>>();
+    List<Set<VarVersionPair>> lst = new ArrayList<>();
     for (Entry<VarVersionPair, FastSparseSet<Integer>> ent : ssa.getPhi().entrySet()) {
-      Set<VarVersionPair> set = new HashSet<VarVersionPair>();
+      Set<VarVersionPair> set = new HashSet<>();
       set.add(ent.getKey());
       for (Integer version : ent.getValue()) {
         set.add(new VarVersionPair(ent.getKey().var, version.intValue()));
@@ -72,7 +75,7 @@ public class VarVersionsProcessor {
 
       for (int i = lst.size() - 1; i >= 0; i--) {
         Set<VarVersionPair> tset = lst.get(i);
-        Set<VarVersionPair> intersection = new HashSet<VarVersionPair>(set);
+        Set<VarVersionPair> intersection = new HashSet<>(set);
         intersection.retainAll(tset);
 
         if (!intersection.isEmpty()) {
@@ -84,7 +87,7 @@ public class VarVersionsProcessor {
       lst.add(set);
     }
 
-    Map<VarVersionPair, Integer> phiVersions = new HashMap<VarVersionPair, Integer>();
+    Map<VarVersionPair, Integer> phiVersions = new HashMap<>();
     for (Set<VarVersionPair> set : lst) {
       int min = Integer.MAX_VALUE;
       for (VarVersionPair paar : set) {
@@ -127,7 +130,7 @@ public class VarVersionsProcessor {
     Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
     Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
 
-    Set<VarVersionPair> set = new HashSet<VarVersionPair>(mapExprentMinTypes.keySet());
+    Set<VarVersionPair> set = new HashSet<>(mapExprentMinTypes.keySet());
     for (VarVersionPair paar : set) {
       VarType type = mapExprentMinTypes.get(paar);
       VarType maxType = mapExprentMaxTypes.get(paar);
@@ -153,13 +156,13 @@ public class VarVersionsProcessor {
     Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
     Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
 
-    Map<Integer, Set<Integer>> mapVarVersions = new HashMap<Integer, Set<Integer>>();
+    Map<Integer, Set<Integer>> mapVarVersions = new HashMap<>();
 
     for (VarVersionPair pair : mapExprentMinTypes.keySet()) {
       if (pair.version >= 0) {  // don't merge constants
         Set<Integer> set = mapVarVersions.get(pair.var);
         if (set == null) {
-          set = new HashSet<Integer>();
+          set = new HashSet<>();
           mapVarVersions.put(pair.var, set);
         }
         set.add(pair.version);
@@ -168,12 +171,12 @@ public class VarVersionsProcessor {
 
     boolean is_method_static = mt.hasModifier(CodeConstants.ACC_STATIC);
 
-    Map<VarVersionPair, Integer> mapMergedVersions = new HashMap<VarVersionPair, Integer>();
+    Map<VarVersionPair, Integer> mapMergedVersions = new HashMap<>();
 
     for (Entry<Integer, Set<Integer>> ent : mapVarVersions.entrySet()) {
 
       if (ent.getValue().size() > 1) {
-        List<Integer> lstVersions = new ArrayList<Integer>(ent.getValue());
+        List<Integer> lstVersions = new ArrayList<>(ent.getValue());
         Collections.sort(lstVersions);
 
         for (int i = 0; i < lstVersions.size(); i++) {
@@ -231,11 +234,11 @@ public class VarVersionsProcessor {
 
     CounterContainer counters = DecompilerContext.getCounterContainer();
 
-    final Map<VarVersionPair, Integer> mapVarPaar = new HashMap<VarVersionPair, Integer>();
-    Map<Integer, Integer> mapOriginalVarIndices = new HashMap<Integer, Integer>();
+    final Map<VarVersionPair, Integer> mapVarPaar = new HashMap<>();
+    Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
 
     // map var-version pairs on new var indexes
-    Set<VarVersionPair> set = new HashSet<VarVersionPair>(mapExprentMinTypes.keySet());
+    Set<VarVersionPair> set = new HashSet<>(mapExprentMinTypes.keySet());
     for (VarVersionPair pair : set) {
 
       if (pair.version >= 0) {

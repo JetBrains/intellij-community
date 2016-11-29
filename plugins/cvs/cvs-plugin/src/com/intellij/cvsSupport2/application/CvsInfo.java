@@ -150,7 +150,7 @@ public class CvsInfo {
   }
 
   public synchronized Collection<Entry> getEntries() {
-    return new HashSet<Entry>(getCvsEntries().getEntries());
+    return new HashSet<>(getCvsEntries().getEntries());
   }
 
   @Nullable
@@ -333,7 +333,7 @@ public class CvsInfo {
 
     @Override
     public Collection<Entry> getEntries() {
-      return new ArrayList<Entry>();
+      return new ArrayList<>();
     }
 
     @Override

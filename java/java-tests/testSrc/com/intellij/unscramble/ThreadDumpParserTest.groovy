@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import junit.framework.TestCase
  * @author peter
  */
 class ThreadDumpParserTest extends TestCase {
-  public void "test waiting threads are not locking"() {
+  void "test waiting threads are not locking"() {
     String text = """
 "1" daemon prio=10 tid=0x00002b5bf8065000 nid=0x4294 waiting for monitor entry [0x00002b5aadb5d000]
    java.lang.Thread.State: BLOCKED (on object monitor)

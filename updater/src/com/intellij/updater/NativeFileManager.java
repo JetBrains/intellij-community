@@ -55,13 +55,13 @@ public class NativeFileManager {
     public boolean terminate() {
       Kernel32.HANDLE process = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_TERMINATE | WinNT.SYNCHRONIZE, false, pid);
       if (process.getPointer() == null) {
-        Runner.logger.warn("Unable to find process " + name + "(" + pid + ")");
+        Runner.logger().warn("Unable to find process " + name + "(" + pid + ")");
         return false;
       } else {
         Kernel32.INSTANCE.TerminateProcess(process, 1);
         int wait = Kernel32.INSTANCE.WaitForSingleObject(process, 1000);
         if (wait != WinBase.WAIT_OBJECT_0) {
-          Runner.logger.warn("Timed out while waiting for process " + name + "(" + pid + ") to end");
+          Runner.logger().warn("Timed out while waiting for process " + name + "(" + pid + ") to end");
           return false;
         }
         Kernel32.INSTANCE.CloseHandle(process);
@@ -71,7 +71,7 @@ public class NativeFileManager {
   }
 
   public static List<Process> getProcessesUsing(File file) {
-    List<Process> processes = new LinkedList<Process>();
+    List<Process> processes = new LinkedList<>();
     // If the DLL was not present (XP or other OS), do not try to find it again.
     if (ourFailed) {
       return processes;
@@ -81,13 +81,13 @@ public class NativeFileManager {
       char[] sessionKey = new char[Win32RestartManager.CCH_RM_SESSION_KEY + 1];
       int error = Win32RestartManager.INSTANCE.RmStartSession(session, 0, sessionKey);
       if (error != 0) {
-        Runner.logger.warn("Unable to start restart manager session");
+        Runner.logger().warn("Unable to start restart manager session");
         return processes;
       }
       StringArray resources = new StringArray(new WString[]{new WString(file.toString())});
       error = Win32RestartManager.INSTANCE.RmRegisterResources(session.getValue(), 1, resources, 0, Pointer.NULL, 0, null);
       if (error != 0) {
-        Runner.logger.warn("Unable to register restart manager resource " + file.getAbsolutePath());
+        Runner.logger().warn("Unable to register restart manager resource " + file.getAbsolutePath());
         return processes;
       }
 
@@ -97,7 +97,7 @@ public class NativeFileManager {
       IntByReference procInfo = new IntByReference(infos.length);
       error = Win32RestartManager.INSTANCE.RmGetList(session.getValue(), procInfoNeeded, procInfo, info, new LongByReference());
       if (error != 0) {
-        Runner.logger.warn("Unable to get the list of processes using " + file.getAbsolutePath());
+        Runner.logger().warn("Unable to get the list of processes using " + file.getAbsolutePath());
         return processes;
       }
       for (int i = 0; i < procInfo.getValue(); i++) {

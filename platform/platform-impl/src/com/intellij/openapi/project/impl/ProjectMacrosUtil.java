@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,13 +65,7 @@ public class ProjectMacrosUtil {
       String macro = it.next();
       String value = System.getProperty(pathMacroSystemPrefix + macro, null);
       if (value != null) {
-        AccessToken token = WriteAction.start();
-        try {
-          PathMacros.getInstance().setMacro(macro, value);
-        }
-        finally {
-          token.finish();
-        }
+        WriteAction.run(() -> PathMacros.getInstance().setMacro(macro, value));
         it.remove();
       }
     }
@@ -83,19 +77,14 @@ public class ProjectMacrosUtil {
 
     // there are undefined macros, need to define them before loading components
     final boolean[] result = new boolean[1];
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
-      @Override
-      public void run() {
-        result[0] = showMacrosConfigurationDialog(project, usedMacros);
-      }
-    }, ModalityState.NON_MODAL);
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(() -> result[0] = showMacrosConfigurationDialog(project, usedMacros), ModalityState.NON_MODAL);
     return result[0];
   }
 
   @NotNull
   public static Set<String> getDefinedMacros() {
     PathMacros pathMacros = PathMacros.getInstance();
-    Set<String> definedMacros = new THashSet<String>(pathMacros.getUserMacroNames());
+    Set<String> definedMacros = new THashSet<>(pathMacros.getUserMacroNames());
     definedMacros.addAll(pathMacros.getSystemMacroNames());
     return definedMacros;
   }

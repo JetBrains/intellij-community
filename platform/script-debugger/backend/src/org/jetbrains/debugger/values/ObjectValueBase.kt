@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 package org.jetbrains.debugger.values
 
 import com.intellij.util.SmartList
-import org.jetbrains.concurrency.Obsolescent
-import org.jetbrains.concurrency.ObsolescentAsyncFunction
-import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.EvaluateContext
 import org.jetbrains.debugger.Variable
 import org.jetbrains.debugger.VariablesHost
@@ -30,7 +28,7 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : V
   override val properties: Promise<List<Variable>>
     get() = childrenManager.get()
 
-  internal abstract inner class MyObsolescentAsyncFunction<PARAM, RESULT>(private val obsolescent: Obsolescent) : ObsolescentAsyncFunction<PARAM, RESULT> {
+  internal abstract inner class MyObsolescentAsyncFunction<PARAM, RESULT>(private val obsolescent: Obsolescent) : ObsolescentFunction<PARAM, Promise<RESULT>> {
     override fun isObsolete() = obsolescent.isObsolete || childrenManager.valueManager.isObsolete
   }
 
@@ -41,9 +39,9 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : V
 
   override val valueString: String? = null
 
-  override fun getIndexedProperties(from: Int, to: Int, bucketThreshold: Int, consumer: IndexedVariablesConsumer, componentType: ValueType?): Promise<*> = Promise.REJECTED
+  override fun getIndexedProperties(from: Int, to: Int, bucketThreshold: Int, consumer: IndexedVariablesConsumer, componentType: ValueType?): Promise<*> = rejectedPromise<Any?>()
 
-  @Suppress("CAST_NEVER_SUCCEEDS")
+  @Suppress("UNCHECKED_CAST")
   override val variablesHost: VariablesHost<ValueManager>
     get() = childrenManager as VariablesHost<ValueManager>
 }
@@ -57,9 +55,7 @@ fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evalu
     }
 
     if (!properties.isEmpty()) {
-      Collections.sort(properties, object : Comparator<Variable> {
-        override fun compare(o1: Variable, o2: Variable) = names.indexOf(o1.name) - names.indexOf(o2.name)
-      })
+      Collections.sort(properties) { o1, o2 -> names.indexOf(o1.name) - names.indexOf(o2.name) }
     }
 
     properties.add(property)
@@ -69,17 +65,16 @@ fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evalu
   }
 
   if (getterCount == 0) {
-    return Promise.resolve(properties)
+    return resolvedPromise(properties)
   }
   else {
     val promises = SmartList<Promise<*>>()
     for (variable in properties) {
       if (variable.value == null) {
-        val valueModifier = variable.valueModifier
-        assert(valueModifier != null)
-        promises.add(valueModifier!!.evaluateGet(variable, evaluateContext))
+        val valueModifier = variable.valueModifier!!
+        promises.add(valueModifier.evaluateGet(variable, evaluateContext))
       }
     }
-    return Promise.all<List<Variable>>(promises, properties)
+    return all(promises, properties)
   }
 }

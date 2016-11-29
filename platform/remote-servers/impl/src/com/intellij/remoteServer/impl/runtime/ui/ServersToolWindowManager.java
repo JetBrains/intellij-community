@@ -23,33 +23,27 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
-import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public abstract class ServersToolWindowManager extends AbstractProjectComponent {
 
   private final String myWindowId;
+  private final Icon myIcon;
 
-  public ServersToolWindowManager(final Project project, String windowId) {
+  public ServersToolWindowManager(final Project project, String windowId, Icon icon) {
     super(project);
     myWindowId = windowId;
+    myIcon = icon;
   }
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        setupListeners();
-      }
-    });
+    StartupManager.getInstance(myProject).registerPostStartupActivity(() -> setupListeners());
   }
 
   public void setupListeners() {
-    getFactory().getContribution().setupAvailabilityListener(myProject, new Runnable() {
-      @Override
-      public void run() {
-        updateWindowAvailable(true);
-      }
-    });
+    getFactory().getContribution().setupAvailabilityListener(myProject, () -> updateWindowAvailable(true));
     myProject.getMessageBus().connect().subscribe(RemoteServerListener.TOPIC, new RemoteServerListener() {
       @Override
       public void serverAdded(@NotNull RemoteServer<?> server) {
@@ -66,36 +60,32 @@ public abstract class ServersToolWindowManager extends AbstractProjectComponent 
   private void updateWindowAvailable(final boolean showIfAvailable) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
 
-    toolWindowManager.invokeLater(new Runnable() {
+    toolWindowManager.invokeLater(() -> {
+      boolean available = getFactory().getContribution().canContribute(myProject);
 
-      @Override
-      public void run() {
-        boolean available = getFactory().getContribution().canContribute(myProject);
+      final ToolWindow toolWindow = toolWindowManager.getToolWindow(myWindowId);
 
-        final ToolWindow toolWindow = toolWindowManager.getToolWindow(myWindowId);
-
-        if (toolWindow == null) {
-          if (available) {
-            createToolWindow(myProject, toolWindowManager).show(null);
-          }
-          return;
+      if (toolWindow == null) {
+        if (available) {
+          createToolWindow(myProject, toolWindowManager).show(null);
         }
+        return;
+      }
 
-        boolean doShow = !toolWindow.isAvailable() && available;
-        if (toolWindow.isAvailable() && !available) {
-          toolWindow.hide(null);
-        }
-        toolWindow.setAvailable(available, null);
-        if (showIfAvailable && doShow) {
-          toolWindow.show(null);
-        }
+      boolean doShow = !toolWindow.isAvailable() && available;
+      if (toolWindow.isAvailable() && !available) {
+        toolWindow.hide(null);
+      }
+      toolWindow.setAvailable(available, null);
+      if (showIfAvailable && doShow) {
+        toolWindow.show(null);
       }
     });
   }
 
   private ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(myWindowId, false, ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(RemoteServersIcons.ServersToolWindow);
+    toolWindow.setIcon(myIcon);
     getFactory().createToolWindowContent(project, toolWindow);
     return toolWindow;
   }

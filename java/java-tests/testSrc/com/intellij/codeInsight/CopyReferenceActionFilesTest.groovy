@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,17 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 
-public class CopyReferenceActionFilesTest extends CodeInsightTestCase {
+class CopyReferenceActionFilesTest extends CodeInsightTestCase {
   VirtualFile additionalRoot
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
+    super.setUp()
 
     ApplicationManager.application.runWriteAction(new Runnable() {
       @Override
       void run() {
-        additionalRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///").createChildDirectory(this, "newRoot");
+        additionalRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///").createChildDirectory(this, "newRoot")
       }
     })
   }
@@ -48,11 +48,11 @@ public class CopyReferenceActionFilesTest extends CodeInsightTestCase {
       })
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
-  public void testCopyFile_RegisteredAsSourceRoots_ShouldContainItsName() throws Exception {
+  void testCopyFile_RegisteredAsSourceRoots_ShouldContainItsName() throws Exception {
     // CPP-4315 "Edit | Copy Reference" result doesn't contain the file name
     
     VirtualFile dir
@@ -62,22 +62,22 @@ public class CopyReferenceActionFilesTest extends CodeInsightTestCase {
     ApplicationManager.application.runWriteAction(new Runnable() {
       @Override
       void run() {
-        dir = additionalRoot.createChildDirectory(this, "dir");
-        dir_subfile = dir.createChildData(this, "dir_subfile.txt");
-        file = additionalRoot.createChildData(this, "file.txt");
+        dir = additionalRoot.createChildDirectory(this, "dir")
+        dir_subfile = dir.createChildData(this, "dir_subfile.txt")
+        file = additionalRoot.createChildData(this, "file.txt")
 
-        PsiTestUtil.addContentRoot(getModule(), additionalRoot);
-        PsiTestUtil.addSourceRoot(getModule(), dir);
-        PsiTestUtil.addSourceRoot(getModule(), file);
+        PsiTestUtil.addContentRoot(getModule(), additionalRoot)
+        PsiTestUtil.addSourceRoot(getModule(), dir)
+        PsiTestUtil.addSourceRoot(getModule(), file)
       }
     })
 
-    assertEquals("dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)));
-    assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_subfile)));
-    assertEquals("file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(file)));
+    assertEquals("dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)))
+    assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_subfile)))
+    assertEquals("file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(file)))
   }
 
-  public void testCopyFile_RegisteredAsContentRoot_ShouldContainItsFullPath() throws Exception {
+  void testCopyFile_RegisteredAsContentRoot_ShouldContainItsFullPath() throws Exception {
     // IDEA-144300 Copy Reference for source folder/content root copies empty string
     
     VirtualFile dir
@@ -87,21 +87,21 @@ public class CopyReferenceActionFilesTest extends CodeInsightTestCase {
     ApplicationManager.application.runWriteAction(new Runnable() {
       @Override
       void run() {
-        dir = additionalRoot.createChildDirectory(this, "dir");
-        dir_subfile = dir.createChildData(this, "dir_subfile.txt");
-        file = additionalRoot.createChildData(this, "file.txt");
+        dir = additionalRoot.createChildDirectory(this, "dir")
+        dir_subfile = dir.createChildData(this, "dir_subfile.txt")
+        file = additionalRoot.createChildData(this, "file.txt")
 
-        PsiTestUtil.addContentRoot(getModule(), dir);
-        PsiTestUtil.addContentRoot(getModule(), file);
+        PsiTestUtil.addContentRoot(getModule(), dir)
+        PsiTestUtil.addContentRoot(getModule(), file)
       }
     })
 
-    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)));
-    assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_subfile)));
-    assertEquals(file.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(file)));
+    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)))
+    assertEquals("dir_subfile.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_subfile)))
+    assertEquals(file.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(file)))
   }
 
-  public void testCopyFile_RegisteredAsNestedContentRoot_ShouldContainPathFromOuterMostRoot() throws Exception {
+  void testCopyFile_RegisteredAsNestedContentRoot_ShouldContainPathFromOuterMostRoot() throws Exception {
     // IDEA-144300 Copy Reference for source folder/content root copies empty string
     
     VirtualFile dir
@@ -111,21 +111,21 @@ public class CopyReferenceActionFilesTest extends CodeInsightTestCase {
     ApplicationManager.application.runWriteAction(new Runnable() {
       @Override
       void run() {
-        dir = additionalRoot.createChildDirectory(this, "dir");
-        dir_dir = dir.createChildDirectory(this, "dir_dir");
-        dir_dir_file = dir_dir.createChildData(this, "file.txt");
+        dir = additionalRoot.createChildDirectory(this, "dir")
+        dir_dir = dir.createChildDirectory(this, "dir_dir")
+        dir_dir_file = dir_dir.createChildData(this, "file.txt")
 
-        PsiTestUtil.addContentRoot(getModule(), dir);
-        PsiTestUtil.addContentRoot(getModule(), dir_dir);
+        PsiTestUtil.addContentRoot(getModule(), dir)
+        PsiTestUtil.addContentRoot(getModule(), dir_dir)
       }
     })
 
-    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)));
-    assertEquals("dir_dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir_dir)));
-    assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_dir_file)));
+    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)))
+    assertEquals("dir_dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir_dir)))
+    assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_dir_file)))
   }
-  
-  public void testCopyFile_UnderExcludeRoot_ShouldContainPathFromTheCorrespondingContentRoot() throws Exception {
+
+  void testCopyFile_UnderExcludeRoot_ShouldContainPathFromTheCorrespondingContentRoot() throws Exception {
     // IDEA-144316 Copy Reference should work for excluded subfolders same way as it works for regular project subdirs
     
     VirtualFile dir
@@ -135,17 +135,17 @@ public class CopyReferenceActionFilesTest extends CodeInsightTestCase {
     ApplicationManager.application.runWriteAction(new Runnable() {
       @Override
       void run() {
-        dir = additionalRoot.createChildDirectory(this, "dir");
-        dir_dir = dir.createChildDirectory(this, "dir_dir");
-        dir_dir_file = dir_dir.createChildData(this, "file.txt");
+        dir = additionalRoot.createChildDirectory(this, "dir")
+        dir_dir = dir.createChildDirectory(this, "dir_dir")
+        dir_dir_file = dir_dir.createChildData(this, "file.txt")
 
-        PsiTestUtil.addContentRoot(getModule(), dir);
-        PsiTestUtil.addExcludedRoot(getModule(), dir_dir);
+        PsiTestUtil.addContentRoot(getModule(), dir)
+        PsiTestUtil.addExcludedRoot(getModule(), dir_dir)
       }
     })
 
-    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)));
-    assertEquals("dir_dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir_dir)));
-    assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_dir_file)));
+    assertEquals(dir.getPath(), CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir)))
+    assertEquals("dir_dir", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findDirectory(dir_dir)))
+    assertEquals("dir_dir/file.txt", CopyReferenceAction.elementToFqn(PsiManager.getInstance(project).findFile(dir_dir_file)))
   }
 }

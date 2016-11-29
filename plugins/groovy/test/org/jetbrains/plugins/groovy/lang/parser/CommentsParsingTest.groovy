@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.parser;
+package org.jetbrains.plugins.groovy.lang.parser
 
 /**
  * @author peter
  */
-public class CommentsParsingTest extends GroovyParsingTestCase {
+class CommentsParsingTest extends GroovyParsingTestCase {
   @Override
   String getBasePath() {
-    super.basePath + "comments";
+    super.basePath + "comments"
   }
 
-  public void testBrown() throws Throwable { doTest(); }
-  public void testError1205() throws Throwable { doTest(); }
-  public void testMax() throws Throwable { doTest(); }
-  public void testNls1() throws Throwable { doTest(); }
-  public void testNls2() throws Throwable { doTest(); }
-  public void testRocher3() throws Throwable { doTest(); }
+  void testBrown() throws Throwable { doTest() }
+
+  void testError1205() throws Throwable { doTest() }
+
+  void testMax() throws Throwable { doTest() }
+
+  void testNls1() throws Throwable { doTest() }
+
+  void testNls2() throws Throwable { doTest() }
+
+  void testRocher3() throws Throwable { doTest() }
   
 }

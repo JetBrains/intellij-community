@@ -93,7 +93,7 @@ public final class PreviewFormAction extends AnAction{
 
   @NotNull
   public static InstrumentationClassFinder createClassFinder(@NotNull final String classPath){
-    final ArrayList<URL> urls = new ArrayList<URL>();
+    final ArrayList<URL> urls = new ArrayList<>();
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();
       try {
@@ -227,7 +227,7 @@ public final class PreviewFormAction extends AnAction{
       }
 
       // 2.5. Copy up-to-date properties files to the output directory.
-      final HashSet<String> bundleSet = new HashSet<String>();
+      final HashSet<String> bundleSet = new HashSet<>();
       FormEditingUtil.iterateStringDescriptors(
         rootContainer,
         new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
@@ -240,8 +240,8 @@ public final class PreviewFormAction extends AnAction{
         });
 
       if (bundleSet.size() > 0) {
-        HashSet<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
-        HashSet<Module> modules = new HashSet<Module>();
+        HashSet<VirtualFile> virtualFiles = new HashSet<>();
+        HashSet<Module> modules = new HashSet<>();
         PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
         for(String bundleName: bundleSet) {
           for(PropertiesFile propFile: manager.findPropertiesFiles(module, bundleName)) {
@@ -366,14 +366,7 @@ public final class PreviewFormAction extends AnAction{
           }
           finally {
             final Project project = myModule.getProject();
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-                if (statusBar != null) {
-                  statusBar.setInfo(myStatusbarMessage);
-                }
-              }
-            });
+            SwingUtilities.invokeLater(() -> WindowManager.getInstance().getStatusBar(project).setInfo(myStatusbarMessage));
           }
         }
       };

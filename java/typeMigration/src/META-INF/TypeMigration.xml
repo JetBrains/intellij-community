@@ -8,6 +8,7 @@
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ElementToArrayConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.LongAdderConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.VoidConversionRule"/>
 
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaOptionalConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaFluentIterableConversionRule"/>

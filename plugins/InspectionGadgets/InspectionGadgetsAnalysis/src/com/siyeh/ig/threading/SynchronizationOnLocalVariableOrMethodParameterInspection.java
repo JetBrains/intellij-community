@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableSearchUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,7 +117,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
     }
 
     private boolean isSynchronizedCollection(@NotNull PsiVariable variable, PsiReferenceExpression referenceExpression) {
-      final PsiExpression definition = VariableSearchUtils.findDefinition(referenceExpression, variable);
+      final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
       if (!(definition instanceof PsiMethodCallExpression)) {
         return false;
       }

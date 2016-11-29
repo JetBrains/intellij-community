@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents the occurrence of a type in Java source code, for example, as a return
  * type of the method or the type of a method parameter.
  */
-public interface PsiTypeElement extends PsiElement,PsiAnnotationOwner {
+public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
   /**
    * The empty array of PSI directories which can be reused to avoid unnecessary allocations.
    */
@@ -39,10 +39,18 @@ public interface PsiTypeElement extends PsiElement,PsiAnnotationOwner {
 
   /**
    * Returns the type referenced by the type element.
+   * <p>
+   * Note: when a containing element (field, method etc.) has C-style array declarations,
+   * the result of this method may differ from an actual type.
    *
    * @return the referenced type.
+   * @see PsiField#getType()
+   * @see PsiMethod#getReturnType()
+   * @see PsiParameter#getType()
+   * @see PsiVariable#getType()
    */
-  @NotNull PsiType getType();
+  @NotNull
+  PsiType getType();
 
   /**
    * Returns the reference element pointing to the referenced type, or if the type element

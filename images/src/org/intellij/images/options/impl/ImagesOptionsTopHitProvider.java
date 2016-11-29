@@ -25,6 +25,6 @@ import com.intellij.openapi.project.Project;
 public class ImagesOptionsTopHitProvider extends EditorOptionsTopHitProviderBase {
   @Override
   protected Configurable getConfigurable(Project project) {
-    return new OptionsConfigurabe();
+    return new ImagesConfigurable();
   }
 }

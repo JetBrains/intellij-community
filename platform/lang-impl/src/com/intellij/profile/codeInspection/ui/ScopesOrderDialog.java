@@ -86,7 +86,7 @@ public class ScopesOrderDialog extends DialogWrapper {
     DefaultListModel model = new DefaultListModel();
     model.removeAllElements();
 
-    final List<String> scopes = new ArrayList<String>();
+    final List<String> scopes = new ArrayList<>();
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
       for (final NamedScope scope : holder.getScopes()) {
         if (!(scope instanceof NonProjectFilesScope)) {

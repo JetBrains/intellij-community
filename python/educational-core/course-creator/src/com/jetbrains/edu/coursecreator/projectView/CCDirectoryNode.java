@@ -1,83 +1,62 @@
 package com.jetbrains.edu.coursecreator.projectView;
 
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.coursecreator.CCProjectService;
-import icons.EducationalIcons;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.learning.StudyLanguageManager;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.projectView.DirectoryNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class CCDirectoryNode extends PsiDirectoryNode {
-  private final PsiDirectory myValue;
-  private final Project myProject;
-
-  public CCDirectoryNode(@NotNull final Project project,
+public class CCDirectoryNode extends DirectoryNode {
+  public CCDirectoryNode(@NotNull Project project,
                          PsiDirectory value,
                          ViewSettings viewSettings) {
     super(project, value, viewSettings);
-    myValue = value;
-    myProject = project;
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
-    String valueName = myValue.getName();
-    final CCProjectService service = CCProjectService.getInstance(myProject);
-    final Course course = service.getCourse();
-    if (course == null) return;
-    if (myProject.getBaseDir().equals(myValue.getVirtualFile())) {
-      data.clearText();
-      data.setIcon(EducationalIcons.Course);
-      data.addText(course.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      return;
-    }
-    final Lesson lesson = course.getLesson(valueName);
-    if (lesson != null) {
-      data.clearText();
-      data.setIcon(EducationalIcons.Lesson);
-      data.addText(lesson.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      return;
-    }
-    else {
-      final PsiDirectory parentDir = myValue.getParentDirectory();
-      if (parentDir != null) {
-        final Lesson parentLesson = course.getLesson(parentDir.getName());
-        if (parentLesson != null) {
-          final Task task = parentLesson.getTask(valueName);
-          if (task != null) {
-            data.clearText();
-            data.setIcon(EducationalIcons.Task);
-            data.addText(task.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            return;
-          }
-        }
+  public boolean canNavigate() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public AbstractTreeNode modifyChildNode(AbstractTreeNode childNode) {
+    final AbstractTreeNode node = super.modifyChildNode(childNode);
+    if (node != null) return node;
+    Object value = childNode.getValue();
+    if (value instanceof PsiElement) {
+      PsiFile psiFile = ((PsiElement) value).getContainingFile();
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+
+      Course course = StudyTaskManager.getInstance(myProject).getCourse();
+      if (course == null) {
+        return null;
+      }
+      StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
+      if (manager == null) {
+        return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings);
+      }
+      if (!CCUtils.isTestsFile(myProject, virtualFile)) {
+        return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings);
       }
     }
-    data.setPresentableText(valueName);
-  }
-
-  @Override
-  public int getTypeSortWeight(boolean sortByType) {
-    String name = myValue.getName();
-    if (name.startsWith(EduNames.LESSON) || name.startsWith(EduNames.TASK)) {
-      String logicalName = name.contains(EduNames.LESSON) ? EduNames.LESSON : EduNames.TASK;
-      int index = EduUtils.getIndex(name, logicalName) + 1;
-      return index != -1 ? index + 1: 0;
-    }
-    return 0;
-  }
-
-  @Override
-  public String getNavigateActionText(boolean focusEditor) {
     return null;
+  }
+
+  @Override
+  public PsiDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory value) {
+    return new CCDirectoryNode(myProject, value, myViewSettings);
   }
 }

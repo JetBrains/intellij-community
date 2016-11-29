@@ -228,7 +228,7 @@ public class Merger implements IMerger {
   }
 
   public static final Topic<CommittedChangesMergedStateChanged> COMMITTED_CHANGES_MERGED_STATE =
-    new Topic<CommittedChangesMergedStateChanged>("COMMITTED_CHANGES_MERGED_STATE", CommittedChangesMergedStateChanged.class);
+    new Topic<>("COMMITTED_CHANGES_MERGED_STATE", CommittedChangesMergedStateChanged.class);
 
   public interface CommittedChangesMergedStateChanged {
     void event(final List<CommittedChangeList> list);

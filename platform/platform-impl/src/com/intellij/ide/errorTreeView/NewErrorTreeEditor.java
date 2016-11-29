@@ -148,7 +148,7 @@ public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEd
       if (UIUtil.isFullRowSelectionLAF()) {
         myPanel.setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
       }
-      else if (tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
+      else if (WideSelectionTreeUI.isWideSelection(tree)) {
         if (selected) {
           myPanel.setBackground(UIUtil.getTreeSelectionBackground());
         }
@@ -169,7 +169,7 @@ public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEd
 
       if (UIUtil.isUnderGTKLookAndFeel() ||
           UIUtil.isUnderNimbusLookAndFeel() && selected ||
-          tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
+          WideSelectionTreeUI.isWideSelection(tree)) {
         myPanel.setOpaque(false);
       }
       return myPanel;

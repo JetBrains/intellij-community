@@ -253,7 +253,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
 
   static class MyOrderProvider implements TreeStructureProvider {
     private final Project myProject;
-    private final Map<String, Integer> myOrder = new LinkedHashMap<String, Integer>();
+    private final Map<String, Integer> myOrder = new LinkedHashMap<>();
 
     public MyOrderProvider(Project project) {
       myProject = project;
@@ -271,7 +271,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
                                                @NotNull Collection<AbstractTreeNode> children,
                                                ViewSettings settings) {
-      ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
       for (final AbstractTreeNode child : children) {
         ProjectViewNode treeNode = (ProjectViewNode)child;

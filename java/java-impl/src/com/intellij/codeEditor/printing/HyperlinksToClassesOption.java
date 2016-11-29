@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,14 @@ import java.util.TreeMap;
 
 public class HyperlinksToClassesOption extends PrintOption {
   private JCheckBox myCbGenerateHyperlinksToClasses;
-  private boolean isGenerateHyperlinksToClasses = false;
+  private boolean isGenerateHyperlinksToClasses;
 
   @Nullable
   public TreeMap<Integer, PsiReference> collectReferences(PsiFile psiFile, Map<PsiFile, PsiFile> filesMap) {
     if (isGenerateHyperlinksToClasses) {
       FileType fileType = psiFile.getFileType();
       if (StdFileTypes.JAVA == fileType || StdFileTypes.JSP == fileType) {
-        final TreeMap<Integer, PsiReference> refMap = new TreeMap<Integer, PsiReference>();
+        final TreeMap<Integer, PsiReference> refMap = new TreeMap<>();
         findClassReferences(psiFile, refMap, filesMap, psiFile);
         return refMap;
       }

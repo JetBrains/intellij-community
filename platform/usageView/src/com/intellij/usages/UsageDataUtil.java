@@ -35,7 +35,7 @@ public class UsageDataUtil {
       return null;
     }
 
-    final Set<VirtualFile> result = new THashSet<VirtualFile>();
+    final Set<VirtualFile> result = new THashSet<>();
 
     if (usages != null) {
       for (Usage usage : usages) {

@@ -224,4 +224,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   public String getTestFrameworkName() {
     return myTestFrameworkName;
   }
+
+  public boolean isUndefined() {
+    return false;
+  }
 }

@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ public class PythonEnvUtil {
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
   @SuppressWarnings("SpellCheckingInspection") public static final String IPYTHONENABLE = "IPYTHONENABLE";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONDONTWRITEBYTECODE = "PYTHONDONTWRITEBYTECODE";
+  @SuppressWarnings("SpellCheckingInspection") public static final String PYVENV_LAUNCHER = "__PYVENV_LAUNCHER__";
 
   private PythonEnvUtil() { }
 
@@ -44,6 +46,16 @@ public class PythonEnvUtil {
 
   public static Map<String, String> setPythonIOEncoding(@NotNull Map<String, String> env, @NotNull String encoding) {
     env.put(PYTHONIOENCODING, encoding);
+    return env;
+  }
+
+  /**
+   * Resets the environment variables that affect the way the Python interpreter searches for its settings and libraries.
+   */
+  public static Map<String, String> resetHomePathChanges(@NotNull String homePath, @NotNull Map<String, String> env) {
+    if (System.getenv(PYVENV_LAUNCHER) != null || EnvironmentUtil.getEnvironmentMap().containsKey(PYVENV_LAUNCHER)) {
+      env.put(PYVENV_LAUNCHER, homePath);
+    }
     return env;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.Map;
  * @author peter
  */
 public abstract class GlobalUsageHelper {
-  final Map<PsiClass,Boolean> unusedClassCache = new HashMap<PsiClass, Boolean>();
+  final Map<PsiClass,Boolean> unusedClassCache = new HashMap<>();
 
   public abstract boolean shouldCheckUsages(@NotNull PsiMember member);
   public abstract boolean isLocallyUsed(@NotNull PsiNamedElement member);

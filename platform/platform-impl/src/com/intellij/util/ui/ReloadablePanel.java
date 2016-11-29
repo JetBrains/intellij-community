@@ -120,14 +120,11 @@ public abstract class ReloadablePanel<T> {
   }
 
   public final void onValuesUpdateError(@NotNull final String errorMessage) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (getSelectedValue() == null) {
-          myErrorMessage.setText(errorMessage);
-        }
-        changeUpdateStatus(UpdateStatus.IDLE);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (getSelectedValue() == null) {
+        myErrorMessage.setText(errorMessage);
       }
+      changeUpdateStatus(UpdateStatus.IDLE);
     });
   }
 

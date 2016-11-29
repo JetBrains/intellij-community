@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger;
 
+import com.google.common.base.Strings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 // todo: load long lists by parts
 // todo: null modifier for modify modules, class objects etc.
@@ -16,10 +19,15 @@ public class PyDebugValue extends XNamedValue {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
   public static final int MAX_VALUE = 256;
 
+  public static final String RETURN_VALUES_PREFIX = "__pydevd_ret_val_dict";
+
   private String myTempName = null;
   private final String myType;
+  private final String myTypeQualifier;
   private final String myValue;
   private final boolean myContainer;
+  private final boolean myIsReturnedVal;
+  private final boolean myIsIPythonHidden;
   private final PyDebugValue myParent;
   private String myId = null;
 
@@ -29,17 +37,21 @@ public class PyDebugValue extends XNamedValue {
 
   private final boolean myErrorOnEval;
 
-  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
-                      boolean errorOnEval, final PyFrameAccessor frameAccessor) {
-    this(name, type, value, container, errorOnEval, null, frameAccessor);
+  public PyDebugValue(@NotNull final String name, final String type, String typeQualifier, final String value, final boolean container,
+                      boolean isReturnedVal, boolean isIPythonHidden, boolean errorOnEval, final PyFrameAccessor frameAccessor) {
+    this(name, type, typeQualifier, value, container, isReturnedVal, isIPythonHidden, errorOnEval, null, frameAccessor);
   }
 
-  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
-                      boolean errorOnEval, final PyDebugValue parent, final PyFrameAccessor frameAccessor) {
+  public PyDebugValue(@NotNull final String name, final String type, String typeQualifier, final String value, final boolean container,
+                      boolean isReturnedVal, boolean isIPythonHidden, boolean errorOnEval, final PyDebugValue parent,
+                      final PyFrameAccessor frameAccessor) {
     super(name);
     myType = type;
+    myTypeQualifier = Strings.isNullOrEmpty(typeQualifier) ? null : typeQualifier;
     myValue = value;
     myContainer = container;
+    myIsReturnedVal = isReturnedVal;
+    myIsIPythonHidden = isIPythonHidden;
     myErrorOnEval = errorOnEval;
     myParent = parent;
     myFrameAccessor = frameAccessor;
@@ -65,12 +77,21 @@ public class PyDebugValue extends XNamedValue {
     return myContainer;
   }
 
+  public boolean isReturnedVal() {
+    return myIsReturnedVal;
+  }
+
+  public boolean isIPythonHidden() {
+    return myIsIPythonHidden;
+  }
+
   public boolean isErrorOnEval() {
     return myErrorOnEval;
   }
-  
+
   public PyDebugValue setParent(@Nullable PyDebugValue parent) {
-    return new PyDebugValue(myName, myType, myValue, myContainer, myErrorOnEval, parent, myFrameAccessor);
+    return new PyDebugValue(myName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myIsIPythonHidden, myErrorOnEval,
+                            parent, myFrameAccessor);
   }
 
   public PyDebugValue getParent() {
@@ -113,6 +134,10 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
+  public String getFullName() {
+    return wrapWithPrefix(getName());
+  }
+
   private static String removeId(@NotNull String name) {
     if (name.indexOf('(') != -1) {
       name = name.substring(0, name.indexOf('(')).trim();
@@ -133,49 +158,89 @@ public class PyDebugValue extends XNamedValue {
     return "__len__".equals(name);
   }
 
-  private String getFullName() {
-    String result = myName;
+  private static boolean isCollection(@NotNull PyDebugValue parent) {
+    String type = parent.getType();
+    return type.equals("dict") || type.equals("list");
+  }
+
+  private static String getChildNamePresentation(@NotNull PyDebugValue parent, @NotNull String childName) {
+    if (isCollection(parent)) {
+      return "[".concat(removeId(childName)).concat("]");
+    }
+    else {
+      return ".".concat(childName);
+    }
+  }
+
+  private String wrapWithPrefix(String name) {
+    if (isReturnedVal()) {
+      // return values are saved in dictionary on Python side, so the variable's name should be transformed
+      return RETURN_VALUES_PREFIX + "[\"" + name + "\"]";
+    }
+    else {
+      return name;
+    }
+  }
+
+  private String getFullTreeName() {
+    String result = "";
+    String curNodeName = myName;
     PyDebugValue parent = myParent;
     while (parent != null) {
-      result = "." + result;
-      result = parent.getName() + result;
+      result = getChildNamePresentation(parent, curNodeName).concat(result);
+      curNodeName = parent.getName();
       parent = parent.getParent();
     }
-    return result;
+    return wrapWithPrefix(curNodeName.concat(result));
   }
 
   @Override
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     String value = PyTypeHandler.format(this);
-
+    setFullValueEvaluator(node, value);
     if (value.length() >= MAX_VALUE) {
-      node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, getFullName()));
       value = value.substring(0, MAX_VALUE);
     }
-
     node.setPresentation(getValueIcon(), myType, value, myContainer);
+  }
+
+  private boolean isDataFrame() {
+    return "DataFrame".equals(myType);
+  }
+
+  private boolean isNdarray() {
+    return "ndarray".equals(myType);
+  }
+
+  private void setFullValueEvaluator(XValueNode node, String value) {
+    String treeName = getFullTreeName();
+    if (!isDataFrame() && !isNdarray()) {
+      if (value.length() >= MAX_VALUE) {
+        node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, treeName));
+      }
+      return;
+    }
+    String linkText = "...View as " + (isDataFrame() ? "DataFrame" : "Array");
+    node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        if (myFrameAccessor == null) return;
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (myFrameAccessor == null) return;
 
-        try {
-          final XValueChildrenList values = myFrameAccessor.loadVariable(PyDebugValue.this);
-          if (!node.isObsolete()) {
-            node.addChildren(values, true);
-          }
+      try {
+        final XValueChildrenList values = myFrameAccessor.loadVariable(this);
+        if (!node.isObsolete()) {
+          node.addChildren(values, true);
         }
-        catch (PyDebuggerException e) {
-          if (!node.isObsolete()) {
-            node.setErrorMessage("Unable to display children:" + e.getMessage());
-          }
-          LOG.warn(e);
+      }
+      catch (PyDebuggerException e) {
+        if (!node.isObsolete()) {
+          node.setErrorMessage("Unable to display children:" + e.getMessage());
         }
+        LOG.warn(e);
       }
     });
   }
@@ -196,9 +261,12 @@ public class PyDebugValue extends XNamedValue {
       return AllIcons.Debugger.Value;
     }
   }
-  
+
   public PyDebugValue setName(String newName) {
-    return new PyDebugValue(newName, myType, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
+    PyDebugValue value = new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myIsIPythonHidden,
+                                          myErrorOnEval, myParent, myFrameAccessor);
+    value.setTempName(myTempName);
+    return value;
   }
 
   @Nullable
@@ -243,7 +311,13 @@ public class PyDebugValue extends XNamedValue {
 
   @Override
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
-    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName));
+    if (myParent == null) {
+      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, null));
+    }
+    else
+    {
+      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, myParent.getDeclaringType()));
+    }
   }
 
   @Override
@@ -251,8 +325,34 @@ public class PyDebugValue extends XNamedValue {
     return true;
   }
 
+  private static final  Pattern IS_TYPE_DECLARATION = Pattern.compile("<(?:class|type)\\s*'(?<TYPE>.*?)'>");
   @Override
   public void computeTypeSourcePosition(@NotNull XNavigatable navigatable) {
-    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(myType));
+
+    String lookupType = getDeclaringType();
+    navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForType(lookupType));
+  }
+
+  protected final String getDeclaringType() {
+    String lookupType = getQualifiedType();
+    if (!Strings.isNullOrEmpty(myValue))
+    {
+      Matcher matcher = IS_TYPE_DECLARATION.matcher(myValue);
+      if (matcher.matches())
+      {
+        lookupType = matcher.group("TYPE");
+      }
+    }
+    return lookupType;
+  }
+
+  public String getQualifiedType() {
+    if (Strings.isNullOrEmpty(myType))
+      return null;
+    return (myTypeQualifier == null) ? myType : (myTypeQualifier + "." + myType);
+  }
+
+  public String getTypeQualifier() {
+    return myTypeQualifier;
   }
 }

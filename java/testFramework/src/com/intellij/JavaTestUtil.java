@@ -41,18 +41,15 @@ public class JavaTestUtil {
   }
 
   public static void setupTestJDK() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
 
-        Sdk jdk = jdkTable.findJdk(TEST_JDK_NAME);
-        if (jdk != null) {
-          jdkTable.removeJdk(jdk);
-        }
-
-        jdkTable.addJdk(getTestJdk());
+      Sdk jdk = jdkTable.findJdk(TEST_JDK_NAME);
+      if (jdk != null) {
+        jdkTable.removeJdk(jdk);
       }
+
+      jdkTable.addJdk(getTestJdk());
     });
   }
 

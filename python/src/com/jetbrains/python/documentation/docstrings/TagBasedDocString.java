@@ -157,7 +157,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
   }
 
   protected static List<String> toUniqueStrings(List<?> objects) {
-    final List<String> result = new ArrayList<String>(objects.size());
+    final List<String> result = new ArrayList<>(objects.size());
     for (Object o : objects) {
       final String s = o.toString();
       if (!result.contains(s)) {
@@ -199,7 +199,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     for (String tagName : tagNames) {
       final Map<Substring, Substring> map = myArgTagValues.get(tagName);
       if (map != null) {
-        return new ArrayList<Substring>(map.keySet());
+        return new ArrayList<>(map.keySet());
       }
     }
     return Collections.emptyList();
@@ -208,7 +208,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
   @NotNull
   @Override
   public List<Substring> getParameterSubstrings() {
-    final List<Substring> results = new ArrayList<Substring>();
+    final List<Substring> results = new ArrayList<>();
     results.addAll(getTagArguments(PARAM_TAGS));
     results.addAll(getTagArguments(PARAM_TYPE_TAGS));
     return results;

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 public class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
 
   private long modificationTimeStamp;
-  private final ArrayList<Variable> variables = new ArrayList<Variable>();
+  private final ArrayList<Variable> variables = new ArrayList<>();
   private final Editor editor;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
 

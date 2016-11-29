@@ -136,12 +136,13 @@ class Jinja2TemplateFrame:
 
     def _change_variable(self, frame, name, value):
         in_vars_or_parents = False
-        if name in frame.f_locals['context'].parent:
-            self.back_context.parent[name] = value
-            in_vars_or_parents = True
-        if name in frame.f_locals['context'].vars:
-            self.back_context.vars[name] = value
-            in_vars_or_parents = True
+        if 'context' in frame.f_locals:
+            if name in frame.f_locals['context'].parent:
+                self.back_context.parent[name] = value
+                in_vars_or_parents = True
+            if name in frame.f_locals['context'].vars:
+                self.back_context.vars[name] = value
+                in_vars_or_parents = True
 
         l_name = 'l_' + name
         if l_name in frame.f_locals:
@@ -360,11 +361,12 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
         elif get_exception_name(exception) in ('TemplateSyntaxError', 'TemplateAssertionError'):
             #errors in compile time
             name = frame.f_code.co_name
-            if name in ('template', 'top-level template code') or name.startswith('block '):
+            if name in ('template', 'top-level template code', '<module>') or name.startswith('block '):
                 #Jinja2 translates exception info and creates fake frame on his own
-                pydb_frame.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK, message=exception_type)
+                pydb_frame.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
                 add_exception_to_frame(frame, (exception, value, trace))
                 thread.additional_info.suspend_type = JINJA2_SUSPEND
+                thread.additional_info.pydev_message = str(exception_type)
                 flag = True
                 return flag, frame
     return None

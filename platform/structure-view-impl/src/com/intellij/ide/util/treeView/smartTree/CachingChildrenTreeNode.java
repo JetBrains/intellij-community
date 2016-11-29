@@ -42,12 +42,12 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ensureChildrenAreInitialized();
-    return new ArrayList<AbstractTreeNode>(myChildren);
+    return new ArrayList<>(myChildren);
   }
 
   private void ensureChildrenAreInitialized() {
     if (myChildren == null) {
-      myChildren = new ArrayList<CachingChildrenTreeNode>();
+      myChildren = new ArrayList<>();
       rebuildSubtree();
     }
   }
@@ -124,7 +124,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   private void groupElements(Grouper grouper) {
-    ArrayList<AbstractTreeNode<TreeElement>> ungrouped = new ArrayList<AbstractTreeNode<TreeElement>>();
+    ArrayList<AbstractTreeNode<TreeElement>> ungrouped = new ArrayList<>();
     Collection<AbstractTreeNode> children = getChildren();
     for (final AbstractTreeNode child : children) {
       CachingChildrenTreeNode<TreeElement> node = (CachingChildrenTreeNode<TreeElement>)child;
@@ -137,7 +137,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       processUngrouped(ungrouped, grouper);
     }
 
-    Collection<AbstractTreeNode> result = new LinkedHashSet<AbstractTreeNode>();
+    Collection<AbstractTreeNode> result = new LinkedHashSet<>();
     for (AbstractTreeNode child : children) {
       AbstractTreeNode parent = child.getParent();
       if (parent != this) {
@@ -179,7 +179,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   private static Map<TreeElement, AbstractTreeNode> collectValues(List<AbstractTreeNode<TreeElement>> ungrouped) {
-    Map<TreeElement, AbstractTreeNode> objects = new LinkedHashMap<TreeElement, AbstractTreeNode>();
+    Map<TreeElement, AbstractTreeNode> objects = new LinkedHashMap<>();
     for (final AbstractTreeNode<TreeElement> node : ungrouped) {
       objects.put(node.getValue(), node);
     }
@@ -187,7 +187,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   private Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<Group> groups) {
-    Map<Group, GroupWrapper> result = new THashMap<Group, GroupWrapper>();
+    Map<Group, GroupWrapper> result = new THashMap<>();
     for (Group group : groups) {
       result.put(group, createGroupWrapper(getProject(), group, myTreeModel));
     }
@@ -210,7 +210,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   protected void synchronizeChildren() {
     List<CachingChildrenTreeNode> children = myChildren;
     if (myOldChildren != null && children != null) {
-      HashMap<Object, CachingChildrenTreeNode> oldValuesToChildrenMap = new HashMap<Object, CachingChildrenTreeNode>();
+      HashMap<Object, CachingChildrenTreeNode> oldValuesToChildrenMap = new HashMap<>();
       for (CachingChildrenTreeNode oldChild : myOldChildren) {
         final Object oldValue = oldChild instanceof TreeElementWrapper ? oldChild.getValue() : oldChild;
         if (oldValue != null) {
@@ -260,7 +260,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     if (myChildren != null) {
       myChildren.clear();
     } else {
-      myChildren = new ArrayList<CachingChildrenTreeNode>();
+      myChildren = new ArrayList<>();
     }
   }
 

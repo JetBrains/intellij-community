@@ -156,13 +156,9 @@ public class SelectTemplateDialog extends DialogWrapper {
 
     final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
     labelPanel.add(new JLabel(SSRBundle.message("selecttemplate.template.preview")));
-    labelPanel.add(UIUtil.createCompleteMatchInfo(new Producer<Configuration>() {
-      @Nullable
-      @Override
-      public Configuration produce() {
-        final Configuration[] configurations = getSelectedConfigurations();
-        return configurations.length != 1 ? null : configurations[0];
-      }
+    labelPanel.add(UIUtil.createCompleteMatchInfo(() -> {
+      final Configuration[] configurations = getSelectedConfigurations();
+      return configurations.length != 1 ? null : configurations[0];
     }));
     panel.add(BorderLayout.NORTH, labelPanel);
     return centerPanel;
@@ -277,7 +273,7 @@ public class SelectTemplateDialog extends DialogWrapper {
       if (selectedValues == null) {
         return new Configuration[0];
       }
-      Collection<Configuration> configurations = new ArrayList<Configuration>();
+      Collection<Configuration> configurations = new ArrayList<>();
       for (Object selectedValue : selectedValues) {
         if (selectedValue instanceof Configuration) {
           configurations.add((Configuration)selectedValue);
@@ -290,7 +286,7 @@ public class SelectTemplateDialog extends DialogWrapper {
       if (paths == null) {
         return new Configuration[0];
       }
-      Collection<Configuration> configurations = new ArrayList<Configuration>();
+      Collection<Configuration> configurations = new ArrayList<>();
       for (TreePath path : paths) {
 
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();

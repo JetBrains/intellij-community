@@ -96,7 +96,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(RunnerAndConfigurationSettings settings,
                                                                                                        @Nullable Executor executor) {
-    SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<Config>(settings, executor);
+    SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<>(settings, executor);
     configurable.reset();
     return configurable;
   }
@@ -175,13 +175,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         Runnable resultQuickFix;
         if (quickFix != null && snapshot != null) {
           final RunnerAndConfigurationSettings fixedSettings = snapshot;
-          resultQuickFix = new Runnable() {
-
-            @Override
-            public void run() {
-              quickFix.run();
-              getEditor().resetFrom(fixedSettings);
-            }
+          resultQuickFix = () -> {
+            quickFix.run();
+            getEditor().resetFrom(fixedSettings);
           };
         }
         else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,22 @@ package com.intellij.codeInsight.template
 
 import com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro
 import com.intellij.codeInsight.template.macro.SplitWordsMacro
+import com.intellij.psi.codeStyle.NameUtil
 import junit.framework.TestCase
-
 /**
  * @author peter
  */
 class NamingConventionMacrosTest extends TestCase {
 
-  public void "test capitalize and underscore"() {
+  void "test capitalize and underscore"() {
     assert "FOO_BAR" == cau("fooBar")
     assert "FOO_BAR" == cau("fooBar")
     assert "FOO_BAR" == cau("foo-Bar")
     assert "FOO_BAR" == cau("foo-bar")
+    assert "" == cau("")
   }
 
-  public void "test snake case"() {
+  void "test snake case"() {
     assert "foo" == snakeCase("foo")
     assert "foo_bar" == snakeCase("foo-bar")
     assert "foo_bar" == snakeCase("fooBar")
@@ -40,32 +41,37 @@ class NamingConventionMacrosTest extends TestCase {
     assert "a_b_c_d_e_f_g" == snakeCase("a-b.c/d|e*f+g")
     assert "a_b" == snakeCase("a--b")
     assert "foo_bar" == snakeCase("FOO BAR")
+    assert "" == snakeCase("")
   }
 
-  public void "test lowercase and dash"() {
+  void "test lowercase and dash"() {
     assert "foo-bar" == new SplitWordsMacro.LowercaseAndDash().convertString("FOO_BAR")
+    assert "" == new SplitWordsMacro.LowercaseAndDash().convertString("")
   }
 
-  public void "test to camel case"() {
+  void "test to camel case"() {
     assert "fooBar" == new ConvertToCamelCaseMacro().convertString("foo-bar")?.toString()
     assert "fooBar" == new ConvertToCamelCaseMacro().convertString("FOO-BAR")?.toString()
     assert "fooBar" == new ConvertToCamelCaseMacro().convertString("foo bar")?.toString()
+    assert "" == new ConvertToCamelCaseMacro().convertString("")?.toString()
   }
 
-  public void "test space separated"() {
+  void "test space separated"() {
     assert "foo Bar" == new SplitWordsMacro.SpaceSeparated().convertString("fooBar")
     assert "foo bar" == new SplitWordsMacro.SpaceSeparated().convertString("foo-bar")
+    assert "" == new SplitWordsMacro.SpaceSeparated().convertString("")
   }
 
-  public void "test underscoresToCamelCase"() {
+  void "test underscoresToCamelCase"() {
     assert "fooBar-goo" == new ConvertToCamelCaseMacro.ReplaceUnderscoresToCamelCaseMacro().convertString("foo_bar-goo")?.toString()
+    assert "" == new ConvertToCamelCaseMacro.ReplaceUnderscoresToCamelCaseMacro().convertString("")?.toString()
   }
 
   private static def snakeCase(String s) {
     return new SplitWordsMacro.SnakeCaseMacro().convertString(s)
   }
   private static def cau(String s) {
-    return new SplitWordsMacro.CapitalizeAndUnderscoreMacro().convertString(s)
+    return NameUtil.capitalizeAndUnderscore(s)
   }
   
 }

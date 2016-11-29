@@ -11,13 +11,10 @@ import java.util.Set;
  * @author traff
  */
 public abstract class PyTestTask {
-  private String myWorkingFolder;
   private String myScriptName;
   private String myScriptParameters;
 
-  public void setWorkingFolder(String workingFolder) {
-    myWorkingFolder = workingFolder;
-  }
+
 
   public void setScriptName(String scriptName) {
     myScriptName = scriptName;
@@ -63,22 +60,12 @@ public abstract class PyTestTask {
     return myScriptName;
   }
 
-  public String getScriptPath() {
-    return getFilePath(myScriptName);
-  }
 
-  public String getFilePath(String scriptName) {
-    return FileUtil
-      .toSystemDependentName(myWorkingFolder.endsWith("/") ? myWorkingFolder + scriptName : myWorkingFolder + "/" + scriptName);
-  }
 
   public String getScriptParameters() {
     return myScriptParameters;
   }
 
-  public String getWorkingFolder() {
-    return myWorkingFolder;
-  }
 
   /**
    * @return tags this task needs to exist on interpreter to run

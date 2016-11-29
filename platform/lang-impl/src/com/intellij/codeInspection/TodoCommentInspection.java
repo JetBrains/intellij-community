@@ -34,8 +34,8 @@ public class TodoCommentInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final TodoItem[] todoItems = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject()).findTodoItems(file);
 
-    final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
-    final THashSet<PsiComment> comments = new THashSet<PsiComment>();
+    final List<ProblemDescriptor> result = new ArrayList<>();
+    final THashSet<PsiComment> comments = new THashSet<>();
     for (TodoItem todoItem : todoItems) {
       final PsiComment comment =
         PsiTreeUtil.getParentOfType(file.findElementAt(todoItem.getTextRange().getStartOffset()), PsiComment.class, false);

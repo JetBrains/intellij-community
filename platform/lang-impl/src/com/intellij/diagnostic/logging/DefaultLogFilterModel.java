@@ -79,7 +79,7 @@ public class DefaultLogFilterModel extends LogFilterModel {
   @Override
   public List<LogFilter> getLogFilters() {
     LogConsolePreferences preferences = getPreferences();
-    final ArrayList<LogFilter> filters = new ArrayList<LogFilter>();
+    final ArrayList<LogFilter> filters = new ArrayList<>();
     if (myCheckStandardFilters) {
       addStandardFilters(filters, preferences);
     }

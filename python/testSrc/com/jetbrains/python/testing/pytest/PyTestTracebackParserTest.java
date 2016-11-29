@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,14 @@ package com.jetbrains.python.testing.pytest;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Base64;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
-import org.apache.log4j.Level;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.Charset;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,7 +53,7 @@ public final class PyTestTracebackParserTest {
     }
     final String longString = StringUtil.repeat("1", junkSize);
     myStringJunk = String.format("%s:%s", longString, longString);
-    myBase64Junk = Base64.encode(junk);
+    myBase64Junk = Base64.getEncoder().encodeToString(junk);
     myStringJunkWithSpaces = StringUtil.repeat("dd ddddddddd", junkSize);
     myStringJunkWithSpacesAndLine = myStringJunkWithSpaces + " c:/file:12";
   }
@@ -86,7 +85,7 @@ public final class PyTestTracebackParserTest {
     final String s =
       StreamUtil.readText(PyTestTracebackParserTest.class.getResource("linksDataTest.txt").openStream(), Charset.defaultCharset());
 
-    final Set<String> requiredStrings = new HashSet<String>();
+    final Set<String> requiredStrings = new HashSet<>();
     requiredStrings.add("file:///c:/windows/system32/file.txt - 42");
     requiredStrings.add("file:///c:/windows/system32/file_spam.txt - 42");
     requiredStrings.add("c:\\documents and settings\\foo.txt - 43");
@@ -102,7 +101,7 @@ public final class PyTestTracebackParserTest {
     requiredStrings.add("/Users/Mac Hipster/Applications/PyCharm 4.0 .app/helpers/lala.py - 12");
     requiredStrings.add("C:\\Users\\ilya.kazakevich\\virtenvs\\spammy\\lib\\site-packages\\django_cron\\models.py - 4");
     final Logger logger = Logger.getInstance(PyTestTracebackParserTest.class);
-    final String[] strings = s.split("\n");
+    final String[] strings = StringUtil.splitByLines(s);
     logger.warn(String.format("Got lines %s", strings));
     for (final String line : strings) {
       logger.warn(String.format("Starting with string %s", line));

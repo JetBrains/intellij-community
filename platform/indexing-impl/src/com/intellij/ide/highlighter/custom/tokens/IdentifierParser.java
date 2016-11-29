@@ -42,7 +42,9 @@ public class IdentifierParser extends TokenParser {
   }
 
   private boolean isIdentifierPart(int position) {
-    if (myBuffer.charAt(position) == '-') return !myKeywordParser.hasToken(position, myBuffer, null);
-    return KeywordParser.isWordPart(position, myBuffer);
+    if (myBuffer.charAt(position) == '-') {
+      return !myKeywordParser.hasToken(position, myBuffer, null);
+    }
+    return Character.isJavaIdentifierPart(myBuffer.charAt(position));
   }
 }

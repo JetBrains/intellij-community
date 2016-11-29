@@ -91,7 +91,7 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   public void testBlockSelectionStateAfterUndo2() throws Exception {
     init("a");
     ((EditorEx)myEditor).setColumnMode(true);
-    mouse().clickAt(0, 0).dragTo(0, 2).release();
+    mouse().pressAt(0, 0).dragTo(0, 2).release();
     type('b');
     undo();
     verifyCaretsAndSelections(0, 2, 0, 2);
@@ -100,19 +100,14 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   public void testPrimaryCaretPositionAfterUndo() throws Exception {
     init("line1\n" +
          "line2");
-    mouse().alt().clickAt(1, 1).dragTo(0, 0).release();
+    mouse().alt().pressAt(1, 1).dragTo(0, 0).release();
     type(' ');
     undo();
     assertEquals(new LogicalPosition(0, 0), myEditor.getCaretModel().getPrimaryCaret().getLogicalPosition());
   }
 
   private void checkResult(final String text) {
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        checkResultByText(text);
-      }
-    });
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> checkResultByText(text));
   }
 
   private static void undo() {

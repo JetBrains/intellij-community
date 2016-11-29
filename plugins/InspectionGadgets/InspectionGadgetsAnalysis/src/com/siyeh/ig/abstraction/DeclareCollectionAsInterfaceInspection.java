@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,16 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
 import org.jetbrains.annotations.NotNull;
@@ -146,7 +143,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
-      if (isOnTheFly() && !isCheapEnoughToSearch(variable)) {
+      if (isOnTheFly() && DeclarationSearchUtils.isTooExpensiveToSearch(variable, false)) {
         return;
       }
       if (ignoreLocalVariables && variable instanceof PsiLocalVariable) {
@@ -189,7 +186,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
           method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      if (isOnTheFly() && !isCheapEnoughToSearch(method)) {
+      if (isOnTheFly() && DeclarationSearchUtils.isTooExpensiveToSearch(method, false)) {
         return;
       }
       final PsiType type = method.getReturnType();
@@ -217,7 +214,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiClassType javaLangObject = PsiType.getJavaLangObject(nameElement.getManager(), nameElement.getResolveScope());
-      final List<PsiClass> weaklingList = new ArrayList<PsiClass>(weaklings);
+      final List<PsiClass> weaklingList = new ArrayList<>(weaklings);
       final PsiClass objectClass = javaLangObject.resolve();
       weaklingList.remove(objectClass);
       if (weaklingList.isEmpty()) {
@@ -233,21 +230,6 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         final String qualifiedName = weakling.getQualifiedName();
         registerError(nameElement, qualifiedName);
       }
-    }
-
-    private boolean isCheapEnoughToSearch(PsiNamedElement element) {
-      final String name = element.getName();
-      if (name == null) {
-        return false;
-      }
-      final ProgressManager progressManager =
-        ProgressManager.getInstance();
-      final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
-      final SearchScope useScope = element.getUseScope();
-      if (useScope instanceof GlobalSearchScope) {
-        return searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
-      }
-      return true;
     }
   }
 }

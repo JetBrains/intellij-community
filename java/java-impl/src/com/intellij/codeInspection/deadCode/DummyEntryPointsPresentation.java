@@ -15,16 +15,20 @@
  */
 package com.intellij.codeInspection.deadCode;
 
-import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalJavaInspectionContext;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.codeInspection.ui.InspectionNode;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation {
   private static final RefEntryPointFilter myFilter = new RefEntryPointFilter();
@@ -40,7 +44,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
   }
 
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, CommonProblemDescriptor[] allowedDescriptors) {
+  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
     if (myQuickFixActions == null) {
       myQuickFixActions = new QuickFixAction[]{new MoveEntriesToSuspicious(getToolWrapper())};
     }
@@ -54,7 +58,28 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
 
   private class MoveEntriesToSuspicious extends QuickFixAction {
     private MoveEntriesToSuspicious(@NotNull InspectionToolWrapper toolWrapper) {
-      super(InspectionsBundle.message("inspection.dead.code.remove.from.entry.point.quickfix"), null, null, toolWrapper);
+      super(InspectionsBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"), null, null, toolWrapper);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      if (e.getPresentation().isEnabled()) {
+        final InspectionResultsView view = getInvoker(e);
+        boolean permanentFound = false;
+        for (RefEntity point : view.getTree().getSelectedElements()) {
+          if (point instanceof RefJavaElement && ((RefJavaElement)point).isEntry()) {
+            if (((RefJavaElement)point).isPermanentEntry()) {
+              permanentFound = true;
+              break;
+            }
+          }
+        }
+
+        if (!permanentFound) {
+          e.getPresentation().setEnabled(false);
+        }
+      }
     }
 
     @Override
@@ -62,7 +87,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
       final EntryPointsManager entryPointsManager =
         getContext().getExtension(GlobalJavaInspectionContext.CONTEXT).getEntryPointsManager(getContext().getRefManager());
       for (RefEntity refElement : refElements) {
-        if (refElement instanceof RefElement) {
+        if (refElement instanceof RefJavaElement && ((RefJavaElement)refElement).isEntry() && ((RefJavaElement)refElement).isPermanentEntry()) {
           entryPointsManager.removeEntryPoint((RefElement)refElement);
         }
       }
@@ -71,18 +96,28 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     }
   }
 
-  @NotNull
   @Override
-  public InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionNode node,
+  public void createToolNode(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionNode node,
                                        @NotNull InspectionRVContentProvider provider,
                                        @NotNull InspectionTreeNode parentNode,
-                                       boolean showStructure) {
-    return node;
+                                       boolean showStructure,
+                                       boolean groupByStructure) {
+    myToolNode = node;
+  }
+
+  @Override
+  protected boolean skipEntryPoints(RefJavaElement refElement) {
+    return false;
   }
 
   @Override
   @NotNull
-  public HTMLComposerImpl getComposer() {
+  public DeadHTMLComposer getComposer() {
     return new DeadHTMLComposer(this);
+  }
+
+  @Override
+  public boolean isDummy() {
+    return true;
   }
 }

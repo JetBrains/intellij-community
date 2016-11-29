@@ -17,6 +17,8 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -30,14 +32,11 @@ import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorStacked {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
-  @Nullable private final CoreProgressManager myProgressManager =
-    ApplicationManager.getApplication() == null ? null : (CoreProgressManager)ProgressManager.getInstance();
 
   private volatile String myText;
   private volatile double myFraction;
@@ -130,7 +129,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     if (isCanceled() && isCancelable()) {
       throw new ProcessCanceledException();
     }
-    if (myProgressManager != null && myProgressManager.sleepIfNeeded()) {
+    if (CoreProgressManager.sleepIfNeeded()) {
       if (isCanceled() && isCancelable()) {
         throw new ProcessCanceledException();
       }
@@ -169,12 +168,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public synchronized void pushState() {
-    if (myTextStack == null) myTextStack = new Stack<String>(2);
-    myTextStack.push(myText);
-    if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
-    myFractionStack.add(myFraction);
-    if (myText2Stack == null) myText2Stack = new Stack<String>(2);
-    myText2Stack.push(myText2);
+    getTextStack().push(myText);
+    getFractionStack().add(myFraction);
+    getText2Stack().push(myText2);
   }
 
   @Override
@@ -209,7 +205,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   @NotNull
-  public final ModalityState getModalityState() {
+  public ModalityState getModalityState() {
     return myModalityState;
   }
 
@@ -219,6 +215,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     myModalityProgress = modalityProgress;
     ModalityState currentModality = ApplicationManager.getApplication().getCurrentModalityState();
     myModalityState = myModalityProgress != null ? ((ModalityStateEx)currentModality).appendProgress(myModalityProgress) : currentModality;
+    if (modalityProgress != null) {
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(myModalityState);
+    }
   }
 
   @Override

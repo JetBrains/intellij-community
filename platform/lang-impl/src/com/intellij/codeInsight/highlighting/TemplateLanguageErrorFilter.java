@@ -51,10 +51,10 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     myTemplateExpressionStartTokens = TokenSet.create(templateExpressionStartTokens.getTypes());
     myTemplateFileViewProviderClass = templateFileViewProviderClass;
 
-    List<String> knownSubLanguageList = new ArrayList<String>(Arrays.asList(knownSubLanguageNames));
+    List<String> knownSubLanguageList = new ArrayList<>(Arrays.asList(knownSubLanguageNames));
     knownSubLanguageList.add("JavaScript");
     knownSubLanguageList.add("CSS");
-    knownLanguageSet = new HashSet<Language>();
+    knownLanguageSet = new HashSet<>();
     for (String name : knownSubLanguageList) {
       final Language language = Language.findLanguageByID(name);
       if (language != null) {
@@ -106,7 +106,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
 
   protected boolean isKnownSubLanguage(@NotNull final Language language) {
     for (Language knownLanguage : knownLanguageSet) {
-      if (language.is(knownLanguage)) {
+      if (language.is(knownLanguage) || knownLanguage.getDialects().contains(language)) {
         return true;
       }
     }

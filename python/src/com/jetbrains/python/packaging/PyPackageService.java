@@ -15,26 +15,21 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * User: catherine
  */
-@State(name = "PyPackageService", storages = @Storage("packages.xml"))
+@State(name = "PyPackageService", storages = @Storage(value = "packages.xml", roamingType = RoamingType.DISABLED))
 public class PyPackageService implements
                               PersistentStateComponent<PyPackageService> {
-  public Map<String, Boolean> sdkToUsersite = new HashMap<String, Boolean>();
-  public List<String> additionalRepositories = new ArrayList<String>();
+  public Map<String, Boolean> sdkToUsersite = ContainerUtil.newConcurrentMap();
+  public List<String> additionalRepositories = ContainerUtil.createConcurrentList();
   public Map<String, String> PY_PACKAGES = ContainerUtil.newConcurrentMap();
   public String virtualEnvBasePath;
   public Boolean PYPI_REMOVED = false;
@@ -57,7 +52,7 @@ public class PyPackageService implements
 
   public void addRepository(String repository) {
     if (repository == null) return;
-    if (repository.startsWith(PyPIPackageUtil.PYPI_HOST)) {
+    if (PyPIPackageUtil.isPyPIRepository(repository)) {
       PYPI_REMOVED = false;
     }
     else {
@@ -69,7 +64,7 @@ public class PyPackageService implements
   public void removeRepository(final String repository) {
     if (additionalRepositories.contains(repository))
       additionalRepositories.remove(repository);
-    else if (repository.startsWith(PyPIPackageUtil.PYPI_HOST)) {
+    else if (PyPIPackageUtil.isPyPIRepository(repository)) {
       PYPI_REMOVED = true;
     }
   }

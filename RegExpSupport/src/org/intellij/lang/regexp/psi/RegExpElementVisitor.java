@@ -16,7 +16,6 @@
 package org.intellij.lang.regexp.psi;
 
 import com.intellij.psi.PsiElementVisitor;
-import org.intellij.lang.regexp.psi.impl.RegExpOptionsImpl;
 
 public class RegExpElementVisitor extends PsiElementVisitor {
 
@@ -43,12 +42,16 @@ public class RegExpElementVisitor extends PsiElementVisitor {
         visitRegExpElement(group);
     }
 
-    public void visitRegExpOptions(RegExpOptionsImpl options) {
+    public void visitRegExpOptions(RegExpOptions options) {
         visitRegExpElement(options);
     }
 
     public void visitRegExpProperty(RegExpProperty property) {
         visitRegExpElement(property);
+    }
+
+    public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
+        visitRegExpElement(namedCharacter);
     }
 
     public void visitRegExpBranch(RegExpBranch branch) {
@@ -81,6 +84,10 @@ public class RegExpElementVisitor extends PsiElementVisitor {
 
     public void visitRegExpIntersection(RegExpIntersection intersection) {
         visitRegExpElement(intersection);
+    }
+
+    public void visitRegExpUnion(RegExpUnion union) {
+        visitRegExpElement(union);
     }
 
     public void visitRegExpNamedGroupRef(RegExpNamedGroupRef groupRef) {

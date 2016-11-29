@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public class OverlyLargePrimitiveArrayInitializerInspection
   extends BaseInspection {
@@ -93,11 +94,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
           (PsiArrayInitializerExpression)expression;
         final PsiExpression[] initializers =
           arrayExpression.getInitializers();
-        int out = 0;
-        for (final PsiExpression initializer : initializers) {
-          out += calculateNumElements(initializer);
-        }
-        return out;
+        return Arrays.stream(initializers).mapToInt(this::calculateNumElements).sum();
       }
       return 1;
     }

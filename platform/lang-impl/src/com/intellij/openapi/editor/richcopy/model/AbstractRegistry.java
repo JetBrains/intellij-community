@@ -27,9 +27,9 @@ import java.util.Arrays;
  */
 public abstract class AbstractRegistry<T> {
 
-  @NotNull private final TIntObjectHashMap<T> myDataById = new TIntObjectHashMap<T>();
+  @NotNull private final TIntObjectHashMap<T> myDataById = new TIntObjectHashMap<>();
 
-  private transient TObjectIntHashMap<T> myIdsByData = new TObjectIntHashMap<T>();
+  private transient TObjectIntHashMap<T> myIdsByData = new TObjectIntHashMap<>();
 
   @NotNull
   public T dataById(int id) throws IllegalArgumentException {

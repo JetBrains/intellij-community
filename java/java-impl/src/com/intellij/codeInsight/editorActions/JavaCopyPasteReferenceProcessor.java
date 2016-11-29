@@ -15,11 +15,14 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -100,7 +103,21 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
         }
       }
     }
+
+    if (ImportClassFixBase.isAddUnambiguousImportsOnTheFlyEnabled(file)) {
+      for (int i = 0; i < refs.length; i++) {
+        if (isUnambiguous(refs[i])) {
+          refs[i] = null;
+        }
+      }
+    }
+
     return refs;
+  }
+
+  private static boolean isUnambiguous(@Nullable PsiJavaCodeReferenceElement ref) {
+    return ref != null && !(ref.getParent() instanceof PsiMethodCallExpression) &&
+           new ImportClassFix(ref).getClassesToImport().size() == 1;
   }
 
   @Override

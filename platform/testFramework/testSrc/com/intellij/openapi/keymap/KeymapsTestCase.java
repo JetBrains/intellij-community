@@ -25,7 +25,6 @@ import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashMap;
@@ -71,14 +70,15 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "BACK_SPACE",               "EditorBackSpace", "Images.Thumbnails.UpFolder"},
     { "ENTER",                    "EditorChooseLookupItem", "NextTemplateVariable", "EditorEnter", "Images.Thumbnails.EnterAction",
                                   "PropertyInspectorActions.EditValue", "Console.Execute", "Console.TableResult.EditValue"},
-    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "XDebugger.EditWatch", "Arrangement.Rule.Edit"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "F5",                       "UML.ApplyCurrentLayout", "CopyElement"},
     { "F7",                       "NextDiff", "StepInto"},
-    { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add"},
+    { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add", "XDebugger.NewWatch"},
     { "SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
-    { "alt DOWN",                 "ShowContent", "MethodDown"},
+    { "alt DOWN",                 "ShowContent", "MethodDown", "Arrangement.Rule.Match.Condition.Move.Down"},
+    { "alt UP",                   "MethodUp", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
     { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
     { "control F10",              "javaee.UpdateRunningApplication", "liveedit.UpdateRunningApplication"},
@@ -107,10 +107,12 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control alt R",            "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction", "Django.RunManageTaskAction"},
     { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt N",            "Inline", "Console.TableResult.SetNull"},
+    { "ctrl alt H",               "CallHierarchy", "ChangesView.ShelveSilently"},
+    { "ctrl alt U",               "ShowUmlDiagramPopup", "ChangesView.UnshelveSilently"}, 
     { "control MINUS",            "CollapseAll", "CollapseRegion"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "CollapseSelection"},
     { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
-    { "shift ENTER",              "EditorStartNewLine", "Console.TableResult.EditValueMaximized"},
+    { "shift ENTER",              "EditorStartNewLine", "Console.TableResult.EditValueMaximized", "OpenElementInNewWindow"},
     { "shift F4",                 "Debugger.EditTypeSource", "EditSourceInNewWindow"},
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
     { "shift TAB",                "PreviousTemplateVariable", "PrevParameter", "EditorUnindentSelection", "PrevTemplateParameter"},
@@ -118,7 +120,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt T",              "tasks.switch", "tasks.switch.toolbar"},
     { "shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff"},
     { "shift control DOWN",       "ResizeToolWindowDown", "MoveStatementDown"},
-    { "shift control ENTER",      "EditorChooseLookupItemCompleteStatement", "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
+    { "shift control ENTER",      "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
     { "shift control F10",        "Console.Open", "RunClass", "RunTargetAction"},
     { "shift control F8",         "ViewBreakpoints", "EditBreakpoint"},
     { "shift control G",          "ClassTemplateNavigation", "GoToClass"},
@@ -158,6 +160,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight", },
     { "meta E",                   "RecentFiles", "Vcs.ShowMessageHistory"},
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
+    { "alt DOWN",                 "EditorUnSelectWord", "Arrangement.Rule.Match.Condition.Move.Down"},
+    { "alt UP",                   "EditorSelectWord", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "ctrl m",                   "EditorMatchBrace", "Vcs.ShowMessageHistory"},
     });
     put("Mac OS X", new String[][] {
@@ -179,11 +183,12 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     put("Emacs", new String[][] {
     { "ENTER",                    "EditorChooseLookupItem", "NextTemplateVariable", "EditorEnter", "Images.Thumbnails.EnterAction",
                                   "PropertyInspectorActions.EditValue", "Console.Execute", "Console.TableResult.EditValue"},
-    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "XDebugger.EditWatch", "Arrangement.Rule.Edit"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", 
                                   "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
-    { "alt DOWN",                 "ShowContent", "MethodDown"},
+    { "alt DOWN",                 "ShowContent", "MethodDown", "Arrangement.Rule.Match.Condition.Move.Down"},
+    { "alt UP",                   "MethodUp", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt SLASH",                "CodeCompletion", "HippieCompletion"},
     { "control 1",                "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
     { "control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},
@@ -253,14 +258,14 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt L",              "ReformatCode", "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
     });
     put("Eclipse", new String[][] {
-    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc"},
+    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "XDebugger.EditWatch", "Arrangement.Rule.Edit"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "F5",                       "UML.ApplyCurrentLayout", "StepInto"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
-    { "alt DOWN",                 "ShowContent", "MoveStatementDown"},
+    { "alt DOWN",                 "ShowContent", "MoveStatementDown", "Arrangement.Rule.Match.Condition.Move.Down"},
+    { "alt UP",                   "MoveStatementUp", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt HOME",                 "ViewNavigationBar", "ShowNavBar"},
     { "control F10",              "ShowPopupMenu", "javaee.UpdateRunningApplication", "liveedit.UpdateRunningApplication"},
-    { "control F11",              "Rerun", "ToggleBookmarkWithMnemonic"},
     { "control D",                "EditorDeleteLine", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control L",                "Vcs.Log.FocusTextFilter", "GotoLine"},
     { "control N",                "ShowPopupMenu", "FileChooser.NewFolder"},
@@ -291,10 +296,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control T",          "GotoClass", "GotoChangedFile"},
     });
     put("NetBeans 6.5", new String[][] {
-    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "XDebugger.EditWatch", "Arrangement.Rule.Edit"},
     { "F4",                       "RunToCursor", "EditSource"},
     { "F5",                       "Debugger.ResumeThread", "Resume", "UML.ApplyCurrentLayout"},
-    { "alt DOWN",                 "NextOccurence", "ShowContent"},
+    { "alt DOWN",                 "NextOccurence", "ShowContent", "Arrangement.Rule.Match.Condition.Move.Down"},
+    { "alt UP",                   "PreviousOccurence", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
     { "control 1",                "ActivateProjectToolWindow", "DuplicatesForm.SendToLeft"},
     { "control 2",                "ActivateProjectToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
@@ -314,7 +320,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt F9",             "ChooseDebugConfiguration", "ValidateXml", "ValidateJsp"},
     { "shift alt D",              "ToggleFloatingMode", "hg4idea.QFold"},
     { "shift control DOWN",       "EditorDuplicate", "ResizeToolWindowDown", },
-    { "shift control ENTER",      "EditorChooseLookupItemCompleteStatement", "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
+    { "shift control ENTER",      "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
     { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
     { "shift control UP",         "EditorDuplicate", "ResizeToolWindowUp", },
     { "shift control alt P",      "Print", "Graph.Print"},
@@ -324,16 +330,17 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift TAB",                "EditorUnindentSelection", "PreviousTemplateVariable", "PrevParameter", "PrevTemplateParameter"},
     });
     put("JBuilder", new String[][] {
-    { "F2",                       "EditorTab", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
+    { "F2",                       "EditorTab", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "XDebugger.EditWatch", "Arrangement.Rule.Edit"},
     { "F5",                       "ToggleBreakpointEnabled", "UML.ApplyCurrentLayout"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
     { "control F6",               "PreviousEditorTab", "PreviousTab", },
+    { "control L",                "Vcs.Log.FocusTextFilter", "EditorSelectLine"},
     { "control M",                "Vcs.ShowMessageHistory", "OverrideMethods", },
     { "control N",                "FileChooser.NewFolder", "GotoClass", "GotoChangedFile"},
     { "control P",                "FileChooser.TogglePathShowing", "FindInPath"},
     { "shift control A",          "SaveAll", "GotoAction"},
     { "shift control E",          "RecentChangedFiles", "ExtractMethod"},
-    { "shift control ENTER",      "EditorChooseLookupItemCompleteStatement", "FindUsages", "Console.Jpa.GenerateSql"},
+    { "shift control ENTER",      "FindUsages", "Console.Jpa.GenerateSql"},
     { "shift control F6",         "NextTab", "ChangeTypeSignature"},
     { "shift control G",          "GotoSymbol", "ClassTemplateNavigation", "GoToClass"},
     { "control SUBTRACT",         "CollapseAll", "CollapseRegion"},
@@ -341,9 +348,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     });
     put("Eclipse (Mac OS X)", new String[][] {
       { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},
-      { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc"},
+      { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "XDebugger.EditWatch", "Arrangement.Rule.Edit"},
       { "F3",                       "GotoDeclaration", "EditSource"},
       { "F5",                       "StepInto", "Console.TableResult.Reload", "UML.ApplyCurrentLayout"},
+      { "alt DOWN",                 "MoveStatementDown", "Arrangement.Rule.Match.Condition.Move.Down"},
+      { "alt UP",                   "MoveStatementUp", "Arrangement.Rule.Match.Condition.Move.Up"},
       { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},
       { "meta 1",                   "FileChooser.GotoHome", "ShowIntentionActions", "DuplicatesForm.SendToLeft"},
       { "meta 3",                   "FileChooser.GotoModule", "GotoAction"},
@@ -366,7 +375,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   // @formatter:on
 
   private Map<String, Map<String, List<String>>> getKnownDuplicates() {
-    Map<String, Map<String, List<String>>> result = new LinkedHashMap<String, Map<String, List<String>>>();
+    Map<String, Map<String, List<String>>> result = new LinkedHashMap<>();
     collectKnownDuplicates(result);
     return result;
   }
@@ -381,7 +390,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
 
       Map<String, List<String>> mapping = result.get(keymapName);
       if (mapping == null) {
-        result.put(keymapName, mapping = new LinkedHashMap<String, List<String>>());
+        result.put(keymapName, mapping = new LinkedHashMap<>());
       }
 
       for (String[] shortcuts : eachKeymap.getValue()) {
@@ -398,8 +407,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String checkDuplicatesInKeymap(Keymap keymap, Map<String, Map<String, List<String>>> allKnownDuplicates) {
-    Set<Shortcut> shortcuts = new LinkedHashSet<Shortcut>();
-    Set<String> aids = new THashSet<String>(Arrays.asList(keymap.getActionIds()));
+    Set<Shortcut> shortcuts = new LinkedHashSet<>();
+    Set<String> aids = new THashSet<>(Arrays.asList(keymap.getActionIds()));
     removeBoundActionIds(aids);
 
     nextId:
@@ -421,13 +430,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
         shortcuts.add(shortcut);
       }
     }
-    List<Shortcut> sorted = new ArrayList<Shortcut>(shortcuts);
-    Collections.sort(sorted, new Comparator<Shortcut>() {
-      @Override
-      public int compare(Shortcut o1, Shortcut o2) {
-        return getText(o1).compareTo(getText(o2));
-      }
-    });
+    List<Shortcut> sorted = new ArrayList<>(shortcuts);
+    Collections.sort(sorted, (o1, o2) -> getText(o1).compareTo(getText(o2)));
 
     if (OUTPUT_TEST_DATA) {
       System.out.println("put(\"" + keymap.getName() + "\", new String[][] {");
@@ -440,7 +444,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       if (!(shortcut instanceof KeyboardShortcut)) {
         continue;
       }
-      Set<String> ids = new THashSet<String>(Arrays.asList(keymap.getActionIds(shortcut)));
+      Set<String> ids = new THashSet<>(Arrays.asList(keymap.getActionIds(shortcut)));
       removeBoundActionIds(ids);
       if (ids.size() == 1) continue;
       Keymap parent = keymap.getParent();
@@ -451,7 +455,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
           Shortcut[] here = keymap.getShortcuts(id);
           Shortcut[] there = parent.getShortcuts(id);
           if (keymap.getName().startsWith("Mac")) convertMac(there);
-          if (!new HashSet<Shortcut>(Arrays.asList(here)).equals(new HashSet<Shortcut>(Arrays.asList(there)))) {
+          if (!new HashSet<>(Arrays.asList(here)).equals(new HashSet<>(Arrays.asList(there)))) {
             differFromParent = true;
             break;
           }
@@ -492,10 +496,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     }
   }
 
-  @NonNls private static final Set<String> unknownActionIds = new THashSet<String>(Arrays.asList(
-    "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow", "ActivateFindToolWindow",
+  @NonNls private static final Set<String> unknownActionIds = new THashSet<>(Arrays.asList(
+    "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow",
+    "ActivateFindToolWindow",
     "ActivateHierarchyToolWindow", "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow",
-    "ActivateStructureToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow","ActivatePaletteToolWindow",
+    "ActivateStructureToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow", "ActivatePaletteToolWindow",
     "ActivateTerminalToolWindow",
     "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename",
     ""
@@ -506,27 +511,27 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   }
 
   public void testValidActionIds() {
-    THashSet<String> unknownActions = new THashSet<String>();
+    THashSet<String> unknownActions = new THashSet<>();
     collectUnknownActions(unknownActions);
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     Map<String, List<String>> missingActions = new FactoryMap<String, List<String>>() {
       @Override
       protected Map<String, List<String>> createMap() {
-        return new LinkedHashMap<String, List<String>>();
+        return new LinkedHashMap<>();
       }
 
       @Nullable
       @Override
       protected List<String> create(String key) {
-        return new ArrayList<String>();
+        return new ArrayList<>();
       }
     };
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
       String[] ids = keymap.getActionIds();
       Arrays.sort(ids);
-      Set<String> noDuplicates = new LinkedHashSet<String>(Arrays.asList(ids));
-      TestCase.assertEquals(new ArrayList<String>(Arrays.asList(ids)), new ArrayList<String>(noDuplicates));
+      Set<String> noDuplicates = new LinkedHashSet<>(Arrays.asList(ids));
+      TestCase.assertEquals(new ArrayList<>(Arrays.asList(ids)), new ArrayList<>(noDuplicates));
       for (String cid : ids) {
         if (unknownActions.contains(cid)) continue;
         AnAction action = ActionManager.getInstance().getAction(cid);
@@ -541,7 +546,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       }
     }
 
-    List<String> reappearedAction = new ArrayList<String>();
+    List<String> reappearedAction = new ArrayList<>();
     for (String id : unknownActions) {
       AnAction action = ActionManager.getInstance().getAction(id);
       if (action != null) {
@@ -574,12 +579,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     Map<String, Map<String, List<String>>> duplicates = getKnownDuplicates();
 
     THashSet<String> allMaps =
-      new THashSet<String>(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), new Function<Keymap, String>() {
-        @Override
-        public String fun(Keymap keymap) {
-          return keymap.getName();
-        }
-      }));
+      new THashSet<>(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), keymap -> keymap.getName()));
     TestCase.assertTrue("Modify 'known duplicates list' test data. Keymaps were added: " +
                         ContainerUtil.subtract(allMaps, duplicates.keySet()),
                         ContainerUtil.subtract(allMaps, duplicates.keySet()).isEmpty()
@@ -593,20 +593,20 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     Map<Keymap, List<Shortcut>> reassignedShortcuts = new FactoryMap<Keymap, List<Shortcut>>() {
       @Override
       protected Map<Keymap, List<Shortcut>> createMap() {
-        return new LinkedHashMap<Keymap, List<Shortcut>>();
+        return new LinkedHashMap<>();
       }
 
       @Nullable
       @Override
       protected List<Shortcut> create(Keymap key) {
-        return new ArrayList<Shortcut>();
+        return new ArrayList<>();
       }
     };
     for (String name : duplicates.keySet()) {
       Keymap keymap = KeymapManagerEx.getInstanceEx().getKeymap(name);
       TestCase.assertNotNull("KeyMap " + name + " not found", keymap);
       Map<String, List<String>> duplicateIdsList = duplicates.get(name);
-      Set<String> mentionedShortcuts = new THashSet<String>();
+      Set<String> mentionedShortcuts = new THashSet<>();
       for (Map.Entry<String, List<String>> shortcutMappings : duplicateIdsList.entrySet()) {
 
         String shortcutString = shortcutMappings.getKey();
@@ -615,11 +615,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
         }
         Shortcut shortcut = parse(shortcutString);
         String[] ids = keymap.getActionIds(shortcut);
-        Set<String> actualSc = new HashSet<String>(Arrays.asList(ids));
+        Set<String> actualSc = new HashSet<>(Arrays.asList(ids));
 
         removeBoundActionIds(actualSc);
 
-        Set<String> expectedSc = new HashSet<String>(shortcutMappings.getValue());
+        Set<String> expectedSc = new HashSet<>(shortcutMappings.getValue());
         for (String s : actualSc) {
           if (!expectedSc.contains(s)) {
             reassignedShortcuts.get(keymap).add(shortcut);
@@ -641,12 +641,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
           .append(". Please modify known duplicates list:\n");
         for (Shortcut eachShortcut : keymapToShortcuts.getValue()) {
           message.append(" { ").append(StringUtil.wrapWithDoubleQuote(getText(eachShortcut))).append(",\t")
-            .append(StringUtil.join(keymap.getActionIds(eachShortcut), new Function<String, String>() {
-              @Override
-              public String fun(String s) {
-                return StringUtil.wrapWithDoubleQuote(s);
-              }
-            }, ", "))
+            .append(StringUtil.join(keymap.getActionIds(eachShortcut), s -> StringUtil.wrapWithDoubleQuote(s), ", "))
             .append("},\n");
         }
       }

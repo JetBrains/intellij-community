@@ -1,4 +1,4 @@
-<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>com.intellij</id>
   <name>IDEA CORE</name>
 
@@ -32,7 +32,7 @@
     <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
                         serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
-                        serviceImplementation="com.intellij.codeInspection.ex.InspectionProfileManagerImpl"/>
+                        serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
 
     <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
 
@@ -61,7 +61,8 @@
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
     <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                         serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
-
+    <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
+    
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
@@ -73,9 +74,9 @@
 
     <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>
 
-    <programRunner implementation="com.intellij.execution.runners.BasicProgramRunner" order="last"/>
+    <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
 
-    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors" provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider" order="before preferences.intentionPowerPack"/>
+    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors" instance="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable" order="before preferences.intentionPowerPack"/>
     <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
 
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener" id="PlatformProjectCheckoutListener"/>
@@ -98,6 +99,5 @@
   <xi:include href="/META-INF/dvcs.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-
   <xi:include href="built-in-server.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,20 +33,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * Formatting progressable task.
- *
- * @author Denis Zhdanov
- * @since 2/10/11 3:00 PM
- */
 public class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
 
-  /**
-   * Holds flag that indicates whether formatting was cancelled by end-user or not.
-   */
   public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = new ThreadLocal<Boolean>() {
     @Override
     protected Boolean initialValue() {
@@ -54,19 +46,9 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
     }
   };
 
-  /**
-   * Holds max allowed progress bar value (defined at ProgressWindow.MyDialog.initDialog()).
-   */
   private static final double MAX_PROGRESS_VALUE = 1;
-  private static final double TOTAL_WEIGHT;
-
-  static {
-    double weight = 0;
-    for (FormattingStateId state : FormattingStateId.values()) {
-      weight += state.getProgressWeight();
-    }
-    TOTAL_WEIGHT = weight;
-  }
+  private static final double TOTAL_WEIGHT =
+    Arrays.stream(FormattingStateId.values()).mapToDouble(FormattingStateId::getProgressWeight).sum();
 
   private final ConcurrentMap<EventType, Collection<Runnable>> myCallbacks = ContainerUtil.newConcurrentMap();
 
@@ -83,8 +65,8 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
 
   public FormattingProgressTask(@Nullable Project project, @NotNull PsiFile file, @NotNull Document document) {
     super(project, getTitle(file));
-    myFile = new WeakReference<VirtualFile>(file.getVirtualFile());
-    myDocument = new WeakReference<Document>(document);
+    myFile = new WeakReference<>(file.getVirtualFile());
+    myDocument = new WeakReference<>(document);
     myFileTextLength = file.getTextLength();
     addCallback(EventType.CANCEL, new MyCancelCallback());
   }
@@ -102,15 +84,12 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
 
   @Override
   protected void prepare(@NotNull final SequentialTask task) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Document document = myDocument.get();
-        if (document != null) {
-          myDocumentModificationStampBefore = document.getModificationStamp();
-        }
-        task.prepare();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      Document document = myDocument.get();
+      if (document != null) {
+        myDocumentModificationStampBefore = document.getModificationStamp();
       }
+      task.prepare();
     });
   }
 
@@ -121,7 +100,6 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
 
   @Override
   public void onSuccess() {
-    super.onSuccess();
     for (Runnable callback : getCallbacks(EventType.SUCCESS)) {
       callback.run();
     }
@@ -129,7 +107,14 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
 
   @Override
   public void onCancel() {
-    super.onCancel();
+    for (Runnable callback : getCallbacks(EventType.CANCEL)) {
+      callback.run();
+    }
+  }
+
+  @Override
+  public void onThrowable(@NotNull Throwable error) {
+    super.onThrowable(error);
     for (Runnable callback : getCallbacks(EventType.CANCEL)) {
       callback.run();
     }
@@ -172,12 +157,6 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
     update(FormattingStateId.APPLYING_CHANGES, MAX_PROGRESS_VALUE * myModifiedBlocksNumber / myBlocksToModifyNumber);
   }
 
-  /**
-   * Updates current progress state if necessary.
-   *
-   * @param state          current state
-   * @param completionRate completion rate of the given state. Is assumed to belong to <code>[0; 1]</code> interval
-   */
   private void update(@NotNull FormattingStateId state, double completionRate) {
     ProgressIndicator indicator = getIndicator();
     if (indicator == null) {
@@ -193,7 +172,6 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
     }
     newFraction += completionRate * state.getProgressWeight() / TOTAL_WEIGHT;
 
-    // We don't bother about imprecise floating point arithmetic here because that is enough for progress representation.
     double currentFraction = indicator.getFraction();
     if (newFraction - currentFraction < MAX_PROGRESS_VALUE / 100) {
       return;

@@ -62,7 +62,7 @@ public class VariableOfTypeMacro extends Macro {
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
-    final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+    final Set<LookupElement> set = new LinkedHashSet<>();
     for (PsiElement var : vars) {
       JavaTemplateUtil.addElementLookupItem(set, var);
     }
@@ -78,7 +78,7 @@ public class VariableOfTypeMacro extends Macro {
     Project project = context.getProject();
     final int offset = context.getStartOffset();
 
-    final ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    final ArrayList<PsiElement> array = new ArrayList<>();
     PsiType type = MacroUtil.resultToPsiType(result, context);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     PsiElement place = file.findElementAt(offset);

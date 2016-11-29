@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,13 +88,15 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       return null;
     }
 
-    final Set<File> fileToCopy = new LinkedHashSet<File>();
-    final Map<String, String> copiedFiles = new HashMap<String, String>();
+    final Set<File> fileToCopy = new LinkedHashSet<>();
+    final Map<String, String> copiedFiles = new HashMap<>();
     final String targetDirectoryPath = dialog.getDirectoryForFilesPath();
     if (targetDirectoryPath != null) {
       for (OrderRootType type : OrderRootType.getAllTypes()) {
         for (VirtualFile root : library.getFiles(type)) {
-          fileToCopy.add(VfsUtil.virtualToIoFile(PathUtil.getLocalFile(root)));
+          if (root.isInLocalFileSystem() || root.getFileSystem() instanceof ArchiveFileSystem) {
+            fileToCopy.add(VfsUtil.virtualToIoFile(PathUtil.getLocalFile(root)));
+          }
         }
       }
       if (!copyOrMoveFiles(fileToCopy, targetDirectoryPath, copiedFiles)) {
@@ -105,14 +107,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     final Library copied = provider.getModifiableModel().createLibrary(StringUtil.nullize(dialog.getLibraryName()), library.getKind());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)copied.getModifiableModel();
     LibraryEditingUtil.copyLibrary(library, copiedFiles, model);
-
-    AccessToken token = WriteAction.start();
-    try {
-      model.commit();
-    }
-    finally {
-      token.finish();
-    }
+    WriteAction.run(() -> model.commit());
     return copied;
   }
 

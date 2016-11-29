@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import java.util.ArrayList;
  * @author dsl
  */
 public abstract class BaseOccurrenceManager implements OccurrenceManager {
-  private PsiExpression[] myOccurrences = null;
-  private PsiElement myAnchorStatement = null;
+  private PsiExpression[] myOccurrences;
+  private PsiElement myAnchorStatement;
   protected final OccurrenceFilter myFilter;
 
   public BaseOccurrenceManager(OccurrenceFilter filter) {
@@ -41,7 +41,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
       myOccurrences = findOccurrences();
 
       if(myFilter != null) {
-        ArrayList<PsiExpression> result = new ArrayList<PsiExpression>();
+        ArrayList<PsiExpression> result = new ArrayList<>();
         for (PsiExpression occurrence : myOccurrences) {
           if (myFilter.isOK(occurrence)) result.add(occurrence);
         }

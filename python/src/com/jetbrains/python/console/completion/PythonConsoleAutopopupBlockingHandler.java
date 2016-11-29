@@ -27,7 +27,7 @@ import com.intellij.psi.PsiFile;
  */
 public class PythonConsoleAutopopupBlockingHandler extends TypedHandlerDelegate {
 
-  public static final Key<Object> REPL_KEY = new Key<Object>("python.repl.console.editor");
+  public static final Key<Object> REPL_KEY = new Key<>("python.repl.console.editor");
 
   @Override
   public Result checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {

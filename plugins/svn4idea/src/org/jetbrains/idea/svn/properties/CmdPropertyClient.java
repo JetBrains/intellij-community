@@ -40,7 +40,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                                    boolean revisionProperty,
                                    @Nullable SVNRevision revision)
     throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     parameters.add(property);
     if (!revisionProperty) {
@@ -80,7 +80,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                           @Nullable SVNRevision revision,
                           @Nullable Depth depth,
                           @Nullable PropertyConsumer handler) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     parameters.add(property);
     fillListParameters(target, revision, depth, parameters, false);
@@ -101,7 +101,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                    @Nullable SVNRevision revision,
                    @Nullable Depth depth,
                    @Nullable PropertyConsumer handler) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
     fillListParameters(target, revision, depth, parameters, true);
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.proplist, parameters, null);
@@ -309,7 +309,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   public static class Properties {
 
     @XmlElement(name = "target")
-    public List<Target> targets = new ArrayList<Target>();
+    public List<Target> targets = new ArrayList<>();
 
     @XmlElement(name = "revprops")
     public RevisionProperties revisionProperties;
@@ -321,7 +321,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     public String path;
 
     @XmlElement(name = "property")
-    public List<Property> properties = new ArrayList<Property>();
+    public List<Property> properties = new ArrayList<>();
   }
 
   public static class RevisionProperties {
@@ -330,7 +330,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     public String revision;
 
     @XmlElement(name = "property")
-    public List<Property> properties = new ArrayList<Property>();
+    public List<Property> properties = new ArrayList<>();
 
     public long revisionNumber() {
       return Long.valueOf(revision);

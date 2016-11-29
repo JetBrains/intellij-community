@@ -105,6 +105,11 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.remove.leading.$0", "U"), LanguageLevel.PYTHON30);
   }
 
+  public void testRemoveLeadingF() {
+    doTest(PyBundle.message("INTN.remove.leading.$0", "F"), LanguageLevel.PYTHON35);
+  }
+
+  // PY-18972
   public void testRemoveTrailingL() {
     doTest(PyBundle.message("INTN.remove.trailing.l"), LanguageLevel.PYTHON30);
   }
@@ -226,6 +231,11 @@ public class  PyIntentionTest extends PyTestCase {
 
   public void testConvertVariadicParam() { //PY-2264
     doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-20254
+  public void testConvertVariadicParamEmptySubscription() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
   }
 
   public void testConvertTripleQuotedString() { //PY-2697
@@ -415,11 +425,7 @@ public class  PyIntentionTest extends PyTestCase {
 
   public void testDocStubKeywordOnly() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      public void run() {
-        doDocStubTest(DocStringFormat.REST);
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doDocStubTest(DocStringFormat.REST));
   }
 
   // PY-16765
@@ -700,39 +706,23 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   private void doDocStubTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-      @Override
-      public void run() {
-        CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = true;
-        doTest(PyBundle.message("INTN.doc.string.stub"), true);
-      }
+    runWithDocStringFormat(format, () -> {
+      CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = true;
+      doTest(PyBundle.message("INTN.doc.string.stub"), true);
     });
   }
 
   private void doDocParamTypeTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-      public void run() {
-        doTest(PyBundle.message("INTN.specify.type"));
-      }
-    });
+    runWithDocStringFormat(format, () -> doTest(PyBundle.message("INTN.specify.type")));
   }
 
   private void doDocReturnTypeTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-        public void run() {
-          doTest(PyBundle.message("INTN.specify.return.type"));
-        }
-      });
+    runWithDocStringFormat(format, () -> doTest(PyBundle.message("INTN.specify.return.type")));
 
   }
 
   public void doDocAddMissingParamsTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-      @Override
-      public void run() {
-        doTest(PyBundle.message("INTN.add.parameters.to.docstring"));
-      }
-    });
+    runWithDocStringFormat(format, () -> doTest(PyBundle.message("INTN.add.parameters.to.docstring")));
 
   }
 }

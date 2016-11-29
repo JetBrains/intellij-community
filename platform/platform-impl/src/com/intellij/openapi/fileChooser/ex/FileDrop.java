@@ -47,7 +47,7 @@ public class FileDrop {
         final List<File> fileList = FileCopyPasteUtil.getFileList(event.getTransferable());
         if (fileList == null) return;
 
-        final List<VirtualFile> files = new ArrayList<VirtualFile>();
+        final List<VirtualFile> files = new ArrayList<>();
         final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
         for (File file : fileList) {
           final VirtualFile vFile = fileSystem.findFileByIoFile(file);

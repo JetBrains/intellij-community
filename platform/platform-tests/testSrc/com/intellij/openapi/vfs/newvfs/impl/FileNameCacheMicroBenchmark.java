@@ -38,24 +38,21 @@ import java.util.concurrent.Future;
 public class FileNameCacheMicroBenchmark {
   public static void main(String[] args) throws Exception {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          IdeaTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR).getFixture();
-          fixture.setUp();
-          long start = System.currentTimeMillis();
-          runTest(200, "All names in cache");
-          runTest(50000, "Cache almost overflows");
-          runTest(120000, "Cache certain overflow");
-          long elapsed = System.currentTimeMillis() - start;
-          System.out.println("Total elapsed: " + elapsed/1000.0 +"s");
+    SwingUtilities.invokeAndWait(() -> {
+      try {
+        IdeaTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR).getFixture();
+        fixture.setUp();
+        long start = System.currentTimeMillis();
+        runTest(200, "All names in cache");
+        runTest(50000, "Cache almost overflows");
+        runTest(120000, "Cache certain overflow");
+        long elapsed = System.currentTimeMillis() - start;
+        System.out.println("Total elapsed: " + elapsed/1000.0 +"s");
 
-          fixture.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        fixture.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
 
@@ -200,12 +197,8 @@ public class FileNameCacheMicroBenchmark {
     for (int i = 0; i < threadCount; i++) {
       final Random threadRandom = new Random(seedRandom.nextInt());
       final int finalI = i;
-      futures.add(ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          testIteration.doTest(finalI, ids, threadRandom, queryCount);
-        }
-      }));
+      futures.add(ApplicationManager.getApplication().executeOnPooledThread(
+        () -> testIteration.doTest(finalI, ids, threadRandom, queryCount)));
     }
     for (Future<?> future : futures) {
       future.get();
@@ -222,7 +215,7 @@ public class FileNameCacheMicroBenchmark {
   @NotNull
   private static TIntObjectHashMap<CharSequence> generateNames(int nameCount) {
     Random random = new Random();
-    TIntObjectHashMap<CharSequence> map = new TIntObjectHashMap<CharSequence>();
+    TIntObjectHashMap<CharSequence> map = new TIntObjectHashMap<>();
     for (int i = 0; i < nameCount; i++) {
       String name = "some_name_" + random.nextInt() + StringUtil.repeat("a", random.nextInt(10));
       int id = FileNameCache.storeName(name);

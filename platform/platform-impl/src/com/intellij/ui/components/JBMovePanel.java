@@ -74,7 +74,7 @@ public class JBMovePanel extends JBPanel {
     }
   };
 
-  @NotNull private final Map<ButtonType, ActionButton> myButtons = new EnumMap<ButtonType, ActionButton>(ButtonType.class);
+  @NotNull private final Map<ButtonType, ActionButton> myButtons = new EnumMap<>(ButtonType.class);
 
   @NotNull private final ListPanel myLeftPanel  = new ListPanel();
   @NotNull private final ListPanel myRightPanel = new ListPanel();

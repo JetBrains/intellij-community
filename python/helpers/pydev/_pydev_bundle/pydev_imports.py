@@ -4,7 +4,7 @@ from _pydevd_bundle.pydevd_constants import USE_LIB_COPY, izip
 try:
     try:
         if USE_LIB_COPY:
-            from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
+            from _pydev_imps._pydev_saved_modules import xmlrpclib
         else:
             import xmlrpclib
     except ImportError:
@@ -16,7 +16,8 @@ except ImportError:
 try:
     try:
         if USE_LIB_COPY:
-            from _pydev_imps._pydev_SimpleXMLRPCServer import SimpleXMLRPCServer
+            from _pydev_imps._pydev_saved_modules import _pydev_SimpleXMLRPCServer
+            from _pydev_SimpleXMLRPCServer import SimpleXMLRPCServer
         else:
             from SimpleXMLRPCServer import SimpleXMLRPCServer
     except ImportError:
@@ -40,7 +41,7 @@ except NameError:
 
 try:
     if USE_LIB_COPY:
-        from _pydev_imps import _pydev_Queue as _queue
+        from _pydev_imps._pydev_saved_modules import _queue
     else:
         import Queue as _queue
 except:

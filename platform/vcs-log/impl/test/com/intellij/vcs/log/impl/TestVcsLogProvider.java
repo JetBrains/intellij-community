@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,6 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -49,7 +53,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     @NotNull
     @Override
     public Color getBackgroundColor() {
-      return Color.white;
+      return JBColor.WHITE;
     }
   };
   private static final String SAMPLE_SUBJECT = "Sample subject";
@@ -61,7 +65,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @NotNull private final MockRefManager myRefManager;
   @NotNull private final ReducibleSemaphore myFullLogSemaphore;
   @NotNull private final ReducibleSemaphore myRefreshSemaphore;
-  @NotNull private AtomicInteger myReadFirstBlockCounter = new AtomicInteger();
+  @NotNull private final AtomicInteger myReadFirstBlockCounter = new AtomicInteger();
 
   private final Function<TimedVcsCommit, VcsCommitMetadata> myCommitToMetadataConvertor =
     new Function<TimedVcsCommit, VcsCommitMetadata>() {
@@ -99,7 +103,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     assertRoot(root);
     List<VcsCommitMetadata> metadatas = ContainerUtil.map(myCommits.subList(0, requirements.getCommitCount()),
                                                           myCommitToMetadataConvertor);
-    return new LogDataImpl(Collections.<VcsRef>emptySet(), metadatas);
+    return new LogDataImpl(Collections.emptySet(), metadatas);
   }
 
   @NotNull
@@ -117,7 +121,12 @@ public class TestVcsLogProvider implements VcsLogProvider {
     for (TimedVcsCommit commit : myCommits) {
       commitConsumer.consume(commit);
     }
-    return new LogDataImpl(myRefs, Collections.<VcsUser>emptySet());
+    return new LogDataImpl(myRefs, Collections.emptySet());
+  }
+
+  @Override
+  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+
   }
 
   private void assertRoot(@NotNull VirtualFile root) {
@@ -226,12 +235,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   private static class MockRefManager implements VcsLogRefManager {
 
-    public static final Comparator<VcsRef> FAKE_COMPARATOR = new Comparator<VcsRef>() {
-      @Override
-      public int compare(VcsRef o1, VcsRef o2) {
-        return 0;
-      }
-    };
+    public static final Comparator<VcsRef> FAKE_COMPARATOR = (o1, o2) -> 0;
 
     @NotNull
     @Override
@@ -241,13 +245,24 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
     @NotNull
     @Override
-    public List<RefGroup> group(Collection<VcsRef> refs) {
-      return ContainerUtil.map(refs, new Function<VcsRef, RefGroup>() {
-        @Override
-        public RefGroup fun(VcsRef ref) {
-          return new SingletonRefGroup(ref);
-        }
-      });
+    public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
+      return ContainerUtil.map(refs, SingletonRefGroup::new);
+    }
+
+    @NotNull
+    @Override
+    public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> refs) {
+      return groupForBranchFilter(refs);
+    }
+
+    @Override
+    public void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) throws IOException {
+    }
+
+    @NotNull
+    @Override
+    public VcsRefType deserialize(@NotNull DataInput in) throws IOException {
+      throw new UnsupportedOperationException();
     }
 
     @NotNull
@@ -280,6 +295,5 @@ public class TestVcsLogProvider implements VcsLogProvider {
       myBlocked = false;
       release();
     }
-
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     indicator.checkCanceled();
 
     final Processor<SliceUsage> uniqueProcessor =
-      new CommonProcessors.UniqueProcessor<SliceUsage>(processor, new TObjectHashingStrategy<SliceUsage>() {
+      new CommonProcessors.UniqueProcessor<>(processor, new TObjectHashingStrategy<SliceUsage>() {
         @Override
         public int computeHashCode(final SliceUsage object) {
           return object.getUsageInfo().hashCode();
@@ -73,15 +73,12 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
         }
       });
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (params.dataFlowToThis) {
-          processUsagesFlownDownTo(element, uniqueProcessor);
-        }
-        else {
-          processUsagesFlownFromThe(element, uniqueProcessor);
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (params.dataFlowToThis) {
+        processUsagesFlownDownTo(element, uniqueProcessor);
+      }
+      else {
+        processUsagesFlownFromThe(element, uniqueProcessor);
       }
     });
   }

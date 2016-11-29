@@ -1,6 +1,6 @@
 // method override
 import java.io.*;
-import java.net.*;
+
 
 class a extends a1 {
  <error descr="Static method 'f()' in 'a' cannot override instance method 'f()' in 'a1'">public static void f()</error> { }

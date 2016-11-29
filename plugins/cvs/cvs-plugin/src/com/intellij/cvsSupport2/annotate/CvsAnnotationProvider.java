@@ -52,7 +52,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
 
   @NonNls private static final String INVALID_OPTION_F = "invalid option -- F";
   @NonNls private static final String USAGE_CVSNTSRV_SERVER = "Usage: cvs";
-  private static final Collection<String> ourDoNotAnnotateBinaryRoots = new HashSet<String>();
+  private static final Collection<String> ourDoNotAnnotateBinaryRoots = new HashSet<>();
 
   private final Project myProject;
   private final CvsHistoryProvider myCvsHistoryProvider;
@@ -83,10 +83,6 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     return annotate(file, revision.getRevisionNumber().asString(), settings);
   }
 
-  public boolean isAnnotationValid(VcsFileRevision rev){
-    return true;
-  }
-
   public FileAnnotation annotate(VirtualFile cvsVirtualFile, String revision, CvsEnvironment environment) throws VcsException {
     // the VirtualFile has a full path if annotate is called from history (when we have a real file on disk),
     // and has the path equal to a CVS module name if annotate is called from the CVS repository browser
@@ -110,8 +106,8 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     }
     else {
       // imitation
-      revisions = new ArrayList<VcsFileRevision>();
-      final Set<String> usedRevisions = new HashSet<String>();
+      revisions = new ArrayList<>();
+      final Set<String> usedRevisions = new HashSet<>();
       for (Annotation annotation : lineAnnotations) {
         if (! usedRevisions.contains(annotation.getRevision())) {
           revisions.add(new RevisionPresentation(annotation.getRevision(), annotation.getUserName(), annotation.getDate()));
@@ -158,7 +154,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
 
   private static void adjustAnnotation(@Nullable List<VcsFileRevision> revisions, @NotNull Annotation[] lineAnnotations) {
     if (revisions != null) {
-      final Map<String, VcsFileRevision> revisionMap = new HashMap<String, VcsFileRevision>();
+      final Map<String, VcsFileRevision> revisionMap = new HashMap<>();
       for (VcsFileRevision vcsFileRevision : revisions) {
         revisionMap.put(vcsFileRevision.getRevisionNumber().asString(), vcsFileRevision);
       }
@@ -184,6 +180,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       myDate = date;
     }
 
+    @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myNumber;
     }

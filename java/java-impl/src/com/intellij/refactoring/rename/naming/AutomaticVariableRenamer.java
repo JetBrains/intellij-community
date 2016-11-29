@@ -19,10 +19,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashSet;
@@ -37,13 +39,15 @@ import java.util.Set;
  * @author dsl
  */
 public class AutomaticVariableRenamer extends AutomaticRenamer {
-  private final Set<PsiNamedElement> myToUnpluralize = new HashSet<PsiNamedElement>();
+  private final Set<PsiNamedElement> myToUnpluralize = new HashSet<>();
 
   public AutomaticVariableRenamer(PsiClass aClass, String newClassName, Collection<UsageInfo> usages) {
     final String oldClassName = aClass.getName();
+    final Set<PsiFile> files = new HashSet<>();
     for (final UsageInfo info : usages) {
       final PsiElement element = info.getElement();
       if (!(element instanceof PsiJavaCodeReferenceElement)) continue;
+      files.add(element.getContainingFile());
       final PsiDeclarationStatement statement = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class);
       if (statement != null) {
         for(PsiElement declaredElement: statement.getDeclaredElements()) {
@@ -64,11 +68,28 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
         }
       }
     }
+
+    if (files.size() < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD && oldClassName != null) {
+      for (PsiFile file : files) {
+        for (PsiLambdaExpression expression : SyntaxTraverser.psiTraverser().withRoot(file).filter(PsiLambdaExpression.class)) {
+          final PsiParameter[] parameters = expression.getParameterList().getParameters();
+          for (PsiParameter parameter : parameters) {
+            if (aClass.equals(PsiUtil.resolveClassInType(parameter.getType()))) {
+              final String parameterName = parameter.getName();
+              if (parameterName != null && StringUtil.containsIgnoreCase(parameterName, oldClassName)) {
+                myElements.add(parameter);
+              }
+            }
+          }
+        }
+      }
+    }
+
     suggestAllNames(oldClassName, newClassName);
   }
 
   private static List<PsiField> getFieldsInSameDeclaration(final PsiField variable) {
-    List<PsiField> result = new ArrayList<PsiField>();
+    List<PsiField> result = new ArrayList<>();
     ASTNode node = variable.getNode();
     if (node != null) {
       while (true) {

@@ -94,14 +94,11 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
 
   private static List<FacetDependentToolWindow> getDependentExtensions(final Facet facet) {
     FacetDependentToolWindow[] extensions = Extensions.getExtensions(FacetDependentToolWindow.EXTENSION_POINT_NAME);
-    return ContainerUtil.filter(extensions, new Condition<FacetDependentToolWindow>() {
-      @Override
-      public boolean value(FacetDependentToolWindow toolWindowEP) {
-        for (String id : toolWindowEP.getFacetIds()) {
-          if (facet.getType().getStringId().equals(id)) return true;
-        }
-        return false;
+    return ContainerUtil.filter(extensions, toolWindowEP -> {
+      for (String id : toolWindowEP.getFacetIds()) {
+        if (facet.getType().getStringId().equals(id)) return true;
       }
+      return false;
     });
   }
 }

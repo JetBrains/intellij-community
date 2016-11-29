@@ -96,7 +96,7 @@ public class LoopConditionNotUpdatedInsideLoopInspection
     }
 
     private void check(PsiExpression condition, PsiStatement statement) {
-      final List<PsiExpression> notUpdated = new SmartList<PsiExpression>();
+      final List<PsiExpression> notUpdated = new SmartList<>();
       if (checkCondition(condition, statement, notUpdated)) {
         if (notUpdated.isEmpty()) {
           // condition involves only final variables and/or constants,

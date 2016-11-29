@@ -21,14 +21,16 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.*
 
 // isInLibraryContent call could be costly, so we compute it only once (our customizePresentation called on each repaint)
 class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
-                                              private val viewSupport: DebuggerViewSupport,
+                                              override val viewSupport: DebuggerViewSupport,
                                               val script: Script? = null,
                                               sourceInfo: SourceInfo? = null,
-                                              isInLibraryContent: Boolean? = null) : XStackFrame(), VariableContext {
+                                              isInLibraryContent: Boolean? = null,
+                                              override val vm: Vm? = null) : XStackFrame(), VariableContext {
   private val sourceInfo = sourceInfo ?: viewSupport.getSourceInfo(script, callFrame)
   private val isInLibraryContent: Boolean = isInLibraryContent ?: (this.sourceInfo != null && viewSupport.isInLibraryContent(this.sourceInfo, script))
 
@@ -41,21 +43,15 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
     createAndAddScopeList(node, callFrame.variableScopes, this, callFrame)
   }
 
-  override fun getEvaluateContext() = callFrame.evaluateContext
-
-  override fun getName() = null
-
-  override fun getParent() = null
+  override val evaluateContext: EvaluateContext
+    get() = callFrame.evaluateContext
 
   override fun watchableAsEvaluationExpression() = true
 
-  override fun getViewSupport() = viewSupport
-
-  override fun getMemberFilter() = viewSupport.getMemberFilter(this)
+  override val memberFilter: Promise<MemberFilter>
+    get() = viewSupport.getMemberFilter(this)
 
   fun getMemberFilter(scope: Scope) = createVariableContext(scope, this, callFrame).memberFilter
-
-  override fun getScope() = null
 
   override fun getEvaluator(): XDebuggerEvaluator? {
     if (evaluator == null) {

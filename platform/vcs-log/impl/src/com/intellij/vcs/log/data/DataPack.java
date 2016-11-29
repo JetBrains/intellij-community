@@ -26,7 +26,6 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -45,18 +44,18 @@ public class DataPack extends DataPackBase {
 
   @NotNull
   static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
-                        @NotNull Map<VirtualFile, Set<VcsRef>> refs,
+                        @NotNull Map<VirtualFile, CompressedRefs> refs,
                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                        @NotNull final VcsLogHashMap hashMap,
+                        @NotNull final VcsLogStorage hashMap,
                         boolean full) {
     RefsModel refsModel;
     PermanentGraph<Integer> permanentGraph;
     if (commits.isEmpty()) {
-      refsModel = new RefsModel(refs, ContainerUtil.<Integer>newHashSet(), hashMap);
+      refsModel = new RefsModel(refs, ContainerUtil.<Integer>newHashSet(), hashMap, providers);
       permanentGraph = EmptyPermanentGraph.getInstance();
     }
     else {
-      refsModel = new RefsModel(refs, getHeads(commits), hashMap);
+      refsModel = new RefsModel(refs, getHeads(commits), hashMap, providers);
       Function<Integer, Hash> hashGetter = createHashGetter(hashMap);
       GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), hashMap);
@@ -70,15 +69,11 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  public static Function<Integer, Hash> createHashGetter(@NotNull final VcsLogHashMap hashMap) {
-    return new Function<Integer, Hash>() {
-      @Nullable
-      @Override
-      public Hash fun(Integer commitIndex) {
-        CommitId commitId = hashMap.getCommitId(commitIndex);
-        if (commitId == null) return null;
-        return commitId.getHash();
-      }
+  public static Function<Integer, Hash> createHashGetter(@NotNull final VcsLogStorage hashMap) {
+    return commitIndex -> {
+      CommitId commitId = hashMap.getCommitId(commitIndex);
+      if (commitId == null) return null;
+      return commitId.getHash();
     };
   }
 
@@ -101,8 +96,8 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> branches, @NotNull VcsLogHashMap hashMap) {
-    Set<Integer> result = new HashSet<Integer>();
+  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> branches, @NotNull VcsLogStorage hashMap) {
+    Set<Integer> result = new HashSet<>();
     for (VcsRef vcsRef : branches) {
       result.add(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
     }
@@ -121,7 +116,7 @@ public class DataPack extends DataPackBase {
   @NotNull
   private static DataPack createEmptyInstance() {
     RefsModel emptyModel =
-      new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), ContainerUtil.<Integer>newHashSet(), VcsLogHashMapImpl.EMPTY);
+      new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.<Integer>newHashSet(), VcsLogStorageImpl.EMPTY, ContainerUtil.newHashMap());
     return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
   }
 

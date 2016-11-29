@@ -17,12 +17,15 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.completion.XmlAttributeInsertHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlEqTypedHandler extends TypedHandlerDelegate {
@@ -32,7 +35,7 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   public Result beforeCharTyped(char c, Project project, Editor editor, PsiFile file, FileType fileType) {
     if (c == '=' && WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
       if (XmlGtTypedHandler.fileContainsXmlLanguage(file)) {
-        TypedHandler.commitDocumentIfCurrentCaretIsNotTheFirstOne(editor, project);
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         
         PsiElement at = file.findElementAt(editor.getCaretModel().getOffset() - 1);
         PsiElement atParent = at != null ? at.getParent() : null;
@@ -50,13 +53,18 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
     if (needToInsertQuotes) {
       int offset = editor.getCaretModel().getOffset();
       PsiElement fileContext = file.getContext();
-      String toInsert= "\"\"";
+      String toInsert = null;
 
       if(fileContext != null) {
         if (fileContext.getText().startsWith("\"")) toInsert = "''";
+        if (fileContext.getText().startsWith("\'")) toInsert = "\"\"";
+      }
+      if (toInsert == null) {
+        final String quote = XmlAttributeInsertHandler.getAttributeQuote(HtmlUtil.hasHtml(file) || HtmlUtil.supportsXmlTypedHandlers(file));
+        toInsert = quote + quote;
       }
       editor.getDocument().insertString(offset, toInsert);
-      editor.getCaretModel().moveToOffset(offset + 1);
+      editor.getCaretModel().moveToOffset(offset + toInsert.length() / 2);
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
     }
     needToInsertQuotes = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
@@ -70,6 +69,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.StringTokenizer;
 
 public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCase {
+  public static final int DEFAULT_ADDRESS = 3456;
   protected DebuggerSession myDebuggerSession;
 
   @Override
@@ -155,28 +155,25 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     };
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myDebuggerSession =
-            DebuggerManagerEx.getInstanceEx(myProject)
-              .attachVirtualMachine(new DefaultDebugEnvironment(new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-                                                                  .runProfile(new MockConfiguration())
-                                                                  .build(), javaCommandLineState, debugParameters, false));
-          XDebuggerManager.getInstance(myProject).startSession(javaCommandLineState.getEnvironment(), new XDebugProcessStarter() {
-            @Override
-            @NotNull
-            public XDebugProcess start(@NotNull XDebugSession session) {
-              return JavaDebugProcess.create(session, myDebuggerSession);
-            }
-          });
-        }
-        catch (ExecutionException e) {
-          LOG.error(e);
-        }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        myDebuggerSession =
+          DebuggerManagerEx.getInstanceEx(myProject)
+            .attachVirtualMachine(new DefaultDebugEnvironment(new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
+                                                                .runProfile(new MockConfiguration())
+                                                                .build(), javaCommandLineState, debugParameters, false));
+        XDebuggerManager.getInstance(myProject).startSession(javaCommandLineState.getEnvironment(), new XDebugProcessStarter() {
+          @Override
+          @NotNull
+          public XDebugProcess start(@NotNull XDebugSession session) {
+            return JavaDebugProcess.create(session, myDebuggerSession);
+          }
+        });
       }
-    }, ModalityState.defaultModalityState());
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+    });
     myDebugProcess = myDebuggerSession.getProcess();
 
     myDebugProcess.addProcessListener(new ProcessAdapter() {
@@ -201,7 +198,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     GenericDebuggerRunnerSettings debuggerRunnerSettings = new GenericDebuggerRunnerSettings();
     debuggerRunnerSettings.LOCAL = true;
-    debuggerRunnerSettings.setDebugPort("3456");
+    debuggerRunnerSettings.setDebugPort(String.valueOf(DEFAULT_ADDRESS));
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
@@ -256,7 +253,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     RemoteConnection remoteConnection = new RemoteConnection(
       useSockets,
       "127.0.0.1",
-      "3456",
+      String.valueOf(DEFAULT_ADDRESS),
       serverMode);
 
     String launchCommandLine = remoteConnection.getLaunchCommandLine();
@@ -365,14 +362,11 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     if(request.isDone()) {
       thread.interrupt();
     }
-      waitFor(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            thread.join();
-          }
-          catch (InterruptedException ignored) {
-          }
+      waitFor(() -> {
+        try {
+          thread.join();
+        }
+        catch (InterruptedException ignored) {
         }
       });
 
@@ -399,12 +393,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     });
 
-    waitFor(new Runnable() {
-      @Override
-      public void run() {
-        s.waitFor();
-      }
-    });
+    waitFor(() -> s.waitFor());
   }
 
   public DebuggerContextImpl createDebuggerContext(final SuspendContextImpl suspendContext, StackFrameProxyImpl stackFrame) {
@@ -442,15 +431,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected void createBreakpointInHelloWorld() {
-    DebuggerInvocationUtil.invokeAndWait(myProject, new Runnable() {
-      @Override
-      public void run() {
-        BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-        PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass("HelloWorld", GlobalSearchScope.allScope(myProject));
-        assertNotNull(psiClass);
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
-        breakpointManager.addLineBreakpoint(document, 3);
-      }
+    DebuggerInvocationUtil.invokeAndWait(myProject, () -> {
+      BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+      PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass("HelloWorld", GlobalSearchScope.allScope(myProject));
+      assertNotNull(psiClass);
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
+      breakpointManager.addLineBreakpoint(document, 3);
     }, ApplicationManager.getApplication().getDefaultModalityState());
   }
 

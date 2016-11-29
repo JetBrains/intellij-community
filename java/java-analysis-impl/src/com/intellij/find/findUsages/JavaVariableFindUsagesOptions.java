@@ -16,6 +16,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +28,11 @@ public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
 
   public JavaVariableFindUsagesOptions(@NotNull Project project) {
     super(project);
+    isSearchForTextOccurrences = false;
+  }
+
+  public JavaVariableFindUsagesOptions(@NotNull SearchScope searchScope) {
+    super(searchScope);
     isSearchForTextOccurrences = false;
   }
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 
@@ -26,6 +25,10 @@ public class DropAnOutOfMemoryErrorAction extends DumbAwareAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
+    Object[] array = new Object[Integer.MAX_VALUE];
+    for (int i = 0; i < array.length; i++) {
+      array[i] = new Object[Integer.MAX_VALUE];
+    }
     throw new OutOfMemoryError();
   }
 }

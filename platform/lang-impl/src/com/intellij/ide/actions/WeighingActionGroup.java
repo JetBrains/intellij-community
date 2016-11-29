@@ -63,7 +63,7 @@ public abstract class WeighingActionGroup extends ActionGroup {
       return children;
     }
 
-    final ArrayList<AnAction> all = new ArrayList<AnAction>();
+    final ArrayList<AnAction> all = new ArrayList<>();
     getAllChildren(e, getDelegate(), all);
 
     LinkedHashSet<AnAction> heaviest = null;
@@ -75,7 +75,7 @@ public abstract class WeighingActionGroup extends ActionGroup {
       if (presentation.isEnabled() && presentation.isVisible()) {
         if (presentation.getWeight() > maxWeight) {
           maxWeight = presentation.getWeight();
-          heaviest = new LinkedHashSet<AnAction>();
+          heaviest = new LinkedHashSet<>();
         }
         if (presentation.getWeight() == maxWeight && heaviest != null) {
           heaviest.add(action);

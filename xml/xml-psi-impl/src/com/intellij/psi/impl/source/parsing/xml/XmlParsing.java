@@ -36,7 +36,7 @@ public class XmlParsing {
   private static final int BALANCING_DEPTH_THRESHOLD = 1000;
 
   protected final PsiBuilder myBuilder;
-  private final Stack<String> myTagNamesStack = new Stack<String>();
+  private final Stack<String> myTagNamesStack = new Stack<>();
 
   public XmlParsing(final PsiBuilder builder) {
     myBuilder = builder;

@@ -1,2 +1,2 @@
-def foo(foo):
+def foo(foo, **kwargs):
     doSomething(foo)

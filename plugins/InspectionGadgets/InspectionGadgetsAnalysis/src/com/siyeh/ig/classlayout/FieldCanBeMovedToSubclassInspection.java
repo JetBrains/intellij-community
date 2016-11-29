@@ -61,7 +61,7 @@ public class FieldCanBeMovedToSubclassInspection extends BaseGlobalInspection {
     final RefClass fieldClass = refField.getOwnerClass();
     final Collection<RefElement> inReferences = refField.getInReferences();
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-    final Set<RefClass> classesUsed = new HashSet<RefClass>();
+    final Set<RefClass> classesUsed = new HashSet<>();
     for (RefElement inReference : inReferences) {
       final RefClass referringClass = refUtil.getOwnerClass(inReference);
       if (referringClass == null) {

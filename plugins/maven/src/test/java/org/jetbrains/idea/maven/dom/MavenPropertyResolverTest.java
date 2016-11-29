@@ -259,17 +259,13 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     final Document doc = FileDocumentManager.getInstance().getDocument(myProjectPom);
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        doc.setText(createPomXml("<groupId>test</groupId>" +
-                                 "<artifactId>project</artifactId>" +
-                                 "<version>2</version>" +
+    WriteCommandAction.runWriteCommandAction(null, () -> doc.setText(createPomXml("<groupId>test</groupId>" +
+                                                                                "<artifactId>project</artifactId>" +
+                                                                                "<version>2</version>" +
 
-                                 "<properties>" +
-                                 "  <uncomitted>value</uncomitted>" +
-                                 "</properties>"));
-      }
-    });
+                                                                                "<properties>" +
+                                                                                "  <uncomitted>value</uncomitted>" +
+                                                                                "</properties>")));
 
     PsiDocumentManager.getInstance(myProject).commitDocument(doc);
 

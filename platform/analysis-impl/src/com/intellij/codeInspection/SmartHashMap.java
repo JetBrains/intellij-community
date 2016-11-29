@@ -131,7 +131,7 @@ public class SmartHashMap<K,V> extends THashMap<K,V> {
   public Set<K> keySet() {
     K theKey = this.theKey;
     if (theKey != null) {
-      return new SingletonSet<K>(theKey);
+      return new SingletonSet<>(theKey);
     }
     return super.keySet();
   }
@@ -141,7 +141,7 @@ public class SmartHashMap<K,V> extends THashMap<K,V> {
   public Collection<V> values() {
     K theKey = this.theKey;
     if (theKey != null) {
-      return new SingletonSet<V>(theValue);
+      return new SingletonSet<>(theValue);
     }
     return super.values();
   }
@@ -151,7 +151,7 @@ public class SmartHashMap<K,V> extends THashMap<K,V> {
   public Set<Map.Entry<K, V>> entrySet() {
     K theKey = this.theKey;
     if (theKey != null) {
-      return new SingletonSet<Map.Entry<K, V>>(new AbstractMap.SimpleEntry<K, V>(theKey, theValue));
+      return new SingletonSet<>(new AbstractMap.SimpleEntry<>(theKey, theValue));
     }
     return super.entrySet();
   }

@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -35,10 +36,14 @@ import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.AncestorEvent;
+import java.awt.*;
 
 /**
 * @author peter
@@ -58,6 +63,29 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     }
 
     final Editor editor = console.getConsoleEditor();
+    JPanel editorPanel = new JPanel(new AbstractLayoutManager() {
+      private int getOffset() {
+        return JBUI.scale(4);
+      }
+
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        Dimension size = parent.getComponent(0).getPreferredSize();
+        return new Dimension(size.width + getOffset(), size.height);
+      }
+
+      @Override
+      public void layoutContainer(Container parent) {
+        int offset = getOffset();
+        parent.getComponent(0).setBounds(offset, 0, parent.getWidth() - offset, parent.getHeight());
+      }
+    }) {
+      @Override
+      public Color getBackground() {
+        return ((EditorEx)editor).getBackgroundColor();
+      }
+    };
+    editorPanel.add(editor.getComponent());
 
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
@@ -65,7 +93,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
         return PlatformDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
       }
     };
-    panel.setContent(editor.getComponent());
+    panel.setContent(editorPanel);
     panel.addAncestorListener(new LogShownTracker(project));
 
     ActionToolbar toolbar = createToolbar(project, editor, console);

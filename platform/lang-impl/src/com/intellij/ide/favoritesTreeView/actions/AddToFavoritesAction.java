@@ -150,7 +150,7 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
                                            boolean inProjectView,
                                            ViewSettings favoritesConfig) {
     if (project == null) return Collections.emptyList();
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
     for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project)) {
       final AbstractTreeNode treeNode = provider.createNode(project, object, favoritesConfig);
       if (treeNode != null) {

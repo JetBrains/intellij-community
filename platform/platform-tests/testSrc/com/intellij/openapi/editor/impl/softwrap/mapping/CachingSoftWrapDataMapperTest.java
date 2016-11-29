@@ -47,42 +47,36 @@ import java.util.List;
  */
 public class CachingSoftWrapDataMapperTest {
 
-  private static final Comparator<DataEntry> LOGICAL_POSITIONS_COMPARATOR = new Comparator<DataEntry>() {
-    @Override
-    public int compare(DataEntry o1, DataEntry o2) {
-      LogicalPosition logical1 = o1.logical;
-      LogicalPosition logical2 = o2.logical;
-      if (logical1.line != logical2.line) {
-        return logical1.line - logical2.line;
-      }
-
-      // There is a possible case that multiple logical positions match to the same visual position (e.g. logical
-      // positions for folded text match to the same visual position). We want to match to the logical position of
-      // folding region start if we search by logical position from folded text.
-      if (o1.foldedSpace && o2.foldedSpace && logical1.column + logical1.foldingColumnDiff == logical2.foldingColumnDiff) {
-        return o1.foldedSpace ? 1 : -1;
-      }
-      return logical1.column - logical2.column;
+  private static final Comparator<DataEntry> LOGICAL_POSITIONS_COMPARATOR = (o1, o2) -> {
+    LogicalPosition logical1 = o1.logical;
+    LogicalPosition logical2 = o2.logical;
+    if (logical1.line != logical2.line) {
+      return logical1.line - logical2.line;
     }
+
+    // There is a possible case that multiple logical positions match to the same visual position (e.g. logical
+    // positions for folded text match to the same visual position). We want to match to the logical position of
+    // folding region start if we search by logical position from folded text.
+    if (o1.foldedSpace && o2.foldedSpace && logical1.column + logical1.foldingColumnDiff == logical2.foldingColumnDiff) {
+      return o1.foldedSpace ? 1 : -1;
+    }
+    return logical1.column - logical2.column;
   };
 
-  private static final Comparator<DataEntry> OFFSETS_COMPARATOR = new Comparator<DataEntry>() {
-    @Override
-    public int compare(DataEntry o1, DataEntry o2) {
-      if (o1.offset != o2.offset) {
-        return o1.offset - o2.offset;
-      }
-      // There are numerous situations when multiple visual positions share the same offset (e.g. all soft wrap-introduced virtual
-      // spaces share offset with the first document symbol after soft wrap or all virtual spaces after line end share the same offset
-      // as the last line symbol). We want to ignore such positions during lookup by offset.
-      if (o1.virtualSpace ^ o2.virtualSpace) {
-        return o1.virtualSpace ? 1 : -1;
-      }
-      if (o1.insideTab ^ o2.insideTab) {
-        return o1.insideTab ? 1 : -1;
-      }
-      return 0;
+  private static final Comparator<DataEntry> OFFSETS_COMPARATOR = (o1, o2) -> {
+    if (o1.offset != o2.offset) {
+      return o1.offset - o2.offset;
     }
+    // There are numerous situations when multiple visual positions share the same offset (e.g. all soft wrap-introduced virtual
+    // spaces share offset with the first document symbol after soft wrap or all virtual spaces after line end share the same offset
+    // as the last line symbol). We want to ignore such positions during lookup by offset.
+    if (o1.virtualSpace ^ o2.virtualSpace) {
+      return o1.virtualSpace ? 1 : -1;
+    }
+    if (o1.insideTab ^ o2.insideTab) {
+      return o1.insideTab ? 1 : -1;
+    }
+    return 0;
   };
 
   private static final String SOFT_WRAP_START_MARKER  = "<WRAP>";
@@ -94,11 +88,11 @@ public class CachingSoftWrapDataMapperTest {
   private static final int    SOFT_WRAP_DRAWING_WIDTH = 11;
 
   /** Holds expected mappings between visual and logical positions and offset. */
-  private final List<DataEntry>  myExpectedData  = new ArrayList<DataEntry>();
-  private final List<TextRange>  myLineRanges    = new ArrayList<TextRange>();
+  private final List<DataEntry>  myExpectedData  = new ArrayList<>();
+  private final List<TextRange>  myLineRanges    = new ArrayList<>();
   /** Holds document offsets that are considered to be folded. */
   private final TIntHashSet      myFoldedOffsets = new TIntHashSet();
-  private final List<FoldRegion> myFoldRegions   = new ArrayList<FoldRegion>();
+  private final List<FoldRegion> myFoldRegions   = new ArrayList<>();
 
   private CachingSoftWrapDataMapper          myMapper;
   private Mockery                            myMockery;

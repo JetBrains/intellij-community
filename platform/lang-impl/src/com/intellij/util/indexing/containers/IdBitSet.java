@@ -16,6 +16,7 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.indexing.IntPredicate;
 import com.intellij.util.indexing.ValueContainer;
 
 /**
@@ -121,13 +122,13 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
   }
 
   @Override
-  public ValueContainer.IntIterator intIterator() {
+  public IntIdsIterator intIterator() {
     return new Iterator();
   }
 
   @Override
-  public ValueContainer.IntPredicate intPredicate() {
-    return new ValueContainer.IntPredicate() {
+  public IntPredicate intPredicate() {
+    return new IntPredicate() {
       @Override
       public boolean contains(int id) {
         return IdBitSet.this.contains(id);
@@ -196,7 +197,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     return calcCapacity(((roundToNearest(max) - roundToNearest(min)) >> SHIFT) + 1) * 8;
   }
 
-  private class Iterator implements ValueContainer.IntIterator {
+  private class Iterator implements IntIdsIterator {
     private int nextSetBit = nextSetBit(0);
 
     @Override
@@ -222,7 +223,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     }
 
     @Override
-    public ValueContainer.IntIterator createCopyInInitialState() {
+    public IntIdsIterator createCopyInInitialState() {
       return new Iterator();
     }
   }

@@ -28,12 +28,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -58,56 +60,41 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = file.findElementAt(offset);
+    List<PsiElement> elements = new ArrayList<>();
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      int offset = caret.getOffset();
+      PsiElement element = file.findElementAt(offset);
 
-    while (true) {
-      if (element == null || element instanceof PsiFile) {
-        String message = RefactoringBundle
-          .getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
-        return;
+      while (element != null && !(element instanceof PsiFile)) {
+        if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
+          elements.add(element);
+          break;
+        }
+        element = element.getParent();
       }
-
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return;
-
-      if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
-        invoke(project, new PsiElement[]{element}, dataContext);
-        return;
-      }
-      element = element.getParent();
+    }
+    if (elements.isEmpty()) {
+      String message = RefactoringBundle
+        .getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+    }
+    else {
+      invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY),dataContext);
     }
   }
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    if (elements.length != 1) return;
+
     myProject = project;
 
-    PsiElement element = elements[0];
-    PsiClass aClass;
-    PsiElement aMember = null;
+    PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
 
-    if (element instanceof PsiClass) {
-      aClass = (PsiClass)element;
-    }
-    else if (element instanceof PsiMethod) {
-      aClass = ((PsiMethod)element).getContainingClass();
-      aMember = element;
-    }
-    else if (element instanceof PsiField) {
-      aClass = ((PsiField)element).getContainingClass();
-      aMember = element;
-    }
-    else {
-      return;
-    }
-
-    invoke(project, dataContext, aClass, aMember);
+    invoke(project, dataContext, aClass, elements);
   }
 
-  private void invoke(Project project, DataContext dataContext, PsiClass aClass, PsiElement aMember) {
+  private void invoke(Project project, DataContext dataContext, PsiClass aClass, PsiElement... selectedMembers) {
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass == null) {
       String message =
@@ -130,21 +117,17 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
       return;
     }
 
-
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     mySubclass = aClass;
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, new MemberInfo.Filter<PsiMember>() {
-      @Override
-      public boolean includeMember(PsiMember element) {
-        return true;
-      }
-    });
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, element -> true);
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySubclass);
-    PsiManager manager = mySubclass.getManager();
 
     for (MemberInfoBase<PsiMember> member : members) {
-      if (manager.areElementsEquivalent(member.getMember(), aMember)) {
-        member.setChecked(true);
-        break;
+      for (PsiElement aMember : selectedMembers) {
+        if (PsiTreeUtil.isAncestor(member.getMember(), aMember, false)) {
+          member.setChecked(true);
+          break;
+        }
       }
     }
 
@@ -162,22 +145,13 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     final MemberInfo[] memberInfos = infos.toArray(new MemberInfo[infos.size()]);
     final PsiClass superClass = dialog.getSuperClass();
     if (!checkWritable(superClass, memberInfos)) return false;
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
-            final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
-            conflicts
-              .putAllValues(PullUpConflictsUtil.checkConflicts(memberInfos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
-          }
-        });
-
-      }
-    }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
+      final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
+      conflicts
+        .putAllValues(PullUpConflictsUtil.checkConflicts(memberInfos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
+    }), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();

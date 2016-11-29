@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,47 +16,48 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
+import com.intellij.util.BitUtil;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
+import java.util.*;
 
 /**
  * Java symbols needed for hierarchy building. Mostly classes ({@link ClassSymbol}) or packages ({@link PackageSymbol}),
  * but other {@link MemberSymbol}s are also sometimes needed for working with anonymous or local classes.
  */
-public abstract class Symbol {
-  public int myFlags;
-  public int myShortName;
-  public final QualifiedName myQualifiedName;
-  public final Symbol myOwner;
+abstract class Symbol {
+  int myFlags;
+  @ShortName final int myShortName;
+  final Symbol myOwner;
 
-  public Symbol(int flags, Symbol owner, QualifiedName qualifiedName, int name) {
+  public Symbol(int flags, Symbol owner, int name) {
     this.myFlags = flags;
     this.myOwner = owner;
-    this.myQualifiedName = qualifiedName;
     this.myShortName = name;
   }
 
-  public ClassSymbol[] members() {
+  @Override
+  public int hashCode() {
+    return myShortName;
+  }
+
+  ClassSymbol[] getMembers() {
     return ClassSymbol.EMPTY_ARRAY;
   }
 
-  public void setMembers(ClassSymbol[] members) {
-  }
-
-  public boolean isStatic() {
-    return (myFlags & IndexTree.STATIC) != 0;
-  }
-
   public boolean isPackage() {
-    return (myFlags & IndexTree.PACKAGE) != 0;}
+    return BitUtil.isSet(myFlags, IndexTree.PACKAGE);
+  }
 
   public boolean isClass() {
-    return (myFlags & IndexTree.CLASS) != 0;}
+    return BitUtil.isSet(myFlags, IndexTree.CLASS);
+  }
 
   public boolean isMember() {
-    return (myFlags & IndexTree.MEMBER) != 0;}
+    return BitUtil.isSet(myFlags, IndexTree.MEMBER);
+  }
 
   public PackageSymbol pkg() {
     Symbol sym = this;
@@ -67,65 +68,109 @@ public abstract class Symbol {
   }
 
   public static class PackageSymbol extends Symbol {
-    public PackageSymbol(Symbol owner, QualifiedName fullname, int name) {
-      super(IndexTree.PACKAGE, owner, fullname, name);
-      setMembers(ClassSymbol.EMPTY_ARRAY);
+    @QNameHash final int myQualifiedName;
+
+    public PackageSymbol(Symbol owner, @QNameHash int fullname, int name) {
+      super(IndexTree.PACKAGE, owner, name);
+      myQualifiedName = fullname;
     }
   }
 
   /** A class for class symbols
    */
-  public static class ClassSymbol extends Symbol {
+  public static class ClassSymbol extends MemberSymbol {
+    private static final int CONNECT_STARTED = 1 << 21;
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
-    public final SmartClassAnchor myClassAnchor;
-    public ClassSymbol[] mySuperClasses;
-    public UnitInfo myUnitInfo;
-    public QualifiedName[] mySuperNames;
-    private ClassSymbol[] myMembers;
-    private HierarchyConnector myConnector;
 
-    public ClassSymbol(SmartClassAnchor classAnchor,
-                       int flags,
-                       Symbol owner,
-                       QualifiedName fullname,
-                       int name,
-                       UnitInfo unitInfo,
-                       QualifiedName[] supers,
-                       HierarchyConnector connector) {
-      super(flags | IndexTree.CLASS, owner, fullname, name);
-      this.myClassAnchor = classAnchor;
-      this.mySuperNames = supers;
-      this.myUnitInfo = unitInfo;
-      this.myConnector = connector;
+    final int myAnchorId;
+    @CompactArray({QualifiedName.class, ClassSymbol.class}) Object mySuperClasses;
+    UnitInfo myUnitInfo;
+
+    ClassSymbol(int anchorId,
+                int flags,
+                Symbol owner,
+                int name,
+                UnitInfo unitInfo,
+                @CompactArray(QualifiedName.class) Object supers) {
+      super(flags | IndexTree.CLASS, owner, name);
+      this.myAnchorId = anchorId;
+
+      boolean incomplete = isHierarchyIncomplete();
+      this.mySuperClasses = incomplete ? null : supers;
+      this.myUnitInfo = incomplete ? null : unitInfo;
     }
 
-    public void connect() {
-      if (myConnector != null) {
-        HierarchyConnector c = myConnector;
-        myConnector = null;
-        c.connect(this);
+    @Override
+    public int hashCode() {
+      return myAnchorId;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(myAnchorId);
+    }
+
+    void connect(StubHierarchyConnector connector) {
+      if (!isConnectStarted()) {
+        myFlags = BitUtil.set(myFlags, CONNECT_STARTED, true);
+        connector.connect(this);
       }
     }
 
-    @NotNull
-    public ClassSymbol[] getSuperClasses() {
-      connect();
-      if (mySuperClasses == null) {
-        return EMPTY_ARRAY;
+    private boolean isConnectStarted() {
+      return BitUtil.isSet(myFlags, CONNECT_STARTED);
+    }
+
+    @Nullable
+    @CompactArray(ClassSymbol.class)
+    Object getSuperClasses(StubHierarchyConnector connector) throws IncompleteHierarchyException {
+      connect(connector);
+      if (isHierarchyIncomplete()) {
+        throw IncompleteHierarchyException.INSTANCE;
       }
       return mySuperClasses;
     }
 
-    public boolean isCompiled() {
-      return (myFlags & IndexTree.COMPILED) != 0;
+    @NotNull
+    ClassSymbol[] rawSuperClasses() {
+      assert isConnectStarted();
+      return mySuperClasses instanceof ClassSymbol ? new ClassSymbol[]{(ClassSymbol)mySuperClasses} :
+             mySuperClasses instanceof ClassSymbol[] ? (ClassSymbol[])mySuperClasses :
+             EMPTY_ARRAY;
     }
 
-    public ClassSymbol[] members() {
-      return myMembers;
+    boolean isCompiled() {
+      return BitUtil.isSet(myFlags, IndexTree.COMPILED);
     }
 
-    public void setMembers(ClassSymbol[] members) {
-      this.myMembers = members;
+    void markHierarchyIncomplete() {
+      setSupers(Collections.emptySet());
+      myFlags = BitUtil.set(myFlags, IndexTree.SUPERS_UNRESOLVED, true);
+    }
+
+    void setSupers(Set<ClassSymbol> supers) {
+      mySuperClasses = supers.isEmpty() ? null :
+                       supers.size() == 1 ? supers.iterator().next() :
+                       supers.toArray(new ClassSymbol[supers.size()]);
+      myUnitInfo = null;
+    }
+
+    boolean isHierarchyIncomplete() {
+      return BitUtil.isSet(myFlags, IndexTree.SUPERS_UNRESOLVED);
+    }
+
+    boolean hasAmbiguousSupers() {
+      ClassSymbol[] superClasses = rawSuperClasses();
+      if (superClasses.length < 2) return false;
+
+      TIntHashSet superNames = new TIntHashSet();
+      for (ClassSymbol symbol : superClasses) {
+        if (!superNames.add(symbol.myShortName)) {
+          return true;
+        }
+      }
+
+      return false;
     }
   }
 
@@ -133,24 +178,36 @@ public abstract class Symbol {
    * Represents methods, fields and other constructs that may contain anonymous or local classes.
    */
   public static class MemberSymbol extends Symbol {
-    private ClassSymbol[] myMembers;
-    public MemberSymbol(Symbol owner) {
-      super(IndexTree.MEMBER, owner, null, NamesEnumerator.NO_NAME);
+    @CompactArray(ClassSymbol.class) private Object myMembers = null;
+
+    MemberSymbol(Symbol owner) {
+      super(IndexTree.MEMBER, owner, NameEnvironment.NO_NAME);
     }
-    public ClassSymbol[] members() {
-      return myMembers;
+
+    MemberSymbol(int flags, Symbol owner, int name) {
+      super(flags, owner, name);
     }
-    public void setMembers(ClassSymbol[] members) {
-      this.myMembers = members;
+
+    ClassSymbol[] getMembers() {
+      return myMembers == null ? ClassSymbol.EMPTY_ARRAY :
+             myMembers instanceof ClassSymbol ? new ClassSymbol[]{(ClassSymbol)myMembers} :
+             (ClassSymbol[])myMembers;
+    }
+
+    void setMembers(List<ClassSymbol> members) {
+      myMembers = members.isEmpty() ? null : members.size() == 1 ? members.get(0) : toSortedArray(members);
+    }
+
+    private static ClassSymbol[] toSortedArray(List<ClassSymbol> members) {
+      ClassSymbol[] array = members.toArray(new ClassSymbol[members.size()]);
+      Arrays.sort(array, CLASS_SYMBOL_BY_NAME_COMPARATOR);
+      return array;
     }
   }
 
-  public static final Comparator<ClassSymbol> CLASS_SYMBOL_BY_NAME_COMPARATOR = new Comparator<ClassSymbol>() {
-    @Override
-    public int compare(ClassSymbol s1, ClassSymbol s2) {
-      int name1 = s1.myShortName;
-      int name2 = s2.myShortName;
-      return (name1 < name2) ? -1 : ((name1 == name2) ? 0 : 1);
-    }
+  private static final Comparator<ClassSymbol> CLASS_SYMBOL_BY_NAME_COMPARATOR = (s1, s2) -> {
+    int name1 = s1.myShortName;
+    int name2 = s2.myShortName;
+    return (name1 < name2) ? -1 : ((name1 == name2) ? 0 : 1);
   };
 }

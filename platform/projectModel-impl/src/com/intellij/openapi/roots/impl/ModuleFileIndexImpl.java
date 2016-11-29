@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,23 +46,26 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator iterator) {
-    final List<VirtualFile> contentRoots = ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
-      @Override
-      public List<VirtualFile> compute() {
-        if (myModule.isDisposed()) return Collections.emptyList();
-        
-        List<VirtualFile> result = ContainerUtil.newArrayList();
-        for (VirtualFile contentRoot : ModuleRootManager.getInstance(myModule).getContentRoots()) {
-          VirtualFile parent = contentRoot.getParent();
+    final Set<VirtualFile> contentRoots = ApplicationManager.getApplication().runReadAction((Computable<Set<VirtualFile>>)() -> {
+      if (myModule.isDisposed()) return Collections.emptySet();
+
+      Set<VirtualFile> result = new LinkedHashSet<>();
+      VirtualFile[][] allRoots = getModuleContentAndSourceRoots(myModule);
+      for (VirtualFile[] roots : allRoots) {
+        for (VirtualFile root : roots) {
+          DirectoryInfo info = getInfoForFileOrDirectory(root);
+          if (!info.isInProject()) continue;
+
+          VirtualFile parent = root.getParent();
           if (parent != null) {
             DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
             if (parentInfo.isInProject() && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
           }
-          result.add(contentRoot);
+          result.add(root);
         }
-
-        return result;
       }
+
+      return result;
     });
     for (VirtualFile contentRoot : contentRoots) {
       boolean finished = VfsUtilCore.iterateChildrenRecursively(contentRoot, myContentFilter, iterator);

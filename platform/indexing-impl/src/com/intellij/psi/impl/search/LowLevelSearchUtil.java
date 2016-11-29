@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,18 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
+import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 public class LowLevelSearchUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
@@ -47,7 +53,7 @@ public class LowLevelSearchUtil {
   private static Boolean processInjectedFile(PsiElement element,
                                              final TextOccurenceProcessor processor,
                                              final StringSearcher searcher,
-                                             ProgressIndicator progress,
+                                             @NotNull ProgressIndicator progress,
                                              InjectedLanguageManager injectedLanguageManager) {
     if (!(element instanceof PsiLanguageInjectionHost)) return null;
     if (injectedLanguageManager == null) return null;
@@ -65,13 +71,16 @@ public class LowLevelSearchUtil {
    * to be reused via <code>lastElement<code/> param in subsequent calls to avoid full tree rescan (n^2->n).
    */
   private static TreeElement processTreeUp(@NotNull Project project,
-                                       @NotNull TextOccurenceProcessor processor,
-                                       @NotNull PsiElement scope,
-                                       @NotNull StringSearcher searcher,
-                                       final int offset,
-                                       final boolean processInjectedPsi,
-                                       ProgressIndicator progress,
-                                       TreeElement lastElement) {
+                                           @NotNull TextOccurenceProcessor processor,
+                                           @NotNull PsiElement scope,
+                                           @NotNull StringSearcher searcher,
+                                           final int offset,
+                                           final boolean processInjectedPsi,
+                                           @NotNull ProgressIndicator progress,
+                                           TreeElement lastElement) {
+    if (scope instanceof PsiCompiledElement) {
+      throw new IllegalArgumentException("Scope is compiled, can't scan: "+scope);
+    }
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
     final int patternLength = searcher.getPatternLength();
     ASTNode scopeNode = scope.getNode();
@@ -98,7 +107,7 @@ public class LowLevelSearchUtil {
       start = offset - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
     }
     if (start < 0) {
-      throw new AssertionError("offset=" + offset + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement + "  scope=" + scope);
+      throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; leafElement=" + leafElement + ";  scope=" + scope+"; leafElement.isValid(): "+ (leafElement == null ? null : leafElement.isValid()));
     }
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     lastElement = leafNode;
@@ -107,7 +116,7 @@ public class LowLevelSearchUtil {
     TreeElement prevNode = null;
     PsiElement run = null;
     while (run != scope) {
-      if (progress != null) progress.checkCanceled();
+      progress.checkCanceled();
       if (useTree) {
         start += prevNode == null ? 0 : prevNode.getStartOffsetInParent();
         prevNode = leafNode;
@@ -139,7 +148,8 @@ public class LowLevelSearchUtil {
         if (leafElement == null) break;
       }
     }
-    assert run == scope: "Malbuilt PSI: scopeNode="+scope+"; leafNode="+run+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, run, false);
+    assert run == scope: "Malbuilt PSI; scopeNode: "+scope+"; containingFile:" + PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) +
+                         "; leafNode: "+run+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, run, false)+"; in same file: "+(PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) == PsiTreeUtil.getParentOfType(run, PsiFile.class, false));
 
     return lastElement;
   }
@@ -164,12 +174,16 @@ public class LowLevelSearchUtil {
     return (LeafElement)scopeNode.findLeafElementAt(offsetR);
   }
 
-  //@RequiresReadAction
   public static boolean processElementsContainingWordInElement(@NotNull final TextOccurenceProcessor processor,
                                                                @NotNull final PsiElement scope,
                                                                @NotNull final StringSearcher searcher,
-                                                               final boolean processInjectedPsi,
-                                                               final ProgressIndicator progress) {
+                                                               boolean processInjectedPsi,
+                                                               @NotNull  ProgressIndicator progress) {
+    int[] occurrences = getTextOccurrencesInScope(scope, searcher, progress);
+    return processElementsAtOffsets(scope, searcher, processInjectedPsi, progress, occurrences, processor);
+  }
+
+  static int[] getTextOccurrencesInScope(@NotNull PsiElement scope, @NotNull StringSearcher searcher, ProgressIndicator progress) {
     if (progress != null) progress.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
@@ -179,28 +193,38 @@ public class LowLevelSearchUtil {
     TextRange range = scope.getTextRange();
     if (range == null) {
       LOG.error("Element " + scope + " of class " + scope.getClass() + " has null range");
-      return true;
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
 
-    final int scopeStart = range.getStartOffset();
-    final int startOffset = scopeStart;
+    int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     if (endOffset > buffer.length()) {
       diagnoseInvalidRange(scope, file, viewProvider, buffer, range);
-      return true;
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
 
-    final Project project = file.getProject();
-    final TreeElement[] lastElement = {null};
-    return processTextOccurrences(buffer, startOffset, endOffset, searcher, progress, new TIntProcedure() {
-      @Override
-      public boolean execute(int offset) {
-        if (progress != null) progress.checkCanceled();
-        lastElement[0] = processTreeUp(project, processor, scope, searcher, offset - scopeStart, processInjectedPsi, progress,
-                                       lastElement[0]);
-        return lastElement[0] != null;
-      }
-    });
+    int[] offsets = getTextOccurrences(buffer, startOffset, endOffset, searcher, progress);
+    for (int i = 0; i < offsets.length; i++) {
+      offsets[i] -= startOffset;
+    }
+    return offsets;
+  }
+
+  static boolean processElementsAtOffsets(@NotNull PsiElement scope,
+                                          @NotNull StringSearcher searcher,
+                                          boolean processInjectedPsi,
+                                          @NotNull ProgressIndicator progress,
+                                          int[] offsetsInScope, @NotNull TextOccurenceProcessor processor) {
+    if (offsetsInScope.length == 0) return true;
+
+    Project project = scope.getProject();
+    TreeElement[] lastElement = {null};
+    for (int offset : offsetsInScope) {
+      progress.checkCanceled();
+      lastElement[0] = processTreeUp(project, processor, scope, searcher, offset, processInjectedPsi, progress, lastElement[0]);
+      if (lastElement[0] == null) return false;
+    }
+    return true;
   }
 
   private static void diagnoseInvalidRange(@NotNull PsiElement scope,
@@ -224,25 +248,64 @@ public class LowLevelSearchUtil {
     LOG.error(msg);
   }
 
+  // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))
+  // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
+  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   public static boolean processTextOccurrences(@NotNull CharSequence text,
                                                int startOffset,
                                                int endOffset,
                                                @NotNull StringSearcher searcher,
                                                @Nullable ProgressIndicator progress,
                                                @NotNull TIntProcedure processor) {
-    if (endOffset > text.length()) {
-      throw new AssertionError("end>length");
-    }
-    for (int index = startOffset; index < endOffset; index++) {
-      if (progress != null) progress.checkCanceled();
-      //noinspection AssignmentToForLoopParameter
-      index = searcher.scan(text, index, endOffset);
-      if (index < 0) break;
-      if (checkJavaIdentifier(text, startOffset, endOffset, searcher, index)) {
-        if (!processor.execute(index)) return false;
+    for (int offset : getTextOccurrences(text, startOffset, endOffset, searcher, progress)) {
+      if (!processor.execute(offset)) {
+        return false;
       }
     }
     return true;
+  }
+
+  private static int[] getTextOccurrences(@NotNull CharSequence text,
+                                          int startOffset,
+                                          int endOffset,
+                                          @NotNull StringSearcher searcher,
+                                          @Nullable ProgressIndicator progress) {
+    if (endOffset > text.length()) {
+      throw new IllegalArgumentException("end: " + endOffset + " > length: "+text.length());
+    }
+    Map<StringSearcher, int[]> cachedMap = cache.get(text);
+    int[] cachedOccurrences = cachedMap == null ? null : cachedMap.get(searcher);
+    boolean hasCachedOccurrences = cachedOccurrences != null && cachedOccurrences[0] <= startOffset && cachedOccurrences[1] >= endOffset;
+    if (!hasCachedOccurrences) {
+      TIntArrayList occurrences = new TIntArrayList();
+      int newStart = Math.min(startOffset, cachedOccurrences == null ? startOffset : cachedOccurrences[0]);
+      int newEnd = Math.max(endOffset, cachedOccurrences == null ? endOffset : cachedOccurrences[1]);
+      occurrences.add(newStart);
+      occurrences.add(newEnd);
+      for (int index = newStart; index < newEnd; index++) {
+        if (progress != null) progress.checkCanceled();
+        //noinspection AssignmentToForLoopParameter
+        index = searcher.scan(text, index, newEnd);
+        if (index < 0) break;
+        if (checkJavaIdentifier(text, 0, text.length(), searcher, index)) {
+          occurrences.add(index);
+        }
+      }
+      cachedOccurrences = occurrences.toNativeArray();
+      if (cachedMap == null) {
+        cachedMap = ConcurrencyUtil.cacheOrGet(cache, text, ContainerUtil.createConcurrentSoftMap());
+      }
+      cachedMap.put(searcher, cachedOccurrences);
+    }
+    TIntArrayList offsets = new TIntArrayList(cachedOccurrences.length - 2);
+    for (int i = 2; i < cachedOccurrences.length; i++) {
+      int occurrence = cachedOccurrences[i];
+      if (occurrence > endOffset - searcher.getPatternLength()) break;
+      if (occurrence >= startOffset) {
+        offsets.add(occurrence);
+      }
+    }
+    return offsets.toNativeArray();
   }
 
   private static boolean checkJavaIdentifier(@NotNull CharSequence text,

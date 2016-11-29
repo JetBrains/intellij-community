@@ -2,7 +2,6 @@ package org.jetbrains.yaml.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,7 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
       children = Collections.emptyList();
     }
     
-    final List<StructureViewTreeElement> structureElements = new ArrayList<StructureViewTreeElement>();
+    final List<StructureViewTreeElement> structureElements = new ArrayList<>();
     for (YAMLPsiElement child : children) {
       structureElements.add(new YAMLStructureViewElement(child));
     }
@@ -82,8 +81,8 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
         }
 
         public Icon getIcon(boolean open) {
-          final PsiElement value = kv.getValue();
-          return value instanceof YAMLScalar ? PlatformIcons.PROPERTY_ICON : PlatformIcons.XML_TAG_ICON;
+          final YAMLValue value = kv.getValue();
+          return value instanceof YAMLScalar ? kv.getIcon(0) : PlatformIcons.XML_TAG_ICON;
         }
       };
     }

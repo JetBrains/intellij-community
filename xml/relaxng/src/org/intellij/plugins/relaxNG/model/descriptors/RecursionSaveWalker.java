@@ -80,18 +80,18 @@ public class RecursionSaveWalker extends DPatternWalker {
     }
   }
 
-  private static final SpinAllocator<THashSet<DPattern>> ourAllocator = new SpinAllocator<THashSet<DPattern>>(
-          new SpinAllocator.ICreator<THashSet<DPattern>>() {
-            @Override
-            @SuppressWarnings({ "unchecked" })
-            public THashSet<DPattern> createInstance() {
-              return ContainerUtil.<DPattern>newIdentityTroveSet(256);
-            }
-          },
-          new SpinAllocator.IDisposer<THashSet<DPattern>>() {
-            @Override
-            public void disposeInstance(THashSet<DPattern> instance) {
-              instance.clear();
-            }
-          });
+  private static final SpinAllocator<THashSet<DPattern>> ourAllocator = new SpinAllocator<>(
+    new SpinAllocator.ICreator<THashSet<DPattern>>() {
+      @Override
+      @SuppressWarnings({"unchecked"})
+      public THashSet<DPattern> createInstance() {
+        return ContainerUtil.<DPattern>newIdentityTroveSet(256);
+      }
+    },
+    new SpinAllocator.IDisposer<THashSet<DPattern>>() {
+      @Override
+      public void disposeInstance(THashSet<DPattern> instance) {
+        instance.clear();
+      }
+    });
 }

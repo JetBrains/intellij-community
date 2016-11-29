@@ -102,7 +102,11 @@ public class PsiFileSystemItemUtil {
       if (length > 0) {
         length++;
       }
-      length += parent.getName().length();
+      String name = parent.getName();
+      if (name == null) {
+        throw new AssertionError("Null name for " + parent + " of " + parent.getClass());
+      }
+      length += name.length();
       parent = parent.getParent();
     }
 

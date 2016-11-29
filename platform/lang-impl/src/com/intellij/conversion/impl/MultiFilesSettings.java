@@ -42,7 +42,7 @@ class MultiFilesSettings {
     if (projectFile != null && projectFile.exists()) {
       myProjectFile = context.getOrCreateFile(projectFile);
     }
-    mySettingsFiles = new ArrayList<SettingsXmlFile>();
+    mySettingsFiles = new ArrayList<>();
 
     if (settingsFiles != null) {
       for (File file : settingsFiles) {
@@ -53,7 +53,7 @@ class MultiFilesSettings {
 
   @NotNull
   protected Collection<? extends Element> getSettings(@NotNull String componentName, @NotNull String tagName) {
-    final List<Element> result = new ArrayList<Element>();
+    final List<Element> result = new ArrayList<>();
     if (myProjectFile != null) {
       result.addAll(JDOMUtil.getChildren(myProjectFile.findComponent(componentName), tagName));
     }
@@ -66,7 +66,7 @@ class MultiFilesSettings {
   }
 
   public Collection<File> getAffectedFiles() {
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
 
     if (myProjectFile != null) {
       files.add(myProjectFile.getFile());

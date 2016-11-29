@@ -33,6 +33,7 @@ public class RepositoryLibraryPropertiesEditor {
   @NotNull private final Project project;
   State currentState;
   List<String> versions;
+  @Nullable
   private VersionKind versionKind;
   private RepositoryLibraryPropertiesModel initialModel;
   private RepositoryLibraryPropertiesModel model;
@@ -74,6 +75,7 @@ public class RepositoryLibraryPropertiesEditor {
     this.model = model;
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     repositoryLibraryDescription = description;
+    mavenCoordinates.setCopyable(true);
     myReloadButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -84,7 +86,7 @@ public class RepositoryLibraryPropertiesEditor {
       @Override
       public void onChange(RepositoryLibraryPropertiesEditor editor) {
         onChangeListener.onChange(editor);
-        mavenCoordinates.setText("Maven: " + repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
+        mavenCoordinates.setText(repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
       }
     };
     reloadVersionsAsync();
@@ -107,12 +109,7 @@ public class RepositoryLibraryPropertiesEditor {
 
   private static int getSelection(String selectedVersion, List<String> versions) {
     VersionKind versionKind = getVersionKind(selectedVersion);
-    int releaseIndex = JBIterable.from(versions).takeWhile(new Condition<String>() {
-      @Override
-      public boolean value(String version) {
-        return version.endsWith(RepositoryUtils.SnapshotVersionSuffix);
-      }
-    }).size();
+    int releaseIndex = JBIterable.from(versions).takeWhile(version -> version.endsWith(RepositoryUtils.SnapshotVersionSuffix)).size();
 
     switch (versionKind) {
       case Unselected:
@@ -135,7 +132,7 @@ public class RepositoryLibraryPropertiesEditor {
       ProjectBundle.message("maven.version.kind.selector.release"),
       ProjectBundle.message("maven.version.kind.selector.latest"),
       ProjectBundle.message("maven.version.kind.selector.select"));
-    CollectionComboBoxModel<String> versionKindSelectorModel = new CollectionComboBoxModel<String>(versionKinds);
+    CollectionComboBoxModel<String> versionKindSelectorModel = new CollectionComboBoxModel<>(versionKinds);
     //noinspection unchecked
     versionKindSelector.setModel(versionKindSelectorModel);
     versionKindSelector.addItemListener(new ItemListener() {
@@ -214,7 +211,7 @@ public class RepositoryLibraryPropertiesEditor {
 
   private void initVersionsPanel() {
     final int selection = getSelection(model.getVersion(), versions);
-    CollectionComboBoxModel<String> versionSelectorModel = new CollectionComboBoxModel<String>(versions);
+    CollectionComboBoxModel<String> versionSelectorModel = new CollectionComboBoxModel<>(versions);
     //noinspection unchecked
     versionSelector.setModel(versionSelectorModel);
     versionSelector.setSelectedIndex(selection);
@@ -253,24 +250,17 @@ public class RepositoryLibraryPropertiesEditor {
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        initVersionsPanel();
-      }
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeLater(this::initVersionsPanel, ModalityState.any());
   }
 
   private void versionsFailedToLoad() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        setState(State.FailedToLoad);
-      }
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeLater(() -> setState(State.FailedToLoad), ModalityState.any());
   }
 
+  @Nullable
   public String getSelectedVersion() {
+    if(versionKind == null) return null;
+
     switch (versionKind) {
       case Unselected:
         return null;

@@ -60,11 +60,6 @@ public class StatisticsConnectionService extends SettingsConnectionService {
     }
 
     final List<String> disabledGroupsList = StringUtil.split(disabledGroupsString, ",");
-    return ContainerUtil.map2Set(disabledGroupsList, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return s.trim();
-      }
-    });
+    return ContainerUtil.map2Set(disabledGroupsList, s -> s.trim());
   }
 }

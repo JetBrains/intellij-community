@@ -27,15 +27,12 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ArrayUtil;
@@ -59,7 +56,7 @@ public abstract class DebuggerSessionTabBase extends RunTab {
       .initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
   }
 
-  protected static ActionGroup getCustomizedActionGroup(final String id) {
+  public static ActionGroup getCustomizedActionGroup(final String id) {
     return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(id);
   }
 
@@ -104,33 +101,5 @@ public abstract class DebuggerSessionTabBase extends RunTab {
         }
       }
     });
-  }
-
-  public void toFront(boolean focus, @Nullable final Runnable onShowCallback) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (myRunContentDescriptor != null) {
-        ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
-          .getToolWindowByDescriptor(myRunContentDescriptor);
-        if (toolWindow != null) {
-          if (!toolWindow.isVisible()) {
-            toolWindow.show(onShowCallback);
-          }
-          //noinspection ConstantConditions
-          toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
-        }
-      }
-    });
-
-    if (focus) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
-        ProjectUtil.focusProjectWindow(myProject, focusWnd);
-        if (!focusWnd) {
-          AppIcon.getInstance().requestAttention(myProject, true);
-        }
-      });
-    }
   }
 }

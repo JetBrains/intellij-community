@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,12 @@ public class CommonTest extends IncrementalTestCase {
   }
 
   public void testDeleteClassAfterCompileErrors() throws Exception {
+    setupInitialProject();
+
+    doTestBuild(2);
+  }
+
+  public void testDontMarkDependentsAfterCompileErrors() throws Exception {
     setupInitialProject();
 
     doTestBuild(2);
@@ -149,7 +155,13 @@ public class CommonTest extends IncrementalTestCase {
     JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
     doTestBuild(1).assertSuccessful();
   }
-  
+
+  public void testIntegrateOnSuperclassRemovedAndRestored() throws Exception {
+    setupInitialProject();
+
+    doTestBuild(2);
+  }
+
   public void testMoveToplevelClassToAnotherFile() throws Exception {
     doTest();
   }
@@ -157,5 +169,12 @@ public class CommonTest extends IncrementalTestCase {
   public void testMoveClassToAnotherRoot() throws Exception {
     doTest();
   }
-  
+
+  public void testIntegrateOnNonIncrementalMake() throws Exception {
+    doTest();
+  }
+
+  public void testModuleInfoIncluded() {
+    doTest();
+  }
 }

@@ -62,14 +62,9 @@ public class I18nizeTest extends LightCodeInsightTestCase {
     if (afterFileExists) {
       PsiLiteralExpression literalExpression = I18nizeAction.getEnclosingStringLiteral(getFile(), getEditor());
       assertNotNull(handler);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          handler.performI18nization(getFile(), getEditor(), literalExpression, Collections.<PropertiesFile>emptyList(), "key1", "value1",
-                                     "i18nizedExpr",
-                                     PsiExpression.EMPTY_ARRAY, JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> handler.performI18nization(getFile(), getEditor(), literalExpression, Collections.<PropertiesFile>emptyList(), "key1", "value1",
+                                                                                        "i18nizedExpr",
+                                                                                        PsiExpression.EMPTY_ARRAY, JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER));
 
       checkResultByFile(afterFile);
     }

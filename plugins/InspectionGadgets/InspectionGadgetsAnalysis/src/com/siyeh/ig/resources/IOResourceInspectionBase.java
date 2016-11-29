@@ -32,7 +32,7 @@ public class IOResourceInspectionBase extends ResourceInspection {
       "java.io.InputStream", "java.io.OutputStream", "java.io.Reader", "java.io.Writer",
       "java.io.RandomAccessFile", "java.util.zip.ZipFile", "java.io.Closeable"
     };
-  final List<String> ignoredTypes = new ArrayList<String>();
+  final List<String> ignoredTypes = new ArrayList<>();
 
   public IOResourceInspectionBase() {
     parseString(ignoredTypesString, ignoredTypes);

@@ -41,7 +41,7 @@ public class ProcessWaitFor {
       public void run() {
         String oldThreadName = Thread.currentThread().getName();
         if (!StringUtil.isEmptyOrSpaces(presentableName)) {
-          Thread.currentThread().setName(StringUtil.first("ProcessWaitFor: " + presentableName, 120, true));
+          Thread.currentThread().setName("ProcessWaitFor: " + presentableName);
         }
         int exitCode = 0;
         try {

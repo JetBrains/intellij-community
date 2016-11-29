@@ -21,16 +21,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.testFramework.file
 import com.intellij.util.PathUtilRt
-import com.intellij.util.writeChild
+import com.intellij.util.io.writeChild
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.jgit.dirCache.deletePath
-import org.jetbrains.jgit.dirCache.writePath
 import org.jetbrains.settingsRepository.CannotResolveConflictInTestMode
 import org.jetbrains.settingsRepository.SyncType
 import org.jetbrains.settingsRepository.conflictResolver
 import org.jetbrains.settingsRepository.copyLocalConfig
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.computeIndexDiff
+import org.jetbrains.settingsRepository.git.deletePath
+import org.jetbrains.settingsRepository.git.writePath
 import org.junit.Test
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -54,7 +54,7 @@ internal class GitTest : GitTestCase() {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
         }
         else if (Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
-          file.setBinaryContent(mergeData.LAST!!)
+          file.setBinaryContent(mergeData.LAST)
           mergeProvider.conflictResolvedForFile(file)
         }
         else {
@@ -363,7 +363,7 @@ internal class GitTest : GitTestCase() {
     if (syncType != SyncType.OVERWRITE_LOCAL) {
       fs.file(path, data)
     }
-    restoreRemoteAfterPush();
+    restoreRemoteAfterPush()
     fs.compare()
   }
 }

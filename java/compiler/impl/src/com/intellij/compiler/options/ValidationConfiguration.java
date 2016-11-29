@@ -25,6 +25,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.jps.model.serialization.java.compiler.JpsCompilerValidationExcludeSerializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +37,7 @@ import java.util.Map;
 public class ValidationConfiguration implements PersistentStateComponent<ValidationConfiguration> {
 
   public boolean VALIDATE_ON_BUILD = false;
-  public Map<String, Boolean> VALIDATORS = new HashMap<String, Boolean>();
+  public Map<String, Boolean> VALIDATORS = new HashMap<>();
 
   public static boolean shouldValidate(Compiler validator, CompileContext context) {
     ValidationConfiguration configuration = getInstance(context.getProject());
@@ -76,6 +77,9 @@ public class ValidationConfiguration implements PersistentStateComponent<Validat
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  @State(name = "ExcludeFromValidation", storages = @Storage("excludeFromValidation.xml"))
+  @State(
+    name = JpsCompilerValidationExcludeSerializer.COMPONENT_NAME,
+    storages = @Storage(JpsCompilerValidationExcludeSerializer.CONFIG_FILE_NAME)
+  )
   public static class ExcludedFromValidationConfiguration extends ExcludedEntriesConfiguration {}
 }

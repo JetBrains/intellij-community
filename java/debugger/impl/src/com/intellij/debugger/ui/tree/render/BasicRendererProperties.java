@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,12 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Feb 12, 2005
- */
-public final class BasicRendererProperties implements Cloneable, JDOMExternalizable{
-  // todo: add class filters here
+public final class BasicRendererProperties implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.BasicRendererProperties");
 
   private static final @NonNls String NAME_OPTION = "NAME";
@@ -39,8 +33,14 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   private static final @NonNls String CLASSNAME_OPTION = "QUALIFIED_NAME";
   private String myClassName;
 
-  private static final @NonNls String SHOWTYPE_OPTION = "SHOW_TYPE";
+  private static final @NonNls String SHOW_TYPE_OPTION = "SHOW_TYPE";
   private boolean myShowType = true;
+
+  private final boolean myEnabledDefaultValue;
+
+  public BasicRendererProperties(boolean enabledDefaultValue) {
+    myEnabledDefaultValue = enabledDefaultValue;
+  }
 
   public String getName() {
     return myName;
@@ -74,55 +74,51 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
     myShowType = showType;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     myName = null;
     myClassName = null;
     for (Element option : element.getChildren("option")) {
       final String optionName = option.getAttributeValue("name");
-      if (NAME_OPTION.equals(optionName)) {
-        myName = option.getAttributeValue("value");
-      }
-      else if (ENABLED_OPTION.equals(optionName)) {
-        // default is false
-        myEnabled = Boolean.parseBoolean(option.getAttributeValue("value"));
-      }
-      else if (CLASSNAME_OPTION.equals(optionName)) {
-        myClassName = option.getAttributeValue("value");
-      }
-      else if (SHOWTYPE_OPTION.equals(optionName)) {
-        // default is true
-        myShowType = !"false".equalsIgnoreCase(option.getAttributeValue("value"));
+      switch (optionName) {
+        case NAME_OPTION:
+          myName = option.getAttributeValue("value");
+          break;
+        case ENABLED_OPTION:
+          // default is false
+          String value = option.getAttributeValue("value");
+          if (value != null) {
+            myEnabled = Boolean.parseBoolean(value);
+          }
+          break;
+        case CLASSNAME_OPTION:
+          myClassName = option.getAttributeValue("value");
+          break;
+        case SHOW_TYPE_OPTION:
+          // default is true
+          myShowType = !"false".equalsIgnoreCase(option.getAttributeValue("value"));
+          break;
       }
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) {
     if (myName != null) {
-      addOption(element, NAME_OPTION, myName);
+      JDOMExternalizerUtil.writeField(element, NAME_OPTION, myName);
     }
-    if (myEnabled) {
-      // default is false
-      //noinspection ConstantConditions
-      addOption(element, ENABLED_OPTION, Boolean.toString(myEnabled));
+    if (myEnabled != myEnabledDefaultValue) {
+      JDOMExternalizerUtil.writeField(element, ENABLED_OPTION, Boolean.toString(myEnabled));
     }
     if (myClassName != null) {
-      addOption(element, CLASSNAME_OPTION, myClassName);
+      JDOMExternalizerUtil.writeField(element, CLASSNAME_OPTION, myClassName);
     }
     if (!myShowType) {
       // default is true
       //noinspection ConstantConditions
-      addOption(element, SHOWTYPE_OPTION, Boolean.toString(myShowType));
+      JDOMExternalizerUtil.writeField(element, SHOW_TYPE_OPTION, Boolean.toString(myShowType));
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void addOption(final Element element, final String optionName, final String optionValue) {
-    final Element option = new Element("option");
-    element.addContent(option);
-    option.setAttribute("name", optionName);
-    option.setAttribute("value", optionValue);
-  }
-
+  @Override
   public BasicRendererProperties clone()  {
     try {
       return (BasicRendererProperties)super.clone();

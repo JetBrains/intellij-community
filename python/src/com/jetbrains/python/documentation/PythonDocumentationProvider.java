@@ -138,20 +138,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                 FP.Lambda1<Iterable<String>, Iterable<String>> funcNameWrapper,
                                                 @NotNull FP.Lambda1<String, String> escaper
   ) {
-    final ChainIterable<String> cat = new ChainIterable<String>();
+    final ChainIterable<String> cat = new ChainIterable<>();
     final String name = fun.getName();
     cat.addItem("def ").addWith(funcNameWrapper, $(name));
     final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getProject(), fun.getContainingFile());
     final List<PyParameter> parameters = PyUtil.getParameters(fun, context);
     final String paramStr = "(" +
                             StringUtil.join(parameters,
-                                            new Function<PyParameter, String>() {
-                                              @NotNull
-                                              @Override
-                                              public String fun(PyParameter parameter) {
-                                                return PyUtil.getReadableRepr(parameter, false);
-                                              }
-                                            },
+                                            parameter -> PyUtil.getReadableRepr(parameter, false),
                                             ", ") +
                             ")";
     cat.addItem(escaper.apply(paramStr));
@@ -225,7 +219,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                   FP.Lambda1<Iterable<String>, Iterable<String>> decoNameWrapper,
                                                   @NotNull String decoSeparator,
                                                   FP.Lambda1<String, String> escaper) {
-    final ChainIterable<String> cat = new ChainIterable<String>();
+    final ChainIterable<String> cat = new ChainIterable<>();
     final PyDecoratorList decoList = what.getDecoratorList();
     if (decoList != null) {
       for (PyDecorator deco : decoList.getDecorators()) {
@@ -248,7 +242,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                              FP.Lambda1<Iterable<String>, Iterable<String>> nameWrapper,
                                              boolean allowHtml,
                                              boolean linkOwnName) {
-    final ChainIterable<String> cat = new ChainIterable<String>();
+    final ChainIterable<String> cat = new ChainIterable<>();
     final String name = cls.getName();
     cat.addItem("class ");
     if (allowHtml && linkOwnName) {
@@ -292,7 +286,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                FP.Lambda1<String, String> argWrapper
                                                // add escaping, if need be
   ) {
-    final ChainIterable<String> cat = new ChainIterable<String>();
+    final ChainIterable<String> cat = new ChainIterable<>();
     cat.addItem("@").addWith(nameWrapper, $(PyUtil.getReadableRepr(deco.getCallee(), true)));
     if (deco.hasArgumentList()) {
       final PyArgumentList arglist = deco.getArgumentList();
@@ -468,17 +462,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final Project project = element.getProject();
     final QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, element);
     if (qName != null && qName.getComponentCount() > 0) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final int rc = Messages.showOkCancelDialog(project,
-                                                     "No external documentation URL configured for module " + qName.getComponents().get(0) +
-                                                     ".\nWould you like to configure it now?",
-                                                     "Python External Documentation",
-                                                     Messages.getQuestionIcon());
-          if (rc == Messages.OK) {
-            ShowSettingsUtilImpl.showSettingsDialog(project, PythonDocumentationConfigurable.ID, "");
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        final int rc = Messages.showOkCancelDialog(project,
+                                                   "No external documentation URL configured for module " + qName.getComponents().get(0) +
+                                                   ".\nWould you like to configure it now?",
+                                                   "Python External Documentation",
+                                                   Messages.getQuestionIcon());
+        if (rc == Messages.OK) {
+          ShowSettingsUtilImpl.showSettingsDialog(project, PythonDocumentationConfigurable.ID, "");
         }
       }, ModalityState.NON_MODAL);
     }

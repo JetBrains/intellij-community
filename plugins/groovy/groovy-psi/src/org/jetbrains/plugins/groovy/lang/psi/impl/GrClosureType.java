@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -39,7 +38,7 @@ import java.util.List;
  */
 public class GrClosureType extends GrLiteralClassType {
   private final GrSignature mySignature;
-  private volatile PsiType[] myTypeArgs = null;
+  private volatile PsiType[] myTypeArgs;
 
   private GrClosureType(LanguageLevel languageLevel,
                         @NotNull GlobalSearchScope scope,
@@ -111,12 +110,6 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Override
-  @NotNull
-  public String getInternalCanonicalText() {
-    return getCanonicalText();
-  }
-
-  @Override
   public boolean isValid() {
     return mySignature.isValid();
   }
@@ -136,7 +129,7 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   public static GrClosureType create(GroovyResolveResult[] results, GroovyPsiElement context) {
-    List<GrClosureSignature> signatures = new ArrayList<GrClosureSignature>();
+    List<GrClosureSignature> signatures = new ArrayList<>();
     for (GroovyResolveResult result : results) {
       if (result.getElement() instanceof PsiMethod) {
         signatures.add(GrClosureSignatureUtil.createSignature((PsiMethod)result.getElement(), result.getSubstitutor()));

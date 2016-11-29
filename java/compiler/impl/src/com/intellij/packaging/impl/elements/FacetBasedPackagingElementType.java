@@ -61,7 +61,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
     final List<F> facets = getFacets(context);
     ChooseFacetsDialog dialog = new ChooseFacetsDialog(context.getProject(), facets, getDialogTitle(), getDialogDescription());
     if (dialog.showAndGet()) {
-      final List<E> elements = new ArrayList<E>();
+      final List<E> elements = new ArrayList<>();
       for (F facet : dialog.getChosenElements()) {
         elements.add(createElement(context.getProject(), facet));
       }
@@ -72,7 +72,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
   private List<F> getFacets(ArtifactEditorContext context) {
     final Module[] modules = context.getModulesProvider().getModules();
-    final List<F> facets = new ArrayList<F>();
+    final List<F> facets = new ArrayList<>();
     for (Module module : modules) {
       facets.addAll(context.getFacetsProvider().getFacetsByType(module, myFacetType));
     }

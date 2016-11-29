@@ -39,12 +39,14 @@ public class HashImpl implements Hash {
   @NotNull
   public static Hash build(@NotNull String inputStr) {
     byte[] data = buildData(inputStr);
+    assert data.length > 0 : "Can not build hash for string " + inputStr;
     return new HashImpl(data);
   }
 
   @NotNull
   public static Hash read(@NotNull DataInput in) throws IOException {
     int length = DataInputOutputUtil.readINT(in);
+    if (length == 0) throw new IOException("Can not read hash: data length is zero");
     byte[] buf = new byte[length];
     in.readFully(buf);
     return new HashImpl(buf);

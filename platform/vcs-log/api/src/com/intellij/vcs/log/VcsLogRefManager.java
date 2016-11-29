@@ -2,6 +2,9 @@ package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -53,10 +56,34 @@ public interface VcsLogRefManager {
   Comparator<VcsRef> getLabelsOrderComparator();
 
   /**
-   * <p>Groups VCS references to show them on the branches panel.</p>
+   * <p>Groups VCS references to show them in branch filter.</p>
    * <p>Groups containing only one element will be displayed as a single ref. Others will provide a popup menu.</p>
    * <p>Groups must be pre-sorted in the order which they are to be painted on the panel.</p>
    */
   @NotNull
-  List<RefGroup> group(Collection<VcsRef> refs);
+  List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs);
+
+  /**
+   * Groups VCS references to show them in graph table.
+   * All references given to this method are from the same commit.
+   */
+  @NotNull
+  List<RefGroup> groupForTable(@NotNull Collection<VcsRef> refs);
+
+  /**
+   * Writes given reference type to the output.
+   *
+   * @param out  output to write type into
+   * @param type type to serialize
+   */
+  void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) throws IOException;
+
+  /**
+   * Reads reference type from given input.
+   *
+   * @param in input to read type from
+   * @return reference type read from the input
+   */
+  @NotNull
+  VcsRefType deserialize(@NotNull DataInput in) throws IOException;
 }

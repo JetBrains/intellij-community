@@ -47,7 +47,7 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
                                 boolean isSingleFile,
                                 @NotNull FindUsagesHandler handler) {
     super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isTextSearch(element, isSingleFile, handler),
-          !isSingleFile && !element.getManager().isInProject(element));
+          true);
     myPsiElement = element;
     myHelpId = ObjectUtils.chooseNotNull(handler.getHelpId(), HelpID.FIND_OTHER_USAGES);
     init();

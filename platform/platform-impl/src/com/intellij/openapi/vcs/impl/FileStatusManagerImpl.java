@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,35 +96,31 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
   }
 
-  public FileStatusManagerImpl(Project project, StartupManager startupManager, EditorColorsManager colorsManager,
-                               @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
+  public FileStatusManagerImpl(Project project, StartupManager startupManager, @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
     myProject = project;
 
-    colorsManager.addEditorColorsListener(new EditorColorsListener() {
+    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         fileStatusesChanged();
       }
-    }, myProject);
+    });
 
-    startupManager.registerPreStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        DocumentAdapter documentListener = new DocumentAdapter() {
-          @Override
-          public void documentChanged(DocumentEvent event) {
-            if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
-            VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-            if (file != null) {
-              refreshFileStatusFromDocument(file, event.getDocument());
-            }
+    startupManager.registerPreStartupActivity(() -> {
+      DocumentAdapter documentListener = new DocumentAdapter() {
+        @Override
+        public void documentChanged(DocumentEvent event) {
+          if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
+          VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
+          if (file != null) {
+            refreshFileStatusFromDocument(file, event.getDocument());
           }
-        };
-
-        final EditorFactory factory = EditorFactory.getInstance();
-        if (factory != null) {
-          factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
         }
+      };
+
+      final EditorFactory factory = EditorFactory.getInstance();
+      if (factory != null) {
+        factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
       }
     });
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {

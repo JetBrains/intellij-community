@@ -45,7 +45,7 @@ public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesColle
   @NotNull
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
 
-    final Set<String> languageLevels = new HashSet<String>();
+    final Set<String> languageLevels = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final LanguageLevelModuleExtension instance = LanguageLevelModuleExtensionImpl.getInstance(module);
       final LanguageLevel languageLevel = instance.getLanguageLevel();
@@ -55,11 +55,6 @@ public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesColle
     }
     languageLevels.add(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().toString());
 
-    return ContainerUtil.map2Set(languageLevels, new Function<String, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(String languageLevel) {
-        return new UsageDescriptor(languageLevel, 1);
-      }
-    });
+    return ContainerUtil.map2Set(languageLevels, languageLevel -> new UsageDescriptor(languageLevel, 1));
   }
 }

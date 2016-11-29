@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.utils.library;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.util.containers.HashMap;
 import icons.MavenIcons;
@@ -29,8 +28,6 @@ import java.util.List;
 import java.util.Map;
 
 public class RepositoryLibraryDescription {
-  protected static final ExtensionPointName<RepositoryLibraryDescription> EP_NAME
-    = ExtensionPointName.create("org.jetbrains.idea.maven.repositoryLibrary");
   protected static final MavenRepositoryInfo mavenCentralRepository = new MavenRepositoryInfo(
     "central",
     "Maven Central repository",
@@ -52,20 +49,16 @@ public class RepositoryLibraryDescription {
     this.libraryName = libraryName;
   }
 
-  public static <C extends RepositoryLibraryDescription> C ofClass(Class<C> clazz) {
-    return EP_NAME.findExtension(clazz);
-  }
-
   @NotNull
   public static synchronized RepositoryLibraryDescription findDescription(@NotNull final String groupId, @NotNull final String artifactId) {
     if (registeredLibraries == null) {
-      registeredLibraries = new HashMap<String, RepositoryLibraryDescription>();
-      for (RepositoryLibraryDescription description : EP_NAME.getExtensions()) {
-        String id = description.getGroupId() + ":" + description.getArtifactId();
-        RepositoryLibraryDescription existDescription = registeredLibraries.get(id);
-        if (existDescription == null || existDescription.getWeight() >= description.getWeight()) {
-          registeredLibraries.put(id, description);
-        }
+      registeredLibraries = new HashMap<>();
+      for (RepositoryLibraryBean bean : RepositoryLibraryBean.EP_NAME.getExtensions()) {
+        String id = bean.groupId + ":" + bean.artifactId;
+        registeredLibraries.put(id, new RepositoryLibraryDescription(
+          bean.groupId,
+          bean.artifactId,
+          bean.name));
       }
     }
     final String id = groupId + ":" + artifactId;

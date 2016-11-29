@@ -1,7 +1,8 @@
 // Exception is never thrown in method
 
 import java.io.*;
-import java.sql.*;
+
+class SQLException extends Exception {}
 
 class a {
     private void f() throws <warning descr="Exception 'java.io.IOException' is never thrown in the method">IOException</warning> {
@@ -50,7 +51,7 @@ final class Final {
 
 
 class a1 {
-    a1() throws <warning descr="Exception 'java.io.IOException' is never thrown in the method">java.io.IOException</warning>, <warning descr="Exception 'java.sql.SQLException' is never thrown in the method">SQLException</warning>{
+    a1() throws <warning descr="Exception 'java.io.IOException' is never thrown in the method">java.io.IOException</warning>, <warning descr="Exception 'SQLException' is never thrown in the method">SQLException</warning>{
     }
 
 }

@@ -44,7 +44,7 @@ public class UsageListCellRenderer extends ColoredListCellRenderer {
   }
 
   @Override
-  protected void customizeCellRenderer(final JList list,
+  protected void customizeCellRenderer(@NotNull final JList list,
                                        final Object value,
                                        final int index,
                                        final boolean selected,

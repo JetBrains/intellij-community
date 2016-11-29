@@ -52,7 +52,7 @@ public class PyStructuralType implements PyType {
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final List<Object> variants = new ArrayList<Object>();
+    final List<Object> variants = new ArrayList<>();
     for (String attribute : myAttributes) {
       if (!attribute.equals(completionPrefix)) {
         variants.add(LookupElementBuilder.create(attribute).withIcon(PlatformIcons.FIELD_ICON));

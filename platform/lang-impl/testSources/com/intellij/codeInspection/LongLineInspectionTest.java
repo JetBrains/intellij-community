@@ -31,12 +31,16 @@ public class LongLineInspectionTest extends LightPlatformCodeInsightFixtureTestC
     doTest("java");
   }
 
-  public void _testLongLine() {
+  public void testLongLine() {
     doTest("java");
   }
 
   public void testXmlLongLine() {
     doTest("xml");
+  }
+
+  public void testPlain() {
+    doTest("txt");
   }
 
   private void doTest(final String extension) {
@@ -47,10 +51,5 @@ public class LongLineInspectionTest extends LightPlatformCodeInsightFixtureTestC
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/lang-impl/testData/codeInspection/longLine/";
-  }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
   }
 }

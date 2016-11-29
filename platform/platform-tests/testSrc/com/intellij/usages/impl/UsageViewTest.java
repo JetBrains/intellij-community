@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
@@ -36,6 +38,18 @@ import com.intellij.util.ui.UIUtil;
  */
 public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() throws Exception {
+    boolean[] foundLeaksBeforeTest = new boolean[1];
+    LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class, file -> {
+      if (!file.isPhysical()) return false;
+      System.err.println("Can't start the test: leaking PsiFiles found:");
+      foundLeaksBeforeTest[0] = true;
+      return true;
+    });
+
+    if (foundLeaksBeforeTest[0]) {
+      fail("Can't start the test: leaking PsiFiles found");
+    }
+
     PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{} //iuggjhfg");
     Usage[] usages = new Usage[100];
     for (int i = 0; i < usages.length; i++) {
@@ -63,7 +77,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
-    document.insertString(0, "/* sdfsdfsd */");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "/* sdfsdfsd */"));
     documentManager.commitAllDocuments();
     int navigationOffset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
     assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);
@@ -77,7 +91,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
-    document.insertString(0, "/* sdfsdfsd */");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "/* sdfsdfsd */"));
     documentManager.commitAllDocuments();
     int navigationOffset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
     assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);

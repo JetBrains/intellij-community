@@ -49,6 +49,7 @@ public class UsageViewPresentation {
   private boolean myDetachedMode; // no UI will be shown
   private String myDynamicCodeUsagesString;
   private boolean myMergeDupLinesAvailable = true;
+  private boolean myExcludeAvailable = true;
 
   public String getTabText() {
     return myTabText;
@@ -67,7 +68,8 @@ public class UsageViewPresentation {
     myScopeText = scopeText;
   }
 
-  public @NotNull String getContextText() {
+  @NotNull
+  public String getContextText() {
     return myContextText;
   }
 
@@ -143,7 +145,7 @@ public class UsageViewPresentation {
   }
 
   public void addNotFoundAction(Action _action) {
-    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<Action>();
+    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<>();
     myNotFoundActions.add(_action);
   }
 
@@ -217,6 +219,14 @@ public class UsageViewPresentation {
     myUsageTypeFilteringAvailable = usageTypeFilteringAvailable;
   }
 
+  public boolean isExcludeAvailable() {
+    return myExcludeAvailable;
+  }
+
+  public void setExcludeAvailable(boolean excludeAvailable) {
+    myExcludeAvailable = excludeAvailable;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -231,6 +241,7 @@ public class UsageViewPresentation {
     if (myShowCancelButton != that.myShowCancelButton) return false;
     if (myShowReadOnlyStatusAsRed != that.myShowReadOnlyStatusAsRed) return false;
     if (myUsageTypeFilteringAvailable != that.myUsageTypeFilteringAvailable) return false;
+    if (myExcludeAvailable != that.myExcludeAvailable) return false;
     if (myCodeUsagesString != null ? !myCodeUsagesString.equals(that.myCodeUsagesString) : that.myCodeUsagesString != null) return false;
     if (myDynamicCodeUsagesString != null
         ? !myDynamicCodeUsagesString.equals(that.myDynamicCodeUsagesString)
@@ -271,6 +282,7 @@ public class UsageViewPresentation {
     result = 31 * result + (myOpenInNewTab ? 1 : 0);
     result = 31 * result + (myCodeUsages ? 1 : 0);
     result = 31 * result + (myUsageTypeFilteringAvailable ? 1 : 0);
+    result = 31 * result + (myExcludeAvailable ? 1 : 0);
     result = 31 * result + (myUsagesWord != null ? myUsagesWord.hashCode() : 0);
     result = 31 * result + (myTabName != null ? myTabName.hashCode() : 0);
     result = 31 * result + (myToolwindowTitle != null ? myToolwindowTitle.hashCode() : 0);

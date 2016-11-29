@@ -57,11 +57,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     if (editor != null) {
       Locale[] locales = FormEditingUtil.collectUsedLocales(editor.getModule(), editor.getRootContainer());
       if (locales.length > 1 || (locales.length == 1 && locales [0].getDisplayName().length() > 0)) {
-        Arrays.sort(locales, new Comparator<Locale>() {
-          public int compare(final Locale o1, final Locale o2) {
-            return o1.getDisplayName().compareTo(o2.getDisplayName());
-          }
-        });
+        Arrays.sort(locales, (o1, o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
         for(Locale locale: locales) {
           group.add(new SetLocaleAction(editor, locale, true));
         }

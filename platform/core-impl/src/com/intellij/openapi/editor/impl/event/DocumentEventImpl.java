@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -29,38 +28,26 @@ public class DocumentEventImpl extends DocumentEvent {
   private final CharSequence myNewString;
   private final int myNewLength;
 
-  private boolean isOnlyOneLineChangedCalculated = false;
-  private boolean isOnlyOneLineChanged;
-
-  private boolean isStartOldIndexCalculated = false;
-  private int myStartOldIndex;
-
   private final long myOldTimeStamp;
   private final boolean myIsWholeDocReplaced;
   private Diff.Change myChange;
-  private static final Diff.Change TOO_BIG_FILE = new Diff.Change(0, 0, 0, 0, null) {
-  };
+  private static final Diff.Change TOO_BIG_FILE = new Diff.Change(0, 0, 0, 0, null);
 
-  private int myOptimizedLineShift = -1;
-  private boolean myOptimizedLineShiftCalculated;
-
-  private int myOptimizedOldLineShift = -1;
-  private boolean myOptimizedOldLineShiftCalculated;
   private final int myInitialStartOffset;
   private final int myInitialOldLength;
 
   public DocumentEventImpl(@NotNull Document document,
                            int offset,
-                           CharSequence oldString,
-                           CharSequence newString,
+                           @NotNull CharSequence oldString,
+                           @NotNull CharSequence newString,
                            long oldTimeStamp,
                            boolean wholeTextReplaced) {
-    this(document, offset, oldString, newString, oldTimeStamp, wholeTextReplaced, offset, oldString == null ? 0 : oldString.length());
+    this(document, offset, oldString, newString, oldTimeStamp, wholeTextReplaced, offset, oldString.length());
   }
   public DocumentEventImpl(@NotNull Document document,
                            int offset,
-                           CharSequence oldString,
-                           CharSequence newString,
+                           @NotNull CharSequence oldString,
+                           @NotNull CharSequence newString,
                            long oldTimeStamp,
                            boolean wholeTextReplaced,
                            int initialStartOffset,
@@ -68,25 +55,21 @@ public class DocumentEventImpl extends DocumentEvent {
     super(document);
     myOffset = offset;
 
-    myOldString = oldString == null ? "" : oldString;
-    myOldLength = myOldString.length();
+    myOldString = oldString;
+    myOldLength = oldString.length();
 
-    myNewString = newString == null ? "" : newString;
-    myNewLength = myNewString.length();
+    myNewString = newString;
+    myNewLength = newString.length();
 
     myInitialStartOffset = initialStartOffset;
     myInitialOldLength = initialOldLength;
 
     myOldTimeStamp = oldTimeStamp;
 
-    if (getDocument().getTextLength() == 0) {
-      isOnlyOneLineChangedCalculated = true;
-      isOnlyOneLineChanged = false;
-      myIsWholeDocReplaced = false;
-    }
-    else {
-      myIsWholeDocReplaced = wholeTextReplaced;
-    }
+    myIsWholeDocReplaced = getDocument().getTextLength() != 0 && wholeTextReplaced;
+    assert initialStartOffset >= 0 : initialStartOffset;
+    assert initialOldLength >= 0 : initialOldLength;
+    assert initialStartOffset+initialOldLength <= document.getTextLength() : "initialStartOffset = " + initialStartOffset + "; initialOldLength = " + initialOldLength+";document.getTextLength() = " + document.getTextLength();
   }
 
   @Override
@@ -138,44 +121,12 @@ public class DocumentEventImpl extends DocumentEvent {
     return myInitialOldLength;
   }
 
-  public int getStartOldIndex() {
-    if (isStartOldIndexCalculated) return myStartOldIndex;
-
-    isStartOldIndexCalculated = true;
-    myStartOldIndex = getDocument().getLineNumber(myOffset);
-    return myStartOldIndex;
-  }
-
-  public boolean isOnlyOneLineChanged() {
-    if (isOnlyOneLineChangedCalculated) return isOnlyOneLineChanged;
-
-    isOnlyOneLineChangedCalculated = true;
-    isOnlyOneLineChanged = true;
-
-    for (int i = 0; i < myOldString.length(); i++) {
-      if (myOldString.charAt(i) == '\n') {
-        isOnlyOneLineChanged = false;
-        break;
-      }
-    }
-
-    if (isOnlyOneLineChanged) {
-      for (int i = 0; i < myNewString.length(); i++) {
-        if (myNewString.charAt(i) == '\n') {
-          isOnlyOneLineChanged = false;
-          break;
-        }
-      }
-    }
-    return isOnlyOneLineChanged;
-  }
-
   @Override
   public long getOldTimeStamp() {
     return myOldTimeStamp;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public String toString() {
     return "DocumentEventImpl[myOffset=" + myOffset + ", myOldLength=" + myOldLength + ", myNewLength=" + myNewLength +
            ", myOldString='" + myOldString + "', myNewString='" + myNewString + "']" + (isWholeTextReplaced() ? " Whole." : ".");
@@ -190,6 +141,8 @@ public class DocumentEventImpl extends DocumentEvent {
     Diff.Change change = reBuildDiffIfNeeded();
     if (change == null) return line;
 
+    int startLine = getDocument().getLineNumber(getOffset());
+    line -= startLine;
     int newLine = line;
 
     while (change != null) {
@@ -206,15 +159,19 @@ public class DocumentEventImpl extends DocumentEvent {
       change = change.link;
     }
 
-    return newLine;
+    return newLine + startLine;
   }
 
   public int translateLineViaDiffStrict(int line) throws FilesTooBigForDiffException {
     Diff.Change change = reBuildDiffIfNeeded();
     if (change == null) return line;
-    return Diff.translateLine(change, line);
+    int startLine = getDocument().getLineNumber(getOffset());
+    if (line < startLine) return line;
+    int translatedRelative = Diff.translateLine(change, line - startLine);
+    return translatedRelative < 0 ? -1 : translatedRelative + startLine;
   }
 
+  // line numbers in Diff.Change are relative to change start
   private Diff.Change reBuildDiffIfNeeded() throws FilesTooBigForDiffException {
     if (myChange == TOO_BIG_FILE) throw new FilesTooBigForDiffException(0);
     if (myChange == null) {
@@ -229,29 +186,5 @@ public class DocumentEventImpl extends DocumentEvent {
     return myChange;
   }
 
-  public int getOptimizedLineShift() {
-    if (!myOptimizedLineShiftCalculated) {
-      myOptimizedLineShiftCalculated = true;
 
-      if (myOldLength == 0) {
-        int lineShift = StringUtil.countNewLines(myNewString);
-
-        myOptimizedLineShift = lineShift == 0 ? -1 : lineShift;
-      }
-    }
-    return myOptimizedLineShift;
-  }
-
-  public int getOptimizedOldLineShift() {
-    if (!myOptimizedOldLineShiftCalculated) {
-      myOptimizedOldLineShiftCalculated = true;
-
-      if (myNewLength == 0) {
-        int lineShift = StringUtil.countNewLines(myOldString);
-
-        myOptimizedOldLineShift = lineShift == 0 ? -1 : lineShift;
-      }
-    }
-    return myOptimizedOldLineShift;
-  }
 }

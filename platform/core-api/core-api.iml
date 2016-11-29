@@ -2,6 +2,9 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="true">
     <exclude-output />
+    <annotation-paths>
+      <root url="file://$MODULE_DIR$/anno" />
+    </annotation-paths>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
@@ -11,16 +14,7 @@
     <orderEntry type="module" module-name="extensions" exported="" />
     <orderEntry type="library" exported="" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="platform-resources-en" exported="" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../lib/automaton.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="asm" level="project" />
+    <orderEntry type="library" name="automaton" level="project" />
     <orderEntry type="library" name="CGLIB" level="project" />
   </component>
 </module>

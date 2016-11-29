@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.UIBundle;
@@ -47,10 +49,10 @@ class TabContentLayout extends ContentLayout {
   JPopupMenu myPopup;
   final PopupMenuListener myPopupListener;
 
-  ArrayList<ContentTabLabel> myTabs = new ArrayList<ContentTabLabel>();
-  final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<Content, ContentTabLabel>();
+  ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
+  final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
 
-  private Map<String, BufferedImage> myCached = new com.intellij.util.containers.HashMap<String, BufferedImage>();
+  private Map<String, BufferedImage> myCached = new com.intellij.util.containers.HashMap<>();
 
   private final MoreIcon myMoreIcon = new MoreIcon() {
     protected Rectangle getIconRec() {
@@ -291,8 +293,8 @@ class TabContentLayout extends ContentLayout {
 
     int moreRectWidth;
 
-    ArrayList<ContentTabLabel> toLayout = new ArrayList<ContentTabLabel>();
-    ArrayList<ContentTabLabel> toDrop = new ArrayList<ContentTabLabel>();
+    ArrayList<ContentTabLabel> toLayout = new ArrayList<>();
+    ArrayList<ContentTabLabel> toDrop = new ArrayList<>();
 
     Rectangle moreRect;
 
@@ -448,6 +450,10 @@ class TabContentLayout extends ContentLayout {
     }
     myTabs.add(event.getIndex(), tab);
     myContent2Tabs.put(content, tab);
+    if (content instanceof DnDTarget) {
+      DnDTarget target = (DnDTarget)content;
+      DnDSupport.createBuilder(tab).setDropHandler(target).setTargetChecker(target).install();
+    }
     
     myCached.clear();
   }

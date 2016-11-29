@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.intellij.tasks.impl;
@@ -47,7 +47,7 @@ public class LocalTaskImpl extends LocalTask {
   private String myId = "";
   private String mySummary = "";
   private String myDescription = null;
-  private Comment[] myComments = new Comment[0];
+  private Comment[] myComments = Comment.EMPTY_ARRAY;
   private boolean myClosed = false;
   private Date myCreated;
   private Date myUpdated;
@@ -64,11 +64,11 @@ public class LocalTaskImpl extends LocalTask {
   private String myIssueUrl = null;
 
   private boolean myActive;
-  private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
+  private List<ChangeListInfo> myChangeLists = new ArrayList<>();
   private boolean myRunning = false;
-  private List<WorkItem> myWorkItems = new ArrayList<WorkItem>();
+  private List<WorkItem> myWorkItems = new ArrayList<>();
   private Date myLastPost;
-  private List<BranchInfo> myBranches = new ArrayList<BranchInfo>();
+  private List<BranchInfo> myBranches = new ArrayList<>();
 
 
   /** for serialization */
@@ -211,6 +211,7 @@ public class LocalTaskImpl extends LocalTask {
     return myChangeLists;
   }
 
+  // for serialization
   public void setChangeLists(List<ChangeListInfo> changeLists) {
     myChangeLists = changeLists;
   }

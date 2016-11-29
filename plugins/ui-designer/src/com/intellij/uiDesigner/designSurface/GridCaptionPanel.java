@@ -93,11 +93,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       @Override public void focusGained(FocusEvent e) {
         repaint();
         // ensure we don't have two repaints of properties panel - one from focus gain and another from click
-        myAlarm.addRequest(new Runnable() {
-          public void run() {
-            editor.fireSelectedComponentChanged();
-          }
-        }, 1000);
+        myAlarm.addRequest(() -> editor.fireSelectedComponentChanged(), 1000);
       }
 
       @Override public void focusLost(FocusEvent e) {
@@ -107,13 +103,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   public static JBColor getGutterColor() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
-        return color == null ? UIUtil.getPanelBackground() : color;
-      }
+    return new JBColor(() -> {
+      Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+      return color == null ? UIUtil.getPanelBackground() : color;
     });
   }
 
@@ -304,7 +296,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   public int[] getSelectedCells(@Nullable final Point dragOrigin) {
-    ArrayList<Integer> selection = new ArrayList<Integer>();
+    ArrayList<Integer> selection = new ArrayList<>();
     RadContainer container = getSelectedGridContainer();
     if (container == null) {
       return ArrayUtil.EMPTY_INT_ARRAY;

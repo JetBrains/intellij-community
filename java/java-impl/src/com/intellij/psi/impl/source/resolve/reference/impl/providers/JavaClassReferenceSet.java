@@ -70,7 +70,7 @@ public class JavaClassReferenceSet {
   private void reparse(@NotNull String str, @NotNull PsiElement element, final boolean isStaticImport, JavaClassReferenceSet context) {
     myElement = element;
     myContext = context;
-    final List<JavaClassReference> referencesList = new ArrayList<JavaClassReference>();
+    final List<JavaClassReference> referencesList = new ArrayList<>();
     int currentDot = -1;
     int referenceIndex = 0;
     boolean allowDollarInNames = isAllowDollarInNames();
@@ -140,7 +140,7 @@ public class JavaClassReferenceSet {
         if (c == LT) {
           int end = str.lastIndexOf('>');
           if (end != -1 && end > nextDotOrDollar) {
-            if (myNestedGenericParameterReferences == null) myNestedGenericParameterReferences = new ArrayList<JavaClassReferenceSet>(1);
+            if (myNestedGenericParameterReferences == null) myNestedGenericParameterReferences = new ArrayList<>(1);
             myNestedGenericParameterReferences.add(
               new JavaClassReferenceSet(
                 str.substring(nextDotOrDollar + 1, end),
@@ -156,7 +156,7 @@ public class JavaClassReferenceSet {
             nextDotOrDollar = -1; // nonsensible characters anyway, don't do resolve
           }
         } else if (COMMA == c && myContext != null) {
-          if (myContext.myNestedGenericParameterReferences == null) myContext.myNestedGenericParameterReferences = new ArrayList<JavaClassReferenceSet>(1);
+          if (myContext.myNestedGenericParameterReferences == null) myContext.myNestedGenericParameterReferences = new ArrayList<>(1);
           myContext.myNestedGenericParameterReferences.add(
             new JavaClassReferenceSet(
               str.substring(nextDotOrDollar + 1),

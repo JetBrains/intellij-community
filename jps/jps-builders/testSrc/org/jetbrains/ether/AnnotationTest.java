@@ -68,6 +68,14 @@ public class AnnotationTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testChangeAnnotationTypeMemberTypeArray() throws Exception {
+    doTest();
+  }
+
+  public void testChangeAnnotationTypeMemberTypeEnumArray() throws Exception {
+    doTest();
+  }
+
   public void testClassAsArgument() throws Exception {
     doTest();
   }
@@ -106,6 +114,10 @@ public class AnnotationTest extends IncrementalTestCase {
   }
 
   public void testConservativeNonIncremental1() throws Exception {
+    doTest();
+  }
+
+  public void testAnnotationsTracker() throws Exception {
     doTest();
   }
 }

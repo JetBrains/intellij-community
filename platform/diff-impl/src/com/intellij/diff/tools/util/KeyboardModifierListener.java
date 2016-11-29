@@ -54,14 +54,11 @@ public class KeyboardModifierListener implements Disposable {
 
     // we can use KeyListener on Editors, but Ctrl+Click will not work with focus in other place.
     // ex: commit dialog with focus in commit message
-    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent e) {
-        if (e instanceof KeyEvent) {
-          onKeyEvent((KeyEvent)e);
-        }
-        return false;
+    IdeEventQueue.getInstance().addPostprocessor(e -> {
+      if (e instanceof KeyEvent) {
+        onKeyEvent((KeyEvent)e);
       }
+      return false;
     }, disposable);
 
     myWindow = UIUtil.getWindow(component);

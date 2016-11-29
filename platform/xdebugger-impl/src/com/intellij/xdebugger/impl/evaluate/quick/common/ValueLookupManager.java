@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -110,12 +111,9 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     myAlarm.cancelAllRequests();
     if (type == ValueHintType.MOUSE_OVER_HINT) {
       if (Registry.is("debugger.valueTooltipAutoShow")) {
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (area.equals(editor.getScrollingModel().getVisibleArea())) {
-              showHint(handler, editor, point, type);
-            }
+        myAlarm.addRequest(() -> {
+          if (area.equals(editor.getScrollingModel().getVisibleArea())) {
+            showHint(handler, editor, point, type);
           }
         }, getDelay(handler));
       }
@@ -141,6 +139,13 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
   }
 
   public void showHint(@NotNull QuickEvaluateHandler handler, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type) {
+    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> doShowHint(handler, editor, point, type));
+  }
+
+  private void doShowHint(@NotNull QuickEvaluateHandler handler,
+                          @NotNull Editor editor,
+                          @NotNull Point point,
+                          @NotNull ValueHintType type) {
     myAlarm.cancelAllRequests();
     if (editor.isDisposed() || !handler.canShowHint(myProject)) {
       return;
@@ -162,12 +167,9 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
       hideHint();
 
       myRequest = request;
-      myRequest.invokeHint(new Runnable() {
-        @Override
-        public void run() {
-          if (myRequest != null && myRequest == request) {
-            myRequest = null;
-          }
+      myRequest.invokeHint(() -> {
+        if (myRequest != null && myRequest == request) {
+          myRequest = null;
         }
       });
     }

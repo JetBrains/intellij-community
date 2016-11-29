@@ -96,9 +96,9 @@ public class IpnbPyParsingContext extends PyConsoleParsingContext {
     public IpnbPyFunctionParsing(ParsingContext context) {
       super(context);
     }
+
     protected IElementType getFunctionType() {
       return IpnbPyTokenTypes.IPNB_FUNCTION;
     }
-
   }
 }

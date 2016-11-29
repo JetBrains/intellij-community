@@ -37,7 +37,7 @@ import java.util.Set;
 
 public class CachedNumberConstructorCallInspection extends BaseInspection {
 
-  private static final Set<String> cachedNumberTypes = new HashSet<String>();
+  private static final Set<String> cachedNumberTypes = new HashSet<>();
 
   static {
     cachedNumberTypes.add(CommonClassNames.JAVA_LANG_LONG);

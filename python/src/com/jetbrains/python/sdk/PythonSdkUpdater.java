@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -35,14 +36,15 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.concurrency.BlockingSet;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -54,6 +56,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Refreshes all project's Python SDKs.
@@ -67,7 +70,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   private static final Object ourLock = new Object();
   private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();
-  private static final BlockingSet<String> ourUnderRefresh = new BlockingSet<String>();
+  private static final BlockingSet<String> ourUnderRefresh = new BlockingSet<>();
 
   /**
    * Refreshes the SDKs of the modules for the open project after some delay.
@@ -78,33 +81,18 @@ public class PythonSdkUpdater implements StartupActivity {
     if (application.isUnitTestMode()) {
       return;
     }
-    application.executeOnPooledThread(new Runnable() {
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
       @Override
-      public void run() {
-        try {
-          Thread.sleep(INITIAL_ACTIVITY_DELAY);
+      public void run(@NotNull ProgressIndicator indicator) {
+        final Project project = getProject();
+        if (project.isDisposed()) {
+          return;
         }
-        catch (InterruptedException ignored) {
+        for (final Sdk sdk : getPythonSdks(project)) {
+          update(sdk, null, project, null);
         }
-        application.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                final Project project = getProject();
-                if (project.isDisposed()) {
-                  return;
-                }
-                for (final Sdk sdk : getPythonSdks(project)) {
-                  update(sdk, null, project, null);
-                }
-              }
-            });
-          }
-        });
       }
-    });
+    }), INITIAL_ACTIVITY_DELAY, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -123,11 +111,11 @@ public class PythonSdkUpdater implements StartupActivity {
    */
   public static boolean update(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable final Project project,
                                @Nullable final Component ownerComponent) {
-    final String homePath = sdk.getHomePath();
+    final String key = PythonSdkType.getSdkKey(sdk);
     synchronized (ourLock) {
-      ourScheduledToRefresh.add(homePath);
+      ourScheduledToRefresh.add(key);
     }
-    if (!updateLocalSdkPaths(sdk, sdkModificator)) {
+    if (!updateLocalSdkPaths(sdk, sdkModificator, project)) {
       return false;
     }
 
@@ -135,76 +123,85 @@ public class PythonSdkUpdater implements StartupActivity {
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode()) {
-      /**
-       * All actions we take after this line are dedicated to skeleton update process.
-       * Not all tests do need them.
-       * To find test API that updates skeleton, find usage of following method:
-       * {@link PySkeletonRefresher#refreshSkeletonsOfSdk(Project, Component, String, Sdk)}
-       */
+      // All actions we take after this line are dedicated to skeleton update process. Not all tests do need them. To find test API that
+      // updates skeleton, see PySkeletonRefresher
       return true;
     }
 
-    application.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (ourLock) {
-          if (!ourScheduledToRefresh.contains(homePath)) {
-            return;
-          }
-          ourScheduledToRefresh.remove(homePath);
+    @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable methodCallStacktrace = new Throwable();
+    application.invokeLater(() -> {
+      synchronized (ourLock) {
+        if (!ourScheduledToRefresh.contains(key)) {
+          return;
         }
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skeletons"), false) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            final Project project = getProject();
-            final Sdk sdk = PythonSdkType.findSdkByPath(homePath);
-            if (sdk != null) {
-              ourUnderRefresh.put(homePath);
+        ourScheduledToRefresh.remove(key);
+      }
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.interpreter"), false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          final Project project1 = getProject();
+          final Sdk sdkInsideTask = PythonSdkType.findSdkByKey(key);
+          if (sdkInsideTask != null) {
+            ourUnderRefresh.put(key);
+            try {
+              final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
               try {
-                final String skeletonsPath = getBinarySkeletonsPath(homePath);
-                try {
-                  if (PythonSdkType.isRemote(sdk) && project == null && ownerComponent == null) {
-                    LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
-                  }
-                  LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
-                  PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, sdk);
-                  updateRemoteSdkPaths(sdk);
+                if (PythonSdkType.isRemote(sdkInsideTask) && project1 == null && ownerComponent == null) {
+                  LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
                 }
-                catch (InvalidSdkException e) {
-                  if (PythonSdkType.isVagrant(sdk)
-                      || new CredentialsTypeExChecker() {
-                    @Override
-                    protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
-                      return languageContribution.shouldNotifySdkSkeletonFail();
-                    }
-                  }.check(sdk)) {
-                    PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
-                      @Override
-                      public void run() {
-                        final Sdk sdk = PythonSdkType.findSdkByPath(homePath);
-                        if (sdk != null) {
-                          update(sdk, null, project, ownerComponent);
-                        }
-                      }
-                    });
+                final String sdkPresentableName = getSdkPresentableName(sdk);
+                LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
+                indicator.setText("Updating skeletons...");
+                PySkeletonRefresher.refreshSkeletonsOfSdk(project1, ownerComponent, skeletonsPath, sdkInsideTask);
+                updateRemoteSdkPaths(sdkInsideTask, getProject());
+                indicator.setIndeterminate(true);
+                indicator.setText("Scanning installed packages...");
+                indicator.setText2("");
+                LOG.info("Performing background scan of packages for SDK " + sdkPresentableName);
+                try {
+                  PyPackageManager.getInstance(sdkInsideTask).refreshAndGetPackages(true);
+                }
+                catch (ExecutionException e) {
+                  if (LOG.isDebugEnabled()) {
+                    e.initCause(methodCallStacktrace);
+                    LOG.debug(e);
                   }
-                  else if (!PythonSdkType.isInvalid(sdk)) {
-                    LOG.error(e);
+                  else {
+                    LOG.warn(e.getMessage());
                   }
                 }
               }
-              finally {
-                try {
-                  ourUnderRefresh.remove(homePath);
+              catch (InvalidSdkException e) {
+                if (PythonSdkType.isVagrant(sdkInsideTask)
+                    || new CredentialsTypeExChecker() {
+                  @Override
+                  protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
+                    return languageContribution.shouldNotifySdkSkeletonFail();
+                  }
+                }.check(sdkInsideTask)) {
+                  PythonSdkType.notifyRemoteSdkSkeletonsFail(e, () -> {
+                    final Sdk sdkInsideNotify = PythonSdkType.findSdkByKey(key);
+                    if (sdkInsideNotify != null) {
+                      update(sdkInsideNotify, null, project1, ownerComponent);
+                    }
+                  });
                 }
-                catch (IllegalStateException e) {
+                else if (!PythonSdkType.isInvalid(sdkInsideTask)) {
                   LOG.error(e);
                 }
               }
             }
+            finally {
+              try {
+                ourUnderRefresh.remove(key);
+              }
+              catch (IllegalStateException e) {
+                LOG.error(e);
+              }
+            }
           }
-        });
-      }
+        }
+      });
     }, ModalityState.NON_MODAL);
     return true;
   }
@@ -218,10 +215,8 @@ public class PythonSdkUpdater implements StartupActivity {
                                        @Nullable Component ownerComponent) {
     final boolean success = update(sdk, sdkModificator, project, ownerComponent);
     if (!success) {
-      final String homePath = sdk.getHomePath();
-      final String sdkName = homePath != null ? homePath : sdk.getName();
       Messages.showErrorDialog(project,
-                               PyBundle.message("MSG.cant.setup.sdk.$0", FileUtil.toSystemDependentName(sdkName)),
+                               PyBundle.message("MSG.cant.setup.sdk.$0", getSdkPresentableName(sdk)),
                                PyBundle.message("MSG.title.bad.sdk"));
     }
   }
@@ -231,12 +226,12 @@ public class PythonSdkUpdater implements StartupActivity {
    *
    * May be invoked from any thread. May freeze the current thread while evaluating sys.path.
    */
-  private static boolean updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator) {
+  private static boolean updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable Project project) {
     if (!PythonSdkType.isRemote(sdk)) {
       final List<VirtualFile> localSdkPaths;
       final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
       try {
-        localSdkPaths = getLocalSdkPaths(sdk);
+        localSdkPaths = getLocalSdkPaths(sdk, project);
       }
       catch (InvalidSdkException e) {
         if (!PythonSdkType.isInvalid(sdk)) {
@@ -256,10 +251,10 @@ public class PythonSdkUpdater implements StartupActivity {
    *
    * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
    */
-  private static void updateRemoteSdkPaths(Sdk sdk) {
+  private static void updateRemoteSdkPaths(@NotNull Sdk sdk, @Nullable Project project) {
     if (PythonSdkType.isRemote(sdk)) {
       final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
-      final List<VirtualFile> remoteSdkPaths = getRemoteSdkPaths(sdk);
+      final List<VirtualFile> remoteSdkPaths = getRemoteSdkPaths(sdk, project);
       commitSdkPathsIfChanged(sdk, null, remoteSdkPaths, forceCommit);
     }
   }
@@ -278,9 +273,9 @@ public class PythonSdkUpdater implements StartupActivity {
    * Returns all the paths for a local SDK.
    */
   @NotNull
-  private static List<VirtualFile> getLocalSdkPaths(@NotNull Sdk sdk) throws InvalidSdkException {
+  private static List<VirtualFile> getLocalSdkPaths(@NotNull Sdk sdk, @Nullable Project project) throws InvalidSdkException {
     return ImmutableList.<VirtualFile>builder()
-      .addAll(evaluateSysPath(sdk))
+      .addAll(filterRootPaths(sdk, evaluateSysPath(sdk), project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
       .build();
@@ -292,9 +287,9 @@ public class PythonSdkUpdater implements StartupActivity {
    * Requires the skeletons refresh steps to be run before it in order to get remote paths mappings in the additional SDK data.
    */
   @NotNull
-  private static List<VirtualFile> getRemoteSdkPaths(@NotNull Sdk sdk) {
+  private static List<VirtualFile> getRemoteSdkPaths(@NotNull Sdk sdk, @Nullable Project project) {
     return ImmutableList.<VirtualFile>builder()
-      .addAll(getRemoteSdkMappedPaths(sdk))
+      .addAll(getRemoteSdkMappedPaths(sdk, project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
       .build();
@@ -308,7 +303,7 @@ public class PythonSdkUpdater implements StartupActivity {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(additionalData, PythonSdkAdditionalData.class);
     return pythonAdditionalData != null ? Lists.newArrayList(pythonAdditionalData.getAddedPathFiles()) :
-           Collections.<VirtualFile>emptyList();
+           Collections.emptyList();
   }
 
   /**
@@ -317,7 +312,7 @@ public class PythonSdkUpdater implements StartupActivity {
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
-  private static List<VirtualFile> getRemoteSdkMappedPaths(@NotNull Sdk sdk) {
+  private static List<VirtualFile> getRemoteSdkMappedPaths(@NotNull Sdk sdk, @Nullable Project project) {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
     if (additionalData instanceof PyRemoteSdkAdditionalDataBase) {
       final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)additionalData;
@@ -325,7 +320,7 @@ public class PythonSdkUpdater implements StartupActivity {
       for (PathMappingSettings.PathMapping mapping : remoteSdkData.getPathMappings().getPathMappings()) {
         paths.add(mapping.getLocalRoot());
       }
-      return filterRootPaths(sdk, paths);
+      return filterRootPaths(sdk, paths, project);
     }
     return Collections.emptyList();
   }
@@ -334,18 +329,25 @@ public class PythonSdkUpdater implements StartupActivity {
    * Filters valid paths from an initial set of Python paths and returns them as virtual files.
    */
   @NotNull
-  private static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths) {
+  private static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
     final Collection<VirtualFile> excludedPaths = pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() :
-                                                  Collections.<VirtualFile>emptyList();
+                                                  Collections.emptyList();
+    final Set<VirtualFile> moduleRoots = new HashSet<>();
+    if (project != null) {
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      for (Module module : modules) {
+        moduleRoots.addAll(PyUtil.getSourceRoots(module));
+      }
+    }
     final List<VirtualFile> results = Lists.newArrayList();
     for (String path : paths) {
       if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
         final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
         if (virtualFile != null) {
           final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
-          if (!excludedPaths.contains(rootFile)) {
-            results.add(virtualFile);
+          if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
+            results.add(rootFile);
             continue;
           }
         }
@@ -366,17 +368,22 @@ public class PythonSdkUpdater implements StartupActivity {
       final VirtualFile skeletonsDir = StandardFileSystems.local().refreshAndFindFileByPath(skeletonsPath);
       if (skeletonsDir != null) {
         results.add(skeletonsDir);
-        LOG.info("Binary skeletons directory for SDK \"" + sdk.getName() + "\" (" + sdk.getHomePath() + "): " +
-                 skeletonsDir.getPath());
+        LOG.info("Binary skeletons directory for SDK " + getSdkPresentableName(sdk) + "): " + skeletonsDir.getPath());
       }
     }
     final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
     if (userSkeletonsDir != null) {
       results.add(userSkeletonsDir);
-      LOG.info("User skeletons directory for SDK \"" + sdk.getName() + "\" (" + sdk.getHomePath() + "): " +
-               userSkeletonsDir.getPath());
+      LOG.info("User skeletons directory for SDK " + getSdkPresentableName(sdk) + "): " + userSkeletonsDir.getPath());
     }
     return results;
+  }
+
+  @NotNull
+  private static String getSdkPresentableName(@NotNull Sdk sdk) {
+    final String homePath = sdk.getHomePath();
+    final String name = sdk.getName();
+    return homePath != null ? name + " (" + homePath + ")" : name;
   }
 
   @Nullable
@@ -390,14 +397,14 @@ public class PythonSdkUpdater implements StartupActivity {
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
-  private static List<VirtualFile> evaluateSysPath(@NotNull Sdk sdk) throws InvalidSdkException {
+  private static List<String> evaluateSysPath(@NotNull Sdk sdk) throws InvalidSdkException {
     if (PythonSdkType.isRemote(sdk)) {
       throw new IllegalArgumentException("Cannot evaluate sys.path for remote Python interpreter " + sdk);
     }
     final long startTime = System.currentTimeMillis();
     final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - startTime) + " ms");
-    return filterRootPaths(sdk, sysPath);
+    return sysPath;
   }
 
   /**
@@ -409,23 +416,20 @@ public class PythonSdkUpdater implements StartupActivity {
                                               @Nullable final SdkModificator sdkModificator,
                                               @NotNull final List<VirtualFile> sdkPaths,
                                               boolean forceCommit) {
-    final String homePath = sdk.getHomePath();
+    final String key = PythonSdkType.getSdkKey(sdk);
     final SdkModificator modificatorToGetRoots = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
     final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToGetRoots.getRoots(OrderRootType.CLASSES));
     if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          final Sdk sdk = PythonSdkType.findSdkByPath(homePath);
-          final SdkModificator modificatorToCommit = sdkModificator != null ? sdkModificator :
-                                                     sdk != null ? sdk.getSdkModificator() : modificatorToGetRoots;
-          modificatorToCommit.removeAllRoots();
-          for (VirtualFile sdkPath : sdkPaths) {
-            modificatorToCommit.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
-          }
-          modificatorToCommit.commitChanges();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        final Sdk sdkInsideInvoke = PythonSdkType.findSdkByKey(key);
+        final SdkModificator modificatorToCommit = sdkModificator != null ? sdkModificator :
+                                                   sdkInsideInvoke != null ? sdkInsideInvoke.getSdkModificator() : modificatorToGetRoots;
+        modificatorToCommit.removeAllRoots();
+        for (VirtualFile sdkPath : sdkPaths) {
+          modificatorToCommit.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
         }
-      }, ModalityState.defaultModalityState());
+        modificatorToCommit.commitChanges();
+      });
     }
   }
 

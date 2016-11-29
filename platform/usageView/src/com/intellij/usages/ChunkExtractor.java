@@ -78,7 +78,7 @@ public class ChunkExtractor {
       final T cur = SoftReference.dereference(myRef);
       if (cur != null) return cur;
       final T result = create();
-      myRef = new WeakReference<T>(result);
+      myRef = new WeakReference<>(result);
       return result;
     }
   }
@@ -145,7 +145,7 @@ public class ChunkExtractor {
 
     int lineNumber = myDocument.getLineNumber(absoluteStartOffset);
     int visibleLineNumber = visibleDocument.getLineNumber(visibleStartOffset);
-    List<TextChunk> result = new ArrayList<TextChunk>();
+    List<TextChunk> result = new ArrayList<>();
     appendPrefix(result, visibleLineNumber);
 
     int fragmentToShowStart = myDocument.getLineStartOffset(lineNumber);
@@ -245,25 +245,22 @@ public class ChunkExtractor {
     }
 
     final int[] lastOffset = {hiStart};
-    usageInfo2UsageAdapter.processRangeMarkers(new Processor<Segment>() {
-      @Override
-      public boolean process(Segment segment) {
-        int usageStart = segment.getStartOffset();
-        int usageEnd = segment.getEndOffset();
-        if (rangeIntersect(lastOffset[0], hiEnd, usageStart, usageEnd)) {
-          addChunk(chars, lastOffset[0], Math.max(lastOffset[0], usageStart), originalAttrs, false, null, result);
+    usageInfo2UsageAdapter.processRangeMarkers(segment -> {
+      int usageStart = segment.getStartOffset();
+      int usageEnd = segment.getEndOffset();
+      if (rangeIntersect(lastOffset[0], hiEnd, usageStart, usageEnd)) {
+        addChunk(chars, lastOffset[0], Math.max(lastOffset[0], usageStart), originalAttrs, false, null, result);
 
-          UsageType usageType = isHighlightedAsString(tokenHighlights)
-                           ? UsageType.LITERAL_USAGE
-                           : isHighlightedAsComment(tokenHighlights) ? UsageType.COMMENT_USAGE : null;
-          addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, selectUsageWithBold, usageType, result);
-          lastOffset[0] = usageEnd;
-          if (usageEnd > hiEnd) {
-            return false;
-          }
+        UsageType usageType = isHighlightedAsString(tokenHighlights)
+                         ? UsageType.LITERAL_USAGE
+                         : isHighlightedAsComment(tokenHighlights) ? UsageType.COMMENT_USAGE : null;
+        addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, selectUsageWithBold, usageType, result);
+        lastOffset[0] = usageEnd;
+        if (usageEnd > hiEnd) {
+          return false;
         }
-        return true;
       }
+      return true;
     });
     if (lastOffset[0] < hiEnd) {
       addChunk(chars, lastOffset[0], hiEnd, originalAttrs, false, null, result);

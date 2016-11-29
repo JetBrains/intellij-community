@@ -72,4 +72,10 @@ class ConditionalExpressionWithIdenticalBranches {
       String a = f ? test(new String[]{"a", "b"}) : test("a");
     }
   }
+
+  static class WithFunctionalExpression {
+    private void foo(boolean b) {
+      Runnable r = b ? (Runnable) () -> {} : (Runnable) () -> {};
+    }
+  }
 }

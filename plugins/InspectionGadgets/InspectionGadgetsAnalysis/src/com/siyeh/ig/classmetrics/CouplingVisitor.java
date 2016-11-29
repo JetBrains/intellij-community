@@ -32,7 +32,7 @@ class CouplingVisitor extends JavaRecursiveElementWalkingVisitor {
   private final PsiClass m_class;
   private final boolean m_includeJavaClasses;
   private final boolean m_includeLibraryClasses;
-  private final Set<String> m_dependencies = new HashSet<String>(10);
+  private final Set<String> m_dependencies = new HashSet<>(10);
 
   CouplingVisitor(PsiClass aClass, boolean includeJavaClasses,
                   boolean includeLibraryClasses) {

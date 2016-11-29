@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,13 +167,60 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
+  // PY-19523
+  public void testBz2Module() {
+    doTest();
+  }
+
+  public void testUnderscoreBz2Module() {
+    doTest();
+  }
+
+  // PY-19486
+  public void testBackportedEnum() {
+    doTest();
+  }
+
+  // PY-18880
+  public void testBackportedTyping() {
+    doTest();
+  }
+
+  public void testUnderscoresInNumericLiterals() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testVariableAnnotations() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-20770
+  public void testYieldInsideAsyncDef() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-20770
+  public void testAsyncComprehensions() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-20770
+  public void testAwaitInComprehensions() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-16098
+  public void testWarningAboutAsyncAndAwaitInPy35() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
+  // PY-16098
+  public void testWarningAboutAsyncAndAwaitInPy36() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
-    runWithLanguageLevel(level, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(level, this::doTest);
   }
 
   private void doTest() {

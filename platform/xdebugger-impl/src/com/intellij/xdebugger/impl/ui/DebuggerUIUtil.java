@@ -16,7 +16,10 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -36,6 +39,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.Consumer;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -46,9 +50,13 @@ import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,10 +65,7 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DebuggerUIUtil {
@@ -267,7 +272,7 @@ public class DebuggerUIUtil {
       }
     });
 
-    final ComponentAdapter moveListener = new ComponentAdapter() {
+    ComponentAdapter moveListener = new ComponentAdapter() {
       @Override
       public void componentMoved(ComponentEvent e) {
         balloon.hide();
@@ -275,6 +280,15 @@ public class DebuggerUIUtil {
     };
     component.addComponentListener(moveListener);
     Disposer.register(balloon, () -> component.removeComponentListener(moveListener));
+
+    HierarchyBoundsListener hierarchyBoundsListener = new HierarchyBoundsAdapter() {
+      @Override
+      public void ancestorMoved(HierarchyEvent e) {
+        balloon.hide();
+      }
+    };
+    component.addHierarchyBoundsListener(hierarchyBoundsListener);
+    Disposer.register(balloon, () -> component.removeHierarchyBoundsListener(hierarchyBoundsListener));
 
     if (whereToShow == null) {
       balloon.showInCenterOf(component);
@@ -370,6 +384,11 @@ public class DebuggerUIUtil {
     return true;
   }
 
+  public static void registerActionOnComponent(String name, JComponent component, Disposable parentDisposable) {
+    AnAction action = ActionManager.getInstance().getAction(name);
+    action.registerCustomShortcutSet(action.getShortcutSet(), component, parentDisposable);
+  }
+
   public static void registerExtraHandleShortcuts(final ListPopupImpl popup, String... actionNames) {
     for (String name : actionNames) {
       KeyStroke stroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(name).getShortcutSet());
@@ -398,5 +417,36 @@ public class DebuggerUIUtil {
 
   public static boolean isObsolete(Object object) {
     return object instanceof Obsolescent && ((Obsolescent)object).isObsolete();
+  }
+
+  public static void setTreeNodeValue(XValueNodeImpl valueNode, String text, Consumer<String> errorConsumer) {
+    XDebuggerTree tree = valueNode.getTree();
+    Project project = tree.getProject();
+    XValueModifier modifier = valueNode.getValueContainer().getModifier();
+    if (modifier == null) return;
+    XDebuggerTreeState treeState = XDebuggerTreeState.saveState(tree);
+    valueNode.setValueModificationStarted();
+    modifier.setValue(text, new XValueModifier.XModificationCallback() {
+      @Override
+      public void valueModified() {
+        if (tree.isDetached()) {
+          AppUIUtil.invokeOnEdt(() -> tree.rebuildAndRestore(treeState));
+        }
+        XDebuggerUtilImpl.rebuildAllSessionsViews(project);
+      }
+
+      @Override
+      public void errorOccurred(@NotNull final String errorMessage) {
+        AppUIUtil.invokeOnEdt(() -> {
+          tree.rebuildAndRestore(treeState);
+          errorConsumer.consume(errorMessage);
+        });
+        XDebuggerUtilImpl.rebuildAllSessionsViews(project);
+      }
+    });
+  }
+
+  public static boolean isInDetachedTree(AnActionEvent event) {
+    return event.getData(XDebugSessionTab.TAB_KEY) == null;
   }
 }

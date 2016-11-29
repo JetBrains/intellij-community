@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class TestBlock implements Block{
   private TextRange myTextRange;
 
-  private final List<Object> myElements = new ArrayList<Object>();
+  private final List<Object> myElements = new ArrayList<>();
   private Wrap myWrap;
   private Indent myIndent;
   private Alignment myAlignment;
@@ -39,7 +39,7 @@ public class TestBlock implements Block{
   }
 
   private List<Block> getBlockList() {
-    final ArrayList<Block> blocks = new ArrayList<Block>();
+    final ArrayList<Block> blocks = new ArrayList<>();
     for (Object o : myElements) {
       if (o instanceof Block) blocks.add((Block)o);
     }

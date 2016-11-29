@@ -38,6 +38,7 @@ public class ApplicationNamesInfo {
   private String myFullProductName;
   private String myLowercaseProductName;
   private String myScriptName;
+  private String myDefaultLauncherName;
 
   private static class ApplicationNamesInfoHolder {
     private static final ApplicationNamesInfo ourInstance = new ApplicationNamesInfo();
@@ -66,34 +67,45 @@ public class ApplicationNamesInfo {
     myFullProductName = names.getAttributeValue(ATTRIBUTE_FULL_NAME);
     myLowercaseProductName = StringUtil.capitalize(myProductName.toLowerCase(Locale.US));
     myScriptName = names.getAttributeValue(ATTRIBUTE_SCRIPT);
+    myDefaultLauncherName = names.getAttributeValue("default-launcher-name", myScriptName);
   }
 
   /**
-   * @return "IDEA"
+   * <strong>Consider using {@link #getFullProductName()} instead.</strong> For the most of the products the both methods return the same value.
+   * @return shortened name of the product if it contains two words (e.g. {@code "IDEA"} for IntelliJ IDEA, {@code "WebStorm"} for WebStorm)
    */
   public String getProductName() {
     return myProductName;
   }
 
   /**
-   * @return "IntelliJ IDEA"
+   * @return name of the product without vendor name (e.g. {@code "IntelliJ IDEA"} for IntelliJ IDEA, {@code "WebStorm"} for WebStorm)
    */
   public String getFullProductName() {
     return myFullProductName;
   }
 
   /**
-   * @return "Idea"
+   * <strong>Consider using {@link #getFullProductName()} instead.</strong> This method is kept mostly for historical reasons, it is used to
+   * name the default directory for newly created projects ('Idea Project' for IntelliJ IDEA, for example)
+   * @return name of the product with lowercased all letters except the first one (e.g. {@code "Idea"} for IntelliJ IDEA, {@code "Webstorm"} for WebStorm)
    */
   public String getLowercaseProductName() {
     return myLowercaseProductName;
   }
 
   /**
-   * @return "idea"
+   * @return base name of the script files (*.exe, *.bat, *.sh) from the product 'bin' directory without extension ({@code "idea"} for IntelliJ IDEA, {@code "webstorm"} for WebStorm)
    */
   public String getScriptName() {
     return myScriptName;
+  }
+
+  /**
+   * @return default name of the command-line launcher to be suggested in 'Create Launcher Script' dialog
+   */
+  public String getDefaultLauncherName() {
+    return myDefaultLauncherName;
   }
 
   public static String getComponentName() {

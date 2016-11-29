@@ -31,16 +31,19 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
   private final InitializerType myInitializerType;
   private final QualifiedName myInitializer;
   private final boolean myQualified;
-  @Nullable private final String myDocString;
+  private final String myTypeComment;
 
+  @Nullable private final String myDocString;
   private final CustomTargetExpressionStub myCustomStub;
 
   public PyTargetExpressionStubImpl(String name,
                                     @Nullable String docString,
+                                    @Nullable String typeComment, 
                                     CustomTargetExpressionStub customStub,
                                     StubElement parent) {
     super(parent, PyElementTypes.TARGET_EXPRESSION);
     myName = name;
+    myTypeComment = typeComment;
     myInitializerType = InitializerType.Custom;
     myInitializer = null;
     myQualified = false;
@@ -48,12 +51,16 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
     myDocString = docString;
   }
   
-  public PyTargetExpressionStubImpl(final String name, @Nullable String docString, final InitializerType initializerType,
+  public PyTargetExpressionStubImpl(final String name, 
+                                    @Nullable String docString,
+                                    final InitializerType initializerType,
                                     final QualifiedName initializer,
                                     final boolean qualified,
+                                    @Nullable String typeComment, 
                                     final StubElement parentStub) {
     super(parentStub, PyElementTypes.TARGET_EXPRESSION);
     myName = name;
+    myTypeComment = typeComment;
     assert initializerType != InitializerType.Custom;
     myInitializerType = initializerType;
     myInitializer = initializer;
@@ -92,6 +99,12 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
   @Override
   public String getDocString() {
     return myDocString;
+  }
+
+  @Nullable
+  @Override
+  public String getTypeComment() {
+    return myTypeComment;
   }
 
   @Override

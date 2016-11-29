@@ -80,6 +80,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfigura
       super("python");
     }
 
+    @NotNull
     @Override
     public FacetType<PythonFacet, PythonFacetConfiguration> getFacetType() {
       return PythonFacetType.getInstance();

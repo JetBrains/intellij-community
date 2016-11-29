@@ -20,7 +20,6 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -78,7 +77,7 @@ public class EclipseUserLibrariesHelper {
       if (!parentFile.mkdir()) return;
     }
     final Element userLibsElement = new Element("eclipse-userlibraries");
-    final List<Library> libraries = new ArrayList<Library>(Arrays.asList(ProjectLibraryTable.getInstance(project).getLibraries()));
+    final List<Library> libraries = new ArrayList<>(Arrays.asList(ProjectLibraryTable.getInstance(project).getLibraries()));
     ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries());
     for (Library library : libraries) {
       Element libElement = new Element("library");
@@ -98,8 +97,7 @@ public class EclipseUserLibrariesHelper {
 
     LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
     Element element = JDOMUtil.load(exportedFile.getInputStream());
-    AccessToken token = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       for (Element libElement : element.getChildren("library")) {
         String libName = libElement.getAttributeValue("name");
         Library libraryByName = libraryTable.getLibraryByName(libName);
@@ -133,9 +131,6 @@ public class EclipseUserLibrariesHelper {
         }
         unknownLibraries.remove(libName);  //ignore finally found libraries
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 }

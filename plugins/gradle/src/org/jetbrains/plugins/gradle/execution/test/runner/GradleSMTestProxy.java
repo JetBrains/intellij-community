@@ -17,9 +17,13 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.stacktrace.StackTraceLine;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +42,15 @@ public class GradleSMTestProxy extends SMTestProxy {
   public GradleSMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @Nullable String className) {
     super(testName, isSuite, locationUrl);
     myClassName = className;
+  }
+
+  @Override
+  public void addStdOutput(String output, Key outputType) {
+    addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.printWithAnsiColoring(output, ConsoleViewContentType.getConsoleViewType(outputType));
+      }
+    });
   }
 
   @Override

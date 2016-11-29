@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
@@ -34,8 +33,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
-import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.packaging.PyRequirement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -123,10 +119,12 @@ public class PySdkUtil {
       return new ProcessOutput();
     }
     final Map<String, String> systemEnv = System.getenv();
-    final Map<String, String> env = extraEnv != null ? mergeEnvVariables(systemEnv, extraEnv) : systemEnv;
+    final Map<String, String> expandedCmdEnv = mergeEnvVariables(systemEnv, cmd.getEnvironment());
+    final Map<String, String> env = extraEnv != null ? mergeEnvVariables(expandedCmdEnv, extraEnv) : expandedCmdEnv;
+    PythonEnvUtil.resetHomePathChanges(homePath, env);
     try {
 
-      GeneralCommandLine commandLine = cmd.withWorkDirectory(homePath).withEnvironment(env);
+      final GeneralCommandLine commandLine = cmd.withWorkDirectory(homePath).withEnvironment(env);
       final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
@@ -170,15 +168,15 @@ public class PySdkUtil {
 
   @NotNull
   public static Map<String, String> mergeEnvVariables(@NotNull Map<String, String> environment,
-                                                       @NotNull Map<String, String> extraEnvironment) {
-    final Map<String, String> result = new HashMap<String, String>(environment);
+                                                      @NotNull Map<String, String> extraEnvironment) {
+    final Map<String, String> result = new HashMap<>(environment);
     for (Map.Entry<String, String> entry : extraEnvironment.entrySet()) {
-      //TODO: merge python path also?
-      if (PATH_ENV_VARIABLE.equals(entry.getKey()) && result.containsKey(PATH_ENV_VARIABLE)) {
-        result.put(PATH_ENV_VARIABLE, result.get(PATH_ENV_VARIABLE) + File.pathSeparator + entry.getValue());
+      final String name = entry.getKey();
+      if (PATH_ENV_VARIABLE.equals(name) || PythonEnvUtil.PYTHONPATH.equals(name)) {
+        PythonEnvUtil.addPathToEnv(result, name, entry.getValue());
       }
       else {
-        result.put(entry.getKey(), entry.getValue());
+        result.put(name, entry.getValue());
       }
     }
     return result;
@@ -244,15 +242,6 @@ public class PySdkUtil {
       if (virtualFile.isValid() && virtualFile.getPath().contains(dirName)) {
         return virtualFile;
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static List<PyRequirement> getRequirementsFromTxt(Module module) {
-    final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
-    if (requirementsTxt != null) {
-      return PyRequirement.parse(requirementsTxt);
     }
     return null;
   }

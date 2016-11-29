@@ -1,4 +1,4 @@
-# $Id: __init__.py 5889 2009-04-01 20:00:21Z gbrandl $
+# $Id: __init__.py 7720 2013-09-05 12:54:56Z milde $
 # Authors: Chris Liechti <cliechti@gmx.net>;
 #          David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
@@ -9,14 +9,15 @@ S5/HTML Slideshow Writer.
 
 __docformat__ = 'reStructuredText'
 
+
+import sys
 import os
 import re
-import sys
-
 import docutils
 from docutils import frontend, nodes, utils
-from docutils._compat import b
 from docutils.writers import html4css1
+from docutils.parsers.rst import directives
+from docutils._compat import b
 
 themes_dir_path = utils.relative_path(
     os.path.join(os.getcwd(), 'dummy'),
@@ -201,7 +202,7 @@ class S5HTMLTranslator(html4css1.HTMLTranslator):
         else:
             # no destination, so we can't copy the theme
             return
-        default = 0
+        default = False
         while path:
             for f in os.listdir(path):  # copy all files from each theme
                 if f == self.base_theme_file:
@@ -232,7 +233,7 @@ class S5HTMLTranslator(html4css1.HTMLTranslator):
             if not path:
                 path = find_theme(self.default_theme)
                 theme_paths.append(path)
-                default = 1
+                default = True
         if len(required_files_copied) != len(self.required_theme_files):
             # Some required files weren't found & couldn't be copied.
             required = list(self.required_theme_files)
@@ -278,22 +279,35 @@ class S5HTMLTranslator(html4css1.HTMLTranslator):
             return 1
 
     def depart_document(self, node):
+        self.head_prefix.extend([self.doctype,
+                                 self.head_prefix_template %
+                                 {'lang': self.settings.language_code}])
+        self.html_prolog.append(self.doctype)
+        self.meta.insert(0, self.content_type % self.settings.output_encoding)
+        self.head.insert(0, self.content_type % self.settings.output_encoding)
+        if self.math_header:
+            if self.math_output == 'mathjax':
+                self.head.extend(self.math_header)
+            else:
+                self.stylesheet.extend(self.math_header)
+        # skip content-type meta tag with interpolated charset value:
+        self.html_head.extend(self.head[1:])
+        self.fragment.extend(self.body)
+        # special S5 code up to the next comment line
         header = ''.join(self.s5_header)
         footer = ''.join(self.s5_footer)
         title = ''.join(self.html_title).replace('<h1 class="title">', '<h1>')
         layout = self.layout_template % {'header': header,
                                          'title': title,
                                          'footer': footer}
-        self.fragment.extend(self.body)
         self.body_prefix.extend(layout)
         self.body_prefix.append('<div class="presentation">\n')
         self.body_prefix.append(
             self.starttag({'classes': ['slide'], 'ids': ['slide0']}, 'div'))
         if not self.section_count:
             self.body.append('</div>\n')
+        #
         self.body_suffix.insert(0, '</div>\n')
-        # skip content-type meta tag with interpolated charset value:
-        self.html_head.extend(self.head[1:])
         self.html_body.extend(self.body_prefix[1:] + self.body_pre_docinfo
                               + self.docinfo + self.body
                               + self.body_suffix[:-1])

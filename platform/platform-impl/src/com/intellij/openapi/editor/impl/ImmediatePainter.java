@@ -15,268 +15,351 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.actions.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.awt.image.BufferedImage;
+import java.awt.image.VolatileImage;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Pavel Fatin
  */
-public class ImmediatePainter {
-  // Characters that excluded from zero-latency painting after key typing
-  private static final Set<Character> KEY_CHARS_TO_SKIP =
-    new HashSet<Character>(Arrays.asList('\n', '\t', '(', ')', '[', ']', '{', '}', '"', '\''));
+class ImmediatePainter {
+  private static final int DEBUG_PAUSE_DURATION = 1000;
 
-  // Characters that excluded from zero-latency painting after document update
-  private static final Set<Character> DOCUMENT_CHARS_TO_SKIP =
-    new HashSet<Character>(Arrays.asList(')', ']', '}', '"', '\''));
-
-  // Although it's possible to paint arbitrary line changes immediately,
-  // our primary interest is direct user editing actions, where visual delay is crucial.
-  // Moreover, as many subsystems (like PsiToDocumentSynchronizer, UndoManager, etc.) don't enforce bulk document updates,
-  // and can trigger multiple write actions / document changes sequentially, we need to avoid possible flickering during such an activity.
-  // There seems to be no other way to determine whether particular document change is triggered by direct user editing
-  // (raw character typing is handled separately, even before write action).
-  private static final Set<Class> IMMEDIATE_EDITING_ACTIONS = new HashSet<Class>(Arrays.asList(BackspaceAction.class,
-                                                                                               DeleteAction.class,
-                                                                                               DeleteToWordStartAction.class,
-                                                                                               DeleteToWordEndAction.class,
-                                                                                               DeleteToWordStartInDifferentHumpsModeAction.class,
-                                                                                               DeleteToWordEndInDifferentHumpsModeAction.class,
-                                                                                               DeleteToLineStartAction.class,
-                                                                                               DeleteToLineEndAction.class,
-                                                                                               CutAction.class,
-                                                                                               PasteAction.class));
-  public static final String ZERO_LATENCY_TYPING_KEY = "editor.zero.latency.typing";
-
-  public static final String ZERO_LATENCY_TYPING_DEBUG_KEY = "editor.zero.latency.typing.debug";
-
-  public static final int DEBUG_PAUSE_DURATION = 1000;
-
-  // TODO Should be removed when IDEA adopts typing without starting write actions.
-  private static final boolean VIM_PLUGIN_LOADED = isPluginLoaded("IdeaVIM");
-
-  private Rectangle myOldArea = new Rectangle(0, 0, 0, 0);
-  private Rectangle myOldTailArea = new Rectangle(0, 0, 0, 0);
-  private boolean myImmediateEditingInProgress;
+  static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
+  static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
+  private static final RegistryValue PIPELINE_FLUSH = Registry.get("editor.zero.latency.rendering.pipeline.flush");
+  private static final RegistryValue DEBUG = Registry.get("editor.zero.latency.rendering.debug");
 
   private final EditorImpl myEditor;
-
+  private Image myImage;
 
   ImmediatePainter(EditorImpl editor) {
     myEditor = editor;
-    AnActionListener.Adapter actionListener = new AnActionListener.Adapter() {
-      @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (isZeroLatencyTypingEnabled() && IMMEDIATE_EDITING_ACTIONS.contains(action.getClass()) &&
-            !(action.getClass() == PasteAction.class && getSelectionModel().hasSelection())) {
-          myImmediateEditingInProgress = true;
-        }
-      }
 
-      @Override
-      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (isZeroLatencyTypingEnabled()) {
-          myImmediateEditingInProgress = false;
-        }
+    Disposer.register(editor.getDisposable(), () -> {
+      if (myImage != null) {
+        myImage.flush();
       }
+    });
+  }
+
+  void paint(final Graphics g, final EditorActionPlan plan) {
+    if (ENABLED.asBoolean() && canPaintImmediately(myEditor)) {
+      if (plan.getCaretShift() != 1) return;
+
+      final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();
+      if (replacements.size() != 1) return;
+
+      final EditorActionPlan.Replacement replacement = replacements.get(0);
+      if (replacement.getText().length() != 1) return;
+
+      final int caretOffset = replacement.getBegin();
+      final char c = replacement.getText().charAt(0);
+      paintImmediately(g, caretOffset, c);
+    }
+  }
+
+  private static boolean canPaintImmediately(final EditorImpl editor) {
+    final CaretModel caretModel = editor.getCaretModel();
+    final Caret caret = caretModel.getPrimaryCaret();
+    final Document document = editor.getDocument();
+
+    return !(editor.getComponent().getParent() instanceof EditorTextField) &&
+           document instanceof DocumentImpl &&
+           editor.getHighlighter() instanceof LexerEditorHighlighter &&
+           !editor.getSelectionModel().hasSelection() &&
+           caretModel.getCaretCount() == 1 &&
+           !isInVirtualSpace(editor, caret) &&
+           !isInsertion(document, caret.getOffset()) &&
+           !caret.isAtRtlLocation() &&
+           !caret.isAtBidiRunBoundary();
+  }
+
+  private static boolean isInVirtualSpace(final Editor editor, final Caret caret) {
+    return caret.getLogicalPosition().compareTo(editor.offsetToLogicalPosition(caret.getOffset())) != 0;
+  }
+
+  private static boolean isInsertion(final Document document, final int offset) {
+    return offset < document.getTextLength() && document.getCharsSequence().charAt(offset) != '\n';
+  }
+
+  private void paintImmediately(final Graphics g, final int offset, final char c2) {
+    final EditorImpl editor = myEditor;
+    final Document document = editor.getDocument();
+    final LexerEditorHighlighter highlighter = (LexerEditorHighlighter)myEditor.getHighlighter();
+
+    final EditorSettings settings = editor.getSettings();
+    final boolean isBlockCursor = editor.isInsertMode() == settings.isBlockCursor();
+    final int lineHeight = editor.getLineHeight();
+    final int ascent = editor.getAscent();
+    final int topOverhang = editor.myView.getTopOverhang();
+    final int bottomOverhang = editor.myView.getBottomOverhang();
+
+    final char c1 = offset == 0 ? ' ' : document.getCharsSequence().charAt(offset - 1);
+
+    final List<TextAttributes> attributes = highlighter.getAttributesForPreviousAndTypedChars(document, offset, c2);
+    updateAttributes(editor, offset, attributes);
+
+    final TextAttributes attributes1 = attributes.get(0);
+    final TextAttributes attributes2 = attributes.get(1);
+
+    if (!(canRender(attributes1) && canRender(attributes2))) {
+      return;
+    }
+
+    final int width1 = editor.getFontMetrics(attributes1.getFontType()).charWidth(c1);
+    final int width2 = editor.getFontMetrics(attributes2.getFontType()).charWidth(c2);
+
+    final Font font1 = EditorUtil.fontForChar(c1, attributes1.getFontType(), editor).getFont();
+    final Font font2 = EditorUtil.fontForChar(c1, attributes2.getFontType(), editor).getFont();
+
+    final Point p2 = editor.offsetToXY(offset, false);
+
+    Caret caret = editor.getCaretModel().getPrimaryCaret();
+    //noinspection ConstantConditions
+    final int caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].myWidth
+                                         : JBUI.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
+    final int caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1;
+    final Rectangle caretRectangle = new Rectangle(p2.x + width2 - caretShift, p2.y - topOverhang,
+                                                   caretWidth, lineHeight + topOverhang + bottomOverhang + (isBlockCursor ? -1 : 0));
+
+    final Rectangle rectangle1 = new Rectangle(p2.x - width1, p2.y, width1, lineHeight);
+    final Rectangle rectangle2 = new Rectangle(p2.x, p2.y, width2 + caretWidth - caretShift, lineHeight);
+
+    final Consumer<Graphics> painter = graphics -> {
+      EditorUIUtil.setupAntialiasing(graphics);
+
+      fillRect(graphics, rectangle2, attributes2.getBackgroundColor());
+      drawChar(graphics, c2, p2.x, p2.y + ascent, font2, attributes2.getForegroundColor());
+
+      fillRect(graphics, caretRectangle, getCaretColor(editor));
+
+      fillRect(graphics, rectangle1, attributes1.getBackgroundColor());
+      drawChar(graphics, c1, p2.x - width1, p2.y + ascent, font1, attributes1.getForegroundColor());
     };
 
-    ActionManager.getInstance().addAnActionListener(actionListener, editor.getDisposable());
-  }
+    final Shape originalClip = g.getClip();
 
-  protected Document getDocument() {
-    return myEditor.getDocument();
-  }
+    g.setClip(p2.x - caretShift, p2.y, width2 - caretShift + caretWidth + 1, lineHeight);
 
-  protected SelectionModel getSelectionModel() {
-    return myEditor.getSelectionModel();
-  }
-
-  protected EditorHighlighter getHighlighter() {
-    return myEditor.getHighlighter();
-  }
-
-  protected CaretModel getCaretModel() {
-    return myEditor.getCaretModel();
-  }
-
-  protected EditorColorsScheme getColorsScheme() {
-    return myEditor.getColorsScheme();
-  }
-
-  protected EditorComponentImpl getContentComponent() {
-    return myEditor.getContentComponent();
-  }
-
-  public void paintCharacter(Graphics g, char c) {
-    if (isZeroLatencyTypingEnabled() && getDocument().isWritable() && !myEditor.isViewer() && canPaintImmediately(c)) {
-      for (Caret caret : getCaretModel().getAllCarets()) {
-        paintImmediately(g, caret.getOffset(), c, myEditor.isInsertMode());
-      }
+    if (DOUBLE_BUFFERING.asBoolean()) {
+      paintWithDoubleBuffering(g, painter);
     }
-  }
-
-  public void beforeUpdate(@NotNull DocumentEvent e) {
-    if (isZeroLatencyTypingEnabled() && myImmediateEditingInProgress && canPaintImmediately(e)) {
-      int offset = e.getOffset();
-      int length = e.getOldLength();
-
-      myOldArea = lineRectangleBetween(offset, offset + length);
-
-      myOldTailArea = lineRectangleBetween(offset + length, getDocument().getLineEndOffset(getDocument().getLineNumber(offset)));
-      if (myOldTailArea.isEmpty()) {
-        myOldTailArea.width += EditorUtil.getSpaceWidth(Font.PLAIN, myEditor); // include possible caret
-      }
-    }
-  }
-
-  public void paintUpdate(Graphics g, @NotNull DocumentEvent e) {
-    if (isZeroLatencyTypingEnabled() && myImmediateEditingInProgress && canPaintImmediately(e)) {
-      paintImmediately(g, e);
-    }
-  }
-
-  public static boolean isZeroLatencyTypingEnabled() {
-    // Zero-latency typing is suppressed when Idea VIM plugin is loaded, because of VIM-1007.
-    // That issue will be resolved automatically when IDEA adopts typing without starting write actions.
-    return !VIM_PLUGIN_LOADED && Registry.is(ZERO_LATENCY_TYPING_KEY);
-  }
-
-  private static boolean isZeroLatencyTypingDebugEnabled() {
-    return Registry.is(ZERO_LATENCY_TYPING_DEBUG_KEY);
-  }
-
-  private static boolean isPluginLoaded(@NotNull String id) {
-    PluginId pluginId = PluginId.findId(id);
-    if (pluginId == null) return false;
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    if (plugin == null) return false;
-    return plugin.isEnabled();
-  }
-
-  private boolean canPaintImmediately(char c) {
-    return getDocument() instanceof DocumentImpl &&
-           getHighlighter() instanceof LexerEditorHighlighter &&
-           !getSelectionModel().hasSelection() &&
-           arePositionsWithinDocument(getCaretModel().getAllCarets()) &&
-           areVisualLinesUnique(getCaretModel().getAllCarets()) &&
-           !isInplaceRenamerActive() &&
-           !KEY_CHARS_TO_SKIP.contains(c);
-  }
-
-  private static boolean areVisualLinesUnique(java.util.List<Caret> carets) {
-    if (carets.size() > 1) {
-      TIntHashSet lines = new TIntHashSet(carets.size());
-      for (Caret caret : carets) {
-        if (!lines.add(caret.getVisualLineStart())) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  // Checks whether all the carets are within document or some of them are in a so called "virtual space".
-  private boolean arePositionsWithinDocument(java.util.List<Caret> carets) {
-    for (Caret caret : carets) {
-      if (caret.getLogicalPosition().compareTo(myEditor.offsetToLogicalPosition(caret.getOffset())) != 0) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // TODO Improve the approach - handle such cases in a more general way.
-  private boolean isInplaceRenamerActive() {
-    Key<?> key = Key.findKeyByName("EditorInplaceRenamer");
-    return key != null && key.isIn(myEditor);
-  }
-
-  // Called to display a single character insertion before starting a write action and the general painting routine.
-  // Bypasses RepaintManager (c.repaint, c.paintComponent) and double buffering (g.paintImmediately) to minimize visual lag.
-  // TODO Should be replaced with the generic paintImmediately(event) call when we implement typing without starting write actions.
-  private void paintImmediately(Graphics g, int offset, char c, boolean insert) {
-    if (g == null) return; // editor component is currently not displayable
-
-    TextAttributes attributes = ((LexerEditorHighlighter)getHighlighter()).getAttributes((DocumentImpl)getDocument(), offset, c);
-
-    int fontType = attributes.getFontType();
-    FontInfo fontInfo = EditorUtil.fontForChar(c, attributes.getFontType(), myEditor);
-    Font font = fontInfo.getFont();
-
-    // it's more reliable to query actual font metrics
-    FontMetrics fontMetrics = myEditor.getFontMetrics(fontType);
-
-    int charWidth = fontMetrics.charWidth(c);
-
-    int delta = charWidth;
-
-    if (!insert && offset < getDocument().getTextLength()) {
-      delta -= fontMetrics.charWidth(getDocument().getCharsSequence().charAt(offset));
+    else {
+      painter.consume(g);
     }
 
-    Rectangle tailArea = lineRectangleBetween(offset, getDocument().getLineEndOffset(myEditor.offsetToLogicalLine(offset)));
-    if (tailArea.isEmpty()) {
-      tailArea.width += EditorUtil.getSpaceWidth(fontType, myEditor); // include caret
+    g.setClip(originalClip);
+
+    if (PIPELINE_FLUSH.asBoolean()) {
+      Toolkit.getDefaultToolkit().sync();
     }
 
-    Color background = attributes.getBackgroundColor() == null ? getCaretRowBackground() : attributes.getBackgroundColor();
-
-    Rectangle newArea = lineRectangleBetween(offset, offset);
-    newArea.width += charWidth;
-
-    String newText = Character.toString(c);
-    Point point = newArea.getLocation();
-    int ascent = myEditor.getAscent();
-    Color foreground = attributes.getForegroundColor() == null ? myEditor.getForegroundColor() : attributes.getForegroundColor();
-
-    EditorUIUtil.setupAntialiasing(g);
-
-    // pre-compute all the arguments beforehand to minimize delays between the calls (as there's no double-buffering)
-    if (delta != 0) {
-      shift(g, tailArea, delta);
-    }
-    fill(g, newArea, background);
-    print(g, newText, point, ascent, font, foreground);
-
-    // flush changes (there can be batching / buffering in video driver)
-    Toolkit.getDefaultToolkit().sync();
-
-    if (isZeroLatencyTypingDebugEnabled()) {
+    if (DEBUG.asBoolean()) {
       pause();
     }
+  }
+
+  private static boolean canRender(final TextAttributes attributes) {
+    return attributes.getEffectType() != EffectType.BOXED || attributes.getEffectColor() == null;
+  }
+
+  private void paintWithDoubleBuffering(final Graphics graphics, final Consumer<Graphics> painter) {
+    final Rectangle bounds = graphics.getClipBounds();
+
+    createOrUpdateImageBuffer(myEditor.getComponent(), bounds.getSize());
+
+    final Graphics imageGraphics = myImage.getGraphics();
+    imageGraphics.translate(-bounds.x, -bounds.y);
+    painter.consume(imageGraphics);
+    imageGraphics.dispose();
+
+    graphics.drawImage(myImage, bounds.x, bounds.y, null);
+  }
+
+  private void createOrUpdateImageBuffer(final JComponent component, final Dimension size) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (myImage == null || !isLargeEnough(myImage, size)) {
+        myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+      }
+    }
+    else {
+      if (myImage == null) {
+        myImage = component.createVolatileImage(size.width, size.height);
+      }
+      else if (!isLargeEnough(myImage, size) ||
+               ((VolatileImage)myImage).validate(component.getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE) {
+        myImage.flush();
+        myImage = component.createVolatileImage(size.width, size.height);
+      }
+    }
+  }
+
+  private static boolean isLargeEnough(final Image image, final Dimension size) {
+    final int width = image.getWidth(null);
+    final int height = image.getHeight(null);
+    if (width == -1 || height == -1) {
+      throw new IllegalArgumentException("Image size is undefined");
+    }
+    return width >= size.width && height >= size.height;
+  }
+
+  private static void fillRect(final Graphics g, final Rectangle r, final Color color) {
+    g.setColor(color);
+    g.fillRect(r.x, r.y, r.width, r.height);
+  }
+
+  private static void drawChar(final Graphics g,
+                               final char c,
+                               final int x, final int y,
+                               final Font font, final Color color) {
+    g.setFont(font);
+    g.setColor(color);
+    g.drawString(String.valueOf(c), x, y);
+  }
+
+  private static Color getCaretColor(final Editor editor) {
+    Color overriddenColor = editor.getCaretModel().getPrimaryCaret().getVisualAttributes().getColor();
+    if (overriddenColor != null) return overriddenColor;
+    final Color caretColor = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
+    return caretColor == null ? new JBColor(Gray._0, Gray._255) : caretColor;
+  }
+
+  private static void updateAttributes(final EditorImpl editor, final int offset, final List<TextAttributes> attributes) {
+    final List<RangeHighlighterEx> list1 = new ArrayList<>();
+    final List<RangeHighlighterEx> list2 = new ArrayList<>();
+
+    final Processor<RangeHighlighterEx> processor = highlighter -> {
+      if (!highlighter.isValid()) return true;
+
+      final boolean isLineHighlighter = highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
+
+      if (isLineHighlighter || highlighter.getStartOffset() < offset) {
+        list1.add(highlighter);
+      }
+
+      if (isLineHighlighter || highlighter.getEndOffset() > offset ||
+          (highlighter.getEndOffset() == offset && (highlighter.isGreedyToRight()))) {
+        list2.add(highlighter);
+      }
+
+      return true;
+    };
+
+    editor.getFilteredDocumentMarkupModel().processRangeHighlightersOverlappingWith(Math.max(0, offset - 1), offset, processor);
+    editor.getMarkupModel().processRangeHighlightersOverlappingWith(Math.max(0, offset - 1), offset, processor);
+
+    updateAttributes(editor, attributes.get(0), list1);
+    updateAttributes(editor, attributes.get(1), list2);
+  }
+
+  // TODO Unify with com.intellij.openapi.editor.impl.view.IterationState.setAttributes
+  private static void updateAttributes(final EditorImpl editor,
+                                       final TextAttributes attributes,
+                                       final List<RangeHighlighterEx> highlighters) {
+    if (highlighters.size() > 1) {
+      ContainerUtil.quickSort(highlighters, com.intellij.openapi.editor.impl.view.IterationState.BY_LAYER_THEN_ATTRIBUTES);
+    }
+
+    TextAttributes syntax = attributes;
+    TextAttributes caretRow = editor.getCaretModel().getTextAttributes();
+
+    final int size = highlighters.size();
+
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < size; i++) {
+      RangeHighlighterEx highlighter = highlighters.get(i);
+      if (highlighter.getTextAttributes() == TextAttributes.ERASE_MARKER) {
+        syntax = null;
+      }
+    }
+
+    final List<TextAttributes> cachedAttributes = new ArrayList<>();
+
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < size; i++) {
+      RangeHighlighterEx highlighter = highlighters.get(i);
+
+      if (caretRow != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
+        cachedAttributes.add(caretRow);
+        caretRow = null;
+      }
+
+      if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
+        cachedAttributes.add(syntax);
+        syntax = null;
+      }
+
+      TextAttributes textAttributes = highlighter.getTextAttributes();
+      if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
+        cachedAttributes.add(textAttributes);
+      }
+    }
+
+    if (caretRow != null) cachedAttributes.add(caretRow);
+    if (syntax != null) cachedAttributes.add(syntax);
+
+    Color foreground = null;
+    Color background = null;
+    Color effect = null;
+    EffectType effectType = null;
+    int fontType = 0;
+
+    //noinspection ForLoopReplaceableByForEach, Duplicates
+    for (int i = 0; i < cachedAttributes.size(); i++) {
+      TextAttributes attrs = cachedAttributes.get(i);
+
+      if (foreground == null) {
+        foreground = attrs.getForegroundColor();
+      }
+
+      if (background == null) {
+        background = attrs.getBackgroundColor();
+      }
+
+      if (fontType == Font.PLAIN) {
+        fontType = attrs.getFontType();
+      }
+
+      if (effect == null) {
+        effect = attrs.getEffectColor();
+        effectType = attrs.getEffectType();
+      }
+    }
+
+    if (foreground == null) foreground = editor.getForegroundColor();
+    if (background == null) background = editor.getBackgroundColor();
+    if (effectType == null) effectType = EffectType.BOXED;
+    TextAttributes defaultAttributes = editor.getColorsScheme().getAttributes(HighlighterColors.TEXT);
+    if (fontType == Font.PLAIN) fontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
+
+    attributes.setAttributes(foreground, background, effect, null, effectType, fontType);
   }
 
   private static void pause() {
@@ -286,111 +369,5 @@ public class ImmediatePainter {
     catch (InterruptedException e) {
       // ...
     }
-  }
-
-  private boolean canPaintImmediately(@NotNull DocumentEvent e) {
-    return getDocument() instanceof DocumentImpl &&
-           !isInplaceRenamerActive() &&
-           StringUtil.indexOf(e.getOldFragment(), '\n') == -1 &&
-           StringUtil.indexOf(e.getNewFragment(), '\n') == -1 &&
-           !(e.getNewLength() == 1 && DOCUMENT_CHARS_TO_SKIP.contains(e.getNewFragment().charAt(0)));
-  }
-
-  // Called to display insertion / deletion / replacement within a single line before the general painting routine.
-  // Bypasses RepaintManager (c.repaint, c.paintComponent) and double buffering (g.paintImmediately) to minimize visual lag.
-  private void paintImmediately(Graphics g, @NotNull DocumentEvent e) {
-    if (g == null) return; // editor component is currently not displayable
-
-    int offset = e.getOffset();
-    String newText = e.getNewFragment().toString();
-    Rectangle newArea = lineRectangleBetween(offset, offset + newText.length());
-    int delta = newArea.width - myOldArea.width;
-    Color background = getCaretRowBackground();
-
-    if (delta != 0) {
-      if (delta < 0) {
-        // Pre-paint carets at new positions, if needed, before shifting the tail area (to avoid flickering),
-        // because painting takes some time while copyArea is almost instantaneous.
-        EditorImpl.CaretRectangle[] caretRectangles = myEditor.getCaretCursor().getCaretLocations(true);
-        if (caretRectangles != null) {
-          for (EditorImpl.CaretRectangle it : caretRectangles) {
-            Rectangle r = toRectangle(it);
-            if (myOldArea.contains(r) && !newArea.contains(r)) {
-              myEditor.getCaretCursor().paintAt(g, it.myPoint.x - delta, it.myPoint.y, it.myWidth, it.myCaret);
-            }
-          }
-        }
-      }
-
-      shift(g, myOldTailArea, delta);
-
-      if (delta < 0) {
-        Rectangle remainingArea = new Rectangle(myOldTailArea.x + myOldTailArea.width + delta,
-                                                myOldTailArea.y, -delta, myOldTailArea.height);
-        fill(g, remainingArea, background);
-      }
-    }
-
-    if (!newArea.isEmpty()) {
-      TextAttributes attributes = getHighlighter().createIterator(offset).getTextAttributes();
-
-      Point point = newArea.getLocation();
-      int ascent = myEditor.getAscent();
-      // simplified font selection (based on the first character)
-      FontInfo fontInfo = EditorUtil.fontForChar(newText.charAt(0), attributes.getFontType(), myEditor);
-      Font font = fontInfo.getFont();
-
-      Color foreground = attributes.getForegroundColor() == null ? myEditor.getForegroundColor() : attributes.getForegroundColor();
-
-      EditorUIUtil.setupAntialiasing(g);
-
-      // pre-compute all the arguments beforehand to minimize delay between the calls (as there's no double-buffering)
-      fill(g, newArea, background);
-      print(g, newText, point, ascent, font, foreground);
-    }
-
-    // flush changes (there can be batching / buffering in video driver)
-    Toolkit.getDefaultToolkit().sync();
-
-    if (isZeroLatencyTypingDebugEnabled()) {
-      pause();
-    }
-  }
-
-  @NotNull
-  private Rectangle lineRectangleBetween(int begin, int end) {
-    Point p1 = myEditor.offsetToXY(begin, false);
-    Point p2 = myEditor.offsetToXY(end, false);
-    // When soft wrap is present, handle only the first visual line (for simplicity, yet it works reasonably well)
-    int x2 = p1.y == p2.y ? p2.x : Math.max(p1.x, getContentComponent().getWidth() - myEditor.getVerticalScrollBar().getWidth());
-    return new Rectangle(p1.x, p1.y, x2 - p1.x, myEditor.getLineHeight());
-  }
-
-  @NotNull
-  private Rectangle toRectangle(@NotNull EditorImpl.CaretRectangle caretRectangle) {
-    Point p = caretRectangle.myPoint;
-    return new Rectangle(p.x, p.y, caretRectangle.myWidth, myEditor.getLineHeight());
-  }
-
-  @NotNull
-  private Color getCaretRowBackground() {
-    Color color = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
-    return color == null ? myEditor.getBackgroundColor() : color;
-  }
-
-  private static void shift(@NotNull Graphics g, @NotNull Rectangle r, int delta) {
-    g.copyArea(r.x, r.y, r.width, r.height, delta, 0);
-  }
-
-  private static void fill(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Color color) {
-    g.setColor(color);
-    g.fillRect(r.x, r.y, r.width, r.height);
-  }
-
-  private static void print(@NotNull Graphics g, @NotNull String text, @NotNull Point point,
-                            int ascent, @NotNull Font font, @NotNull Color color) {
-    g.setFont(font);
-    g.setColor(color);
-    g.drawString(text, point.x, point.y + ascent);
   }
 }

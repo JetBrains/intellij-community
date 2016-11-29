@@ -24,7 +24,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.autotest.ToggleAutoTestAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
@@ -32,10 +31,7 @@ import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -93,7 +89,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   @Override
-  public GeneralCommandLine generateCommandLine()  {
+  public GeneralCommandLine generateCommandLine() {
     GeneralCommandLine cmd = super.generateCommandLine();
 
     setWorkingDirectory(cmd);
@@ -107,26 +103,11 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
-    final String workingDirectory = myConfiguration.getWorkingDirectory();
-    if (!StringUtil.isEmptyOrSpaces(workingDirectory)) {
-      cmd.withWorkDirectory(workingDirectory);
+    String workingDirectory = myConfiguration.getWorkingDirectory();
+    if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
+      workingDirectory = myConfiguration.getWorkingDirectorySafe();
     }
-    else if (myConfiguration instanceof AbstractPythonTestRunConfiguration) {
-      final String folderName = ((AbstractPythonTestRunConfiguration)myConfiguration).getFolderName();
-      if (!StringUtil.isEmptyOrSpaces(folderName)) {
-        cmd.withWorkDirectory(folderName);
-      }
-      else {
-        final String scriptName = ((AbstractPythonTestRunConfiguration)myConfiguration).getScriptName();
-        if (StringUtil.isEmptyOrSpaces(scriptName)) return;
-        final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(scriptName);
-        if (script == null) return;
-        cmd.withWorkDirectory(script.getParent().getPath());
-      }
-    }
-    if (cmd.getWorkDirectory() == null) { // If current dir still not set, lets use project dir
-      cmd.setWorkDirectory(myConfiguration.getWorkingDirectorySafe());
-    }
+    cmd.withWorkDirectory(workingDirectory);
   }
 
   @Override
@@ -143,27 +124,23 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     PyRerunFailedTestsAction rerunFailedTestsAction = new PyRerunFailedTestsAction(console);
     if (console instanceof SMTRunnerConsoleView) {
       rerunFailedTestsAction.init(((BaseTestsOutputConsoleView)console).getProperties());
-      rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return ((SMTRunnerConsoleView)console).getResultsViewer();
-      }
-    });
+      rerunFailedTestsAction.setModelProvider(() -> ((SMTRunnerConsoleView)console).getResultsViewer());
     }
 
     executionResult.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction());
     return executionResult;
   }
 
-  protected void addBeforeParameters(GeneralCommandLine cmd)  {}
+  protected void addBeforeParameters(GeneralCommandLine cmd) {}
+
   protected void addAfterParameters(GeneralCommandLine cmd) {}
 
-  protected void addTestRunnerParameters(GeneralCommandLine cmd)  {
+  protected void addTestRunnerParameters(GeneralCommandLine cmd) {
     ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert scriptParams != null;
     getRunner().addToGroup(scriptParams, cmd);
     addBeforeParameters(cmd);
-    scriptParams.addParameters(getTestSpecs());
+    myConfiguration.addTestSpecsAsParameters(scriptParams, getTestSpecs());
     addAfterParameters(cmd);
   }
 
@@ -174,6 +151,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected abstract HelperPackage getRunner();
+
   @NotNull
   protected abstract List<String> getTestSpecs();
 }

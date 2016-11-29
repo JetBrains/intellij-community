@@ -18,19 +18,22 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.formatter.common.ExtraRangesProvider;
+import com.intellij.psi.formatter.common.NodeIndentRangesCalculator;
 import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LeafBlock implements ASTBlock{
+public class LeafBlock implements ASTBlock, ExtraRangesProvider {
   private int myStartOffset = -1;
   private final ASTNode myNode;
   private final Wrap myWrap;
   private final Alignment myAlignment;
 
-  private static final ArrayList<Block> EMPTY_SUB_BLOCKS = new ArrayList<Block>();
+  private static final ArrayList<Block> EMPTY_SUB_BLOCKS = new ArrayList<>();
   private final Indent myIndent;
 
   public LeafBlock(final ASTNode node,
@@ -108,4 +111,16 @@ public class LeafBlock implements ASTBlock{
     myStartOffset = startOffset;
    // if (startOffset != -1) assert startOffset == myNode.getTextRange().getStartOffset();
   }
+
+  @Override
+  @Nullable
+  public List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
+    int startOffset = getTextRange().getStartOffset();
+    if (info.isOnInsertedLine(startOffset) && myNode.getTextLength() == 1 && myNode.textContains('}')) {
+      ASTNode parent = myNode.getTreeParent();
+      return new NodeIndentRangesCalculator(parent).calculateExtraRanges();
+    }
+    return null;
+  }
+  
 }

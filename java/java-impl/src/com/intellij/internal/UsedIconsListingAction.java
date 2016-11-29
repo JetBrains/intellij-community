@@ -53,7 +53,7 @@ public class UsedIconsListingAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
 
-    final MultiMap<String, PsiExpression> calls = new MultiMap<String, PsiExpression>();
+    final MultiMap<String, PsiExpression> calls = new MultiMap<>();
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     Processor<PsiReference> consumer = new Processor<PsiReference>() {
@@ -87,11 +87,7 @@ public class UsedIconsListingAction extends AnAction {
 
       private void processValue(Object value, PsiCallExpression call, PsiFile file) {
         if (value instanceof String) {
-          String str = (String)value;
-          if (str.startsWith("\"")) {
-            str = str.substring(0);
-            str = StringUtil.trimEnd(str, "\"");
-          }
+          String str = StringUtil.unquoteString((String)value, '\"');
 
           if (!str.startsWith("/")) {
 
@@ -124,7 +120,7 @@ public class UsedIconsListingAction extends AnAction {
       MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
     }
 
-    final List<XmlAttribute> xmlAttributes = new ArrayList<XmlAttribute>();
+    final List<XmlAttribute> xmlAttributes = new ArrayList<>();
 
     PsiSearchHelper.SERVICE.getInstance(project).processAllFilesWithWordInText(
       "icon",
@@ -158,22 +154,19 @@ public class UsedIconsListingAction extends AnAction {
 
     PsiClass presentation = psiFacade.findClass("com.intellij.ide.presentation.Presentation",
                                                 allScope);
-    final MultiMap<String, PsiAnnotation> annotations = new MultiMap<String, PsiAnnotation>();
-    AnnotationTargetsSearch.search(presentation).forEach(new Processor<PsiModifierListOwner>() {
-      @Override
-      public boolean process(PsiModifierListOwner owner) {
-        PsiAnnotation annotation = owner.getModifierList().findAnnotation("com.intellij.ide.presentation.Presentation");
+    final MultiMap<String, PsiAnnotation> annotations = new MultiMap<>();
+    AnnotationTargetsSearch.search(presentation).forEach(owner -> {
+      PsiAnnotation annotation = owner.getModifierList().findAnnotation("com.intellij.ide.presentation.Presentation");
 
-        PsiAnnotationMemberValue icon = annotation.findAttributeValue("icon");
-        if (icon instanceof PsiLiteralExpression) {
-          Object value = ((PsiLiteralExpression)icon).getValue();
-          if (value instanceof String) {
-            annotations.putValue((String)value, annotation);
-          }
+      PsiAnnotationMemberValue icon = annotation.findAttributeValue("icon");
+      if (icon instanceof PsiLiteralExpression) {
+        Object value = ((PsiLiteralExpression)icon).getValue();
+        if (value instanceof String) {
+          annotations.putValue((String)value, annotation);
         }
-
-        return true;
       }
+
+      return true;
     });
 
     doReplacements(project, calls, xmlAttributes, annotations, psiFacade.findClass("com.intellij.icons.AllIcons", allScope));
@@ -189,7 +182,7 @@ public class UsedIconsListingAction extends AnAction {
                                      List<XmlAttribute> xmlAttributes,
                                      MultiMap<String, PsiAnnotation> annotations,
                                      PsiClass iconClass) {
-    final HashMap<String, String> mappings = new HashMap<String, String>();
+    final HashMap<String, String> mappings = new HashMap<>();
     int size = mappings.size();
     collectFields(iconClass, "", mappings);
     System.out.println("Found " + (mappings.size() - size) + " icons in " + iconClass.getQualifiedName());

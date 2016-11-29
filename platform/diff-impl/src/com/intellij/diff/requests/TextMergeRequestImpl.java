@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.requests;
 
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.TextMergeRequest;
@@ -59,6 +60,8 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     myTitle = title;
 
     myApplyCallback = applyCallback;
+
+    onAssigned(true);
   }
 
   @NotNull
@@ -87,35 +90,44 @@ public class TextMergeRequestImpl extends TextMergeRequest {
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
-    final CharSequence applyContent;
-    switch (result) {
-      case CANCEL:
-        applyContent = myOriginalContent;
-        break;
-      case LEFT:
-        CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
-        applyContent = StringUtil.convertLineSeparators(leftContent.toString());
-        break;
-      case RIGHT:
-        CharSequence rightContent = ThreeSide.RIGHT.select(getContents()).getDocument().getImmutableCharSequence();
-        applyContent = StringUtil.convertLineSeparators(rightContent.toString());
-        break;
-      case RESOLVED:
-        applyContent = null;
-        break;
-      default:
-        throw new IllegalArgumentException(result.toString());
-    }
+    try {
+      final CharSequence applyContent;
+      switch (result) {
+        case CANCEL:
+          applyContent = myOriginalContent;
+          break;
+        case LEFT:
+          CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
+          applyContent = StringUtil.convertLineSeparators(leftContent.toString());
+          break;
+        case RIGHT:
+          CharSequence rightContent = ThreeSide.RIGHT.select(getContents()).getDocument().getImmutableCharSequence();
+          applyContent = StringUtil.convertLineSeparators(rightContent.toString());
+          break;
+        case RESOLVED:
+          applyContent = null;
+          break;
+        default:
+          throw new IllegalArgumentException(result.toString());
+      }
 
-    if (applyContent != null) {
-      DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, new Runnable() {
-        @Override
-        public void run() {
+      if (applyContent != null) {
+        DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> {
           myOutput.getDocument().setText(applyContent);
-        }
-      });
-    }
+        });
+      }
 
-    if (myApplyCallback != null) myApplyCallback.consume(result);
+      if (myApplyCallback != null) myApplyCallback.consume(result);
+    }
+    finally {
+      onAssigned(false);
+    }
+  }
+
+  private void onAssigned(boolean assigned) {
+    myOutput.onAssigned(assigned);
+    for (DocumentContent content : myContents) {
+      content.onAssigned(assigned);
+    }
   }
 }

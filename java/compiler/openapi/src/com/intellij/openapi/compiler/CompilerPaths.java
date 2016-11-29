@@ -43,12 +43,7 @@ import java.util.Comparator;
 public class CompilerPaths {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
   private static volatile String ourSystemPath;
-  private static final Comparator<String> URLS_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      return o1.compareTo(o2);
-    }
-  };
+  private static final Comparator<String> URLS_COMPARATOR = (o1, o2) -> o1.compareTo(o2);
   /**
    * Returns a directory
    * @return a directory where compiler may generate files. All generated files are not deleted when the application exits
@@ -181,10 +176,20 @@ public class CompilerPaths {
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
+  /**
+   * @return path to annotation-processors generated _production_ sources
+    Use {@link #getAnnotationProcessorsGenerationPath(Module, boolean)}
+   */
+  @Deprecated
   @Nullable
   public static String getAnnotationProcessorsGenerationPath(Module module) {
+    return getAnnotationProcessorsGenerationPath(module, false);
+  }
+
+  @Nullable
+  public static String getAnnotationProcessorsGenerationPath(Module module, boolean forTests) {
     final AnnotationProcessingConfiguration config = CompilerConfiguration.getInstance(module.getProject()).getAnnotationProcessingConfiguration(module);
-    final String sourceDirName = config.getGeneratedSourcesDirectoryName(false);
+    final String sourceDirName = config.getGeneratedSourcesDirectoryName(forTests);
     if (config.isOutputRelativeToContentRoot()) {
       final String[] roots = ModuleRootManager.getInstance(module).getContentRootUrls();
       if (roots.length == 0) {
@@ -197,7 +202,7 @@ public class CompilerPaths {
     }
 
 
-    final String path = getModuleOutputPath(module, false);
+    final String path = getModuleOutputPath(module, forTests);
     if (path == null) {
       return null;
     }

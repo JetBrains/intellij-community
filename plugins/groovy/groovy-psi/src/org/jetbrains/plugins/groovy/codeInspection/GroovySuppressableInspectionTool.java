@@ -124,7 +124,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
       return Collections.emptyList();
     }
     final GrAnnotationMemberValue attributeValue = (GrAnnotationMemberValue)annotation.findAttributeValue(null);
-    Collection<String> result = new ArrayList<String>();
+    Collection<String> result = new ArrayList<>();
     if (attributeValue instanceof GrAnnotationArrayInitializer) {
       for (GrAnnotationMemberValue annotationMemberValue : ((GrAnnotationArrayInitializer)attributeValue).getInitializers()) {
         final String id = getInspectionIdSuppressedInAnnotationAttribute(annotationMemberValue);

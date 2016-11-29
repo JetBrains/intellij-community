@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -225,7 +222,7 @@ public class OrderEntryUtil {
   @NotNull
   public static List<Library> getModuleLibraries(@NotNull ModuleRootModel model) {
     OrderEntry[] orderEntries = model.getOrderEntries();
-    List<Library> libraries = new ArrayList<Library>();
+    List<Library> libraries = new ArrayList<>();
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry entry = (LibraryOrderEntry)orderEntry;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,24 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind;
 
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Set;
 
 enum GroovyResolveKind {
 
-  VARIABLE(EnumSet.of(DeclarationKind.VARIABLE)),
-  BINDING(EnumSet.of(DeclarationKind.VARIABLE)),
-  FIELD(EnumSet.of(DeclarationKind.FIELD, DeclarationKind.ENUM_CONST)),
-  PROPERTY(EnumSet.of(DeclarationKind.METHOD, DeclarationKind.FIELD, DeclarationKind.ENUM_CONST)),
-  METHOD(EnumSet.of(DeclarationKind.METHOD)),
-  CLASS(EnumSet.of(DeclarationKind.CLASS)),
-  PACKAGE(EnumSet.of(DeclarationKind.PACKAGE));
+  VARIABLE(DeclarationKind.VARIABLE),
+  BINDING(DeclarationKind.VARIABLE),
+  ENUM_CONST(DeclarationKind.ENUM_CONST),
+  FIELD(DeclarationKind.FIELD),
+  PROPERTY(DeclarationKind.METHOD, DeclarationKind.FIELD),
+  METHOD(DeclarationKind.METHOD),
+  CLASS(DeclarationKind.CLASS),
+  PACKAGE(DeclarationKind.PACKAGE);
 
-  final EnumSet<DeclarationKind> declarationKinds;
+  final Set<DeclarationKind> declarationKinds;
 
-  GroovyResolveKind(EnumSet<DeclarationKind> declarationKinds) {
-    this.declarationKinds = declarationKinds;
+  GroovyResolveKind(DeclarationKind kind, DeclarationKind... kinds) {
+    declarationKinds = Collections.unmodifiableSet(EnumSet.of(kind, kinds));
   }
 }

@@ -93,13 +93,13 @@ public class GitExecutableDetectorWindowsTest {
 
   @Test
   public void Program_not_found_try_git_exe() {
-    CAN_RUN = new ArrayList<String>(Arrays.asList("git.exe"));
+    CAN_RUN = new ArrayList<>(Arrays.asList("git.exe"));
     assertExecutable("git.exe");
   }
 
   @Test
   public void For_both_git_exe_and_git_cmd_prefer_git_cmd() {
-    CAN_RUN = new ArrayList<String>(Arrays.asList("git.exe", "git.cmd"));
+    CAN_RUN = new ArrayList<>(Arrays.asList("git.exe", "git.cmd"));
     assertExecutable("git.cmd");
   }
 

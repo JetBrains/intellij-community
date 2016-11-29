@@ -108,7 +108,7 @@ public class JsonUtil {
       return Collections.emptyList();
     }
 
-    List<T> list = new SmartList<T>();
+    List<T> list = new SmartList<>();
     readListBody(reader, list);
     reader.endArray();
     return list;
@@ -122,7 +122,7 @@ public class JsonUtil {
 
   @NotNull
   public static Map<String, Object> nextObject(@NotNull JsonReaderEx reader) {
-    Map<String, Object> map = new THashMap<String, Object>();
+    Map<String, Object> map = new THashMap<>();
     reader.beginObject();
     while (reader.hasNext()) {
       map.put(reader.nextName(), nextAny(reader));

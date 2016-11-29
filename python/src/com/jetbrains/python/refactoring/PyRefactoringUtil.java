@@ -26,9 +26,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +52,7 @@ public class PyRefactoringUtil {
     if (context == null) {
       return Collections.emptyList();
     }
-    final List<PsiElement> occurrences = new ArrayList<PsiElement>();
+    final List<PsiElement> occurrences = new ArrayList<>();
     final PyElementVisitor visitor = new PyElementVisitor() {
       public void visitElement(@NotNull final PsiElement element) {
         if (element instanceof PyParameter) {
@@ -260,7 +263,7 @@ public class PyRefactoringUtil {
     }
 
     PsiElement[] children = parent.getChildren();
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> array = new ArrayList<>();
     boolean flag = false;
     for (PsiElement child : children) {
       if (child.equals(element1)) {
@@ -293,23 +296,88 @@ public class PyRefactoringUtil {
 
   @NotNull
   public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element, boolean forHighlightUsages) {
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usages = new ArrayList<>();
     final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, forHighlightUsages);
     assert handler != null;
-    final List<PsiElement> elementsToProcess = new ArrayList<PsiElement>();
+    final List<PsiElement> elementsToProcess = new ArrayList<>();
     Collections.addAll(elementsToProcess, handler.getPrimaryElements());
     Collections.addAll(elementsToProcess, handler.getSecondaryElements());
     for (PsiElement e : elementsToProcess) {
-      handler.processElementUsages(e, new Processor<UsageInfo>() {
-        @Override
-        public boolean process(UsageInfo usageInfo) {
-          if (!usageInfo.isNonCodeUsage) {
-            usages.add(usageInfo);
-          }
-          return true;
+      handler.processElementUsages(e, usageInfo -> {
+        if (!usageInfo.isNonCodeUsage) {
+          usages.add(usageInfo);
         }
+        return true;
       }, FindUsagesHandler.createFindUsagesOptions(element.getProject(), null));
     }
     return usages;
+  }
+
+  /**
+   * Selects the shortest unique name inside the scope of scopeAnchor generated using {@link NameSuggesterUtil#generateNamesByType(String)}.
+   * If none of those names is suitable, unique names is made by appending number suffix.
+   *
+   * @param typeName    initial type name for generator
+   * @param scopeAnchor PSI element used to determine correct scope
+   * @return unique name in the scope of scopeAnchor
+   */
+  @NotNull
+  public static String selectUniqueNameFromType(@NotNull String typeName, @NotNull PsiElement scopeAnchor) {
+    return selectUniqueName(typeName, true, scopeAnchor);
+  }
+
+  /**
+   * Selects the shortest unique name inside the scope of scopeAnchor generated using {@link NameSuggesterUtil#generateNames(String)}.
+   * If none of those names is suitable, unique names is made by appending number suffix.
+   *
+   * @param templateName initial template name for generator
+   * @param scopeAnchor  PSI element used to determine correct scope
+   * @return unique name in the scope of scopeAnchor
+   */
+  @NotNull
+  public static String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor) {
+    return selectUniqueName(templateName, false, scopeAnchor);
+  }
+
+  @NotNull
+  private static String selectUniqueName(@NotNull String templateName, boolean templateIsType, @NotNull PsiElement scopeAnchor) {
+    final Collection<String> suggestions;
+    if (templateIsType) {
+      suggestions = NameSuggesterUtil.generateNamesByType(templateName);
+    }
+    else {
+      suggestions = NameSuggesterUtil.generateNames(templateName);
+    }
+    for (String name : suggestions) {
+      if (isValidNewName(name, scopeAnchor)) {
+        return name;
+      }
+    }
+
+    final String shortestName = ContainerUtil.getFirstItem(suggestions);
+    //noinspection ConstantConditions
+    return appendNumberUntilValid(shortestName, scopeAnchor);
+  }
+
+  /**
+   * Appends increasing numbers starting from 1 to the name until it becomes unique within the scope of the scopeAnchor.
+   *
+   * @param name        initial name
+   * @param scopeAnchor PSI element used to determine correct scope
+   * @return unique name in the scope probably with number suffix appended
+   */
+  @NotNull
+  public static String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor) {
+    int counter = 1;
+    String candidate = name;
+    while (!isValidNewName(candidate, scopeAnchor)) {
+      candidate = name + counter;
+      counter++;
+    }
+    return candidate;
+  }
+
+  public static boolean isValidNewName(@NotNull String name, @NotNull PsiElement scopeAnchor) {
+    return !(IntroduceValidator.isDefinedInScope(name, scopeAnchor) || PyNames.isReserved(name));
   }
 }

@@ -51,7 +51,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   @NotNull
   @Override
   protected List<PsiClass> getTargetClasses(PsiElement element) {
-    final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
+    final List<PsiClass> targetClasses = new ArrayList<>();
     for (PsiClass psiClass : super.getTargetClasses(element)) {
       if (psiClass.getManager().isInProject(psiClass) && 
           (!psiClass.isInterface() && !psiClass.isAnnotationType() || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
@@ -129,11 +129,8 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
         final int offset = newEditor.getCaretModel().getOffset();
         final PsiField psiField = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiField.class, false);
         if (psiField != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              CodeStyleManager.getInstance(project).reformat(psiField);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            CodeStyleManager.getInstance(project).reformat(psiField);
           });
           newEditor.getCaretModel().moveToOffset(psiField.getTextRange().getEndOffset() - 1);
         }

@@ -30,7 +30,7 @@ import java.util.Collection;
  */
 public interface LangCodeStyleExtractor {
   LanguageExtension<LangCodeStyleExtractor> EXTENSION =
-      new LanguageExtension<LangCodeStyleExtractor>("com.intellij.lang.formatting.extractor");
+    new LanguageExtension<>("com.intellij.lang.formatting.extractor");
 
   @NotNull
   Differ getDiffer(Project project, PsiFile psiFile, CodeStyleSettings settings);

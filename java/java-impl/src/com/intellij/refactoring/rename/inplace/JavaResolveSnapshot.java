@@ -31,7 +31,7 @@ import java.util.Map;
 class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.JavaResolveSnapshot");
 
-  private final Map<SmartPsiElementPointer, SmartPsiElementPointer> myReferencesMap = new HashMap<SmartPsiElementPointer, SmartPsiElementPointer>();
+  private final Map<SmartPsiElementPointer, SmartPsiElementPointer> myReferencesMap = new HashMap<>();
   private final Project myProject;
   private final Document myDocument;
 
@@ -39,13 +39,13 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
     myProject = scope.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(scope.getContainingFile());
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
-    final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<PsiElement, SmartPsiElementPointer>();
+    final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<>();
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression refExpr) {
         if (!refExpr.isQualified()) {
           JavaResolveResult resolveResult = refExpr.advancedResolve(false);
           final PsiElement resolved = resolveResult.getElement();
-          if (resolved instanceof PsiField && resolveResult.isStaticsScopeCorrect()) {
+          if ((resolved instanceof PsiField || resolved instanceof PsiClass) && resolveResult.isStaticsScopeCorrect()) {
             SmartPsiElementPointer key = pointerManager.createSmartPsiElementPointer(refExpr);
             SmartPsiElementPointer value = pointers.get(resolved);
             if (value == null) {
@@ -68,12 +68,12 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
   }
 
   private static void qualify(PsiElement referent, PsiElement referee, String hidingLocalName) {
-    if (referent instanceof PsiReferenceExpression && referee instanceof PsiField) {
+    if (referent instanceof PsiReferenceExpression && referee instanceof PsiMember) {
       PsiReferenceExpression ref = ((PsiReferenceExpression) referent);
       if (!ref.isQualified() && hidingLocalName.equals(ref.getReferenceName())) {
         final PsiElement newlyResolved = ref.resolve();
         if (referee.getManager().areElementsEquivalent(newlyResolved, referee)) return;
-        RenameJavaMemberProcessor.qualifyMember((PsiField)referee, referent, hidingLocalName);
+        RenameJavaMemberProcessor.qualifyMember((PsiMember)referee, referent, hidingLocalName);
       }
     }
   }

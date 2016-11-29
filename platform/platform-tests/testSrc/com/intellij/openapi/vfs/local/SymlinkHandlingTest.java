@@ -30,6 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -262,12 +263,26 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testDirLinkSwitch() throws Exception {
+  public void testDirLinkSwitchWithDifferentlenghtContent() throws Exception {
+    doTestDirLinkSwitch("text", "longer text");
+  }
+
+  @Test
+  public void testDirLinkSwitchWithSameLengthContent() throws Exception {
+    doTestDirLinkSwitch("text 1", "text 2");
+  }
+
+  private void doTestDirLinkSwitch(String text1, String text2) throws Exception {
     File targetDir1 = myTempDir.newFolder("target1");
     File targetDir2 = myTempDir.newFolder("target2");
-    assertTrue(new File(targetDir1, "child1.txt").createNewFile());
-    assertTrue(new File(targetDir2, "child11.txt").createNewFile());
-    assertTrue(new File(targetDir2, "child12.txt").createNewFile());
+    
+    File target1Child = new File(targetDir1, "child1.txt");
+    assertTrue(target1Child.createNewFile());
+    File target2Child = new File(targetDir2, "child1.txt");
+    assertTrue(target2Child.createNewFile());
+    assertTrue(new File(targetDir2, "child2.txt").createNewFile());
+    FileUtil.writeToFile(target1Child, text1);
+    FileUtil.writeToFile(target2Child, text2);
 
     File link = createSymLink(targetDir1.getPath(), myTempDir.getRoot() + "/link");
     VirtualFile vLink1 = refreshAndFind(link);
@@ -275,6 +290,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
                vLink1 != null && vLink1.isDirectory() && vLink1.is(VFileProperty.SYMLINK));
     assertEquals(1, vLink1.getChildren().length);
     assertPathsEqual(targetDir1.getPath(), vLink1.getCanonicalPath());
+    assertEquals(FileUtil.loadFile(target1Child), VfsUtilCore.loadText(vLink1.findChild("child1.txt")));
 
     assertTrue(link.toString(), link.delete());
     createSymLink(targetDir2.getPath(), myTempDir.getRoot() + "/" + link.getName());
@@ -287,14 +303,25 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
                vLink2 != null && vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(2, vLink2.getChildren().length);
     assertPathsEqual(targetDir2.getPath(), vLink1.getCanonicalPath());
+    assertEquals(FileUtil.loadFile(target2Child), VfsUtilCore.loadText(vLink1.findChild("child1.txt")));
+    assertEquals(FileUtil.loadFile(target2Child), VfsUtilCore.loadText(vLink2.findChild("child1.txt")));
   }
 
   @Test
-  public void testFileLinkSwitch() throws Exception {
+  public void testFileLinkSwitchWithDifferentlenghtContent() throws Exception {
+    doTestLinkSwitch("text", "longer text");
+  }
+
+  @Test
+  public void testFileLinkSwitchWithSameLengthContent() throws Exception {
+    doTestLinkSwitch("text 1", "text 2");
+  }
+
+  private void doTestLinkSwitch(String text1, String text2) throws IOException, InterruptedException {
     File target1 = myTempDir.newFile("target1.txt");
-    FileUtil.writeToFile(target1, "some text");
+    FileUtil.writeToFile(target1, text1);
     File target2 = myTempDir.newFile("target2.txt");
-    FileUtil.writeToFile(target2, "some quite another text");
+    FileUtil.writeToFile(target2, text2);
 
     File link = createSymLink(target1.getPath(), myTempDir.getRoot() + "/link");
     VirtualFile vLink1 = refreshAndFind(link);
@@ -309,9 +336,11 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     refresh();
     assertTrue(vLink1.isValid());
     VirtualFile vLink2 = LocalFileSystem.getInstance().findFileByIoFile(link);
+    VfsUtilCore.loadText(vLink2);
     assertEquals(vLink1, vLink2);
     assertTrue("link=" + link + ", vLink=" + vLink2,
                vLink2 != null && !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
+    assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink1));
     assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink2));
     assertPathsEqual(target2.getPath(), vLink1.getCanonicalPath());
   }

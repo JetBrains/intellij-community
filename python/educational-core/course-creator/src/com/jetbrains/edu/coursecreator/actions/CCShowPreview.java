@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.util.LabeledEditor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -33,17 +32,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
-import com.jetbrains.edu.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,34 +52,35 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 
 public class CCShowPreview extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(CCShowPreview.class.getName());
+  public static final String SHOW_PREVIEW = "Show Preview";
+  public static final String NO_PREVIEW_MESSAGE = "Preview is available for task files with answer placeholders only";
 
   public CCShowPreview() {
-    super("Show Preview", "Show Preview", null);
+    super(SHOW_PREVIEW, SHOW_PREVIEW, null);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!CCProjectService.setCCActionAvailable(e)) {
-      return;
-    }
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabledAndVisible(false);
     Project project = e.getProject();
     if (project == null) {
       return;
     }
-    Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(false);
+    if (!CCUtils.isCourseCreator(project)) {
+      return;
+    }
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    if (file != null && CCProjectService.getInstance(project).getTaskFile(file.getVirtualFile()) != null) {
+    if (file != null && StudyUtils.getTaskFile(project, file.getVirtualFile()) != null) {
       presentation.setEnabledAndVisible(true);
     }
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    //TODO: need to rewrite this action using new GENERATED_ROOT_FOLDER
     final Project project = e.getProject();
     Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     if (project == null || module == null) {
@@ -88,13 +90,12 @@ public class CCShowPreview extends DumbAwareAction {
     if (file == null) {
       return;
     }
-    final CCProjectService service = CCProjectService.getInstance(project);
-    Course course = service.getCourse();
+    Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
       return;
     }
     VirtualFile virtualFile = file.getVirtualFile();
-    TaskFile taskFile = service.getTaskFile(virtualFile);
+    TaskFile taskFile = StudyUtils.getTaskFile(project, virtualFile);
     if (taskFile == null) {
       return;
     }
@@ -108,13 +109,10 @@ public class CCShowPreview extends DumbAwareAction {
     }
 
 
-    if (taskFile.getAnswerPlaceholders().isEmpty()) {
+    if (taskFile.getActivePlaceholders().isEmpty()) {
       Messages.showInfoMessage("Preview is available for task files with answer placeholders only", "No Preview for This File");
       return;
     }
-    final TaskFile taskFileCopy = new TaskFile();
-    TaskFile.copy(taskFile, taskFileCopy);
-
 
     VirtualFile generatedFilesFolder = CCUtils.getGeneratedFilesFolder(project, module);
 
@@ -125,17 +123,18 @@ public class CCShowPreview extends DumbAwareAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        EduUtils.createStudentFileFromAnswer(project, generatedFilesFolder, taskDir.getVirtualFile(), virtualFile.getName(), taskFileCopy);
+        Pair<VirtualFile, TaskFile> pair =
+          EduUtils.createStudentFile(this, project, virtualFile, generatedFilesFolder, null, taskFile.getTask().getActiveSubtaskIndex());
+        if (pair != null) {
+          showPreviewDialog(project, pair.getFirst(), pair.getSecond());
+        }
       }
     });
+  }
 
-    VirtualFile userFile = generatedFilesFolder.findChild(virtualFile.getName());
-    if (userFile == null) {
-      LOG.info("Generated file " + virtualFile.getName() + "was not found");
-      return;
-    }
+  private static void showPreviewDialog(@NotNull Project project, @NotNull VirtualFile userFile, @NotNull TaskFile taskFile) {
     final FrameWrapper showPreviewFrame = new FrameWrapper(project);
-    showPreviewFrame.setTitle(virtualFile.getName());
+    showPreviewFrame.setTitle(userFile.getName());
     LabeledEditor labeledEditor = new LabeledEditor(null);
     final EditorFactory factory = EditorFactory.getInstance();
     Document document = FileDocumentManager.getInstance().getDocument(userFile);
@@ -148,8 +147,13 @@ public class CCShowPreview extends DumbAwareAction {
         factory.releaseEditor(createdEditor);
       }
     });
-    for (AnswerPlaceholder answerPlaceholder : taskFileCopy.getAnswerPlaceholders()) {
-      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, true, JBColor.BLUE);
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
+      if (answerPlaceholder.getActiveSubtaskInfo().isNeedInsertText()) {
+        answerPlaceholder.setLength(answerPlaceholder.getTaskText().length());
+      }
+      Integer minIndex = Collections.min(answerPlaceholder.getSubtaskInfos().keySet());
+      answerPlaceholder.setUseLength(minIndex >= answerPlaceholder.getActiveSubtaskIndex());
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, JBColor.BLUE);
     }
     JPanel header = new JPanel();
     header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
@@ -163,6 +167,8 @@ public class CCShowPreview extends DumbAwareAction {
     createdEditor.setCaretEnabled(false);
     showPreviewFrame.setComponent(labeledEditor);
     showPreviewFrame.setSize(new Dimension(500, 500));
-    showPreviewFrame.show();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      showPreviewFrame.show();
+    }
   }
 }

@@ -201,24 +201,21 @@ public class DomChildrenTest extends DomTestCase {
     final MyElement child2 = element.getChildElements().get(1);
     final MyElement child3 = element.getChildElements().get(2);
 
-    final List<XmlTag> oldChildren = new ArrayList<XmlTag>(Arrays.asList(element.getXmlTag().getSubTags()));
+    final List<XmlTag> oldChildren = new ArrayList<>(Arrays.asList(element.getXmlTag().getSubTags()));
 
     assertTrue(child2.isValid());
     assertEquals(element, child2.getParent());
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        child2.undefine();
-        assertFalse(child2.isValid());
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      child2.undefine();
+      assertFalse(child2.isValid());
 
-        oldChildren.remove(1);
-        assertEquals(oldChildren, Arrays.asList(element.getXmlTag().getSubTags()));
+      oldChildren.remove(1);
+      assertEquals(oldChildren, Arrays.asList(element.getXmlTag().getSubTags()));
 
-        assertEquals(Arrays.asList(child1, child3), element.getChildElements());
-        assertCached(child1, element.getXmlTag().findSubTags("child-element")[0]);
-        assertCached(child3, element.getXmlTag().findSubTags("child-element")[1]);
-      }
+      assertEquals(Arrays.asList(child1, child3), element.getChildElements());
+      assertCached(child1, element.getXmlTag().findSubTags("child-element")[0]);
+      assertCached(child3, element.getXmlTag().findSubTags("child-element")[1]);
     });
 
 
@@ -409,12 +406,7 @@ public class DomChildrenTest extends DomTestCase {
   public void testChildrenValidAfterUndefine() throws Throwable {
     final MyElement element = createElement("<a><child/></a>");
     final MyElement child = element.getChild();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        element.undefine();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> element.undefine());
 
     assertTrue(element.isValid());
     assertFalse(child.isValid());
@@ -483,34 +475,20 @@ public class DomChildrenTest extends DomTestCase {
     final XmlTag tag = myElement.getXmlTag();
     final List<MyElement> customChildren = myElement.getCustomChildren();
     assertOrderedEquals(customChildren, myElement.getGenericInfo().getCustomNameChildrenDescription().get(0).getValues(myElement));
-    assertOrderedCollection(customChildren, new Consumer<MyElement>() {
-      @Override
-      public void consume(final MyElement element) {
-        assertInstanceOf(element, MyElement.class);
-        assertEquals(tag.getSubTags()[0], element.getXmlTag());
-      }
-    }, new Consumer<MyElement>() {
-      @Override
-      public void consume(final MyElement element) {
-        assertInstanceOf(element, MyElement.class);
-        assertEquals(tag.getSubTags()[1], element.getXmlTag());
-      }
-    }, new Consumer<MyElement>() {
-      @Override
-      public void consume(final MyElement element) {
-        assertInstanceOf(element, MyElement.class);
-        assertEquals(tag.getSubTags()[2], element.getXmlTag());
-      }
+    assertOrderedCollection(customChildren, element -> {
+      assertInstanceOf(element, MyElement.class);
+      assertEquals(tag.getSubTags()[0], element.getXmlTag());
+    }, element -> {
+      assertInstanceOf(element, MyElement.class);
+      assertEquals(tag.getSubTags()[1], element.getXmlTag());
+    }, element -> {
+      assertInstanceOf(element, MyElement.class);
+      assertEquals(tag.getSubTags()[2], element.getXmlTag());
     });
   }
 
   private List<String> getFixedPath(final DomElement element) {
-    return ContainerUtil.map2List(DomUtil.getFixedPath(element), new Function<JavaMethod, String>() {
-      @Override
-      public String fun(final JavaMethod s) {
-        return s.getName();
-      }
-    });
+    return ContainerUtil.map2List(DomUtil.getFixedPath(element), s -> s.getName());
   }
 
   public void testElementsWithoutXmlGetItLater() throws Throwable {

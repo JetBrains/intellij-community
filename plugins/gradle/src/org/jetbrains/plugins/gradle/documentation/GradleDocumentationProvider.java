@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -51,7 +50,7 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     return result.isEmpty() ? null : result;
   }
 
@@ -83,12 +82,7 @@ public class GradleDocumentationProvider implements DocumentationProvider {
     String result = null;
     if (element instanceof GrLiteral) {
       GrLiteral grLiteral = (GrLiteral)element;
-      PsiElement stmt = PsiTreeUtil.findFirstParent(grLiteral, new Condition<PsiElement>() {
-        @Override
-        public boolean value(PsiElement psiElement) {
-          return psiElement instanceof GrCall;
-        }
-      });
+      PsiElement stmt = PsiTreeUtil.findFirstParent(grLiteral, psiElement -> psiElement instanceof GrCall);
       if (stmt instanceof GrCall) {
         GrCall grCall = (GrCall)stmt;
         PsiMethod psiMethod = grCall.resolveMethod();

@@ -88,11 +88,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   protected Runnable onChosen(@NotNull final T value) {
     stopCellEditing(value);
 
-    return new Runnable() {
-      public void run() {
-        stopCellEditing(value);
-      }
-    };
+    return () -> stopCellEditing(value);
   }
 
   @Override
@@ -120,11 +116,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     customizeComponent(t, table, true);
 
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        showPopup(t, row);
-      }
-    });
+    SwingUtilities.invokeLater(() -> showPopup(t, row));
 
     return this;
   }
@@ -134,12 +126,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   private void showPopup(final T value, final int row) {
-    List<T> filtered = ContainerUtil.findAll(myValues, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return isApplicable(t, row);
-      }
-    });
+    List<T> filtered = ContainerUtil.findAll(myValues, t -> isApplicable(t, row));
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<T>(filtered, value) {
       @NotNull
       public String getTextFor(T value) {
@@ -168,7 +155,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     popup.addListener(this);
     popup.setRequestFocus(false);
 
-    myPopupRef = new WeakReference<ListPopup>(popup);
+    myPopupRef = new WeakReference<>(popup);
     popup.showUnderneathOf(this);
   }
 

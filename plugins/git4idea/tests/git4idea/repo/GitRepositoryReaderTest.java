@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.vcs.log.Hash;
@@ -60,12 +58,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
     File dataDir = new File(new File(pluginRoot, "testData"), "repo");
     File[] testCases = dataDir.listFiles(FileUtilRt.ALL_DIRECTORIES);
-    return ContainerUtil.map(testCases, new Function<File, Object[]>() {
-      @Override
-      public Object[] fun(File file) {
-        return new Object[] { file.getName(), file };
-      }
-    });
+    return ContainerUtil.map(testCases, file -> new Object[] { file.getName(), file });
   }
 
   @SuppressWarnings({"UnusedParameters", "JUnitTestCaseWithNonTrivialConstructors"})
@@ -76,12 +69,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
   @Override
   @Before
   public void setUp() throws Exception {
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        GitRepositoryReaderTest.super.setUp();
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> super.setUp());
     myTempDir = new File(myProjectRoot.getPath(), "test");
     prepareTest(myTestCaseDir);
   }
@@ -95,12 +83,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
       }
     }
     finally {
-      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable() {
-          @Override
-          public void run() throws Throwable {
-            GitRepositoryReaderTest.super.tearDown();
-          }
-        });
+      EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
     }
   }
 
@@ -140,7 +123,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
 
   @Test
   public void testBranches() throws Exception {
-    Collection<GitRemote> remotes = GitConfig.read(myPlatformFacade, new File(myGitDir, "config")).parseRemotes();
+    Collection<GitRemote> remotes = GitConfig.read(new File(myGitDir, "config")).parseRemotes();
     GitBranchState state = myRepositoryReader.readState(remotes);
 
     assertEquals("HEAD revision is incorrect", readHead(myTempDir), state.getCurrentRevision());

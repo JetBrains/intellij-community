@@ -1,0 +1,1 @@
+"to be %(completed)s" % dict(completed="smth")

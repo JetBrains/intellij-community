@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -102,7 +103,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(myTargetContainer != null);
 
     Collection<PsiReference> innerClassRefs = ReferencesSearch.search(myInnerClass).findAll();
-    ArrayList<UsageInfo> usageInfos = new ArrayList<UsageInfo>(innerClassRefs.size());
+    ArrayList<UsageInfo> usageInfos = new ArrayList<>(innerClassRefs.size());
     for (PsiReference innerClassRef : innerClassRefs) {
       PsiElement ref = innerClassRef.getElement();
       if (!PsiTreeUtil.isAncestor(myInnerClass, ref, true)) { // do not show self-references
@@ -203,7 +204,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         ref.bindToElement(newClass);
       }
 
-      List<PsiReference> referencesToRebind = new ArrayList<PsiReference>();
+      List<PsiReference> referencesToRebind = new ArrayList<>();
       for (UsageInfo usage : usages) {
         if (usage.isNonCodeUsage) continue;
         PsiElement refElement = usage.getElement();
@@ -281,7 +282,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       }
       elementListener.elementMoved(newClass);
 
-      List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
+      List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
       for (UsageInfo usage : usages) {
         if (usage instanceof NonCodeUsageInfo) {
           nonCodeUsages.add((NonCodeUsageInfo)usage);
@@ -314,8 +315,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<PsiElement, HashSet<PsiElement>>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<>();
     class Visitor extends JavaRecursiveElementWalkingVisitor {
 
 
@@ -363,7 +364,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     final PsiElement container = ConflictsUtil.getContainer(reference);
     HashSet<PsiElement> containerSet = reported.get(container);
     if (containerSet == null) {
-      containerSet = new HashSet<PsiElement>();
+      containerSet = new HashSet<>();
       reported.put(container, containerSet);
     }
     if (!containerSet.contains(resolved)) {
@@ -372,12 +373,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       if (containerSet.size() == 1) {
         placesDescription = RefactoringUIUtil.getDescription(resolved, true);
       } else {
-        placesDescription = "<ol><li>" + StringUtil.join(containerSet, new Function<PsiElement, String>() {
-          @Override
-          public String fun(PsiElement element) {
-            return RefactoringUIUtil.getDescription(element, true);
-          }
-        }, "</li><li>") + "</li></ol>";
+        placesDescription = "<ol><li>" + StringUtil.join(containerSet, element -> RefactoringUIUtil.getDescription(element, true), "</li><li>") + "</li></ol>";
       }
       String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
                                                  placesDescription,
@@ -390,6 +386,10 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     final String visibilityModifier = VisibilityUtil.getVisibilityModifier(element.getModifierList());
     if (PsiModifier.PRIVATE.equals(visibilityModifier)) return true;
     if (PsiModifier.PUBLIC.equals(visibilityModifier)) return false;
+    if (PsiModifier.PROTECTED.equals(visibilityModifier) &&
+        InheritanceUtil.isInheritorOrSelf(myInnerClass, myOuterClass, true)) {
+      return false;
+    }
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     if (myTargetContainer instanceof PsiDirectory) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myTargetContainer);

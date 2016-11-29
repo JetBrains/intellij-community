@@ -15,12 +15,19 @@
  */
 package com.intellij.testIntegration;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RecentTestRunner {
@@ -30,12 +37,16 @@ public interface RecentTestRunner {
   }
   
   void setMode(Mode mode);
-  void run(Location location);
+  
+  void run(RecentTestsPopupEntry entry);
 }
 
 class RecentTestRunnerImpl implements RecentTestRunner {
   private static AnAction RUN = ActionManager.getInstance().getAction("RunClass");
   private static AnAction DEBUG = ActionManager.getInstance().getAction("DebugClass");
+  
+  private final Project myProject;
+  private final TestLocator myTestLocator;
 
   protected AnAction myCurrentAction = RUN;
   
@@ -50,7 +61,44 @@ class RecentTestRunnerImpl implements RecentTestRunner {
     }
   }
 
-  public void run(final Location location) {
+  public RecentTestRunnerImpl(Project project, TestLocator testLocator) {
+    myProject = project;
+    myTestLocator = testLocator;
+  }
+
+  @Override
+  public void run(RecentTestsPopupEntry entry) {
+    entry.accept(new TestEntryVisitor() {
+      @Override
+      public void visitTest(@NotNull SingleTestEntry test) {
+        run(test.getUrl());
+      }
+
+      @Override
+      public void visitSuite(@NotNull SuiteEntry suite) {
+        run(suite.getSuiteUrl());
+      }
+
+      @Override
+      public void visitRunConfiguration(@NotNull RunConfigurationEntry configuration) {
+        run(configuration.getRunSettings());
+      }
+    });
+  }
+
+  private void run(RunnerAndConfigurationSettings configuration) {
+    Executor executor = myCurrentAction == RUN ? DefaultRunExecutor.getRunExecutorInstance() 
+                                               : DefaultDebugExecutor.getDebugExecutorInstance();
+    
+    ProgramRunnerUtil.executeConfiguration(myProject, configuration, executor);
+  }
+
+  private void run(@NotNull String url) {
+    Location location = myTestLocator.getLocation(url);
+    if (location == null) {
+      return;
+    }
+
     DataContext data = new DataContext() {
       @Nullable
       @Override

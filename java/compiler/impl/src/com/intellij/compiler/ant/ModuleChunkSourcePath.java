@@ -49,8 +49,8 @@ public class ModuleChunkSourcePath extends CompositeGenerator{
       excludedFromCompilation.add(new PatternSetRef(BuildProperties.PROPERTY_COMPILER_EXCLUDES));
     }
 
-    final List<VirtualFile> sourceRootFiles = new ArrayList<VirtualFile>();
-    final List<VirtualFile> testSourceRootFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> sourceRootFiles = new ArrayList<>();
+    final List<VirtualFile> testSourceRootFiles = new ArrayList<>();
 
     for (final Module module : modules) {
       final String moduleName = module.getName();

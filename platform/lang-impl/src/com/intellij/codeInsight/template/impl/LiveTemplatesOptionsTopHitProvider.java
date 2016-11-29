@@ -41,7 +41,7 @@ public final class LiveTemplatesOptionsTopHitProvider extends OptionsTopHitProvi
     if (settings == null) {
       return Collections.emptyList();
     }
-    Collection<BooleanOptionDescription> options = new ArrayList<BooleanOptionDescription>();
+    Collection<BooleanOptionDescription> options = new ArrayList<>();
     for (TemplateGroup group : settings.getTemplateGroups()) {
       for (final TemplateImpl element : group.getElements()) {
         options.add(new Option(element));

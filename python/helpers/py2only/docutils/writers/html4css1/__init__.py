@@ -1,5 +1,6 @@
-# $Id: __init__.py 6315 2010-04-28 12:28:33Z milde $
-# Author: David Goodger <goodger@python.org>
+# $Id: __init__.py 7753 2014-06-24 14:52:59Z milde $
+# Author: David Goodger
+# Maintainer: docutils-develop@lists.sourceforge.net
 # Copyright: This module has been placed in the public domain.
 
 """
@@ -13,17 +14,28 @@ for proper viewing with a modern graphical browser.
 
 __docformat__ = 'reStructuredText'
 
+
+import sys
 import os
 import os.path
+import time
 import re
-try:
-    import Image                        # check for the Python Imaging Library
+import urllib
+try: # check for the Python Imaging Library
+    import PIL.Image
 except ImportError:
-    Image = None
+    try:  # sometimes PIL modules are put in PYTHONPATH's root
+        import Image
+        class PIL(object): pass  # dummy wrapper
+        PIL.Image = Image
+    except ImportError:
+        PIL = None
 import docutils
 from docutils import frontend, nodes, utils, writers, languages, io
+from docutils.utils.error_reporting import SafeString
 from docutils.transforms import writer_aux
-
+from docutils.utils.math import unichar2tex, pick_math_environment, math2html
+from docutils.utils.math.latex2mathml import parse_latex_math
 
 class Writer(writers.Writer):
 
@@ -31,10 +43,8 @@ class Writer(writers.Writer):
     """Formats this writer supports."""
 
     default_stylesheet = 'html4css1.css'
-
-    default_stylesheet_path = utils.relative_path(
-        os.path.join(os.getcwd(), 'dummy'),
-        os.path.join(os.path.dirname(__file__), default_stylesheet))
+    default_stylesheet_dirs = ['.', utils.relative_path(
+        os.path.join(os.getcwd(), 'dummy'), os.path.dirname(__file__))]
 
     default_template = 'template.txt'
 
@@ -49,17 +59,20 @@ class Writer(writers.Writer):
           % default_template_path,
           ['--template'],
           {'default': default_template_path, 'metavar': '<file>'}),
-        ('Specify comma separated list of stylesheet URLs. '
+         ('Comma separated list of stylesheet URLs. '
           'Overrides previous --stylesheet and --stylesheet-path settings.',
           ['--stylesheet'],
-          {'metavar': '<URL>', 'overrides': 'stylesheet_path'}),
-         ('Specify comma separated list of stylesheet paths. '
-          'With --link-stylesheet, '
+          {'metavar': '<URL[,URL,...]>', 'overrides': 'stylesheet_path',
+           'validator': frontend.validate_comma_separated_list}),
+         ('Comma separated list of stylesheet paths. '
+          'Relative paths are expanded if a matching file is found in '
+          'the --stylesheet-dirs. With --link-stylesheet, '
           'the path is rewritten relative to the output HTML file. '
-          'Default: "%s"' % default_stylesheet_path,
+          'Default: "%s"' % default_stylesheet,
           ['--stylesheet-path'],
-          {'metavar': '<file>', 'overrides': 'stylesheet',
-           'default': default_stylesheet_path}),
+          {'metavar': '<file[,file,...]>', 'overrides': 'stylesheet',
+           'validator': frontend.validate_comma_separated_list,
+           'default': [default_stylesheet]}),
          ('Embed the stylesheet(s) in the output HTML file.  The stylesheet '
           'files must be accessible during processing. This is the default.',
           ['--embed-stylesheet'],
@@ -69,6 +82,13 @@ class Writer(writers.Writer):
           'Default: embed stylesheets.',
           ['--link-stylesheet'],
           {'dest': 'embed_stylesheet', 'action': 'store_false'}),
+         ('Comma-separated list of directories where stylesheets are found. '
+          'Used by --stylesheet-path when expanding relative path arguments. '
+          'Default: "%s"' % default_stylesheet_dirs,
+          ['--stylesheet-dirs'],
+          {'metavar': '<dir[,dir,...]>',
+           'validator': frontend.validate_comma_separated_list,
+           'default': default_stylesheet_dirs}),
          ('Specify the initial header level.  Default is 1 for "<h1>".  '
           'Does not affect document title & subtitle (see --no-doc-title).',
           ['--initial-header-level'],
@@ -119,6 +139,10 @@ class Writer(writers.Writer):
           'Defined styles: "borderless". Default: ""',
           ['--table-style'],
           {'default': ''}),
+         ('Math output format, one of "MathML", "HTML", "MathJax" '
+          'or "LaTeX". Default: "HTML math.css"',
+          ['--math-output'],
+          {'default': 'HTML math.css'}),
          ('Omit the XML declaration.  Use with caution.',
           ['--no-xml-declaration'],
           {'dest': 'xml_declaration', 'default': 1, 'action': 'store_false',
@@ -129,8 +153,6 @@ class Writer(writers.Writer):
           {'action': 'store_true', 'validator': frontend.validate_boolean}),))
 
     settings_defaults = {'output_encoding_error_handler': 'xmlcharrefreplace'}
-
-    relative_path_settings = ('stylesheet_path',)
 
     config_section = 'html4css1 writer'
     config_section_dependencies = ('writers',)
@@ -225,24 +247,39 @@ class HTMLTranslator(nodes.NodeVisitor):
     doctype = (
         '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"'
         ' "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
+    doctype_mathml = doctype
+
     head_prefix_template = ('<html xmlns="http://www.w3.org/1999/xhtml"'
-                            ' xml:lang="%s" lang="%s">\n<head>\n')
+                            ' xml:lang="%(lang)s" lang="%(lang)s">\n<head>\n')
     content_type = ('<meta http-equiv="Content-Type"'
                     ' content="text/html; charset=%s" />\n')
+    content_type_mathml = ('<meta http-equiv="Content-Type"'
+                           ' content="application/xhtml+xml; charset=%s" />\n')
+
     generator = ('<meta name="generator" content="Docutils %s: '
                  'http://docutils.sourceforge.net/" />\n')
+
+    # Template for the MathJax script in the header:
+    mathjax_script = '<script type="text/javascript" src="%s"></script>\n'
+    # The latest version of MathJax from the distributed server:
+    # avaliable to the public under the `MathJax CDN Terms of Service`__
+    # __http://www.mathjax.org/download/mathjax-cdn-terms-of-service/
+    mathjax_url = ('http://cdn.mathjax.org/mathjax/latest/MathJax.js?'
+                   'config=TeX-AMS-MML_HTMLorMML')
+    # may be overwritten by custom URL appended to "mathjax"
+
     stylesheet_link = '<link rel="stylesheet" href="%s" type="text/css" />\n'
     embedded_stylesheet = '<style type="text/css">\n\n%s\n</style>\n'
     words_and_spaces = re.compile(r'\S+| +|\n')
     sollbruchstelle = re.compile(r'.+\W\W.+|[-?].+', re.U) # wrap point inside word
+    lang_attribute = 'lang' # name changes to 'xml:lang' in XHTML 1.1
 
     def __init__(self, document):
         nodes.NodeVisitor.__init__(self, document)
         self.settings = settings = document.settings
         lcode = settings.language_code
-        self.language = languages.get_language(lcode)
-        self.meta = [self.content_type % settings.output_encoding,
-                     self.generator % docutils.__version__]
+        self.language = languages.get_language(lcode, document.reporter)
+        self.meta = [self.generator % docutils.__version__]
         self.head_prefix = []
         self.html_prolog = []
         if settings.xml_declaration:
@@ -250,23 +287,9 @@ class HTMLTranslator(nodes.NodeVisitor):
                                     % settings.output_encoding)
             # encoding not interpolated:
             self.html_prolog.append(self.xml_declaration)
-        self.head_prefix.extend([self.doctype,
-                                 self.head_prefix_template % (lcode, lcode)])
-        self.html_prolog.append(self.doctype)
         self.head = self.meta[:]
-        # stylesheets
-        styles = utils.get_stylesheet_list(settings)
-        if settings.stylesheet_path and not(settings.embed_stylesheet):
-            styles = [utils.relative_path(settings._destination, sheet)
-                      for sheet in styles]
-        if settings.embed_stylesheet:
-            settings.record_dependencies.add(*styles)
-            self.stylesheet = [self.embedded_stylesheet %
-                io.FileInput(source_path=sheet, encoding='utf-8').read()
-                for sheet in styles]
-        else: # link to stylesheets
-            self.stylesheet = [self.stylesheet_link % self.encode(stylesheet)
-                               for stylesheet in styles]
+        self.stylesheet = [self.stylesheet_call(path)
+                           for path in utils.get_stylesheet_list(settings)]
         self.body_prefix = ['</head>\n<body>\n']
         # document title, subtitle display
         self.body_pre_docinfo = []
@@ -277,16 +300,21 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.body_suffix = ['</body>\n</html>\n']
         self.section_level = 0
         self.initial_header_level = int(settings.initial_header_level)
+
+        self.math_output = settings.math_output.split()
+        self.math_output_options = self.math_output[1:]
+        self.math_output = self.math_output[0].lower()
+
         # A heterogenous stack used in conjunction with the tree traversal.
         # Make sure that the pops correspond to the pushes:
         self.context = []
         self.topic_classes = []
         self.colspecs = []
-        self.compact_p = 1
-        self.compact_simple = None
-        self.compact_field_list = None
-        self.in_docinfo = None
-        self.in_sidebar = None
+        self.compact_p = True
+        self.compact_simple = False
+        self.compact_field_list = False
+        self.in_docinfo = False
+        self.in_sidebar = False
         self.title = []
         self.subtitle = []
         self.header = []
@@ -295,9 +323,10 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.html_title = []
         self.html_subtitle = []
         self.html_body = []
-        self.in_document_title = 0
-        self.in_mailto = 0
-        self.author_in_authors = None
+        self.in_document_title = 0   # len(self.body) or 0
+        self.in_mailto = False
+        self.author_in_authors = False
+        self.math_header = []
 
     def astext(self):
         return ''.join(self.head_prefix + self.head
@@ -343,7 +372,26 @@ class HTMLTranslator(nodes.NodeVisitor):
             encoded = encoded.replace('.', '&#46;')
         return encoded
 
-    def starttag(self, node, tagname, suffix='\n', empty=0, **attributes):
+    def stylesheet_call(self, path):
+        """Return code to reference or embed stylesheet file `path`"""
+        if self.settings.embed_stylesheet:
+            try:
+                content = io.FileInput(source_path=path,
+                                       encoding='utf-8').read()
+                self.settings.record_dependencies.add(path)
+            except IOError, err:
+                msg = u"Cannot embed stylesheet '%s': %s." % (
+                                path, SafeString(err.strerror))
+                self.document.reporter.error(msg)
+                return '<--- %s --->\n' % msg
+            return self.embedded_stylesheet % content
+        # else link to style file:
+        if self.settings.stylesheet_path:
+            # adapt path relative to output (cf. config.html#stylesheet-path)
+            path = utils.relative_path(self.settings._destination, path)
+        return self.stylesheet_link % self.encode(path)
+
+    def starttag(self, node, tagname, suffix='\n', empty=False, **attributes):
         """
         Construct and return a start tag given a node (id & class attributes
         are extracted), tag name, and optional attributes.
@@ -354,9 +402,17 @@ class HTMLTranslator(nodes.NodeVisitor):
         ids = []
         for (name, value) in attributes.items():
             atts[name.lower()] = value
-        classes = node.get('classes', [])
-        if 'class' in atts:
-            classes.append(atts['class'])
+        classes = []
+        languages = []
+        # unify class arguments and move language specification
+        for cls in node.get('classes', []) + atts.pop('class', '').split() :
+            if cls.startswith('language-'):
+                languages.append(cls[9:])
+            elif cls.strip() and cls not in classes:
+                classes.append(cls)
+        if languages:
+            # attribute name is 'lang' in XHTML 1.0 but 'xml:lang' in 1.1
+            atts[self.lang_attribute] = languages[0]
         if classes:
             atts['class'] = ' '.join(classes)
         assert 'id' not in atts
@@ -401,7 +457,7 @@ class HTMLTranslator(nodes.NodeVisitor):
 
     def emptytag(self, node, tagname, suffix='\n', **attributes):
         """Construct and return an XML-compatible empty tag."""
-        return self.starttag(node, tagname, suffix, empty=1, **attributes)
+        return self.starttag(node, tagname, suffix, empty=True, **attributes)
 
     def set_class_on_child(self, node, class_, index=0):
         """
@@ -444,7 +500,7 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.body.append('</acronym>')
 
     def visit_address(self, node):
-        self.visit_docinfo_item(node, 'address', meta=None)
+        self.visit_docinfo_item(node, 'address', meta=False)
         self.body.append(self.starttag(node, 'pre', CLASS='address'))
 
     def depart_address(self, node):
@@ -481,17 +537,16 @@ class HTMLTranslator(nodes.NodeVisitor):
 
     def depart_author(self, node):
         if isinstance(node.parent, nodes.authors):
-            self.author_in_authors += 1
+            self.author_in_authors = True
         else:
             self.depart_docinfo_item()
 
     def visit_authors(self, node):
         self.visit_docinfo_item(node, 'authors')
-        self.author_in_authors = 0      # initialize counter
+        self.author_in_authors = False  # initialize
 
     def depart_authors(self, node):
         self.depart_docinfo_item()
-        self.author_in_authors = None
 
     def visit_block_quote(self, node):
         self.body.append(self.starttag(node, 'blockquote'))
@@ -551,7 +606,13 @@ class HTMLTranslator(nodes.NodeVisitor):
                          '</tbody>\n</table>\n')
 
     def visit_citation_reference(self, node):
-        href = '#' + node['refid']
+        href = '#'
+        if 'refid' in node:
+            href += node['refid']
+        elif 'refname' in node:
+            href += self.document.nameids[node['refname']]
+        # else: # TODO system message (or already in the transform)?
+        # 'Citation reference missing.'
         self.body.append(self.starttag(
             node, 'a', '[', CLASS='citation-reference', href=href))
 
@@ -608,7 +669,7 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.body.append('</div>\n')
 
     def visit_contact(self, node):
-        self.visit_docinfo_item(node, 'contact', meta=None)
+        self.visit_docinfo_item(node, 'contact', meta=False)
 
     def depart_contact(self, node):
         self.depart_docinfo_item()
@@ -666,16 +727,16 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.body.append('<col class="docinfo-name" />\n'
                          '<col class="docinfo-content" />\n'
                          '<tbody valign="top">\n')
-        self.in_docinfo = 1
+        self.in_docinfo = True
 
     def depart_docinfo(self, node):
         self.body.append('</tbody>\n</table>\n')
-        self.in_docinfo = None
+        self.in_docinfo = False
         start = self.context.pop()
         self.docinfo = self.body[start:]
         self.body = []
 
-    def visit_docinfo_item(self, node, name, meta=1):
+    def visit_docinfo_item(self, node, name, meta=True):
         if meta:
             meta_tag = '<meta name="%s" content="%s" />\n' \
                        % (name, self.attval(node.astext()))
@@ -703,11 +764,22 @@ class HTMLTranslator(nodes.NodeVisitor):
                          % self.encode(node.get('title', '')))
 
     def depart_document(self, node):
-        self.fragment.extend(self.body)
-        self.body_prefix.append(self.starttag(node, 'div', CLASS='document'))
-        self.body_suffix.insert(0, '</div>\n')
+        self.head_prefix.extend([self.doctype,
+                                 self.head_prefix_template %
+                                 {'lang': self.settings.language_code}])
+        self.html_prolog.append(self.doctype)
+        self.meta.insert(0, self.content_type % self.settings.output_encoding)
+        self.head.insert(0, self.content_type % self.settings.output_encoding)
+        if self.math_header:
+            if self.math_output == 'mathjax':
+                self.head.extend(self.math_header)
+            else:
+                self.stylesheet.extend(self.math_header)
         # skip content-type meta tag with interpolated charset value:
         self.html_head.extend(self.head[1:])
+        self.body_prefix.append(self.starttag(node, 'div', CLASS='document'))
+        self.body_suffix.insert(0, '</div>\n')
+        self.fragment.extend(self.body) # self.fragment is the "naked" body
         self.html_body.extend(self.body_prefix[1:] + self.body_pre_docinfo
                               + self.docinfo + self.body
                               + self.body_suffix[:-1])
@@ -797,10 +869,10 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.context.append((self.compact_field_list, self.compact_p))
         self.compact_p = None
         if 'compact' in node['classes']:
-            self.compact_field_list = 1
+            self.compact_field_list = True
         elif (self.settings.compact_field_lists
               and 'open' not in node['classes']):
-            self.compact_field_list = 1
+            self.compact_field_list = True
         if self.compact_field_list:
             for field in node:
                 field_body = field[-1]
@@ -811,7 +883,7 @@ class HTMLTranslator(nodes.NodeVisitor):
                         len(children) == 1 and
                         isinstance(children[0],
                                    (nodes.paragraph, nodes.line_block))):
-                    self.compact_field_list = 0
+                    self.compact_field_list = False
                     break
         self.body.append(self.starttag(node, 'table', frame='void',
                                        rules='none',
@@ -833,7 +905,10 @@ class HTMLTranslator(nodes.NodeVisitor):
         if ( self.settings.field_name_limit
              and len(node.astext()) > self.settings.field_name_limit):
             atts['colspan'] = 2
-            self.context.append('</tr>\n<tr><td>&nbsp;</td>')
+            self.context.append('</tr>\n'
+                                + self.starttag(node.parent, 'tr', '', 
+                                                CLASS='field')
+                                + '<td>&nbsp;</td>')
         else:
             self.context.append('')
         self.body.append(self.starttag(node, 'th', '', **atts))
@@ -960,18 +1035,22 @@ class HTMLTranslator(nodes.NodeVisitor):
         if 'height' in node:
             atts['height'] = node['height']
         if 'scale' in node:
-            if Image and not ('width' in node and 'height' in node):
+            if (PIL and not ('width' in node and 'height' in node)
+                and self.settings.file_insertion_enabled):
+                imagepath = urllib.url2pathname(uri)
                 try:
-                    im = Image.open(str(uri))
-                except (IOError, # Source image can't be found or opened
-                        UnicodeError):  # PIL doesn't like Unicode paths.
-                    pass
+                    img = PIL.Image.open(
+                            imagepath.encode(sys.getfilesystemencoding()))
+                except (IOError, UnicodeEncodeError):
+                    pass # TODO: warn?
                 else:
+                    self.settings.record_dependencies.add(
+                        imagepath.replace('\\', '/'))
                     if 'width' not in atts:
-                        atts['width'] = str(im.size[0])
+                        atts['width'] = '%dpx' % img.size[0]
                     if 'height' not in atts:
-                        atts['height'] = str(im.size[1])
-                    del im
+                        atts['height'] = '%dpx' % img.size[1]
+                    del img
             for att_name in 'width', 'height':
                 if att_name in atts:
                     match = re.match(r'([0-9.]+)(\S*)$', atts[att_name])
@@ -1053,7 +1132,13 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.body.append('</li>\n')
 
     def visit_literal(self, node):
-        """Process text to prevent tokens from wrapping."""
+        # special case: "code" role
+        classes = node.get('classes', [])
+        if 'code' in classes:
+            # filter 'code' from class arguments
+            node['classes'] = [cls for cls in classes if cls != 'code']
+            self.body.append(self.starttag(node, 'code', ''))
+            return
         self.body.append(
             self.starttag(node, 'tt', '', CLASS='docutils literal'))
         text = node.astext()
@@ -1076,11 +1161,109 @@ class HTMLTranslator(nodes.NodeVisitor):
         # Content already processed:
         raise nodes.SkipNode
 
+    def depart_literal(self, node):
+        # skipped unless literal element is from "code" role:
+        self.body.append('</code>')
+
     def visit_literal_block(self, node):
         self.body.append(self.starttag(node, 'pre', CLASS='literal-block'))
 
     def depart_literal_block(self, node):
         self.body.append('\n</pre>\n')
+
+    def visit_math(self, node, math_env=''):
+        # If the method is called from visit_math_block(), math_env != ''.
+
+        # As there is no native HTML math support, we provide alternatives:
+        # LaTeX and MathJax math_output modes simply wrap the content,
+        # HTML and MathML math_output modes also convert the math_code.
+        if self.math_output not in ('mathml', 'html', 'mathjax', 'latex'):
+            self.document.reporter.error(
+                'math-output format "%s" not supported '
+                'falling back to "latex"'% self.math_output)
+            self.math_output = 'latex'
+        #
+        # HTML container
+        tags = {# math_output: (block, inline, class-arguments)
+                'mathml':      ('div', '', ''),
+                'html':        ('div', 'span', 'formula'),
+                'mathjax':     ('div', 'span', 'math'),
+                'latex':       ('pre', 'tt',   'math'),
+               }
+        tag = tags[self.math_output][math_env == '']
+        clsarg = tags[self.math_output][2]
+        # LaTeX container
+        wrappers = {# math_mode: (inline, block)
+                    'mathml':  (None,     None),
+                    'html':    ('$%s$',   u'\\begin{%s}\n%s\n\\end{%s}'),
+                    'mathjax': ('\(%s\)', u'\\begin{%s}\n%s\n\\end{%s}'),
+                    'latex':   (None,     None),
+                   }
+        wrapper = wrappers[self.math_output][math_env != '']
+        # get and wrap content
+        math_code = node.astext().translate(unichar2tex.uni2tex_table)
+        if wrapper and math_env:
+            math_code = wrapper % (math_env, math_code, math_env)
+        elif wrapper:
+            math_code = wrapper % math_code
+        # settings and conversion
+        if self.math_output in ('latex', 'mathjax'):
+            math_code = self.encode(math_code)
+        if self.math_output == 'mathjax' and not self.math_header:
+            if self.math_output_options:
+                self.mathjax_url = self.math_output_options[0]
+            self.math_header = [self.mathjax_script % self.mathjax_url]
+        elif self.math_output == 'html':
+            if self.math_output_options and not self.math_header:
+                self.math_header = [self.stylesheet_call(
+                    utils.find_file_in_dirs(s, self.settings.stylesheet_dirs))
+                    for s in self.math_output_options[0].split(',')]
+            # TODO: fix display mode in matrices and fractions
+            math2html.DocumentParameters.displaymode = (math_env != '')
+            math_code = math2html.math2html(math_code)
+        elif self.math_output == 'mathml':
+            self.doctype = self.doctype_mathml
+            self.content_type = self.content_type_mathml
+            try:
+                mathml_tree = parse_latex_math(math_code, inline=not(math_env))
+                math_code = ''.join(mathml_tree.xml())
+            except SyntaxError, err:
+                err_node = self.document.reporter.error(err, base_node=node)
+                self.visit_system_message(err_node)
+                self.body.append(self.starttag(node, 'p'))
+                self.body.append(u','.join(err.args))
+                self.body.append('</p>\n')
+                self.body.append(self.starttag(node, 'pre',
+                                               CLASS='literal-block'))
+                self.body.append(self.encode(math_code))
+                self.body.append('\n</pre>\n')
+                self.depart_system_message(err_node)
+                raise nodes.SkipNode
+        # append to document body
+        if tag:
+            self.body.append(self.starttag(node, tag,
+                                           suffix='\n'*bool(math_env),
+                                           CLASS=clsarg))
+        self.body.append(math_code)
+        if math_env: # block mode (equation, display)
+            self.body.append('\n')
+        if tag:
+            self.body.append('</%s>' % tag)
+        if math_env:
+            self.body.append('\n')
+        # Content already processed:
+        raise nodes.SkipNode
+
+    def depart_math(self, node):
+        pass # never reached
+
+    def visit_math_block(self, node):
+        # print node.astext().encode('utf8')
+        math_env = pick_math_environment(node.astext())
+        self.visit_math(node, math_env=math_env)
+
+    def depart_math_block(self, node):
+        pass # never reached
 
     def visit_meta(self, node):
         meta = self.emptytag(node, 'meta', **node.non_default_attributes())
@@ -1163,13 +1346,13 @@ class HTMLTranslator(nodes.NodeVisitor):
         if (isinstance(node.parent, nodes.document) or
             isinstance(node.parent, nodes.compound)):
             # Never compact paragraphs in document or compound.
-            return 0
+            return False
         for key, value in node.attlist():
             if (node.is_not_default(key) and
                 not (key == 'classes' and value in
                      ([], ['first'], ['last'], ['first', 'last']))):
                 # Attribute which needs to survive.
-                return 0
+                return False
         first = isinstance(node.parent[0], nodes.label) # skip label
         for child in node.parent.children[first:]:
             # only first paragraph can be compact
@@ -1177,14 +1360,14 @@ class HTMLTranslator(nodes.NodeVisitor):
                 continue
             if child is node:
                 break
-            return 0
+            return False
         parent_length = len([n for n in node.parent if not isinstance(
             n, (nodes.Invisible, nodes.label))])
         if ( self.compact_simple
              or self.compact_field_list
              or self.compact_p and parent_length == 1):
-            return 1
-        return 0
+            return True
+        return False
 
     def visit_paragraph(self, node):
         if self.should_be_compact_paragraph(node):
@@ -1226,7 +1409,7 @@ class HTMLTranslator(nodes.NodeVisitor):
             if ( self.settings.cloak_email_addresses
                  and atts['href'].startswith('mailto:')):
                 atts['href'] = self.cloak_mailto(atts['href'])
-                self.in_mailto = 1
+                self.in_mailto = True
             atts['class'] += ' external'
         else:
             assert 'refid' in node, \
@@ -1242,10 +1425,10 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.body.append('</a>')
         if not isinstance(node.parent, nodes.TextElement):
             self.body.append('\n')
-        self.in_mailto = 0
+        self.in_mailto = False
 
     def visit_revision(self, node):
-        self.visit_docinfo_item(node, 'revision', meta=None)
+        self.visit_docinfo_item(node, 'revision', meta=False)
 
     def depart_revision(self, node):
         self.depart_docinfo_item()
@@ -1276,14 +1459,14 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.body.append(
             self.starttag(node, 'div', CLASS='sidebar'))
         self.set_first_last(node)
-        self.in_sidebar = 1
+        self.in_sidebar = True
 
     def depart_sidebar(self, node):
         self.body.append('</div>\n')
-        self.in_sidebar = None
+        self.in_sidebar = False
 
     def visit_status(self, node):
-        self.visit_docinfo_item(node, 'status', meta=None)
+        self.visit_docinfo_item(node, 'status', meta=False)
 
     def depart_status(self, node):
         self.depart_docinfo_item()
@@ -1368,11 +1551,14 @@ class HTMLTranslator(nodes.NodeVisitor):
         self.body.append('</div>\n')
 
     def visit_table(self, node):
+        self.context.append(self.compact_p)
+        self.compact_p = True
         classes = ' '.join(['docutils', self.settings.table_style]).strip()
         self.body.append(
             self.starttag(node, 'table', CLASS=classes, border="1"))
 
     def depart_table(self, node):
+        self.compact_p = self.context.pop()
         self.body.append('</table>\n')
 
     def visit_target(self, node):
@@ -1426,7 +1612,7 @@ class HTMLTranslator(nodes.NodeVisitor):
 
     def visit_title(self, node):
         """Only 6 section levels are supported by HTML."""
-        check_id = 0
+        check_id = 0  # TODO: is this a bool (False) or a counter?
         close_tag = '</p>\n'
         if isinstance(node.parent, nodes.topic):
             self.body.append(
@@ -1495,7 +1681,7 @@ class HTMLTranslator(nodes.NodeVisitor):
         pass
 
     def visit_version(self, node):
-        self.visit_docinfo_item(node, 'version', meta=None)
+        self.visit_docinfo_item(node, 'version', meta=False)
 
     def depart_version(self, node):
         self.depart_docinfo_item()

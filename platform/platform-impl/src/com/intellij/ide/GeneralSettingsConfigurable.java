@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
@@ -51,10 +54,12 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     GeneralSettings settings = GeneralSettings.getInstance();
 
     settings.setReopenLastProject(myComponent.myChkReopenLastProject.isSelected());
+    settings.setSupportScreenReaders(myComponent.myChkSupportScreenReaders.isSelected());
     settings.setSyncOnFrameActivation(myComponent.myChkSyncOnFrameActivation.isSelected());
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
     settings.setConfirmOpenNewProject(getConfirmOpenNewProject());
+    settings.setProcessCloseConfirmation(getProcessCloseConfirmation());
 
     settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());
     try {
@@ -67,6 +72,19 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     settings.setUseSafeWrite(myComponent.myChkUseSafeWrite.isSelected());
   }
 
+  private GeneralSettings.ProcessCloseConfirmation getProcessCloseConfirmation() {
+    if (myComponent.myTerminateProcessJBRadioButton.isSelected()) {
+      return GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+    }
+    else if (myComponent.myDisconnectJBRadioButton.isSelected()) {
+      return GeneralSettings.ProcessCloseConfirmation.DISCONNECT;
+    }
+    else {
+      return GeneralSettings.ProcessCloseConfirmation.ASK;
+    }
+  }
+
+  @GeneralSettings.OpenNewProjectOption
   private int getConfirmOpenNewProject() {
     if (myComponent.myConfirmWindowToOpenProject.isSelected()) {
       return GeneralSettings.OPEN_PROJECT_ASK;
@@ -84,11 +102,13 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     boolean isModified = false;
     GeneralSettings settings = GeneralSettings.getInstance();
     isModified |= settings.isReopenLastProject() != myComponent.myChkReopenLastProject.isSelected();
+    isModified |= settings.isSupportScreenReaders() != myComponent.myChkSupportScreenReaders.isSelected();
     isModified |= settings.isSyncOnFrameActivation() != myComponent.myChkSyncOnFrameActivation.isSelected();
     isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
     isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
     isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
     isModified |= settings.getConfirmOpenNewProject() != getConfirmOpenNewProject();
+    isModified |= settings.getProcessCloseConfirmation() != getProcessCloseConfirmation();
 
     int inactiveTimeout = -1;
     try {
@@ -132,6 +152,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     super.reset();
     GeneralSettings settings = GeneralSettings.getInstance();
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
+    myComponent.myChkSupportScreenReaders.setSelected(settings.isSupportScreenReaders());
     myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
     myComponent.myChkSaveOnFrameDeactivation.setSelected(settings.isSaveOnFrameDeactivation());
     myComponent.myChkAutoSaveIfInactive.setSelected(settings.isAutoSaveIfInactive());
@@ -148,6 +169,17 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
         break;
       case GeneralSettings.OPEN_PROJECT_SAME_WINDOW:
         myComponent.myOpenProjectInSameWindow.setSelected(true);
+        break;
+    }
+    switch (settings.getProcessCloseConfirmation()) {
+      case TERMINATE:
+        myComponent.myTerminateProcessJBRadioButton.setSelected(true);
+        break;
+      case DISCONNECT:
+        myComponent.myDisconnectJBRadioButton.setSelected(true);
+        break;
+      case ASK:
+        myComponent.myAskJBRadioButton.setSelected(true);
         break;
     }
   }
@@ -175,6 +207,10 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private JBRadioButton myOpenProjectInNewWindow;
     private JBRadioButton myOpenProjectInSameWindow;
     private JBRadioButton myConfirmWindowToOpenProject;
+    private JCheckBox myChkSupportScreenReaders;
+    private JBRadioButton myTerminateProcessJBRadioButton;
+    private JBRadioButton myDisconnectJBRadioButton;
+    private JBRadioButton myAskJBRadioButton;
 
     public MyComponent() { }
   }
@@ -182,11 +218,6 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   protected List<SearchableConfigurable> createConfigurables() {

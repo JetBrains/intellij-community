@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
@@ -34,8 +35,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,7 +62,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -84,10 +82,12 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
- * @author peter
+ * Please don't use this class directly from plugins
  */
+@Deprecated
 public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
   private final Editor myEditor;
@@ -109,19 +109,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final List<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createLockFreeCopyOnWriteList();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     @Override
-    public void itemSelected(LookupEvent event) {
-      LookupElement item = event.getItem();
-      boolean dispose = item == null;
-      finishCompletionProcess(dispose);
-      if (dispose) return;
-
-      setMergeCommand();
-
-      myHandler.lookupItemSelected(CompletionProgressIndicator.this, item, event.getCompletionChar(), myLookup.getItems());
-    }
-
-
-    @Override
     public void lookupCanceled(final LookupEvent event) {
       finishCompletionProcess(true);
     }
@@ -132,7 +119,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final ConcurrentMap<LookupElement, CompletionSorterImpl> myItemSorters =
     ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
-  private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<Runnable>();
+  private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<>();
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
 
@@ -176,6 +163,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (hasModifiers && !ApplicationManager.getApplication().isUnitTestMode()) {
       trackModifiers();
     }
+  }
+
+  public void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
+    boolean dispose = lookupItem == null;
+    finishCompletionProcess(dispose);
+    if (dispose) return;
+
+    setMergeCommand();
+
+    myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
   public OffsetMap getOffsetMap() {
@@ -414,12 +411,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myCount++;
 
     if (myCount == 1) {
-      new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this).addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myFreezeSemaphore.up();
-        }
-      }, 300);
+      JobScheduler.getScheduler().schedule(myFreezeSemaphore::up, 300, TimeUnit.MILLISECONDS);
     }
     myQueue.queue(myUpdate);
   }
@@ -476,9 +468,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   void disposeIndicator() {
-    // our offset map should be disposed under write action, so that duringCompletion (read action) won't access it after disposing
-    TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.TEXT_EDITING, () ->
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(this)));
+    Disposer.dispose(this);
   }
 
   @TestOnly
@@ -685,7 +675,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     phase.ignoreCurrentDocumentChange();
 
     final Project project = getProject();
-    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+    AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
       if (phase.checkExpired()) return;
 
       CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
@@ -734,16 +724,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, listener);
     assert text != null;
-    HintManager.getInstance().showErrorHint(editor, text, HintManager.UNDER);
+    HintManager.getInstance().showErrorHint(editor, StringUtil.escapeXml(text), HintManager.UNDER);
     connection.disconnect();
     return result[0];
   }
 
   private static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
-    if (!Registry.is("ide.completion.autopopup.choose.by.enter")) {
-      return false;
-    }
-
     if (Registry.is("ide.completion.lookup.element.preselect.depends.on.context")) {
       for (CompletionPreselectionBehaviourProvider provider : Extensions.getExtensions(CompletionPreselectionBehaviourProvider.EP_NAME)) {
         if (!provider.shouldPreselectFirstSuggestion(parameters)) {

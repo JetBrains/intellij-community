@@ -77,7 +77,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
     myNotifier = new CloudNotifier("Git remotes detector");
 
-    myDelegates = new ArrayList<CloudTypeDelegate>();
+    myDelegates = new ArrayList<>();
     for (CloudGitDeploymentDetector deploymentDetector : CloudGitDeploymentDetector.EP_NAME.getExtensions()) {
       myDelegates.add(new CloudTypeDelegate(deploymentDetector));
     }
@@ -119,7 +119,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
     private final CloudGitDeploymentDetector myDeploymentDetector;
 
-    private Map<GitRepository, RepositoryNotifier> myRepositoryToNotifier = new HashMap<GitRepository, RepositoryNotifier>();
+    private Map<GitRepository, RepositoryNotifier> myRepositoryToNotifier = new HashMap<>();
 
     public CloudTypeDelegate(CloudGitDeploymentDetector deploymentDetector) {
       myDeploymentDetector = deploymentDetector;
@@ -247,19 +247,14 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
       if (targetModule == null) {
         AddModuleWizard wizard = new AddModuleWizard(myProject, myRepositoryRoot.getPath(), new ImportFromSourcesProvider());
-        wizard.navigateToStep(new Function<Step, Boolean>() {
-          @Override
-          public Boolean fun(Step step) {
-            return step instanceof RootsDetectionStep;
-          }
-        });
+        wizard.navigateToStep(step -> step instanceof RootsDetectionStep);
         if (wizard.getStepCount() > 0 && !wizard.showAndGet()) {
           return;
         }
         ImportModuleAction.createFromWizard(myProject, wizard);
       }
       else {
-        final Ref<CloudGitChooseAccountStepBase> chooseAccountStepRef = new Ref<CloudGitChooseAccountStepBase>();
+        final Ref<CloudGitChooseAccountStepBase> chooseAccountStepRef = new Ref<>();
         if (!new AbstractProjectWizard(CloudBundle.getText("choose.account.wizzard.title", myCloudName), myProject, (String)null) {
 
           final StepSequence myStepSequence;

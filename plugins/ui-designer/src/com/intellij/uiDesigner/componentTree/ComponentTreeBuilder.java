@@ -109,7 +109,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   private void syncSelection() {
     // Found selected components
     final RadContainer rootContainer=myEditor.getRootContainer();
-    final ArrayList<RadComponent> selection = new ArrayList<RadComponent>();
+    final ArrayList<RadComponent> selection = new ArrayList<>();
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<RadComponent>() {
@@ -193,13 +193,10 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
 
       myInsideChange++;
       try{
-        queueUpdate().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            // After updating the tree we have to synchronize the selection in the tree
-            // with selected element in the hierarchy
-            syncSelection();
-          }
+        queueUpdate().doWhenDone(() -> {
+          // After updating the tree we have to synchronize the selection in the tree
+          // with selected element in the hierarchy
+          syncSelection();
         });
       }finally{
         myInsideChange--;

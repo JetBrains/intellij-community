@@ -24,7 +24,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +44,7 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
 
     if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(psiClass)) return null;
 
-    final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INSPECTION_PROFILE_ENTRY, GlobalSearchScope.allScope(project));
+    final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INSPECTION_PROFILE_ENTRY, psiClass.getResolveScope());
     if (base == null || !psiClass.isInheritor(base, true) || isPathMethodsAreOverridden(psiClass)) return null;
 
     final InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);

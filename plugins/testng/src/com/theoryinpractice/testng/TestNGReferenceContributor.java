@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.theoryinpractice.testng.inspection.DependsOnGroupsInspection;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -87,6 +88,14 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       super(element, false);
     }
 
+    @Override
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+      if (element instanceof PsiMethod) {
+        return handleElementRename(((PsiMethod)element).getName());
+      }
+      return super.bindToElement(element);
+    }
+
     @Nullable
     public PsiElement resolve() {
       @NonNls String val = getValue();
@@ -113,7 +122,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     @NotNull
     public Object[] getVariants() {
-      List<Object> list = new ArrayList<Object>();
+      List<Object> list = new ArrayList<>();
       @NonNls String val = getValue();
       int hackIndex = val.indexOf(CompletionUtil.DUMMY_IDENTIFIER);
       if (hackIndex > -1) {
@@ -153,9 +162,9 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     @NotNull
     public Object[] getVariants() {
-      List<Object> list = new ArrayList<Object>();
+      List<Object> list = new ArrayList<>();
 
-      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
       DependsOnGroupsInspection inspection = (DependsOnGroupsInspection)inspectionProfile.getUnwrappedTool(
         DependsOnGroupsInspection.SHORT_NAME, myElement);
 

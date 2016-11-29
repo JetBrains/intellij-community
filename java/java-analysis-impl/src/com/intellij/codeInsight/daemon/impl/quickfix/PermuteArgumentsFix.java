@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -74,14 +73,13 @@ public class PermuteArgumentsFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     myCall.getArgumentList().replace(myPermutation.getArgumentList());
   }
 
   public static void registerFix(HighlightInfo info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
     PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
     if (expressions.length < 2) return;
-    List<PsiCall> permutations = new ArrayList<PsiCall>();
+    List<PsiCall> permutations = new ArrayList<>();
 
     for (CandidateInfo candidate : candidates) {
       if (candidate instanceof MethodCandidateInfo) {

@@ -40,41 +40,38 @@ import java.util.List;
 public final class IterationState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
   
-  private static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = new Comparator<RangeHighlighterEx>() {
-    @Override
-    public int compare(RangeHighlighterEx o1, RangeHighlighterEx o2) {
-      final int result = LayerComparator.INSTANCE.compare(o1, o2);
-      if (result != 0) {
-        return result;
-      }
-      
-      // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
-      // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
-      // while the other one has only foreground color). See IDEA-85697 for concrete example.
-      final TextAttributes a1 = o1.getTextAttributes();
-      final TextAttributes a2 = o2.getTextAttributes();
-      if (a1 == null ^ a2 == null) {
-        return a1 == null ? 1 : -1;
-      }
-
-      if (a1 == null) {
-        return result;
-      }
-      
-      final Color fore1 = a1.getForegroundColor();
-      final Color fore2 = a2.getForegroundColor();
-      if (fore1 == null ^ fore2 == null) {
-        return fore1 == null ? 1 : -1;
-      }
-
-      final Color back1 = a1.getBackgroundColor();
-      final Color back2 = a2.getBackgroundColor();
-      if (back1 == null ^ back2 == null) {
-        return back1 == null ? 1 : -1;
-      }
-
+  private static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = (o1, o2) -> {
+    final int result = LayerComparator.INSTANCE.compare(o1, o2);
+    if (result != 0) {
       return result;
     }
+
+    // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
+    // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
+    // while the other one has only foreground color). See IDEA-85697 for concrete example.
+    final TextAttributes a1 = o1.getTextAttributes();
+    final TextAttributes a2 = o2.getTextAttributes();
+    if (a1 == null ^ a2 == null) {
+      return a1 == null ? 1 : -1;
+    }
+
+    if (a1 == null) {
+      return result;
+    }
+
+    final Color fore1 = a1.getForegroundColor();
+    final Color fore2 = a2.getForegroundColor();
+    if (fore1 == null ^ fore2 == null) {
+      return fore1 == null ? 1 : -1;
+    }
+
+    final Color back1 = a1.getBackgroundColor();
+    final Color back2 = a2.getBackgroundColor();
+    if (back1 == null ^ back2 == null) {
+      return back1 == null ? 1 : -1;
+    }
+
+    return result;
   };
 
   private final TextAttributes myMergedAttributes = new TextAttributes();
@@ -99,7 +96,7 @@ public final class IterationState {
   private int myCurrentPastLineEndBackgroundSegment; // 0 - before selection, 1 - in selection, 2 - after selection
   private Color myCurrentBackgroundColor;
 
-  private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
+  private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<>();
 
   private final FoldingModelEx myFoldingModel;
 
@@ -112,11 +109,13 @@ public final class IterationState {
   private final int myDefaultFontType;
   private final int myCaretRowStart;
   private final int myCaretRowEnd;
-  private final List<TextAttributes> myCachedAttributesList = new ArrayList<TextAttributes>(5);
+  private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
   private final DocumentEx myDocument;
   private final EditorEx myEditor;
   private final Color myReadOnlyColor;
   private final boolean myUseOnlyFullLineHighlighters;
+
+  private boolean myNextIsFoldRegion;
 
   public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection) {
     this(editor, start, end, useCaretAndSelection, false);
@@ -174,8 +173,8 @@ public final class IterationState {
     TextAttributes defaultAttributes = editor.getColorsScheme().getAttributes(HighlighterColors.TEXT);
     myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
-    myCaretRowStart = caretModel.getVisualLineStart();
-    myCaretRowEnd = caretModel.getVisualLineEnd();
+    myCaretRowStart = useCaretAndSelection ? caretModel.getVisualLineStart() : -1;
+    myCaretRowEnd = useCaretAndSelection ? caretModel.getVisualLineEnd() : -1;
 
     MarkupModelEx editorMarkup = editor.getMarkupModel();
     myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters);
@@ -196,7 +195,7 @@ public final class IterationState {
     private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end, final boolean onlyFullLine) {
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
-      final List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+      final List<RangeHighlighterEx> list = new ArrayList<>();
       markupModel.processRangeHighlightersOverlappingWith(start, end, new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
         @Override
         protected boolean accept(RangeHighlighterEx ex) {
@@ -255,6 +254,7 @@ public final class IterationState {
   }
 
   public void advance() {
+    myNextIsFoldRegion = false;
     myStartOffset = myEndOffset;
     advanceSegmentHighlighters();
     advanceCurrentSelectionIndex();
@@ -269,9 +269,12 @@ public final class IterationState {
     else {
       myEndOffset = Math.min(getHighlighterEnd(myStartOffset), getSelectionEnd());
       myEndOffset = Math.min(myEndOffset, getMinSegmentHighlightersEnd());
-      myEndOffset = Math.min(myEndOffset, getFoldRangesEnd(myStartOffset));
+      int foldRangesEnd = getFoldRangesEnd(myStartOffset);
+      myEndOffset = Math.min(myEndOffset, foldRangesEnd);
       myEndOffset = Math.min(myEndOffset, getCaretEnd(myStartOffset));
       myEndOffset = Math.min(myEndOffset, getGuardedBlockEnd(myStartOffset));
+
+      myNextIsFoldRegion = myEndOffset == foldRangesEnd && myEndOffset < myEnd;
     }
 
     reinit();
@@ -561,6 +564,10 @@ public final class IterationState {
 
   public FoldRegion getCurrentFold() {
     return myCurrentFold;
+  }
+
+  public boolean nextIsFoldRegion() {
+    return myNextIsFoldRegion;
   }
 
   public boolean hasPastLineEndBackgroundSegment() {

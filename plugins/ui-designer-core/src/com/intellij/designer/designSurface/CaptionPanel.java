@@ -260,7 +260,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
       }
 
       if (myCaption == caption) {
-        List<RadComponent> newSelection = new ArrayList<RadComponent>();
+        List<RadComponent> newSelection = new ArrayList<>();
         int componentSize = myRootChildren.size();
         int selectionSize = oldSelection.size();
 

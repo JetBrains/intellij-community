@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     myActionWithUseShortcutOfExistentRedefinedInParent = new MyAction("text", "description");
     myActionWithUseShortcutOfNonExistent = new MyAction("text", "description");
     myActionWithFixedShortcuts = new MyAction("text", "description");
-      
+
     ActionManager actionManager = ActionManager.getInstance();
     actionManager.registerAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION, myActionWithoutTextAndDescription);
     actionManager.registerAction(ACTION_WITH_TEXT_ONLY, myActionWithTextOnly);
@@ -102,7 +102,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       @Override
       public ShortcutRestrictions getForActionId(String actionId) {
         return ACTION_WITH_FIXED_SHORTCUTS.equals(actionId)
-               ? new ShortcutRestrictions(false, false, false, false, false) : ShortcutRestrictions.NO_RESTRICTIONS;
+               ? new ShortcutRestrictions(false, false, false, false, false, false) : ShortcutRestrictions.NO_RESTRICTIONS;
       }
     });
 
@@ -112,13 +112,13 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     assertNotNull(actionManager.getAction(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT));
 
     DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_EDITOR);
-    group.addAll(myActionWithoutTextAndDescription, 
-                 myActionWithTextOnly, 
+    group.addAll(myActionWithoutTextAndDescription,
+                 myActionWithTextOnly,
                  myActionWithTextAndDescription,
-                 myActionExistent, 
-                 myActionWithUseShortcutOfExistent, 
-                 myActionWithUseShortcutOfExistentRedefined, 
-                 myActionWithUseShortcutOfExistentRedefinedInParent, 
+                 myActionExistent,
+                 myActionWithUseShortcutOfExistent,
+                 myActionWithUseShortcutOfExistentRedefined,
+                 myActionWithUseShortcutOfExistentRedefinedInParent,
                  myActionWithUseShortcutOfNonExistent,
                  myActionWithFixedShortcuts);
     // populate action tree
@@ -130,8 +130,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     parent.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT, shortcut1);
     parent.setName("parent");
     parent.setCanModify(false);
-    KeymapImpl child = parent.deriveKeymap();
-    child.setName("child");
+    KeymapImpl child = parent.deriveKeymap("child");
     child.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED, shortcut2);
     child.addShortcut(ACTION_EDITOR_DELETE_WITH_SHORTCUT, shortcut2);
     myActionsTree.reset(child, new QuickList[0]);
@@ -205,7 +204,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   public void testPresentation() {
     ActionManager manager = ActionManager.getInstance();
 
-    List<String> failures = new SmartList<String>();
+    List<String> failures = new SmartList<>();
     for (String id : manager.getActionIds("")) {
       if (!ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
         try {
@@ -267,8 +266,8 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       myActionsTree.filter(filter, new QuickList[0]);
     }
 
-    List<String> missing = new ArrayList<String>();
-    List<String> present = new ArrayList<String>();
+    List<String> missing = new ArrayList<>();
+    List<String> present = new ArrayList<>();
     for (String actionId : idsThatMustBePresent) {
       if (!myActionsTree.getMainGroup().containsId(actionId)) missing.add(actionId);
     }

@@ -56,4 +56,9 @@ public class CommitId {
     result = 31 * result + myRoot.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    return myHash.asString() + "(" + myRoot + ")";
+  }
 }

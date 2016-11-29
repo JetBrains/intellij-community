@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Map;
 
 /**
@@ -25,5 +29,16 @@ public abstract class ConcurrentFactoryMap<T,V> extends FactoryMap<T,V> {
   @Override
   protected Map<T, V> createMap() {
     return ContainerUtil.newConcurrentMap();
+  }
+
+  @NotNull
+  public static <T, V> ConcurrentFactoryMap<T, V> createConcurrentMap(@NotNull final Function<T, V> computeValue) {
+    return new ConcurrentFactoryMap<T, V>() {
+      @Nullable
+      @Override
+      protected V create(T key) {
+        return computeValue.fun(key);
+      }
+    };
   }
 }

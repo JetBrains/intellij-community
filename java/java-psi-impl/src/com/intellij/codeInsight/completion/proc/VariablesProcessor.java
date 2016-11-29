@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Created by IntelliJ IDEA.
- * User: igork
- * Date: Nov 25, 2002
- * Time: 1:44:25 PM
- * To change this template use Options | File Templates.
- */
 package com.intellij.codeInsight.completion.proc;
 
 import com.intellij.openapi.util.Key;
@@ -43,7 +36,7 @@ import java.util.List;
 public class VariablesProcessor
         extends BaseScopeProcessor implements ElementClassHint{
   private final String myPrefix;
-  private boolean myStaticScopeFlag = false;
+  private boolean myStaticScopeFlag;
   private final boolean myStaticSensitiveFlag;
   private final List<PsiVariable> myResultList;
 

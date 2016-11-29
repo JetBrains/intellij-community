@@ -74,7 +74,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (MemberInfo memberInfo : myDelegateMethodInfos) {
       if (memberInfo.isChecked() && memberInfo.isToAbstract()) {
         final PsiMember psiMember = memberInfo.getMember();

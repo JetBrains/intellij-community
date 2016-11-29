@@ -132,6 +132,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     myRbExtractSuperclass.setText(RefactoringBundle.message("extractSuper.extract", s));
     myRbExtractSubclass = new JRadioButton();
     myRbExtractSubclass.setText(RefactoringBundle.message("extractSuper.rename.original.class", s));
+    myRbExtractSubclass.setEnabled(isPossibleToRenameOriginal());
     box.add(myRbExtractSuperclass);
     box.add(myRbExtractSubclass);
     box.add(Box.createHorizontalGlue());
@@ -150,6 +151,10 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     myRbExtractSuperclass.addItemListener(listener);
     myRbExtractSubclass.addItemListener(listener);
     return box;
+  }
+
+  protected boolean isPossibleToRenameOriginal() {
+    return true;
   }
 
   protected void customizeRadiobuttons(Box box, ButtonGroup buttonGroup) {
@@ -242,20 +247,17 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
         myExtractedSuperNameField.requestFocusInWindow();
       }
       else {
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          @Override
-          public void run() {
-            try {
-              preparePackage();
-            }
-            catch (IncorrectOperationException e) {
-              errorString[0] = e.getMessage();
-              myPackageNameField.requestFocusInWindow();
-            }
-            catch (OperationFailedException e) {
-              errorString[0] = e.getMessage();
-              myPackageNameField.requestFocusInWindow();
-            }
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          try {
+            preparePackage();
+          }
+          catch (IncorrectOperationException e) {
+            errorString[0] = e.getMessage();
+            myPackageNameField.requestFocusInWindow();
+          }
+          catch (OperationFailedException e) {
+            errorString[0] = e.getMessage();
+            myPackageNameField.requestFocusInWindow();
           }
         }, RefactoringBundle.message("create.directory"), null);
       }
@@ -296,7 +298,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   }
 
   public Collection<MemberInfoType> getSelectedMemberInfos() {
-    ArrayList<MemberInfoType> result = new ArrayList<MemberInfoType>(myMemberInfos.size());
+    ArrayList<MemberInfoType> result = new ArrayList<>(myMemberInfos.size());
     for (MemberInfoType info : myMemberInfos) {
       if (info.isChecked()) {
         result.add(info);

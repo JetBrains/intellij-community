@@ -40,11 +40,6 @@ public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefiniti
     super(node);
   }
 
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
   public GrPackageDefinitionImpl(@NotNull GrPackageDefinitionStub stub) {
     super(stub, GroovyElementTypes.PACKAGE_DEFINITION);
   }

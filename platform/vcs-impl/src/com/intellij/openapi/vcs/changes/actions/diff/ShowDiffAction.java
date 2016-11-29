@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes.actions.diff;
 
-import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -33,7 +31,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,14 +43,6 @@ import java.util.Map;
 public class ShowDiffAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ShowDiffAction.class);
 
-  private static final String ourText = ActionsBundle.actionText("ChangesView.Diff");
-
-  public ShowDiffAction() {
-    super(ourText,
-          ActionsBundle.actionDescription("ChangesView.Diff"),
-          AllIcons.Actions.Diff);
-  }
-
   public void update(@NotNull AnActionEvent e) {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
@@ -65,11 +54,11 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     }
   }
 
-  protected static boolean canShowDiff(@Nullable Project project, @Nullable Change[] changes) {
+  public static boolean canShowDiff(@Nullable Project project, @Nullable Change[] changes) {
     return changes != null && canShowDiff(project, Arrays.asList(changes));
   }
 
-  protected static boolean canShowDiff(@Nullable Project project, @Nullable List<Change> changes) {
+  public static boolean canShowDiff(@Nullable Project project, @Nullable List<Change> changes) {
     if (changes == null || changes.size() == 0) return false;
     for (Change change : changes) {
       if (ChangeDiffRequestProducer.canCreate(project, change)) return true;
@@ -109,7 +98,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
           selectedChane = convertedChanges[0];
           ChangeList changeList = ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChane);
           if (changeList != null) {
-            result = changesInList != null ? changesInList : new ArrayList<Change>(changeList.getChanges());
+            result = changesInList != null ? changesInList : new ArrayList<>(changeList.getChanges());
           }
         }
         if (result == null) result = ContainerUtil.newArrayList(convertedChanges);
@@ -122,8 +111,8 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     };
 
     if (needsConversion) {
-      ChangeListManager.getInstance(project)
-        .invokeAfterUpdate(performer, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE, ourText, ModalityState.current());
+      ChangeListManager.getInstance(project).invokeAfterUpdate(performer, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
+                                                               ActionsBundle.actionText("ChangesView.Diff"), ModalityState.current());
     }
     else {
       performer.run();
@@ -149,7 +138,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
   @Nullable
   private static Change[] loadFakeRevisions(@NotNull Project project, @NotNull Change[] changes) {
-    List<Change> matchingChanges = new ArrayList<Change>();
+    List<Change> matchingChanges = new ArrayList<>();
     for (Change change : changes) {
       matchingChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
     }
@@ -173,7 +162,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
                                        @NotNull Condition<Change> condition,
                                        @NotNull ShowDiffContext context) {
     int index = 0;
-    List<ChangeDiffRequestProducer> presentables = new ArrayList<ChangeDiffRequestProducer>();
+    List<ChangeDiffRequestProducer> presentables = new ArrayList<>();
     for (Change change : changes) {
       if (condition.value(change)) index = presentables.size();
       ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
@@ -189,7 +178,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
                                        @NotNull ShowDiffContext context) {
     int i = 0;
     int newIndex = 0;
-    List<ChangeDiffRequestProducer> presentables = new ArrayList<ChangeDiffRequestProducer>();
+    List<ChangeDiffRequestProducer> presentables = new ArrayList<>();
     for (Change change : changes) {
       if (i == index) newIndex = presentables.size();
       ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
@@ -218,17 +207,5 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     chain.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, context.getActions());
 
     DiffManager.getInstance().showDiff(project, chain, context.getDialogHints());
-  }
-
-  //
-  // Compatibility
-  //
-
-  @NotNull
-  public static ShowDiffContext convertContext(@NotNull ShowDiffUIContext uiContext) {
-    if (uiContext.getActionsFactory() != null) LOG.warn("DiffExtendUIFactory ignored");
-    if (uiContext.getDiffNavigationContext() != null) LOG.warn("DiffNavigationContext ignored");
-
-    return new ShowDiffContext(uiContext.isShowFrame() ? DiffDialogHints.FRAME : DiffDialogHints.MODAL);
   }
 }

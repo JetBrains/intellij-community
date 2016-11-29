@@ -79,7 +79,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate {
     final PsiMethodCallExpression elseMethodCallExpression = (PsiMethodCallExpression)elseExpression;
     final PsiReferenceExpression thenMethodExpression = thenMethodCallExpression.getMethodExpression();
     final PsiReferenceExpression elseMethodExpression = elseMethodCallExpression.getMethodExpression();
-    if (!EquivalenceChecker.expressionsAreEquivalent(thenMethodExpression, elseMethodExpression)) {
+    if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenMethodExpression, elseMethodExpression)) {
       return false;
     }
     final PsiExpressionList thenArgumentList = thenMethodCallExpression.getArgumentList();
@@ -93,7 +93,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate {
     for (int i = 0, length = thenArguments.length; i < length; i++) {
       final PsiExpression thenArgument = thenArguments[i];
       final PsiExpression elseArgument = elseArguments[i];
-      if (!EquivalenceChecker.expressionsAreEquivalent(thenArgument,  elseArgument)) {
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenArgument, elseArgument)) {
         differences++;
       }
     }
@@ -188,6 +188,6 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate {
     }
     final PsiExpression thenLhs = thenAssignmentExpression.getLExpression();
     final PsiExpression elseLhs = elseAssignmentExpression.getLExpression();
-    return EquivalenceChecker.expressionsAreEquivalent(thenLhs, elseLhs);
+    return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenLhs, elseLhs);
   }
 }

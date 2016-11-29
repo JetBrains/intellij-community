@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -48,8 +49,8 @@ public class Util {
       if (initialMethodReturnType == null) {
         return null;
       }
-      final List<PsiMethod> normalized = new SmartList<PsiMethod>();
-      final Queue<PsiMethod> queue = new Queue<PsiMethod>(1);
+      final List<PsiMethod> normalized = new SmartList<>();
+      final Queue<PsiMethod> queue = new Queue<>(1);
       queue.addLast(method);
       while (!queue.isEmpty()) {
         final PsiMethod currentMethod = queue.pullFirst();
@@ -91,7 +92,16 @@ public class Util {
     return element;
   }
 
-  public static boolean canBeMigrated(final PsiElement e) {
+  public static boolean canBeMigrated(@NotNull final PsiElement[] es) {
+    for (PsiElement e : es) {
+      if (!canBeMigrated(e)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean canBeMigrated(@Nullable final PsiElement e) {
     if (e == null) {
       return false;
     }
@@ -116,8 +126,7 @@ public class Util {
         return aClass != null;
       }
       else if (elementType instanceof PsiDisjunctionType) {
-        final PsiType lub = ((PsiDisjunctionType)elementType).getLeastUpperBound();
-        return lub != null;
+        return true;
       }
     }
 

@@ -39,15 +39,13 @@ public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
   private static final Pattern RE_NAMESPACE = Pattern.compile("sys\\.modules\\.setdefault\\('([^']*)'");
   private static final String NAMESPACE_FILE_SUFFIX = "-nspkg.pth";
 
-  private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
-
   private final DataIndexer<String, Void, FileContent> myDataIndexer = new DataIndexer<String, Void, FileContent>() {
     @NotNull
     @Override
     public Map<String, Void> map(@NotNull FileContent inputData) {
       final CharSequence content = inputData.getContentAsText();
       final Matcher matcher = RE_NAMESPACE.matcher(content);
-      final Map<String, Void> results = new HashMap<String, Void>();
+      final Map<String, Void> results = new HashMap<>();
       while (matcher.find()) {
         final String packageName = matcher.group(1);
         results.put(packageName, null);
@@ -78,7 +76,7 @@ public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull

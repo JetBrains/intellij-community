@@ -74,14 +74,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
 
-  @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
-  }
-
   protected void assertModules(String... expectedNames) {
     Module[] actual = ModuleManager.getInstance(myProject).getModules();
-    List<String> actualNames = new ArrayList<String>();
+    List<String> actualNames = new ArrayList<>();
 
     for (Module m : actual) {
       actualNames.add(m.getName());
@@ -91,7 +86,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
-    List<String> actual = new ArrayList<String>();
+    List<String> actual = new ArrayList<>();
     for (ContentEntry e : getContentRoots(moduleName)) {
       actual.add(e.getUrl());
     }
@@ -158,8 +153,8 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
                                                            ContentEntry[] contentRoots,
                                                            @NotNull JpsModuleSourceRootType<?> rootType,
                                                            String... expected) {
-    List<SourceFolder> result = new ArrayList<SourceFolder>();
-    List<String> actual = new ArrayList<String>();
+    List<SourceFolder> result = new ArrayList<>();
+    List<String> actual = new ArrayList<>();
     for (ContentEntry contentRoot : contentRoots) {
       for (SourceFolder f : contentRoot.getSourceFolders(rootType)) {
         rootUrl = rootUrl == null ? VirtualFileManager.extractPath(contentRoot.getUrl()) : VirtualFileManager.extractPath(rootUrl);
@@ -179,7 +174,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   private static void doAssertContentFolders(ContentEntry e, final List<? extends ContentFolder> folders, String... expected) {
-    List<String> actual = new ArrayList<String>();
+    List<String> actual = new ArrayList<>();
     for (ContentFolder f : folders) {
       String rootUrl = e.getUrl();
       String folderUrl = f.getUrl();
@@ -197,12 +192,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertModuleOutputs(String moduleName, String... outputs) {
     String[] outputPaths = ContainerUtil.map2Array(CompilerPathsEx.getOutputPaths(new Module[]{getModule(moduleName)}), String.class,
-                                                   new Function<String, String>() {
-                                                     @Override
-                                                     public String fun(String s) {
-                                                       return getAbsolutePath(s);
-                                                     }
-                                                   });
+                                                   s -> getAbsolutePath(s));
     assertUnorderedElementsAreEqual(outputPaths, outputs);
   }
 
@@ -271,14 +261,9 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertUnorderedPathsAreEqual(Arrays.asList(library.getUrls(type)), paths);
   }
 
-  protected void assertModuleLibDepScope(String moduleName, String depName, DependencyScope scopes) {
+  protected void assertModuleLibDepScope(String moduleName, String depName, DependencyScope... scopes) {
     List<LibraryOrderEntry> deps = getModuleLibDeps(moduleName, depName);
-    assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, new Function<LibraryOrderEntry, Object>() {
-      @Override
-      public Object fun(LibraryOrderEntry entry) {
-        return entry.getScope();
-      }
-    }), scopes);
+    assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, entry -> entry.getScope()), scopes);
   }
 
   protected List<LibraryOrderEntry> getModuleLibDeps(String moduleName, String depName) {
@@ -290,7 +275,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void assertExportedDeps(String moduleName, String... expectedDeps) {
-    final List<String> actual = new ArrayList<String>();
+    final List<String> actual = new ArrayList<>();
 
     getRootManager(moduleName).orderEntries().withoutSdk().withoutModuleSourceEntries().exportedOnly().process(new RootPolicy<Object>() {
       @Override
@@ -319,12 +304,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertModuleModuleDepScope(String moduleName, String depName, DependencyScope... scopes) {
     List<ModuleOrderEntry> deps = getModuleModuleDeps(moduleName, depName);
-    assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, new Function<ModuleOrderEntry, Object>() {
-      @Override
-      public Object fun(ModuleOrderEntry entry) {
-        return entry.getScope();
-      }
-    }), scopes);
+    assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, entry -> entry.getScope()), scopes);
   }
 
   @NotNull
@@ -333,7 +313,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   private List<String> collectModuleDepsNames(String moduleName, Class clazz) {
-    List<String> actual = new ArrayList<String>();
+    List<String> actual = new ArrayList<>();
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
       if (clazz.isInstance(e)) {
@@ -357,7 +337,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   public void assertProjectLibraries(String... expectedNames) {
-    List<String> actualNames = new ArrayList<String>();
+    List<String> actualNames = new ArrayList<>();
     for (Library each : ProjectLibraryTable.getInstance(myProject).getLibraries()) {
       String name = each.getName();
       actualNames.add(name == null ? "<unnamed>" : name);
@@ -403,7 +383,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   private ContentEntry getContentRoot(String moduleName) {
     ContentEntry[] ee = getContentRoots(moduleName);
-    List<String> roots = new ArrayList<String>();
+    List<String> roots = new ArrayList<>();
     for (ContentEntry e : ee) {
       roots.add(e.getUrl());
     }
@@ -439,12 +419,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
     final Collection<DataNode<?>> nodes = ExternalSystemApiUtil.findAllRecursively(projectDataNode, booleanFunction);
     for (DataNode<?> node : nodes) {
-      ExternalSystemApiUtil.visit(node, new Consumer<DataNode<?>>() {
-        @Override
-        public void consume(DataNode dataNode) {
-          dataNode.setIgnored(ignored);
-        }
-      });
+      ExternalSystemApiUtil.visit(node, dataNode -> dataNode.setIgnored(ignored));
     }
     ServiceManager.getService(ProjectDataManager.class).importData(projectDataNode, myProject, true);
   }
@@ -487,6 +462,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             error.set(Couple.of(errorMessage, errorDetails));
           }
         })
+        .forceWhenUptodate()
     );
 
     if (!error.isNull()) {

@@ -182,7 +182,7 @@ public class BlockSupportImpl extends BlockSupport {
                                        @NotNull CharSequence lastCommittedText) {
     if (fileImpl instanceof PsiCodeFragment) {
       FileElement parent = fileImpl.getTreeElement();
-      final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
+      final FileElement holderElement = new DummyHolder(fileImpl.getManager(), fileImpl.getContext()).getTreeElement();
       holderElement.rawAddChildren(fileImpl.createContentLeafElement(holderElement.getCharTable().intern(newFileText, 0, newFileText.length())));
       DiffLog diffLog = new DiffLog();
       diffLog.appendReplaceFileElement(parent, (FileElement)holderElement.getFirstChildNode());

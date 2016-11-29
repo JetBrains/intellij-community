@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
@@ -34,7 +33,7 @@ import java.awt.*;
 
 public class IntelliSortChooserPopupAction extends DumbAwareAction {
   public IntelliSortChooserPopupAction() {
-    super("IntelliSort", "Change IntelliSort Type", IconUtil.flip(VcsLogIcons.Branch, false));
+    super("IntelliSort", "Change IntelliSort Type", VcsLogIcons.IntelliSort);
   }
 
   @Override
@@ -42,12 +41,9 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     final VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
 
     ActionGroup settingsGroup =
-      new DefaultActionGroup(ContainerUtil.map(PermanentGraph.SortType.values(), new Function<PermanentGraph.SortType, AnAction>() {
-        @Override
-        public AnAction fun(PermanentGraph.SortType sortType) {
-          return new SelectIntelliSortTypeAction(logUI, sortType);
-        }
-      }));
+      new DefaultActionGroup(ContainerUtil.map(PermanentGraph.SortType.values(),
+                                               (Function<PermanentGraph.SortType, AnAction>)sortType -> new SelectIntelliSortTypeAction(
+                                                 logUI, sortType)));
 
 
     ListPopup popup = JBPopupFactory.getInstance()

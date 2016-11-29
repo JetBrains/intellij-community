@@ -73,7 +73,7 @@ public class OldFacetDetectionExcludesConfiguration implements PersistentStateCo
         state.getFrameworkTypes().add(frameworkId);
         continue;
       }
-      Set<String> excludedUrls = new LinkedHashSet<String>();
+      Set<String> excludedUrls = new LinkedHashSet<>();
       for (DisabledAutodetectionInModuleElement moduleElement : moduleElements) {
         if (moduleElement.isDisableInWholeModule()) {
           final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleElement.getModuleName());

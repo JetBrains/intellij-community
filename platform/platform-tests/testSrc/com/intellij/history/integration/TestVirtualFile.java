@@ -40,7 +40,7 @@ public class TestVirtualFile extends VirtualFile {
 
   private final boolean IsDirectory;
   private VirtualFile myParent;
-  private final List<TestVirtualFile> myChildren = new ArrayList<TestVirtualFile>();
+  private final List<TestVirtualFile> myChildren = new ArrayList<>();
 
   public TestVirtualFile(@NotNull String name, String content, long timestamp) {
     this(name, content,  timestamp, false);

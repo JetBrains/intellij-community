@@ -55,11 +55,11 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
 
   public CompoundRunConfigurationSettingsEditor(@NotNull Project project) {
     myRunManager = RunManagerImpl.getInstanceImpl(project);
-    myModel = new SortedListModel<RunConfiguration>(CompoundRunConfiguration.COMPARATOR);
+    myModel = new SortedListModel<>(CompoundRunConfiguration.COMPARATOR);
     myList = new JBList(myModel);
     myList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         RunConfiguration configuration = myModel.get(index);
         setIcon(configuration.getType().getIcon());
         append(configuration.getType().getDisplayName() + " '" + configuration.getName() + "'");
@@ -100,7 +100,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
 
   @Override
   protected void applyEditorTo(CompoundRunConfiguration s) throws ConfigurationException {
-    Set<RunConfiguration> checked = new HashSet<RunConfiguration>();
+    Set<RunConfiguration> checked = new HashSet<>();
     for (int i = 0; i < myModel.getSize(); i++) {
       RunConfiguration configuration = myModel.get(i);
         String message =
@@ -121,7 +121,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
       @Override
       public void run(AnActionButton button) {
 
-        final List<RunConfiguration> all = new ArrayList<RunConfiguration>();
+        final List<RunConfiguration> all = new ArrayList<>();
         for (ConfigurationType type : myRunManager.getConfigurationFactories()) {
           if (!(type instanceof UnknownConfigurationType)) {
             for (RunnerAndConfigurationSettings settings : myRunManager.getConfigurationSettingsList(type)) {
@@ -130,12 +130,8 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
           }
         }
 
-        final List<RunConfiguration> configurations = ContainerUtil.filter(all, new Condition<RunConfiguration>() {
-          @Override
-          public boolean value(RunConfiguration configuration) {
-            return !mySnapshot.getSetToRun().contains(configuration) && canBeAdded(configuration, mySnapshot);
-          }
-        });
+        final List<RunConfiguration> configurations = ContainerUtil.filter(all,
+                                                                           configuration -> !mySnapshot.getSetToRun().contains(configuration) && canBeAdded(configuration, mySnapshot));
         JBPopupFactory.getInstance().createListPopup(new MultiSelectionListPopupStep<RunConfiguration>(null, configurations){
           @Nullable
           @Override

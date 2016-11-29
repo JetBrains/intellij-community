@@ -23,21 +23,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 
-public class PutLabelAction extends LocalHistoryActionWithDialog {
+public class PutLabelAction extends LocalHistoryAction {
   @Override
-  protected void showDialog(Project p, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
-    String labelName = Messages.showInputDialog(p, message("put.label.name"), message("put.label.dialog.title"),null,
-                                                "", new NonEmptyInputValidator());
-    if (labelName == null) return;
-    LocalHistory.getInstance().putUserLabel(p, labelName);
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
+    String labelName =
+      Messages.showInputDialog(p, message("put.label.name"), message("put.label.dialog.title"), null, "", new NonEmptyInputValidator());
+
+    if (labelName != null) {
+      LocalHistory.getInstance().putUserLabel(p, labelName);
+    }
   }
 
   @Override
-  protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
-    return f != null && gw.isVersioned(f);
+  protected boolean isEnabled(@NotNull LocalHistoryFacade vcs, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
+    return true;
   }
 }

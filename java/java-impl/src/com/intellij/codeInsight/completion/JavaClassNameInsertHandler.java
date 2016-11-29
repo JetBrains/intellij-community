@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -34,9 +33,9 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.*;
 
 /**
@@ -73,7 +72,9 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
 
     String qname = psiClass.getQualifiedName();
-    if (qname != null && PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null && shouldInsertFqnInJavadoc(item, file, project)) {
+    if (qname != null && PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null &&
+        (ref == null || !ref.isQualified()) &&
+        shouldInsertFqnInJavadoc(item, file, project)) {
       context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), qname);
       return;
     }
@@ -92,7 +93,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     if (ref == null || !ref.isQualified()) {
       PsiTypeLookupItem.addImportForItem(context, psiClass);
     }
-    if (context.getOffset(refEnd) < 0) {
+    if (!context.getOffsetMap().containsOffset(refEnd)) {
       return;
     }
 
@@ -158,16 +159,15 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
     if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-      for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes((PsiExpression)prevElement.getParent(), true)) {
-        if (info.getType() instanceof PsiArrayType) {
-          return false;
-        }
-      }
-
-      return true;
+      return !isArrayTypeExpected((PsiExpression)prevElement.getParent());
     }
 
     return false;
+  }
+
+  static boolean isArrayTypeExpected(PsiExpression expr) {
+    return ContainerUtil.exists(ExpectedTypesProvider.getExpectedTypes(expr, true),
+                                info -> info.getType() instanceof PsiArrayType);
   }
 
   private static boolean insertingAnnotation(InsertionContext context, LookupElement item) {
@@ -175,7 +175,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     if (!(obj instanceof PsiClass) || !((PsiClass)obj).isAnnotationType()) return false;
 
     PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
-    return psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(leaf);
+    PsiAnnotation anno = PsiTreeUtil.getParentOfType(leaf, PsiAnnotation.class);
+    return anno != null && PsiTreeUtil.isAncestor(anno.getNameReferenceElement(), leaf, false);
   }
 
   static boolean shouldHaveAnnotationParameters(PsiClass annoClass) {

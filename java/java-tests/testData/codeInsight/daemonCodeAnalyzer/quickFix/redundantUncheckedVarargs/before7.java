@@ -12,7 +12,7 @@ public class Test {
   }
 
   @SuppressWarnings("unchecked")
-  void foo() {
+  void f<caret>oo() {
     foo(new ArrayList<String>()).addAll(foo1(new ArrayList<String>);
   }
 }

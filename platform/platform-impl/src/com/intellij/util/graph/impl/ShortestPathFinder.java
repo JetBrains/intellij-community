@@ -33,8 +33,8 @@ public class ShortestPathFinder<Node> {
 
   @Nullable
   public List<Node> findPath(Node start, Node finish) {
-    Map<Node, Node> nextNodes = new HashMap<Node, Node>();
-    Deque<Node> queue = new ArrayDeque<Node>();
+    Map<Node, Node> nextNodes = new HashMap<>();
+    Deque<Node> queue = new ArrayDeque<>();
     queue.addLast(finish);
 
     boolean found = false;
@@ -58,7 +58,7 @@ public class ShortestPathFinder<Node> {
     if (!found) {
       return null;
     }
-    List<Node> path = new ArrayList<Node>();
+    List<Node> path = new ArrayList<>();
     Node current = start;
     while (!current.equals(finish)) {
       path.add(current);

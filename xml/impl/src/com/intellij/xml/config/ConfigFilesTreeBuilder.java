@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,11 @@ public class ConfigFilesTreeBuilder {
   }
 
   public Set<PsiFile> buildTree(DefaultMutableTreeNode root, ConfigFileSearcher... searchers) {
-    final Set<PsiFile> psiFiles = new com.intellij.util.containers.HashSet<PsiFile>();
+    final Set<PsiFile> psiFiles = new com.intellij.util.containers.HashSet<>();
 
-    final MultiMap<Module, PsiFile> files = new MultiMap<Module, PsiFile>();
-    final MultiMap<VirtualFile, PsiFile> jars = new MultiMap<VirtualFile, PsiFile>();
-    final MultiMap<VirtualFile, PsiFile> virtualFiles = new MultiMap<VirtualFile, PsiFile>();
+    final MultiMap<Module, PsiFile> files = new MultiMap<>();
+    final MultiMap<VirtualFile, PsiFile> jars = new MultiMap<>();
+    final MultiMap<VirtualFile, PsiFile> virtualFiles = new MultiMap<>();
 
     for (ConfigFileSearcher searcher : searchers) {
       files.putAllValues(searcher.getFilesByModules());
@@ -63,7 +63,7 @@ public class ConfigFilesTreeBuilder {
 
     for (Map.Entry<VirtualFile, Collection<PsiFile>> entry : virtualFiles.entrySet()) {
       DefaultMutableTreeNode node = createFileNode(entry.getKey());
-      List<PsiFile> list = new ArrayList<PsiFile>(entry.getValue());
+      List<PsiFile> list = new ArrayList<>(entry.getValue());
       Collections.sort(list, FILE_COMPARATOR);
       for (PsiFile file : list) {
         node.add(createFileNode(file));
@@ -89,16 +89,16 @@ public class ConfigFilesTreeBuilder {
                                        final MultiMap<VirtualFile, PsiFile> jars,
                                        DefaultMutableTreeNode root) {
 
-    final HashSet<PsiFile> psiFiles = new HashSet<PsiFile>();
-    final List<Module> modules = new ArrayList<Module>(files.keySet());
+    final HashSet<PsiFile> psiFiles = new HashSet<>();
+    final List<Module> modules = new ArrayList<>(files.keySet());
     Collections.sort(modules, ModulesAlphaComparator.INSTANCE);
     for (Module module : modules) {
       DefaultMutableTreeNode moduleNode = createFileNode(module);
       root.add(moduleNode);
       if (files.containsKey(module)) {
-        List<PsiFile> moduleFiles = new ArrayList<PsiFile>(files.get(module));
+        List<PsiFile> moduleFiles = new ArrayList<>(files.get(module));
 
-        MultiMap<FileType, PsiFile> filesByType = new MultiMap<FileType, PsiFile>();
+        MultiMap<FileType, PsiFile> filesByType = new MultiMap<>();
         for (PsiFile file : moduleFiles) {
           filesByType.putValue(file.getFileType(), file);
         }
@@ -106,7 +106,7 @@ public class ConfigFilesTreeBuilder {
           for (Map.Entry<FileType, Collection<PsiFile>> entry : filesByType.entrySet()) {
             DefaultMutableTreeNode fileTypeNode = createFileNode(entry.getKey());
             moduleNode.add(fileTypeNode);
-            addChildrenFiles(psiFiles, fileTypeNode, new ArrayList<PsiFile>(entry.getValue()));
+            addChildrenFiles(psiFiles, fileTypeNode, new ArrayList<>(entry.getValue()));
           }
         }  else {
           addChildrenFiles(psiFiles, moduleNode, moduleFiles);
@@ -114,15 +114,10 @@ public class ConfigFilesTreeBuilder {
       }
     }
 
-    List<VirtualFile> sortedJars = new ArrayList<VirtualFile>(jars.keySet());
-    Collections.sort(sortedJars, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        return StringUtil.naturalCompare(o1.getName(), o2.getName());
-      }
-    });
+    List<VirtualFile> sortedJars = new ArrayList<>(jars.keySet());
+    Collections.sort(sortedJars, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
     for (VirtualFile file : sortedJars) {
-      final List<PsiFile> list = new ArrayList<PsiFile>(jars.get(file));
+      final List<PsiFile> list = new ArrayList<>(jars.get(file));
       final PsiFile jar = list.get(0).getManager().findFile(file);
       if (jar != null) {
         final DefaultMutableTreeNode jarNode = createFileNode(jar);
@@ -141,12 +136,9 @@ public class ConfigFilesTreeBuilder {
     return fileType.getName() + " context files" ;
   }
 
-  private boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
-    byte nonEmptyGroups = 0;
-    for (Map.Entry<FileType, Collection<PsiFile>> entry : filesByType.entrySet()) {
-      Collection<PsiFile> files = entry.getValue();
-      if (files != null && files.size() > 0) nonEmptyGroups++;
-    }
+  private static boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
+    long nonEmptyGroups = filesByType.entrySet().stream().map(Map.Entry::getValue)
+      .filter(files -> files != null && !files.isEmpty()).limit(2).count();
     return nonEmptyGroups > 1;
   }
 
@@ -163,12 +155,7 @@ public class ConfigFilesTreeBuilder {
     return new DefaultMutableTreeNode(file);
   }
 
-  private static final Comparator<PsiFile> FILE_COMPARATOR = new Comparator<PsiFile>() {
-    @Override
-    public int compare(final PsiFile o1, final PsiFile o2) {
-      return StringUtil.naturalCompare(o1.getName(), o2.getName());
-    }
-  };
+  private static final Comparator<PsiFile> FILE_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
   public static void renderNode(Object value, boolean expanded, ColoredTreeCellRenderer renderer) {
     if (!(value instanceof DefaultMutableTreeNode)) return;
@@ -194,25 +181,24 @@ public class ConfigFilesTreeBuilder {
       renderer.append(fileName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
-        String path = virtualFile.getPath();
-        final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
-        if (i >= 0) {
-          path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
-        }
-        renderer.append(" (" + path + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderPath(renderer, virtualFile);
       }
     }
     else if (object instanceof VirtualFile) {
       VirtualFile file = (VirtualFile)object;
       renderer.setIcon(VirtualFilePresentation.getIcon(file));
       renderer.append(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      String path = file.getPath();
-      final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
-      if (i >= 0) {
-        path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
-      }
-      renderer.append(" (" + path + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      renderPath(renderer, file);
     }
+  }
+
+  private static void renderPath(ColoredTreeCellRenderer renderer, VirtualFile virtualFile) {
+    String path = virtualFile.getPath();
+    final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
+    if (i >= 0) {
+      path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
+    }
+    renderer.append(" (" + path.substring(0, path.length() - virtualFile.getName().length() - 1) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   public static void installSearch(JTree tree) {

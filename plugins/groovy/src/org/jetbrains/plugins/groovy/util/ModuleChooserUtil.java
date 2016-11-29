@@ -53,8 +53,8 @@ public class ModuleChooserUtil {
                                   final Function<Module, String> versionProvider,
                                   final Consumer<Module> callback,
                                   @Nullable DataContext context) {
-    final List<Module> modules = new ArrayList<Module>();
-    final Map<Module, String> versions = new HashMap<Module, String>();
+    final List<Module> modules = new ArrayList<>();
+    final Map<Module, String> versions = new HashMap<>();
 
     for (Module module : suitableModules) {
       modules.add(module);
@@ -117,17 +117,14 @@ public class ModuleChooserUtil {
 
   @NotNull
   private static Condition<Module> isGroovyCompatibleModule(final Condition<Module> condition) {
-    return new Condition<Module>() {
-      @Override
-      public boolean value(Module module) {
-        if (condition.value(module)) {
-          final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-          if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-            return true;
-          }
+    return module -> {
+      if (condition.value(module)) {
+        final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+          return true;
         }
-        return false;
       }
+      return false;
     };
   }
 

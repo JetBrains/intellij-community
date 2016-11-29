@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.PrintStream;
-import java.io.PrintWriter;
 
 /**
  * Thrown on accessing indices when they're not ready, in so-called dumb mode. Possible fixes:
@@ -50,7 +50,7 @@ import java.io.PrintWriter;
  * @see DumbService
  * @see DumbAware
  */
-public class IndexNotReadyException extends RuntimeException {
+public class IndexNotReadyException extends RuntimeException implements ExceptionWithAttachments {
   @Nullable private final Throwable myStartTrace;
 
   public IndexNotReadyException() {
@@ -62,25 +62,11 @@ public class IndexNotReadyException extends RuntimeException {
     myStartTrace = startTrace;
   }
 
+  @NotNull
   @Override
-  public void printStackTrace(PrintStream s) {
-    super.printStackTrace(s);
-    if (myStartTrace != null) {
-      s.println();
-      s.println("-----------");
-      s.println("Indexing started at:");
-      myStartTrace.printStackTrace(s);
-    }
-  }
-
-  @Override
-  public void printStackTrace(PrintWriter s) {
-    super.printStackTrace(s);
-    if (myStartTrace != null) {
-      s.println();
-      s.println("-----------");
-      s.println("Indexing started at:");
-      myStartTrace.printStackTrace(s);
-    }
+  public Attachment[] getAttachments() {
+    return myStartTrace == null
+           ? Attachment.EMPTY_ARRAY
+           : new Attachment[]{new Attachment("indexingStart", myStartTrace)};
   }
 }

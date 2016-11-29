@@ -79,38 +79,36 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
     final Module module = ModuleUtil.findModuleForFile(psiFile.getVirtualFile(), project);
     assert module != null;
 
-    Runnable command = new Runnable() {
-      public void run() {
-        try {
-          if (PluginModuleType.isOfType(module)) {
-            XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-            if (pluginXml != null) {
-              DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, element, pluginXml);
-            }
+    Runnable command = () -> {
+      try {
+        if (PluginModuleType.isOfType(module)) {
+          XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+          if (pluginXml != null) {
+            DescriptorUtil.patchPluginXml(this, element, pluginXml);
           }
-          else {
-            List<Module> modules = PluginModuleType.getCandidateModules(module);
-            if (modules.size() > 1) {
-              ChooseModulesDialog dialog = new ChooseModulesDialog(project, modules, getName());
-              if (!dialog.showAndGet()) {
-                return;
-              }
-              modules = dialog.getSelectedModules();
+        }
+        else {
+          List<Module> modules = PluginModuleType.getCandidateModules(module);
+          if (modules.size() > 1) {
+            ChooseModulesDialog dialog = new ChooseModulesDialog(project, modules, getName());
+            if (!dialog.showAndGet()) {
+              return;
             }
-            XmlFile[] pluginXmls = new XmlFile[modules.size()];
-            for (int i = 0; i < pluginXmls.length; i++) {
-              pluginXmls[i] = PluginModuleType.getPluginXml(modules.get(i));
-            }
+            modules = dialog.getSelectedModules();
+          }
+          XmlFile[] pluginXmls = new XmlFile[modules.size()];
+          for (int i = 0; i < pluginXmls.length; i++) {
+            pluginXmls[i] = PluginModuleType.getPluginXml(modules.get(i));
+          }
 
-            DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, element, pluginXmls);
-          }
-          CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+          DescriptorUtil.patchPluginXml(this, element, pluginXmls);
         }
-        catch (IncorrectOperationException e) {
-          Messages.showMessageDialog(project, filterMessage(e.getMessage()),
-                                     DevKitBundle.message("inspections.component.not.registered.quickfix.error", getType()),
-                                     Messages.getErrorIcon());
-        }
+        CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+      }
+      catch (IncorrectOperationException e) {
+        Messages.showMessageDialog(project, filterMessage(e.getMessage()),
+                                   DevKitBundle.message("inspections.component.not.registered.quickfix.error", getType()),
+                                   Messages.getErrorIcon());
       }
     };
     CommandProcessor.getInstance().executeCommand(project, command, getName(), null);

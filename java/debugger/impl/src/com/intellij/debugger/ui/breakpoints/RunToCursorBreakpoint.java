@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
     VirtualFile file = position.getFile().getVirtualFile();
     int line = position.getLine();
     for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
-      if (type instanceof JavaLineBreakpointType && type.canPutAt(file, line, getProject())) {
+      if (type instanceof JavaLineBreakpointType && type.canPutAt(file, line, myProject)) {
         return ((JavaLineBreakpointType)type);
       }
     }
@@ -147,7 +147,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
   }
 
   @Override
-  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess) {
-    return debugProcess.isAttached() && debugProcess.getRequestsManager().findRequests(this).isEmpty();
+  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess, boolean forPreparedClass) {
+    return debugProcess.isAttached() && (forPreparedClass || debugProcess.getRequestsManager().findRequests(this).isEmpty());
   }
 }

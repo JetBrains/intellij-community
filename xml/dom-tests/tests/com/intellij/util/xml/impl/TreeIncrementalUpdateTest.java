@@ -259,7 +259,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
   }
 
   public void testTypeBeforeRootTag() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<MyElement>(MyElement.class, "a"), getTestRootDisposable());
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyElement.class, "a"), getTestRootDisposable());
 
     final XmlFile file = (XmlFile)createFile("file.xml", "<?xml version='1.0' encoding='UTF-8'?>\n" +
                                                          "<a/>");
@@ -373,12 +373,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
 
     final XmlTag tag = element.getXmlTag();
     final XmlTag childTag = tag.getSubTags()[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        childTag.delete();
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> childTag.delete());
 
     putExpected(new DomEvent(element, false));
     assertResultsAndClear();
@@ -393,12 +388,9 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
     final Sepulka element = createElement("<a><foo/><bar/></a>", Sepulka.class);
     final List<MyElement> list = element.getCustomChildren();
     final XmlTag tag = element.getXmlTag();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
-      @Override
-      public void run() {
-        tag.getSubTags()[0].delete();
-        tag.getSubTags()[0].delete();
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      tag.getSubTags()[0].delete();
+      tag.getSubTags()[0].delete();
     });
 
     tag.add(createTag("<goo/>"));
@@ -423,21 +415,18 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
     XmlTag leafTag = tag.getSubTags()[2].getSubTags()[0];
     assertNoCache(leafTag);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        tag.getSubTags()[1].delete();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      tag.getSubTags()[1].delete();
 
-        assertFalse(oldLeaf.isValid());
+      assertFalse(oldLeaf.isValid());
 
-        putExpected(new DomEvent(element, false));
-        assertResultsAndClear();
+      putExpected(new DomEvent(element, false));
+      assertResultsAndClear();
 
-        assertEquals(child, element.getChild());
-        assertFalse(child2.isValid());
+      assertEquals(child, element.getChild());
+      assertFalse(child2.isValid());
 
-        tag.getSubTags()[1].delete();
-      }
+      tag.getSubTags()[1].delete();
     });
 
     putExpected(new DomEvent(element, false));

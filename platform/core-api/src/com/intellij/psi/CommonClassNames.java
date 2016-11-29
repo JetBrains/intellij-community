@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,9 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_STRING_BUILDER = "java.lang.StringBuilder";
   @NonNls String JAVA_LANG_ABSTRACT_STRING_BUILDER = "java.lang.AbstractStringBuilder";
 
+  @NonNls String JAVA_LANG_MATH = "java.lang.Math";
+  @NonNls String JAVA_LANG_STRICT_MATH = "java.lang.StrictMath";
+
   @NonNls String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
   @NonNls String JAVA_LANG_COMPARABLE = "java.lang.Comparable";
 
@@ -102,8 +105,12 @@ public interface CommonClassNames {
 
   @NonNls String JAVA_UTIL_STREAM_BASE_STREAM = "java.util.stream.BaseStream";
   @NonNls String JAVA_UTIL_STREAM_STREAM = "java.util.stream.Stream";
+  @NonNls String JAVA_UTIL_STREAM_INT_STREAM = "java.util.stream.IntStream";
+  @NonNls String JAVA_UTIL_STREAM_LONG_STREAM = "java.util.stream.LongStream";
+  @NonNls String JAVA_UTIL_STREAM_DOUBLE_STREAM = "java.util.stream.DoubleStream";
   @NonNls String JAVA_UTIL_STREAM_COLLECTORS = "java.util.stream.Collectors";
   @NonNls String JAVA_UTIL_FUNCTION_PREDICATE = "java.util.function.Predicate";
+  @NonNls String JAVA_UTIL_FUNCTION_FUNCTION = "java.util.function.Function";
 
   @NonNls String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
 

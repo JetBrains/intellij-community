@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,12 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -54,6 +57,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -161,7 +166,42 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDeprecated() { doTest(true, false); }
   public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true, false); }
   public void testExpressionsInSwitch () { doTest(false, false); }
-  public void testAccessInner () { doTest(false, false); }
+  public void testAccessInner() throws IOException {
+    Editor e = createSaveAndOpenFile("x/BeanContextServicesSupport.java",
+                                     "" +
+                                     "package x;\n" +
+                                     "public class BeanContextServicesSupport {" +
+                                     "  protected class BCSSChild {" +
+                                     "    class BCSSCServiceClassRef {" +
+                                     "      void addRequestor(Object requestor) {" +
+                                     "      }" +
+                                     "    }" +
+                                     "  }" +
+                                     "}");
+    Editor e2 = createSaveAndOpenFile("x/Component.java",
+                                      "" +
+                                      "package x;\n" +
+                                      "public class Component {" +
+                                      "  protected class FlipBufferStrategy {" +
+                                      "    protected int numBuffers;" +
+                                      "    protected void createBuffers(int numBuffers){}" +
+                                      "  }" +
+                                      "}");
+    try {
+      UIUtil.dispatchAllInvocationEvents();
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      doTest(false, false);
+    }
+    finally {
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      VirtualFile file = FileDocumentManager.getInstance().getFile(e.getDocument());
+      FileEditorManager.getInstance(getProject()).closeFile(file);
+      VfsTestUtil.deleteFile(file);
+      VirtualFile file2 = FileDocumentManager.getInstance().getFile(e2.getDocument());
+      FileEditorManager.getInstance(getProject()).closeFile(file2);
+      VfsTestUtil.deleteFile(file2);
+    }
+  }
 
   public void testExceptionNeverThrown() { doTest(true, false); }
   public void testExceptionNeverThrownInTry() { doTest(false, false); }
@@ -173,7 +213,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testExtendMultipleClasses() { doTest(false, false); }
   public void testRecursiveConstructorInvocation() { doTest(false, false); }
   public void testMethodCalls() { doTest(false, false); }
-  public void testSingleTypeImportConflicts() { doTest(false, false); }
+  public void testSingleTypeImportConflicts() throws IOException {
+    createSaveAndOpenFile("sql/Date.java", "package sql; public class Date{}");
+    UIUtil.dispatchAllInvocationEvents();
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    doTest(false, false);
+  }
   public void testMultipleSingleTypeImports() { doTest(true, false); } //duplicate imports
   public void testNotAllowedInInterface() { doTest(false, false); }
   public void testQualifiedNew() { doTest(false, false); }
@@ -199,7 +244,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnused() { doTest(true, false); }
   public void testQualifierBeforeClassName() { doTest(false, false); }
   public void testQualifiedSuper() {
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
     doTest(false, false);
   }
 
@@ -222,13 +267,13 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnusedParamsOfPublicMethodDisabled() {
     UnusedSymbolLocalInspectionBase tool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
     assertNotNull(tool);
-    boolean oldVal = tool.REPORT_PARAMETER_FOR_PUBLIC_METHODS;
+    String oldVal = tool.getParameterVisibility();
     try {
-      tool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = false;
+      tool.setParameterVisibility(PsiModifier.PRIVATE);
       doTest(true, false);
     }
     finally {
-      tool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = oldVal;
+      tool.setParameterVisibility(oldVal);
     }
   }
 
@@ -281,6 +326,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       myUnusedDeclarationInspection = new UnusedDeclarationInspectionBase();
     }
   }
+
   public void testUnusedInspectionNonPrivateMembersReferencedFromText() {
     doTest(true, false);
     WriteCommandAction.runWriteCommandAction(null, () -> {
@@ -374,6 +420,14 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
+  public void testNestedLocalClasses() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testAmbiguousConstants() throws Exception {
+    doTest(false, false);
+  }
+
   public void testInsane() throws IOException {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
@@ -415,6 +469,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
     assertFalse(list.toString(), list.contains(annotator));
   }
+
+  public void testIllegalWhitespaces() { doTest(false, false); }
 
   // must stay public for PicoContainer to work
   public static class MyAnnotator implements Annotator {

@@ -73,7 +73,7 @@ public class PropertyValueSetToItselfInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression2 = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression2 = ParenthesesUtils.stripParentheses(methodExpression2.getQualifierExpression());
       if (qualifierExpression1 instanceof PsiReferenceExpression && qualifierExpression2 instanceof PsiReferenceExpression) {
-        if (!EquivalenceChecker.expressionsAreEquivalent(qualifierExpression1, qualifierExpression2)) {
+        if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifierExpression1, qualifierExpression2)) {
           return;
         }
       }

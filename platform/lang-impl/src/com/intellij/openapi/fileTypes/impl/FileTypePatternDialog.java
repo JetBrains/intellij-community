@@ -43,12 +43,7 @@ public class FileTypePatternDialog {
       final DefaultComboBoxModel model = (DefaultComboBoxModel) myLanguageCombo.getModel();
       model.addElement(null);
       final List<Language> languages = TemplateDataLanguageMappings.getTemplateableLanguages();
-      Collections.sort(languages, new Comparator<Language>() {
-        @Override
-        public int compare(final Language o1, final Language o2) {
-          return o1.getID().compareTo(o2.getID());
-        }
-      });
+      Collections.sort(languages, (o1, o2) -> o1.getID().compareTo(o2.getID()));
       for (Language language : languages) {
         model.addElement(language);
       }

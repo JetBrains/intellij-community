@@ -40,16 +40,16 @@ import static com.intellij.psi.JavaTokenType.*;
 public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
   private static final Object ANY_VALUE = new Object();
-  private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
-  private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
+  private final Set<BinopInstruction> myReachable = new THashSet<>();
+  private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<>();
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
-  private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
-  private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
+  private final Set<PsiElement> myNotToReportReachability = new THashSet<>();
+  private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<>();
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<MethodCallInstruction, Nullness> myReturnTypeNullability = new FactoryMap<MethodCallInstruction, Nullness>() {
     @Override
     protected Nullness create(MethodCallInstruction key) {
-      final PsiCallExpression callExpression = key.getCallExpression();
+      final PsiCall callExpression = key.getCallExpression();
       if (callExpression instanceof PsiNewExpression) {
         return Nullness.NOT_NULL;
       }
@@ -237,7 +237,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     @NotNull final DfaValue qualifier = memState.pop();
     boolean unboxing = instruction.getMethodType() == MethodCallInstruction.MethodType.UNBOXING;
     NullabilityProblem problem = unboxing ? NullabilityProblem.unboxingNullable : NullabilityProblem.callNPE;
-    PsiExpression anchor = unboxing ? instruction.getContext() : instruction.getCallExpression();
+    PsiElement anchor = unboxing ? instruction.getContext() : instruction.getCallExpression();
     if (!checkNotNullable(memState, qualifier, problem, anchor)) {
       forceNotNull(runner, memState, qualifier);
     }
@@ -353,7 +353,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return qualifierValue;
     }
 
-    if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
+    if (type != null && !(type instanceof PsiPrimitiveType)) {
       Nullness nullability = myReturnTypeNullability.get(instruction);
       if (nullability == Nullness.UNKNOWN && factory.isUnknownMembersAreNullable()) {
         nullability = Nullness.NULLABLE;
@@ -426,7 +426,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     myCanBeNullInInstanceof.add(instruction);
 
-    ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
+    ArrayList<DfaInstructionState> states = new ArrayList<>();
 
     final DfaMemoryState trueCopy = memState.createCopy();
     if (trueCopy.applyCondition(dfaRelation)) {
@@ -472,11 +472,19 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                 DfaMemoryState memState,
                                                                 DfaValue dfaRight,
                                                                 DfaValue dfaLeft, IElementType opSign) {
+    if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
+      Number leftValue = getKnownNumberValue(memState, (DfaVariableValue)dfaLeft);
+      Number rightValue = getKnownNumberValue(memState, (DfaVariableValue)dfaRight);
+      if (leftValue != null && rightValue != null) {
+        return checkComparisonWithKnownValue(instruction, runner, memState, opSign, leftValue, rightValue);
+      }
+    }
+    
     if (dfaRight instanceof DfaConstValue && dfaLeft instanceof DfaVariableValue) {
       Object value = ((DfaConstValue)dfaRight).getValue();
       if (value instanceof Number) {
         DfaInstructionState[] result = checkComparingWithConstant(instruction, runner, memState, (DfaVariableValue)dfaLeft, opSign,
-                                                                  ((Number)value).doubleValue());
+                                                                  (Number)value);
         if (result != null) {
           return result;
         }
@@ -508,12 +516,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                   DataFlowRunner runner,
                                                                   DfaMemoryState memState,
                                                                   DfaVariableValue var,
-                                                                  IElementType opSign, double comparedWith) {
-    DfaConstValue knownConstantValue = memState.getConstantValue(var);
-    Object knownValue = knownConstantValue == null ? null : knownConstantValue.getValue();
-    if (knownValue instanceof Number) {
-      double knownDouble = ((Number)knownValue).doubleValue();
-      return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, knownDouble, knownDouble);
+                                                                  IElementType opSign, Number comparedWith) {
+    Object knownValue = getKnownNumberValue(memState, var);
+    if (knownValue != null) {
+      return checkComparisonWithKnownValue(instruction, runner, memState, opSign, (Number)knownValue, comparedWith);
     }
 
     PsiType varType = var.getVariableType();
@@ -534,27 +540,50 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Nullable
+  private static Number getKnownNumberValue(DfaMemoryState memState, DfaVariableValue var) {
+    DfaConstValue knownConstantValue = memState.getConstantValue(var);
+    return knownConstantValue != null && knownConstantValue.getValue() instanceof Number ? (Number)knownConstantValue.getValue() : null;
+  }
+
+  private static DfaInstructionState[] checkComparisonWithKnownValue(BinopInstruction instruction,
+                                                                     DataFlowRunner runner,
+                                                                     DfaMemoryState memState,
+                                                                     IElementType opSign,
+                                                                     Number leftValue,
+                                                                     Number rightValue) {
+    return checkComparisonWithKnownRange(instruction, runner, memState, opSign, rightValue, leftValue, leftValue);
+  }
+
+  private static int compare(Number a, Number b) {
+    long aLong = a.longValue();
+    long bLong = b.longValue();
+    if (aLong != bLong) return aLong > bLong ? 1 : -1;
+
+    return Double.compare(a.doubleValue(), b.doubleValue());
+  }
+
+  @Nullable
   private static DfaInstructionState[] checkComparisonWithKnownRange(BinopInstruction instruction,
                                                                      DataFlowRunner runner,
                                                                      DfaMemoryState memState,
                                                                      IElementType opSign,
-                                                                     double comparedWith,
-                                                                     double rangeMin,
-                                                                     double rangeMax) {
-    if (comparedWith < rangeMin || comparedWith > rangeMax) {
+                                                                     Number comparedWith,
+                                                                     Number rangeMin,
+                                                                     Number rangeMax) {
+    if (compare(comparedWith, rangeMin) < 0 || compare(comparedWith, rangeMax) > 0) {
       if (opSign == EQEQ) return alwaysFalse(instruction, runner, memState);
       if (opSign == NE) return alwaysTrue(instruction, runner, memState);
     }
 
-    if (opSign == LT && comparedWith <= rangeMin) return alwaysFalse(instruction, runner, memState);
-    if (opSign == LT && comparedWith > rangeMax) return alwaysTrue(instruction, runner, memState);
-    if (opSign == LE && comparedWith >= rangeMax) return alwaysTrue(instruction, runner, memState);
-    if (opSign == LE && comparedWith < rangeMin) return alwaysFalse(instruction, runner, memState);
+    if (opSign == LT && compare(comparedWith, rangeMin) <= 0) return alwaysFalse(instruction, runner, memState);
+    if (opSign == LT && compare(comparedWith, rangeMax) > 0) return alwaysTrue(instruction, runner, memState);
+    if (opSign == LE && compare(comparedWith, rangeMax) >= 0) return alwaysTrue(instruction, runner, memState);
+    if (opSign == LE && compare(comparedWith, rangeMin) < 0) return alwaysFalse(instruction, runner, memState);
 
-    if (opSign == GT && comparedWith >= rangeMax) return alwaysFalse(instruction, runner, memState);
-    if (opSign == GT && comparedWith < rangeMin) return alwaysTrue(instruction, runner, memState);
-    if (opSign == GE && comparedWith <= rangeMin) return alwaysTrue(instruction, runner, memState);
-    if (opSign == GE && comparedWith > rangeMax) return alwaysFalse(instruction, runner, memState);
+    if (opSign == GT && compare(comparedWith, rangeMax) >= 0) return alwaysFalse(instruction, runner, memState);
+    if (opSign == GT && compare(comparedWith, rangeMin) < 0) return alwaysTrue(instruction, runner, memState);
+    if (opSign == GE && compare(comparedWith, rangeMin) <= 0) return alwaysTrue(instruction, runner, memState);
+    if (opSign == GE && compare(comparedWith, rangeMax) > 0) return alwaysFalse(instruction, runner, memState);
 
     return null;
   }

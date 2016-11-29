@@ -12,29 +12,7 @@
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
-    <orderEntry type="module-library" exported="">
-      <library name="Gradle">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-core-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.9.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/tooling-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/core/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/messaging/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/wrapper/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/base-services/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/base-services-groovy/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/native/src/main/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="GradleGuava">
         <CLASSES>

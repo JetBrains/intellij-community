@@ -74,20 +74,16 @@ public class MicrodataUtil {
       @Nullable
       @Override
       public Result<Map<String, XmlTag>> compute() {
-        final Map<String, XmlTag> result = new THashMap<String, XmlTag>();
+        final Map<String, XmlTag> result = new THashMap<>();
         file.accept(new XmlRecursiveElementVisitor() {
           @Override
           public void visitXmlTag(final XmlTag tag) {
             super.visitXmlTag(tag);
             XmlAttribute refAttr = tag.getAttribute(ITEM_REF);
             if (refAttr != null && tag.getAttribute(ITEM_SCOPE) != null) {
-              getReferencesForAttributeValue(refAttr.getValueElement(), new PairFunction<String, Integer, PsiReference>() {
-                @Nullable
-                @Override
-                public PsiReference fun(String t, Integer v) {
-                  result.put(t, tag);
-                  return null;
-                }
+              getReferencesForAttributeValue(refAttr.getValueElement(), (t, v) -> {
+                result.put(t, tag);
+                return null;
               });
             }
           }
@@ -124,17 +120,13 @@ public class MicrodataUtil {
   }
 
   public static PsiReference[] getUrlReferencesForAttributeValue(final XmlAttributeValue element) {
-    return getReferencesForAttributeValue(element, new PairFunction<String, Integer, PsiReference>() {
-      @Nullable
-      @Override
-      public PsiReference fun(String token, Integer offset) {
-        if (HtmlUtil.hasHtmlPrefix(token)) {
-          final TextRange range = TextRange.from(offset, token.length());
-          final URLReference urlReference = new URLReference(element, range, true);
-          return new DependentNSReference(element, range, urlReference, true);
-        }
-        return null;
+    return getReferencesForAttributeValue(element, (token, offset) -> {
+      if (HtmlUtil.hasHtmlPrefix(token)) {
+        final TextRange range = TextRange.from(offset, token.length());
+        final URLReference urlReference = new URLReference(element, range, true);
+        return new DependentNSReference(element, range, urlReference, true);
       }
+      return null;
     });
   }
 
@@ -146,7 +138,7 @@ public class MicrodataUtil {
     String text = element.getText();
     String urls = StringUtil.unquoteString(text);
     StringTokenizer tokenizer = new StringTokenizer(urls);
-    List<PsiReference> result = new ArrayList<PsiReference>();
+    List<PsiReference> result = new ArrayList<>();
     while (tokenizer.hasMoreTokens()) {
       String token = tokenizer.nextToken();
       int index = text.indexOf(token);
@@ -165,10 +157,10 @@ public class MicrodataUtil {
   }
 
   private static class CollectNamesVisitor extends XmlRecursiveElementVisitor {
-    protected final Set<String> myValues = new THashSet<String>();
+    protected final Set<String> myValues = new THashSet<>();
 
     public List<String> getValues() {
-      return new ArrayList<String>(myValues);
+      return new ArrayList<>(myValues);
     }
   }
 

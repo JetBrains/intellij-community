@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -34,19 +33,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class UnresolvedRefAddFutureImportQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.unresolved.reference.add.future");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.unresolved.reference.add.future");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     PyFile file = (PyFile)element.getContainingFile();
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyFromImportStatement statement = elementGenerator.createFromText(LanguageLevel.forElement(element), PyFromImportStatement.class,
                                                                   "from __future__ import with_statement");

@@ -41,19 +41,9 @@ public final class ScriptRunnerUtil {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.process.ScriptRunnerUtil");
 
-  public static final Condition<Key> STDOUT_OUTPUT_KEY_FILTER = new Condition<Key>() {
-    @Override
-    public boolean value(Key key) {
-      return ProcessOutputTypes.STDOUT.equals(key);
-    }
-  };
+  public static final Condition<Key> STDOUT_OUTPUT_KEY_FILTER = key -> ProcessOutputTypes.STDOUT.equals(key);
 
-  public static final Condition<Key> STDERR_OUTPUT_KEY_FILTER = new Condition<Key>() {
-    @Override
-    public boolean value(Key key) {
-      return ProcessOutputTypes.STDERR.equals(key);
-    }
-  };
+  public static final Condition<Key> STDERR_OUTPUT_KEY_FILTER = key -> ProcessOutputTypes.STDERR.equals(key);
 
   public static final Condition<Key> STDOUT_OR_STDERR_OUTPUT_KEY_FILTER = Conditions.or(STDOUT_OUTPUT_KEY_FILTER, STDERR_OUTPUT_KEY_FILTER);
 

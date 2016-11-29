@@ -40,13 +40,9 @@ import java.util.Map;
  */
 public class BasePackageParameterFactory extends ProjectTemplateParameterFactory {
 
-  private static final Condition<PsiPackage> PACKAGE_CONDITION = new Condition<PsiPackage>() {
-    @Override
-    public boolean value(PsiPackage aPackage) {
-      return PsiNameHelper.getInstance(aPackage.getProject()).isQualifiedName(aPackage.getQualifiedName()) &&
-             Character.isLowerCase(aPackage.getName().charAt(0));
-    }
-  };
+  private static final Condition<PsiPackage> PACKAGE_CONDITION =
+    aPackage -> PsiNameHelper.getInstance(aPackage.getProject()).isQualifiedName(aPackage.getQualifiedName()) &&
+              Character.isLowerCase(aPackage.getName().charAt(0));
 
   @Override
   public String getParameterId() {
@@ -77,7 +73,7 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
 
       @Override
       public Map<String, String> getValues() {
-        HashMap<String, String> map = new HashMap<String, String>(2);
+        HashMap<String, String> map = new HashMap<>(2);
         map.put(getId(), getValue());
         map.put("IJ_BASE_PACKAGE_DIR", getValue().replace('.', '/'));
         map.put("IJ_BASE_PACKAGE_PREFIX", StringUtil.isEmpty(getValue()) ? "" : getValue() + ".");

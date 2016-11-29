@@ -71,7 +71,7 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
   }
 
   public List<MemberInfo> getSelectedMemberInfos() {
-    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.size());
+    ArrayList<MemberInfo> list = new ArrayList<>(myMemberInfos.size());
     for (MemberInfo info : myMemberInfos) {
       if (info.isChecked() && myMemberInfoModel.isMemberEnabled(info)) {
         list.add(info);
@@ -130,9 +130,10 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    myMemberSelectionPanel = new MemberSelectionPanelBase<Member, MemberInfo, AbstractMemberSelectionTable<Member, MemberInfo>>(RefactoringBundle.message("members.to.be.pulled.up"), createMemberSelectionTable(myMemberInfos));
+    myMemberSelectionPanel =
+      new MemberSelectionPanelBase<>(RefactoringBundle.message("members.to.be.pulled.up"), createMemberSelectionTable(myMemberInfos));
     myMemberInfoModel = createMemberInfoModel();
-    myMemberInfoModel.memberInfoChanged(new MemberInfoChange<Member, MemberInfo>(myMemberInfos));
+    myMemberInfoModel.memberInfoChanged(new MemberInfoChange<>(myMemberInfos));
     myMemberSelectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
     myMemberSelectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
     panel.add(myMemberSelectionPanel, BorderLayout.CENTER);

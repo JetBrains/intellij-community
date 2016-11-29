@@ -39,15 +39,15 @@ import java.util.List;
  * @author yole
  */
 public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
-  protected final Editor myEditor;
-  protected final PsiFile myFile;
+  @NotNull protected final Editor myEditor;
+  @NotNull protected final PsiFile myFile;
 
-  protected List<TextRange> myReadUsages = new ArrayList<TextRange>();
-  protected List<TextRange> myWriteUsages = new ArrayList<TextRange>();
+  protected List<TextRange> myReadUsages = new ArrayList<>();
+  protected List<TextRange> myWriteUsages = new ArrayList<>();
   protected String myStatusText;
   protected String myHintText;
 
-  protected HighlightUsagesHandlerBase(final Editor editor, final PsiFile file) {
+  protected HighlightUsagesHandlerBase(@NotNull Editor editor, @NotNull PsiFile file) {
     myEditor = editor;
     myFile = file;
   }
@@ -57,12 +57,9 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     if (targets == null) {
       return;
     }
-    selectTargets(targets, new Consumer<List<T>>() {
-      @Override
-      public void consume(final List<T> targets) {
-        computeUsages(targets);
-        performHighlighting();
-      }
+    selectTargets(targets, targets1 -> {
+      computeUsages(targets1);
+      performHighlighting();
     });
   }
 

@@ -46,9 +46,9 @@ import java.awt.event.*;
  * @author Alexander Lobas
  */
 public class LightToolWindow extends JPanel {
-  public static final String LEFT_MIN_KEY = "left";
-  public static final String RIGHT_MIN_KEY = "right";
-  public static final int MINIMIZE_WIDTH = 25;
+  static final String LEFT_MIN_KEY = "left";
+  static final String RIGHT_MIN_KEY = "right";
+  static final int MINIMIZE_WIDTH = 25;
   private static final String IGNORE_WIDTH_KEY = "ignore_width";
 
   private final LightToolWindowContent myContent;
@@ -139,12 +139,14 @@ public class LightToolWindow extends JPanel {
     add(contentWrapper, BorderLayout.CENTER);
 
     addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseReleased(final MouseEvent e) {
         IdeFocusManager.getInstance(myProject).requestFocus(myFocusedComponent, true);
       }
     });
 
     addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(Component component, int x, int y) {
         showGearPopup(component, x, y);
       }
@@ -167,12 +169,9 @@ public class LightToolWindow extends JPanel {
         return myAnchor;
       }
     };
-    myMinimizeButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myMinimizeButton.setSelected(false);
-        updateContent(true, true);
-      }
+    myMinimizeButton.addActionListener(e -> {
+      myMinimizeButton.setSelected(false);
+      updateContent(true, true);
     });
     myMinimizeButton.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
     myMinimizeButton.setFocusable(false);
@@ -233,7 +232,7 @@ public class LightToolWindow extends JPanel {
     }
   }
 
-  public void updateAnchor(ToolWindowAnchor newAnchor) {
+  void updateAnchor(ToolWindowAnchor newAnchor) {
     JComponent minimizeParent = myContentSplitter.getInnerComponent();
     minimizeParent.putClientProperty(IGNORE_WIDTH_KEY, Boolean.TRUE);
 
@@ -374,7 +373,7 @@ public class LightToolWindow extends JPanel {
   }
 
   private class GearAction extends AnAction {
-    public GearAction() {
+    GearAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setIcon(AllIcons.General.Gear);
       presentation.setHoveredIcon(AllIcons.General.GearHover);
@@ -462,7 +461,7 @@ public class LightToolWindow extends JPanel {
   }
 
   private class ToggleWindowedModeAction extends ToggleTypeModeAction {
-    public ToggleWindowedModeAction() {
+    ToggleWindowedModeAction() {
       super(ToolWindowType.WINDOWED, InternalDecorator.TOGGLE_WINDOWED_MODE_ACTION_ID);
     }
 
@@ -475,7 +474,7 @@ public class LightToolWindow extends JPanel {
   private class ToggleTypeModeAction extends ToggleAction {
     private final ToolWindowType myType;
 
-    public ToggleTypeModeAction(ToolWindowType type, String id) {
+    ToggleTypeModeAction(@NotNull ToolWindowType type, @NotNull String id) {
       myType = type;
       copyFrom(ActionManager.getInstance().getAction(id));
     }

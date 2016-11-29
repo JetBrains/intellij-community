@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   private final MyListTableModel model;
 
   public TableModelEditor(@NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
-    this(Collections.<T>emptyList(), columns, itemEditor, emptyText);
+    this(Collections.emptyList(), columns, itemEditor, emptyText);
   }
 
   /**
@@ -65,8 +65,8 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
     super(itemEditor);
 
-    model = new MyListTableModel(columns, new ArrayList<T>(items));
-    table = new TableView<T>(model);
+    model = new MyListTableModel(columns, new ArrayList<>(items));
+    table = new TableView<>(model);
     table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
     table.setStriped(true);
     table.setEnableAntialiasing(true);
@@ -116,12 +116,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
           }
           else {
             final int selectedRow = table.getSelectedRow();
-            mutator = new Function<T, T>() {
-              @Override
-              public T fun(T item) {
-                return helper.getMutable(item, selectedRow);
-              }
-            };
+            mutator = item12 -> helper.getMutable(item12, selectedRow);
           }
           ((DialogItemEditor<T>)itemEditor).edit(item, mutator, false);
           table.requestFocus();
@@ -140,12 +135,9 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
         @Override
         public void run(AnActionButton button) {
           T item = createElement();
-          ((DialogItemEditor<T>)itemEditor).edit(item, new Function<T, T>() {
-            @Override
-            public T fun(T item) {
-              model.addRow(item);
-              return item;
-            }
+          ((DialogItemEditor<T>)itemEditor).edit(item, item1 -> {
+            model.addRow(item1);
+            return item1;
           }, true);
         }
       });
@@ -183,16 +175,16 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     return model;
   }
 
-  public static abstract class DialogItemEditor<T> extends CollectionItemEditor<T> {
-    public abstract void edit(@NotNull T item, @NotNull Function<T, T> mutator, boolean isAdd);
+  public interface DialogItemEditor<T> extends CollectionItemEditor<T> {
+    void edit(@NotNull T item, @NotNull Function<T, T> mutator, boolean isAdd);
 
-    public abstract void applyEdited(@NotNull T oldItem, @NotNull T newItem);
+    void applyEdited(@NotNull T oldItem, @NotNull T newItem);
 
-    public boolean isEditable(@NotNull T item) {
+    default boolean isEditable(@NotNull T item) {
       return true;
     }
 
-    public boolean isUseDialogToAdd() {
+    default boolean isUseDialogToAdd() {
       return false;
     }
   }
@@ -346,7 +338,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
   public void reset(@NotNull List<T> items) {
     super.reset(items);
-    model.setItems(new ArrayList<T>(items));
+    model.setItems(new ArrayList<>(items));
   }
 
   private class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {

@@ -11,7 +11,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class UnusedMethodParameterTest extends InspectionTestCase {
@@ -20,10 +20,10 @@ public class UnusedMethodParameterTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private final UnusedParametersInspection myTool = new UnusedParametersInspection();
-
   private void doTest() throws Exception {
-    doTest("unusedMethodParameter/" + getTestName(true), myTool);
+    UnusedDeclarationInspection declarationInspection = new UnusedDeclarationInspection();
+    declarationInspection.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("unusedMethodParameter/" + getTestName(true), declarationInspection);
   }
 
   public void testFieldInAnonymousClass() throws Exception {
@@ -43,7 +43,7 @@ public class UnusedMethodParameterTest extends InspectionTestCase {
   }
 
   public void testEntryPointUnusedParameter() throws Exception {
-    doTest("unusedMethodParameter/" + getTestName(true), myTool, true, true);
+    doTest("unusedMethodParameter/" + getTestName(true), new UnusedDeclarationInspection(), true, true);
   }
 
   public void testAppMainUnusedParams() throws Exception {

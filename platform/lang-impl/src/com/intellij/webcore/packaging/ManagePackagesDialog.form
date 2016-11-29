@@ -61,7 +61,7 @@
                     </properties>
                     <border type="none"/>
                     <children>
-                      <component id="db08a" class="javax.swing.JEditorPane" binding="myDescriptionTextArea">
+                      <component id="db08a" class="javax.swing.JEditorPane" binding="myDescriptionTextArea" custom-create="true">
                         <constraints/>
                         <properties>
                           <contentType value="text/html"/>

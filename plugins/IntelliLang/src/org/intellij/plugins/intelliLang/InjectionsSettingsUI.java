@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
@@ -115,16 +118,10 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   private void createActions(ToolbarDecorator decorator) {
-    final Consumer<BaseInjection> consumer = new Consumer<BaseInjection>() {
-      public void consume(final BaseInjection injection) {
-        addInjection(injection);
-      }
-    };
-    final Factory<BaseInjection> producer = new NullableFactory<BaseInjection>() {
-      public BaseInjection create() {
-        final InjInfo info = getSelectedInjection();
-        return info == null? null : info.injection;
-      }
+    final Consumer<BaseInjection> consumer = injection -> addInjection(injection);
+    final Factory<BaseInjection> producer = (NullableFactory<BaseInjection>)() -> {
+      final InjInfo info = getSelectedInjection();
+      return info == null? null : info.injection;
     };
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       ContainerUtil.addAll(myAddActions, support.createAddActions(myProject, consumer));
@@ -133,11 +130,8 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         .put(support.getId(), action == null ? AbstractLanguageInjectionSupport.createDefaultEditAction(myProject, producer) : action);
       mySupports.put(support.getId(), support);
     }
-    Collections.sort(myAddActions, new Comparator<AnAction>() {
-      public int compare(final AnAction o1, final AnAction o2) {
-        return Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
-      }
-    });
+    Collections.sort(myAddActions,
+                     (o1, o2) -> Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText()));
     decorator.disableUpDownActions();
     decorator.setAddActionUpdater(new AnActionButtonUpdater() {
       @Override
@@ -372,15 +366,11 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
 
   @Override
   protected Configurable[] buildConfigurables() {
-      final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
+      final ArrayList<Configurable> configurables = new ArrayList<>();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         ContainerUtil.addAll(configurables, support.createSettings(myProject, myConfiguration));
       }
-      Collections.sort(configurables, new Comparator<Configurable>() {
-        public int compare(final Configurable o1, final Configurable o2) {
-          return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
-        }
-      });
+      Collections.sort(configurables, (o1, o2) -> Comparing.compare(o1.getDisplayName(), o2.getDisplayName()));
       return configurables.toArray(new Configurable[configurables.size()]);
   }
 
@@ -391,14 +381,12 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   private static void sortInjections(final List<BaseInjection> injections) {
-    Collections.sort(injections, new Comparator<BaseInjection>() {
-      public int compare(final BaseInjection o1, final BaseInjection o2) {
-        final int support = Comparing.compare(o1.getSupportId(), o2.getSupportId());
-        if (support != 0) return support;
-        final int lang = Comparing.compare(o1.getInjectedLanguageId(), o2.getInjectedLanguageId());
-        if (lang != 0) return lang;
-        return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
-      }
+    Collections.sort(injections, (o1, o2) -> {
+      final int support = Comparing.compare(o1.getSupportId(), o2.getSupportId());
+      if (support != 0) return support;
+      final int lang = Comparing.compare(o1.getInjectedLanguageId(), o2.getInjectedLanguageId());
+      if (lang != 0) return lang;
+      return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
     });
   }
 
@@ -422,10 +410,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   public boolean isModified() {
-    for (CfgInfo info : myInfos) {
-      if (info.isModified()) return true;
-    }
-    return false;
+    return Arrays.stream(myInfos).anyMatch(CfgInfo::isModified);
   }
 
   private void performSelectedInjectionsEnabled(final boolean enabled) {
@@ -465,7 +450,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   private List<InjInfo> getSelectedInjections() {
-    final ArrayList<InjInfo> toRemove = new ArrayList<InjInfo>();
+    final ArrayList<InjInfo> toRemove = new ArrayList<>();
     for (int row : myInjectionsTable.getSelectedRows()) {
       toRemove.add(myInjectionsTable.getItems().get(myInjectionsTable.convertRowIndexToModel(row)));
     }
@@ -481,11 +466,8 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   private void performAdd(AnActionButton e) {
     DefaultActionGroup group = new DefaultActionGroup(myAddActions);
 
-    JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true, new Runnable() {
-      public void run() {
-        updateCountLabel();
-      }
-    }, -1).show(e.getPreferredPopupPoint());
+    JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true,
+                                                        () -> updateCountLabel(), -1).show(e.getPreferredPopupPoint());
   }
 
   @Nls
@@ -499,7 +481,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
 
   private class InjectionsTable extends TableView<InjInfo> {
     private InjectionsTable(final List<InjInfo> injections) {
-      super(new ListTableModel<InjInfo>(createInjectionColumnInfos(), injections, 1));
+      super(new ListTableModel<>(createInjectionColumnInfos(), injections, 1));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
       getColumnModel().getColumn(2).setCellRenderer(createLanguageCellRenderer());
       getColumnModel().getColumn(1).setCellRenderer(createDisplayNameCellRenderer());
@@ -522,21 +504,17 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       }.installOn(this);
 
       final String[] maxName = new String[]{""};
-      ContainerUtil.process(injections, new Processor<InjInfo>() {
-        public boolean process(final InjInfo injection) {
-          String languageId = injection.injection.getInjectedLanguageId();
-          Language language = InjectedLanguage.findLanguageById(languageId);
-          String displayName = language == null ? languageId : language.getDisplayName();
-          if (maxName[0].length() < displayName.length()) maxName[0] = displayName;
-          return true;
-        }
+      ContainerUtil.process(injections, injection -> {
+        String languageId = injection.injection.getInjectedLanguageId();
+        Language language = InjectedLanguage.findLanguageById(languageId);
+        String displayName = language == null ? languageId : language.getDisplayName();
+        if (maxName[0].length() < displayName.length()) maxName[0] = displayName;
+        return true;
       });
-      ContainerUtil.process(InjectedLanguage.getAvailableLanguages(), new Processor<Language>() {
-        public boolean process(final Language language) {
-          String displayName = language.getDisplayName();
-          if (maxName[0].length() < displayName.length()) maxName[0] = displayName;
-          return true;
-        }
+      ContainerUtil.process(InjectedLanguage.getAvailableLanguages(), language -> {
+        String displayName = language.getDisplayName();
+        if (maxName[0].length() < displayName.length()) maxName[0] = displayName;
+        return true;
       });
       Icon icon = FileTypes.PLAIN_TEXT.getIcon();
       int preferred = (int)(new JLabel(maxName[0], icon, SwingConstants.LEFT).getPreferredSize().width * 1.1);
@@ -558,17 +536,12 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     final TableCellRenderer booleanCellRenderer = createBooleanCellRenderer();
     final TableCellRenderer displayNameCellRenderer = createDisplayNameCellRenderer();
     final TableCellRenderer languageCellRenderer = createLanguageCellRenderer();
-    final Comparator<InjInfo> languageComparator = new Comparator<InjInfo>() {
-      public int compare(final InjInfo o1, final InjInfo o2) {
-        return Comparing.compare(o1.injection.getInjectedLanguageId(), o2.injection.getInjectedLanguageId());
-      }
-    };
-    final Comparator<InjInfo> displayNameComparator = new Comparator<InjInfo>() {
-      public int compare(final InjInfo o1, final InjInfo o2) {
-        final int support = Comparing.compare(o1.injection.getSupportId(), o2.injection.getSupportId());
-        if (support != 0) return support;
-        return Comparing.compare(o1.injection.getDisplayName(), o2.injection.getDisplayName());
-      }
+    final Comparator<InjInfo> languageComparator =
+      (o1, o2) -> Comparing.compare(o1.injection.getInjectedLanguageId(), o2.injection.getInjectedLanguageId());
+    final Comparator<InjInfo> displayNameComparator = (o1, o2) -> {
+      final int support = Comparing.compare(o1.injection.getSupportId(), o2.injection.getSupportId());
+      if (support != 0) return support;
+      return Comparing.compare(o1.injection.getDisplayName(), o2.injection.getDisplayName());
     };
     final ColumnInfo[] columnInfos = {new ColumnInfo<InjInfo, Boolean>(" ") {
       @Override
@@ -646,12 +619,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
 
         @Override
         public Comparator<InjInfo> getComparator() {
-          return new Comparator<InjInfo>() {
-            @Override
-            public int compare(final InjInfo o1, final InjInfo o2) {
-              return Comparing.compare(valueOf(o1), valueOf(o2));
-            }
-          };
+          return (o1, o2) -> Comparing.compare(valueOf(o1), valueOf(o2));
         }
       });
     }
@@ -780,8 +748,8 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
             return o.injection.getSupportId();
           }
         });
-      final List<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
-      final List<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+      final List<BaseInjection> originalInjections = new ArrayList<>();
+      final List<BaseInjection> newInjections = new ArrayList<>();
       //// remove duplicates
       //for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
       //  final Set<BaseInjection> currentInjections = currentMap.get(supportId);
@@ -794,7 +762,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       //myInjections.addAll(newInjections);
 
       for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-        ArrayList<InjInfo> list = new ArrayList<InjInfo>(ObjectUtils.notNull(currentMap.get(supportId), Collections.<InjInfo>emptyList()));
+        ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.<InjInfo>emptyList()));
         final List<BaseInjection> currentInjections = getInjectionList(list);
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
         if (currentInjections == null) {
@@ -828,28 +796,26 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   private static class CfgInfo {
     final Configuration cfg;
     final List<BaseInjection> originalInjections;
-    final List<InjInfo> injectionInfos = new ArrayList<InjInfo>();
-    final THashSet<BaseInjection> bundledInjections = new THashSet<BaseInjection>(new SameParamsAndPlacesStrategy());
+    final List<InjInfo> injectionInfos = new ArrayList<>();
+    final THashSet<BaseInjection> bundledInjections = new THashSet<>(new SameParamsAndPlacesStrategy());
     final String title;
 
     public CfgInfo(Configuration cfg, final String title) {
       this.cfg = cfg;
       this.title = title;
       bundledInjections.addAll(cfg.getDefaultInjections());
-      originalInjections = new ArrayList<BaseInjection>(ContainerUtil
-        .concat(InjectorUtils.getActiveInjectionSupportIds(), new Function<String, Collection<? extends BaseInjection>>() {
-          public Collection<? extends BaseInjection> fun(final String s) {
-            List<BaseInjection> injections =
-              CfgInfo.this.cfg instanceof Configuration.Prj ? ((Configuration.Prj)CfgInfo.this.cfg).getOwnInjections(s) : CfgInfo.this.cfg
-                .getInjections(s);
-            return ContainerUtil.findAll(injections, new Condition<BaseInjection>() {
-                public boolean value(final BaseInjection injection) {
-                  String id = injection.getInjectedLanguageId();
-                  return InjectedLanguage.findLanguageById(id) != null || ReferenceInjector.findById(id) != null;
-                }
-              });
-          }
-        }));
+      originalInjections = new ArrayList<>(ContainerUtil
+                                             .concat(InjectorUtils.getActiveInjectionSupportIds(), s -> {
+                                               List<BaseInjection> injections =
+                                                 this.cfg instanceof Configuration.Prj ? ((Configuration.Prj)this.cfg)
+                                                   .getOwnInjections(s) : this.cfg
+                                                   .getInjections(s);
+                                               return ContainerUtil.findAll(injections, injection -> {
+                                                 String id = injection.getInjectedLanguageId();
+                                                 return InjectedLanguage.findLanguageById(id) != null ||
+                                                        ReferenceInjector.findById(id) != null;
+                                               });
+                                             }));
       sortInjections(originalInjections);
       reset();
     }
@@ -866,18 +832,18 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     public void reset() {
       injectionInfos.clear();
       for (BaseInjection injection : originalInjections) {
-        injectionInfos.add(new InjInfo(injection.copy(), this));
+        injectionInfos.add(new InjInfo(injection.copy(), this, bundledInjections.contains(injection)));
       }
     }
 
     public InjInfo addInjection(final BaseInjection injection) {
-      final InjInfo info = new InjInfo(injection, this);
+      final InjInfo info = new InjInfo(injection, this, false);
       injectionInfos.add(info);
       return info;
     }
 
     public boolean isModified() {
-      final List<BaseInjection> copy = new ArrayList<BaseInjection>(getInjectionList(injectionInfos));
+      final List<BaseInjection> copy = new ArrayList<>(getInjectionList(injectionInfos));
       sortInjections(copy);
       return !originalInjections.equals(copy);
     }
@@ -888,7 +854,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         if (originalInjections.contains(info.injection)) it.remove();
       }
       for (BaseInjection newInjection : newInjections) {
-        injectionInfos.add(new InjInfo(newInjection, this));
+        injectionInfos.add(new InjInfo(newInjection, this, false));
       }
     }
 
@@ -911,10 +877,10 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     final CfgInfo cfgInfo;
     final boolean bundled;
 
-    private InjInfo(final BaseInjection injection, final CfgInfo cfgInfo) {
+    private InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
       this.injection = injection;
       this.cfgInfo = cfgInfo;
-      bundled = cfgInfo.bundledInjections.contains(injection);
+      this.bundled = bundled;
     }
   }
 

@@ -55,11 +55,12 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
 
     if (logUI != null) {
       boolean off = logUI.getBekType() == PermanentGraph.SortType.Normal;
-      e.getPresentation().setText("IntelliSort is " + (off ? "Off" : "On"));
-      e.getPresentation().setDescription("Turn IntelliSort " + (off ? "on" : "off") + " (" +
-                                         (off
-                                          ? PermanentGraph.SortType.Bek.getDescription().toLowerCase()
-                                          : PermanentGraph.SortType.Normal.getDescription().toLowerCase()) + ").");
+      String description = "Turn IntelliSort " + (off ? "on" : "off") + ": " +
+                           (off
+                            ? PermanentGraph.SortType.Bek.getDescription().toLowerCase()
+                            : PermanentGraph.SortType.Normal.getDescription().toLowerCase()) + ".";
+      e.getPresentation().setDescription(description);
+      e.getPresentation().setText(description);
     }
     else {
       e.getPresentation().setText(DEFAULT_TEXT);

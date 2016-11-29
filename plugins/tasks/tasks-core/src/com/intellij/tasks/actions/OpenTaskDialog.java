@@ -77,7 +77,7 @@ public class OpenTaskDialog extends DialogWrapper {
       myUpdateState.setVisible(false);
       myTaskStateCombo.setVisible(false);
     }
-    final boolean stateUpdatesEnabled = PropertiesComponent.getInstance(project).getBoolean(UPDATE_STATE_ENABLED, true);
+    final boolean stateUpdatesEnabled = PropertiesComponent.getInstance(project).getBoolean(UPDATE_STATE_ENABLED, false);
     myUpdateState.setSelected(stateUpdatesEnabled);
     myUpdateState.addActionListener(new ActionListener() {
       @Override
@@ -155,6 +155,12 @@ public class OpenTaskDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
+    for (TaskDialogPanel panel : myPanels) {
+      final JComponent component = panel.getPreferredFocusedComponent();
+      if (component != null) {
+        return component;
+      }
+    }
     if (myTaskStateCombo.isVisible() && myTaskStateCombo.isEnabled()){
       return myTaskStateCombo.getComboBox();
     }

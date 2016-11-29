@@ -41,7 +41,7 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
 
   public CloudLoggingHandlerImpl(DeploymentLogManager logManager) {
     myMainLoggingHandler = logManager.getMainLoggingHandler();
-    myPipeName2LogListener = new HashMap<String, LogListener>();
+    myPipeName2LogListener = new HashMap<>();
     myLogManager = logManager;
   }
 
@@ -110,7 +110,7 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
-  public TerminalListener createTerminal(final String pipeName, OutputStream terminalInput, InputStream terminalOutput) {
+  public TerminalListener createTerminal(final String pipeName, OutputStream terminalInput, InputStream terminalOutput, InputStream stderr) {
     final TerminalHandler terminalHandler = myLogManager.addTerminal(pipeName, terminalOutput, terminalInput);
     return new TerminalListener() {
 

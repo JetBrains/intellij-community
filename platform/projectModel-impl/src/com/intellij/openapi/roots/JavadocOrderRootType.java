@@ -34,7 +34,7 @@ public class JavadocOrderRootType extends PersistentOrderRootType {
   }
 
   public static String[] getUrls(OrderEntry entry) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
       @Override
       public List<String> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<String> value) {

@@ -164,7 +164,7 @@ public class VcsCherryPickManager {
         @NotNull
         @Override
         protected Collection<VcsFullCommitDetails> createCollection() {
-          return new ArrayList<VcsFullCommitDetails>();
+          return new ArrayList<>();
         }
       };
     }

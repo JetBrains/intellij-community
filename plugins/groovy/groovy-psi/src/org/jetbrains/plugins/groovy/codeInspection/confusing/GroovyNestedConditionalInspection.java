@@ -55,7 +55,7 @@ public class GroovyNestedConditionalInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(GrConditionalExpression grConditionalExpression) {
+    public void visitConditionalExpression(@NotNull GrConditionalExpression grConditionalExpression) {
       super.visitConditionalExpression(grConditionalExpression);
       final GrConditionalExpression containingConditional =
           PsiTreeUtil.getParentOfType(grConditionalExpression, GrConditionalExpression.class);

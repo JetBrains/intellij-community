@@ -94,7 +94,7 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(IDEA_VERSION)) {
       currentPlugin.setSinceBuild(attributes.getValue(SINCE_BUILD));
-      currentPlugin.setUntilBuild(attributes.getValue(UNTIL_BUILD));
+      currentPlugin.setUntilBuild(IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(attributes.getValue(UNTIL_BUILD)));
     }
     else if (qName.equals(VENDOR)) {
       currentPlugin.setVendorEmail(attributes.getValue(EMAIL));

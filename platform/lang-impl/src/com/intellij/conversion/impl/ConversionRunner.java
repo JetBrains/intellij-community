@@ -36,7 +36,7 @@ public class ConversionRunner {
   private boolean myProcessRunConfigurations;
   private boolean myProcessProjectLibraries;
   private boolean myArtifacts;
-  private final List<File> myModulesFilesToProcess = new ArrayList<File>();
+  private final List<File> myModulesFilesToProcess = new ArrayList<>();
   private final ProjectConverter myConverter;
   private final ConversionProcessor<RunManagerSettings> myRunConfigurationsConverter;
   private final ConversionProcessor<ProjectLibrariesSettings> myProjectLibrariesConverter;
@@ -98,7 +98,7 @@ public class ConversionRunner {
   }
 
   public Set<File> getAffectedFiles() {
-    Set<File> affectedFiles = new HashSet<File>();
+    Set<File> affectedFiles = new HashSet<>();
     if (myProcessProjectFile) {
       affectedFiles.add(myContext.getProjectFile());
     }
@@ -217,7 +217,7 @@ public class ConversionRunner {
   }
 
   public static List<File> getReadOnlyFiles(final Collection<File> affectedFiles) {
-    List<File> result = new ArrayList<File>();
+    List<File> result = new ArrayList<>();
     for (File file : affectedFiles) {
       if (!file.canWrite()) {
         result.add(file);

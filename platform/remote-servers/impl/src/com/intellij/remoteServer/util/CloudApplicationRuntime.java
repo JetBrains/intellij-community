@@ -75,35 +75,27 @@ public abstract class CloudApplicationRuntime extends DeploymentRuntime {
   protected abstract class LoggingTask {
 
     public void perform(final Project project, final Runnable onDone) {
-      getTaskExecutor().submit(new Runnable() {
+      getTaskExecutor().submit(() -> {
+        try {
+          getAgentTaskExecutor().execute(() -> {
+            Deployment deployment = getDeploymentModel();
+            CloudAgentLoggingHandler loggingHandler
+              = deployment == null
+                ? null
+                : new CloudLoggingHandlerImpl(deployment.getOrCreateLogManager(project)) {
 
-        @Override
-        public void run() {
-          try {
-            getAgentTaskExecutor().execute(new Computable<Object>() {
-
-              @Override
-              public Object compute() {
-                Deployment deployment = getDeploymentModel();
-                CloudAgentLoggingHandler loggingHandler
-                  = deployment == null
-                    ? null
-                    : new CloudLoggingHandlerImpl(deployment.getOrCreateLogManager(project)) {
-
-                      @Override
-                      public void println(String message) {
-                        LOG.info(message);
-                      }
-                    };
-                LoggingTask.this.run(loggingHandler);
-                return null;
-              }
-            });
-            onDone.run();
-          }
-          catch (ServerRuntimeException e) {
-            getCloudNotifier().showMessage(e.getMessage(), MessageType.ERROR);
-          }
+                  @Override
+                  public void println(String message) {
+                    LOG.info(message);
+                  }
+                };
+            this.run(loggingHandler);
+            return null;
+          });
+          onDone.run();
+        }
+        catch (ServerRuntimeException e) {
+          getCloudNotifier().showMessage(e.getMessage(), MessageType.ERROR);
         }
       });
     }

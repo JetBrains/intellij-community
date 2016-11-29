@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -26,7 +25,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -116,7 +114,7 @@ public class KeyStrokeAdapter implements KeyListener {
           if (Registry.is("actionSystem.extendedKeyCode.disabled")) {
             return null;
           }
-          code = getExtendedKeyCode(event);
+          code = event.getExtendedKeyCode();
           if (code == event.getKeyCode()) {
             return null;
           }
@@ -144,23 +142,6 @@ public class KeyStrokeAdapter implements KeyListener {
    */
   private static KeyStroke getKeyStroke(int code, int modifiers, boolean released) {
     return KeyEvent.VK_UNDEFINED == code ? null : KeyStroke.getKeyStroke(code, modifiers, released);
-  }
-
-  // TODO: HACK because of Java7 required:
-  // replace later with event.getExtendedKeyCode()
-  private static int getExtendedKeyCode(KeyEvent event) {
-    //noinspection ConstantConditions
-    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
-    try {
-      Method method = KeyEvent.class.getMethod("getExtendedKeyCode");
-      if (!method.isAccessible()) {
-        method.setAccessible(true);
-      }
-      return (Integer)method.invoke(event);
-    }
-    catch (Exception exception) {
-      return event.getKeyCode();
-    }
   }
 
   /**
@@ -316,7 +297,7 @@ public class KeyStrokeAdapter implements KeyListener {
   }
 
   private static final class LazyModifiers {
-    private static final Map<String, Integer> mapNameToMask = new HashMap<String, Integer>();
+    private static final Map<String, Integer> mapNameToMask = new HashMap<>();
 
     static {
       mapNameToMask.put("shift", InputEvent.SHIFT_DOWN_MASK | InputEvent.SHIFT_MASK);
@@ -333,8 +314,8 @@ public class KeyStrokeAdapter implements KeyListener {
   }
 
   private static final class LazyVirtualKeys {
-    private static final Map<String, Integer> myNameToCode = new HashMap<String, Integer>();
-    private static final Map<Integer, String> myCodeToName = new HashMap<Integer, String>();
+    private static final Map<String, Integer> myNameToCode = new HashMap<>();
+    private static final Map<Integer, String> myCodeToName = new HashMap<>();
 
     static {
       try {

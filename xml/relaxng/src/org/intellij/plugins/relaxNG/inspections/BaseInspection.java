@@ -112,51 +112,41 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   }
 
   private SuppressQuickFix[] getXmlOnlySuppressions(PsiElement element) {
-    return ContainerUtil.map(super.getBatchSuppressActions(element), new Function<SuppressQuickFix, SuppressQuickFix>() {
+    return ContainerUtil.map(super.getBatchSuppressActions(element), action -> new SuppressQuickFix() {
+      @NotNull
       @Override
-      public SuppressQuickFix fun(final SuppressQuickFix action) {
-        return new SuppressQuickFix() {
-          @NotNull
-          @Override
-          public String getName() {
-            return action.getName();
-          }
+      public String getName() {
+        return action.getName();
+      }
 
-          @Override
-          public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
-            return context.isValid();
-          }
+      @Override
+      public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
+        return context.isValid();
+      }
 
-          @Override
-          public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-            PsiElement element = descriptor.getPsiElement();
-            PsiFile file = element == null ? null : element.getContainingFile();
-            if (file == null || file.getFileType() != StdFileTypes.XML) return;
-            action.applyFix(project, descriptor);
-          }
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        PsiElement element1 = descriptor.getPsiElement();
+        PsiFile file = element1 == null ? null : element1.getContainingFile();
+        if (file == null || file.getFileType() != StdFileTypes.XML) return;
+        action.applyFix(project, descriptor);
+      }
 
-          @Override
-          @NotNull
-          public String getFamilyName() {
-            return action.getFamilyName();
-          }
+      @Override
+      @NotNull
+      public String getFamilyName() {
+        return action.getFamilyName();
+      }
 
-          @Override
-          public boolean isSuppressAll() {
-            return action.isSuppressAll();
-          }
-        };
+      @Override
+      public boolean isSuppressAll() {
+        return action.isSuppressAll();
       }
     }, SuppressQuickFix.EMPTY_ARRAY);
   }
 
   private void suppress(PsiFile file, @NotNull PsiElement location) {
-    suppress(file, location, "#suppress " + getID(), new Function<String, String>() {
-      @Override
-      public String fun(final String text) {
-        return text + ", " + getID();
-      }
-    });
+    suppress(file, location, "#suppress " + getID(), text -> text + ", " + getID());
   }
 
   @SuppressWarnings({ "SSBasedInspection" })

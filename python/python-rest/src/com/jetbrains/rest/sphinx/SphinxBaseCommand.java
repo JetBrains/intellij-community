@@ -46,9 +46,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
-import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
+import static com.jetbrains.python.sdk.PythonEnvUtil.*;
 
 /**
  * User : catherine
@@ -108,12 +108,7 @@ public class SphinxBaseCommand {
       new RunContentExecutor(project, process)
         .withFilter(new PythonTracebackFilter(project))
         .withTitle("reStructuredText")
-        .withRerun(new Runnable() {
-          @Override
-          public void run() {
-            execute(module);
-          }
-        })
+        .withRerun(() -> execute(module))
         .withAfterCompletion(getAfterTask(module))
         .run();
     }
@@ -124,11 +119,9 @@ public class SphinxBaseCommand {
 
   @Nullable
   protected Runnable getAfterTask(final Module module) {
-    return new Runnable() {
-      public void run() {
-        final ReSTService service = ReSTService.getInstance(module);
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(service.getWorkdir());
-      }
+    return () -> {
+      final ReSTService service = ReSTService.getInstance(module);
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(service.getWorkdir());
     };
   }
 
@@ -172,10 +165,14 @@ public class SphinxBaseCommand {
       }
     }
 
-    setPythonIOEncoding(cmd.getEnvironment(), "utf-8");
-    setPythonUnbuffered(cmd.getEnvironment());
-    cmd.getEnvironment().put("PYCHARM_EP_DIST", "Sphinx");
-    cmd.getEnvironment().put("PYCHARM_EP_NAME", "sphinx-quickstart");
+    final Map<String, String> env = cmd.getEnvironment();
+    setPythonIOEncoding(env, "utf-8");
+    setPythonUnbuffered(env);
+    if (sdkHomePath != null) {
+      resetHomePathChanges(sdkHomePath, env);
+    }
+    env.put("PYCHARM_EP_DIST", "Sphinx");
+    env.put("PYCHARM_EP_NAME", "sphinx-quickstart");
 
     List<String> pathList = Lists.newArrayList(PythonCommandLineState.getAddedPaths(sdk));
     pathList.addAll(PythonCommandLineState.collectPythonPath(module));

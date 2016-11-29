@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -49,8 +48,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase extend
     return new BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor();
   }
 
-  private static class BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor
-    extends BaseInspectionVisitor {
+  private static class BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -72,16 +70,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase extend
           !returnType.equals(PsiType.VOID) ||
           !method.hasModifierProperty(PsiModifier.PUBLIC) ||
           !method.hasModifierProperty(PsiModifier.STATIC)) {
-        registerMethodError(method, "Change signature of \'" +
-                                    PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                               PsiFormatUtil.SHOW_NAME |
-                                                               PsiFormatUtil.SHOW_MODIFIERS |
-                                                               PsiFormatUtil.SHOW_PARAMETERS |
-                                                               PsiFormatUtil.SHOW_TYPE,
-                                                               PsiFormatUtil.SHOW_TYPE) +
-                                    "\' to \'public static void " +
-                                    method.getName() +
-                                    "()\'");
+        registerMethodError(method, method);
       }
     }
   }

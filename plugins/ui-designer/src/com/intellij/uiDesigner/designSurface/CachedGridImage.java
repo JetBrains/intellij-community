@@ -197,7 +197,7 @@ public class CachedGridImage {
     else {
       gridImage = new CachedGridImage(container);
       container.getDelegee().putClientProperty(CACHED_GRID_IMAGE_KEY,
-                                               new SoftReference<CachedGridImage>(gridImage));
+                                               new SoftReference<>(gridImage));
     }
     return gridImage.getImage();
   }

@@ -19,6 +19,7 @@ directives = {
       # language-dependent: fixed
       u'uwaga': 'attention',
       u'ostro\u017cnie': 'caution',
+      u'code (translation required)': 'code',
       u'niebezpiecze\u0144stwo': 'danger',
       u'b\u0142\u0105d': 'error',
       u'wskaz\u00f3wka': 'hint',
@@ -44,6 +45,7 @@ directives = {
       #'qa': 'questions',
       #'faq': 'questions',
       u'meta': 'meta',
+      'math (translation required)': 'math',
       #'imagemap': 'imagemap',
       u'obraz': 'image',
       u'rycina': 'figure',
@@ -72,6 +74,7 @@ roles = {
     # language-dependent: fixed
     u'skr\u00f3t': 'abbreviation',
     u'akronim': 'acronym',
+    u'code (translation required)': 'code',
     u'indeks': 'index',
     u'indeks-dolny': 'subscript',
     u'indeks-g\u00f3rny': 'superscript',
@@ -81,6 +84,7 @@ roles = {
     u'podkre\u015blenie': 'emphasis',
     u'wyt\u0142uszczenie': 'strong',
     u'dos\u0142ownie': 'literal',
+    'math (translation required)': 'math',
     u'referencja-nazwana': 'named-reference',
     u'referencja-anonimowa': 'anonymous-reference',
     u'referencja-przypis': 'footnote-reference',
@@ -95,4 +99,4 @@ roles = {
 """
     
 
- 	  	 
+                 

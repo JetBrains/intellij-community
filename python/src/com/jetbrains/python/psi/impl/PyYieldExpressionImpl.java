@@ -17,13 +17,16 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyYieldExpression;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -51,6 +54,21 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression e = getExpression();
-    return e != null ? context.getType(e) : null;
+    PyType type = e != null ? context.getType(e) : null;
+    if (isDelegating()) {
+      String name = type != null ? type.getName() : null;
+      if (PyNames.FAKE_GENERATOR.equals(name)) {
+        if (type instanceof PyCollectionType) {
+          List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(context);
+          if (elementTypes.size() == 3) {
+            return elementTypes.get(2);
+          }
+        }
+      }
+      else {
+        return PyNoneType.INSTANCE;
+      }
+    }
+    return type;
   }
 }

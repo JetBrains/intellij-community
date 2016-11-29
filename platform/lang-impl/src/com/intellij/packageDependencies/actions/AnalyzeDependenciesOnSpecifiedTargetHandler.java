@@ -26,6 +26,7 @@ import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -41,7 +42,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
   private final GlobalSearchScope myTargetScope;
 
   public AnalyzeDependenciesOnSpecifiedTargetHandler(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull GlobalSearchScope targetScope) {
-    super(project, Collections.singletonList(scope), Collections.<PsiFile>emptySet());
+    super(project, Collections.singletonList(scope), new HashSet<>());
     myTargetScope = targetScope;
   }
 

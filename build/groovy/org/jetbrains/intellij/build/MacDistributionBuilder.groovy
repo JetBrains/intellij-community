@@ -21,6 +21,9 @@ import org.apache.tools.ant.util.SplitClassLoader
 import org.codehaus.gant.GantBuilder
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 
+/**
+ * @deprecated use {@link BuildTasks} instead.
+ */
 class MacDistributionBuilder {
   GantBuilder ant
   JpsGantProjectBuilder projectBuilder
@@ -73,7 +76,7 @@ class MacDistributionBuilder {
     ant.delete(file: dmgImageCopy)
 
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "$communityHome/build/mac") {
+      ant.fileset(dir: "$communityHome/platform/build-scripts/tools/mac/scripts") {
         include(name: "makedmg.sh")
         include(name: "makedmg.pl")
       }
@@ -120,12 +123,13 @@ class MacDistributionBuilder {
     }
     ant.delete(file: sitFilePath)
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "$communityHome/build/mac") {
+      ant.fileset(dir: "$communityHome/platform/build-scripts/tools/mac/scripts") {
         include(name: "signapp.sh")
       }
     }
 
-    sshExec("$remoteDir/signapp.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" \"${PathUtilRt.getFileName(customJDKTarPath)}\"")
+    sshExec(
+      "$remoteDir/signapp.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" \"${PathUtilRt.getFileName(customJDKTarPath)}\"")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${sitFileName}.sit")
@@ -137,6 +141,7 @@ class MacDistributionBuilder {
   }
 
   static boolean tasksDefined
+
   private def defineTasks() {
     if (tasksDefined) return
     tasksDefined = true
@@ -156,7 +161,7 @@ class MacDistributionBuilder {
 
     def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER";
     Path pathSsh = new Path(ant.project)
-    pathSsh.createPathElement().setLocation(new File("$communityHome/lib/jsch-0.1.52.jar"))
+    pathSsh.createPathElement().setLocation(new File("$communityHome/lib/jsch-0.1.54.jar"))
     pathSsh.createPathElement().setLocation(new File("$communityHome/lib/ant/lib/ant-jsch.jar"))
     ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
                                                                     ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
@@ -173,7 +178,13 @@ class MacDistributionBuilder {
     )
   }
 
-  def ftpAction(String action, boolean binary = true, String chmod = null, int retriesAllowed = 0, String overrideRemoteDir = null, Closure filesets) {
+  def ftpAction(
+    String action,
+    boolean binary = true,
+    String chmod = null,
+    int retriesAllowed = 0,
+    String overrideRemoteDir = null,
+    Closure filesets) {
     Map<String, String> args = [
       server        : macHostProperties.host,
       userid        : macHostProperties.userName,

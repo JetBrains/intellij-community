@@ -1,0 +1,13 @@
+Backward Hierarchy:
+java.lang.Object -> TypeParam
+
+Backward References:
+TypeParam in TypeParam
+TypeParam.<init>(0) in TypeParam
+TypeParam.method(1) in TypeParam
+java.lang.Object.<init>(0) in TypeParam
+java.lang.String in TypeParam
+java.util.List in TypeParam
+
+Class Definitions:
+TypeParam in TypeParam

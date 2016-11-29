@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -43,7 +40,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
   @NonNls private static final String ATTRIBUTE_PROPORTIONS = "proportions";
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
-  private List<Float> proportions = new SmartList<Float>();
+  private List<Float> proportions = new SmartList<>();
 
   @Override
   public void saveSplitterProportions(Component root) {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,6 +35,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
@@ -46,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -90,7 +93,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     final long end = warmupEnd + 1000;
 
     ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
-      final Alarm alarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getTestRootDisposable());
+      final Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
       ProgressIndicatorEx indicator = (ProgressIndicatorEx)ProgressIndicatorProvider.getGlobalProgressIndicator();
       prevTime = System.currentTimeMillis();
       assert indicator != null;
@@ -135,9 +138,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     while (!insideReadAction.get()) {
 
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      assertTrue(indicator.isCanceled());
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> assertTrue(indicator.isCanceled()));
     assertTrue(indicator.isCanceled());
   }
 
@@ -270,8 +271,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
   private void ensureCheckCanceledCalled(@NotNull ProgressIndicator indicator) {
     myFlag = false;
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myTestRootDisposable);
-    alarm.addRequest(() -> myFlag = true, 100);
+    JobScheduler.getScheduler().schedule(() -> myFlag = true, 100, TimeUnit.MILLISECONDS);
     final long start = System.currentTimeMillis();
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
@@ -316,6 +316,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         @Override
         public void checkCanceled() throws ProcessCanceledException {
           checkCanceledCalled = true;
+          throw new RuntimeException("must not call checkCanceled()");
         }
       });
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
@@ -593,5 +594,76 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     public void checkCanceled() throws ProcessCanceledException {
        if (myCanceled) throw new ProcessCanceledException();
     }
+  }
+
+  public void testDefaultModalityWithNestedProgress() {
+    assertEquals(ModalityState.NON_MODAL, ModalityState.defaultModalityState());
+    ProgressManager.getInstance().run(new Task.Modal(getProject(), "", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          assertFalse(ModalityState.NON_MODAL.equals(ModalityState.defaultModalityState()));
+          assertEquals(ProgressManager.getInstance().getProgressIndicator().getModalityState(), ModalityState.defaultModalityState());
+          ProgressManager.getInstance().runProcess(() -> {
+            assertSame(indicator.getModalityState(), ModalityState.defaultModalityState());
+            assertInvokeAndWaitWorks();
+          }, new ProgressIndicatorBase());
+        }
+        catch (Throwable e) {
+          throw new RuntimeException(e); // ProgressManager doesn't handle errors
+        }
+      }
+    });
+  }
+
+  public void testProgressWrapperModality() {
+    ProgressManager.getInstance().run(new Task.Modal(getProject(), "", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(
+            () -> ProgressManager.getInstance().runProcess(
+              ProgressIndicatorTest::assertInvokeAndWaitWorks,
+              ProgressWrapper.wrap(indicator)));
+          future.get(2000, TimeUnit.MILLISECONDS);
+        }
+        catch (Throwable e) {
+          throw new RuntimeException(e); // ProgressManager doesn't handle errors
+        }
+      }
+    });
+  }
+
+  private static void assertInvokeAndWaitWorks() {
+    Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    ApplicationManager.getApplication().invokeLater(semaphore::up);
+    assertTrue("invokeAndWait would deadlock", semaphore.waitFor(1000));
+  }
+
+  public void testNonCancelableSectionDetectedCorrectly() {
+    ProgressManager progressManager = ProgressManager.getInstance();
+    assertFalse(progressManager.isInNonCancelableSection());
+    progressManager.run(new Task.Modal(getProject(), "", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        assertFalse(indicator instanceof NonCancelableIndicator);
+        assertFalse(progressManager.isInNonCancelableSection());
+        progressManager.executeNonCancelableSection(() -> {
+          assertTrue(progressManager.getProgressIndicator() instanceof NonCancelableIndicator);
+          assertTrue(progressManager.isInNonCancelableSection());
+
+          progressManager.executeProcessUnderProgress(() -> {
+            assertFalse(progressManager.getProgressIndicator() instanceof NonCancelableIndicator);
+            assertTrue(progressManager.isInNonCancelableSection());
+          }, new DaemonProgressIndicator());
+
+          assertTrue(progressManager.isInNonCancelableSection());
+        });
+
+        assertFalse(progressManager.isInNonCancelableSection());
+      }
+    });
+    assertFalse(progressManager.isInNonCancelableSection());
   }
 }

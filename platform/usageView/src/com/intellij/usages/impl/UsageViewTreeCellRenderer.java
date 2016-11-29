@@ -49,7 +49,7 @@ public class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes ourNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
   private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
   private static final Insets STANDARD_IPAD_NOWIFI = new Insets(1, 2, 1, 2);
-  private boolean myRowBoundsCalled = false;
+  private boolean myRowBoundsCalled;
 
   private final UsageViewPresentation myPresentation;
   private final UsageView myView;
@@ -109,7 +109,9 @@ public class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       if (userObject instanceof UsageTarget) {
         UsageTarget usageTarget = (UsageTarget)userObject;
         if (!usageTarget.isValid()) {
-          append(UsageViewBundle.message("node.invalid"), ourInvalidAttributes);
+          if (!getCharSequence(false).toString().contains(UsageViewBundle.message("node.invalid"))) {
+            append(UsageViewBundle.message("node.invalid"), ourInvalidAttributes);
+          }
           return;
         }
 

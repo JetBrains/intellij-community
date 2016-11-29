@@ -57,12 +57,7 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
     disableToolbar(false);
     myWrapper = new JPanel(new BorderLayout());
     add(myWrapper, BorderLayout.CENTER);
-    myDefaultHeight = new Getter<Integer>() {
-      @Override
-      public Integer get() {
-        return 400;
-      }
-    };
+    myDefaultHeight = () -> 400;
     myPreferredHeightGetter = myDefaultHeight;
     myPrefferedWidth = 600;
   }
@@ -226,11 +221,7 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
 
     public void deferScroll(final DiffPanelOuterComponent outer) {
       if (!outer.isDisplayable()) return;
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          outer.performScroll();
-        }
-      });
+      SwingUtilities.invokeLater(() -> outer.performScroll());
     }
   };
 

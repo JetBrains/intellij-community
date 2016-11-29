@@ -5,7 +5,7 @@
     <hectorComponentProvider implementation="org.intellij.plugins.relaxNG.config.NoNamespaceConfigImpl$HectorProvider" />
 
     <fileTypeFactory implementation="org.intellij.plugins.relaxNG.compact.RncFileType$Factory" />
-    <completionData fileType="RNG Compact" className="org.intellij.plugins.relaxNG.compact.RncCompletionData" />
+    <completion.contributor language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RncCompletionContributor" />
     <standardResourceProvider implementation="org.intellij.plugins.relaxNG.ApplicationLoader$ResourceProvider" />
 
     <annotator language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.ReferenceAnnotator" />

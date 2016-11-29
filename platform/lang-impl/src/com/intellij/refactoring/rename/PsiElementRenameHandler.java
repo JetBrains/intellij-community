@@ -142,7 +142,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (!PsiManager.getInstance(project).isInProject(element)) {
       if (element.isPhysical()) {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-        if (!(virtualFile != null && NonProjectFileWritingAccessProvider.isWriteAccessAllowedExplicitly(virtualFile, project))) {
+        if (!(virtualFile != null && NonProjectFileWritingAccessProvider.isWriteAccessAllowed(virtualFile, project))) {
           String message = RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element));
           return RefactoringBundle.getCannotRefactorMessage(message);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+
+import static java.awt.GridBagConstraints.*;
 
 /**
  * @author Eugene Belyaev
@@ -146,21 +148,21 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
       }
     });
 
-    panel.add(myCbAutoscroll, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+    panel.add(myCbAutoscroll, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
 
 
     final JPanel showPanel = new JPanel(new GridBagLayout());
     showPanel.setBorder(IdeBorderFactory.createTitledBorder("Show", true));
 
-    showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    showPanel.add(myCbShowObjectId, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
-    showPanel.add(myCbShowSyntheticFields, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
-    showPanel.add(myCbShowStatic, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
-    showPanel.add(myCbShowValFieldsAsLocalVariables, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
-    showPanel.add(myCbShowStaticFinalFields, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
-    showPanel.add(myCbShowFQNames, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
+    showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    showPanel.add(myCbShowObjectId, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
+    showPanel.add(myCbShowSyntheticFields, new GridBagConstraints(1, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsLeft(10), 0, 0));
+    showPanel.add(myCbShowStatic, new GridBagConstraints(1, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 10, 0, 0), 0, 0));
+    showPanel.add(myCbShowValFieldsAsLocalVariables, new GridBagConstraints(2, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 10, 0, 0), 0, 0));
+    showPanel.add(myCbShowStaticFinalFields, new GridBagConstraints(2, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 10, 0, 0), 0, 0));
+    showPanel.add(myCbShowFQNames, new GridBagConstraints(3, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsLeft(10), 0, 0));
 
-    panel.add(showPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
+    panel.add(showPanel, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
     //final JPanel arraysPanel = new JPanel(new BorderLayout(0, UIUtil.DEFAULT_VGAP));
     //final JComponent arraysComponent = myArrayRendererConfigurable.createComponent();
@@ -169,17 +171,17 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     //arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
     //arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", true));
     //panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myCbShowStringsType, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myCbHexValue, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
-    panel.add(myCbHideNullArrayElements, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
+    panel.add(myCbShowStringsType, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCbHexValue, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
+    panel.add(myCbHideNullArrayElements, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
-    panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 10), 0, 0));
+    panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 0, 0, 10), 0, 0));
     // starting 4-th row
-    panel.add(myCbEnableToString, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
-    panel.add(myRbAllThatOverride, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 12, 0, 0), 0, 0));
-    panel.add(myRbFromList, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 12, 0, 0), 0, 0));
+    panel.add(myCbEnableToString, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
+    panel.add(myRbAllThatOverride, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsLeft(12), 0, 0));
+    panel.add(myRbFromList, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsLeft(12), 0, 0));
     myToStringFilterEditor.setMinimumSize(JBUI.size(50, 100));
-    panel.add(myToStringFilterEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 12, 0, 0), 0, 0));
+    panel.add(myToStringFilterEditor, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 1.0, CENTER, BOTH, JBUI.insetsLeft(12), 0, 0));
 
     return panel;
   }
@@ -320,10 +322,5 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

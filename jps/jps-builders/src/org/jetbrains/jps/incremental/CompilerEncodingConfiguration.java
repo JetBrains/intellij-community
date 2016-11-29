@@ -29,6 +29,7 @@ import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -39,12 +40,14 @@ import java.util.*;
  * @author nik
  */
 public class CompilerEncodingConfiguration {
+  private final JpsModel myJpsModel;
   private final Map<String, String> myUrlToCharset;
   private final String myProjectCharset;
   private final BuildRootIndex myRootsIndex;
   private Map<JpsModule, Set<String>> myModuleCharsetMap;
 
   public CompilerEncodingConfiguration(JpsModel jpsModel, BuildRootIndex index) {
+    myJpsModel = jpsModel;
     JpsEncodingProjectConfiguration configuration = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(jpsModel.getProject());
     myUrlToCharset = configuration != null ? configuration.getUrlToEncoding() : Collections.<String, String>emptyMap();
     myProjectCharset = JpsEncodingConfigurationService.getInstance().getProjectEncoding(jpsModel);
@@ -65,22 +68,26 @@ public class CompilerEncodingConfiguration {
       final String fileUrl = entry.getKey();
       final String charset = entry.getValue();
       File file = JpsPathUtil.urlToFile(fileUrl);
-      if (charset == null || (!file.isDirectory() && !shouldHonorEncodingForCompilation(builderExtensions, file))) continue;
-
+      if (charset == null || (!file.isDirectory() && !shouldHonorEncodingForCompilation(builderExtensions, file))) {
+        continue;
+      }
       final JavaSourceRootDescriptor rootDescriptor = myRootsIndex.findJavaRootDescriptor(null, file);
-      if (rootDescriptor == null) continue;
-
+      if (rootDescriptor == null) {
+        continue;
+      }
       final JpsModule module = rootDescriptor.target.getModule();
       Set<String> set = map.get(module);
       if (set == null) {
         set = new LinkedHashSet<String>();
         map.put(module, set);
-
+        // need to search parents only once because
+        // file parent's charset, if explicitly defined, has higher priority than the charset assigned to individual files
+        // we deliberately check parents until the source roots
         final File sourceRoot = rootDescriptor.root;
         File current = FileUtilRt.getParentFile(file);
         String parentCharset = null;
         while (current != null) {
-          final String currentCharset = myUrlToCharset.get(FileUtil.toSystemIndependentName(current.getAbsolutePath()));
+          final String currentCharset = lookupCharsetMap(current);
           if (currentCharset != null) {
             parentCharset = currentCharset;
           }
@@ -96,7 +103,41 @@ public class CompilerEncodingConfiguration {
       set.add(charset);
     }
 
+    // now check source root charsets and up and augment the map so that every module has its preferred charset assigned
+    // here apply usual rules from encoding configuration: sub-paths inherit charset assigned to parents unless explicitly overridden.
+
+    for (JpsModule module : myJpsModel.getProject().getModules()) {
+      for (JpsModuleSourceRoot srcRoot : module.getSourceRoots()) {
+        final String encoding = getEncoding(srcRoot.getFile());
+        if (encoding != null) {
+          Set<String> charsets = map.get(module);
+          if (charsets == null) {
+            charsets = new LinkedHashSet<String>();
+            map.put(module, charsets);
+          }
+          charsets.add(encoding);
+        }
+      }
+    }
+
     return map;
+  }
+
+  @Nullable
+  public String getEncoding(@Nullable File file) {
+    while (file != null) {
+      final String charset = lookupCharsetMap(file);
+      if (charset != null) {
+        return charset;
+      }
+      file = FileUtilRt.getParentFile(file);
+    }
+    return myProjectCharset;
+  }
+
+  @Nullable
+  private String lookupCharsetMap(File file) {
+    return myUrlToCharset.get(JpsPathUtil.pathToUrl(FileUtilRt.toSystemIndependentName(file.getAbsolutePath())));
   }
 
   private static boolean shouldHonorEncodingForCompilation(Iterable<JavaBuilderExtension> builders, File file) {

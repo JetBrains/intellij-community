@@ -137,11 +137,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       final StringBuilder sb = new StringBuilder();
       textEscaper.decode(textRange, sb);
       final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(StringPattern.newBombedCharSequence(sb)), sb.length());
-      return !ranges.isEmpty() ? ContainerUtil.map(ranges, new Function<TextRange, TextRange>() {
-        public TextRange fun(TextRange s) {
-          return new TextRange(textEscaper.getOffsetInHost(s.getStartOffset(), textRange), textEscaper.getOffsetInHost(s.getEndOffset(), textRange));
-        }
-      }) : Collections.<TextRange>emptyList();
+      return !ranges.isEmpty() ? ContainerUtil.map(ranges, s -> new TextRange(textEscaper.getOffsetInHost(s.getStartOffset(), textRange), textEscaper.getOffsetInHost(s.getEndOffset(), textRange))) : Collections.<TextRange>emptyList();
     }
   }
 
@@ -278,11 +274,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     if (mySingleFile) {
       e.addContent(new Element("single-file"));
     }
-    Arrays.sort(myPlaces, new Comparator<InjectionPlace>() {
-      public int compare(final InjectionPlace o1, final InjectionPlace o2) {
-        return Comparing.compare(o1.getText(), o2.getText());
-      }
-    });
+    Arrays.sort(myPlaces, (o1, o2) -> Comparing.compare(o1.getText(), o2.getText()));
     for (InjectionPlace place : myPlaces) {
       final Element child = new Element("place").setContent(new CDATA(place.getText()));
       if (!place.isEnabled()) child.setAttribute("disabled", "true");
@@ -338,7 +330,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
 
   private static List<TextRange> getMatchingRanges(Matcher matcher, final int length) {
-    final List<TextRange> list = new SmartList<TextRange>();
+    final List<TextRange> list = new SmartList<>();
     int start = 0;
     while (start < length && matcher.find(start)) {
       final int groupCount = matcher.groupCount();

@@ -32,7 +32,7 @@ public class FileGroupInfo implements FileIterationListener, IgnoreInfoGetter {
   public FileGroupInfo() {
     fileCount = 0;
     sameExtensionCase = true;
-    folders = new HashMap<VirtualFile, Set<String>>();
+    folders = new HashMap<>();
   }
 
   public void onFileEnabled(final VirtualFile file) {
@@ -54,7 +54,7 @@ public class FileGroupInfo implements FileIterationListener, IgnoreInfoGetter {
     if (parentVirtualFile != null) {
       Set<String> namesList = folders.get(parentVirtualFile);
       if (namesList == null) {
-        namesList = new HashSet<String>();
+        namesList = new HashSet<>();
         folders.put(parentVirtualFile, namesList);
       }
       namesList.add(file.getName());
@@ -77,9 +77,9 @@ public class FileGroupInfo implements FileIterationListener, IgnoreInfoGetter {
     if (! useCommonExtension) {
       return folders;
     }
-    final Map<VirtualFile, Set<String>> result = new HashMap<VirtualFile, Set<String>>(folders.size(), 1);
+    final Map<VirtualFile, Set<String>> result = new HashMap<>(folders.size(), 1);
     for (final Map.Entry<VirtualFile, Set<String>> entry : folders.entrySet()) {
-      final Set<String> set = new HashSet<String>();
+      final Set<String> set = new HashSet<>();
       set.add(getExtensionMask());
       result.put(entry.getKey(), set);
     }

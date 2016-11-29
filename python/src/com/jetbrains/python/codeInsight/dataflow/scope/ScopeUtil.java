@@ -98,13 +98,8 @@ public class ScopeUtil {
         return null;
       }
     }
-    return CachedValuesManager.getCachedValue(element, new CachedValueProvider<ScopeOwner>() {
-      @Nullable
-      @Override
-      public Result<ScopeOwner> compute() {
-        return Result.create(calculateScopeOwnerByAST(element), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result
+      .create(calculateScopeOwnerByAST(element), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Nullable
@@ -167,7 +162,7 @@ public class ScopeUtil {
   public static Collection<PsiElement> getReadWriteElements(@NotNull String name, @NotNull ScopeOwner scopeOwner, boolean isReadAccess,
                                                             boolean isWriteAccess) {
     ControlFlow flow = ControlFlowCache.getControlFlow(scopeOwner);
-    Collection<PsiElement> result = new ArrayList<PsiElement>();
+    Collection<PsiElement> result = new ArrayList<>();
     for (Instruction instr : flow.getInstructions()) {
       if (instr instanceof ReadWriteInstruction) {
         ReadWriteInstruction rw = (ReadWriteInstruction)instr;

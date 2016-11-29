@@ -32,7 +32,7 @@ class MergeAutoTest : MergeTestBase() {
   private fun doUndoTest(seed: Long, runs: Int, maxLength: Int) {
     doTest(seed, runs, maxLength) { text1, text2, text3, debugData ->
       testN(text1, text2, text3) {
-        if (changes.size == 0) {
+        if (changes.isEmpty()) {
           assertEquals(text1, text2)
           assertEquals(text1, text3)
           assertEquals(text2, text3)
@@ -80,8 +80,8 @@ class MergeAutoTest : MergeTestBase() {
   private fun TestBuilder.doReplace(): Unit {
     val length = document.textLength
 
-    var index1: Int = 0;
-    var index2: Int = 0;
+    var index1: Int = 0
+    var index2: Int = 0
     if (length != 0) {
       index1 = RNG.nextInt(length)
       index2 = index1 + RNG.nextInt(length - index1)

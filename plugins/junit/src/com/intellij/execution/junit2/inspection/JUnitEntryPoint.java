@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@
  */
 package com.intellij.execution.junit2.inspection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -51,33 +49,35 @@ public class JUnitEntryPoint extends EntryPoint {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (ADD_JUNIT_TO_ENTRIES) {
-      if (psiElement instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)psiElement;
-        if (JUnitUtil.isTestClass(aClass, false, true)) {
-          if (!PsiClassUtil.isRunnableClass(aClass, true, true)) {
-            final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class);
-            if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, true, true)) {
-              return true;
-            }
-            final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
-              @Override
-              protected boolean accept(PsiClass psiClass) {
-                return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
-              }
-            };
-            return !ClassInheritorsSearch.search(aClass).forEach(findProcessor) && findProcessor.isFound();
+    if (psiElement instanceof PsiClass) {
+      final PsiClass aClass = (PsiClass)psiElement;
+      if (JUnitUtil.isTestClass(aClass, false, true)) {
+        final boolean isJUnit5 = JUnitUtil.isJUnit5(aClass);
+        if (!PsiClassUtil.isRunnableClass(aClass, !isJUnit5, true)) {
+          final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class);
+          if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, !isJUnit5, true)) {
+            return true;
           }
-          return true;
+          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
+            @Override
+            protected boolean accept(PsiClass psiClass) {
+              return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
+            }
+          };
+          return !ClassInheritorsSearch.search(aClass).forEach(findProcessor) && findProcessor.isFound();
         }
+        return true;
       }
-      else if (psiElement instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)psiElement;
-        if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
-          return JUnitUtil.isTestClass(method.getContainingClass());
-        }
-        if (JUnitUtil.isTestMethodOrConfig(method)) return true;
+    }
+    else if (psiElement instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)psiElement;
+      if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
+        return JUnitUtil.isTestClass(method.getContainingClass());
       }
+      if (JUnitUtil.isTestMethodOrConfig(method)) return true;
+    }
+    else if (psiElement instanceof PsiField) {
+      return AnnotationUtil.isAnnotated((PsiField)psiElement, JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, false);
     }
     return false;
   }
@@ -103,11 +103,8 @@ public class JUnitEntryPoint extends EntryPoint {
   @Override
   public String[] getIgnoreAnnotations() {
     return new String[]{"org.junit.Rule",
-                        "org.mockito.Mock",
-                        "org.mockito.Spy",
-                        "org.mockito.Captor",
-                        "org.mockito.InjectMocks",
                         "org.junit.ClassRule",
-                        "org.junit.experimental.theories.DataPoint"};
+                        "org.junit.experimental.theories.DataPoint",
+                        "org.junit.experimental.theories.DataPoints"};
   }
 }

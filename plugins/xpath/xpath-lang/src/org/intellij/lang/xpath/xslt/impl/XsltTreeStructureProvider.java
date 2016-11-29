@@ -56,7 +56,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
         if (element instanceof PsiFile) {
           if (XsltSupport.isXsltFile((PsiFile)element)) {
             if (l == children && l.getClass() != ArrayList.class) {
-              l = new ArrayList<AbstractTreeNode>(children);
+              l = new ArrayList<>(children);
             }
             final XsltFileNode fileNode = new XsltFileNode(myProject, (PsiFile)element, settings);
             ((List<AbstractTreeNode>)l).set(i, fileNode);

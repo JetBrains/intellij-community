@@ -41,6 +41,22 @@ public class ThreadDumper {
     dumpThreadsToFile(ManagementFactory.getThreadMXBean(), writer);
     return writer.toString();
   }
+  
+  @NotNull
+  public static String dumpEdtStackTrace(ThreadInfo[] threadInfos) {
+    StringWriter writer = new StringWriter();
+    if (threadInfos.length > 0) {
+      StackTraceElement[] trace = threadInfos[0].getStackTrace();
+      printStackTrace(writer, trace);
+    }
+    return writer.toString();
+  }
+
+  @NotNull
+  public static ThreadInfo[] getThreadInfos() {
+    ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+    return sort(threadMXBean.dumpAllThreads(false, false));
+  }
 
   @NotNull
   public static ThreadDump getThreadDumpInfo(@NotNull final ThreadMXBean threadMXBean) {
@@ -128,10 +144,19 @@ public class ThreadDumper {
       }
 
       f.write(sb + "\n");
+      printStackTrace(f, stackTraceElements);
+      f.write("\n");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void printStackTrace(@NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
+    try {
       for (StackTraceElement element : stackTraceElements) {
         f.write("\tat " + element.toString() + "\n");
       }
-      f.write("\n");
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,13 +106,10 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     if (!showDialog) {
       return CommandCvsHandler.createAddFilesHandler(project, roots);
     }
-    final Ref<CvsHandler> handler = new Ref<CvsHandler>();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
-        handler.set(!dialog.showAndGet() ? CvsHandler.NULL : CommandCvsHandler.createAddFilesHandler(project, roots));
-      }
+    final Ref<CvsHandler> handler = new Ref<>();
+    final Runnable runnable = () -> {
+      final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
+      handler.set(!dialog.showAndGet() ? CvsHandler.NULL : CommandCvsHandler.createAddFilesHandler(project, roots));
     };
     ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.any());
 
@@ -136,9 +133,9 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
   }
 
   private static ArrayList<VirtualFile> collectFilesToAdd(final VirtualFile[] files) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> result = new ArrayList<>();
     for (VirtualFile file : files) {
-      final List<VirtualFile> parentsToAdd = new ArrayList<VirtualFile>();
+      final List<VirtualFile> parentsToAdd = new ArrayList<>();
       VirtualFile parent = file.getParent();
       do {
         if (parent == null || CvsUtil.fileExistsInCvs(parent) || result.contains(parent)) break;
@@ -152,11 +149,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
       }
       addFilesToCollection(result, file);
     }
-    Collections.sort(result, new Comparator<VirtualFile>() {
-      public int compare(final VirtualFile o1, final VirtualFile o2) {
-        return o1.getPath().compareTo(o2.getPath());
-      }
-    });
+    Collections.sort(result, Comparator.comparing(VirtualFile::getPath));
     return result;
   }
 
@@ -172,7 +165,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
 
   static class CreateTreeOnFileList {
     private final Collection<VirtualFile> myFiles;
-    private final Map<VirtualFile, AddedFileInfo> myResult = new HashMap<VirtualFile, AddedFileInfo>();
+    private final Map<VirtualFile, AddedFileInfo> myResult = new HashMap<>();
     private final Project myProject;
 
     public CreateTreeOnFileList(Collection<VirtualFile> files, Project project) {

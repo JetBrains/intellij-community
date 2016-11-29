@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Queue;
@@ -63,17 +62,17 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   protected final boolean myReplaceInstanceOf;
   protected PsiManager myManager;
   protected PsiSearchHelper mySearchHelper;
-  protected HashSet<PsiElement> myMarkedNodes = new HashSet<PsiElement>();
+  protected HashSet<PsiElement> myMarkedNodes = new HashSet<>();
   private Queue<PsiExpression> myExpressionsQueue;
-  protected HashMap<PsiElement, Node> myElementToNode = new HashMap<PsiElement, Node>();
-  protected Map<SmartPsiElementPointer, String> myVariablesRenames = new HashMap<SmartPsiElementPointer, String>();
+  protected HashMap<PsiElement, Node> myElementToNode = new HashMap<>();
+  protected Map<SmartPsiElementPointer, String> myVariablesRenames = new HashMap<>();
   private final String mySuperClassName;
-  private final List<UsageInfo> myVariablesUsages = new ArrayList<UsageInfo>();
+  private final List<UsageInfo> myVariablesUsages = new ArrayList<>();
 
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
-    List<UsageInfo> filtered = new ArrayList<UsageInfo>();
+    List<UsageInfo> filtered = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof TurnToSuperReferenceUsageInfo) {
         filtered.add(usage);
@@ -96,17 +95,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
           myVariablesRenames.put(pointer, variableRenamer.getNewName(variable));
         }
   
-        Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                variableRenamer.findUsages(myVariablesUsages, false, false);
-              }
-            });
-          }
-        };
+        Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> variableRenamer.findUsages(myVariablesUsages, false, false));
   
         if (!ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
@@ -122,7 +111,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   protected void performVariablesRenaming() {
     try {
       //forget about smart pointers
-      Map<PsiElement, String> variableRenames = new HashMap<PsiElement, String>();
+      Map<PsiElement, String> variableRenames = new HashMap<>();
       for (Map.Entry<SmartPsiElementPointer, String> entry : myVariablesRenames.entrySet()) {
         variableRenames.put(entry.getKey().getElement(), entry.getValue());
       }
@@ -243,7 +232,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
   private void buildGraph(PsiReference[] refs) {
     myMarkedNodes.clear();
-    myExpressionsQueue = new Queue<PsiExpression>(refs.length);
+    myExpressionsQueue = new Queue<>(refs.length);
     myElementToNode.clear();
     for (PsiReference ref : refs) {
       processUsage(ref.getElement());
@@ -368,45 +357,39 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       final LocalSearchScope derivedScope = new LocalSearchScope(inheritingClass);
       final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(ownerClass, inheritingClass, PsiSubstitutor.EMPTY);
       if (substitutor == null) return;
-      final LocalSearchScope baseScope = new LocalSearchScope(ownerClass);
-      ReferencesSearch.search(typeParameter, baseScope).forEach(new Processor<PsiReference>() {
+      ownerClass.accept(new JavaRecursiveElementVisitor() {
         @Override
-        public boolean process(final PsiReference ref) {
-          final PsiElement element = ref.getElement();
-          final PsiElement parent = element.getParent();
-          if (parent instanceof PsiTypeElement) {
-            final PsiElement pparent = parent.getParent();
-            if (pparent instanceof PsiMethod && parent.equals(((PsiMethod)pparent).getReturnTypeElement())) {
-              final PsiMethod method = (PsiMethod)pparent;
+        public void visitTypeElement(PsiTypeElement parent) {
+          super.visitTypeElement(parent);
+          final PsiElement pparent = parent.getParent();
+          if (pparent instanceof PsiMethod && parent.equals(((PsiMethod)pparent).getReturnTypeElement())) {
+            final PsiMethod method = (PsiMethod)pparent;
+            final MethodSignature signature = method.getSignature(substitutor);
+            if (PsiUtil.isAccessible(method, inheritingClass, null)) {
+              final PsiMethod inInheritor = MethodSignatureUtil.findMethodBySignature(inheritingClass, signature, false);
+              if (inInheritor != null && inInheritor.getReturnTypeElement() != null) {
+                addLink(instantiation, method.getReturnTypeElement());
+                addLink(method.getReturnTypeElement(), instantiation);
+              }
+            }
+          } else if (pparent instanceof PsiParameter) {
+            final PsiParameter parameter = (PsiParameter)pparent;
+            if (parameter.getDeclarationScope() instanceof PsiMethod) {
+              PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+              final int index = ((PsiParameterList)parameter.getParent()).getParameterIndex(parameter);
               final MethodSignature signature = method.getSignature(substitutor);
               if (PsiUtil.isAccessible(method, inheritingClass, null)) {
                 final PsiMethod inInheritor = MethodSignatureUtil.findMethodBySignature(inheritingClass, signature, false);
-                if (inInheritor != null && inInheritor.getReturnTypeElement() != null) {
-                  addLink(instantiation, method.getReturnTypeElement());
-                  addLink(method.getReturnTypeElement(), instantiation);
-                }
-              }
-            } else if (pparent instanceof PsiParameter) {
-              final PsiParameter parameter = (PsiParameter)pparent;
-              if (parameter.getDeclarationScope() instanceof PsiMethod) {
-                PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
-                final int index = ((PsiParameterList)parameter.getParent()).getParameterIndex(parameter);
-                final MethodSignature signature = method.getSignature(substitutor);
-                if (PsiUtil.isAccessible(method, inheritingClass, null)) {
-                  final PsiMethod inInheritor = MethodSignatureUtil.findMethodBySignature(inheritingClass, signature, false);
-                  if (inInheritor != null) {
-                    final PsiParameter[] inheritorParams = inInheritor.getParameterList().getParameters();
-                    LOG.assertTrue(inheritorParams.length > index);
-                    final PsiTypeElement hisTypeElement = inheritorParams[index].getTypeElement();
-                    addLink(instantiation, hisTypeElement);
-                    addLink(hisTypeElement, instantiation);
-                  }
+                if (inInheritor != null) {
+                  final PsiParameter[] inheritorParams = inInheritor.getParameterList().getParameters();
+                  LOG.assertTrue(inheritorParams.length > index);
+                  final PsiTypeElement hisTypeElement = inheritorParams[index].getTypeElement();
+                  addLink(instantiation, hisTypeElement);
+                  addLink(hisTypeElement, instantiation);
                 }
               }
             }
           }
-
-          return true;
         }
       });
     }
@@ -524,7 +507,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         final PsiMethod[] superMethods = method.findSuperMethods();
         new Inner().linkInheritors(superMethods);
         PsiClass containingClass = method.getContainingClass();
-        List<PsiClass> subClasses = new ArrayList<PsiClass>(ClassInheritorsSearch.search(containingClass, false).findAll());
+        List<PsiClass> subClasses = new ArrayList<>(ClassInheritorsSearch.search(containingClass, false).findAll());
         // ??? In the theory this is non-efficient way: too many inheritors can be processed.
         // ??? But in real use it seems reasonably fast. If poor performance problems emerged,
         // ??? should be optimized
@@ -548,9 +531,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiReturnStatement) {
-      final PsiElement el = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
-      constrainingType = el instanceof PsiMethod ? ((PsiMethod)el).getReturnType() 
-                                                 : el instanceof PsiLambdaExpression ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)el) : null;
+      constrainingType = PsiTypesUtil.getMethodReturnType(parent);
     }
     else if (parent instanceof PsiAssignmentExpression) {
       constrainingType = ((PsiAssignmentExpression)parent).getLExpression().getType();
@@ -726,7 +707,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   }
 
   private void spreadMarks() {
-    final LinkedList<MarkedNode> markedNodes = new LinkedList<MarkedNode>();
+    final LinkedList<MarkedNode> markedNodes = new LinkedList<>();
 
     for (final PsiElement markedNode : myMarkedNodes) {
       final Node node = myElementToNode.get(markedNode);
@@ -800,7 +781,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   }
 
   private static class Node extends NodeImpl {
-    private final HashSet<Node> mySuccessors = new HashSet<Node>();
+    private final HashSet<Node> mySuccessors = new HashSet<>();
     private VisitMark myMark;
 
     public Node(PsiElement x) {

@@ -30,9 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +44,6 @@ import java.util.List;
 public class RedundantThrows extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
-  private final BidirectionalMap<String, QuickFix> myQuickFixes = new BidirectionalMap<String, QuickFix>();
   @NonNls private static final String SHORT_NAME = "RedundantThrows";
 
   @Override
@@ -83,21 +80,21 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
         for (PsiClass s : unThrown) {
           final PsiClass throwsResolvedType = throwsType.resolve();
           if (psiManager.areElementsEquivalent(s, throwsResolvedType)) {
-            if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
+            if (problems == null) problems = new ArrayList<>(1);
 
             if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
             else if (!refMethod.getDerivedMethods().isEmpty()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
             else {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
           }
@@ -164,30 +161,16 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
     return SHORT_NAME;
   }
 
-  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final String hint) {
-    QuickFix fix = myQuickFixes.get(hint);
-    if (fix == null) {
-      fix = new MyQuickFix(processor, hint);
-      if (hint != null) {
-        myQuickFixes.put(hint, fix);
-      }
-    }
-    return (LocalQuickFix)fix;
-  }
-
-
   @Override
   @Nullable
   public QuickFix getQuickFix(String hint) {
-    return getFix(null, hint);
+    return new MyQuickFix(null, hint);
   }
 
   @Override
   @Nullable
   public String getHint(@NotNull final QuickFix fix) {
-    final List<String> hints = myQuickFixes.getKeysByValue(fix);
-    LOG.assertTrue(hints != null && hints.size() == 1);
-    return hints.get(0);
+    return fix instanceof MyQuickFix ? ((MyQuickFix)fix).myHint : null;
   }
 
   private static class MyQuickFix implements LocalQuickFix {
@@ -201,7 +184,7 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.redundant.throws.remove.quickfix");
     }
 
@@ -225,12 +208,6 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
       }
     }
 
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
-
     private void removeExcessiveThrows(@Nullable RefMethod refMethod, @Nullable final PsiModifierListOwner element, final CommonProblemDescriptor[] problems) {
       try {
         @Nullable final PsiMethod psiMethod;
@@ -244,7 +221,7 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
         if (psiMethod == null) return; //invalid refMethod
         final Project project = psiMethod.getProject();
         final PsiManager psiManager = PsiManager.getInstance(project);
-        final List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<PsiJavaCodeReferenceElement>();
+        final List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<>();
         for (CommonProblemDescriptor problem : problems) {
           final PsiElement psiElement = ((ProblemDescriptor)problem).getPsiElement();
           if (psiElement instanceof PsiJavaCodeReferenceElement) {
@@ -301,14 +278,11 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
         }
       } else {
         final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-        query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>(){
-          @Override
-          public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-            if (pair.first == psiMethod) {
-              removeException(null, exceptionType, refsToDelete, pair.second);
-            }
-            return true;
+        query.forEach(pair -> {
+          if (pair.first == psiMethod) {
+            removeException(null, exceptionType, refsToDelete, pair.second);
           }
+          return true;
         });
       }
     }

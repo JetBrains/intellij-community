@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -39,7 +40,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
 
   public ScopeBasedTodosPanel(final Project project, TodoPanelSettings settings, Content content){
     super(project,settings,false,content);
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     myScopes.getChildComponent().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -66,7 +67,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     scopesLabel.setLabelFor(myScopes);
     final GridBagConstraints gc =
       new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                             new Insets(2, 2, 2, 2), 0, 0);
+                             JBUI.insets(2), 0, 0);
     chooserPanel.add(scopesLabel, gc);
     chooserPanel.add(myScopes, gc);
 

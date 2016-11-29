@@ -41,19 +41,16 @@ public class LibraryUsageCollector extends AbstractApplicationUsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
-    final Set<LibraryKind> usedKinds = new HashSet<LibraryKind>();
-    final Processor<Library> processor = new Processor<Library>() {
-      @Override
-      public boolean process(Library library) {
-        usedKinds.addAll(LibraryPresentationManagerImpl.getLibraryKinds(library, null));
-        return true;
-      }
+    final Set<LibraryKind> usedKinds = new HashSet<>();
+    final Processor<Library> processor = library -> {
+      usedKinds.addAll(LibraryPresentationManagerImpl.getLibraryKinds(library, null));
+      return true;
     };
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       ModuleRootManager.getInstance(module).orderEntries().librariesOnly().forEachLibrary(processor);
     }
 
-    final HashSet<UsageDescriptor> usageDescriptors = new HashSet<UsageDescriptor>();
+    final HashSet<UsageDescriptor> usageDescriptors = new HashSet<>();
     for (LibraryKind kind : usedKinds) {
       usageDescriptors.add(new UsageDescriptor(kind.getKindId(), 1));
     }

@@ -73,21 +73,25 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
     }
   }
 
+  public void testOuterClassReferenceInInstanceof() throws Exception {
+    myFixture.configureByText("a.java", "class Outer<T> {class Inner {} {boolean b = new Inner() instanceof Outer.Inner;}}\n" +
+                                        "class Outer1 {class Inner {} {boolean b = new Inner() instanceof Outer1.Inner;}}");
+    doShortenRefs();
+    myFixture.checkResult("class Outer<T> {class Inner {} {boolean b = new Inner() instanceof Outer.Inner;}}\n" +
+                          "class Outer1 {class Inner {} {boolean b = new Inner() instanceof Inner;}}");
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          @Override
-          public void run() {
-            JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(myFixture.getFile());
-            PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-            PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-          }
-        });
-      }
-    }, "", "");
+    doShortenRefs();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  private void doShortenRefs() {
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
+      JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(myFixture.getFile());
+      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    }), "", "");
   }
 }

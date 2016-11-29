@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     EditorSettingsExternalizable.getInstance().setFoldingOutlineShown(myCbFolding.isSelected());
     super.apply();
 
-    final List<Pair<Editor, Project>> toUpdate = new ArrayList<Pair<Editor, Project>>();
+    final List<Pair<Editor, Project>> toUpdate = new ArrayList<>();
     for (final Editor editor : EditorFactory.getInstance().getAllEditors()) {
       final Project project = editor.getProject();
       if (project != null && !project.isDefault()) {
@@ -85,20 +85,17 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
       }
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-          for (Pair<Editor, Project> each : toUpdate) {
-              if (each.second == null || each.second.isDisposed()) {
-                  continue;
-              }
-              final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(each.second);
-              if (foldingManager != null) {
-                  foldingManager.buildInitialFoldings(each.first);
-              }
-          }
-          EditorOptionsPanel.reinitAllEditors();
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+        for (Pair<Editor, Project> each : toUpdate) {
+            if (each.second == null || each.second.isDisposed()) {
+                continue;
+            }
+            final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(each.second);
+            if (foldingManager != null) {
+                foldingManager.buildInitialFoldings(each.first);
+            }
+        }
+        EditorOptionsPanel.reinitAllEditors();
     }, ModalityState.NON_MODAL);
   }
 
@@ -117,10 +114,5 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
   @NotNull
   public String getId() {
     return "editor.preferences.folding";
-  }
-
-  @Override
-  public Runnable enableSearch(final String option) {
-    return null;
   }
 }

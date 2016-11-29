@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 package com.intellij.psi;
 
 /**
- * Represents a Java keyword. Constants defined in this interface represent all
- * keywords of the Java language.
+ * Represents a Java keyword. Constants defined in this interface represent all keywords and literals of the Java language.
  */
-@SuppressWarnings({"HardCodedStringLiteral", "JavaDoc"})
 public interface PsiKeyword extends PsiJavaToken {
   String ABSTRACT = "abstract";
   String ASSERT = "assert";
@@ -58,6 +56,8 @@ public interface PsiKeyword extends PsiJavaToken {
   String PUBLIC = "public";
   String RETURN = "return";
   String SHORT = "short";
+  String STATIC = "static";
+  String STRICTFP = "strictfp";
   String SUPER = "super";
   String SWITCH = "switch";
   String SYNCHRONIZED = "synchronized";
@@ -67,12 +67,18 @@ public interface PsiKeyword extends PsiJavaToken {
   String TRANSIENT = "transient";
   String TRY = "try";
   String VOID = "void";
-  String STATIC = "static";
-  String STRICTFP = "strictfp";
-  String WHILE = "while";
   String VOLATILE = "volatile";
+  String WHILE = "while";
 
   String TRUE = "true";
   String FALSE = "false";
   String NULL = "null";
+
+  String MODULE = "module";
+  String REQUIRES = "requires";
+  String EXPORTS = "exports";
+  String USES = "uses";
+  String PROVIDES = "provides";
+  String TO = "to";
+  String WITH = "with";
 }

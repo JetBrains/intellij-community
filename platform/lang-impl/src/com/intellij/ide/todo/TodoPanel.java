@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,12 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
@@ -49,7 +50,10 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,7 +154,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
 
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, FindInProjectUtil.setupViewPresentation(false, new FindModel()));
-    myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     Disposer.register(this, myUsagePreviewPanel);
     myUsagePreviewPanel.setVisible(mySettings.showPreview);
 
@@ -159,14 +162,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(final TreeSelectionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myUsagePreviewPanel.isVisible()) {
-              updatePreviewPanel();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myUsagePreviewPanel.isVisible()) {
+            updatePreviewPanel();
           }
-        });
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
 
@@ -215,12 +215,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     autoScrollToSourceHandler.install(myTree);
     rightGroup.add(autoScrollToSourceHandler.createToggleAction());
 
-    SetTodoFilterAction setTodoFilterAction = new SetTodoFilterAction(myProject, mySettings, new Consumer<TodoFilter>() {
-      @Override
-      public void consume(TodoFilter todoFilter) {
-        setTodoFilter(todoFilter);
-      }
-    });
+    SetTodoFilterAction setTodoFilterAction = new SetTodoFilterAction(myProject, mySettings, todoFilter -> setTodoFilter(todoFilter));
     rightGroup.add(setTodoFilterAction);
     rightGroup.add(new MyPreviewAction());
     toolBarPanel.add(
@@ -230,15 +225,15 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   protected JComponent createCenterComponent() {
-    final Splitter splitter = new Splitter(false);
+    Splitter splitter = new OnePixelSplitter(false);
     splitter.setSecondComponent(myUsagePreviewPanel);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
     return splitter;
   }
 
   private void updatePreviewPanel() {
-    if (myProject.isDisposed()) return;
-    List<UsageInfo> infos = new ArrayList<UsageInfo>();
+    if (myProject == null || myProject.isDisposed()) return;
+    List<UsageInfo> infos = new ArrayList<>();
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -423,35 +418,19 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   protected void rebuildWithAlarm(final Alarm alarm) {
     alarm.cancelAllRequests();
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        final Set<VirtualFile> files = new HashSet<VirtualFile>();
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              myTodoTreeBuilder.collectFiles(new Processor<VirtualFile>() {
-                @Override
-                public boolean process(VirtualFile virtualFile) {
-                  files.add(virtualFile);
-                  return true;
-                }
-              });
-            }
-            catch (IndexNotReadyException ignore) {
-            }
-          }
+    alarm.addRequest(() -> {
+      final Set<VirtualFile> files = new HashSet<>();
+      DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+        myTodoTreeBuilder.collectFiles(virtualFile -> {
+          files.add(virtualFile);
+          return true;
         });
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            myTodoTreeBuilder.rebuildCache(files);
-            updateTree();
-          }
-        };
-        ApplicationManager.getApplication().invokeLater(runnable);
-      }
+      });
+      final Runnable runnable = () -> {
+        myTodoTreeBuilder.rebuildCache(files);
+        updateTree();
+      };
+      ApplicationManager.getApplication().invokeLater(runnable);
     }, 300);
   }
 
@@ -679,8 +658,8 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     @Override
     public void visibilityChanged() {
       if (myProject.isOpen()) {
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        myTodoTreeBuilder.setUpdatable(isShowing());
+        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(
+          () -> myTodoTreeBuilder.setUpdatable(isShowing()));
       }
     }
   }

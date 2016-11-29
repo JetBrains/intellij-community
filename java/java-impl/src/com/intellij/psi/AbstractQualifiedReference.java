@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -245,8 +245,8 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
   protected abstract static class AbstractQualifiedReferenceResolvingProcessor extends BaseScopeProcessor {
-    private boolean myFound = false;
-    private final Set<ResolveResult> myResults = new LinkedHashSet<ResolveResult>();
+    private boolean myFound;
+    private final Set<ResolveResult> myResults = new LinkedHashSet<>();
 
     @Override
     public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {

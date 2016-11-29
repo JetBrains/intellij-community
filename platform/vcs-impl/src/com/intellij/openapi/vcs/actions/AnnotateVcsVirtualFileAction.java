@@ -107,8 +107,8 @@ public class AnnotateVcsVirtualFileAction {
     assert provider != null;
 
 
-    final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
-    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
+    final Ref<FileAnnotation> fileAnnotationRef = new Ref<>();
+    final Ref<VcsException> exceptionRef = new Ref<>();
 
     VcsAnnotateUtil.getBackgroundableLock(project, file).lock();
 

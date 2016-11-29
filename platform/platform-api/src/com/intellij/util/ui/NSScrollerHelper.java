@@ -23,8 +23,12 @@ import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.EventListenerList;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
@@ -32,23 +36,13 @@ class NSScrollerHelper {
   private static final Callback APPEARANCE_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          fireStyleChanged();
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> fireStyleChanged());
     }
   };
   private static final Callback BEHAVIOR_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          updateBehaviorPreferences();
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> updateBehaviorPreferences());
     }
   };
 
@@ -57,7 +51,7 @@ class NSScrollerHelper {
   public enum Style {Legacy, Overlay}
 
   private static ClickBehavior ourClickBehavior = null;
-  private static final EventListenerList ourStyleListeners = new EventListenerList();
+  private static final List<Reference<ScrollbarStyleListener>> ourStyleListeners = new ArrayList<>();
 
   static {
     if (SystemInfo.isMac) {
@@ -152,19 +146,37 @@ class NSScrollerHelper {
   }
 
   public static void addScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
-    ourStyleListeners.add(ScrollbarStyleListener.class, listener);
+    processReferences(listener, null, null);
   }
 
   public static void removeScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
-    ourStyleListeners.remove(ScrollbarStyleListener.class, listener);
+    processReferences(null, listener, null);
+  }
+
+  private static void processReferences(ScrollbarStyleListener toAdd, ScrollbarStyleListener toRemove, List<ScrollbarStyleListener> list) {
+    synchronized (ourStyleListeners) {
+      Iterator<Reference<ScrollbarStyleListener>> iterator = ourStyleListeners.iterator();
+      while (iterator.hasNext()) {
+        Reference<ScrollbarStyleListener> reference = iterator.next();
+        ScrollbarStyleListener ui = reference.get();
+        if (ui == null || ui == toRemove) {
+          iterator.remove();
+        }
+        else if (list != null) {
+          list.add(ui);
+        }
+      }
+      if (toAdd != null) {
+        ourStyleListeners.add(new WeakReference<>(toAdd));
+      }
+    }
   }
 
   private static void fireStyleChanged() {
-    Object[] listeners = ourStyleListeners.getListenerList();
-    for (int i = listeners.length - 2; i >= 0; i -= 2) {
-      if (listeners[i] == ScrollbarStyleListener.class) {
-        ((ScrollbarStyleListener)listeners[i + 1]).styleChanged();
-      }
+    List<ScrollbarStyleListener> list = new ArrayList<>();
+    processReferences(null, null, list);
+    for (ScrollbarStyleListener listener : list) {
+      listener.styleChanged();
     }
   }
 

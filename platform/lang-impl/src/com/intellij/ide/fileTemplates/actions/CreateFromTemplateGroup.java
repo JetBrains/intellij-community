@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,10 @@ import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
 
@@ -41,7 +44,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
   public void update(AnActionEvent e){
     super.update(e);
     Presentation presentation = e.getPresentation();
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project != null) {
       FileTemplate[] allTemplates = FileTemplateManager.getInstance(project).getAllTemplates();
       for (FileTemplate template : allTemplates) {
@@ -58,7 +61,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e){
     if (e == null) return EMPTY_ARRAY;
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project == null || project.isDisposed()) return EMPTY_ARRAY;
     FileTemplateManager manager = FileTemplateManager.getInstance(project);
     FileTemplate[] templates = manager.getAllTemplates();
@@ -74,28 +77,25 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
       }
     }
 
-    Arrays.sort(templates, new Comparator<FileTemplate>() {
-      @Override
-      public int compare(FileTemplate template1, FileTemplate template2) {
-        // java first
-        if (template1.isTemplateOfType(StdFileTypes.JAVA) && !template2.isTemplateOfType(StdFileTypes.JAVA)) {
-          return -1;
-        }
-        if (template2.isTemplateOfType(StdFileTypes.JAVA) && !template1.isTemplateOfType(StdFileTypes.JAVA)) {
-          return 1;
-        }
-
-        // group by type
-        int i = template1.getExtension().compareTo(template2.getExtension());
-        if (i != 0) {
-          return i;
-        }
-
-        // group by name if same type
-        return template1.getName().compareTo(template2.getName());
+    Arrays.sort(templates, (template1, template2) -> {
+      // java first
+      if (template1.isTemplateOfType(StdFileTypes.JAVA) && !template2.isTemplateOfType(StdFileTypes.JAVA)) {
+        return -1;
       }
+      if (template2.isTemplateOfType(StdFileTypes.JAVA) && !template1.isTemplateOfType(StdFileTypes.JAVA)) {
+        return 1;
+      }
+
+      // group by type
+      int i = template1.getExtension().compareTo(template2.getExtension());
+      if (i != 0) {
+        return i;
+      }
+
+      // group by name if same type
+      return template1.getName().compareTo(template2.getName());
     });
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
 
     for (FileTemplate template : templates) {
       if (canCreateFromTemplate(e, template)) {

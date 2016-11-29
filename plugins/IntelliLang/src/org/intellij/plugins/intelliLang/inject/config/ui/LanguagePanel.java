@@ -55,7 +55,7 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
 
     myLanguage.setModel(new DefaultComboBoxModel(languageIDs));
     myLanguage.setRenderer(new ColoredListCellRendererWrapper<String>() {
-      final Set<String> IDs = new HashSet<String>(Arrays.asList(languageIDs));
+      final Set<String> IDs = new HashSet<>(Arrays.asList(languageIDs));
 
       @Override
       protected void doCustomize(JList list, String s, int index, boolean selected, boolean hasFocus) {

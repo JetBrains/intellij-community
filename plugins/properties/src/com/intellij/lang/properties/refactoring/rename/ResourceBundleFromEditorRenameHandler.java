@@ -20,7 +20,6 @@
 package com.intellij.lang.properties.refactoring.rename;
 
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.*;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
@@ -33,15 +32,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiTarget;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -79,22 +75,19 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
     assert resourceBundleEditor != null;
     final ResourceBundleEditorViewElement selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
     if (selectedElement != null) {
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        @Override
-        public void run() {
-          if (selectedElement instanceof PropertiesPrefixGroup) {
-            final PropertiesPrefixGroup group = (PropertiesPrefixGroup)selectedElement;
-            ResourceBundleRenameUtil.renameResourceBundleKeySection(getPsiElementsFromGroup(group),
-                                                                    group.getPresentableName(),
-                                                                    group.getPrefix().length() - group.getPresentableName().length());
-          } else if (selectedElement instanceof ResourceBundlePropertyStructureViewElement) {
-            final PsiElement psiElement = ((ResourceBundlePropertyStructureViewElement)selectedElement).getProperty().getPsiElement();
-            ResourceBundleRenameUtil.renameResourceBundleKey(psiElement, project);
-          } else if (selectedElement instanceof ResourceBundleFileStructureViewElement) {
-            ResourceBundleRenameUtil.renameResourceBundleBaseName(((ResourceBundleFileStructureViewElement)selectedElement).getValue(), project);
-          } else {
-            throw new IllegalStateException("unsupported type: " + selectedElement.getClass());
-          }
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+        if (selectedElement instanceof PropertiesPrefixGroup) {
+          final PropertiesPrefixGroup group = (PropertiesPrefixGroup)selectedElement;
+          ResourceBundleRenameUtil.renameResourceBundleKeySection(getPsiElementsFromGroup(group),
+                                                                  group.getPresentableName(),
+                                                                  group.getPrefix().length() - group.getPresentableName().length());
+        } else if (selectedElement instanceof ResourceBundlePropertyStructureViewElement) {
+          final PsiElement psiElement = ((ResourceBundlePropertyStructureViewElement)selectedElement).getProperty().getPsiElement();
+          ResourceBundleRenameUtil.renameResourceBundleKey(psiElement, project);
+        } else if (selectedElement instanceof ResourceBundleFileStructureViewElement) {
+          ResourceBundleRenameUtil.renameResourceBundleBaseName(((ResourceBundleFileStructureViewElement)selectedElement).getValue(), project);
+        } else {
+          throw new IllegalStateException("unsupported type: " + selectedElement.getClass());
         }
       });
     }
@@ -106,18 +99,14 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
   }
 
   private static List<PsiElement> getPsiElementsFromGroup(final PropertiesPrefixGroup propertiesPrefixGroup) {
-    return ContainerUtil.mapNotNull(propertiesPrefixGroup.getChildren(), new NullableFunction<TreeElement, PsiElement>() {
-      @Nullable
-      @Override
-      public PsiElement fun(TreeElement treeElement) {
-        if (treeElement instanceof PropertiesStructureViewElement) {
-          return ((PropertiesStructureViewElement)treeElement).getValue().getPsiElement();
-        }
-        if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
-          return ((ResourceBundlePropertyStructureViewElement)treeElement).getProperty().getPsiElement();
-        }
-        return null;
+    return ContainerUtil.mapNotNull(propertiesPrefixGroup.getChildren(), (NullableFunction<TreeElement, PsiElement>)treeElement -> {
+      if (treeElement instanceof PropertiesStructureViewElement) {
+        return ((PropertiesStructureViewElement)treeElement).getValue().getPsiElement();
       }
+      if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
+        return ((ResourceBundlePropertyStructureViewElement)treeElement).getProperty().getPsiElement();
+      }
+      return null;
     });
   }
 }

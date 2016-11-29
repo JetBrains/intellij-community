@@ -73,14 +73,14 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   protected ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;
   protected JPanel myEditorsPanel;
-  protected final Map<String, ContentEntryEditor> myEntryToEditorMap = new HashMap<String, ContentEntryEditor>();
+  protected final Map<String, ContentEntryEditor> myEntryToEditorMap = new HashMap<>();
   private String mySelectedEntryUrl;
 
   private VirtualFile myLastSelectedDir = null;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
   private final ModuleConfigurationState myState;
-  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers = new ArrayList<ModuleSourceRootEditHandler<?>>();
+  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers = new ArrayList<>();
 
   public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, JpsModuleSourceRootType<?>... rootTypes) {
     super(state);
@@ -274,12 +274,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
           editor.setSelected(true);
           final JComponent component = editor.getComponent();
           final JComponent scroller = (JComponent)component.getParent();
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              scroller.scrollRectToVisible(component.getBounds());
-            }
-          });
+          SwingUtilities.invokeLater(() -> scroller.scrollRectToVisible(component.getBounds()));
           myRootTreeEditor.setContentEntryEditor(editor);
           myRootTreeEditor.requestFocus();
         }
@@ -319,7 +314,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   protected List<ContentEntry> addContentEntries(final VirtualFile[] files) {
-    List<ContentEntry> contentEntries = new ArrayList<ContentEntry>();
+    List<ContentEntry> contentEntries = new ArrayList<>();
     for (final VirtualFile file : files) {
       if (isAlreadyAdded(file)) {
         continue;
@@ -415,12 +410,9 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      FileChooser.chooseFiles(myDescriptor, myProject, myLastSelectedDir, new Consumer<List<VirtualFile>>() {
-        @Override
-        public void consume(List<VirtualFile> files) {
-          myLastSelectedDir = files.get(0);
-          addContentEntries(VfsUtilCore.toVirtualFileArray(files));
-        }
+      FileChooser.chooseFiles(myDescriptor, myProject, myLastSelectedDir, files -> {
+        myLastSelectedDir = files.get(0);
+        addContentEntries(VfsUtilCore.toVirtualFileArray(files));
       });
     }
 
@@ -447,7 +439,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
           if (contentEntryFile.equals(file)) {
             throw new Exception(ProjectBundle.message("module.paths.add.content.already.exists.error", file.getPresentableUrl()));
           }
-          if (VfsUtilCore.isAncestor(contentEntryFile, file, true)) {
+          if (VfsUtilCore.isAncestor(contentEntryFile, file, true) && !ContentEntryEditor.isExcludedOrUnderExcludedDirectory(myProject, contentEntry, file)) {
             // intersection not allowed
             throw new Exception(
               ProjectBundle.message("module.paths.add.content.intersect.error", file.getPresentableUrl(),

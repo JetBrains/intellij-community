@@ -21,7 +21,7 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class ChangesViewContentEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP");
 
-  public static final ExtensionPointName<ChangesViewContentEP> EP_NAME = new ExtensionPointName<ChangesViewContentEP>("com.intellij.changesViewContent");
+  public static final ExtensionPointName<ChangesViewContentEP> EP_NAME = new ExtensionPointName<>("com.intellij.changesViewContent");
 
   @Attribute("tabName")
   public String tabName;
@@ -90,7 +90,7 @@ public class ChangesViewContentEP implements PluginAware {
     try {
       final Class<?> aClass = Class.forName(className, true,
                                             myPluginDescriptor == null ? getClass().getClassLoader()  : myPluginDescriptor.getPluginClassLoader());
-      return new ConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(project.getPicoContainer());
+      return new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(project.getPicoContainer());
     }
     catch(Exception e) {
       LOG.error(e);

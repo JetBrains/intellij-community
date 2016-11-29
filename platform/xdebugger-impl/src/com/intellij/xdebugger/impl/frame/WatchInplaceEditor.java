@@ -15,20 +15,15 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.ui.AppUIUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author nik
@@ -36,97 +31,38 @@ import javax.swing.*;
 public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final WatchesRootNode myRootNode;
   private final XWatchesView myWatchesView;
-  @Nullable private final WatchNode myOldNode;
-  private WatchEditorSessionListener mySessionListener;
+  private final WatchNode myOldNode;
 
   public WatchInplaceEditor(@NotNull WatchesRootNode rootNode,
-                            @Nullable XDebugSession session, XWatchesView watchesView, final WatchNode node,
-                            @NonNls final String historyId,
-                            final @Nullable WatchNode oldNode) {
-    super((XDebuggerTreeNode)node, historyId);
+                            XWatchesView watchesView,
+                            WatchNode node,
+                            @Nullable WatchNode oldNode) {
+    super((XDebuggerTreeNode)node, "watch");
     myRootNode = rootNode;
     myWatchesView = watchesView;
     myOldNode = oldNode;
     myExpressionEditor.setExpression(oldNode != null ? oldNode.getExpression() : null);
-    if (session != null) {
-      mySessionListener = new WatchEditorSessionListener(session).install();
-    }
-  }
-
-  @Override
-  protected JComponent createInplaceEditorComponent() {
-    return myExpressionEditor.getComponent();
   }
 
   @Override
   public void cancelEditing() {
     if (!isShown()) return;
     super.cancelEditing();
-    int index = myRootNode.removeChildNode(getNode());
-    if (myOldNode != null && index != -1) {
-      myWatchesView.addWatchExpression(myOldNode.getExpression(), index, false);
+    int index = myRootNode.getIndex(myNode);
+    if (myOldNode == null && index != -1) {
+      myRootNode.removeChildNode(myNode);
     }
-    getTree().setSelectionRow(index);
+    TreeUtil.selectNode(myTree, myNode);
   }
 
   @Override
   public void doOKAction() {
-    XExpression expression = myExpressionEditor.getExpression();
-    myExpressionEditor.saveTextInHistory();
+    XExpression expression = getExpression();
     super.doOKAction();
-    int index = myRootNode.removeChildNode(getNode());
+    int index = myRootNode.removeChildNode(myNode);
     if (!XDebuggerUtilImpl.isEmptyExpression(expression) && index != -1) {
       myWatchesView.addWatchExpression(expression, index, false);
     }
-    getTree().setSelectionRow(index);
-  }
-
-  @Override
-  protected void onHidden() {
-    super.onHidden();
-    if (mySessionListener != null) {
-      mySessionListener.remove();
-    }
-  }
-
-  private class WatchEditorSessionListener implements XDebugSessionListener {
-    private final XDebugSession mySession;
-
-    public WatchEditorSessionListener(@NotNull XDebugSession session) {
-      mySession = session;
-    }
-
-    public WatchEditorSessionListener install() {
-      mySession.addSessionListener(this);
-      return this;
-    }
-
-    public void remove() {
-      mySession.removeSessionListener(this);
-    }
-
-    private void cancel() {
-      AppUIUtil.invokeOnEdt(WatchInplaceEditor.this::cancelEditing);
-    }
-
-    @Override
-    public void sessionPaused() {
-      cancel();
-    }
-
-    @Override
-    public void beforeSessionResume() {
-      cancel();
-    }
-
-    @Override
-    public void sessionResumed() {
-      cancel();
-    }
-
-    @Override
-    public void sessionStopped() {
-      cancel();
-    }
+    TreeUtil.selectNode(myTree, myNode);
   }
 }

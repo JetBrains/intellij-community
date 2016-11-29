@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.psi.search;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -47,12 +46,12 @@ public class FindUsages15Test extends PsiTestCase{
     PsiMethod[] constructors = enumClass.getConstructors();
     assertEquals(2, constructors.length);
     PsiReference[] references0 =
-      ReferencesSearch.search(constructors[0], GlobalSearchScope.moduleScope(myModule), false).toArray(new PsiReference[0]);
+      ReferencesSearch.search(constructors[0], GlobalSearchScope.moduleScope(myModule), false).toArray(PsiReference.EMPTY_ARRAY);
     assertEquals(2, references0.length);
     assertTrue(references0[0].getElement() instanceof PsiEnumConstant);
     assertTrue(references0[1].getElement() instanceof PsiEnumConstant);
     PsiReference[] references1 =
-      ReferencesSearch.search(constructors[1], GlobalSearchScope.moduleScope(myModule), false).toArray(new PsiReference[0]);
+      ReferencesSearch.search(constructors[1], GlobalSearchScope.moduleScope(myModule), false).toArray(PsiReference.EMPTY_ARRAY);
     assertEquals(1, references1.length);
     assertTrue(references1[0].getElement() instanceof PsiEnumConstant);
   }

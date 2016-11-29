@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,11 +65,11 @@ public class HighlightManagerImpl extends HighlightManager {
           Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
           if (map == null) return;
 
-          ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
+          ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<>();
           for (RangeHighlighter highlighter : map.keySet()) {
             HighlightInfo info = map.get(highlighter);
             if (!info.editor.getDocument().equals(document)) continue;
-            if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
+            if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
               highlightersToRemove.add(highlighter);
             }
           }
@@ -87,7 +88,7 @@ public class HighlightManagerImpl extends HighlightManager {
     if (editor instanceof EditorWindow) return getHighlightInfoMap(((EditorWindow)editor).getDelegate(), toCreate);
     Map<RangeHighlighter, HighlightInfo> map = editor.getUserData(HIGHLIGHT_INFO_MAP_KEY);
     if (map == null && toCreate) {
-      map = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHT_INFO_MAP_KEY, new HashMap<RangeHighlighter, HighlightInfo>());
+      map = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHT_INFO_MAP_KEY, new HashMap<>());
     }
     return map;
   }
@@ -96,7 +97,7 @@ public class HighlightManagerImpl extends HighlightManager {
   public RangeHighlighter[] getHighlighters(@NotNull Editor editor) {
     Map<RangeHighlighter, HighlightInfo> highlightersMap = getHighlightInfoMap(editor, false);
     if (highlightersMap == null) return RangeHighlighter.EMPTY_ARRAY;
-    Set<RangeHighlighter> set = new HashSet<RangeHighlighter>();
+    Set<RangeHighlighter> set = new HashSet<>();
     for (Map.Entry<RangeHighlighter, HighlightInfo> entry : highlightersMap.entrySet()) {
       HighlightInfo info = entry.getValue();
       if (info.editor.equals(editor)) set.add(entry.getKey());
@@ -270,7 +271,7 @@ public class HighlightManagerImpl extends HighlightManager {
     if (map == null) return false;
 
     boolean done = false;
-    ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
+    ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<>();
     for (RangeHighlighter highlighter : map.keySet()) {
       HighlightInfo info = map.get(highlighter);
       if (!info.editor.equals(editor)) continue;

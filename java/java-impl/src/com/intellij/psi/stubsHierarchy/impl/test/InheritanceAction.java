@@ -17,11 +17,11 @@ package com.intellij.psi.stubsHierarchy.impl.test;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.psi.stubsHierarchy.impl.HierarchyService;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 
 public abstract class InheritanceAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(HierarchyService.isEnabled());
+    e.getPresentation().setVisible(IndexTree.STUB_HIERARCHY_ENABLED);
   }
 }

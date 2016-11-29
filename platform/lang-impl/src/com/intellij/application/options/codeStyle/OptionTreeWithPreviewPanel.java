@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
@@ -48,15 +49,15 @@ import java.util.List;
 public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
   protected JTree myOptionsTree;
-  private final ArrayList<BooleanOptionKey> myKeys = new ArrayList<BooleanOptionKey>();
+  protected final ArrayList<BooleanOptionKey> myKeys = new ArrayList<>();
   protected final JPanel myPanel = new JPanel(new GridBagLayout());
 
   private boolean myShowAllStandardOptions = false;
-  private Set<String> myAllowedOptions = new HashSet<String>();
-  private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<String, CustomBooleanOptionInfo>();
+  private Set<String> myAllowedOptions = new HashSet<>();
+  private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
-  private final Map<String, String> myRenamedFields = new THashMap<String, String>();
-  private final Map<String, String> myRemappedGroups = new THashMap<String, String>();
+  private final Map<String, String> myRenamedFields = new THashMap<>();
+  private final Map<String, String> myRemappedGroups = new THashMap<>();
 
 
   public OptionTreeWithPreviewPanel(CodeStyleSettings settings) {
@@ -72,7 +73,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     myOptionsTree = createOptionsTree();
     myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
     myOptionsTree.setBackground(UIUtil.getPanelBackground());
-    myOptionsTree.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+    myOptionsTree.setBorder(JBUI.Borders.emptyRight(10));
     JScrollPane scrollPane = new JBScrollPane(myOptionsTree) {
       @Override
       public Dimension getMinimumSize() {
@@ -81,13 +82,13 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     };
     myPanel.add(scrollPane,
                 new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 0), 0, 0));
+                                       JBUI.emptyInsets(), 0, 0));
 
     JPanel previewPanel = createPreviewPanel();
 
     myPanel.add(previewPanel,
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 0), 0, 0));
+                                       JBUI.emptyInsets(), 0, 0));
 
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);
@@ -229,30 +230,27 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   private List<BooleanOptionKey> orderByGroup(final List<BooleanOptionKey> options) {
     final List<String> groupOrder = getGroupOrder(options);
-    List<BooleanOptionKey> result = new ArrayList<BooleanOptionKey>(options.size());
+    List<BooleanOptionKey> result = new ArrayList<>(options.size());
     result.addAll(options);
-    Collections.sort(result, new Comparator<BooleanOptionKey>(){
-      @Override
-      public int compare(BooleanOptionKey key1, BooleanOptionKey key2) {
-        String group1 = key1.groupName;
-        String group2 = key2.groupName;
-        if (group1 == null) {
-          return group2 == null ? 0 : 1;
-        }
-        if (group2 == null) {
-          return -1;
-        }
-        Integer index1 = groupOrder.indexOf(group1);
-        Integer index2 = groupOrder.indexOf(group2);
-        if (index1 == -1 || index2 == -1) return group1.compareToIgnoreCase(group2);
-        return index1.compareTo(index2);
+    Collections.sort(result, (key1, key2) -> {
+      String group1 = key1.groupName;
+      String group2 = key2.groupName;
+      if (group1 == null) {
+        return group2 == null ? 0 : 1;
       }
+      if (group2 == null) {
+        return -1;
+      }
+      Integer index1 = groupOrder.indexOf(group1);
+      Integer index2 = groupOrder.indexOf(group2);
+      if (index1 == -1 || index2 == -1) return group1.compareToIgnoreCase(group2);
+      return index1.compareTo(index2);
     });
     return result;
   }
 
   protected List<String> getGroupOrder(List<BooleanOptionKey> options) {
-    List<String> groupOrder = new ArrayList<String>();
+    List<String> groupOrder = new ArrayList<>();
     for (BooleanOptionKey each : options) {
       if (each.groupName != null && !groupOrder.contains(each.groupName)) {
         groupOrder.add(each.groupName);
@@ -284,6 +282,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
+    ((DefaultTreeModel)treeModel).nodeChanged(root);
   }
 
   private void resetNode(TreeNode node, final CodeStyleSettings settings) {
@@ -618,7 +617,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   @Override
   public Set<String> processListOptions() {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
     for (BooleanOptionKey key : myKeys) {
       result.add(key.title);
       if (key.groupName != null) {

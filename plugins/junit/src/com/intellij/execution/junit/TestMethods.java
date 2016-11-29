@@ -62,14 +62,16 @@ public class TestMethods extends TestMethod {
     final Project project = module.getProject();
     final SourceScope scope = getSourceScope();
     final GlobalSearchScope searchScope = scope != null ? scope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);
-    addClassesListToJavaParameters(myFailedTests, new Function<AbstractTestProxy, String>() {
-      @Override
-      public String fun(AbstractTestProxy testInfo) {
-        return testInfo != null ? getTestPresentation(testInfo, project, searchScope) : null;
-      }
-    }, data.getPackageName(), true, javaParameters);
+    addClassesListToJavaParameters(myFailedTests, testInfo -> testInfo != null ? getTestPresentation(testInfo, project, searchScope) : null, data.getPackageName(), true, javaParameters);
 
     return javaParameters;
+  }
+
+  @Nullable
+  @Override
+  public SourceScope getSourceScope() {
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    return data.getScope().getSourceScope(getConfiguration());
   }
 
   @Override
@@ -88,7 +90,8 @@ public class TestMethods extends TestMethod {
       if (containingClass != null) {
         final String proxyName = testInfo.getName();
         final String methodName = ((PsiMethod)element).getName();
-        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + proxyName.substring(proxyName.indexOf(methodName));
+        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," +
+               (proxyName.contains(methodName) ? proxyName.substring(proxyName.indexOf(methodName)) : methodName);
       }
     }
     return null;

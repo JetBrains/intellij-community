@@ -23,7 +23,7 @@ public class YAMLPlainTextImpl extends YAMLScalarImpl implements YAMLScalar {
   public List<TextRange> getContentRanges() {
     final int myStart = getTextOffset();
     final ASTNode node = getNode();
-    final List<TextRange> result = new ArrayList<TextRange>();
+    final List<TextRange> result = new ArrayList<>();
 
     boolean seenText = false;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -44,13 +44,17 @@ public class YAMLPlainTextImpl extends YAMLScalarImpl implements YAMLScalar {
 
   @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence leftString, @NotNull CharSequence rightString) {
-    if (leftString.equals("\n") || rightString.equals("\n")) {
+  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+    if (isNewline(text, contentRanges.get(indexBefore)) || isNewline(text, contentRanges.get(indexBefore + 1))) {
       return "";
     }
     else {
       return " ";
     }
+  }
+  
+  private static boolean isNewline(@NotNull CharSequence text, @NotNull TextRange range) {
+    return range.getLength() == 1 && text.charAt(range.getStartOffset()) == '\n';
   }
 
   @Override

@@ -36,7 +36,7 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 class CacheEntry implements Comparable<CacheEntry>, Cloneable {
 
-  private static final TIntObjectHashMap<FoldingData> DUMMY = new TIntObjectHashMap<FoldingData>();
+  private static final TIntObjectHashMap<FoldingData> DUMMY = new TIntObjectHashMap<>();
 
   public int visualLine;
 
@@ -161,7 +161,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     // fold data caching with its further replace by up-to-date info. Hence, there is a possible case that soft wraps processing
     // advances fold region offset but folding model still provides old cached values. Hence, we're trying to match exact given
     // fold region against the cached data here.
-    final Ref<FoldingData> result = new Ref<FoldingData>();
+    final Ref<FoldingData> result = new Ref<>();
     myFoldingData.forEachValue(new TObjectProcedure<FoldingData>() {
       @Override
       public boolean execute(FoldingData data) {
@@ -177,7 +177,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
   
   public void store(FoldingData foldData, int offset) {
     if (myFoldingData == DUMMY) {
-      myFoldingData = new TIntObjectHashMap<FoldingData>();
+      myFoldingData = new TIntObjectHashMap<>();
     }
     myFoldingData.put(offset, foldData);
   }
@@ -188,7 +188,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
 
   public void storeTabData(TabData tabData) {
     if (myTabPositions == Collections.EMPTY_LIST) {
-      myTabPositions = new ArrayList<TabData>();
+      myTabPositions = new ArrayList<>();
     }
     myTabPositions.add(tabData);
   }
@@ -208,7 +208,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
       return;
     }
     
-    final TIntObjectHashMap<FoldingData> newFoldingData = new TIntObjectHashMap<FoldingData>(myFoldingData.size());
+    final TIntObjectHashMap<FoldingData> newFoldingData = new TIntObjectHashMap<>(myFoldingData.size());
     myFoldingData.forEachEntry(new TIntObjectProcedure<FoldingData>() {
       @Override
       public boolean execute(int offset, FoldingData foldingData) {

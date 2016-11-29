@@ -79,7 +79,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   public final Collection<AbstractTreeNode> getChildren() {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement == null) {
-      return new ArrayList<AbstractTreeNode>();
+      return new ArrayList<>();
     }
     final boolean valid = psiElement.isValid();
     if (!LOG.assertTrue(valid)) {
@@ -135,39 +135,36 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Override
   public void update(final PresentationData data) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!validate()) {
-          return;
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (!validate()) {
+        return;
+      }
 
-        final PsiElement value = extractPsiFromValue();
-        LOG.assertTrue(value.isValid());
+      final PsiElement value = extractPsiFromValue();
+      LOG.assertTrue(value.isValid());
 
-        int flags = getIconableFlags();
+      int flags = getIconableFlags();
 
-        try {
-          Icon icon = value.getIcon(flags);
-          data.setIcon(icon);
-        }
-        catch (IndexNotReadyException ignored) {
-        }
-        data.setPresentableText(myName);
+      try {
+        Icon icon = value.getIcon(flags);
+        data.setIcon(icon);
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+      data.setPresentableText(myName);
 
-        try {
-          if (isDeprecated()) {
-            data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
-          }
+      try {
+        if (isDeprecated()) {
+          data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
         }
-        catch (IndexNotReadyException ignored) {
-        }
-        updateImpl(data);
-        data.setIcon(patchIcon(myProject, data.getIcon(true), getVirtualFile()));
-        
-        for (ProjectViewNodeDecorator decorator : Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
-          decorator.decorate(AbstractPsiBasedNode.this, data);
-        }
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+      updateImpl(data);
+      data.setIcon(patchIcon(myProject, data.getIcon(true), getVirtualFile()));
+
+      for (ProjectViewNodeDecorator decorator : Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
+        decorator.decorate(this, data);
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,14 @@ package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
-import com.intellij.ide.*;
+import com.intellij.ide.CommandLineProcessor;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.application.ApplicationStarterEx;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -27,11 +32,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,8 +45,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class IdeaApplication {
-  @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
-  @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
+  public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+  public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
   private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
 
@@ -84,11 +89,9 @@ public class IdeaApplication {
     }
     else {
       Splash splash = null;
-      if (myArgs.length == 0) {
-        myStarter = getStarter();
-        if (myStarter instanceof IdeStarter) {
-          splash = ((IdeStarter)myStarter).showSplash(myArgs);
-        }
+      myStarter = getStarter();
+      if (myStarter instanceof IdeStarter) {
+        splash = ((IdeStarter)myStarter).showSplash(myArgs);
       }
       ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash, isServer);
     }
@@ -114,7 +117,7 @@ public class IdeaApplication {
    */
   @NotNull
   private static String[] processProgramArguments(String[] args) {
-    ArrayList<String> arguments = new ArrayList<String>();
+    ArrayList<String> arguments = new ArrayList<>();
     List<String> safeKeys = Arrays.asList(SAFE_JAVA_ENV_PARAMETERS);
     for (String arg : args) {
       if (arg.startsWith("-D")) {
@@ -181,7 +184,7 @@ public class IdeaApplication {
       ApplicationManagerEx.getApplicationEx().load();
       myLoaded = true;
 
-      myStarter.main(myArgs);
+      ((TransactionGuardImpl) TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));
       myStarter = null; //GC it
     }
     catch (Exception e) {
@@ -214,11 +217,20 @@ public class IdeaApplication {
     return project;
   }
 
+  /**
+   * Used for GUI tests to stop IdeEventQueue dispatching when Application is disposed already
+   */
+  public void shutdown() {
+    myLoaded = false;
+    IdeEventQueue.applicationClose();
+    ShutDownTracker.getInstance().run();
+  }
+
   public String[] getCommandLineArguments() {
     return myArgs;
   }
 
-  public void setPerformProjectLoad(boolean performProjectLoad) {
-    myPerformProjectLoad = performProjectLoad;
+  public void disableProjectLoad() {
+    myPerformProjectLoad = false;
   }
 }

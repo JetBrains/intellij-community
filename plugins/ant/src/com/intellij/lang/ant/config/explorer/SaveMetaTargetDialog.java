@@ -99,17 +99,17 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     panel.add(new JLabel(AntBundle.message("save.meta.data.targets.label")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1,
                                                                                                     0.0, 0.0, GridBagConstraints.NORTHWEST,
                                                                                                     GridBagConstraints.NONE,
-                                                                                                    new Insets(6, 0, 0, 0), 0, 0));
+                                                                                                    JBUI.insetsTop(6), 0, 0));
     panel.add(ScrollPaneFactory.createScrollPane(myTargetList), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0,
-                                                                    GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                                    new Insets(4, 0, 0, 0), 0, 0));
+                                                                                       GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                                                       JBUI.insetsTop(4), 0, 0));
 
     final JButton upButton = new JButton(AntBundle.message("button.move.up"));
     panel.add(upButton, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                               new Insets(6, 6, 0, 0), 0, 0));
+                                               JBUI.insets(6, 6, 0, 0), 0, 0));
     final JButton downButton = new JButton(AntBundle.message("button.move.down"));
     panel.add(downButton, new GridBagConstraints(1, 4, 1, GridBagConstraints.REMAINDER, 0.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                 GridBagConstraints.HORIZONTAL, new Insets(0, 6, 0, 0), 0, 0));
+                                                 GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(6), 0, 0));
 
     class UpdateAction implements ActionListener {
       public void actionPerformed(ActionEvent e) {

@@ -1,0 +1,12 @@
+REGEXP_FILE
+  RegExpPatternImpl: <[a-\w]>
+    RegExpBranchImpl: <[a-\w]>
+      RegExpClassImpl: <[a-\w]>
+        PsiElement(CLASS_BEGIN)('[')
+        RegExpCharRangeImpl: <a-\w>
+          RegExpCharImpl: <a>
+            PsiElement(CHARACTER)('a')
+          PsiElement(MINUS)('-')
+          RegExpSimpleClassImpl: <\w>
+            PsiElement(CHAR_CLASS)('\w')
+        PsiElement(CLASS_END)(']')

@@ -1,20 +1,20 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.compiler
+
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
@@ -28,7 +28,6 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
@@ -38,187 +37,186 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+
 /**
  * @author peter
  */
-public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
+@CompileStatic
+abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
-    super.setUp();
+    super.setUp()
     Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
-    addGroovyLibrary(myModule);
+    addGroovyLibrary(myModule)
   }
 
-  public void testPlainGroovy() throws Throwable {
-    myFixture.addFileToProject("A.groovy", "println '239'");
-    assertEmpty(make());
-    assertOutput("A", "239");
+  void testPlainGroovy() throws Throwable {
+    myFixture.addFileToProject("A.groovy", "println '239'")
+    assertEmpty(make())
+    assertOutput("A", "239")
   }
 
-  public void testJavaDependsOnGroovy() throws Throwable {
+  void testJavaDependsOnGroovy() throws Throwable {
     myFixture.addClass("public class Foo {" +
                        "public static void main(String[] args) { " +
                        "  System.out.println(new Bar().foo());" +
                        "}" +
-                       "}");
+                       "}")
     myFixture.addFileToProject("Bar.groovy", "class Bar {" +
                                              "  def foo() {" +
                                              "    239" +
                                              "  }" +
-                                             "}");
-    make();
-    assertOutput("Foo", "239");
+                                             "}")
+    make()
+    assertOutput("Foo", "239")
   }
 
-  public void testCorrectFailAndCorrect() throws Exception {
+  void testCorrectFailAndCorrect() throws Exception {
     myFixture.addClass("public class Foo {" +
                        "public static void main(String[] args) { " +
                        "  System.out.println(new Bar().foo());" +
                        "}" +
-                       "}");
-    final String barText = "class Bar {" + "  def foo() { 239  }" + "}";
-    final PsiFile file = myFixture.addFileToProject("Bar.groovy", barText);
+                       "}")
+    final String barText = "class Bar {" + "  def foo() { 239  }" + "}"
+    final PsiFile file = myFixture.addFileToProject("Bar.groovy", barText)
     make()
-    assertOutput("Foo", "239");
+    assertOutput("Foo", "239")
 
-    setFileText(file, "class Bar {}");
+    setFileText(file, "class Bar {}")
     shouldFail { make() }
 
-    setFileText(file, barText);
-    make();
-    assertOutput("Foo", "239");
+    setFileText(file, barText)
+    make()
+    assertOutput("Foo", "239")
   }
 
-  protected static void shouldFail(Closure action) {
-    List<CompilerMessage> messages = action()
-    assert messages.find { it.category == CompilerMessageCategory.ERROR }
-  }
-
-  public void testRenameToJava() throws Throwable {
+  void testRenameToJava() throws Throwable {
     myFixture.addClass("public class Foo {" +
                        "public static void main(String[] args) { " +
                        "  System.out.println(new Bar().foo());" +
                        "}" +
-                       "}");
+                       "}")
 
     final PsiFile bar =
-      myFixture.addFileToProject("Bar.groovy", "public class Bar {" + "public int foo() { " + "  return 239;" + "}" + "}");
+      myFixture.addFileToProject("Bar.groovy", "public class Bar {" + "public int foo() { " + "  return 239;" + "}" + "}")
 
-    make();
-    assertOutput("Foo", "239");
+    make()
+    assertOutput("Foo", "239")
 
     setFileName bar, "Bar.java"
 
-    make();
-    assertOutput("Foo", "239");
+    make()
+    assertOutput("Foo", "239")
   }
 
-  public void testTransitiveJavaDependency() throws Throwable {
-    final VirtualFile ifoo = myFixture.addClass("public interface IFoo { int foo(); }").getContainingFile().getVirtualFile();
+  void testTransitiveJavaDependency() throws Throwable {
+    final VirtualFile ifoo = myFixture.addClass("public interface IFoo { int foo(); }").getContainingFile().getVirtualFile()
     myFixture.addClass("public class Foo implements IFoo {" +
                        "  public int foo() { return 239; }" +
-                       "}");
+                       "}")
     final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar {" +
                                                                  "Foo foo\n" +
                                                                  "public static void main(String[] args) { " +
                                                                  "  System.out.println(new Foo().foo());" +
                                                                  "}" +
-                                                                 "}");
-    assertEmpty(make());
-    assertOutput("Bar", "239");
+                                                                 "}")
+    assertEmpty(make())
+    assertOutput("Bar", "239")
 
-    touch(ifoo);
-    touch(bar.getVirtualFile());
+    touch(ifoo)
+    touch(bar.getVirtualFile())
 
     //assertTrue(assertOneElement(make()).contains("WARNING: Groovyc stub generation failed"));
     assertEmpty make()
-    assertOutput("Bar", "239");
+    assertOutput("Bar", "239")
   }
 
-  public void testTransitiveJavaDependencyThroughGroovy() throws Throwable {
-    myFixture.addClass("public class IFoo { void foo() {} }").getContainingFile().getVirtualFile();
+  void testTransitiveJavaDependencyThroughGroovy() throws Throwable {
+    myFixture.addClass("public class IFoo { void foo() {} }").getContainingFile().getVirtualFile()
     myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
                                              "  static IFoo f\n" +
                                              "  public int foo() { return 239; }\n" +
-                                             "}");
+                                             "}")
     final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar extends Foo {" +
                                                                  "public static void main(String[] args) { " +
                                                                  "  System.out.println(new Foo().foo());" +
                                                                  "}" +
-                                                                 "}");
-    assertEmpty(make());
-    assertOutput("Bar", "239");
+                                                                 "}")
+    assertEmpty(make())
+    assertOutput("Bar", "239")
 
-    deleteClassFile("IFoo");
-    touch(bar.getVirtualFile());
+    deleteClassFile("IFoo")
+    touch(bar.getVirtualFile())
 
     //assertTrue(assertOneElement(make()).contains("WARNING: Groovyc error"));
     assertEmpty make()
-    assertOutput("Bar", "239");
+    assertOutput("Bar", "239")
   }
 
-  public void testTransitiveGroovyDependency() throws Throwable {
+  void testTransitiveGroovyDependency() throws Throwable {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {} ')
     def bar = myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo {}')
     def goo = myFixture.addFileToProject('Goo.groovy', 'class Goo extends Bar {}')
-    assertEmpty(make());
+    assertEmpty(make())
 
     touch(foo.virtualFile)
     touch(goo.virtualFile)
-    assertEmpty(make());
+    assertEmpty(make())
   }
 
-  public void testJavaDependsOnGroovyEnum() throws Throwable {
+  void testJavaDependsOnGroovyEnum() throws Throwable {
     myFixture.addFileToProject("Foo.groovy", "enum Foo { FOO }")
     myFixture.addClass("class Bar { Foo f; }")
     assertEmpty(make())
   }
 
-  public void testDeleteTransitiveJavaClass() throws Throwable {
-    myFixture.addClass("public interface IFoo { int foo(); }");
+  void testDeleteTransitiveJavaClass() throws Throwable {
+    myFixture.addClass("public interface IFoo { int foo(); }")
     myFixture.addClass("public class Foo implements IFoo {" +
                        "  public int foo() { return 239; }" +
-                       "}");
+                       "}")
     final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar {" +
                                                                  "Foo foo\n" +
                                                                  "public static void main(String[] args) { " +
                                                                  "  System.out.println(new Foo().foo());" +
                                                                  "}" +
-                                                                 "}");
-    assertEmpty(make());
-    assertOutput("Bar", "239");
+                                                                 "}")
+    assertEmpty(make())
+    assertOutput("Bar", "239")
 
-    deleteClassFile("IFoo");
-    touch(bar.getVirtualFile());
+    deleteClassFile("IFoo")
+    touch(bar.getVirtualFile())
 
     //assertTrue(assertOneElement(make()).contains("WARNING: Groovyc stub generation failed"));
     assertEmpty make()
-    assertOutput("Bar", "239");
+    assertOutput("Bar", "239")
   }
 
-  public void testGroovyDependsOnGroovy() throws Throwable {
-    myFixture.addClass("public class JustToMakeGroovyGenerateStubs {}");
-    myFixture.addFileToProject("Foo.groovy", "class Foo { }");
+  void testGroovyDependsOnGroovy() throws Throwable {
+    myFixture.addClass("public class JustToMakeGroovyGenerateStubs {}")
+    myFixture.addFileToProject("Foo.groovy", "class Foo { }")
     final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar {" +
                                                                  "def foo(Foo f) {}\n" +
                                                                  "public static void main(String[] args) { " +
                                                                  "  System.out.println(239);" +
                                                                  "}" +
-                                                                 "}");
-    assertEmpty(make());
-    assertOutput("Bar", "239");
+                                                                 "}")
+    assertEmpty(make())
+    assertOutput("Bar", "239")
 
-    touch(bar.getVirtualFile());
+    touch(bar.getVirtualFile())
 
-    assertEmpty(make());
-    assertOutput("Bar", "239");
+    assertEmpty(make())
+    assertOutput("Bar", "239")
   }
 
   @Override
@@ -252,56 +250,56 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     System.out.flush()
   }
 
-  public void testMakeInTests() throws Throwable {
-    setupTestSources();
-    myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
-    assertEmpty(make());
+  void testMakeInTests() throws Throwable {
+    setupTestSources()
+    myFixture.addFileToProject("tests/Super.groovy", "class Super {}")
+    assertEmpty(make())
 
     def sub = myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
       "  Super xxx() {}\n" +
       "  static void main(String[] args) {" +
       "    println 'hello'" +
       "  }" +
-      "}");
+      "}")
 
-    def javaFile = myFixture.addFileToProject("tests/Java.java", "public class Java {}");
+    def javaFile = myFixture.addFileToProject("tests/Java.java", "public class Java {}")
 
-    assertEmpty(make());
-    assertOutput("Sub", "hello");
+    assertEmpty(make())
+    assertOutput("Sub", "hello")
   }
 
-  public void testTestsDependOnProduction() throws Throwable {
-    setupTestSources();
+  void testTestsDependOnProduction() throws Throwable {
+    setupTestSources()
     myFixture.addFileToProject("src/com/Bar.groovy", "package com\n" +
-                                                     "class Bar {}");
+                                                     "class Bar {}")
     myFixture.addFileToProject("src/com/ToGenerateStubs.java", "package com;\n" +
-                                                               "public class ToGenerateStubs {}");
+                                                               "public class ToGenerateStubs {}")
     myFixture.addFileToProject("tests/com/BarTest.groovy", "package com\n" +
-                                                           "class BarTest extends Bar {}");
-    assertEmpty(make());
+                                                           "class BarTest extends Bar {}")
+    assertEmpty(make())
   }
 
-  public void testStubForGroovyExtendingJava() throws Exception {
-    def foo = myFixture.addFileToProject("Foo.groovy", "class Foo extends Goo { }");
-    myFixture.addFileToProject("Goo.groovy", "class Goo extends Main { void bar() { println 'hello' } }");
-    def main = myFixture.addClass("public class Main { public static void main(String[] args) { new Goo().bar(); } }");
+  void testStubForGroovyExtendingJava() throws Exception {
+    def foo = myFixture.addFileToProject("Foo.groovy", "class Foo extends Goo { }")
+    myFixture.addFileToProject("Goo.groovy", "class Goo extends Main { void bar() { println 'hello' } }")
+    def main = myFixture.addClass("public class Main { public static void main(String[] args) { new Goo().bar(); } }")
 
-    assertEmpty(make());
+    assertEmpty(make())
     assertOutput 'Main', 'hello'
 
     touch(foo.virtualFile)
     touch(main.containingFile.virtualFile)
-    assertEmpty(make());
+    assertEmpty(make())
 
     assertOutput 'Main', 'hello'
   }
 
-  public void testDontApplyTransformsFromSameModule() throws Exception {
-    addTransform();
+  void testDontApplyTransformsFromSameModule() throws Exception {
+    addTransform()
 
-    myFixture.addClass("public class JavaClassToGenerateStubs {}");
+    myFixture.addClass("public class JavaClassToGenerateStubs {}")
 
-    assertEmpty(make());
+    assertEmpty(make())
 
   }
 
@@ -322,49 +320,49 @@ public class Transf implements ASTTransformation {
     }
       //throw new RuntimeException("In class " + nodes[0]);
   }
-}""");
+}""")
 
     myFixture.addFileToProject("Foo.java", "public class Foo {\n" +
                                              "public static int autoImported() { return 239; }\n" +
-                                             "}");
+                                             "}")
 
-    CompilerConfiguration.getInstance(getProject()).addResourceFilePattern("*.ASTTransformation");
+    CompilerConfiguration.getInstance(getProject()).addResourceFilePattern("*.ASTTransformation")
 
-    myFixture.addFileToProject("META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "Transf");
+    myFixture.addFileToProject("META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "Transf")
   }
 
-  public void testApplyTransformsFromDependencies() throws Exception {
-    addTransform();
+  void testApplyTransformsFromDependencies() throws Exception {
+    addTransform()
 
     myFixture.addFileToProject("dependent/Bar.groovy", "class Bar {\n" +
                                                        "  static Object zzz = autoImported()\n" +
                                                        "  static void main(String[] args) {\n" +
                                                        "    println zzz\n" +
                                                        "  }\n" +
-                                                       "}");
+                                                       "}")
 
-    myFixture.addFileToProject("dependent/AJavaClass.java", "class AJavaClass {}");
+    myFixture.addFileToProject("dependent/AJavaClass.java", "class AJavaClass {}")
 
-    Module dep = addDependentModule();
+    Module dep = addDependentModule()
 
-    addGroovyLibrary(dep);
+    addGroovyLibrary(dep)
 
-    assertEmpty(make());
-    assertOutput("Bar", "239", dep);
+    assertEmpty(make())
+    assertOutput("Bar", "239", dep)
   }
 
-  public void testIndirectDependencies() throws Exception {
-    myFixture.addFileToProject("dependent1/Bar1.groovy", "class Bar1 {}");
-    myFixture.addFileToProject("dependent2/Bar2.groovy", "class Bar2 extends Bar1 {}");
-    PsiFile main = myFixture.addFileToProject("Main.groovy", "class Main extends Bar2 {}");
+  void testIndirectDependencies() throws Exception {
+    myFixture.addFileToProject("dependent1/Bar1.groovy", "class Bar1 {}")
+    myFixture.addFileToProject("dependent2/Bar2.groovy", "class Bar2 extends Bar1 {}")
+    PsiFile main = myFixture.addFileToProject("Main.groovy", "class Main extends Bar2 {}")
 
     Module dep1 = addModule('dependent1', true)
     Module dep2 = addModule('dependent2', true)
     ModuleRootModificationUtil.addDependency dep2, dep1
     ModuleRootModificationUtil.addDependency myModule, dep2
 
-    addGroovyLibrary(dep1);
-    addGroovyLibrary(dep2);
+    addGroovyLibrary(dep1)
+    addGroovyLibrary(dep2)
 
     assertEmpty(make())
 
@@ -372,7 +370,7 @@ public class Transf implements ASTTransformation {
     assertEmpty(make())
   }
 
-  public void testExtendFromGroovyAbstractClass() throws Exception {
+  void testExtendFromGroovyAbstractClass() throws Exception {
     myFixture.addFileToProject "Super.groovy", "abstract class Super {}"
     myFixture.addFileToProject "AJava.java", "public class AJava {}"
     assertEmpty make()
@@ -381,7 +379,7 @@ public class Transf implements ASTTransformation {
     assertEmpty make()
   }
 
-  public void test1_7InnerClass() throws Exception {
+  void test1_7InnerClass() throws Exception {
     myFixture.addFileToProject "Foo.groovy", """
 class Foo {
   static class Bar {}
@@ -393,7 +391,7 @@ class Foo {
     assertEmpty make()
   }
 
-  public void testRecompileDependentClass() throws Exception {
+  void testRecompileDependentClass() throws Exception {
     def cloud = myFixture.addFileToProject("Cloud.groovy", """
 class Cloud {
   def accessFooProperty(Foo c) {
@@ -414,7 +412,7 @@ class Foo {
     assertEmpty make()
   }
 
-  public void testRecompileExpressionReferences() throws Exception {
+  void testRecompileExpressionReferences() throws Exception {
     def rusCon = myFixture.addFileToProject('RusCon.groovy', '''
 interface RusCon {
   Closure foo = { Seq.foo() }
@@ -429,7 +427,7 @@ class Seq implements RusCon {
     assertEmpty make()
   }
 
-  public void testRecompileImportedClass() throws Exception {
+  void testRecompileImportedClass() throws Exception {
     def bar = myFixture.addFileToProject("pack/Bar.groovy", """
 package pack
 import pack.Foo
@@ -450,7 +448,7 @@ class Goo {}""")
     assertEmpty make()
   }
 
-  public void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
+  void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
     def bar = myFixture.addFileToProject("Bar.groovy", """
 class Bar {
   Foo f
@@ -466,7 +464,7 @@ class Foo extends Bar {
     assertEmpty make()
   }
 
-  public void testDollarGroovyInnerClassUsagesInStubs() throws Exception {
+  void testDollarGroovyInnerClassUsagesInStubs() throws Exception {
     def javaFile = myFixture.addClass("""
       public class JavaClass {
         public static class InnerJavaClass {}
@@ -490,7 +488,7 @@ class Usage {
     assertEmpty make()
   }
 
-  public void testDollarGroovyInnerClassUsagesInStubs2() throws Exception {
+  void testDollarGroovyInnerClassUsagesInStubs2() throws Exception {
     myFixture.addClass(""" public class JavaClass { } """)
     myFixture.addFileToProject("WithInner.groovy", """
 class WithInner {
@@ -507,7 +505,7 @@ class Usage {
     assertEmpty make()
   }
 
-  public void testGroovyAnnotations() {
+  void testGroovyAnnotations() {
     myFixture.addClass 'public @interface Anno { Class<?>[] value(); }'
     myFixture.addFileToProject 'Foo.groovy', '@Anno([String]) class Foo {}'
     myFixture.addFileToProject 'Bar.java', 'class Bar extends Foo {}'
@@ -515,13 +513,13 @@ class Usage {
     assertEmpty make()
   }
 
-  public void testGenericStubs() {
+  void testGenericStubs() {
     myFixture.addFileToProject 'Foo.groovy', 'class Foo { List<String> list }'
     myFixture.addFileToProject 'Bar.java', 'class Bar {{ for (String s : new Foo().getList()) { s.hashCode(); } }}'
     assertEmpty make()
   }
 
-  public void testDuplicateClassDuringCompilation() throws Exception {
+  void testDuplicateClassDuringCompilation() throws Exception {
     def base = myFixture.addFileToProject('p/Base.groovy', 'package p; class Base { }').virtualFile
     myFixture.addFileToProject('p/Indirect.groovy', '''package p
 class Indirect {
@@ -537,7 +535,7 @@ class Indirect {
     assertEmpty make()
   }
 
-  public void testDontRecompileUnneeded() {
+  void testDontRecompileUnneeded() {
     myFixture.addFileToProject('Base.groovy', 'class Base { }')
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo extends Base { }').virtualFile
     myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo { }')
@@ -553,7 +551,7 @@ class Indirect {
     assert oldBaseStamp == findClassFile("Base").timeStamp
   }
 
-  public void testPartialCrossRecompile() {
+  void testPartialCrossRecompile() {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
@@ -578,7 +576,7 @@ class Indirect {
     assert findClassFile('Used2') == null
   }
 
-  public void testClassLoadingDuringBytecodeGeneration() {
+  void testClassLoadingDuringBytecodeGeneration() {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', '''
 abstract class Java {
@@ -599,7 +597,7 @@ class Main {
     assertEmpty make()
   }
 
-  public void testMakeInDependentModuleAfterChunkRebuild() {
+  void testMakeInDependentModuleAfterChunkRebuild() {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
@@ -617,7 +615,7 @@ class Main {
     assertEmpty make()
   }
 
-  public void "test extend package-local class from another module"() {
+  void "test extend package-private class from another module"() {
     addGroovyLibrary(addDependentModule())
 
     myFixture.addClass("package foo; class Foo {}")
@@ -627,7 +625,23 @@ class Main {
     assertEmpty make()
   }
 
-  public void "test module cycle"() {
+  void "test do not recompile unrelated files after breaking compilation"() {
+    def fooFile = myFixture.addFileToProject("Foo.groovy", "class Foo {}")
+    myFixture.addFileToProject("Bar.groovy", "class Bar {}")
+    assertEmpty make()
+
+    def barCompiled = VfsUtil.virtualToIoFile(findClassFile('Bar'))
+    def barStamp = barCompiled.lastModified()
+
+    setFileText(fooFile, 'class Foo ext { }')
+    shouldFail { make() }
+    setFileText(fooFile, 'interface Foo extends Runnable { }')
+    assertEmpty make()
+
+    assert barStamp == barCompiled.lastModified()
+  }
+
+  void "test module cycle"() {
     def dep = addDependentModule()
     ModuleRootModificationUtil.addDependency(myModule, dep)
     addGroovyLibrary(dep)
@@ -663,7 +677,7 @@ class Main {
     checkClassFiles()
   }
 
-  public void testCompileTimeConstants() {
+  void testCompileTimeConstants() {
     myFixture.addFileToProject 'Gr.groovy', '''
 interface Gr {
   String HELLO = "Hello"
@@ -682,7 +696,7 @@ public class Main {
     assertOutput 'Main', 'Hello, truetrue239'
   }
 
-  public void "test reporting rebuild errors caused by missing files excluded from compilation"() {
+  void "test reporting rebuild errors caused by missing files excluded from compilation"() {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
     myFixture.addFileToProject 'Bar.groovy', 'class Bar extends Foo {}'
 
@@ -693,7 +707,7 @@ public class Main {
     shouldFail { rebuild() }
   }
 
-  public void "test compile groovy excluded from stub generation"() {
+  void "test compile groovy excluded from stub generation"() {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
     myFixture.addFileToProject 'Bar.groovy', 'class Bar extends Foo {}'
 
@@ -710,7 +724,7 @@ public class Main {
     configuration.addExcludeEntryDescription(new ExcludeEntryDescription(foo.virtualFile, false, true, testRootDisposable))
   }
 
-  public void "test make stub-level error and correct it"() {
+  void "test make stub-level error and correct it"() {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo { }')
     myFixture.addFileToProject('Bar.java', 'class Bar extends Foo {}')
 
@@ -732,7 +746,7 @@ public class Main {
     assertEmpty make()
   }
 
-  public void "test reporting module compile errors caused by missing files excluded from compilation"() {
+  void "test reporting module compile errors caused by missing files excluded from compilation"() {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
     myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo {}')
 
@@ -743,7 +757,7 @@ public class Main {
     shouldFail { compileModule(myModule) }
   }
 
-  public void "test stubs generated while processing groovy class file dependencies"() {
+  void "test stubs generated while processing groovy class file dependencies"() {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo { }')
     def bar = myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo { }')
     def client = myFixture.addFileToProject('Client.groovy', 'class Client { Bar bar = new Bar() }')
@@ -757,7 +771,7 @@ public class Main {
     assert findClassFile("Client")
   }
 
-  public void "test ignore groovy internal non-existent interface helper inner class"() {
+  void "test ignore groovy internal non-existent interface helper inner class"() {
     myFixture.addFileToProject 'Foo.groovy', '''
 interface Foo {}
 
@@ -773,7 +787,7 @@ class Zoo {
     assertEmpty compileFiles(bar.virtualFile)
   }
 
-  public void "test multiline strings"() {
+  void "test multiline strings"() {
     myFixture.addFileToProject 'Foo.groovy', '''class Foo {
   public static final String s = """
 multi
@@ -786,7 +800,7 @@ string
     assertEmpty make()
   }
 
-  public void "test inner java class references with incremental recompilation"() {
+  void "test inner java class references with incremental recompilation"() {
     def bar1 = myFixture.addFileToProject('bar/Bar1.groovy', 'package bar; class Bar1 extends Bar2 { } ')
     myFixture.addFileToProject('bar/Bar2.java', 'package bar; class Bar2 extends Bar3 { } ')
     def bar3 = myFixture.addFileToProject('bar/Bar3.groovy', 'package bar; class Bar3 { Bar1 property } ')
@@ -803,7 +817,7 @@ string
     assertEmpty make()
   }
 
-  public void "test rename class to java and touch its usage"() {
+  void "test rename class to java and touch its usage"() {
     def usage = myFixture.addFileToProject('Usage.groovy', 'class Usage { Renamed r } ')
     def renamed = myFixture.addFileToProject('Renamed.groovy', 'public class Renamed { } ')
     assertEmpty make()
@@ -813,7 +827,7 @@ string
     assertEmpty make()
   }
 
-  public void "test compiling static extension"() {
+  void "test compiling static extension"() {
     setupTestSources()
     myFixture.addFileToProject "src/extension/Extension.groovy", """
 package extension
@@ -845,54 +859,54 @@ class AppTest {
     assertOutput 'AppTest', 'b'
   }
 
-  public void "test no groovy library"() {
-    myFixture.addFileToProject("dependent/a.groovy", "");
+  void "test no groovy library"() {
+    myFixture.addFileToProject("dependent/a.groovy", "")
     addModule("dependent", true)
 
     def messages = make()
     assert messages.find { it.message.contains("Cannot compile Groovy files: no Groovy library is defined for module 'dependent'") }
   }
 
-  public void testGroovyOutputIsInstrumented() {
+  void testGroovyOutputIsInstrumented() {
     myFixture.addFileToProject("Bar.groovy",
        "import org.jetbrains.annotations.NotNull; " +
        "public class Bar {" +
          "void xxx(@NotNull String param) { println param }\n" +
          "static void main(String[] args) { new Bar().xxx(null) }"+
        "}"
-    );
+    )
 
-    File annotations = new File(PathManager.getJarPathForClass(NotNull.class));
-    PsiTestUtil.addLibrary(myModule, "annotations", annotations.getParent(), annotations.getName());
+    File annotations = new File(PathManager.getJarPathForClass(NotNull.class))
+    PsiTestUtil.addLibrary(myModule, "annotations", annotations.getParent(), annotations.getName())
 
-    assertEmpty(make());
+    assertEmpty(make())
 
-    final Ref<Boolean> exceptionFound = Ref.create(Boolean.FALSE);
+    final Ref<Boolean> exceptionFound = Ref.create(Boolean.FALSE)
     ProcessHandler process = runProcess("Bar", myModule, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+       void onTextAvailable(ProcessEvent event, Key outputType) {
         println "stdout: " + event.text
         if (ProcessOutputTypes.SYSTEM != outputType) {
           if (!exceptionFound.get()) {
-            exceptionFound.set(event.getText().contains("java.lang.IllegalArgumentException: Argument for @NotNull parameter 'param' of Bar.xxx must not be null"));
+            exceptionFound.set(event.getText().contains("java.lang.IllegalArgumentException: Argument for @NotNull parameter 'param' of Bar.xxx must not be null"))
           }
         }
       }
-    }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class));
-    process.waitFor();
+    }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class))
+    process.waitFor()
 
-    assertTrue(exceptionFound.get());
+    assertTrue(exceptionFound.get())
   }
 
-  public void "test extend groovy classes with additional dependencies"() {
+  void "test extend groovy classes with additional dependencies"() {
     def anotherModule = addModule("another", true)
     addGroovyLibrary(anotherModule)
 
-    PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar");
+    PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar")
 
     def cliPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib")
-    PsiTestUtil.addLibrary(myModule, "cli", cliPath, "commons-cli-1.2.jar");
-    PsiTestUtil.addLibrary(anotherModule, "cli", cliPath, "commons-cli-1.2.jar");
+    PsiTestUtil.addLibrary(myModule, "cli", cliPath, "commons-cli-1.2.jar")
+    PsiTestUtil.addLibrary(anotherModule, "cli", cliPath, "commons-cli-1.2.jar")
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
     myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
@@ -902,8 +916,34 @@ class AppTest {
     assertEmpty(make())
   }
 
+  void "test java depends on stub whose generation failed"() {
+    Closure<Runnable> createFiles = { String prefix ->
+      def genParam = myFixture.addFileToProject(prefix + "GenParam.java", "class GenParam {}")
+      myFixture.addFileToProject(prefix + "Intf.java", "class Intf<T extends GenParam> {}")
+      myFixture.addFileToProject(prefix + "SuperFoo.java", "class SuperFoo extends Intf<GenParam> {}")
+      def fooGroovy = myFixture.addFileToProject(prefix + "Foo.groovy", "class Foo extends SuperFoo {}")
+      return {
+        touch(genParam.virtualFile)
+        touch(fooGroovy.virtualFile)
+        myFixture.addFileToProject(prefix + "Bar.java", "class Bar extends Foo { }")
+      } as Runnable
+    }
+
+    addGroovyLibrary(addModule('mod2', true))
+
+    def touch1 = createFiles('')
+    def touch2 = createFiles('mod2/')
+
+    assertEmpty(make())
+
+    touch1.run()
+    touch2.run()
+
+    assert !make().find { it.category == CompilerMessageCategory.ERROR }
+  }
+
   static class GroovycTest extends GroovyCompilerTest {
-    public void "test navigate from stub to source"() {
+    void "test navigate from stub to source"() {
       GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
       myFixture.addClass("class Java4 extends Groovy3 {}").containingFile
 
@@ -918,17 +958,17 @@ class AppTest {
       assert groovyFile.classes[0] == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
     }
 
-    public void "test config script"() {
+    void "test config script"() {
       def script = FileUtil.createTempFile("configScriptTest", ".groovy", true)
       FileUtil.writeToFile(script, "import groovy.transform.*; withConfig(configuration) { ast(CompileStatic) }")
 
       GroovyCompilerConfiguration.getInstance(project).configScript = script.path
-      
+
       myFixture.addFileToProject("a.groovy", "class A { int s = 'foo' }")
       shouldFail { make() }
     }
 
-    public void "test user-level diagnostic for missing dependency of groovy-all"() {
+    void "test user-level diagnostic for missing dependency of groovy-all"() {
       myFixture.addFileToProject 'Bar.groovy', '''import groovy.util.logging.Commons
 @Commons
 class Bar {}'''
@@ -951,7 +991,5 @@ class Bar {}'''
 
       GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
     }
-
   }
-
 }

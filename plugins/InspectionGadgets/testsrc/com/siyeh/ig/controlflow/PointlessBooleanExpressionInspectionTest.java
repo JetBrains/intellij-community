@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,24 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Danila Ponomarenko
  */
-public class PointlessBooleanExpressionInspectionTest extends IGInspectionTestCase {
+public class PointlessBooleanExpressionInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
+  public void testPointlessBooleanExpression() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
     final PointlessBooleanExpressionInspection inspection = new PointlessBooleanExpressionInspection();
     inspection.m_ignoreExpressionsContainingConstants = true;
-    doTest("com/siyeh/igtest/controlflow/pointless_boolean_expression", inspection);
+    return inspection;
   }
 }

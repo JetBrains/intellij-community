@@ -35,11 +35,7 @@ public class JavaReferenceEditorUtil {
                                                                                       final Project project,
                                                                                       final boolean toAcceptClasses) {
     return new ReferenceEditorWithBrowseButton(browseActionListener, project,
-                                               new NullableFunction<String,Document>() {
-      public Document fun(final String s) {
-        return createDocument(s, project, toAcceptClasses);
-      }
-    }, text);
+                                               (NullableFunction<String, Document>)s -> createDocument(s, project, toAcceptClasses), text);
   }
 
   @Nullable

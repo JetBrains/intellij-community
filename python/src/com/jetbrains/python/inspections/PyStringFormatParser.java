@@ -73,6 +73,7 @@ public class PyStringFormatParser {
     @Nullable private String myWidth;
     @Nullable private String myPrecision;
     @Nullable private Integer myPosition;
+    @Nullable private Integer myAutoPosition;
     private char myLengthModifier;
     private char myConversionType;
     private boolean myUnclosedMapping;
@@ -81,7 +82,7 @@ public class PyStringFormatParser {
       super(startIndex, startIndex);
     }
 
-    private void setEndIndex(int endIndex) {
+    protected void setEndIndex(int endIndex) {
       myEndIndex = endIndex;
     }
 
@@ -98,7 +99,7 @@ public class PyStringFormatParser {
       return myMappingKey;
     }
 
-    private void setMappingKey(@Nullable String mappingKey) {
+    protected void setMappingKey(@Nullable String mappingKey) {
       myMappingKey = mappingKey;
     }
 
@@ -150,14 +151,32 @@ public class PyStringFormatParser {
       return myPosition;
     }
 
-    private void setPosition(@Nullable Integer position) {
+    protected void setPosition(@Nullable Integer position) {
       myPosition = position;
+    }
+
+    /**
+     * Automatic index of the field if neither mapping key nor explicit index was given, {@code null} otherwise.
+     * <p/>
+     * Basically, it's the number of automatically numbered fields preceding the current one.
+     * Note that this is somewhat unreliable because it's an error to use fields with both explicit
+     * and implicit indexing.
+     *
+     */
+    @Nullable
+    public Integer getAutoPosition() {
+      return myAutoPosition;
+    }
+
+    protected void setAutoPosition(@Nullable Integer autoPosition) {
+      myAutoPosition = autoPosition;
     }
   }
 
   @NotNull private final String myLiteral;
-  @NotNull private final List<FormatStringChunk> myResult = new ArrayList<FormatStringChunk>();
+  @NotNull private final List<FormatStringChunk> myResult = new ArrayList<>();
   private int myPos;
+  private int mySubstitutionsCount = 0;
 
   private static final String CONVERSION_FLAGS = "#0- +";
   private static final String DIGITS = "0123456789";
@@ -175,8 +194,9 @@ public class PyStringFormatParser {
 
   @NotNull
   public static List<FormatStringChunk> parseNewStyleFormat(@NotNull String s) {
-    final List<FormatStringChunk> results = new ArrayList<FormatStringChunk>();
+    final List<FormatStringChunk> results = new ArrayList<>();
     final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(s);
+    int autoPositionedFieldsCount = 0;
     while (matcher.find()) {
       final String group = matcher.group();
       final int start = matcher.start();
@@ -197,6 +217,10 @@ public class PyStringFormatParser {
           } catch (NumberFormatException e) {
             chunk.setMappingKey(name);
           }
+        }
+        else {
+          chunk.setAutoPosition(autoPositionedFieldsCount);
+          autoPositionedFieldsCount++;
         }
         // TODO: Parse substitution details
         results.add(chunk);
@@ -246,6 +270,10 @@ public class PyStringFormatParser {
       chunk.setMappingKey(myLiteral.substring(myPos+1, mappingEnd));
       myPos = mappingEnd+1;
     }
+    else  {
+      chunk.setAutoPosition(mySubstitutionsCount);
+      mySubstitutionsCount++;
+    }
     chunk.setConversionFlags(parseWhileCharacterInSet(CONVERSION_FLAGS));
     chunk.setWidth(parseWidth());
     if (isAt('.')) {
@@ -291,7 +319,7 @@ public class PyStringFormatParser {
 
   @NotNull
   public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<FormatStringChunk> chunks) {
-    final List<SubstitutionChunk> results = new ArrayList<SubstitutionChunk>();
+    final List<SubstitutionChunk> results = new ArrayList<>();
     for (FormatStringChunk chunk : chunks) {
       if (chunk instanceof SubstitutionChunk) {
         results.add((SubstitutionChunk)chunk);
@@ -303,7 +331,7 @@ public class PyStringFormatParser {
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
-    final ArrayList<SubstitutionChunk> result = new ArrayList<SubstitutionChunk>();
+    final ArrayList<SubstitutionChunk> result = new ArrayList<>();
     for (SubstitutionChunk s : substitutions) {
       if (s.getMappingKey() == null) {
         result.add(s);
@@ -315,7 +343,7 @@ public class PyStringFormatParser {
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
-    final Map<String, SubstitutionChunk> result = new HashMap<String, SubstitutionChunk>();
+    final Map<String, SubstitutionChunk> result = new HashMap<>();
     for (SubstitutionChunk s : substitutions) {
       final String key = s.getMappingKey();
       if (key != null) {
@@ -327,7 +355,7 @@ public class PyStringFormatParser {
 
   @NotNull
   public static List<TextRange> substitutionsToRanges(@NotNull List<SubstitutionChunk> substitutions) {
-    final List<TextRange> ranges = new ArrayList<TextRange>();
+    final List<TextRange> ranges = new ArrayList<>();
     for (SubstitutionChunk substitution : substitutions) {
       ranges.add(TextRange.create(substitution.getStartIndex(), substitution.getEndIndex()));
     }
@@ -375,7 +403,7 @@ public class PyStringFormatParser {
 
   @NotNull
   public static List<TextRange> getEscapeRanges(@NotNull String s) {
-    final List<TextRange> ranges = new ArrayList<TextRange>();
+    final List<TextRange> ranges = new ArrayList<>();
     Matcher matcher = PyStringLiteralExpressionImpl.PATTERN_ESCAPE.matcher(s);
     while (matcher.find()) {
       ranges.add(TextRange.create(matcher.start(), matcher.end()));

@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class AlignmentImpl extends Alignment {
+public class AlignmentImpl extends Alignment {
   private static final List<LeafBlockWrapper> EMPTY = Collections.emptyList();
   private final boolean myAllowBackwardShift;
   private final Anchor myAnchor;
@@ -33,24 +33,14 @@ class AlignmentImpl extends Alignment {
   private AlignmentImpl myParentAlignment;
   private ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper> myOffsetRespBlocksCalculator;
 
-  /**
-   * Creates new <code>AlignmentImpl</code> object with <code>'false'</code> as <code>'allows backward shift'</code> argument flag.
-   */
   AlignmentImpl() {
     this(false, Anchor.LEFT);
   }
 
-  /**
-   * Creates new <code>AlignmentImpl</code> object with the given <code>'allows backward shift'</code> argument flag.
-   *
-   * @param allowBackwardShift    flag that indicates if it should be possible to shift former aligned block to right
-   *                              in order to align to subsequent aligned block (see {@link Alignment#createAlignment(boolean, Anchor)})
-   * @param anchor                alignment anchor (see {@link Alignment#createAlignment(boolean, Anchor)})
-   */
   AlignmentImpl(boolean allowBackwardShift, @NotNull Anchor anchor) {
     myAllowBackwardShift = allowBackwardShift;
     myAnchor = anchor;
-    myOffsetRespBlocksCalculator = new ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper>(myOffsetRespBlocks);
+    myOffsetRespBlocksCalculator = new ProbablyIncreasingLowerboundAlgorithm<>(myOffsetRespBlocks);
   }
 
   public boolean isAllowBackwardShift() {
@@ -110,7 +100,7 @@ class AlignmentImpl extends Alignment {
    *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; <code>null</code> otherwise
    */
   @Nullable
-  LeafBlockWrapper getOffsetRespBlockBefore(@Nullable final AbstractBlockWrapper block) {
+  public LeafBlockWrapper getOffsetRespBlockBefore(@Nullable final AbstractBlockWrapper block) {
     if (!continueOffsetResponsibleBlockRetrieval(block)) {
       return null;
     }
@@ -135,12 +125,12 @@ class AlignmentImpl extends Alignment {
    *
    * @param block   wrapped block to register within the current alignment object
    */
-  void setOffsetRespBlock(final LeafBlockWrapper block) {
+  public void setOffsetRespBlock(final LeafBlockWrapper block) {
     if (block == null) {
       return;
     }
     if (myOffsetRespBlocks == EMPTY) {
-      myOffsetRespBlocks = new ArrayList<LeafBlockWrapper>(1);
+      myOffsetRespBlocks = new ArrayList<>(1);
       myOffsetRespBlocksCalculator.setBlocksList(myOffsetRespBlocks);
     }
     myOffsetRespBlocks.add(block);

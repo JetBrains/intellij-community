@@ -112,7 +112,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
       return;
     }
 
-    final HashMap<PsiClass, Collection<MemberInfo>> basesToMemberInfos = new LinkedHashMap<PsiClass, Collection<MemberInfo>>();
+    final HashMap<PsiClass, Collection<MemberInfo>> basesToMemberInfos = new LinkedHashMap<>();
 
     for (PsiClass base : bases) {
       if (javaLangObject.equals(base.getQualifiedName())) continue;
@@ -131,7 +131,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
 
     final MemberInfoStorage memberInfoStorage = new MemberInfoStorage(baseClass, MEMBER_INFO_FILTER);
 
-    ArrayList<MemberInfo> memberInfoList = new ArrayList<MemberInfo>(memberInfoStorage.getClassMemberInfos(deepestBase));
+    ArrayList<MemberInfo> memberInfoList = new ArrayList<>(memberInfoStorage.getClassMemberInfos(deepestBase));
     List<MemberInfo> memberInfos = memberInfoStorage.getIntermediateMemberInfosList(deepestBase);
     for (final MemberInfo memberInfo : memberInfos) {
       memberInfoList.add(memberInfo);

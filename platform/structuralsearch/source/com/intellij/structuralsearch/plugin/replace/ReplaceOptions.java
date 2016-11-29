@@ -159,7 +159,7 @@ public class ReplaceOptions implements JDOMExternalizable {
 
   public void addVariableDefinition(ReplacementVariableDefinition definition) {
     if (variableDefs==null) {
-      variableDefs = new LinkedHashMap<String, ReplacementVariableDefinition>();
+      variableDefs = new LinkedHashMap<>();
     }
     variableDefs.put( definition.getName(), definition );
   }

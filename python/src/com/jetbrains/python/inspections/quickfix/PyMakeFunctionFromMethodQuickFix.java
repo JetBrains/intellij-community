@@ -45,14 +45,8 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.make.function");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.make.function");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
@@ -89,7 +83,10 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
                                   @NotNull final PsiFile usageFile, boolean addImport) {
     final PyExpression qualifier = element.getQualifier();
     if (qualifier == null) return;
-    if (qualifier.getText().equals(PyNames.CANONICAL_SELF)) PyUtil.removeQualifier(element);
+    if (qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
+      PyUtil.removeQualifier(element);
+      return;
+    }
     if (qualifier instanceof PyCallExpression) {              // remove qualifier A().m()
       if (addImport)
         AddImportHelper.addImport((PsiNamedElement)finalElement, usageFile, element);

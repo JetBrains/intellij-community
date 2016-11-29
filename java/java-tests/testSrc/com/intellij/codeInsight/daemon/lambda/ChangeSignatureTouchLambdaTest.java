@@ -38,6 +38,14 @@ public class ChangeSignatureTouchLambdaTest extends ChangeSignatureBaseTest {
     doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "false")}, new ThrownExceptionInfo[0], true);
   }
 
+  public void testAddExceptionToCatchInOneLineLambda() throws Exception {
+    doTest(null, null, new String[] {"java.io.IOException"}, false);
+  }
+
+  public void testAddUncheckedExceptionInMethodRef() throws Exception {
+    doTest(null, null, new String[] {"java.lang.NullPointerException"}, false);
+  }
+
   @Override
   protected String getRelativePath() {
     return "/codeInsight/daemonCodeAnalyzer/lambda/changeSignature/";

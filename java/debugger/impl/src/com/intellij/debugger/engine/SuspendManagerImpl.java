@@ -39,7 +39,7 @@ public class SuspendManagerImpl implements SuspendManager {
    * "paused at breakpoint" and JDI prohibits data queries on its stack frames
    */
   private final LinkedList<SuspendContextImpl> myPausedContexts = new LinkedList<>();
-  private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = Collections.synchronizedSet(new HashSet<ThreadReferenceProxyImpl>());
+  private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = Collections.synchronizedSet(new HashSet<>());
 
   private final DebugProcessImpl myDebugProcess;
 
@@ -62,11 +62,9 @@ public class SuspendManagerImpl implements SuspendManager {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, suspendPolicy, nVotes, null) {
       @Override
       protected void resumeImpl() {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Start resuming...");
-        }
+        LOG.debug("Start resuming...");
         myDebugProcess.logThreads();
-        switch(getSuspendPolicy()) {
+        switch (getSuspendPolicy()) {
           case EventRequest.SUSPEND_ALL:
             int resumeAttempts = 5;
             while (--resumeAttempts > 0) {
@@ -87,22 +85,18 @@ public class SuspendManagerImpl implements SuspendManager {
                 }
               }
             }
-            
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("VM resumed ");
-            }
+
+            LOG.debug("VM resumed ");
             break;
           case EventRequest.SUSPEND_EVENT_THREAD:
             myFrozenThreads.remove(getThread());
             getThread().resume();
-            if(LOG.isDebugEnabled()) {
+            if (LOG.isDebugEnabled()) {
               LOG.debug("Thread resumed : " + getThread().toString());
             }
             break;
           case EventRequest.SUSPEND_NONE:
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("None resumed");
-            }
+            LOG.debug("None resumed");
             break;
         }
         if (LOG.isDebugEnabled()) {
@@ -161,9 +155,7 @@ public class SuspendManagerImpl implements SuspendManager {
             }
           }
         }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Set resumed ");
-        }
+        LOG.debug("Set resumed ");
         myDebugProcess.logThreads();
       }
     };
@@ -241,18 +233,13 @@ public class SuspendManagerImpl implements SuspendManager {
   public boolean isSuspended(ThreadReferenceProxyImpl thread) throws ObjectCollectedException{
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    boolean suspended = false;
+    boolean suspended;
 
     if (isFrozen(thread)) {
       suspended = true;
     }
     else {
-      for (SuspendContextImpl suspendContext : myEventContexts) {
-        if (suspendContext.suspends(thread)) {
-          suspended = true;
-          break;
-        }
-      }
+      suspended = myEventContexts.stream().anyMatch(suspendContext -> suspendContext.suspends(thread));
     }
 
     //bug in JDI : newly created thread may be resumed even when suspendPolicy == SUSPEND_ALL
@@ -321,13 +308,11 @@ public class SuspendManagerImpl implements SuspendManager {
         });
       }
       else {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("vote paused");
-        }
+        LOG.debug("vote paused");
         myDebugProcess.logThreads();
         myDebugProcess.cancelRunToCursorBreakpoint();
         final ThreadReferenceProxyImpl thread = suspendContext.getThread();
-        myDebugProcess.deleteStepRequests(thread != null? thread.getThreadReference() : null);
+        myDebugProcess.deleteStepRequests(thread != null ? thread.getThreadReference() : null);
         notifyPaused(suspendContext);
       }
     }
@@ -340,9 +325,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public void voteResume(SuspendContextImpl suspendContext) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Resume voted");
-    }
+    LOG.debug("Resume voted");
     processVote(suspendContext);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -28,25 +29,27 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public class GroovyReadWriteAccessDetector extends ReadWriteAccessDetector{
   @Override
-  public boolean isReadWriteAccessible(PsiElement element) {
+  public boolean isReadWriteAccessible(@NotNull PsiElement element) {
     return element instanceof GrVariable;
   }
 
   @Override
-  public boolean isDeclarationWriteAccess(PsiElement element) {
+  public boolean isDeclarationWriteAccess(@NotNull PsiElement element) {
     if (element instanceof GrVariable && ((GrVariable)element).getInitializerGroovy() != null) {
       return true;
     }
     return false;
   }
 
+  @NotNull
   @Override
-  public Access getReferenceAccess(PsiElement referencedElement, PsiReference reference) {
+  public Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference) {
     return getExpressionAccess(reference.getElement());
   }
 
+  @NotNull
   @Override
-  public Access getExpressionAccess(PsiElement expression) {
+  public Access getExpressionAccess(@NotNull PsiElement expression) {
     if (expression instanceof GrExpression) {
       GrExpression expr = (GrExpression)expression;
       boolean readAccess = PsiUtil.isAccessedForReading(expr);

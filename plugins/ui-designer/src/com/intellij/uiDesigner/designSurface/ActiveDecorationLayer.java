@@ -42,7 +42,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private final GuiEditor myEditor;
   private final JToolTip myToolTip;
 
-  private final Map<RadComponent, ListenerNavigateButton> myNavigateButtons = new HashMap<RadComponent, ListenerNavigateButton>();
+  private final Map<RadComponent, ListenerNavigateButton> myNavigateButtons = new HashMap<>();
 
   private final FeedbackPainterPanel myFeedbackPainterPanel = new FeedbackPainterPanel();
   private final RectangleFeedbackPainter myRectangleFeedbackPainter = new RectangleFeedbackPainter();

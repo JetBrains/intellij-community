@@ -68,7 +68,7 @@ public abstract class MvcProjectStructure {
   public abstract String[] getExcludedFolders();
 
   public List<VirtualFile> getExcludedFolders(@NotNull VirtualFile root) {
-    List<VirtualFile> res = new ArrayList<VirtualFile>();
+    List<VirtualFile> res = new ArrayList<>();
 
     for (final String excluded : getExcludedFolders()) {
       VirtualFile dir = root.findFileByRelativePath(excluded);

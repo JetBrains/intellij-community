@@ -91,13 +91,9 @@ public abstract class AbstractImportFromExternalSystemControl<
     assert manager != null;
     FileChooserDescriptor fileChooserDescriptor = manager.getExternalProjectDescriptor();
 
-    myLinkedProjectPathField.addBrowseFolderListener("",
-                                                     ExternalSystemBundle
-                                                       .message("settings.label.select.project", externalSystemId.getReadableName()),
-                                                     null,
-                                                     fileChooserDescriptor,
-                                                     TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-                                                     false);
+    myLinkedProjectPathField.addBrowseFolderListener("", ExternalSystemBundle
+                                                       .message("settings.label.select.project", externalSystemId.getReadableName()), null,
+                                                     fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myLinkedProjectPathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {

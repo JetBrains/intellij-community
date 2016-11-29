@@ -50,9 +50,9 @@ public class CloudModuleWizardStep extends ModuleWizardStep {
     myProject = project;
     myParentDisposable = parentDisposable;
 
-    myApplicationConfigurableTypes = new HashSet<ServerType<?>>();
+    myApplicationConfigurableTypes = new HashSet<>();
 
-    List<ServerType<?>> cloudTypes = new ArrayList<ServerType<?>>();
+    List<ServerType<?>> cloudTypes = new ArrayList<>();
     for (CloudModuleBuilderContributionFactory contribution : CloudModuleBuilderContributionFactory.EP_NAME.getExtensions()) {
       cloudTypes.add(contribution.getCloudType());
     }
@@ -60,13 +60,7 @@ public class CloudModuleWizardStep extends ModuleWizardStep {
     myAccountSelectionPanel = new CloudAccountSelectionEditor(cloudTypes);
     myAccountPanelPlaceHolder.add(myAccountSelectionPanel.getMainPanel());
 
-    myAccountSelectionPanel.setAccountSelectionListener(new Runnable() {
-
-      @Override
-      public void run() {
-        onAccountSelectionChanged();
-      }
-    });
+    myAccountSelectionPanel.setAccountSelectionListener(() -> onAccountSelectionChanged());
     onAccountSelectionChanged();
   }
 

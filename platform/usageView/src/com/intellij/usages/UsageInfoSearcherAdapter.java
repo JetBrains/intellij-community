@@ -27,17 +27,14 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
   protected void processUsages(final @NotNull Processor<Usage> processor, @NotNull Project project) {
-    final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
-    final Ref<Boolean> dumbModeOccurred = new Ref<Boolean>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          refUsages.set(findUsages());
-        }
-        catch (IndexNotReadyException e) {
-          dumbModeOccurred.set(true);
-        }
+    final Ref<UsageInfo[]> refUsages = new Ref<>();
+    final Ref<Boolean> dumbModeOccurred = new Ref<>();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      try {
+        refUsages.set(findUsages());
+      }
+      catch (IndexNotReadyException e) {
+        dumbModeOccurred.set(true);
       }
     });
     if (!dumbModeOccurred.isNull()) {
@@ -52,11 +49,8 @@ public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
     });
 
     for (final Usage usage : usages) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          processor.process(usage);
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        processor.process(usage);
       });
     }
   }

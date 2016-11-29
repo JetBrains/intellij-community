@@ -55,11 +55,9 @@ import java.util.regex.Pattern;
  * @author Gregory.Shrago
  */
 public class InjectorUtils {
-  public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
-    public int compare(final TextRange o1, final TextRange o2) {
-      if (o1.intersects(o2)) return 0;
-      return o1.getStartOffset() - o2.getStartOffset();
-    }
+  public static final Comparator<TextRange> RANGE_COMPARATOR = (o1, o2) -> {
+    if (o1.intersects(o2)) return 0;
+    return o1.getStartOffset() - o2.getStartOffset();
   };
 
   private InjectorUtils() {
@@ -140,7 +138,7 @@ public class InjectorUtils {
 
   private static final Map<String, LanguageInjectionSupport> ourSupports;
   static {
-    ourSupports = new LinkedHashMap<String, LanguageInjectionSupport>();
+    ourSupports = new LinkedHashMap<>();
     for (LanguageInjectionSupport support : Arrays.asList(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME))) {
       ourSupports.put(support.getId(), support);
     }
@@ -297,19 +295,15 @@ public class InjectorUtils {
 
   @Nullable
   private static TreeMap<TextRange, BaseInjection> getInjectionMap(@NotNull final PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<TreeMap<TextRange, BaseInjection>>() {
-      @Nullable
-      @Override
-      public Result<TreeMap<TextRange, BaseInjection>> compute() {
-        TreeMap<TextRange, BaseInjection> map = calcInjections(file);
-        return Result.create(map.isEmpty() ? null : map, file);
-      }
+    return CachedValuesManager.getCachedValue(file, () -> {
+      TreeMap<TextRange, BaseInjection> map = calcInjections(file);
+      return CachedValueProvider.Result.create(map.isEmpty() ? null : map, file);
     });
   }
 
   @NotNull
   protected static TreeMap<TextRange, BaseInjection> calcInjections(PsiFile file) {
-    final TreeMap<TextRange, BaseInjection> injectionMap = new TreeMap<TextRange, BaseInjection>(RANGE_COMPARATOR);
+    final TreeMap<TextRange, BaseInjection> injectionMap = new TreeMap<>(RANGE_COMPARATOR);
 
     TIntArrayList ints = new TIntArrayList();
     StringSearcher searcher = new StringSearcher("language=", true, true, false);
@@ -337,7 +331,7 @@ public class InjectorUtils {
   public static Map<String, String> decodeMap(CharSequence charSequence) {
     if (StringUtil.isEmpty(charSequence)) return Collections.emptyMap();
     final Matcher matcher = MAP_ENTRY_PATTERN.matcher(charSequence);
-    final LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
+    final LinkedHashMap<String, String> map = new LinkedHashMap<>();
     while (matcher.find()) {
       map.put(StringUtil.unescapeStringCharacters(matcher.group(1)),
               StringUtil.unescapeStringCharacters(StringUtil.unquoteString(matcher.group(2))));

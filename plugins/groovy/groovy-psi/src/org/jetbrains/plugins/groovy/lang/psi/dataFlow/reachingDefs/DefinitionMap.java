@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
  * @author peter
  */
 public class DefinitionMap {
-  private final TIntObjectHashMap<TIntHashSet> myMap = new TIntObjectHashMap<TIntHashSet>();
+  private final TIntObjectHashMap<TIntHashSet> myMap = new TIntObjectHashMap<>();
 
   public void registerDef(Instruction varInsn, int varId) {
     TIntHashSet defs = myMap.get(varId);

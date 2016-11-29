@@ -53,7 +53,7 @@ public class PyTestFinder implements TestFinder {
 
     String sourceName = source.getName();
     if (sourceName == null) return Collections.emptySet();
-    List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
+    List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<>();
 
     if (source instanceof PyClass) {
       Collection<String> names = PyClassNameIndex.allKeys(element.getProject());
@@ -92,8 +92,8 @@ public class PyTestFinder implements TestFinder {
     final PyClass source = PsiTreeUtil.getParentOfType(element, PyClass.class);
     if (sourceFunction == null && source == null) return Collections.emptySet();
 
-    List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
-    final List<Pair<String, Integer>> possibleNames = new ArrayList<Pair<String, Integer>>();
+    List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<>();
+    final List<Pair<String, Integer>> possibleNames = new ArrayList<>();
     if (source != null)
       possibleNames.addAll(TestFinderHelper.collectPossibleClassNamesWithWeights(source.getName()));
     if (sourceFunction != null)

@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.AbstractStorage;
 
@@ -306,5 +307,41 @@ public class PersistentMapTest extends PersistentMapTestBase {
     System.out.printf("File size = %d bytes\n", myFile.length());
     System.out
       .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length());
+  }
+
+  public void testReadonlyMap() throws IOException {
+    myMap.put("AAA", "AAA_VALUE");
+
+    myMap.close();
+    myMap = new PersistentHashMap<String, String>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE) {
+      @Override
+      protected boolean isReadOnly() {
+        return true;
+      }
+    };
+
+    try {
+      myMap.compact();
+      fail();
+    } catch (IncorrectOperationException ignore) {}
+
+    try {
+      myMap.put("AAA", "AAA_VALUE2");
+      fail();
+    } catch (IncorrectOperationException ignore) {}
+
+    assertEquals("AAA_VALUE", myMap.get("AAA"));
+    assertNull(myMap.get("BBB"));
+    assertEquals(new HashSet<>(Arrays.asList("AAA")), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
+
+    try {
+      myMap.remove("AAA");
+      fail();
+    } catch (IncorrectOperationException ignore) {}
+
+    try {
+      myMap.appendData("AAA", out -> out.writeUTF("BAR"));
+      fail();
+    } catch (IncorrectOperationException ignore) {}
   }
 }

@@ -15,29 +15,22 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class FileAccessorCache<K, T> implements com.intellij.util.containers.hash.EqualityPolicy<K> {
-  private final SLRUCache<K, Handle<T>> myCache;
-  private final Object myLock = new Object();
+  /*@GuardedBy("myCacheLock")*/ private final SLRUMap<K, Handle<T>> myCache;
+  /*@GuardedBy("myCacheLock")*/ private final List<T> myElementsToBeDisposed = new ArrayList<T>();
+  private final Object myCacheLock = new Object();
+  private final Object myUpdateLock = new Object();
 
   public FileAccessorCache(int protectedQueueSize, int probationalQueueSize) {
-    myCache = new SLRUCache<K, Handle<T>>(protectedQueueSize, probationalQueueSize, this) {
-      @NotNull
-      @Override
-      public final Handle<T> createValue(K path) {
-        try {
-          return new Handle<T>(createAccessor(path), FileAccessorCache.this);
-        } catch (IOException ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-
+    myCache = new SLRUMap<K, Handle<T>>(protectedQueueSize, probationalQueueSize, this) {
       @Override
       protected final void onDropFromCache(K key, Handle<T> value) {
         value.release();
@@ -46,28 +39,79 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
   }
 
   protected abstract T createAccessor(K key) throws IOException;
-  protected abstract void disposeAccessor(T fileAccessor);
+  protected abstract void disposeAccessor(T fileAccessor) throws IOException;
 
-  protected void disposeCloseable(Closeable fileAccessor) {
+  @NotNull
+  public final Handle<T> get(K key) {
+    Handle<T> cached = getIfCached(key);
+    if (cached != null) return cached;
+
+    synchronized (myUpdateLock) {
+      cached = getIfCached(key);
+      if (cached != null) return cached;
+      return createHandle(key);
+    }
+  }
+
+  //private static final int FACTOR = 0xF;
+  //private static final AtomicLong myCreateTime = new AtomicLong();
+  //private static final AtomicInteger myCreateRequests = new AtomicInteger();
+  //private static final AtomicInteger myCloseRequests = new AtomicInteger();
+  //private static final AtomicLong myCloseTime = new AtomicLong();
+  @NotNull
+  private Handle<T> createHandle(K key) {
+    Handle<T> cached;
     try {
-      fileAccessor.close();
+      //long started = System.nanoTime();
+      cached = new Handle<T>(createAccessor(key), this);
+      //myCreateTime.addAndGet(System.nanoTime() - started);
+      //int l = myCreateRequests.incrementAndGet();
+      //if ((l & FACTOR) == 0) {
+      //  System.out.println("Opened for:" + this + ", " + l + " for " + (myCreateTime.get() / 1000000));
+      //}
+      cached.allocate();
+
+      synchronized (myCacheLock) {
+        myCache.put(key, cached);
+      }
+
+      disposeInvalidAccessors();
+      return cached;
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
   }
 
-  @NotNull
-  public final Handle<T> get(K key) {
-    synchronized (myLock) {
-      final Handle<T> value = myCache.get(key);
-      value.allocate();
-      return value;
+  private void disposeInvalidAccessors() {
+    List<T> fileAccessorsToBeDisposed;
+    synchronized (myCacheLock) {
+      if (myElementsToBeDisposed.isEmpty()) return;
+      fileAccessorsToBeDisposed = new ArrayList<T>(myElementsToBeDisposed);
+      myElementsToBeDisposed.clear();
     }
+
+    //assert Thread.holdsLock(myUpdateLock);
+
+    //long started = System.nanoTime();
+    for (T t : fileAccessorsToBeDisposed) {
+      try {
+        disposeAccessor(t);
+      }
+      catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+
+    //myCloseTime.addAndGet(System.nanoTime() - started);
+    //int l = myCloseRequests.addAndGet(fileAccessorsToBeDisposed.size());
+    //if ((l & FACTOR) == 0) {
+    //  System.out.println("Closed for:" + this + ", " + l + " for " + (myCloseTime.get() / 1000000));
+    //}
   }
 
   public Handle<T> getIfCached(K key) {
-    synchronized (myLock) {
-      final Handle<T> value = myCache.getIfCached(key);
+    synchronized (myCacheLock) {
+      final Handle<T> value = myCache.get(key);
       if (value != null) {
         value.allocate();
       }
@@ -76,14 +120,28 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
   }
 
   public boolean remove(K key) {
-    synchronized (myLock) {
-      return myCache.remove(key);
+    try {
+      synchronized (myCacheLock) {
+        return myCache.remove(key);
+      }
+    }
+    finally {
+      synchronized (myUpdateLock) {
+        disposeInvalidAccessors();
+      }
     }
   }
 
   public void clear() {
-    synchronized (myLock) {
-      myCache.clear();
+    try {
+      synchronized (myCacheLock) {
+        myCache.clear();
+      }
+    }
+    finally {
+      synchronized (myUpdateLock) {
+        disposeInvalidAccessors();
+      }
     }
   }
 
@@ -113,7 +171,9 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
 
     public final void release() {
       if (myRefCount.decrementAndGet() == 0) {
-        myOwner.disposeAccessor(myFileAccessor);
+        synchronized (myOwner.myCacheLock) {
+          myOwner.myElementsToBeDisposed.add(myFileAccessor);
+        }
       }
     }
 

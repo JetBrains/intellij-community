@@ -20,11 +20,11 @@ import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
@@ -36,7 +36,6 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -78,12 +77,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return getHelpTopic();
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public JComponent createComponent() {
@@ -107,7 +100,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAntialiasingInIDE.setRenderer(new AAListCellRenderer(false));
     myComponent.myAntialiasingInEditor.setRenderer(new AAListCellRenderer(true));
 
-    @SuppressWarnings("UseOfObsoleteCollectionType") Dictionary<Integer, JComponent> delayDictionary = new Hashtable<Integer, JComponent>();
+    @SuppressWarnings("UseOfObsoleteCollectionType") Dictionary<Integer, JComponent> delayDictionary = new Hashtable<>();
     delayDictionary.put(new Integer(0), new JLabel("0"));
     delayDictionary.put(new Integer(1200), new JLabel("1200"));
     //delayDictionary.put(new Integer(2400), new JLabel("2400"));
@@ -132,7 +125,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myAlphaModeRatioSlider.setSize(100, 50);
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
-    Dictionary<Integer, JComponent> dictionary = new Hashtable<Integer, JComponent>();
+    Dictionary<Integer, JComponent> dictionary = new Hashtable<>();
     dictionary.put(new Integer(0), new JLabel("0%"));
     dictionary.put(new Integer(50), new JLabel("50%"));
     dictionary.put(new Integer(100), new JLabel("100%"));
@@ -161,6 +154,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
     int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.FONT_SIZE);
     int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.PRESENTATION_MODE_FONT_SIZE);
+    boolean update = false;
     boolean shouldUpdateUI = false;
     String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
@@ -168,6 +162,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       settings.FONT_SIZE = _fontSize;
       settings.FONT_FACE = _fontFace;
       shouldUpdateUI = true;
+      update = true;
     }
 
     if (_presentationFontSize != settings.PRESENTATION_MODE_FONT_SIZE) {
@@ -191,7 +186,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
 
     settings.ANIMATE_WINDOWS = myComponent.myAnimateWindowsCheckBox.isSelected();
-    boolean update = settings.SHOW_TOOL_WINDOW_NUMBERS != myComponent.myWindowShortcutsCheckBox.isSelected();
+    update |= settings.SHOW_TOOL_WINDOW_NUMBERS != myComponent.myWindowShortcutsCheckBox.isSelected();
     settings.SHOW_TOOL_WINDOW_NUMBERS = myComponent.myWindowShortcutsCheckBox.isSelected();
     update |= settings.HIDE_TOOL_STRIPES != !myComponent.myShowToolStripesCheckBox.isSelected();
     settings.HIDE_TOOL_STRIPES = !myComponent.myShowToolStripesCheckBox.isSelected();
@@ -205,6 +200,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.CYCLE_SCROLLING = myComponent.myCycleScrollingCheckBox.isSelected();
     if (settings.OVERRIDE_NONIDEA_LAF_FONTS != myComponent.myOverrideLAFFonts.isSelected()) {
       shouldUpdateUI = true;
+      update = true;
     }
     settings.OVERRIDE_NONIDEA_LAF_FONTS = myComponent.myOverrideLAFFonts.isSelected();
     settings.MOVE_MOUSE_ON_DEFAULT_BUTTON = myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected();
@@ -251,14 +247,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
         final boolean wasDarcula = UIUtil.isUnderDarcula();
         lafManager.setCurrentLookAndFeel(lafInfo);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (UIUtil.isUnderDarcula()) {
-              DarculaInstaller.install();
-            } else if (wasDarcula) {
-              DarculaInstaller.uninstall();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (UIUtil.isUnderDarcula()) {
+            DarculaInstaller.install();
+          } else if (wasDarcula) {
+            DarculaInstaller.uninstall();
           }
         });
       }
@@ -296,10 +289,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
     myComponent.updateCombo();
 
-    EditorUtil.reinitSettings();
-
     if (updateEditorScheme) {
-      EditorColorsManagerImpl.schemeChangedOrSwitched();
+      ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
+    }
+    else {
+      EditorFactory.getInstance().refreshAllEditors();
     }
   }
 
@@ -327,8 +321,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     initComponent();
     UISettings settings = UISettings.getInstance();
 
-    myComponent.myFontCombo.setFontName(settings.FONT_FACE);
-
+    if (settings.OVERRIDE_NONIDEA_LAF_FONTS) {
+      myComponent.myFontCombo.setFontName(settings.FONT_FACE);
+    } else {
+      myComponent.myFontCombo.setFontName(UIUtil.getLabelFont().getFamily());
+    }
     // todo migrate
     //myComponent.myAntialiasingCheckBox.setSelected(settings.ANTIALIASING_IN_IDE);
     //myComponent.myLCDRenderingScopeCombo.setSelectedItem(settings.LCD_RENDERING_SCOPE);
@@ -399,7 +396,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     boolean isModified = false;
-    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE);
+    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE) && myComponent.myOverrideLAFFonts.isSelected();
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
 
     isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE;

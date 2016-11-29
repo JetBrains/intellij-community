@@ -40,7 +40,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
    * @noinspection StaticCollection
    */
   @NonNls private static final Map<String, String> s_conversionMap =
-    new HashMap<String, String>(7);
+    new HashMap<>(7);
 
   static {
     s_conversionMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "valueOf");
@@ -181,7 +181,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
      * @noinspection StaticCollection
      */
     @NonNls private static final Map<String, String> s_basicTypeMap =
-      new HashMap<String, String>(7);
+      new HashMap<>(7);
 
     static {
       s_basicTypeMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "booleanValue");

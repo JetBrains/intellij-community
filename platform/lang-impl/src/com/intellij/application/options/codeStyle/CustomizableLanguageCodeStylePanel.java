@@ -132,24 +132,16 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
     final String text = psiFile.getText();
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     final Document doc = manager.getDocument(psiFile);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                          doc.replaceString(0, doc.getTextLength(), text);
-                                                          manager.commitDocument(doc);
-                                                          try {
-                                                            CodeStyleManager.getInstance(project).reformat(psiFile);
-                                                          }
-                                                          catch (IncorrectOperationException e) {
-                                                            LOG.error(e);
-                                                          }
-                                                        }
-                                                      });
-                                                    }
-                                                  }, "", "");
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      doc.replaceString(0, doc.getTextLength(), text);
+      manager.commitDocument(doc);
+      try {
+        CodeStyleManager.getInstance(project).reformat(psiFile);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), "", "");
     if (doc != null) {
       manager.commitDocument(doc);
     }
@@ -166,16 +158,16 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   }
 
   protected <T extends OrderedOption>List<T> sortOptions(Collection<T> options) {
-    Set<String> names = new THashSet<String>(ContainerUtil.map(options, new Function<OrderedOption, String>() {
+    Set<String> names = new THashSet<>(ContainerUtil.map(options, new Function<OrderedOption, String>() {
       @Override
       public String fun(OrderedOption option) {
         return option.getOptionName();
       }
     }));
 
-    List<T> order = new ArrayList<T>(options.size());
-    MultiMap<String, T> afters = new MultiMap<String, T>();
-    MultiMap<String, T> befores = new MultiMap<String, T>();
+    List<T> order = new ArrayList<>(options.size());
+    MultiMap<String, T> afters = new MultiMap<>();
+    MultiMap<String, T> befores = new MultiMap<>();
 
     for (T each : options) {
         String anchorOptionName = each.getAnchorOptionName();
@@ -192,7 +184,7 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
       order.add(each);
     }
 
-    List<T> result = new ArrayList<T>(options.size());
+    List<T> result = new ArrayList<>(options.size());
     for (T each : order) {
       result.addAll(befores.get(each.getOptionName()));
       result.add(each);

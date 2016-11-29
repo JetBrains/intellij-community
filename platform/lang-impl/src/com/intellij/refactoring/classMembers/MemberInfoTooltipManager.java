@@ -23,7 +23,7 @@ import com.intellij.util.containers.HashMap;
  * @author dsl
  */
 public class MemberInfoTooltipManager<T extends PsiElement, M extends MemberInfoBase<T>> {
-  private final HashMap<M, String> myTooltips = new HashMap<M, String>();
+  private final HashMap<M, String> myTooltips = new HashMap<>();
   private final TooltipProvider<T, M> myProvider;
 
   public interface TooltipProvider<T extends PsiElement, M extends MemberInfoBase<T>> {

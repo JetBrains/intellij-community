@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ public abstract class VersionsComponent {
 
   private final ButtonGroup myButtonGroup = new ButtonGroup();
 
-  private final Map<String, Pair<JRadioButton, JComboBox>> myButtons = new HashMap<String, Pair<JRadioButton, JComboBox>>();
+  private final Map<String, Pair<JRadioButton, JComboBox>> myButtons = new HashMap<>();
 
   private Artifact myCurrentVersion = null;
 
@@ -132,7 +133,7 @@ public abstract class VersionsComponent {
   }
 
   private List<Artifact> getSupportedVersions(@NotNull String ri) {
-    List<Artifact> versions = new ArrayList<Artifact>();
+    List<Artifact> versions = new ArrayList<>();
     for (Artifact version : getLibraries()) {
       if (ri.equals(version.getName())) {
         versions.add(version);
@@ -165,10 +166,10 @@ public abstract class VersionsComponent {
 
   private void addToPanel(@NotNull JComponent first, @NotNull JComponent second) {
     myMainPanel.add(first, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-                                                  GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
+                                                  GridBagConstraints.BOTH, JBUI.insets(2), 0, 0));
     myMainPanel.add(second,
                     new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.LINE_END, GridBagConstraints.BOTH,
-                                           new Insets(2, 2, 2, 2), 0, 0));
+                                           JBUI.insets(2), 0, 0));
   }
 
   private JRadioButton createRadioButton(final String ri) {
@@ -271,7 +272,7 @@ public abstract class VersionsComponent {
   }
 
   public Set<String> getRIs() {
-    Set<String> ris = new HashSet<String>();
+    Set<String> ris = new HashSet<>();
     for (Artifact version : getLibraries()) {
       String ri = version.getName();
       if (!StringUtil.isEmptyOrSpaces(ri)) {

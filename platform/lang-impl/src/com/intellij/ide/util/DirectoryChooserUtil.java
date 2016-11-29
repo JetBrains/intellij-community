@@ -55,7 +55,7 @@ public class DirectoryChooserUtil {
                                              String postfixToShow) {
     ProjectFileIndex projectFileIndex = getInstance(project).getFileIndex();
 
-    ArrayList<PsiDirectory> possibleDirs = new ArrayList<PsiDirectory>();
+    ArrayList<PsiDirectory> possibleDirs = new ArrayList<>();
     for (PsiDirectory dir : packageDirectories) {
       if (!dir.isValid()) continue;
       if (!dir.isWritable()) continue;

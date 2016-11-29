@@ -52,8 +52,8 @@ public class PresentationModeProgressPanel {
     Font font = JBUI.Fonts.label(11);
     myText.setFont(font);
     myText2.setFont(font);
-    myText.setIcon(EmptyIcon.create(1, 16));
-    myText2.setIcon(EmptyIcon.create(1, 16));
+    myText.setIcon(JBUI.scale(EmptyIcon.create(1, 16)));
+    myText2.setIcon(JBUI.scale(EmptyIcon.create(1, 16)));
     myUpdateQueue = new MergingUpdateQueue("Presentation Mode Progress", 100, true, null);
     myUpdate = new Update("Update UI") {
       @Override

@@ -69,7 +69,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
       return null;
     }
 
-    Set<PsiElement> result = new LinkedHashSet<PsiElement>();
+    Set<PsiElement> result = new LinkedHashSet<>();
     for (PsiElement sourceElement : sourceElements) {
       result.add(sourceElement instanceof PsiClass ? sourceElement.getContainingFile() : sourceElement);
     }
@@ -84,40 +84,36 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
       return;
     }
     MoveFilesOrDirectoriesUtil
-      .doMove(project, elements, new PsiElement[]{targetContainer}, callback, new Function<PsiElement[], PsiElement[]>() {
-        @Override
-        public PsiElement[] fun(final PsiElement[] elements) {
-          return new WriteCommandAction<PsiElement[]>(project, "Regrouping ...") {
-            @Override
-            protected void run(@NotNull Result<PsiElement[]> result) throws Throwable {
-              final List<PsiElement> adjustedElements = new ArrayList<PsiElement>();
-              for (int i = 0, length = elements.length; i < length; i++) {
-                PsiElement element = elements[i];
-                if (element instanceof PsiClass) {
-                  final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-                  if (topLevelClass != null) {
-                    elements[i] = topLevelClass;
-                    final PsiFile containingFile = obtainContainingFile(topLevelClass, elements);
-                    if (containingFile != null && !adjustedElements.contains(containingFile)) {
-                      adjustedElements.add(containingFile);
-                      continue;
+      .doMove(project, elements, new PsiElement[]{targetContainer}, callback,
+              elements1 -> new WriteCommandAction<PsiElement[]>(project, "Regrouping ...") {
+                @Override
+                protected void run(@NotNull Result<PsiElement[]> result) throws Throwable {
+                  final List<PsiElement> adjustedElements = new ArrayList<>();
+                  for (int i = 0, length = elements1.length; i < length; i++) {
+                    PsiElement element = elements1[i];
+                    if (element instanceof PsiClass) {
+                      final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+                      if (topLevelClass != null) {
+                        elements1[i] = topLevelClass;
+                        final PsiFile containingFile = obtainContainingFile(topLevelClass, elements1);
+                        if (containingFile != null) {
+                          adjustedElements.add(containingFile);
+                          continue;
+                        }
+                      }
                     }
+                    adjustedElements.add(element);
                   }
+                  result.setResult(PsiUtilCore.toPsiElementArray(adjustedElements));
                 }
-                adjustedElements.add(element);
-              }
-              result.setResult(PsiUtilCore.toPsiElementArray(adjustedElements));
-            }
-          }.execute().getResultObject();
-        }
-      });
+              }.execute().getResultObject());
   }
 
   @Nullable
   private static PsiFile obtainContainingFile(@NotNull PsiElement element, PsiElement[] elements) {
     final PsiFile containingFile = element.getContainingFile();
     final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
-    final Set<PsiClass> nonMovedClasses = new HashSet<PsiClass>();
+    final Set<PsiClass> nonMovedClasses = new HashSet<>();
     for (PsiClass aClass : classes) {
       if (ArrayUtilRt.find(elements, aClass) < 0) {
         nonMovedClasses.add(aClass);

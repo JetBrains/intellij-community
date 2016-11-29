@@ -41,36 +41,34 @@ public class PyLineSeparatorUtil {
   public static LineMarkerInfo addLineSeparatorIfNeeded(final Provider provider,
                                                         final PsiElement element) {
     final Ref<LineMarkerInfo> info = new Ref<LineMarkerInfo>(null);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        if (!provider.isSeparatorAllowed(element)) {
-          return;
-        }
-        boolean hasSeparableBefore = false;
-        final PsiElement parent = element.getParent();
-        if (parent == null) {
-          return;
-        }
-        for (PsiElement child : parent.getChildren()) {
-          if (child == element){
-            break;
-          }
-          if (provider.isSeparatorAllowed(child)) {
-            hasSeparableBefore = true;
-            break;
-          }
-        }
-        if (!hasSeparableBefore) {
-          return;
-        }
-        info.set(createLineSeparatorByElement(element));
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (!provider.isSeparatorAllowed(element)) {
+        return;
       }
+      boolean hasSeparableBefore = false;
+      final PsiElement parent = element.getParent();
+      if (parent == null) {
+        return;
+      }
+      for (PsiElement child : parent.getChildren()) {
+        if (child == element){
+          break;
+        }
+        if (provider.isSeparatorAllowed(child)) {
+          hasSeparableBefore = true;
+          break;
+        }
+      }
+      if (!hasSeparableBefore) {
+        return;
+      }
+      info.set(createLineSeparatorByElement(element));
     });
     return info.get();
   }
 
   private static LineMarkerInfo<PsiElement> createLineSeparatorByElement(final PsiElement element) {
-    final LineMarkerInfo<PsiElement> info = new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(), null, Pass.UPDATE_ALL, null, null);
+    final LineMarkerInfo<PsiElement> info = new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(), null, Pass.LINE_MARKERS, null, null);
     info.separatorColor = EditorColorsManager.getInstance().getGlobalScheme().getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
     info.separatorPlacement = SeparatorPlacement.TOP;
     return info;

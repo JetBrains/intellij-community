@@ -24,31 +24,28 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class SwitchStatementPostfixTemplate extends StringBasedPostfixTemplate {
-  private static final Condition<PsiElement> SWITCH_TYPE = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement expression) {
-      if (!(expression instanceof PsiExpression)) return false;
+  private static final Condition<PsiElement> SWITCH_TYPE = expression -> {
+    if (!(expression instanceof PsiExpression)) return false;
 
-      PsiType type = ((PsiExpression)expression).getType();
+    PsiType type = ((PsiExpression)expression).getType();
 
-      if (type == null) return false;
-      if (PsiType.INT.isAssignableFrom(type)) return true;
+    if (type == null) return false;
+    if (PsiType.INT.isAssignableFrom(type)) return true;
 
-      if (type instanceof PsiClassType) {
-        PsiClass psiClass = ((PsiClassType)type).resolve();
-        if (psiClass != null && psiClass.isEnum()) return true;
-      }
-
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        PsiFile containingFile = expression.getContainingFile();
-        if (containingFile instanceof PsiJavaFile) {
-          LanguageLevel level = ((PsiJavaFile)containingFile).getLanguageLevel();
-          if (level.isAtLeast(LanguageLevel.JDK_1_7)) return true;
-        }
-      }
-
-      return false;
+    if (type instanceof PsiClassType) {
+      PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass != null && psiClass.isEnum()) return true;
     }
+
+    if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      PsiFile containingFile = expression.getContainingFile();
+      if (containingFile instanceof PsiJavaFile) {
+        LanguageLevel level = ((PsiJavaFile)containingFile).getLanguageLevel();
+        if (level.isAtLeast(LanguageLevel.JDK_1_7)) return true;
+      }
+    }
+
+    return false;
   };
 
   public SwitchStatementPostfixTemplate() {

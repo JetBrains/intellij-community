@@ -16,11 +16,11 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.SoftWrapModelEx;
-import com.intellij.util.DocumentUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,14 +51,17 @@ public class EditorStressTest extends AbstractEditorTest {
   private long mySeed;
 
   public void testRandomActions() {
+    System.out.println("Seed is " + mySeed);
     int i = 0;
     try {
       initText("");
       configureSoftWraps(10);
+      EditorImpl editor = (EditorImpl)myEditor;
       for (i = 1; i <= ITERATIONS; i++) {
-        doRandomAction();
-        checkConsistency(myEditor);
+        doRandomAction(editor);
+        editor.validateState();
       }
+      if (editor.getDocument().isInBulkUpdate()) editor.getDocument().setInBulkUpdate(false);
     }
     catch (Throwable t) {
       String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
@@ -67,31 +70,8 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private void doRandomAction() {
-    ourActions.get(myRandom.nextInt(ourActions.size())).perform((EditorEx)myEditor, myRandom);
-  }
-
-  protected void checkConsistency(Editor editor) {
-    checkSoftWrapPositions(editor);
-  }
-
-  private static void checkSoftWrapPositions(Editor editor) {
-    DocumentEx document = ((EditorEx)editor).getDocument();
-    if (document.isInBulkUpdate()) return;
-    FoldingModel foldingModel = editor.getFoldingModel();
-    List<? extends SoftWrap> softWraps = ((SoftWrapModelEx)editor.getSoftWrapModel()).getRegisteredSoftWraps();
-    int lastSoftWrapOffset = -1;
-    for (SoftWrap wrap : softWraps) {
-      int softWrapOffset = wrap.getStart();
-      assertTrue("Soft wraps are not ordered", softWrapOffset > lastSoftWrapOffset);
-      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(softWrapOffset);
-      assertTrue("Soft wrap is inside fold region", foldRegion == null || foldRegion.getStartOffset() == softWrapOffset);
-      assertFalse("Soft wrap before line break", softWrapOffset == DocumentUtil.getLineEndOffset(softWrapOffset, document) &&
-                                                 foldRegion == null);
-      assertFalse("Soft wrap after line break", softWrapOffset == DocumentUtil.getLineStartOffset(softWrapOffset, document) && 
-                                                !foldingModel.isOffsetCollapsed(softWrapOffset - 1));
-      lastSoftWrapOffset = softWrapOffset;
-    }
+  private void doRandomAction(EditorEx editor) {
+    ourActions.get(myRandom.nextInt(ourActions.size())).perform(editor, myRandom);
   }
 
   interface Action {

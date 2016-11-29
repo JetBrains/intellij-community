@@ -18,7 +18,10 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
 import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.JavaCommentContextType;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -59,7 +62,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
        return;
     }
 
-    List<Pair<PsiElement, StaticImporter>> staticImportTargets = new ArrayList<Pair<PsiElement, StaticImporter>>();
+    List<Pair<PsiElement, StaticImporter>> staticImportTargets = new ArrayList<>();
     for (
       PsiElement element = PsiUtilCore.getElementAtOffset(file, templateRange.getStartOffset());
       element != null && element.getTextRange().getStartOffset() < templateRange.getEndOffset();
@@ -98,8 +101,14 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
   }
 
   @Override
-  public boolean isVisible(Template template) {
-    return true;
+  public boolean isVisible(@NotNull Template template, @NotNull TemplateContext context) {
+    for (TemplateContextType contextType : TemplateContextType.EP_NAME.getExtensions()) {
+      if (!context.isEnabled(contextType)) continue;
+      if (contextType instanceof JavaCodeContextType || contextType instanceof JavaCommentContextType) {
+        return true;
+      }
+    }
+    return false;
   }
   
   private interface StaticImporter {

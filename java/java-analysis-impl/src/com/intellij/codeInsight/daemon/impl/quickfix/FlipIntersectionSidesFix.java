@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -24,7 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,16 +72,10 @@ public class FlipIntersectionSidesFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     myConjuncts.remove(myConjunct);
     myConjuncts.add(0, myConjunct);
 
-    final String intersectionTypeText = StringUtil.join(myConjuncts, new Function<PsiTypeElement, String>() {
-      @Override
-      public String fun(PsiTypeElement element) {
-        return element.getText();
-      }
-    }, " & ");
+    final String intersectionTypeText = StringUtil.join(myConjuncts, element -> element.getText(), " & ");
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiTypeCastExpression fixedCast =
       (PsiTypeCastExpression)elementFactory.createExpressionFromText("(" + intersectionTypeText + ") a", myCastTypeElement);

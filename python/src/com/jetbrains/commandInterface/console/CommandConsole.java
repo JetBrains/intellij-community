@@ -102,7 +102,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * Listener that will be notified when console state (mode?) changed.
    */
   @NotNull
-  private final Collection<Runnable> myStateChangeListeners = new ArrayList<Runnable>();
+  private final Collection<Runnable> myStateChangeListeners = new ArrayList<>();
   /**
    * Process handler currently running on console (if any)
    *
@@ -191,21 +191,18 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     // "upper" and "bottom" parts of console both need padding in command mode
     myProcessHandler = null;
     setPrompt(getTitle() + " > ");
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        notifyStateChangeListeners();
-        configureLeftBorder(true, getConsoleEditor(), getHistoryViewer());
-        setLanguage(CommandLineLanguage.INSTANCE);
-        final CommandLineFile file = PyUtil.as(getFile(), CommandLineFile.class);
-        resetConsumer(null);
-        if (file == null || myCommandsAndDefaultExecutor == null) {
-          return;
-        }
-        file.setCommands(myCommandsAndDefaultExecutor.first);
-        final CommandConsole console = CommandConsole.this;
-        resetConsumer(new CommandModeConsumer(myCommandsAndDefaultExecutor.first, myModule, console, myCommandsAndDefaultExecutor.second));
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      notifyStateChangeListeners();
+      configureLeftBorder(true, getConsoleEditor(), getHistoryViewer());
+      setLanguage(CommandLineLanguage.INSTANCE);
+      final CommandLineFile file = PyUtil.as(getFile(), CommandLineFile.class);
+      resetConsumer(null);
+      if (file == null || myCommandsAndDefaultExecutor == null) {
+        return;
       }
+      file.setCommands(myCommandsAndDefaultExecutor.first);
+      final CommandConsole console = this;
+      resetConsumer(new CommandModeConsumer(myCommandsAndDefaultExecutor.first, myModule, console, myCommandsAndDefaultExecutor.second));
     }, ModalityState.NON_MODAL);
   }
 
@@ -216,17 +213,14 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    */
   private void switchToProcessMode(@NotNull final ProcessHandler processHandler) {
     myProcessHandler = processHandler;
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        configureLeftBorder(false,
-                            getConsoleEditor()); // "bottom" part of console do not need padding now because it is used for user inputA
-        notifyStateChangeListeners();
-        resetConsumer(new ProcessModeConsumer(processHandler));
-        // In process mode we do not need prompt and highlighting
-        setLanguage(PlainTextLanguage.INSTANCE);
-        setPrompt("");
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      configureLeftBorder(false,
+                          getConsoleEditor()); // "bottom" part of console do not need padding now because it is used for user inputA
+      notifyStateChangeListeners();
+      resetConsumer(new ProcessModeConsumer(processHandler));
+      // In process mode we do not need prompt and highlighting
+      setLanguage(PlainTextLanguage.INSTANCE);
+      setPrompt("");
     }, ModalityState.NON_MODAL);
   }
 

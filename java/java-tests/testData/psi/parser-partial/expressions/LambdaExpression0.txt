@@ -1,5 +1,5 @@
 PsiJavaFile:LambdaExpression0.java
-  PsiLambdaExpression:p -> 42
+  PsiLambdaExpression
     PsiParameterList:p
       PsiParameter:p
         PsiModifierList:

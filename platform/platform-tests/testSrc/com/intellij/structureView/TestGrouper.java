@@ -54,13 +54,13 @@ public class TestGrouper implements Grouper {
     public StringGroup(String string, final Collection<TreeElement> children, Collection<String> childrenStrings) {
       myString = string;
       myChildrenUsedStrings = childrenStrings;
-      myChildren = new ArrayList<TreeElement>(children);
+      myChildren = new ArrayList<>(children);
     }
 
     @NotNull
     @Override
     public Collection<TreeElement> getChildren() {
-      Collection<TreeElement> result = new LinkedHashSet<TreeElement>();
+      Collection<TreeElement> result = new LinkedHashSet<>();
       for (TreeElement object : myChildren) {
         if (object.toString().indexOf(myString) >= 0) {
           result.add(object);
@@ -98,14 +98,14 @@ public class TestGrouper implements Grouper {
   @Override
   @NotNull
   public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
-    List<Group> result = new ArrayList<Group>();
+    List<Group> result = new ArrayList<>();
     Collection<String> parentGroupUsedStrings = parent.getValue() instanceof StringGroup ?
                                                 ((StringGroup)parent.getValue()).myChildrenUsedStrings :
                                                 Collections.<String>emptySet();
-    Collection<TreeElement> elements = new LinkedHashSet<TreeElement>(children);
+    Collection<TreeElement> elements = new LinkedHashSet<>(children);
     for (String subString : mySubStrings) {
       if (parentGroupUsedStrings.contains(subString)) continue;
-      Set<String> childrenStrings = new THashSet<String>(parentGroupUsedStrings);
+      Set<String> childrenStrings = new THashSet<>(parentGroupUsedStrings);
       ContainerUtil.addAll(childrenStrings, mySubStrings);
       StringGroup group = new StringGroup(subString, elements, childrenStrings);
       Collection<TreeElement> groupChildren = group.getChildren();

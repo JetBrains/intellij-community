@@ -49,7 +49,7 @@ public class MethodsChainLookupRangingHelper {
   public static List<LookupElement> chainsToWeightableLookupElements(final List<MethodsChain> chains,
                                                                      final ChainCompletionContext context) {
     final CachedRelevantStaticMethodSearcher staticMethodSearcher = new CachedRelevantStaticMethodSearcher(context);
-    final List<LookupElement> lookupElements = new ArrayList<LookupElement>(chains.size());
+    final List<LookupElement> lookupElements = new ArrayList<>(chains.size());
     for (final MethodsChain chain : chains) {
       final LookupElement lookupElement = chainToWeightableLookupElement(chain, context, staticMethodSearcher);
       if (lookupElement != null) {
@@ -140,7 +140,7 @@ public class MethodsChainLookupRangingHelper {
     boolean hasCallingVariableInContext = false;
     boolean introduceNewVariable = false;
     final PsiParameterList parameterList = method.getParameterList();
-    final TIntObjectHashMap<SubLookupElement> parametersMap = new TIntObjectHashMap<SubLookupElement>(parameterList.getParametersCount());
+    final TIntObjectHashMap<SubLookupElement> parametersMap = new TIntObjectHashMap<>(parameterList.getParametersCount());
     final PsiParameter[] parameters = parameterList.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       final PsiParameter parameter = parameters[i];

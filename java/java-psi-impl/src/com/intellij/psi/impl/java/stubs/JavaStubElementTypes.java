@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,18 @@ public interface JavaStubElementTypes {
   JavaAnnotationElementType ANNOTATION = new JavaAnnotationElementType();
   JavaAnnotationParameterListType ANNOTATION_PARAMETER_LIST = new JavaAnnotationParameterListType();
   JavaNameValuePairType NAME_VALUE_PAIR = new JavaNameValuePairType();
+  JavaLiteralExpressionElementType LITERAL_EXPRESSION = new JavaLiteralExpressionElementType();
+  LambdaExpressionElementType LAMBDA_EXPRESSION = new LambdaExpressionElementType();
+  MethodReferenceElementType METHOD_REFERENCE = new MethodReferenceElementType();
   JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
   JavaParameterElementType PARAMETER = new JavaParameterElementType();
   JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
   JavaTypeParameterListElementType TYPE_PARAMETER_LIST = new JavaTypeParameterListElementType();
   JavaClassInitializerElementType CLASS_INITIALIZER = new JavaClassInitializerElementType();
   JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
+  JavaModuleElementType MODULE = new JavaModuleElementType();
+  JavaRequiresStatementElementType REQUIRES_STATEMENT = new JavaRequiresStatementElementType();
+  JavaExportsStatementElementType EXPORTS_STATEMENT = new JavaExportsStatementElementType();
 
   JavaClassElementType CLASS = new JavaClassElementType("CLASS") {
     @NotNull

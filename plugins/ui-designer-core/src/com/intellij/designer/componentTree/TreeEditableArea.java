@@ -95,7 +95,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   @NotNull
   @Override
   public List<RadComponent> getSelection() {
-    return new ArrayList<RadComponent>(getRawSelection());
+    return new ArrayList<>(getRawSelection());
   }
 
   @Override

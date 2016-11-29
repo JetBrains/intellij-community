@@ -44,11 +44,8 @@ public class TestRepositoryType extends TaskRepositoryType<TestRepository> {
   @NotNull
   @Override
   public TaskRepositoryEditor createEditor(TestRepository repository, Project project, Consumer<TestRepository> changeListener) {
-    return new BaseRepositoryEditor<TestRepository>(project, repository, new Consumer<TestRepository>() {
-      @Override
-      public void consume(TestRepository repository) {
+    return new BaseRepositoryEditor<>(project, repository, repository1 -> {
 
-      }
     });
   }
 

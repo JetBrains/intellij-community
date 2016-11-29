@@ -75,22 +75,19 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     final PsiClass originalClass = method.getContainingClass();
     assert originalClass != null;
     final PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);
-    final Set<PsiMethod> methodsToFind = new HashSet<PsiMethod>();
+    final Set<PsiMethod> methodsToFind = new HashSet<>();
     methodsToFind.add(method);
     ContainerUtil.addAll(methodsToFind, method.findDeepestSuperMethods());
 
-    final Map<PsiMember, NodeDescriptor> methodToDescriptorMap = new HashMap<PsiMember, NodeDescriptor>();
+    final Map<PsiMember, NodeDescriptor> methodToDescriptorMap = new HashMap<>();
     for (final PsiMethod methodToFind : methodsToFind) {
       final JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
 
-      MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(final PsiReference reference) {
-          for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
-            if (!processor.process(reference, data)) break;
-          }
-          return true;
+      MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(reference -> {
+        for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
+          if (!processor.process(reference, data)) break;
         }
+        return true;
       });
     }
 

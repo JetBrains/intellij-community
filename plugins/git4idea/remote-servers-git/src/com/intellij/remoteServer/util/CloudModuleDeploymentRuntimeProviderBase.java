@@ -40,7 +40,7 @@ public abstract class CloudModuleDeploymentRuntimeProviderBase implements CloudD
 
   @Override
   public Collection<DeploymentSource> getDeploymentSources(Project project) {
-    List<DeploymentSource> result = new ArrayList<DeploymentSource>();
+    List<DeploymentSource> result = new ArrayList<>();
     ModulePointerManager pointerManager = ModulePointerManager.getInstance(project);
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       result.add(new ModuleDeploymentSourceImpl(pointerManager.create(module)));

@@ -9,10 +9,7 @@ class Test {
 
     <R> SuperFoo<R> foo(I<R> ax) { return null; }
 
-    SuperFoo<String> ls = foo(<error descr="no instance(s) of type variable(s)  exist so that String conforms to Number
-inference variable R has incompatible bounds:
- equality constraints: String
-upper bounds: Object, Number">() -> new Foo<>()</error>);
+    SuperFoo<String> ls = foo(() -> new Foo<error descr="Cannot infer arguments"><></error>());
     SuperFoo<Integer> li = foo(() -> new Foo<>());
     SuperFoo<?> lw = foo(() -> new Foo<>());
 }

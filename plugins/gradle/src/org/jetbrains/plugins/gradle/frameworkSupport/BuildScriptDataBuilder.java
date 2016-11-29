@@ -51,12 +51,7 @@ public class BuildScriptDataBuilder {
   public String build() {
     List<String> lines = ContainerUtil.newArrayList();
 
-    final Function<String, String> padding = new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return StringUtil.isNotEmpty(s) ? "    " + s : "";
-      }
-    };
+    final Function<String, String> padding = s -> StringUtil.isNotEmpty(s) ? "    " + s : "";
     addBuildscriptLines(lines, padding);
     if (!plugins.isEmpty()) {
       lines.addAll(plugins);

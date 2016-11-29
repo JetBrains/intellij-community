@@ -25,8 +25,10 @@ public interface PyFrameAccessor {
   ArrayChunk getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) throws PyDebuggerException;
 
   @Nullable
-  XSourcePosition getSourcePositionForName(String name);
+  XSourcePosition getSourcePositionForName(String name, String parentType);
 
   @Nullable
   XSourcePosition getSourcePositionForType(String type);
+
+  default void showNumericContainer(PyDebugValue value) {}
 }

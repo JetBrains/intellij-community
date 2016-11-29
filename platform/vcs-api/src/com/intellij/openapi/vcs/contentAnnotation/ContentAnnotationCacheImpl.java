@@ -43,7 +43,7 @@ public class ContentAnnotationCacheImpl implements ContentAnnotationCache {
 
   public ContentAnnotationCacheImpl() {
     myLock = new Object();
-    myCache = new SLRUMap<HistoryCacheWithRevisionKey, TreeMap<Integer, Long>>(50, 50);
+    myCache = new SLRUMap<>(50, 50);
   }
 
   @Override
@@ -78,7 +78,7 @@ public class ContentAnnotationCacheImpl implements ContentAnnotationCache {
       if (myCache.get(key) != null) return;
     }
     final long absoluteLimit = System.currentTimeMillis() - VcsContentAnnotationSettings.ourAbsoluteLimit;
-    final TreeMap<Integer, Long> map = new TreeMap<Integer, Long>();
+    final TreeMap<Integer, Long> map = new TreeMap<>();
     final int lineCount = fa.getLineCount();
     for (int i = 0; i < lineCount; i++) {
       Date lineDate = fa.getLineDate(i);

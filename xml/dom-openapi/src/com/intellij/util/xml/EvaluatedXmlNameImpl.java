@@ -107,20 +107,17 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   private List<String> getAllowedNamespaces(final XmlFile file) {
     CachedValue<FactoryMap<String, List<String>>> value = file.getUserData(NAMESPACE_PROVIDER_KEY);
     if (value == null) {
-      file.putUserData(NAMESPACE_PROVIDER_KEY, value = CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<FactoryMap<String, List<String>>>() {
+      file.putUserData(NAMESPACE_PROVIDER_KEY, value = CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
+        final FactoryMap<String, List<String>> map = new ConcurrentFactoryMap<String, List<String>>() {
           @Override
-          public Result<FactoryMap<String, List<String>>> compute() {
-            final FactoryMap<String, List<String>> map = new ConcurrentFactoryMap<String, List<String>>() {
-              @Override
-              protected List<String> create(final String key) {
-                final DomFileDescription<?> description = DomManager.getDomManager(file.getProject()).getDomFileDescription(file);
-                if (description == null) return Collections.emptyList();
-                return description.getAllowedNamespaces(key, file);
-              }
-            };
-            return Result.create(map, file);
+          protected List<String> create(final String key) {
+            final DomFileDescription<?> description = DomManager.getDomManager(file.getProject()).getDomFileDescription(file);
+            if (description == null) return Collections.emptyList();
+            return description.getAllowedNamespaces(key, file);
           }
-        }, false));
+        };
+        return CachedValueProvider.Result.create(map, file);
+      }, false));
     }
 
     final List<String> list = value.getValue().get(myNamespaceKey);

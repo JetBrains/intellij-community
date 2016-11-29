@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,16 +32,16 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   /**
    * XML tag.
    */
-  @NonNls static final String TAG="window_info";
+  @NonNls static final String TAG = "window_info";
   /**
    * Default window weight.
    */
-  static final float DEFAULT_WEIGHT= 0.33f;
-  static final float DEFAULT_SIDE_WEIGHT = 0.5f;
+  static final float DEFAULT_WEIGHT = 0.33f;
+  private static final float DEFAULT_SIDE_WEIGHT = 0.5f;
 
   private boolean myActive;
   @NotNull
-  private ToolWindowAnchor myAnchor;
+  private ToolWindowAnchor myAnchor = ToolWindowAnchor.LEFT;
   private boolean myAutoHide;
   /**
    * Bounds of window in "floating" mode. It equals to <code>null</code> if
@@ -52,9 +52,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   private ToolWindowType myInternalType;
   private ToolWindowType myType;
   private boolean myVisible;
-  private boolean myShowStripeButton;
-  private float myWeight;
-  private float mySideWeight;
+  private boolean myShowStripeButton = true;
+  private float myWeight = DEFAULT_WEIGHT;
+  private float mySideWeight = DEFAULT_SIDE_WEIGHT;
   private boolean mySplitMode;
 
   @NotNull private ToolWindowContentUiType myContentUiType = ToolWindowContentUiType.TABBED;
@@ -62,24 +62,24 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    * Defines order of tool window button inside the stripe.
    * The default value is <code>-1</code>.
    */
-  private int myOrder;
-  @NonNls static final String ID_ATTR = "id";
-  @NonNls static final String ACTIVE_ATTR = "active";
-  @NonNls static final String ANCHOR_ATTR = "anchor";
-  @NonNls static final String AUTOHIDE_ATTR = "auto_hide";
-  @NonNls static final String INTERNAL_TYPE_ATTR = "internal_type";
-  @NonNls static final String TYPE_ATTR = "type";
-  @NonNls static final String VISIBLE_ATTR = "visible";
-  @NonNls static final String WEIGHT_ATTR = "weight";
-  @NonNls static final String SIDE_WEIGHT_ATTR = "sideWeight";
-  @NonNls static final String ORDER_ATTR = "order";
-  @NonNls static final String X_ATTR = "x";
-  @NonNls static final String Y_ATTR = "y";
-  @NonNls static final String WIDTH_ATTR = "width";
-  @NonNls static final String HEIGHT_ATTR = "height";
-  @NonNls static final String SIDE_TOOL_ATTR = "side_tool";
-  @NonNls static final String CONTENT_UI_ATTR = "content_ui";
-  @NonNls static final String SHOW_STRIPE_BUTTON = "show_stripe_button";
+  private int myOrder = -1;
+  @NonNls private static final String ID_ATTR = "id";
+  @NonNls private static final String ACTIVE_ATTR = "active";
+  @NonNls private static final String ANCHOR_ATTR = "anchor";
+  @NonNls private static final String AUTOHIDE_ATTR = "auto_hide";
+  @NonNls private static final String INTERNAL_TYPE_ATTR = "internal_type";
+  @NonNls private static final String TYPE_ATTR = "type";
+  @NonNls private static final String VISIBLE_ATTR = "visible";
+  @NonNls private static final String WEIGHT_ATTR = "weight";
+  @NonNls private static final String SIDE_WEIGHT_ATTR = "sideWeight";
+  @NonNls private static final String ORDER_ATTR = "order";
+  @NonNls private static final String X_ATTR = "x";
+  @NonNls private static final String Y_ATTR = "y";
+  @NonNls private static final String WIDTH_ATTR = "width";
+  @NonNls private static final String HEIGHT_ATTR = "height";
+  @NonNls private static final String SIDE_TOOL_ATTR = "side_tool";
+  @NonNls private static final String CONTENT_UI_ATTR = "content_ui";
+  @NonNls private static final String SHOW_STRIPE_BUTTON = "show_stripe_button";
 
 
   private boolean myWasRead;
@@ -88,18 +88,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    * Creates <code>WindowInfo</code> for tool window with specified <code>ID</code>.
    */
   WindowInfoImpl(@NotNull String id) {
-    myActive = false;
-    myAnchor = ToolWindowAnchor.LEFT;
-    myAutoHide = false;
-    myFloatingBounds = null;
     myId = id;
     setType(ToolWindowType.DOCKED);
-    myVisible = false;
-    myShowStripeButton = true;
-    myWeight = DEFAULT_WEIGHT;
-    mySideWeight = DEFAULT_SIDE_WEIGHT;
-    myOrder = -1;
-    mySplitMode = false;
   }
 
   /**
@@ -122,7 +112,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   /**
    * Copies all data from the passed <code>WindowInfo</code> into itself.
    */
-  void copyFrom(final WindowInfoImpl info){
+  void copyFrom(@NotNull WindowInfoImpl info){
     myActive = info.myActive;
     myAnchor = info.myAnchor;
     myAutoHide = info.myAutoHide;
@@ -178,15 +168,16 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    * window can be in floating mode, but this method has sense if you want to know what type
    * tool window had when it was internal one. The method never returns <code>null</code>.
    */
+  @NotNull
   ToolWindowType getInternalType(){
     return myInternalType;
   }
 
   /**
    * @return current type of tool window.
-   * @see com.intellij.openapi.wm.ToolWindowType#DOCKED
-   * @see com.intellij.openapi.wm.ToolWindowType#FLOATING
-   * @see com.intellij.openapi.wm.ToolWindowType#SLIDING
+   * @see ToolWindowType#DOCKED
+   * @see ToolWindowType#FLOATING
+   * @see ToolWindowType#SLIDING
    */
   @Override
   public ToolWindowType getType(){
@@ -248,11 +239,12 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     return myVisible;
   }
 
+  @Override
   public boolean isShowStripeButton() {
     return myShowStripeButton;
   }
 
-  public void setShowStripeButton(boolean showStripeButton) {
+  void setShowStripeButton(boolean showStripeButton) {
     myShowStripeButton = showStripeButton;
   }
 
@@ -266,12 +258,12 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   }
 
   @Override
-  @SuppressWarnings({"EmptyCatchBlock"})
+  @SuppressWarnings("EmptyCatchBlock")
   public void readExternal(final Element element) {
     myId = element.getAttributeValue(ID_ATTR);
     myWasRead = true;
     try {
-      myActive = Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue();
+      myActive = Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue() && canActivateOnStart(myId);
     }
     catch (NumberFormatException ignored) {
     }
@@ -291,7 +283,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     }
     catch (IllegalArgumentException ignored) {
     }
-    myVisible = Boolean.valueOf(element.getAttributeValue(VISIBLE_ATTR)).booleanValue();
+    myVisible = Boolean.valueOf(element.getAttributeValue(VISIBLE_ATTR)).booleanValue() && canActivateOnStart(myId);
     if (element.getAttributeValue(SHOW_STRIPE_BUTTON) != null) {
       myShowStripeButton = Boolean.valueOf(element.getAttributeValue(SHOW_STRIPE_BUTTON)).booleanValue();
     }
@@ -327,6 +319,16 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myContentUiType = ToolWindowContentUiType.getInstance(element.getAttributeValue(CONTENT_UI_ATTR));
   }
 
+  private static boolean canActivateOnStart(String id) {
+    for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensions()) {
+      if (id.equals(ep.id)) {
+        ToolWindowFactory factory = ep.getToolWindowFactory();
+        return !factory.isDoNotActivateOnStart();
+      }
+    }
+    return true;
+  }
+
   /**
    * Sets new anchor.
    */
@@ -353,7 +355,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     setTypeAndCheck(type);
   }
   //Hardcoded to avoid single-usage-API
-  private void setTypeAndCheck(ToolWindowType type) {
+  private void setTypeAndCheck(@NotNull ToolWindowType type) {
     myType = ToolWindowId.PREVIEW == myId && type == ToolWindowType.DOCKED ? ToolWindowType.SLIDING : type;
   }
 
@@ -420,7 +422,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     return myAnchor.hashCode()+myId.hashCode()+myType.hashCode()+myOrder;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public String toString(){
     return getClass().getName() + "[myId=" + myId
            + "; myVisible=" + myVisible
@@ -439,7 +441,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
            ']';
   }
 
-  public boolean wasRead() {
+  boolean wasRead() {
     return myWasRead;
   }
 }

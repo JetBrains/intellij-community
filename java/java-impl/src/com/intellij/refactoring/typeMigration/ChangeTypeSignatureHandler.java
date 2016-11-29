@@ -27,8 +27,11 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#" + ChangeTypeSignatureHandler.class.getName());
@@ -42,8 +45,15 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
     while (typeElement != null) {
       final PsiElement parent = typeElement.getParent();
-      if (parent instanceof PsiVariable || (parent instanceof PsiMember && !(parent instanceof PsiClass)) || isClassArgument(parent)) {
-        invoke(project, parent, null, null, editor);
+      PsiElement[] toMigrate = null;
+      if (parent instanceof PsiVariable) {
+        toMigrate = extractReferencedVariables(typeElement);
+      }
+      else if ((parent instanceof PsiMember && !(parent instanceof PsiClass)) || isClassArgument(parent)) {
+        toMigrate = new PsiElement[]{parent};
+      }
+      if (toMigrate != null && toMigrate.length > 0) {
+        invoke(project, toMigrate, null, null, editor);
         return;
       }
       typeElement = PsiTreeUtil.getParentOfType(parent, PsiTypeElement.class, false);
@@ -61,12 +71,11 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
   }
 
   public static boolean invokeOnElement(final Project project, final PsiElement element) {
-    if (element instanceof PsiVariable || (element instanceof PsiMember && !(element instanceof PsiClass)) || element instanceof PsiFile) {
-      invoke(project, element, null, null, null);
-      return true;
-    }
-    if (isClassArgument(element)) {
-      invoke(project, element, null, null, null);
+    if (element instanceof PsiVariable ||
+        (element instanceof PsiMember && !(element instanceof PsiClass)) ||
+        element instanceof PsiFile  ||
+        isClassArgument(element)) {
+      invoke(project, new PsiElement[] {element}, null, null, null);
       return true;
     }
     return false;
@@ -88,9 +97,9 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     return false;
   }
 
-  public static void invoke(final Project project, final PsiElement root, final PsiType type, final TypeMigrationRules rules, final Editor editor) {
-    if (Util.canBeMigrated(root)) {
-      TypeMigrationDialog dialog = new TypeMigrationDialog.SingleElement(project, root, type, rules);
+  public static void invoke(final Project project, final PsiElement[] roots, final PsiType type, final TypeMigrationRules rules, final Editor editor) {
+    if (Util.canBeMigrated(roots)) {
+      TypeMigrationDialog dialog = new TypeMigrationDialog.SingleElement(project, roots, type, rules);
       dialog.show();
       return;
     }
@@ -98,5 +107,32 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("only.fields.variables.of.methods.of.valid.type.can.be.considered"),
                                    RefactoringBundle.message("unable.to.start.type.migration"), null);
 
+  }
+
+  @NotNull
+  private static PsiElement[] extractReferencedVariables(@NotNull PsiTypeElement typeElement) {
+    final PsiElement parent = typeElement.getParent();
+    if (parent instanceof PsiVariable) {
+      if (parent instanceof PsiField) {
+        PsiField aField = (PsiField)parent;
+        List<PsiField> fields = new ArrayList<>();
+        while (true) {
+          fields.add(aField);
+          aField = PsiTreeUtil.getNextSiblingOfType(aField, PsiField.class);
+          if (aField == null || aField.getTypeElement() != typeElement) {
+            return fields.toArray(new PsiElement[fields.size()]);
+          }
+        }
+      }
+      else if (parent instanceof PsiLocalVariable) {
+        final PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(parent, PsiDeclarationStatement.class);
+        if (declaration != null) {
+          return Arrays.stream(declaration.getDeclaredElements()).filter(PsiVariable.class::isInstance).toArray(PsiVariable[]::new);
+        }
+      }
+      return new PsiElement[]{parent};
+    } else {
+      return PsiElement.EMPTY_ARRAY;
+    }
   }
 }

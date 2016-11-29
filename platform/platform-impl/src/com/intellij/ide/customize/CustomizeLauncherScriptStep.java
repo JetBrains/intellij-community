@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,32 +23,24 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
   public static boolean isAvailable() {
-    return CreateLauncherScriptAction.isAvailable();
+    return System.getProperty("idea.skip.launcher.script.step") == null && CreateLauncherScriptAction.isAvailable();
   }
 
-  private final JCheckBox myCreateScriptCheckBox;
-  private final JTextField myScriptPathTextField;
+  private final JCheckBox myCreateScriptCheckBox = new JCheckBox(ActionsBundle.message("action.CreateLauncherScript.description"));
+  private final JTextField myScriptPathTextField = new JTextField();
 
   public CustomizeLauncherScriptStep() {
     setLayout(new BorderLayout());
 
-    myCreateScriptCheckBox = new JCheckBox(ActionsBundle.message("action.CreateLauncherScript.description"));
     myCreateScriptCheckBox.setOpaque(false);
-    myCreateScriptCheckBox.setSelected(true);
-    myCreateScriptCheckBox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        myScriptPathTextField.setEnabled(myCreateScriptCheckBox.isSelected());
-      }
-    });
+    myCreateScriptCheckBox.setSelected(false);
+    myCreateScriptCheckBox.addChangeListener(e -> myScriptPathTextField.setEnabled(myCreateScriptCheckBox.isSelected()));
 
-    myScriptPathTextField = new JTextField();
+    myScriptPathTextField.setEnabled(false);
     myScriptPathTextField.setText(CreateLauncherScriptAction.defaultScriptPath());
 
     JPanel content = new JPanel(createSmallBorderLayout());

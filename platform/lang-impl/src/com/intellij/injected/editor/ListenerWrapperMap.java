@@ -27,7 +27,7 @@ import java.util.Map;
  * @author cdr
 */
 class ListenerWrapperMap<T extends EventListener> {
-  Map<T,T> myListener2WrapperMap = new THashMap<T, T>();
+  Map<T,T> myListener2WrapperMap = new THashMap<>();
 
   void registerWrapper(T listener, T wrapper) {
     myListener2WrapperMap.put(listener, wrapper);
@@ -41,7 +41,7 @@ class ListenerWrapperMap<T extends EventListener> {
   }
 
   public String toString() {
-    return new HashMap<T,T>(myListener2WrapperMap).toString();
+    return new HashMap<>(myListener2WrapperMap).toString();
   }
 
   public void clear() {

@@ -88,7 +88,7 @@ public abstract class BaseButtonBehavior {
     private boolean myWasPressedOnFocusTransfer;
 
     public void mouseEntered(MouseEvent e) {
-      myMouseDeadzone.reEnter();
+      myMouseDeadzone.enter(e);
 
       setHovered(true);
       repaintComponent();
@@ -142,13 +142,10 @@ public abstract class BaseButtonBehavior {
       repaintComponent();
 
       BaseButtonBehavior.this.execute(e);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!myComponent.isShowing()) {
-            setHovered(false);
-            myMouseDeadzone.clear();
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myComponent.isShowing()) {
+          setHovered(false);
+          myMouseDeadzone.clear();
         }
       });
 
@@ -170,7 +167,7 @@ public abstract class BaseButtonBehavior {
   private class MyMouseMotionListener extends MouseMotionAdapter {
     @Override
     public void mouseMoved(final MouseEvent e) {
-      myMouseDeadzone.enter();
+      myMouseDeadzone.enter(e);
     }
   }
 

@@ -44,10 +44,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.KeymapGroupFactory;
-import com.intellij.openapi.keymap.impl.ui.Group;
-import com.intellij.openapi.keymap.impl.ui.Hyperlink;
-import com.intellij.openapi.keymap.impl.ui.KeymapListener;
-import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
+import com.intellij.openapi.keymap.impl.ui.*;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -81,6 +78,12 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
   public KeymapGroup createGroup(Condition<AnAction> condition, final Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(
       ExternalSystemBundle.message("external.system.keymap.group"), ExternalSystemIcons.TaskGroup);
+
+    AnAction[] externalSystemActions = ActionsTreeUtil.getActions("ExternalSystem.Actions");
+    for (AnAction action : externalSystemActions) {
+      ActionsTreeUtil.addAction(result, action, condition);
+    }
+
     if (project == null) return result;
 
     MultiMap<ProjectSystemId, String> projectToActionsMapping = MultiMap.create();
@@ -245,7 +248,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       }
     }
 
-    Set<RunnerAndConfigurationSettings> settings = new THashSet<RunnerAndConfigurationSettings>(
+    Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
       RunManager.getInstance(project).getConfigurationSettingsList(configurationType));
 
     final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManager.getInstance(project).getShortcutsManager();

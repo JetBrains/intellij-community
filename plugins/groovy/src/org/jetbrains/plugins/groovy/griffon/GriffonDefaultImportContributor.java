@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributorBase;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GriffonDefaultImportContributor extends DefaultImportContributor {
+public class GriffonDefaultImportContributor extends GrImportContributorBase {
 
   private static Couple<List<String>> getDefaultImports(@NotNull final Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<Couple<List<String>>>() {
@@ -61,12 +61,12 @@ public class GriffonDefaultImportContributor extends DefaultImportContributor {
           }
         }
 
-        return Result.create(Couple.<List<String>>of(new ArrayList<String>(), new ArrayList<String>()),
+        return Result.create(Couple.<List<String>>of(new ArrayList<>(), new ArrayList<>()),
                              PsiModificationTracker.MODIFICATION_COUNT);
       }
 
       private List<String> tokenize(IProperty models) {
-        List<String> modelImports = new ArrayList<String>();
+        List<String> modelImports = new ArrayList<>();
         if (models != null) {
           String value = models.getValue();
           if (value != null) {
@@ -81,12 +81,13 @@ public class GriffonDefaultImportContributor extends DefaultImportContributor {
     });
   }
 
+  @NotNull
   @Override
   public List<String> appendImplicitlyImportedPackages(@NotNull GroovyFile file) {
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     MvcFramework framework = MvcFramework.getInstance(module);
     if (framework instanceof GriffonFramework) {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       result.add("griffon.core");
       result.add("griffon.util");
 

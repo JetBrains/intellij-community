@@ -65,13 +65,8 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.quickfix");
     }
 
     @Override
@@ -117,7 +112,8 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
       if (out.length() == "{@code".length() && endOffset - startOffset > 0 && !Character.isWhitespace(text.charAt(startOffset))) {
         out.append(' ');
       }
-      out.append(text, startOffset, endOffset);
+      final String s = text.substring(startOffset, endOffset);
+      out.append(StringUtil.unescapeXml(s));
     }
   }
 

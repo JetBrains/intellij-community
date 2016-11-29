@@ -76,7 +76,7 @@ public class CollectionAddedToSelfInspection extends BaseInspection {
       PsiExpression selfArgument = null;
       final PsiExpression[] arguments = argumentList.getExpressions();
       for (PsiExpression argument : arguments) {
-        if (EquivalenceChecker.expressionsAreEquivalent(qualifier, argument)) {
+        if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, argument)) {
           selfArgument = argument;
         }
       }

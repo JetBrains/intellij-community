@@ -56,7 +56,7 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
       }
     }
     if (elements != null) {
-      final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiMethod) {
           result.add(new MethodSmartPointerNode(project, element, viewSettings));

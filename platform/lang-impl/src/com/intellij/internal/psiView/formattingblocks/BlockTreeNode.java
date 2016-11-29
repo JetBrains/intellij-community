@@ -42,12 +42,7 @@ public class BlockTreeNode extends SimpleNode {
 
   @Override
   public BlockTreeNode[] getChildren() {
-    return ContainerUtil.map2Array(myBlock.getSubBlocks(), BlockTreeNode.class, new Function<Block, BlockTreeNode>() {
-      @Override
-      public BlockTreeNode fun(Block block) {
-        return new BlockTreeNode(block, BlockTreeNode.this);
-      }
-    });
+    return ContainerUtil.map2Array(myBlock.getSubBlocks(), BlockTreeNode.class, block -> new BlockTreeNode(block, this));
   }
 
   @Override
@@ -85,6 +80,6 @@ public class BlockTreeNode extends SimpleNode {
 
   @Override
   public boolean isAlwaysLeaf() {
-    return myBlock.isLeaf();
+    return myBlock.isLeaf() && myBlock.getSubBlocks().isEmpty();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class ConvertClosureToMethodIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final GrField field;
     if (element.getParent() instanceof GrField) {
       field = (GrField)element.getParent();
@@ -85,7 +85,7 @@ public class ConvertClosureToMethodIntention extends Intention {
       field = (GrField)resolved;
     }
 
-    final HashSet<PsiReference> usages = new HashSet<PsiReference>();
+    final HashSet<PsiReference> usages = new HashSet<>();
     usages.addAll(ReferencesSearch.search(field).findAll());
     final GrAccessorMethod[] getters = field.getGetters();
     for (GrAccessorMethod getter : getters) {
@@ -98,8 +98,8 @@ public class ConvertClosureToMethodIntention extends Intention {
 
     final String fieldName = field.getName();
     LOG.assertTrue(fieldName != null);
-    final Collection<PsiElement> fieldUsages = new HashSet<PsiElement>();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final Collection<PsiElement> fieldUsages = new HashSet<>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (PsiReference usage : usages) {
       final PsiElement psiElement = usage.getElement();
       if (PsiUtil.isMethodUsage(psiElement)) continue;
@@ -133,12 +133,7 @@ public class ConvertClosureToMethodIntention extends Intention {
       }
     }
     if (!conflicts.isEmpty()) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
-        @Override
-        public void run() {
-          execute(field, fieldUsages);
-        }
-      });
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, () -> execute(field, fieldUsages));
       conflictsDialog.show();
       if (conflictsDialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
     }
@@ -170,50 +165,47 @@ public class ConvertClosureToMethodIntention extends Intention {
     builder.append(") {");
 
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        block.getParameterList().delete();
-        block.getLBrace().delete();
-        final PsiElement psiElement = PsiUtil.skipWhitespacesAndComments(block.getFirstChild(), true);
-        if (psiElement != null && "->".equals(psiElement.getText())) {
-          psiElement.delete();
-        }
-        builder.append(block.getText());
-        final GrMethod method = GroovyPsiElementFactory.getInstance(field.getProject()).createMethodFromText(builder.toString());
-        field.getParent().replace(method);
-        for (PsiElement usage : fieldUsages) {
-          if (usage instanceof GrReferenceExpression) {
-            final PsiElement parent = usage.getParent();
-            StringBuilder newRefText = new StringBuilder();
-            if (parent instanceof GrReferenceExpression &&
-                usage == ((GrReferenceExpression)parent).getQualifier() &&
-                "call".equals(((GrReferenceExpression)parent).getReferenceName())) {
-              newRefText.append(usage.getText());
-              usage = parent;
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      block.getParameterList().delete();
+      block.getLBrace().delete();
+      final PsiElement psiElement = PsiUtil.skipWhitespacesAndComments(block.getFirstChild(), true);
+      if (psiElement != null && "->".equals(psiElement.getText())) {
+        psiElement.delete();
+      }
+      builder.append(block.getText());
+      final GrMethod method = GroovyPsiElementFactory.getInstance(field.getProject()).createMethodFromText(builder.toString());
+      field.getParent().replace(method);
+      for (PsiElement usage : fieldUsages) {
+        if (usage instanceof GrReferenceExpression) {
+          final PsiElement parent = usage.getParent();
+          StringBuilder newRefText = new StringBuilder();
+          if (parent instanceof GrReferenceExpression &&
+              usage == ((GrReferenceExpression)parent).getQualifier() &&
+              "call".equals(((GrReferenceExpression)parent).getReferenceName())) {
+            newRefText.append(usage.getText());
+            usage = parent;
+          }
+          else {
+            PsiElement qualifier = ((GrReferenceExpression)usage).getQualifier();
+            if (qualifier == null) {
+              if (parent instanceof GrReferenceExpression &&
+                  ((GrReferenceExpression)parent).getQualifier() != null &&
+                  usage != ((GrReferenceExpression)parent).getQualifier()) {
+                qualifier = ((GrReferenceExpression)parent).getQualifier();
+                usage = parent;
+              }
+            }
+
+            if (qualifier != null) {
+              newRefText.append(qualifier.getText()).append('.');
+              ((GrReferenceExpression)usage).setQualifier(null);
             }
             else {
-              PsiElement qualifier = ((GrReferenceExpression)usage).getQualifier();
-              if (qualifier == null) {
-                if (parent instanceof GrReferenceExpression &&
-                    ((GrReferenceExpression)parent).getQualifier() != null &&
-                    usage != ((GrReferenceExpression)parent).getQualifier()) {
-                  qualifier = ((GrReferenceExpression)parent).getQualifier();
-                  usage = parent;
-                }
-              }
-
-              if (qualifier != null) {
-                newRefText.append(qualifier.getText()).append('.');
-                ((GrReferenceExpression)usage).setQualifier(null);
-              }
-              else {
-                newRefText.append("this.");
-              }
-              newRefText.append('&').append(usage.getText());
+              newRefText.append("this.");
             }
-            usage.replace(factory.createReferenceExpressionFromText(newRefText.toString()));
+            newRefText.append('&').append(usage.getText());
           }
+          usage.replace(factory.createReferenceExpressionFromText(newRefText.toString()));
         }
       }
     });

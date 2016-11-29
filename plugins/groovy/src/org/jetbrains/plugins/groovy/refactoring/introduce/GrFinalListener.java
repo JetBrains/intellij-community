@@ -48,18 +48,15 @@ public class GrFinalListener {
     LOG.assertTrue(modifierList != null);
     final int textOffset = modifierList.getTextOffset();
 
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (generateFinal) {
-          final GrTypeElement typeElement = variable.getTypeElementGroovy();
-          final int typeOffset = typeElement != null ? typeElement.getTextOffset() : textOffset;
-          document.insertString(typeOffset, modifier + " ");
-        }
-        else {
-          final int idx = modifierList.getText().indexOf(modifier);
-          document.deleteString(textOffset + idx, textOffset + idx + modifier.length() + 1);
-        }
+    final Runnable runnable = () -> {
+      if (generateFinal) {
+        final GrTypeElement typeElement = variable.getTypeElementGroovy();
+        final int typeOffset = typeElement != null ? typeElement.getTextOffset() : textOffset;
+        document.insertString(typeOffset, modifier + " ");
+      }
+      else {
+        final int idx = modifierList.getText().indexOf(modifier);
+        document.deleteString(textOffset + idx, textOffset + idx + modifier.length() + 1);
       }
     };
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);

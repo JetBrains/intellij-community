@@ -211,20 +211,23 @@ class TeamcityTestResult(TestResult):
 
   def __getDuration(self, test):
     start = getattr(test, "startTime", datetime.datetime.now())
+    assert isinstance(start, datetime.datetime), \
+      "You testcase has property named 'startTime' (value {0}). Please, rename it".format(start)
     d = datetime.datetime.now() - start
     duration = d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
     return duration
 
   def addSubTest(self, test, subtest, err):
+    location = self.init_suite(test)
     suite_name = self.getTestName(test)  # + " (subTests)"
     if not self.subtest_suite:
       self.subtest_suite = suite_name
-      self.messages.testSuiteStarted(self.subtest_suite)
+      self.messages.testSuiteStarted(self.subtest_suite, location=location)
     else:
       if suite_name != self.subtest_suite:
         self.messages.testSuiteFinished(self.subtest_suite)
         self.subtest_suite = suite_name
-        self.messages.testSuiteStarted(self.subtest_suite)
+        self.messages.testSuiteStarted(self.subtest_suite, location=location)
 
     name = self.getTestName(subtest, True)
     if err is not None:

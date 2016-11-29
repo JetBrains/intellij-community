@@ -29,9 +29,9 @@ import java.util.Map;
 @SuppressWarnings("PackageVisibleField") // Package-only class
 class PyEvaluationResult {
   @NotNull
-  final Map<String, Object> myNamespace = new HashMap<String, Object>();
+  final Map<String, Object> myNamespace = new HashMap<>();
   @NotNull
-  final Map<String, List<PyExpression>> myDeclarations = new HashMap<String, List<PyExpression>>();
+  final Map<String, List<PyExpression>> myDeclarations = new HashMap<>();
 
   @NotNull
   List<PyExpression> getDeclarations(@NotNull final String name) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.psi.StubBasedPsiElement;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/3/12
+ * @since 3.08.2012
  */
-public abstract class ObjectStubBase<T extends Stub>  extends UserDataHolderBase implements Stub {
+public abstract class ObjectStubBase<T extends Stub> extends UserDataHolderBase implements Stub {
+  private static final Key<Boolean> DANGLING_STUB = Key.create("DIRECT_PARENT_IS_STUBBED");
 
   protected final T myParent;
   public int id;
@@ -30,7 +33,23 @@ public abstract class ObjectStubBase<T extends Stub>  extends UserDataHolderBase
     myParent = parent;
   }
 
+  @Override
   public T getParentStub() {
     return myParent;
+  }
+
+  /**
+   * @return whether the parent stub is not immediate, i.e. doesn't correspond to the actual AST parent node. In this case,
+   * {@link StubBasedPsiElement#getParent()} should switch to AST.
+   */
+  public boolean isDangling() {
+    return Boolean.TRUE.equals(getUserData(DANGLING_STUB));
+  }
+
+  /**
+   * @see #isDangling()
+   */
+  public void markDangling() {
+    putUserData(DANGLING_STUB, true);
   }
 }

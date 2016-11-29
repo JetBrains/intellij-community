@@ -107,6 +107,29 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    PsiParameterList parameterList = expression.getParameterList();
+    PsiParameter[] parameters = parameterList.getParameters();
+
+    PsiElement firstChild = parameterList.getFirstChild();
+    boolean addParenthesis = firstChild instanceof PsiJavaToken &&
+                             ((PsiJavaToken)firstChild).getTokenType() == JavaTokenType.LPARENTH;
+
+    if (addParenthesis) myBuf.append('(');
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      if (i != 0) {
+        myBuf.append(", ");
+      }
+      PsiTypeElement typeElement = parameter.getTypeElement();
+      int formatOptions = PsiFormatUtilBase.SHOW_NAME | (typeElement == null ? 0 : PsiFormatUtilBase.SHOW_TYPE);
+      myBuf.append(PsiFormatUtil.formatVariable(parameter, formatOptions, PsiSubstitutor.EMPTY));
+    }
+    if (addParenthesis) myBuf.append(')');
+    myBuf.append(" -> {...}");
+  }
+
+  @Override
   public void visitConditionalExpression(final PsiConditionalExpression expression) {
     expression.getCondition().accept(this);
 

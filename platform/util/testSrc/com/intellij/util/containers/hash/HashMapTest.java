@@ -39,7 +39,7 @@ public class HashMapTest {
 
   public void testPutGet() {
 
-    final HashMap<Integer, String> tested = new HashMap<Integer, String>();
+    final HashMap<Integer, String> tested = new HashMap<>();
 
     for (int i = 0; i < 1000; ++i) {
 
@@ -71,7 +71,7 @@ public class HashMapTest {
 
   public void testPutGet2() {
 
-    final HashMap<Integer, String> tested = new HashMap<Integer, String>();
+    final HashMap<Integer, String> tested = new HashMap<>();
 
     for (int i = 0; i < 1000; ++i) {
 
@@ -103,7 +103,7 @@ public class HashMapTest {
 
   public void testPutGetRemove() {
 
-    final HashMap<Integer, String> tested = new HashMap<Integer, String>();
+    final HashMap<Integer, String> tested = new HashMap<>();
 
     for (int i = 0; i < 1000; ++i) {
 
@@ -130,9 +130,9 @@ public class HashMapTest {
 
   public void keySet() {
 
-    final HashMap<Integer, String> tested = new HashMap<Integer, String>();
+    final HashMap<Integer, String> tested = new HashMap<>();
 
-    final Set<Integer> set = new HashSet<Integer>();
+    final Set<Integer> set = new HashSet<>();
 
 
     for (int i = 0; i < 10000; ++i) {
@@ -155,9 +155,9 @@ public class HashMapTest {
 
   public void keySet2() {
 
-    final HashMap<Integer, String> tested = new HashMap<Integer, String>();
+    final HashMap<Integer, String> tested = new HashMap<>();
 
-    final Set<Integer> set = new HashSet<Integer>();
+    final Set<Integer> set = new HashSet<>();
 
 
     for (int i = 0; i < 10000; ++i) {
@@ -208,7 +208,7 @@ public class HashMapTest {
     long started;
 
 
-    final Map<Integer, String> map = new java.util.HashMap<Integer, String>();
+    final Map<Integer, String> map = new java.util.HashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -228,7 +228,7 @@ public class HashMapTest {
     System.out.println("100 000 000 lookups in java.util.HashMap took " + (System.currentTimeMillis() - started));
 
 
-    final Map<Integer, String> troveMap = new THashMap<Integer, String>();
+    final Map<Integer, String> troveMap = new THashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -248,7 +248,7 @@ public class HashMapTest {
     System.out.println("100 000 000 lookups in THashMap took " + (System.currentTimeMillis() - started));
 
 
-    final HashMap<Integer, String> tested = new HashMap<Integer, String>();
+    final HashMap<Integer, String> tested = new HashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -277,7 +277,7 @@ public class HashMapTest {
     long started;
 
 
-    final Map<Integer, String> map = new java.util.HashMap<Integer, String>();
+    final Map<Integer, String> map = new java.util.HashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -297,7 +297,7 @@ public class HashMapTest {
     System.out.println("100 000 000 lookups in java.util.HashMap took " + (System.currentTimeMillis() - started));
 
 
-    final Map<Integer, String> troveMap = new THashMap<Integer, String>();
+    final Map<Integer, String> troveMap = new THashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -317,7 +317,7 @@ public class HashMapTest {
     System.out.println("100 000 000 lookups in THashMap took " + (System.currentTimeMillis() - started));
 
 
-    final HashMap<Integer, String> tested = new HashMap<Integer, String>();
+    final HashMap<Integer, String> tested = new HashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 

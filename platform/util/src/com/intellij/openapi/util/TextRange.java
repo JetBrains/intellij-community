@@ -78,7 +78,7 @@ public class TextRange implements Segment, Serializable {
   }
 
   public boolean containsRange(int startOffset, int endOffset) {
-    return getStartOffset() <= startOffset && getEndOffset() >= endOffset;
+    return getStartOffset() <= startOffset && endOffset <= getEndOffset();
   }
 
   public static boolean containsRange(@NotNull Segment outer, @NotNull Segment inner) {
@@ -122,7 +122,9 @@ public class TextRange implements Segment, Serializable {
   public TextRange cutOut(@NotNull TextRange subRange) {
     assert subRange.getStartOffset() <= getLength() : subRange + "; this="+this;
     assert subRange.getEndOffset() <= getLength() : subRange + "; this="+this;
-    return new TextRange(myStartOffset + subRange.getStartOffset(), Math.min(myEndOffset, myStartOffset + subRange.getEndOffset()));
+    assertProperRange(subRange);
+    return new TextRange(myStartOffset + subRange.getStartOffset(),
+                         Math.min(myEndOffset, myStartOffset + subRange.getEndOffset()));
   }
 
   @NotNull
@@ -216,11 +218,8 @@ public class TextRange implements Segment, Serializable {
   }
 
   public static void assertProperRange(int startOffset, int endOffset, @NotNull Object message) {
-    if (startOffset > endOffset) {
+    if (startOffset > endOffset || startOffset < 0) {
       LOG.error("Invalid range specified: (" + startOffset + "," + endOffset + "); " + message);
-    }
-    if (startOffset < 0) {
-      LOG.error("Negative start offset: (" + startOffset + "," + endOffset + "); " + message);
     }
   }
 }

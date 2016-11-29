@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CachedXmlDocumentSet {
-  private final Map<String, String> nameToDir = new THashMap<String, String>();
+  private final Map<String, String> nameToDir = new THashMap<>();
 
   @Nullable
   public Element load(@NotNull String name, boolean refresh) throws IOException, JDOMException {
@@ -82,7 +82,7 @@ public class CachedXmlDocumentSet {
 
   @NotNull
   public List<String> getFilePaths() {
-    List<String> list = new ArrayList<String>(nameToDir.size());
+    List<String> list = new ArrayList<>(nameToDir.size());
     for (String name : nameToDir.keySet()) {
       list.add(getParent(name) + '/' + name);
     }

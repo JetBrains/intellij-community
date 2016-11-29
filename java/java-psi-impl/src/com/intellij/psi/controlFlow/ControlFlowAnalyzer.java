@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -410,6 +410,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
     PsiStatement exitedStatement = statement.findExitedStatement();
     if (exitedStatement != null) {
+      callFinallyBlocksOnExit(exitedStatement);
+
       final Instruction instruction;
       final PsiElement finallyBlock = findEnclosingFinallyBlockElement(statement, exitedStatement);
       final int finallyStartOffset = finallyBlock == null ? -1 : myCurrentFlow.getStartOffset(finallyBlock);
@@ -426,6 +428,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addElementOffsetLater(exitedStatement, false);
     }
     finishElement(statement);
+  }
+
+  private void callFinallyBlocksOnExit(PsiStatement exitedStatement) {
+    for (final ListIterator<PsiElement> it = myFinallyBlocks.listIterator(myFinallyBlocks.size()); it.hasPrevious(); ) {
+      final PsiElement finallyBlock = it.previous();
+      final PsiElement enclosingTryStatement = finallyBlock.getParent();
+      if (enclosingTryStatement == null || !PsiTreeUtil.isAncestor(exitedStatement, enclosingTryStatement, false)) {
+        break;
+      }
+      myCurrentFlow.addInstruction(new CallInstruction(0, 0, myStack));
+      addElementOffsetLater(finallyBlock, true);
+    }
   }
 
   private PsiElement findEnclosingFinallyBlockElement(@NotNull PsiElement sourceElement, @Nullable PsiElement jumpElement) {
@@ -449,21 +463,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement continuedStatement = statement.findContinuedStatement();
     if (continuedStatement != null) {
       PsiElement body = null;
-      if (continuedStatement instanceof PsiForStatement) {
-        body = ((PsiForStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiWhileStatement) {
-        body = ((PsiWhileStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiDoWhileStatement) {
-        body = ((PsiDoWhileStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiForeachStatement) {
-        body = ((PsiForeachStatement)continuedStatement).getBody();
+      if (continuedStatement instanceof PsiLoopStatement) {
+        body = ((PsiLoopStatement)continuedStatement).getBody();
       }
       if (body == null) {
         body = myCodeFragment;
       }
+      callFinallyBlocksOnExit(continuedStatement);
+
       final Instruction instruction;
       final PsiElement finallyBlock = findEnclosingFinallyBlockElement(statement, continuedStatement);
       final int finallyStartOffset = finallyBlock == null ? -1 : myCurrentFlow.getStartOffset(finallyBlock);
@@ -735,7 +742,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     boolean generateElseFlow = true;
     boolean generateThenFlow = true;
     boolean generateConditionalJump = true;
-    /**
+    /*
      * if() statement generated instructions outline:
      *  'if (C) { A } [ else { B } ]' :
      *     generate (C)
@@ -971,7 +978,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       ProgressManager.checkCanceled();
       PsiParameter parameter = myCatchParameters.get(i);
       PsiType catchType = parameter.getType();
-      if (catchType.isAssignableFrom(throwType) || throwType.isAssignableFrom(catchType)) {
+      if (ControlFlowUtil.isCaughtExceptionType(throwType, catchType)) {
         blocks.add(myCatchBlocks.get(i));
       }
     }
@@ -985,6 +992,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override
   public void visitAssertStatement(PsiAssertStatement statement) {
     startElement(statement);
+
+    myStartStatementStack.pushStatement(statement, false);
+    myEndStatementStack.pushStatement(statement, false);
+    Instruction passByWhenAssertionsDisabled = new ConditionalGoToInstruction(0, BranchingInstruction.Role.END, null);
+    myCurrentFlow.addInstruction(passByWhenAssertionsDisabled);
+    addElementOffsetLater(statement, false);
 
     // should not try to compute constant expression within assert
     // since assertions can be disabled/enabled at any moment via JVM flags
@@ -1013,6 +1026,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     Instruction instruction = new ConditionalThrowToInstruction(0, statement.getAssertCondition());
     myCurrentFlow.addInstruction(instruction);
     addElementOffsetLater(myCodeFragment, false);
+
+    myStartStatementStack.popStatement();
+    myEndStatementStack.popStatement();
 
     finishElement(statement);
   }
@@ -1091,8 +1107,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         generateWriteInstruction(catchBlockParameters[i]);
       }
       PsiCodeBlock catchBlock = catchBlocks[i];
-      assert catchBlock != null : i + statement.getText();
-      catchBlock.accept(this);
+      if (catchBlock != null) {
+        catchBlock.accept(this);
+      }
+      else {
+        LOG.error("Catch body is null (" + i + ") " + statement.getText());
+      }
 
       myCurrentFlow.addInstruction(new GoToInstruction(finallyBlock == null ? 0 : -6));
       if (finallyBlock == null) {
@@ -1298,9 +1318,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiExpression lExpr = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
     if (lExpr instanceof PsiReferenceExpression) {
-      if (rExpr != null) {
-        rExpr.accept(this);
-      }
       PsiVariable variable = getUsedVariable((PsiReferenceExpression)lExpr);
       if (variable != null) {
         if (myAssignmentTargetsAreElements) {
@@ -1315,11 +1332,17 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         if (expression.getOperationTokenType() != JavaTokenType.EQ) {
           generateReadInstruction(variable);
         }
+        if (rExpr != null) {
+          rExpr.accept(this);
+        }
         generateWriteInstruction(variable);
 
         if (myAssignmentTargetsAreElements) finishElement(lExpr);
       }
       else {
+        if (rExpr != null) {
+          rExpr.accept(this);
+        }
         lExpr.accept(this); //?
       }
     }

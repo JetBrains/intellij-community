@@ -36,7 +36,7 @@ public abstract class DataValidator<T> {
 
   Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataValidator");
 
-  private static final Map<String, DataValidator> ourValidators = new HashMap<String, DataValidator>();
+  private static final Map<String, DataValidator> ourValidators = new HashMap<>();
   private static final DataValidator<VirtualFile> VIRTUAL_FILE_VALIDATOR = new DataValidator<VirtualFile>() {
     public VirtualFile findInvalid(final String dataId, VirtualFile file, final Object dataSource) {
       return file.isValid() ? null : file;
@@ -71,7 +71,7 @@ public abstract class DataValidator<T> {
 
   static {
     ourValidators.put(CommonDataKeys.VIRTUAL_FILE.getName(), VIRTUAL_FILE_VALIDATOR);
-    ourValidators.put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), new ArrayValidator<VirtualFile>(VIRTUAL_FILE_VALIDATOR));
+    ourValidators.put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), new ArrayValidator<>(VIRTUAL_FILE_VALIDATOR));
     ourValidators.put(CommonDataKeys.PROJECT.getName(), PROJECT_VALIDATOR);
   }
 

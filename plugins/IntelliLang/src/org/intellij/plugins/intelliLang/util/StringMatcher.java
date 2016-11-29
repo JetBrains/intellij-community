@@ -144,7 +144,7 @@ public abstract class StringMatcher<T> {
   }
 
   private static final class Cache extends StringMatcher<StringMatcher> {
-    private final WeakHashMap<String, Boolean> myCache = new WeakHashMap<String, Boolean>();
+    private final WeakHashMap<String, Boolean> myCache = new WeakHashMap<>();
 
     Cache(StringMatcher target) {
       super(target);
@@ -170,11 +170,7 @@ public abstract class StringMatcher<T> {
 
     protected MatcherSet(Set<StringMatcher> target) {
       super(target);
-      myPattern = StringUtil.join(target, new Function<StringMatcher, String>() {
-        public String fun(StringMatcher s) {
-          return s.getPattern();
-        }
-      }, "|");
+      myPattern = StringUtil.join(target, s -> s.getPattern(), "|");
     }
 
     public static StringMatcher create(Set<StringMatcher> matchers) {
@@ -206,7 +202,7 @@ public abstract class StringMatcher<T> {
     if (target.equals(NONE.getPattern())) return NONE;
 
     final List<String> branches = StringUtil.split(target,"|");
-    final Set<StringMatcher> matchers = new LinkedHashSet<StringMatcher>();
+    final Set<StringMatcher> matchers = new LinkedHashSet<>();
 
     for (String branch : branches) {
       boolean startsWith = false;

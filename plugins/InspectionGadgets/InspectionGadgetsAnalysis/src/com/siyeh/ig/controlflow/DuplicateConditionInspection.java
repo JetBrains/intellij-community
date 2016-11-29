@@ -73,7 +73,7 @@ public class DuplicateConditionInspection extends BaseInspection {
       if (ControlFlowUtils.isElseIf(statement)) {
         return;
       }
-      final Set<PsiExpression> conditions = new HashSet<PsiExpression>();
+      final Set<PsiExpression> conditions = new HashSet<>();
       collectConditionsForIfStatement(statement, conditions, 0);
       final int numConditions = conditions.size();
       if (numConditions < 2) {
@@ -92,7 +92,7 @@ public class DuplicateConditionInspection extends BaseInspection {
             continue;
           }
           final PsiExpression testCondition = conditionArray[j];
-          final boolean areEquivalent = EquivalenceChecker.expressionsAreEquivalent(condition, testCondition);
+          final boolean areEquivalent = EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(condition, testCondition);
           if (areEquivalent) {
             if (!ignoreMethodCalls || !containsMethodCallExpression(testCondition)) {
               registerError(testCondition);

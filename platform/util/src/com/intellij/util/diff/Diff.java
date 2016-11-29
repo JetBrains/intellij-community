@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Enumerator;
 import org.jetbrains.annotations.NonNls;
@@ -34,22 +35,6 @@ import java.util.BitSet;
  */
 public class Diff {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.diff.Diff");
-
-  @Nullable
-  public static <T> Change buildChangesSomehow(@NotNull T[] objects1, @NotNull T[] objects2) {
-    try {
-      return buildChanges(objects1, objects2);
-    }
-    catch (FilesTooBigForDiffException e) {
-      final int startShift = getStartShift(objects1, objects2);
-      final int endCut = getEndCut(objects1, objects2, startShift);
-
-      int trimmedLength1 = objects1.length - startShift - endCut;
-      int trimmedLength2 = objects2.length - startShift - endCut;
-
-      return new Change(startShift, startShift, trimmedLength1, trimmedLength2, null);
-    }
-  }
 
   @Nullable
   public static Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) throws FilesTooBigForDiffException {
@@ -129,8 +114,7 @@ public class Diff {
       }
       catch (FilesTooBigForDiffException e) {
         PatienceIntLCS patienceIntLCS = new PatienceIntLCS(discarded[0], discarded[1]);
-        patienceIntLCS.failOnSmallSizeReduction();
-        patienceIntLCS.execute();
+        patienceIntLCS.execute(true);
         changes = patienceIntLCS.getChanges();
         LOG.info("Successful fallback to patience diff");
       }
@@ -196,13 +180,29 @@ public class Diff {
 
   public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line, boolean approximate)
     throws FilesTooBigForDiffException {
-    Change change = buildChanges(before, after);
+    String[] strings1 = LineTokenizer.tokenize(before, false);
+    String[] strings2 = LineTokenizer.tokenize(after, false);
+    if (approximate) {
+      strings1 = trim(strings1);
+      strings2 = trim(strings2);
+    }
+    Change change = buildChanges(strings1, strings2);
     return translateLine(change, line, approximate);
+  }
+
+  @NotNull
+  private static String[] trim(@NotNull String[] lines) {
+    return ContainerUtil.map2Array(lines, String.class, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return s.trim();
+      }
+    });
   }
 
   /**
    * Tries to translate given line that pointed to the text before change to the line that points to the same text after the change.
-   * 
+   *
    * @param change    target change
    * @param line      target line before change
    * @return          translated line if the processing is ok; negative value otherwise
@@ -228,7 +228,7 @@ public class Diff {
 
     return result;
   }
-  
+
   public static class Change {
     // todo remove. Return lists instead.
     /**

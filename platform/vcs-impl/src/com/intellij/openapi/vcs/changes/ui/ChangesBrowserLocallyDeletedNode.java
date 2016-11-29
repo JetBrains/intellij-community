@@ -20,74 +20,69 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.io.File;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
-  public ChangesBrowserLocallyDeletedNode(LocallyDeletedChange userObject) {
+public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<LocallyDeletedChange>
+  implements TreeLinkMouseListener.HaveTooltip {
+  public ChangesBrowserLocallyDeletedNode(@NotNull LocallyDeletedChange userObject) {
     super(userObject);
-    myCount = 1;
+    if (!isDirectory()) {
+      myCount = 1;
+    }
   }
 
-  public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
+  public boolean canAcceptDrop(ChangeListDragBean dragBean) {
     return false;
   }
 
-  public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
+  public void acceptDrop(ChangeListOwner dragOwner, ChangeListDragBean dragBean) {
   }
 
   @Override
-  protected FilePath getMyPath() {
-    final LocallyDeletedChange change = (LocallyDeletedChange) getUserObject();
-    if (change != null) {
-      return change.getPath();
-    }
-    return null;
+  protected boolean isDirectory() {
+    return getUserObject().getPath().isDirectory();
   }
 
   @Override
-  public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+  public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     // todo would be good to have render code in one place
-    final LocallyDeletedChange change = (LocallyDeletedChange)getUserObject();
-    final FilePath filePath = change.getPath();
-
-    final String fileName = filePath.getName();
-    VirtualFile vFile = filePath.getVirtualFile();
-    final Color changeColor = FileStatus.NOT_CHANGED.getColor();
-    renderer.appendFileName(vFile, fileName, changeColor);
+    FilePath filePath = getUserObject().getPath();
+    renderer.appendFileName(filePath.getVirtualFile(), filePath.getName(), FileStatus.NOT_CHANGED.getColor());
 
     if (renderer.isShowFlatten()) {
-      final File parentFile = filePath.getIOFile().getParentFile();
-      if (parentFile != null) {
-        renderer.append(spaceAndThinSpace() + parentFile.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      FilePath parentPath = filePath.getParentPath();
+      if (parentPath != null) {
+        renderer.append(spaceAndThinSpace() + parentPath.getPresentableUrl(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
     else if (getCount() != 1 || getDirectoryCount() != 0) {
       appendCount(renderer);
     }
 
-    final Icon addIcon = change.getAddIcon();
-    if (addIcon != null) {
-      renderer.setIcon(addIcon);
-    } else {
-      if (filePath.isDirectory() || !isLeaf()) {
-        renderer.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
-      }
-      else {
-        renderer.setIcon(filePath.getFileType().getIcon());
-      }
-    }
+    renderer.setIcon(getIcon());
   }
 
+  @Nullable
   public String getTooltip() {
-    final LocallyDeletedChange change = (LocallyDeletedChange)getUserObject();
-    return change.getDescription();
+    return getUserObject().getDescription();
+  }
+
+  @Nullable
+  private Icon getIcon() {
+    Icon result = getUserObject().getAddIcon();
+
+    if (result == null) {
+      FilePath filePath = getUserObject().getPath();
+      result = filePath.isDirectory() || !isLeaf() ? PlatformIcons.DIRECTORY_CLOSED_ICON : filePath.getFileType().getIcon();
+    }
+
+    return result;
   }
 }

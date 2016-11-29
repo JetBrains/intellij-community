@@ -34,7 +34,7 @@ public class IfHelper {
 
   public static boolean mergeAllIfs(RootStatement root) {
 
-    boolean res = mergeAllIfsRec(root, new HashSet<Integer>());
+    boolean res = mergeAllIfsRec(root, new HashSet<>());
 
     if (res) {
       SequenceHelper.condenseSequences(root);
@@ -88,7 +88,7 @@ public class IfHelper {
 
       boolean updated = false;
 
-      List<Statement> lst = new ArrayList<Statement>();
+      List<Statement> lst = new ArrayList<>();
       if (statement.type == Statement.TYPE_IF) {
         lst.add(statement);
       }
@@ -196,7 +196,7 @@ public class IfHelper {
             // merge if conditions
             IfExprent statexpr = ifparent.getHeadexprent();
 
-            List<Exprent> lstOperands = new ArrayList<Exprent>();
+            List<Exprent> lstOperands = new ArrayList<>();
             lstOperands.add(statexpr.getCondition());
             lstOperands.add(ifchild.getHeadexprent().getCondition());
 
@@ -250,7 +250,7 @@ public class IfHelper {
             // merge if conditions
             IfExprent statexpr = ifparent.getHeadexprent();
 
-            List<Exprent> lstOperands = new ArrayList<Exprent>();
+            List<Exprent> lstOperands = new ArrayList<>();
             lstOperands.add(statexpr.getCondition());
             lstOperands.add(new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, ifchild.getHeadexprent().getCondition(), null));
             statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_CADD, lstOperands, null));
@@ -305,7 +305,7 @@ public class IfHelper {
             // merge if conditions
             IfExprent statexpr = secondif.getHeadexprent();
 
-            List<Exprent> lstOperands = new ArrayList<Exprent>();
+            List<Exprent> lstOperands = new ArrayList<>();
             lstOperands.add(firstif.getHeadexprent().getCondition());
 
             if (path == 2) {
@@ -509,7 +509,7 @@ public class IfHelper {
       SequenceStatement sequence = (SequenceStatement)parent;
 
       // build and cut the new else statement
-      List<Statement> lst = new ArrayList<Statement>();
+      List<Statement> lst = new ArrayList<>();
       for (int i = sequence.getStats().size() - 1; i >= 0; i--) {
         Statement sttemp = sequence.getStats().get(i);
         if (sttemp == ifstat) {
@@ -597,7 +597,7 @@ public class IfHelper {
         SequenceStatement sequence = (SequenceStatement)parent;
 
         // build and cut the new else statement
-        List<Statement> lst = new ArrayList<Statement>();
+        List<Statement> lst = new ArrayList<>();
         for (int i = sequence.getStats().size() - 1; i >= 0; i--) {
           Statement sttemp = sequence.getStats().get(i);
           if (sttemp == ifstat) {
@@ -735,8 +735,8 @@ public class IfHelper {
   private static class IfNode {
     public final Statement value;
 
-    public final List<IfNode> succs = new ArrayList<IfNode>();
-    public final List<Integer> edgetypes = new ArrayList<Integer>();
+    public final List<IfNode> succs = new ArrayList<>();
+    public final List<Integer> edgetypes = new ArrayList<>();
 
     public IfNode(Statement value) {
       this.value = value;

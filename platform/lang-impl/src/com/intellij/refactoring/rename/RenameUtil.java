@@ -194,16 +194,13 @@ public class RenameUtil {
       //LOG.error(e);
       //return;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final String helpID = RenamePsiElementProcessor.forElement(element).getHelpID(element);
-        String message = e.getMessage();
-        if (StringUtil.isEmpty(message)) {
-          message = RefactoringBundle.message("rename.not.supported");
-        }
-        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, helpID, project);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final String helpID = RenamePsiElementProcessor.forElement(element).getHelpID(element);
+      String message = e.getMessage();
+      if (StringUtil.isEmpty(message)) {
+        message = RefactoringBundle.message("rename.not.supported");
       }
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, helpID, project);
     });
   }
 
@@ -271,7 +268,7 @@ public class RenameUtil {
 
   @Nullable
   public static List<UnresolvableCollisionUsageInfo> removeConflictUsages(Set<UsageInfo> usages) {
-    final List<UnresolvableCollisionUsageInfo> result = new ArrayList<UnresolvableCollisionUsageInfo>();
+    final List<UnresolvableCollisionUsageInfo> result = new ArrayList<>();
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
       if (usageInfo instanceof UnresolvableCollisionUsageInfo) {
@@ -292,7 +289,7 @@ public class RenameUtil {
 
   public static void renameNonCodeUsages(@NotNull Project project, @NotNull NonCodeUsageInfo[] usages) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Map<Document, List<UsageOffset>> docsToOffsetsMap = new HashMap<Document, List<UsageOffset>>();
+    Map<Document, List<UsageOffset>> docsToOffsetsMap = new HashMap<>();
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (NonCodeUsageInfo usage : usages) {
       PsiElement element = usage.getElement();
@@ -313,7 +310,7 @@ public class RenameUtil {
 
       List<UsageOffset> list = docsToOffsetsMap.get(document);
       if (list == null) {
-        list = new ArrayList<UsageOffset>();
+        list = new ArrayList<>();
         docsToOffsetsMap.put(document, list);
       }
 

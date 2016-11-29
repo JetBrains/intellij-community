@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
@@ -76,23 +73,22 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     myOccurrences = occurrences;
     if (expr != null) {
       final ASTNode node = expr.getNode();
-      ASTNode prev = node.getTreePrev();
-      final ASTNode astNode = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(expr.getLanguage())
-        .generateWhitespaceBetweenTokens(prev, node);
-      if (astNode != null) {
-        final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
-        if (LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
-          PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
-            @Override
-            public void run() {
-              new WriteCommandAction<Object>(project, "Normalize declaration") {
+      if (node != null) {
+        ASTNode prev = node.getTreePrev();
+        final ASTNode astNode = prev instanceof PsiWhiteSpace ? null :
+                                LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(expr.getLanguage())
+                                  .generateWhitespaceBetweenTokens(prev, node);
+        if (astNode != null) {
+          final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
+          if (LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
+            PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
+              (Runnable)() -> new WriteCommandAction<Object>(project, "Normalize declaration") {
                 @Override
                 protected void run(@NotNull Result<Object> result) throws Throwable {
                   node.getTreeParent().addChild(astNode, node);
                 }
-              }.execute(); 
-            }
-          });
+              }.execute());
+          }
         }
       }
       myExpr = expr;
@@ -138,7 +134,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
 
   protected void initOccurrencesMarkers() {
     if (myOccurrenceMarkers != null) return;
-    myOccurrenceMarkers = new ArrayList<RangeMarker>();
+    myOccurrenceMarkers = new ArrayList<>();
     for (E occurrence : myOccurrences) {
       myOccurrenceMarkers.add(createMarker(occurrence));
     }
@@ -218,7 +214,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
         if (insertedValue != null) {
           final String text = insertedValue.getText();
           if (!text.isEmpty() && !Comparing.strEqual(text, name)) {
-            final LinkedHashSet<String> names = new LinkedHashSet<String>();
+            final LinkedHashSet<String> names = new LinkedHashSet<>();
             names.add(text);
             for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
               final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(psiVariable, psiVariable, names);

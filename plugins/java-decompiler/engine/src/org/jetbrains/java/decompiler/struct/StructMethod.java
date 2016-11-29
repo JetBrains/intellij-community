@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.*;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
@@ -37,7 +38,6 @@ import static org.jetbrains.java.decompiler.code.CodeConstants.*;
   }
 */
 public class StructMethod extends StructMember {
-
   private static final int[] opr_iconst = {-1, 0, 1, 2, 3, 4, 5};
   private static final int[] opr_loadstore = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
   private static final int[] opcs_load = {opc_iload, opc_lload, opc_fload, opc_dload, opc_aload};
@@ -119,7 +119,7 @@ public class StructMethod extends StructMember {
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   private InstructionSequence parseBytecode(DataInputFullStream in, int length, ConstantPool pool) throws IOException {
-    VBStyleCollection<Instruction, Integer> instructions = new VBStyleCollection<Instruction, Integer>();
+    VBStyleCollection<Instruction, Integer> instructions = new VBStyleCollection<>();
 
     int bytecode_version = classStruct.getBytecodeVersion();
 
@@ -137,7 +137,7 @@ public class StructMethod extends StructMember {
         opcode = in.readUnsignedByte();
       }
 
-      List<Integer> operands = new ArrayList<Integer>();
+      List<Integer> operands = new ArrayList<>();
 
       if (opcode >= opc_iconst_m1 && opcode <= opc_iconst_5) {
         operands.add(new Integer(opr_iconst[opcode - opc_iconst_m1]));
@@ -331,7 +331,7 @@ public class StructMethod extends StructMember {
     }
 
     // initialize exception table
-    List<ExceptionHandler> lstHandlers = new ArrayList<ExceptionHandler>();
+    List<ExceptionHandler> lstHandlers = new ArrayList<>();
 
     int exception_count = in.readUnsignedShort();
     for (int i = 0; i < exception_count; i++) {
@@ -388,5 +388,14 @@ public class StructMethod extends StructMember {
 
   public InstructionSequence getInstructionSequence() {
     return seq;
+  }
+
+  public StructLocalVariableTableAttribute getLocalVariableAttr() {
+    return (StructLocalVariableTableAttribute)getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+  }
+
+  @Override
+  public String toString() {
+    return name;
   }
 }

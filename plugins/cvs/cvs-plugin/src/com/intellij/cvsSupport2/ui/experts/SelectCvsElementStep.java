@@ -48,7 +48,7 @@ public class SelectCvsElementStep extends WizardStep {
   @JdkConstants.TreeSelectionMode private final int mySelectionMode;
   private final boolean myAllowRootSelection;
   private final boolean myShowModules;
-  private final Ref<Boolean> myErrors = new Ref<Boolean>();
+  private final Ref<Boolean> myErrors = new Ref<>();
 
   public SelectCvsElementStep(String title, CvsWizard wizard,
                               Project project,
@@ -76,12 +76,7 @@ public class SelectCvsElementStep extends WizardStep {
     myErrors.set(null);
     final LoginPerformer performer = new LoginPerformer(
       myProject, Collections.<CvsEnvironment>singletonList(selectedConfiguration),
-      new Consumer<VcsException>() {
-        @Override
-        public void consume(VcsException e) {
-          myErrors.set(Boolean.TRUE);
-        }
-      });
+      e -> myErrors.set(Boolean.TRUE));
     try {
       final boolean logged = performer.loginAll(false);
       return logged && myErrors.isNull();
@@ -120,18 +115,10 @@ public class SelectCvsElementStep extends WizardStep {
 
   @Override
   protected JComponent createComponent() {
-    myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles, new Consumer<VcsException>() {
-      @Override
-      public void consume(final VcsException e) {
-        myErrors.set(Boolean.TRUE);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-
-          @Override
-          public void run() {
-            Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.cvs.error"));
-          }
-        }, ModalityState.any());
-      }
+    myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles, e -> {
+      myErrors.set(Boolean.TRUE);
+      ApplicationManager.getApplication().invokeLater(
+        () -> Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.cvs.error")), ModalityState.any());
     });
     myCvsTree.init();
     myCvsTree.addSelectionObserver(new Observer() {

@@ -15,39 +15,40 @@
  */
 package com.intellij.util.text;
 
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
-import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.Constructor;
 
-@SuppressWarnings("deprecation")
 public class StringFactory {
   // String(char[], boolean). Works since JDK1.7, earlier JDKs have too slow reflection anyway
-  private static final ConstructorAccessor ourConstructorAccessor;
+  private static final Constructor<String> ourConstructor;
 
   static {
-    ConstructorAccessor constructorAccessor = null;
+    Constructor<String> constructor = null;
     try {
-      Constructor<String> newC = String.class.getDeclaredConstructor(char[].class, boolean.class);
-      constructorAccessor = ReflectionUtil.getConstructorAccessor(newC);
+      constructor = String.class.getDeclaredConstructor(char[].class, boolean.class);
+      constructor.setAccessible(true);
     }
-    catch (Exception ignored) {
-    }
-    ourConstructorAccessor = constructorAccessor;
+    catch (Throwable ignored) { }
+    ourConstructor = constructor;
   }
 
   /**
-   * @return new instance of String which backed by 'chars' array.
+   * @return new instance of String which backed by given char array.
    *
-   * CAUTION. EXTREMELY DANGEROUS.
-   * DO NOT USE THIS METHOD UNLESS YOU ARE TOO DESPERATE
+   * CAUTION! EXTREMELY DANGEROUS!! DO NOT USE THIS METHOD UNLESS YOU ARE REALLY DESPERATE!!!
    */
   @NotNull
   public static String createShared(@NotNull char[] chars) {
-    if (ourConstructorAccessor != null) {
-      return ReflectionUtil.createInstanceViaConstructorAccessor(ourConstructorAccessor, chars, Boolean.TRUE);
+    if (ourConstructor != null) {
+      try {
+        return ourConstructor.newInstance(chars, Boolean.TRUE);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
+
     return new String(chars);
   }
 }

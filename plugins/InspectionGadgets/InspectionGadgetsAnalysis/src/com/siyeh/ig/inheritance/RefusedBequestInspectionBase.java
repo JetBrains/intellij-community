@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
@@ -37,6 +40,12 @@ public class RefusedBequestInspectionBase extends BaseInspection {
     new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper");
 
   @SuppressWarnings("PublicField") boolean onlyReportWhenAnnotated = true;
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "MethodDoesntCallSuperMethod";
+  }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -103,10 +112,15 @@ public class RefusedBequestInspectionBase extends BaseInspection {
       if (leastConcreteSuperMethod == null) {
         return;
       }
-      final PsiClass objectClass = ClassUtils.findObjectClass(method);
-      final PsiMethod[] superMethods = method.findSuperMethods(objectClass);
-      if (superMethods.length > 0) {
-        return;
+      final String methodName = method.getName();
+      if (!HardcodedMethodConstants.CLONE.equals(methodName)) {
+        final PsiClass superClass = leastConcreteSuperMethod.getContainingClass();
+        if (superClass != null) {
+          final String superClassName = superClass.getQualifiedName();
+          if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName)) {
+            return;
+          }
+        }
       }
       if (ignoreEmptySuperMethods) {
         final PsiElement element = leastConcreteSuperMethod.getNavigationElement();
@@ -115,15 +129,32 @@ public class RefusedBequestInspectionBase extends BaseInspection {
           return;
         }
       }
-      if (onlyReportWhenAnnotated) {
+      if (onlyReportWhenAnnotated && !CloneUtils.isClone(method) && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method)) {
         if (!AnnotationUtil.isAnnotated(leastConcreteSuperMethod, annotations)) {
           return;
         }
       }
-      if (containsSuperCall(body, leastConcreteSuperMethod)) {
+      final PsiClass aClass = method.getContainingClass();
+      if ((aClass != null && aClass.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.FINAL)) &&
+          MethodUtils.isTrivial(method, true)) {
+        return;
+      }
+      if (MethodCallUtils.containsSuperMethodCall(method)) {
         return;
       }
       registerMethodError(method);
+    }
+
+    private boolean isJUnitSetUpOrTearDown(PsiMethod method) {
+      final String name = method.getName();
+      if (!"setUp".equals(name) && !"tearDown".equals(name)) {
+        return false;
+      }
+      if (method.getParameterList().getParametersCount() != 0) {
+        return false;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      return InheritanceUtil.isInheritor(aClass, "junit.framework.TestCase");
     }
 
     @Nullable
@@ -137,59 +168,6 @@ public class RefusedBequestInspectionBase extends BaseInspection {
         return null;
       }
       return superMethod;
-    }
-
-    private boolean containsSuperCall(@NotNull PsiElement context, @NotNull PsiMethod method) {
-      final SuperCallVisitor visitor = new SuperCallVisitor(method);
-      context.accept(visitor);
-      return visitor.hasSuperCall();
-    }
-  }
-
-  private static class SuperCallVisitor extends JavaRecursiveElementWalkingVisitor {
-
-    private final PsiMethod methodToSearchFor;
-    private boolean hasSuperCall;
-
-    SuperCallVisitor(PsiMethod methodToSearchFor) {
-      this.methodToSearchFor = methodToSearchFor;
-    }
-
-    @Override
-    public void visitElement(@NotNull PsiElement element) {
-      if (hasSuperCall) {
-        return;
-      }
-      super.visitElement(element);
-    }
-
-    @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      if (hasSuperCall) {
-        return;
-      }
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
-      final String text = qualifier.getText();
-      if (!PsiKeyword.SUPER.equals(text)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      if (method.equals(methodToSearchFor)) {
-        hasSuperCall = true;
-      }
-    }
-
-    boolean hasSuperCall() {
-      return hasSuperCall;
     }
   }
 }

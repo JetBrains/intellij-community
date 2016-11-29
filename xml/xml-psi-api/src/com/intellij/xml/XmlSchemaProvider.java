@@ -38,7 +38,7 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public abstract class XmlSchemaProvider {
-  public static final ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<XmlSchemaProvider>("com.intellij.xml.schemaProvider");
+  public static final ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<>("com.intellij.xml.schemaProvider");
 
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String namespace, @Nullable Module module, @NotNull PsiFile file) {
@@ -82,12 +82,7 @@ public abstract class XmlSchemaProvider {
   }
 
   public static List<XmlSchemaProvider> getAvailableProviders(@NotNull final XmlFile file) {
-    return ContainerUtil.findAll(Extensions.getExtensions(EP_NAME), new Condition<XmlSchemaProvider>() {
-      @Override
-      public boolean value(XmlSchemaProvider xmlSchemaProvider) {
-        return xmlSchemaProvider.isAvailable(file);
-      }
-    });
+    return ContainerUtil.findAll(Extensions.getExtensions(EP_NAME), xmlSchemaProvider -> xmlSchemaProvider.isAvailable(file));
   }
 
   @Nullable

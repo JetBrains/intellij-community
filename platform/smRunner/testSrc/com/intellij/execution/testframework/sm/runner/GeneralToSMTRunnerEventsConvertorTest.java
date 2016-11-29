@@ -177,6 +177,18 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertFalse(proxy.isInProgress());
   }
 
+  public void testOnTestTruncatedComparisonFailure() {
+    onTestStarted("some_test");
+    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", false, "actual", null));
+
+    final String fullName = myEventsProcessor.getFullTestName("some_test");
+    final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
+
+    assertNotNull(proxy);
+    assertTrue(proxy.isDefect());
+    assertFalse(proxy.isInProgress());
+  }
+
   public void testOnTestFailure_Twice() {
     myMockResettablePrinter.resetIfNecessary();
     onTestStarted("some_test");

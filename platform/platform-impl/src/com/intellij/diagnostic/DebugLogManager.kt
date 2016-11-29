@@ -36,13 +36,12 @@ class DebugLogManager : ApplicationComponent.Adapter() {
   }
 
   override fun initComponent() {
-    val categories = getSavedCategories()
-    if (categories.isEmpty()) {
-      saveCategories(getCurrentCategories())
-    }
-    else {
-      applyCategories(categories)
-    }
+    val categories = getSavedCategories() +
+        // add categories from system properties (e.g. for tests on CI server)  
+        fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG) +
+        fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE)
+    
+    applyCategories(categories)
   }
 
   private fun fromString(text: String?, level: DebugLogLevel) =
@@ -72,22 +71,11 @@ class DebugLogManager : ApplicationComponent.Adapter() {
     val filtered = categories.filter { it.second == level }.map { it.first }
     return if (filtered.isNotEmpty()) filtered.joinToString("\n") else null
   }
-
-  private fun getCurrentCategories(): List<Pair<String, DebugLogLevel>> {
-    val currentLoggers = LogManager.getCurrentLoggers().toList().filterIsInstance(org.apache.log4j.Logger::class.java)
-    return currentLoggers.map {
-      val category = it.name
-      val logger = Logger.getInstance(category)
-      when {
-        logger.isTraceEnabled -> Pair(category, DebugLogLevel.TRACE)
-        logger.isDebugEnabled ->  Pair(category, DebugLogLevel.DEBUG)
-        else -> null
-      }
-    }.filterNotNull()
-
-  }
 }
 
 private val LOG_DEBUG_CATEGORIES = "log.debug.categories"
 private val LOG_TRACE_CATEGORIES = "log.trace.categories"
+private val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea." + LOG_DEBUG_CATEGORIES
+private val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea." + LOG_TRACE_CATEGORIES
+
 private val LOG = Logger.getInstance(DebugLogManager::class.java)

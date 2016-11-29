@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +49,9 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Configu
   private JPanel myPanel;
   private JCheckBox myTransparentNativeToAsciiCheckBox;
   private JPanel myPropertiesFilesEncodingCombo;
-  private final Ref<Charset> mySelectedCharsetForPropertiesFiles = new Ref<Charset>();
-  private final Ref<Charset> mySelectedIdeCharset = new Ref<Charset>();           // IDE encoding or null if "System Default"
-  private final Ref<Charset> mySelectedProjectCharset = new Ref<Charset>(); // Project encoding or null if "System Default"
+  private final Ref<Charset> mySelectedCharsetForPropertiesFiles = new Ref<>();
+  private final Ref<Charset> mySelectedIdeCharset = new Ref<>();           // IDE encoding or null if "System Default"
+  private final Ref<Charset> mySelectedProjectCharset = new Ref<>(); // Project encoding or null if "System Default"
   private JLabel myTitleLabel;
   private JPanel myIdeEncodingsListCombo;
   private JPanel myProjectEncodingListCombo;
@@ -84,11 +83,6 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Configu
     return "File.Encoding";
   }
 
-  @Override
-  public Runnable enableSearch(final String option) {
-    return null;
-  }
-
   @NotNull
   private static ChooseFileEncodingAction installChooseEncodingCombo(@NotNull JPanel parentPanel, @NotNull final Ref<Charset> selected) {
     ChooseFileEncodingAction myAction = new ChooseFileEncodingAction(null) {
@@ -108,12 +102,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Configu
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        return createCharsetsActionGroup("<System Default>", selected.get(), new Function<Charset, String>() {
-          @Override
-          public String fun(Charset charset) {
-            return "Choose encoding '" + charset + "'";
-          }
-        });
+        return createCharsetsActionGroup("<System Default>", selected.get(), charset -> "Choose encoding '" + charset + "'");
       }
     };
     parentPanel.removeAll();
@@ -151,7 +140,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Configu
 
   @NotNull
   static Map<VirtualFile, Charset> getExistingMappingIncludingDefault(@NotNull Project project) {
-    Map<VirtualFile, Charset> existingMapping = new HashMap<VirtualFile, Charset>();
+    Map<VirtualFile, Charset> existingMapping = new HashMap<>();
     EncodingProjectManagerImpl encodingProjectManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project);
     existingMapping.putAll(encodingProjectManager.getAllMappings());
     existingMapping.put(null, encodingProjectManager.getDefaultCharset());

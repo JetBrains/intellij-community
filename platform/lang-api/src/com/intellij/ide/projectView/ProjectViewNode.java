@@ -92,7 +92,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
                                             Class<? extends AbstractTreeNode> nodeClass,
                                             ViewSettings settings) {
     try {
-      ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      ArrayList<AbstractTreeNode> result = new ArrayList<>();
       for (Object object : objects) {
         result.add(createTreeNode(nodeClass, project, object, settings));
       }
@@ -100,7 +100,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     }
     catch (Exception e) {
       LOG.error(e);
-      return new ArrayList<AbstractTreeNode>();
+      return new ArrayList<>();
     }
   }
 
@@ -191,15 +191,12 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   protected boolean hasProblemFileBeneath() {
     if (!Registry.is("projectView.showHierarchyErrors")) return false;
 
-    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      @Override
-      public boolean value(final VirtualFile virtualFile) {
-        Value value;
-        return contains(virtualFile)
-               // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
-               && ((value = getValue()) instanceof PsiElement && Comparing.equal(PsiUtilCore.getVirtualFile((PsiElement)value), virtualFile) ||
-                   someChildContainsFile(virtualFile));
-      }
+    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(virtualFile -> {
+      Value value;
+      return contains(virtualFile)
+             // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
+             && ((value = getValue()) instanceof PsiElement && Comparing.equal(PsiUtilCore.getVirtualFile((PsiElement)value), virtualFile) ||
+                 someChildContainsFile(virtualFile));
     });
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -29,7 +29,6 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -47,21 +46,23 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class PluginDescriptorChooser {
 
-  private static final ImmutableMap<String, String> INTELLIJ_MODULES = ImmutableMap.<String, String>builder()
-    .put("platform-api", "PlatformExtensions.xml")
-    .put("platform-impl", "PlatformExtensions.xml")
-    .put("lang-api", "LangExtensions.xml")
-    .put("lang-impl", "LangExtensions.xml")
-    .put("vcs-api", "VcsExtensions.xml")
-    .put("vcs-impl", "VcsExtensions.xml")
-    .put("openapi", "IdeaPlugin.xml")
-    .put("java-impl", "IdeaPlugin.xml")
-    .build();
+  private static final Map<String, String> INTELLIJ_MODULES =
+    ContainerUtil.<String, String>immutableMapBuilder()
+      .put("platform-api", "PlatformExtensions.xml")
+      .put("platform-impl", "PlatformExtensions.xml")
+      .put("lang-api", "LangExtensions.xml")
+      .put("lang-impl", "LangExtensions.xml")
+      .put("vcs-api", "VcsExtensions.xml")
+      .put("vcs-impl", "VcsExtensions.xml")
+      .put("openapi", "IdeaPlugin.xml")
+      .put("java-impl", "IdeaPlugin.xml")
+      .put("java-analysis-impl", "IdeaPlugin.xml")
+      .build();
 
   public static void show(final Project project,
                           final Editor editor,
@@ -69,17 +70,12 @@ public class PluginDescriptorChooser {
                           final Consumer<DomFileElement<IdeaPlugin>> consumer) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
-    List<DomFileElement<IdeaPlugin>> elements =
-      DomService.getInstance().getFileElements(IdeaPlugin.class,
-                                               project,
-                                               module.getModuleWithDependenciesScope());
+    List<DomFileElement<IdeaPlugin>> elements = DomService.getInstance().getFileElements(IdeaPlugin.class, project,
+                                                                                         module.getModuleWithDependentsScope());
 
-    elements = ContainerUtil.filter(elements, new Condition<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public boolean value(DomFileElement<IdeaPlugin> element) {
-        VirtualFile virtualFile = element.getFile().getVirtualFile();
-        return virtualFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile);
-      }
+    elements = ContainerUtil.filter(elements, element -> {
+      VirtualFile virtualFile = element.getFile().getVirtualFile();
+      return virtualFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile);
     });
 
     elements = findAppropriateIntelliJModule(module.getName(), elements);
@@ -95,8 +91,7 @@ public class PluginDescriptorChooser {
     }
 
     final BaseListPopupStep<PluginDescriptorCandidate> popupStep =
-      new BaseListPopupStep<PluginDescriptorCandidate>("Choose Plugin Descriptor",
-                                                       createCandidates(module, elements)) {
+      new BaseListPopupStep<PluginDescriptorCandidate>("Choose Plugin Descriptor", createCandidates(module, elements)) {
 
         @Override
         public boolean isSpeedSearchEnabled() {
@@ -155,27 +150,36 @@ public class PluginDescriptorChooser {
 
   private static List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
                                                                   List<DomFileElement<IdeaPlugin>> elements) {
-    Collections.sort(elements, new Comparator<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public int compare(DomFileElement<IdeaPlugin> o1, DomFileElement<IdeaPlugin> o2) {
-        // current module = first group
-        final Module module1 = o1.getModule();
-        final Module module2 = o2.getModule();
-        final int byAlpha = ModulesAlphaComparator.INSTANCE.compare(module1, module2);
-        if (byAlpha == 0) return 0;
+    ModuleManager moduleManager = ModuleManager.getInstance(currentModule.getProject());
+    final String[] groupPath = moduleManager.getModuleGroupPath(currentModule);
 
-        if (currentModule.equals(module1)) return -1;
-        if (currentModule.equals(module2)) return 1;
+    elements.sort((o1, o2) -> {
+      // current module = first group
+      final Module module1 = o1.getModule();
+      final Module module2 = o2.getModule();
 
-        return byAlpha;
+      if (currentModule.equals(module1)) return -1;
+      if (currentModule.equals(module2)) return 1;
+
+      if (module1 != null && module2 != null) {
+        int groupComparison = Comparing.compare(groupMatchLevel(groupPath, moduleManager.getModuleGroupPath(module2)),
+                                                groupMatchLevel(groupPath, moduleManager.getModuleGroupPath(module1)));
+        if (groupComparison != 0) {
+          return groupComparison;
+        }
       }
+      return ModulesAlphaComparator.INSTANCE.compare(module1, module2);
     });
-    Collections.sort(elements, new Comparator<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public int compare(DomFileElement<IdeaPlugin> o1, DomFileElement<IdeaPlugin> o2) {
-        if (!Comparing.equal(o1.getModule(), o2.getModule())) return 0;
+    elements.sort((o1, o2) -> {
+      if (!Comparing.equal(o1.getModule(), o2.getModule())) return 0;
+      String pluginId1 = o1.getRootElement().getPluginId();
+      String pluginId2 = o2.getRootElement().getPluginId();
+      if (pluginId1 == null && pluginId2 == null) {
         return o1.getFile().getName().compareTo(o2.getFile().getName());
       }
+      if (pluginId1 == null) return 1;
+      if (pluginId2 == null) return -1;
+      return Comparing.compare(pluginId1, pluginId2);
     });
 
     return ContainerUtil.map(elements, new Function<DomFileElement<IdeaPlugin>, PluginDescriptorCandidate>() {
@@ -192,7 +196,19 @@ public class PluginDescriptorChooser {
     });
   }
 
-  private static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,
+  private static int groupMatchLevel(@Nullable String[] targetGroupPath, @Nullable String[] groupPath) {
+    if (targetGroupPath != null && groupPath != null) {
+      for (int i = 0; i < Math.min(targetGroupPath.length, groupPath.length); i++) {
+        if (!targetGroupPath[i].equals(groupPath[i])) {
+          return i;
+        }
+      }
+      return Math.min(targetGroupPath.length, groupPath.length);
+    }
+    return 0;
+  }
+
+  public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,
                                                                                 List<DomFileElement<IdeaPlugin>> elements) {
     String extensionsFile = INTELLIJ_MODULES.get(moduleName);
     if (extensionsFile != null) {

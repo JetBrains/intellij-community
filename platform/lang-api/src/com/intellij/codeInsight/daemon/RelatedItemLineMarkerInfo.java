@@ -70,7 +70,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
   @Override
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
-    return new RelatedItemLineMarkerGutterIconRenderer<T>(this);
+    return new RelatedItemLineMarkerGutterIconRenderer<>(this);
   }
 
   @Override
@@ -86,24 +86,16 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
   @NotNull
   @Override
   public Function<? super PsiElement, String> getCommonTooltip(@NotNull final List<MergeableLineMarkerInfo> infos) {
-    return new Function<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        Set<String> tooltips = new HashSet<String>(ContainerUtil.mapNotNull(infos, new Function<MergeableLineMarkerInfo, String>() {
-          @Override
-          public String fun(MergeableLineMarkerInfo info) {
-            return info.getLineMarkerTooltip();
-          }
-        }));
-        StringBuilder tooltip = new StringBuilder();
-        for (String info : tooltips) {
-          if (tooltip.length() > 0) {
-            tooltip.append(UIUtil.BORDER_LINE);
-          }
-          tooltip.append(UIUtil.getHtmlBody(info));
+    return (Function<PsiElement, String>)element -> {
+      Set<String> tooltips = new HashSet<>(ContainerUtil.mapNotNull(infos, info -> info.getLineMarkerTooltip()));
+      StringBuilder tooltip = new StringBuilder();
+      for (String info : tooltips) {
+        if (tooltip.length() > 0) {
+          tooltip.append(UIUtil.BORDER_LINE);
         }
-        return XmlStringUtil.wrapInHtml(tooltip);
+        tooltip.append(UIUtil.getHtmlBody(info));
       }
+      return XmlStringUtil.wrapInHtml(tooltip);
     };
   }
 

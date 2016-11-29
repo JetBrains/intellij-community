@@ -15,11 +15,8 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
-import com.intellij.lang.ImportOptimizer;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -47,7 +44,7 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
     if (!JavaFxFileTypeFactory.isFxml(file)) return null;
     final XmlDocument document = ((XmlFile)file).getDocument();
     if (document == null) return null;
-    final Set<String> usedNames = new HashSet<String>();
+    final Set<String> usedNames = new HashSet<>();
     file.accept(new JavaFxImportsOptimizer.JavaFxUsedClassesVisitor() {
       @Override
       protected void appendClassName(String fqn) {
@@ -57,14 +54,19 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
           usedNames.add(packageName);
         }
       }
+
+      @Override
+      protected void appendDemandedPackageName(@NotNull String packageName) {
+        usedNames.add(packageName);
+      }
     });
 
     final InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
 
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
+    final List<ProblemDescriptor> problems = new ArrayList<>();
     final Collection<XmlProcessingInstruction> instructions =
       PsiTreeUtil.findChildrenOfType(document.getProlog(), XmlProcessingInstruction.class);
-    final Map<String, XmlProcessingInstruction> targetProcessingInstructions = new LinkedHashMap<String, XmlProcessingInstruction>();
+    final Map<String, XmlProcessingInstruction> targetProcessingInstructions = new LinkedHashMap<>();
     for (XmlProcessingInstruction instruction : instructions) {
       final String target = JavaFxPsiUtil.getInstructionTarget("import", instruction);
       if (target != null) {
@@ -88,11 +90,6 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
   }
 
   private static class JavaFxOptimizeImportsFix implements LocalQuickFix {
-    @NotNull
-    @Override
-    public String getName() {
-      return QuickFixBundle.message("optimize.imports.fix");
-    }
 
     @Override
     @NotNull
@@ -106,15 +103,7 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
       if (psiElement == null) return;
       final PsiFile file = psiElement.getContainingFile();
       if (file == null || !JavaFxFileTypeFactory.isFxml(file)) return;
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-      ImportOptimizer optimizer = new JavaFxImportsOptimizer();
-      final Runnable runnable = optimizer.processFile(file);
-      new WriteCommandAction.Simple(project, getFamilyName(), file) {
-        @Override
-        protected void run() throws Throwable {
-          runnable.run();
-        }
-      }.execute();
+      new JavaFxImportsOptimizer().processFile(file).run();
     }
   }
 }

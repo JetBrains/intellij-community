@@ -64,7 +64,7 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
 
   @NotNull
   private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<PsiMethod> constructors) {
-    final List<PsiMethod> result = new ArrayList<PsiMethod>(constructors);
+    final List<PsiMethod> result = new ArrayList<>(constructors);
     for (Iterator<PsiMethod> iterator = result.iterator(); iterator.hasNext(); ) {
       final PsiMethod constructor = iterator.next();
       if (JavaHighlightUtil.getChainedConstructors(constructor) != null) {

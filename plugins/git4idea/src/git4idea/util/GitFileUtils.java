@@ -110,7 +110,7 @@ public class GitFileUtils {
 
   @NotNull
   private static Collection<VirtualFile> getVirtualFilesFromFilePaths(@NotNull Collection<FilePath> paths) {
-    Collection<VirtualFile> files = new ArrayList<VirtualFile>(paths.size());
+    Collection<VirtualFile> files = new ArrayList<>(paths.size());
     for (FilePath path : paths) {
       VirtualFile file = path.getVirtualFile();
       if (file != null) {
@@ -146,8 +146,8 @@ public class GitFileUtils {
     handler.addParameters(paths);
     String output = handler.run();
 
-    List<String> nonIgnoredFiles = new ArrayList<String>(paths.size());
-    Set<String> ignoredPaths = new HashSet<String>(Arrays.asList(StringUtil.splitByLines(output)));
+    List<String> nonIgnoredFiles = new ArrayList<>(paths.size());
+    Set<String> ignoredPaths = new HashSet<>(Arrays.asList(StringUtil.splitByLines(output)));
     for (String pathToCheck : paths) {
       if (!ignoredPaths.contains(pathToCheck)) {
         nonIgnoredFiles.add(pathToCheck);
@@ -181,18 +181,4 @@ public class GitFileUtils {
     }
     return path;
   }
-
-  /**
-   * Checks if two file paths are different only by case in a case insensitive OS.
-   * @return true if the difference between paths should probably be ignored, i.e. the OS is case-insensitive, and case is the only
-   *         difference between paths.
-   */
-  public static boolean shouldIgnoreCaseChange(@NotNull String onePath, @NotNull String secondPath) {
-    return !SystemInfo.isFileSystemCaseSensitive && onlyCaseChanged(onePath, secondPath);
-  }
-  
-  private static boolean onlyCaseChanged(@NotNull String one, @NotNull String second) {
-    return one.compareToIgnoreCase(second) == 0;
-  }
-  
 }

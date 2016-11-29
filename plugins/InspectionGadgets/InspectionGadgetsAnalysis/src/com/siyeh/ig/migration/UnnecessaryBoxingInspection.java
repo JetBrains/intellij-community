@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,25 +71,16 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
   }
 
   private static class UnnecessaryBoxingFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix");
     }
 
     @Override
     public void doFix(@NotNull Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiCallExpression expression = (PsiCallExpression)descriptor.getPsiElement();
-      final PsiType boxedType = expression.getType();
-      if (boxedType == null) {
-        return;
-      }
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
         return;
@@ -99,7 +90,18 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final PsiExpression unboxedExpression = arguments[0];
-      final String replacementText = getUnboxedExpressionText(unboxedExpression, boxedType);
+      final Object value = ExpressionUtils.computeConstantExpression(unboxedExpression);
+      if (value != null) {
+        if (value == Boolean.TRUE) {
+          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.TRUE");
+          return;
+        }
+        else if (value == Boolean.FALSE) {
+          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.FALSE");
+          return;
+        }
+      }
+      final String replacementText = getUnboxedExpressionText(unboxedExpression, expression);
       if (replacementText == null) {
         return;
       }
@@ -107,7 +109,11 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     @Nullable
-    private static String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression, @NotNull PsiType boxedType) {
+    private static String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression, @NotNull PsiExpression boxedExpression) {
+      final PsiType boxedType = boxedExpression.getType();
+      if (boxedType == null) {
+        return null;
+      }
       final PsiType expressionType = unboxedExpression.getType();
       if (expressionType == null) {
         return null;
@@ -118,7 +124,13 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       final String text = unboxedExpression.getText();
       if (expressionType.equals(unboxedType)) {
-        return text;
+        final PsiElement parent = boxedExpression.getParent();
+        if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(unboxedExpression, (PsiExpression) parent, false)) {
+          return '(' + text + ')';
+        }
+        else {
+          return text;
+        }
       }
       if (unboxedExpression instanceof PsiLiteralExpression) {
         if (unboxedType.equals(PsiType.LONG) && expressionType.equals(PsiType.INT)) {

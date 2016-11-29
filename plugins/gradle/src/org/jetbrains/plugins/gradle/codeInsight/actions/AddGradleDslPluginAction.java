@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.KeyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import icons.GradleIcons;
@@ -29,7 +29,11 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Vladislav.Soroka
@@ -37,28 +41,21 @@ import java.util.*;
  */
 public class AddGradleDslPluginAction extends CodeInsightAction {
   public static final String ID = "AddGradleDslPluginAction";
-  static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<String>();
-  private final KeyValue[] myPlugins;
+  static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
+  private final List<Pair<String, String>> myPlugins;
 
   public AddGradleDslPluginAction() {
     getTemplatePresentation().setDescription(GradleBundle.message("gradle.codeInsight.action.apply_plugin.description"));
     getTemplatePresentation().setText(GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"));
     getTemplatePresentation().setIcon(GradleIcons.GradlePlugin);
 
-    Collection<KeyValue> pluginDescriptions = new ArrayList<KeyValue>();
+    myPlugins = new ArrayList<>();
     for (GradlePluginDescriptionsExtension extension : GradlePluginDescriptionsExtension.EP_NAME.getExtensions()) {
       for (Map.Entry<String, String> pluginDescription : extension.getPluginDescriptions().entrySet()) {
-        pluginDescriptions.add(KeyValue.create(pluginDescription.getKey(), pluginDescription.getValue()));
+        myPlugins.add(pair(pluginDescription.getKey(), pluginDescription.getValue()));
       }
     }
-
-    myPlugins = pluginDescriptions.toArray(new KeyValue[pluginDescriptions.size()]);
-    Arrays.sort(myPlugins, new Comparator<KeyValue>() {
-      @Override
-      public int compare(KeyValue o1, KeyValue o2) {
-        return String.valueOf(o1.getKey()).compareTo(String.valueOf(o2.getKey()));
-      }
-    });
+    myPlugins.sort((o1, o2) -> o1.first.compareTo(o2.first));
   }
 
   @NotNull

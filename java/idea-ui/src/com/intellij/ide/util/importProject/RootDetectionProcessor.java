@@ -72,7 +72,7 @@ public class RootDetectionProcessor {
   }
 
   public static MultiMap<ProjectStructureDetector, DetectedProjectRoot> createRootsMap(List<DetectedRootData> list) {
-    MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots = new MultiMap<ProjectStructureDetector, DetectedProjectRoot>();
+    MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots = new MultiMap<>();
     for (final DetectedRootData rootData : list) {
       for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {
         roots.putValue(detector, rootData.getSelectedRoot());
@@ -90,11 +90,11 @@ public class RootDetectionProcessor {
     BitSet enabledDetectors = new BitSet(myDetectors.length);
     enabledDetectors.set(0, myDetectors.length);
     for (int i = 0; i < myDetectors.length; i++) {
-      myDetectedRoots[i] = new ArrayList<DetectedProjectRoot>();
+      myDetectedRoots[i] = new ArrayList<>();
     }
     processRecursively(myBaseDir, enabledDetectors);
 
-    final Map<ProjectStructureDetector, List<DetectedProjectRoot>> result = new LinkedHashMap<ProjectStructureDetector, List<DetectedProjectRoot>>();
+    final Map<ProjectStructureDetector, List<DetectedProjectRoot>> result = new LinkedHashMap<>();
     for (int i = 0; i < myDetectors.length; i++) {
       if (!myDetectedRoots[i].isEmpty()) {
         result.put(myDetectors[i], myDetectedRoots[i]);
@@ -104,7 +104,7 @@ public class RootDetectionProcessor {
   }
 
   private List<Pair<File, Integer>> processRecursively(File dir, BitSet enabledDetectors) {
-    List<Pair<File, Integer>> parentsToSkip = new SmartList<Pair<File, Integer>>();
+    List<Pair<File, Integer>> parentsToSkip = new SmartList<>();
 
     if (myTypeManager.isFileIgnored(dir.getName())) {
       return parentsToSkip;
@@ -206,7 +206,7 @@ public class RootDetectionProcessor {
       myProgressIndicator.setText2("Processing " + roots.values().size() + " project roots...");
     }
 
-    Map<File, DetectedRootData> rootData = new LinkedHashMap<File, DetectedRootData>();
+    Map<File, DetectedRootData> rootData = new LinkedHashMap<>();
     for (ProjectStructureDetector detector : roots.keySet()) {
       for (DetectedProjectRoot detectedRoot : roots.get(detector)) {
         if (isUnderIncompatibleRoot(detectedRoot, rootData)) {
@@ -234,8 +234,8 @@ public class RootDetectionProcessor {
   private List<DetectedRootData> mergeContentRoots(Map<File, DetectedRootData> rootData) {
     LOG.debug(rootData.size() + " roots found, merging content roots");
     boolean hasSourceRoots = false;
-    Set<ModuleType> typesToReplace = new HashSet<ModuleType>();
-    Set<ModuleType> moduleTypes = new HashSet<ModuleType>();
+    Set<ModuleType> typesToReplace = new HashSet<>();
+    Set<ModuleType> moduleTypes = new HashSet<>();
     for (DetectedRootData data : rootData.values()) {
       for (DetectedProjectRoot root : data.getAllRoots()) {
         if (root instanceof DetectedContentRoot) {
@@ -283,6 +283,6 @@ public class RootDetectionProcessor {
         LOG.debug("Added " + firstRoot.getRootTypeName() + " content root for " + myBaseDir);
       }
     }
-    return new ArrayList<DetectedRootData>(rootData.values());
+    return new ArrayList<>(rootData.values());
   }
 }

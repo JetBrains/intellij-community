@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.KeyEvent;
 
 public class SpeedSearch {
+  private final static String ALLOWED_SPECIAL_SYMBOLS = " *_-\"'/.$>:";
+
   private String myString = "";
   private boolean myEnabled;
   private Matcher myMatcher;
@@ -58,7 +60,7 @@ public class SpeedSearch {
     }
     else {
       final char ch = e.getKeyChar();
-      if (Character.isLetterOrDigit(ch) || ch == ' ' || ch == '*' || ch == '_' || ch == '-' || ch == '"' || ch == '\'' || ch == '/' || ch == '.' || ch == '$') {
+      if (Character.isLetterOrDigit(ch) || ALLOWED_SPECIAL_SYMBOLS.indexOf(ch) != -1) {
         type(Character.toString(ch));
         e.consume();
       }

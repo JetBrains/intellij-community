@@ -34,7 +34,7 @@ class AttributeFinder extends RecursionSaveWalker {
   private int optional;
   private final QName myQname;
   private final Map<DAttributePattern, Pair<? extends Map<String, String>, Boolean>> myAttributes =
-          new THashMap<DAttributePattern, Pair<? extends Map<String, String>, Boolean>>();
+    new THashMap<>();
   private DAttributePattern myLastAttr;
 
   private AttributeFinder() {
@@ -67,7 +67,7 @@ class AttributeFinder extends RecursionSaveWalker {
     if (depth == 1 && (myQname == null || p.getName().contains(myQname))) {
       myLastAttr = p;
       if (!myAttributes.containsKey(p)) {
-        myAttributes.put(p, Pair.create(new LinkedHashMap<String, String>(), optional > 0));
+        myAttributes.put(p, Pair.create(new LinkedHashMap<>(), optional > 0));
       }
       return super.onAttribute(p);
     }

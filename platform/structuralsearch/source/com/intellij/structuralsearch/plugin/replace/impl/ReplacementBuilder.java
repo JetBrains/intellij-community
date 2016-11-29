@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -31,14 +46,14 @@ import java.util.Map;
  */
 public final class ReplacementBuilder {
   private final String replacement;
-  private final List<ParameterInfo> parameterizations = new ArrayList<ParameterInfo>();
+  private final List<ParameterInfo> parameterizations = new ArrayList<>();
   private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
   private final Project myProject;
 
   ReplacementBuilder(final Project project,final ReplaceOptions options) {
     myProject = project;
-    replacementVarsMap = new HashMap<String, ScriptSupport>();
+    replacementVarsMap = new HashMap<>();
     this.options = options;
     String _replacement = options.getReplacement();
     FileType fileType = options.getMatchOptions().getFileType();
@@ -120,16 +135,14 @@ public final class ReplacementBuilder {
           profile.provideAdditionalReplaceOptions(patternNode, options, this);
         }
       } catch (IncorrectOperationException e) {
-        throw new MalformedPatternException();
+        throw new MalformedPatternException(e.getMessage());
       }
     }
   }
 
   private static void fill(MatchResult r,Map<String,MatchResult> m) {
     if (r.getName()!=null) {
-      if (m.get(r.getName()) == null) {
-        m.put(r.getName(), r);
-      }
+      m.putIfAbsent(r.getName(), r);
     }
 
     if (!r.isScopeMatch() || !r.isMultipleMatch()) {
@@ -150,7 +163,7 @@ public final class ReplacementBuilder {
     }
 
     final StringBuilder result = new StringBuilder(replacement);
-    final HashMap<String, MatchResult> matchMap = new HashMap<String, MatchResult>();
+    final HashMap<String, MatchResult> matchMap = new HashMap<>();
     fill(match, matchMap);
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type);

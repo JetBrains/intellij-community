@@ -15,9 +15,6 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 %function advance
 %type IElementType
 
-%eof{ return;
-%eof}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// USER CODE //////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,7 +111,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 
 // NB !(!a|b) is "a - b"
 // From the spec
-ANY_CHAR = [^\n] | "\n"
+ANY_CHAR = [^]
 
 NS_CHAR = [^\n\t\r\ ]
 NS_INDICATOR = [-?:,\[\]\{\}#&*!|>'\"%@`]
@@ -138,7 +135,7 @@ EOL =                           "\n"
 WHITE_SPACE_CHAR =              [ \t]
 WHITE_SPACE =                   {WHITE_SPACE_CHAR}+
 
-LINE =                          .*
+LINE =                          [^\n]*
 COMMENT =                       "#"{LINE}
 
 ID =                            [^\n\-\ {}\[\]#][^\n{}\[\]>:#]*
@@ -332,11 +329,11 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 }
 
 <VALUE, VALUE_BRACE, VALUE_OR_KEY>{
-.                               {   return TEXT; }
+[^]                               {   return TEXT; }
 }
 
 <YYINITIAL, BRACES> {
-. {
+[^] {
   return TEXT;
 }
 }

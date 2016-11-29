@@ -66,23 +66,17 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     DocumentAdapter listener = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (isUpdating) return;
-            if (!panel.isShowing()) return;
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (isUpdating) return;
+          if (!panel.isShowing()) return;
 
-            myUpdateAlarm.cancelAllRequests();
-            myUpdateAlarm.addRequest(new Runnable() {
-                @Override
-                public void run() {
-                  isUpdating = true;
-                  userSettingsFileOverrider.updateDefault();
-                  localRepositoryOverrider.updateDefault();
-                  isUpdating = false;
-                }
-              }, 100);
-          }
+          myUpdateAlarm.cancelAllRequests();
+          myUpdateAlarm.addRequest(() -> {
+            isUpdating = true;
+            userSettingsFileOverrider.updateDefault();
+            localRepositoryOverrider.updateDefault();
+            isUpdating = false;
+          }, 100);
         });
       }
     };
@@ -114,7 +108,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   private void createUIComponents() {
     mavenHomeField = new TextFieldWithHistory();
     mavenHomeField.setHistorySize(-1);
-    final ArrayList<String> foundMavenHomes = new ArrayList<String>();
+    final ArrayList<String> foundMavenHomes = new ArrayList<>();
     foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_2);
     foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_3);
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
@@ -123,7 +117,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     }
     mavenHomeField.setHistory(foundMavenHomes);
     mavenHomeComponent = LabeledComponent.create(
-      new ComponentWithBrowseButton<TextFieldWithHistory>(mavenHomeField, null), "Maven &amp;home directory");
+      new ComponentWithBrowseButton<>(mavenHomeField, null), "Maven &amp;home directory");
 
     final JBLabel versionLabel = new JBLabel();
     versionLabel.setOpaque(true);

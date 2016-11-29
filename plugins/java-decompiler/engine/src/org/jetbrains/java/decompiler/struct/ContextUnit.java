@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,11 @@ public class ContextUnit {
   private final IResultSaver resultSaver;
   private final IDecompiledData decompiledData;
 
-  private final List<String> classEntries = new ArrayList<String>();  // class file or jar/zip entry
-  private final List<String> dirEntries = new ArrayList<String>();
-  private final List<String[]> otherEntries = new ArrayList<String[]>();
+  private final List<String> classEntries = new ArrayList<>();  // class file or jar/zip entry
+  private final List<String> dirEntries = new ArrayList<>();
+  private final List<String[]> otherEntries = new ArrayList<>();
 
-  private List<StructClass> classes = new ArrayList<StructClass>();
+  private List<StructClass> classes = new ArrayList<>();
   private Manifest manifest;
 
   public ContextUnit(int type, String archivePath, String filename, boolean own, IResultSaver resultSaver, IDecompiledData decompiledData) {
@@ -72,18 +72,14 @@ public class ContextUnit {
   }
 
   public void reload(LazyLoader loader) throws IOException {
-    List<StructClass> lstClasses = new ArrayList<StructClass>();
+    List<StructClass> lstClasses = new ArrayList<>();
 
     for (StructClass cl : classes) {
       String oldName = cl.qualifiedName;
 
       StructClass newCl;
-      DataInputFullStream in = loader.getClassStream(oldName);
-      try {
+      try (DataInputFullStream in = loader.getClassStream(oldName)) {
         newCl = new StructClass(in, cl.isOwn(), loader);
-      }
-      finally {
-        in.close();
       }
 
       lstClasses.add(newCl);

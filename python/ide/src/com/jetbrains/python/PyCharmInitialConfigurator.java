@@ -56,17 +56,7 @@ public class PyCharmInitialConfigurator {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V3", "true");
       UISettings.getInstance().SHOW_MEMORY_INDICATOR = false;
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class");
-            }
-          });
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));
     }
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V4")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V4", true);
@@ -85,11 +75,9 @@ public class PyCharmInitialConfigurator {
       bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
         @Override
         public void welcomeScreenDisplayed() {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-              showInitialConfigurationDialog();
-            }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
+            showInitialConfigurationDialog();
           });
         }
       });

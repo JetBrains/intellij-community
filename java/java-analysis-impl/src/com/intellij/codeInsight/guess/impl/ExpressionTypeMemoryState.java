@@ -53,7 +53,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
       return false;
     }
   };
-  private final Map<PsiExpression, PsiType> myStates = new THashMap<PsiExpression, PsiType>(EXPRESSION_HASHING_STRATEGY);
+  private final Map<PsiExpression, PsiType> myStates = new THashMap<>(EXPRESSION_HASHING_STRATEGY);
 
   public ExpressionTypeMemoryState(final DfaValueFactory factory) {
     super(factory);
@@ -109,7 +109,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
 
   @Override
   public String toString() {
-    return super.toString() + " states=[" + new HashMap<PsiExpression, PsiType>(myStates) + "]";
+    return super.toString() + " states=[" + new HashMap<>(myStates) + "]";
   }
 
   public void setExpressionType(PsiExpression expression, @NotNull PsiType type) {

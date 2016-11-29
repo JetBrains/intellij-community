@@ -180,17 +180,14 @@ public class MavenArtifactSearchPanel extends JPanel {
     final String text = mySearchField.getText();
 
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            doSearch(text);
-          }
-          catch (Throwable e) {
-            MavenLog.LOG.warn(e);
-          }
-        }
-      }, 500);
+    myAlarm.addRequest(() -> {
+      try {
+        doSearch(text);
+      }
+      catch (Throwable e) {
+        MavenLog.LOG.warn(e);
+      }
+    }, 500);
   }
 
   private void resortUsingDependencyVersionMap(List<MavenArtifactSearchResult> result) {
@@ -200,16 +197,13 @@ public class MavenArtifactSearchPanel extends JPanel {
       MavenArtifactInfo artifactInfo = searchResult.versions.get(0);
       final String managedVersion = myManagedDependenciesMap.get(Pair.create(artifactInfo.getGroupId(), artifactInfo.getArtifactId()));
       if (managedVersion != null) {
-        Collections.sort(searchResult.versions, new Comparator<MavenArtifactInfo>() {
-          @Override
-          public int compare(MavenArtifactInfo o1, MavenArtifactInfo o2) {
-            String v1 = o1.getVersion();
-            String v2 = o2.getVersion();
-            if (Comparing.equal(v1, v2)) return 0;
-            if (managedVersion.equals(v1)) return -1;
-            if (managedVersion.equals(v2)) return 1;
-            return 0;
-          }
+        Collections.sort(searchResult.versions, (o1, o2) -> {
+          String v1 = o1.getVersion();
+          String v2 = o2.getVersion();
+          if (Comparing.equal(v1, v2)) return 0;
+          if (managedVersion.equals(v1)) return -1;
+          if (managedVersion.equals(v2)) return 1;
+          return 0;
         });
       }
     }
@@ -223,22 +217,19 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     final TreeModel model = new MyTreeModel(result);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!myDialog.isVisible()) return;
+    SwingUtilities.invokeLater(() -> {
+      if (!myDialog.isVisible()) return;
 
-        myResultList.getEmptyText().setText("No results");
-        myResultList.setModel(model);
-        myResultList.setSelectionRow(0);
-        myResultList.setPaintBusy(false);
-      }
+      myResultList.getEmptyText().setText("No results");
+      myResultList.setModel(model);
+      myResultList.setSelectionRow(0);
+      myResultList.setPaintBusy(false);
     });
   }
 
   @NotNull
   public List<MavenId> getResult() {
-    List<MavenId> result = new ArrayList<MavenId>();
+    List<MavenId> result = new ArrayList<>();
 
     for (TreePath each : myResultList.getSelectionPaths()) {
       Object sel = each.getLastPathComponent();

@@ -48,32 +48,29 @@ import java.util.HashMap;
 public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafeCastExpression, PsiPolyVariantReference {
 
   private static final Function<GrSafeCastExpressionImpl, PsiType> TYPE_CALCULATOR =
-    new NullableFunction<GrSafeCastExpressionImpl, PsiType>() {
-      @Override
-      public PsiType fun(GrSafeCastExpressionImpl cast) {
-        GrTypeElement typeElement = cast.getCastTypeElement();
-        if (typeElement == null) return null;
+    (NullableFunction<GrSafeCastExpressionImpl, PsiType>)cast -> {
+      GrTypeElement typeElement = cast.getCastTypeElement();
+      if (typeElement == null) return null;
 
-        final PsiType opType = cast.getOperand().getType();
-        final PsiType castType = typeElement.getType();
+      final PsiType opType = cast.getOperand().getType();
+      final PsiType castType = typeElement.getType();
 
-        if (isCastToRawCollectionFromArray(opType, castType)) {
-          final PsiClass resolved = ((PsiClassType)castType).resolve();
-          assert resolved != null;
-          final PsiTypeParameter typeParameter = resolved.getTypeParameters()[0];
-          final HashMap<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
-          substitutionMap.put(typeParameter, TypesUtil.getItemType(opType));
-          final PsiSubstitutor substitutor = JavaPsiFacade.getElementFactory(cast.getProject()).createSubstitutor(substitutionMap);
-          return JavaPsiFacade.getElementFactory(cast.getProject()).createType(resolved, substitutor);
-        }
-
-        PsiType traitClassType = GrTraitType.createTraitType(cast);
-        if (traitClassType != null) {
-          return traitClassType;
-        }
-
-        return castType;//TypesUtil.boxPrimitiveType(castType, cast.getManager(), cast.getResolveScope());
+      if (isCastToRawCollectionFromArray(opType, castType)) {
+        final PsiClass resolved = ((PsiClassType)castType).resolve();
+        assert resolved != null;
+        final PsiTypeParameter typeParameter = resolved.getTypeParameters()[0];
+        final HashMap<PsiTypeParameter, PsiType> substitutionMap = new HashMap<>();
+        substitutionMap.put(typeParameter, TypesUtil.getItemType(opType));
+        final PsiSubstitutor substitutor = JavaPsiFacade.getElementFactory(cast.getProject()).createSubstitutor(substitutionMap);
+        return JavaPsiFacade.getElementFactory(cast.getProject()).createType(resolved, substitutor);
       }
+
+      PsiType traitClassType = GrTraitType.createTraitType(cast);
+      if (traitClassType != null) {
+        return traitClassType;
+      }
+
+      return castType;//TypesUtil.boxPrimitiveType(castType, cast.getManager(), cast.getResolveScope());
     };
 
 

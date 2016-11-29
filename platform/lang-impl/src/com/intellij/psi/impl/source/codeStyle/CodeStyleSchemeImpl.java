@@ -15,46 +15,39 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme {
+public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme, SerializableScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
 
-  private Element myRootElement;
+  private SchemeDataHolder<? super CodeStyleSchemeImpl> myDataHolder;
   private String myParentSchemeName;
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
 
-  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, Element rootElement) {
-    myName = name;
-    myRootElement = rootElement;
+  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder) {
+    setName(name);
+    myDataHolder = dataHolder;
     myIsDefault = false;
     myParentSchemeName = parentSchemeName;
   }
 
-  public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, CodeStyleScheme parentScheme){
-    myName = name;
+  public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, CodeStyleScheme parentScheme) {
+    setName(name);
     myIsDefault = isDefault;
     init(parentScheme, null);
   }
 
-  void init(@NotNull SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> schemesManager) {
-    LOG.assertTrue(myCodeStyleSettings == null, "Already initialized");
-    init(myParentSchemeName == null ? null : schemesManager.findSchemeByName(myParentSchemeName), myRootElement);
-    myParentSchemeName = null;
-    myRootElement = null;
-  }
-
-  private void init(@Nullable CodeStyleScheme parentScheme, Element root) {
+  private void init(@Nullable CodeStyleScheme parentScheme, @Nullable Element root) {
     if (parentScheme == null) {
       myCodeStyleSettings = new CodeStyleSettings();
     }
@@ -77,12 +70,26 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
-  public CodeStyleSettings getCodeStyleSettings(){
+  @NotNull
+  public CodeStyleSettings getCodeStyleSettings() {
+    SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
+    if (dataHolder != null) {
+      myDataHolder = null;
+      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
+      dataHolder.updateDigest(this);
+      myParentSchemeName = null;
+    }
     return myCodeStyleSettings;
+  }
+
+  boolean isInitialized() {
+    return myDataHolder == null;
   }
 
   public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings){
     myCodeStyleSettings = codeStyleSettings;
+    myParentSchemeName = null;
+    myDataHolder = null;
   }
 
   @Override
@@ -90,7 +97,22 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     return myIsDefault;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException{
-    myCodeStyleSettings.writeExternal(element);
+  @Override
+  public void resetToDefaults() {
+    myCodeStyleSettings = new CodeStyleSettings();
+  }
+
+  @Override
+  @NotNull
+  public Element writeScheme() {
+    if (myDataHolder == null) {
+      Element newElement = new Element("code_scheme");
+      newElement.setAttribute("name", getName());
+      myCodeStyleSettings.writeExternal(newElement);
+      return newElement;
+    }
+    else {
+      return myDataHolder.read();
+    }
   }
 }

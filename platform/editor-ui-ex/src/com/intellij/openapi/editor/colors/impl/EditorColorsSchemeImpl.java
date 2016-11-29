@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,21 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * @author Yura Cangea
- */
+import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
+
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
   public EditorColorsSchemeImpl(EditorColorsScheme parentScheme) {
     super(parentScheme);
   }
 
   @Override
-  public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
-    if (attributes != getAttributes(key)) {
+  public void setAttributes(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
+    if (attributes == USE_INHERITED_MARKER || attributes != getAttributes(key)) {
       myAttributesMap.put(key, attributes);
     }
   }
@@ -48,17 +48,19 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   @Override
-  public TextAttributes getAttributes(TextAttributesKey key) {
+  public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
     if (key != null) {
-      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       TextAttributes attributes = getDirectlyDefinedAttributes(key);
-      if (fallbackKey == null) {
-        if (containsValue(attributes)) return attributes;
+      if (attributes != null && attributes != USE_INHERITED_MARKER) {
+        return attributes;
       }
-      else {
-        if (containsValue(attributes) && !attributes.isFallbackEnabled()) return attributes;
+
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (fallbackKey != null) {
         attributes = getFallbackAttributes(fallbackKey);
-        if (containsValue(attributes)) return attributes;
+        if (attributes != null) {
+          return attributes;
+        }
       }
     }
     return myParentScheme.getAttributes(key);
@@ -80,6 +82,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(myParentScheme);
     copyTo(newScheme);
     newScheme.setName(getName());
+    newScheme.setDefaultMetaInfo(this);
     return newScheme;
   }
 }

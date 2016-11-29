@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -62,8 +61,8 @@ import java.util.Set;
 public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
 
-  private volatile String myCachedQName = null;
-  private volatile String myCachedNormalizedText = null;
+  private volatile String myCachedQName;
+  private volatile String myCachedNormalizedText;
 
   public PsiReferenceExpressionImpl() {
     super(JavaElementType.REFERENCE_EXPRESSION);
@@ -92,6 +91,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     boolean doImportStatic;
     if (containingFile instanceof PsiJavaFile) {
       importList = ((PsiJavaFile)containingFile).getImportList();
+      assert importList != null : containingFile;
       PsiImportStatementBase singleImportStatement = importList.findSingleImportStatement(staticName);
       doImportStatic = singleImportStatement == null;
       if (singleImportStatement instanceof PsiImportStaticStatement) {
@@ -117,13 +117,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return this;
   }
 
-  public static void bindToElementViaStaticImport(final PsiClass qualifierClass, final String staticName, final PsiImportList importList)
-    throws IncorrectOperationException {
+  public static void bindToElementViaStaticImport(PsiClass qualifierClass, String staticName, PsiImportList importList) throws IncorrectOperationException {
+    assert importList != null;
     final String qualifiedName  = qualifierClass.getQualifiedName();
     final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
-    if (refs.size() < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand()) {
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass,
-                                                                                                                            staticName));
+    if (refs.size() < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand() ||
+        JavaCodeStyleManager.getInstance(qualifierClass.getProject()).hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
+      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
     } else {
       for (PsiJavaCodeReferenceElement ref : refs) {
         final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
@@ -286,6 +286,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
 
     if (parentType == JavaElementType.METHOD_REF_EXPRESSION) {
+      if (((PsiMethodReferenceExpression)getParent()).isConstructor()) {
+        PsiElement classNameElement = getReferenceNameElement();
+        if (classNameElement == null) {
+          return JavaResolveResult.EMPTY_ARRAY;
+        }
+        return resolveToClass(classNameElement, containingFile);
+      }
       return resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
     }
 
@@ -350,12 +357,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @NotNull
   public String getCanonicalText() {
     final PsiElement element = resolve();
-    if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+    if (element instanceof PsiClass) {
       final String fqn = ((PsiClass)element).getQualifiedName();
       if (fqn != null) return fqn;
-      LOG.error("FQN is null. Reference:" + getElement().getText() +
-                " resolves to:" + LogUtil.objectAndClass(element) +
-                " parent:" + LogUtil.objectAndClass(element.getParent()));
     }
     return getCachedNormalizedText();
   }

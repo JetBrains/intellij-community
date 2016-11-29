@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
-    <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="module" module-name="lvcs-api" exported="" />
     <orderEntry type="library" name="JavaHelp" level="project" />
@@ -46,5 +45,8 @@
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="configuration-store-impl" scope="RUNTIME" />
     <orderEntry type="library" name="com.twelvemonkeys.imageio:imageio-tiff:3.2.1" level="project" />
+    <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="module" module-name="credential-store" scope="RUNTIME" />
+    <orderEntry type="library" exported="" name="StreamEx" level="project" />
   </component>
 </module>

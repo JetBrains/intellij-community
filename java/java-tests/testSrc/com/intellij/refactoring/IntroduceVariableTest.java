@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -29,7 +28,6 @@ import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -209,6 +207,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
 
+  public void testInsideForLoopIndependantFromLoopVariable() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
+
+  public void testDistinguishLambdaParams() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
   public void testDuplicateGenericExpressions() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Foo2<? extends java.lang.Runnable>"));
   }
@@ -250,7 +256,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testSubPrimitiveLiteral() {
-    doTest(new MockIntroduceVariableHandler("str", false, false, false, "boolean"));
+    doTest(new MockIntroduceVariableHandler("str", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
   public void testArrayFromVarargs() {
@@ -492,6 +498,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("s", false, false, false, "java.lang.String"));
   }
 
+  public void testPutInNestedLambdaBody() {
+    doTest(new MockIntroduceVariableHandler("s", false, false, false, "java.lang.String"));
+  }
+
+  public void testPutOuterLambda() {
+    doTest(new MockIntroduceVariableHandler("s", true, false, false, "java.lang.String"));
+  }
+
   public void testNormalizeDeclarations() {
     doTest(new MockIntroduceVariableHandler("i3", false, false, false, "int"));
   }
@@ -505,11 +519,19 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testDenotableType1() {
-    doTest(new MockIntroduceVariableHandler("m", false, false, false, "A<? extends A<?>>"));
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "A<? extends A<? extends java.lang.Object>>"));
   }
 
   public void testDenotableType2() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "I<? extends I<?>>"));
+  }
+
+  public void testDenotableType3() {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "java.util.function.IntFunction<java.lang.Class<?>[]>"));
+  }
+
+  public void testCapturedWildcardUpperBoundSuggestedAsType() throws Exception {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "I"));
   }
 
   public void testReturnNonExportedArray() {
@@ -549,10 +571,5 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     configureByFile(baseName + ".java");
     testMe.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(baseName + ".after.java");
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

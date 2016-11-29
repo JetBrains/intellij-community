@@ -38,7 +38,7 @@ public class UsageViewSettings implements PersistentStateComponent<UsageViewSett
   public boolean IS_SHOW_PACKAGES = true;
   public boolean IS_SHOW_METHODS = false;
   public boolean IS_AUTOSCROLL_TO_SOURCE = false;
-  public boolean IS_FILTER_DUPLICATED_LINE = false;
+  public boolean IS_FILTER_DUPLICATED_LINE = true;
   public boolean IS_SHOW_MODULES = false;
   public boolean IS_PREVIEW_USAGES = false;
   public boolean IS_SORT_MEMBERS_ALPHABETICALLY = true;

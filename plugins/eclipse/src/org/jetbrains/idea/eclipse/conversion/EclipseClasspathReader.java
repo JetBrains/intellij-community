@@ -94,7 +94,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   }
 
   public void readClasspath(@NotNull ModifiableRootModel model, @NotNull Element classpathElement) throws IOException, ConversionException {
-    Set<String> sink = new THashSet<String>();
+    Set<String> sink = new THashSet<>();
     readClasspath(model, sink, sink, sink, null, classpathElement);
   }
 
@@ -111,7 +111,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     }
     int idx = 0;
     EclipseModuleManagerImpl eclipseModuleManager = EclipseModuleManagerImpl.getInstance(model.getModule());
-    Set<String> libs = new HashSet<String>();
+    Set<String> libs = new HashSet<>();
     for (Element o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
         readClasspathEntry(model, unknownLibraries, unknownJdks, refsToModules, testPattern, o, idx++,

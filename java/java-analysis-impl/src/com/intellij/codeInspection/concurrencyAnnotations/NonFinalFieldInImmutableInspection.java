@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class NonFinalFieldInImmutableInspection extends BaseJavaBatchLocalInspec
           if (!JCiPUtil.isImmutable(containingClass)) {
             return;
           }
-          holder.registerProblem(field, "Non-final field #ref in @Immutable class  #loc");
+          holder.registerProblem(field.getNameIdentifier(), "Non-final field <code>#ref</code> in @Immutable class  #loc");
         }
       }
     };

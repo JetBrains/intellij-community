@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,6 +36,16 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
   @Override
   protected boolean processHasSeparateErrorStream() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  protected BaseOutputReader.Options readerOptions() {
+    // Currently, when blocking policy is used, reading stops when nothing was actually read (stream ended).
+    // This is an issue for reading output in Windows as redirection to file is used. And so file is actually
+    // empty when first read attempt is performed (thus no output is read at all).
+    // So here we ensure non-blocking policy is used for such cases.
+    return BaseOutputReader.Options.NON_BLOCKING;
   }
 
   @NotNull

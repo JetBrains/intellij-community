@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
@@ -235,11 +234,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
     if (exceptionObj != null && evaluationContext != null) {
       try {
-        final ReferenceType refType = exceptionObj.referenceType();
-        final List<Method> methods = refType.methodsByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
-        if (methods.size() > 0) {
+        ClassType refType = (ClassType)exceptionObj.referenceType();
+        Method method = refType.concreteMethodByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
+        if (method != null) {
           final DebugProcessImpl process = evaluationContext.getDebugProcess();
-          process.invokeMethod(evaluationContext, exceptionObj, methods.get(0), Collections.emptyList());
+          process.invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
           
           // print to console as well
           
@@ -260,9 +259,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
           }
         }
       }
-      catch (EvaluateException ignored) {
-      }
-      catch (ClassNotLoadedException ignored) {
+      catch (EvaluateException | ClassNotLoadedException ignored) {
       }
       catch (Throwable e) {
         LOG.info(e); // catch all exceptions to ensure the method returns gracefully
@@ -323,19 +320,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return ""; // we have overridden getLabel
   }
 
-  private String calcIdLabel() {
-    //translate only strings in quotes
-    if(isShowIdLabel() && myValueReady) {
-      final Value value = getValue();
-      Renderer lastRenderer = getLastRenderer();
-      final EvaluationContextImpl evalContext = myStoredEvaluationContext;
-      return evalContext != null && lastRenderer != null && !evalContext.getSuspendContext().isResumed()?
-                             ((NodeRendererImpl)lastRenderer).getIdLabel(value, evalContext.getDebugProcess()) :
-                             null;
-    }
-    return null;
-  }
-
   @Override
   public String getLabel() {
     return calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
@@ -358,12 +342,17 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   @Override
-  public void setValueLabel(String label) {
-    if (!myFullValue) {
-      label = DebuggerUtilsEx.truncateString(label);
-    }
+  public void setValueLabel(@NotNull String label) {
+    label = myFullValue ? label : DebuggerUtilsEx.truncateString(label);
+
+    Value value = myValueReady ? getValue() : null;
+    NodeRendererImpl lastRenderer = (NodeRendererImpl)getLastRenderer();
+    EvaluationContextImpl evalContext = myStoredEvaluationContext;
+    String labelId = myValueReady && evalContext != null && lastRenderer != null &&
+                     !evalContext.getSuspendContext().isResumed() ?
+                     lastRenderer.getIdLabel(value, evalContext.getDebugProcess()) : null;
     myValueText = label;
-    myIdLabel = calcIdLabel();
+    myIdLabel = isShowIdLabel() ? labelId : null;
   }
 
   @Override
@@ -408,12 +397,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public Renderer getLastRenderer() {
     return myRenderer != null ? myRenderer: myAutoRenderer;
-  }
-
-  @Nullable
-  public Type getType() {
-    Value value = getValue();
-    return value != null ? value.type() : null;
   }
 
   public NodeRenderer getRenderer (DebugProcessImpl debugProcess) {

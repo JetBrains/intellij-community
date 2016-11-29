@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.border.LineBorder;
@@ -45,7 +46,7 @@ public class SideBorder extends LineBorder {
 
   @Override
   public Insets getBorderInsets(Component component) {
-    return new Insets(
+    return JBUI.insets(
       (mySideMask & TOP) != 0 ? getThickness() : 0,
       (mySideMask & LEFT) != 0 ? getThickness() : 0,
       (mySideMask & BOTTOM) != 0 ? getThickness() : 0,

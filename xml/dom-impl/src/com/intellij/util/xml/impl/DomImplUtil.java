@@ -151,22 +151,19 @@ public class DomImplUtil {
       return Collections.emptyList();
     }
 
-    return ContainerUtil.findAll(tags, new Condition<XmlTag>() {
-      @Override
-      public boolean value(XmlTag childTag) {
-        try {
-          return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
+    return ContainerUtil.findAll(tags, childTag -> {
+      try {
+        return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
+      }
+      catch (PsiInvalidElementAccessException e) {
+        if (!childTag.isValid()) {
+          LOG.error("tag.getSubTags() returned invalid, " +
+                    "tag=" + tag + ", " +
+                    "containing file: " + tag.getContainingFile() +
+                    "subTag.parent=" + childTag.getNode().getTreeParent());
+          return false;
         }
-        catch (PsiInvalidElementAccessException e) {
-          if (!childTag.isValid()) {
-            LOG.error("tag.getSubTags() returned invalid, " +
-                      "tag=" + tag + ", " +
-                      "containing file: " + tag.getContainingFile() +
-                      "subTag.parent=" + childTag.getNode().getTreeParent());
-            return false;
-          }
-          throw e;
-        }
+        throw e;
       }
     });
   }
@@ -176,12 +173,7 @@ public class DomImplUtil {
       return Collections.emptyList();
     }
 
-    return ContainerUtil.findAll(tags, new Condition<XmlTag>() {
-      @Override
-      public boolean value(XmlTag childTag) {
-        return isNameSuitable(name, childTag, file);
-      }
-    });
+    return ContainerUtil.findAll(tags, childTag -> isNameSuitable(name, childTag, file));
   }
 
   public static boolean isNameSuitable(final XmlName name, final XmlTag tag, @NotNull final DomInvocationHandler handler, final XmlFile file) {
@@ -260,7 +252,7 @@ public class DomImplUtil {
     }
 
     final DomGenericInfoEx info = handler.getGenericInfo();
-    final Set<XmlName> usedNames = new THashSet<XmlName>();
+    final Set<XmlName> usedNames = new THashSet<>();
     List<? extends DomCollectionChildDescription> collectionChildrenDescriptions = info.getCollectionChildrenDescriptions();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = collectionChildrenDescriptions.size(); i < size; i++) {
@@ -273,18 +265,15 @@ public class DomImplUtil {
       DomFixedChildDescription description = fixedChildrenDescriptions.get(i);
       usedNames.add(description.getXmlName());
     }
-    return ContainerUtil.findAll(subTags, new Condition<XmlTag>() {
-      @Override
-      public boolean value(final XmlTag tag) {
-        if (StringUtil.isEmpty(tag.getName())) return false;
+    return ContainerUtil.findAll(subTags, tag -> {
+      if (StringUtil.isEmpty(tag.getName())) return false;
 
-        for (final XmlName name : usedNames) {
-          if (isNameSuitable(name, tag, handler, file)) {
-            return false;
-          }
+      for (final XmlName name : usedNames) {
+        if (isNameSuitable(name, tag, handler, file)) {
+          return false;
         }
-        return true;
       }
+      return true;
     });
   }
 

@@ -39,7 +39,7 @@ public class Form implements Navigatable {
 
   public Form(PsiClass classToBind, Collection<PsiFile> formFiles) {
     myClassToBind = classToBind;
-    myFormFiles = new HashSet<PsiFile>(formFiles);
+    myFormFiles = new HashSet<>(formFiles);
   }
 
   public boolean equals(Object object) {

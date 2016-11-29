@@ -69,7 +69,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
     final PsiElement targetElement = targetFile != null ? targetFile : element;
     CachedValue<XmlEntityDecl> value;
-    synchronized(PsiLock.LOCK) {
+    synchronized(XmlEntityCache.LOCK) {
       Map<String, CachedValue<XmlEntityDecl>> map = XmlEntityCache.getCachingMap(targetElement);
 
       value = map.get(entityName);
@@ -80,12 +80,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
         if(manager == null){
           return doResolveEntity(targetElement, entityName, containingFile).getValue();
         }
-        value = CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
-          @Override
-          public Result<XmlEntityDecl> compute() {
-            return doResolveEntity(targetElement, entityName, containingFile);
-          }
-        });
+        value = CachedValuesManager.getManager(manager.getProject()).createCachedValue(
+          () -> doResolveEntity(targetElement, entityName, containingFile));
 
 
         map.put(entityName, value);
@@ -102,7 +98,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return RecursionManager.doPreventingRecursion(targetElement, true, new Computable<CachedValueProvider.Result<XmlEntityDecl>>() {
       @Override
       public CachedValueProvider.Result<XmlEntityDecl> compute() {
-        final List<PsiElement> deps = new ArrayList<PsiElement>();
+        final List<PsiElement> deps = new ArrayList<>();
         final XmlEntityDecl[] result = {null};
 
         PsiElementProcessor processor = new PsiElementProcessor() {
@@ -181,7 +177,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           }
         }
 
-        return new CachedValueProvider.Result<XmlEntityDecl>(result[0], ArrayUtil.toObjectArray(deps));
+        return new CachedValueProvider.Result<>(result[0], ArrayUtil.toObjectArray(deps));
       }
     });
   }

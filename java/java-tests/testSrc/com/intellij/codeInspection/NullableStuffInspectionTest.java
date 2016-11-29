@@ -1,4 +1,20 @@
 /*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Created by IntelliJ IDEA.
  * User: Alexey
  * Date: 08.07.2006
@@ -53,6 +69,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testNotNullCustomException() throws Exception{ doTest(); }
 
   public void testNotNullFieldNotInitialized() throws Exception{ doTest(); }
+  public void testNotNullFieldInitializedInLambda() { doTest(); }
   public void testNotNullFieldNotInitializedInOneConstructor() { doTest(); }
   public void testNotNullFieldNotInitializedSetting() {
     myInspection.REQUIRE_NOTNULL_FIELDS_INITIALIZED = false;
@@ -127,7 +144,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
 
     final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
     nnnManager.setNullables("custom.CheckForNull");
-    Disposer.register(myTestRootDisposable, new Disposable() {
+    Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         nnnManager.setNullables();
@@ -145,6 +162,18 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
     myFixture.enableInspections(myInspection);
     myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testNullPassedToNotNullParameter() {
+    doTest();
+  }
+
+  public void testNullPassedToNotNullConstructorParameter() {
+    doTest();
+  }
+
+  public void testNullPassedAsPartNotNullAnnotatedOfVarArg() {
+    doTest();
   }
 
   public void testHonorParameterDefaultInSetters() {

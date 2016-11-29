@@ -15,11 +15,14 @@
  */
 package com.intellij.refactoring.safeDelete.usageInfo;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.safeDelete.ImportSearcher;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -38,6 +41,10 @@ public class SafeDeleteReferenceJavaDeleteUsageInfo extends SafeDeleteReferenceS
                                                 final boolean isNonCodeUsage,
                                                 final boolean isSafeDelete) {
     super(element, referencedElement, startOffset, endOffset, isNonCodeUsage, isSafeDelete);
+  }
+
+  public SafeDeleteReferenceJavaDeleteUsageInfo(PsiExpression expression, PsiElement referenceElement) {
+    this(expression, referenceElement, !RemoveUnusedVariableUtil.checkSideEffects(expression, null, new ArrayList<>()));
   }
 
   public void deleteElement() throws IncorrectOperationException {

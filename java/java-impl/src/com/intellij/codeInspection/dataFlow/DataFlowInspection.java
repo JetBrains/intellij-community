@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
@@ -24,8 +25,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -65,13 +66,12 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
-    return new IntroduceVariableFix(false) {
-      @Nullable
-      @Override
-      public PsiExpression getExpressionToExtract(PsiElement element) {
-        return (PsiExpression)element;
-      }
-    };
+    return new IntroduceVariableFix(true);
+  }
+
+  @Override
+  protected LocalQuickFix createNavigateToNullParameterUsagesFix(PsiParameter parameter) {
+    return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
   }
 
   private class OptionsPanel extends JPanel {
@@ -80,6 +80,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     private final JCheckBox mySuggestNullables;
     private final JCheckBox myDontReportTrueAsserts;
     private final JCheckBox myTreatUnknownMembersAsNullable;
+    private final JCheckBox myReportNullArguments;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -137,7 +138,16 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         }
       });
 
-      gc.insets = new Insets(0, 0, 0, 0);
+      myReportNullArguments = new JCheckBox("Report not-null required parameter with null-literal argument usages");
+      myReportNullArguments.setSelected(REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER);
+      myReportNullArguments.getModel().addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = myReportNullArguments.isSelected();
+        }
+      });
+
+      gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
       add(mySuggestNullables, gc);
 
@@ -171,6 +181,9 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(myTreatUnknownMembersAsNullable, gc);
+
+      gc.gridy++;
+      add(myReportNullArguments, gc);
     }
   }
 

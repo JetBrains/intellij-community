@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
         CharSequence text = inputData.getContentAsText();
         if (StringUtil.indexOf(text, XmlUtil.XML_SCHEMA_URI) == -1) return Collections.emptyMap();
         Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(text));
-        Map<String, Void> map = new HashMap<String, Void>(tags.size());
+        Map<String, Void> map = new HashMap<>(tags.size());
         for (String tag : tags) {
           map.put(tag, null);
         }
@@ -72,7 +73,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
   @NotNull
   @Override
   public DataExternalizer<Void> getValueExternalizer() {
-    return ScalarIndexExtension.VOID_DATA_EXTERNALIZER;
+    return VoidDataExternalizer.INSTANCE;
   }
 
 }

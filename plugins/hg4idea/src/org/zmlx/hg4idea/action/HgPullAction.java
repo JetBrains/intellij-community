@@ -46,7 +46,7 @@ public class HgPullAction extends HgAbstractGlobalSingleRepoAction {
   private static void executePull(final Project project, final HgRepository hgRepository, final String source) {
     final HgPullCommand command = new HgPullCommand(project, hgRepository.getRoot());
     command.setSource(source);
-    command.execute();
+    command.executeInCurrentThread();
     hgRepository.update();
   }
 }

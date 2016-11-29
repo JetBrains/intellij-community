@@ -13,8 +13,6 @@
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,9 +40,8 @@ public class AuthDialog extends DialogWrapper {
 
   @Nullable
   private static Boolean decideOnShowRememberPasswordOption(@Nullable String password, boolean rememberByDefault) {
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     // if password saving is disabled, don't show the checkbox.
-    if (passwordSafe.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
+    if (PasswordSafe.getInstance().isMemoryOnly()) {
       return null;
     }
     // if password is prefilled, it is expected to continue remembering it.

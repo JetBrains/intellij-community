@@ -29,6 +29,6 @@ class PyRecursiveElementVisitorWithResult extends PyRecursiveElementVisitor {
   protected final MultiMap<PyClass, PyElement> myResult;
 
   PyRecursiveElementVisitorWithResult() {
-    myResult = new MultiMap<PyClass, PyElement>();
+    myResult = new MultiMap<>();
   }
 }

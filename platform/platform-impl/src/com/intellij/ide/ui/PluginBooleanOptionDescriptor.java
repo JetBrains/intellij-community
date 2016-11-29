@@ -45,7 +45,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
   @Override
   public void setOptionState(boolean enabled) {
-    List<String> disabledPlugins = new ArrayList<String>(PluginManagerCore.getDisabledPlugins());
+    List<String> disabledPlugins = new ArrayList<>(PluginManagerCore.getDisabledPlugins());
     if (enabled) {
       disabledPlugins.remove(myId.getIdString());
     } else {

@@ -30,10 +30,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
@@ -45,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
+public class SelectionModelImpl implements SelectionModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
 
   private final List<SelectionListener> mySelectionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -53,37 +51,8 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   private TextAttributes myTextAttributes;
 
-  private DocumentEvent myIsInUpdate;
-
   public SelectionModelImpl(EditorImpl editor) {
     myEditor = editor;
-  }
-
-  @Override
-  public void beforeDocumentChange(DocumentEvent event) {
-    myIsInUpdate = event;
-    for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-      ((CaretImpl)caret).beforeDocumentChange();
-    }
-  }
-
-  @Override
-  public void documentChanged(DocumentEvent event) {
-    if (myIsInUpdate == event) {
-      myIsInUpdate = null;
-      myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
-        public void run() {
-          for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-            ((CaretImpl)caret).documentChanged();
-          }
-        }
-      });
-    }
-  }
-
-  @Override
-  public int getPriority() {
-    return EditorDocumentPriorities.SELECTION_MODEL;
   }
 
   /**
@@ -276,24 +245,24 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
   }
 
-  public static void doSelectLineAtCaret(Editor editor) {
-    int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+  public static void doSelectLineAtCaret(Caret caret) {
+    Editor editor = caret.getEditor();
+    int lineNumber = caret.getLogicalPosition().line;
     Document document = editor.getDocument();
     if (lineNumber >= document.getLineCount()) {
       return;
     }
 
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(editor);
+    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(caret);
     LogicalPosition lineStart = lines.first;
     LogicalPosition nextLineStart = lines.second;
 
     int start = editor.logicalPositionToOffset(lineStart);
     int end = editor.logicalPositionToOffset(nextLineStart);
 
-    //myEditor.getCaretModel().moveToOffset(start);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    editor.getSelectionModel().removeSelection();
-    editor.getSelectionModel().setSelection(start, end);
+    caret.removeSelection();
+    caret.setSelection(start, end);
   }
 
   @Override
@@ -339,8 +308,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     myTextAttributes = null;
   }
 
-  private void validateContext(boolean isWrite) {
-    if (!myEditor.getComponent().isShowing()) return;
+  private static void validateContext(boolean isWrite) {
     if (isWrite) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }

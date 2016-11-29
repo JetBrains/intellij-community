@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
@@ -32,7 +32,7 @@ import org.picocontainer.PicoContainer;
 
 import java.util.*;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class ExtensionsAreaImpl implements ExtensionsArea {
   private final LogProvider myLogger;
   public static final String ATTRIBUTE_AREA = "area";
@@ -137,6 +137,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
     final PluginId pluginId = pluginDescriptor.getPluginId();
 
+    if (!Extensions.isComponentSuitableForOs(extensionElement.getAttributeValue("os"))) {
+      return;
+    }
+
     String epName = extractEPName(extensionElement);
 
     ExtensionComponentAdapter adapter;
@@ -195,7 +199,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return myPicoContainer;
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   private void initialize() {
     for (Map.Entry<String, String> entry : ourDefaultEPs.entrySet()) {
       String epName = entry.getKey();
@@ -234,13 +238,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private Object instantiate(Class clazz) {
-    ConstructorInjectionComponentAdapter adapter =
-      new ConstructorInjectionComponentAdapter(Integer.toString(System.identityHashCode(new Object())), clazz);
+    CachingConstructorInjectionComponentAdapter adapter =
+      new CachingConstructorInjectionComponentAdapter(Integer.toString(System.identityHashCode(new Object())), clazz);
 
     return adapter.getComponentInstance(getPicoContainer());
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public Throwable getCreationTrace() {
     return myCreationTrace;
   }
@@ -282,7 +286,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       throw new RuntimeException("Duplicate registration for EP: " + extensionPointName);
     }
 
-    registerExtensionPoint(new ExtensionPointImpl(extensionPointName, extensionPointBeanClass, kind, this, myAreaInstance, myLogger, descriptor));
+    registerExtensionPoint(new ExtensionPointImpl(extensionPointName, extensionPointBeanClass, kind, this, myAreaInstance, descriptor));
   }
 
   public void registerExtensionPoint(@NotNull ExtensionPointImpl extensionPoint) {
@@ -402,7 +406,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     mySuspendedListenerActions.clear();
   }
 
-  public void removeAllComponents(final Set<ExtensionComponentAdapter> extensionAdapters) {
+  void removeAllComponents(final Set<ExtensionComponentAdapter> extensionAdapters) {
     for (final Object extensionAdapter : extensionAdapters) {
       ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)extensionAdapter;
       internalGetPluginContainer().unregisterComponent(componentAdapter.getComponentKey());
@@ -412,5 +416,12 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public String toString() {
     return (myAreaClass == null ? "Root" : myAreaClass)+" Area";
+  }
+
+  void error(@NotNull String msg) {
+    myLogger.error(msg);
+  }
+  void error(@NotNull Throwable msg) {
+    myLogger.error(msg);
   }
 }

@@ -28,11 +28,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.Nullable;
 
-public class CopyAction extends EditorAction {
+public class CopyAction extends TextComponentEditorAction {
 
   public static final String SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY = "editor.skip.copy.and.cut.for.empty.selection";
 
@@ -42,7 +42,7 @@ public class CopyAction extends EditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void execute(final Editor editor, DataContext dataContext) {
+    public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!editor.getSelectionModel().hasSelection(true)) {
         if (Registry.is(SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
           return;

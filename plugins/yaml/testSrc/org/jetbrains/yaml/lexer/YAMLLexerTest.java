@@ -204,6 +204,10 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testSingleQuotedEscapes() {
     doTest();
   }
+  
+  public void testUnicodeNewlines() {
+    doTest();
+  }
 
   private void doTest() {
     doFileTest("yml");

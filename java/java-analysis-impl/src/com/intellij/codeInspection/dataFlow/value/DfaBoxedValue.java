@@ -41,7 +41,7 @@ public class DfaBoxedValue extends DfaValue {
   }
 
   public static class Factory {
-    private final Map<Object, DfaBoxedValue> cachedValues = new HashMap<Object, DfaBoxedValue>();
+    private final Map<Object, DfaBoxedValue> cachedValues = new HashMap<>();
     private final DfaValueFactory myFactory;
 
     public Factory(DfaValueFactory factory) {

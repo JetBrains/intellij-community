@@ -194,11 +194,9 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       public void shortcutsUpdated() {
         scheduleTasksUpdate();
 
-        scheduleStructureRequest(new Runnable() {
-          public void run() {
-            assert myStructure != null;
-            myStructure.updateNodes(RunConfigurationNode.class);
-          }
+        scheduleStructureRequest(() -> {
+          assert myStructure != null;
+          myStructure.updateNodes(RunConfigurationNode.class);
         });
       }
     });
@@ -208,27 +206,18 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       public void tasksActivationChanged() {
         scheduleTasksUpdate();
 
-        scheduleStructureRequest(new Runnable() {
-          public void run() {
-            assert myStructure != null;
-            myStructure.updateNodes(RunConfigurationNode.class);
-          }
+        scheduleStructureRequest(() -> {
+          assert myStructure != null;
+          myStructure.updateNodes(RunConfigurationNode.class);
         });
       }
     });
 
     ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerAdapter() {
       private void changed() {
-        scheduleStructureRequest(new Runnable() {
-          public void run() {
-            assert myStructure != null;
-            myStructure.visitNodes(ModuleNode.class, new Consumer<ModuleNode>() {
-              @Override
-              public void consume(ModuleNode node) {
-                node.updateRunConfigurations();
-              }
-            });
-          }
+        scheduleStructureRequest(() -> {
+          assert myStructure != null;
+          myStructure.visitNodes(ModuleNode.class, node -> node.updateRunConfigurations());
         });
       }
 
@@ -251,16 +240,14 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     ExternalSystemApiUtil.subscribe(myProject, myExternalSystemId, new ExternalSystemSettingsListenerAdapter(){
       @Override
       public void onUseAutoImportChange(boolean currentValue, @NotNull final String linkedProjectPath) {
-        scheduleStructureRequest(new Runnable() {
-          public void run() {
-            assert myStructure != null;
-            final List<ProjectNode> projectNodes = myStructure.getNodes(ProjectNode.class);
-            for (ProjectNode projectNode : projectNodes) {
-              final ProjectData projectData = projectNode.getData();
-              if(projectData != null && projectData.getLinkedExternalProjectPath().equals(linkedProjectPath)) {
-                projectNode.updateProject();
-                break;
-              }
+        scheduleStructureRequest(() -> {
+          assert myStructure != null;
+          final List<ProjectNode> projectNodes = myStructure.getNodes(ProjectNode.class);
+          for (ProjectNode projectNode : projectNodes) {
+            final ProjectData projectData = projectNode.getData();
+            if(projectData != null && projectData.getLinkedExternalProjectPath().equals(linkedProjectPath)) {
+              projectNode.updateProject();
+              break;
             }
           }
         });
@@ -358,22 +345,15 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   public void scheduleStructureUpdate() {
-    scheduleStructureRequest(new Runnable() {
-      public void run() {
-        final Collection<ExternalProjectInfo> projectsData =
-          ProjectDataManager.getInstance().getExternalProjectsData(myProject, myExternalSystemId);
+    scheduleStructureRequest(() -> {
+      final Collection<ExternalProjectInfo> projectsData =
+        ProjectDataManager.getInstance().getExternalProjectsData(myProject, myExternalSystemId);
 
-        final List<DataNode<ProjectData>> toImport =
-          ContainerUtil.mapNotNull(projectsData, new Function<ExternalProjectInfo, DataNode<ProjectData>>() {
-            @Override
-            public DataNode<ProjectData> fun(ExternalProjectInfo info) {
-              return info.getExternalProjectStructure();
-            }
-          });
+      final List<DataNode<ProjectData>> toImport =
+        ContainerUtil.mapNotNull(projectsData, info -> info.getExternalProjectStructure());
 
-        assert myStructure != null;
-        myStructure.updateProjects(toImport);
-      }
+      assert myStructure != null;
+      myStructure.updateProjects(toImport);
     });
   }
 
@@ -415,7 +395,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   public List<ExternalSystemNode<?>> createNodes(@NotNull ExternalProjectsView externalProjectsView,
                                                  @Nullable ExternalSystemNode<?> parent,
                                                  @NotNull DataNode<?> dataNode) {
-    final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
+    final List<ExternalSystemNode<?>> result = new SmartList<>();
     final MultiMap<Key<?>, DataNode<?>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
     for (ExternalSystemViewContributor contributor : ExternalSystemViewContributor.EP_NAME.getExtensions()) {
       if (!contributor.getSystemId().equals(ProjectSystemId.IDE) &&
@@ -423,7 +403,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         continue;
       }
 
-      final MultiMap<Key<?>, DataNode<?>> dataNodes = new ContainerUtil.KeyOrderedMultiMap<Key<?>, DataNode<?>>();
+      final MultiMap<Key<?>, DataNode<?>> dataNodes = new ContainerUtil.KeyOrderedMultiMap<>();
       for (Key<?> key : contributor.getKeys()) {
         ContainerUtil.putIfNotNull(key, groups.get(key), dataNodes);
       }
@@ -501,24 +481,20 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   private void scheduleTasksRebuild() {
-    scheduleStructureRequest(new Runnable() {
-      public void run() {
-        assert myStructure != null;
-        final List<TasksNode> tasksNodes = myStructure.getNodes(TasksNode.class);
-        for (TasksNode tasksNode : tasksNodes) {
-          tasksNode.cleanUpCache();
-          updateUpTo(tasksNode);
-        }
+    scheduleStructureRequest(() -> {
+      assert myStructure != null;
+      final List<TasksNode> tasksNodes = myStructure.getNodes(TasksNode.class);
+      for (TasksNode tasksNode : tasksNodes) {
+        tasksNode.cleanUpCache();
+        updateUpTo(tasksNode);
       }
     });
   }
 
   private void scheduleTasksUpdate() {
-    scheduleStructureRequest(new Runnable() {
-      public void run() {
-        assert myStructure != null;
-        myStructure.updateNodes(TaskNode.class);
-      }
+    scheduleStructureRequest(() -> {
+      assert myStructure != null;
+      myStructure.updateNodes(TaskNode.class);
     });
   }
 
@@ -528,25 +504,23 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       return;
     }
 
-    invokeLater(myProject, new Runnable() {
-      public void run() {
-        if (!myToolWindow.isVisible()) return;
+    invokeLater(myProject, () -> {
+      if (!myToolWindow.isVisible()) return;
 
-        boolean shouldCreate = myStructure == null;
+      boolean shouldCreate = myStructure == null;
+      if (shouldCreate) {
+        initStructure();
+      }
+
+      myTree.setPaintBusy(true);
+      try {
+        r.run();
         if (shouldCreate) {
-          initStructure();
+          restoreTreeState();
         }
-
-        myTree.setPaintBusy(true);
-        try {
-          r.run();
-          if (shouldCreate) {
-            restoreTreeState();
-          }
-        }
-        finally {
-          myTree.setPaintBusy(false);
-        }
+      }
+      finally {
+        myTree.setPaintBusy(false);
       }
     });
   }
@@ -628,7 +602,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   private Object extractVirtualFiles() {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     for (ExternalSystemNode each : getSelectedNodes(ExternalSystemNode.class)) {
       VirtualFile file = each.getVirtualFile();
       if (file != null && file.isValid()) files.add(file);
@@ -637,7 +611,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   private Object extractNavigatables() {
-    final List<Navigatable> navigatables = new ArrayList<Navigatable>();
+    final List<Navigatable> navigatables = new ArrayList<>();
     for (ExternalSystemNode each : getSelectedNodes(ExternalSystemNode.class)) {
       Navigatable navigatable = each.getNavigatable();
       if (navigatable != null) navigatables.add(navigatable);

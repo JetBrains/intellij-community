@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,20 +41,21 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
  * @since Apr 11, 2002
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public abstract class InspectionTestCase extends PsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.InspectionTestCase");
   private EntryPoint myUnusedCodeExtension;
@@ -65,6 +66,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     ep.presentation = UnusedDeclarationPresentation.class.getName();
     ep.implementationClass = UnusedDeclarationInspection.class.getName();
     ep.shortName = UnusedDeclarationInspectionBase.SHORT_NAME;
+    ep.displayName = UnusedDeclarationInspectionBase.DISPLAY_NAME;
     return new GlobalInspectionToolWrapper(ep);
   }
 
@@ -72,83 +74,82 @@ public abstract class InspectionTestCase extends PsiTestCase {
     return (InspectionManagerEx)InspectionManager.getInstance(myProject);
   }
 
-  public void doTest(@NonNls String folderName, LocalInspectionTool tool) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull LocalInspectionTool tool) {
     doTest(folderName, new LocalInspectionToolWrapper(tool));
   }
 
-  public void doTest(@NonNls String folderName, GlobalInspectionTool tool) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull GlobalInspectionTool tool) {
     doTest(folderName, new GlobalInspectionToolWrapper(tool));
   }
 
-  public void doTest(@NonNls String folderName, GlobalInspectionTool tool, boolean checkRange) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull GlobalInspectionTool tool, boolean checkRange) {
     doTest(folderName, new GlobalInspectionToolWrapper(tool), checkRange);
   }
 
-  public void doTest(@NonNls String folderName, GlobalInspectionTool tool, boolean checkRange, boolean runDeadCodeFirst) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull GlobalInspectionTool tool, boolean checkRange, boolean runDeadCodeFirst) {
     doTest(folderName, new GlobalInspectionToolWrapper(tool), "java 1.4", checkRange, runDeadCodeFirst);
   }
 
-  public void doTest(@NonNls String folderName, InspectionToolWrapper tool) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull InspectionToolWrapper tool) {
     doTest(folderName, tool, "java 1.4");
   }
 
-  public void doTest(@NonNls String folderName, InspectionToolWrapper tool, final boolean checkRange) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull InspectionToolWrapper tool, final boolean checkRange) {
     doTest(folderName, tool, "java 1.4", checkRange);
   }
 
-  public void doTest(@NonNls String folderName, LocalInspectionTool tool, @NonNls final String jdkName) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull LocalInspectionTool tool, @NonNls final String jdkName) {
     doTest(folderName, new LocalInspectionToolWrapper(tool), jdkName);
   }
 
-  public void doTest(@NonNls String folderName, InspectionToolWrapper tool, @NonNls final String jdkName) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull InspectionToolWrapper tool, @NonNls final String jdkName) {
     doTest(folderName, tool, jdkName, false);
   }
 
-  public void doTest(@NonNls String folderName, InspectionToolWrapper tool, @NonNls final String jdkName, boolean checkRange) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull InspectionToolWrapper tool, @NonNls final String jdkName, boolean checkRange) {
     doTest(folderName, tool, jdkName, checkRange, false);
   }
 
-  public void doTest(@NonNls String folderName,
-                     InspectionToolWrapper toolWrapper,
+  public void doTest(@NonNls @NotNull String folderName,
+                     @NotNull InspectionToolWrapper toolWrapper,
                      @NonNls final String jdkName,
                      boolean checkRange,
                      boolean runDeadCodeFirst,
-                     InspectionToolWrapper... additional) {
+                     @NotNull InspectionToolWrapper... additional) {
     final String testDir = getTestDataPath() + "/" + folderName;
     GlobalInspectionContextImpl context = runTool(testDir, jdkName, runDeadCodeFirst, toolWrapper, additional);
 
     InspectionTestUtil.compareToolResults(context, toolWrapper, checkRange, testDir);
   }
 
-  protected void runTool(@NonNls final String testDir, @NonNls final String jdkName, final InspectionToolWrapper tool) {
+  protected void runTool(@NonNls @NotNull String testDir, @NonNls final String jdkName, @NotNull InspectionToolWrapper tool) {
     runTool(testDir, jdkName, false, tool);
   }
 
-  protected GlobalInspectionContextImpl runTool(final String testDir,
+  protected GlobalInspectionContextImpl runTool(@NotNull final String testDir,
                                                 final String jdkName,
                                                 boolean runDeadCodeFirst,
                                                 @NotNull InspectionToolWrapper toolWrapper,
                                                 @NotNull InspectionToolWrapper... additional) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          setupRootModel(testDir, sourceDir, jdkName);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        setupRootModel(testDir, sourceDir, jdkName);
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     });
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
     AnalysisScope scope = createAnalysisScope(sourceDir[0].equals(projectDir) ? projectDir : sourceDir[0].getParent());
 
-    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
-    InspectionToolWrapper[] toolWrappers = runDeadCodeFirst ? new InspectionToolWrapper []{getUnusedDeclarationWrapper(), toolWrapper} : new InspectionToolWrapper []{toolWrapper};
-    toolWrappers = ArrayUtil.mergeArrays(toolWrappers, additional);
-    final GlobalInspectionContextForTests globalContext =
-      CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrappers);
+    List<InspectionToolWrapper<?, ?>> toolWrappers = new ArrayList<>();
+    if (runDeadCodeFirst) {
+      toolWrappers.add(getUnusedDeclarationWrapper());
+    }
+    toolWrappers.add(toolWrapper);
+    ContainerUtil.addAll(toolWrappers, additional);
+    GlobalInspectionContextForTests globalContext = InspectionsKt.createGlobalContextForTool(scope, getProject(), toolWrappers);
 
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
     return globalContext;
@@ -160,7 +161,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     return new AnalysisScope(psiManager.findDirectory(sourceDir));
   }
 
-  protected void setupRootModel(final String testDir, final VirtualFile[] sourceDir, final String sdkName) {
+  protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, final String sdkName) {
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
     assertNotNull("could not find project dir " + testDir, projectDir);
     sourceDir[0] = projectDir.findChild("src");
@@ -175,6 +176,11 @@ public abstract class InspectionTestCase extends PsiTestCase {
     ext_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/ext_src"));
     if (ext_src != null) {
       PsiTestUtil.addSourceRoot(myModule, ext_src);
+    }
+
+    VirtualFile test_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/test_src"));
+    if (test_src != null) {
+      PsiTestUtil.addSourceRoot(myModule, test_src, true);
     }
   }
 
@@ -201,7 +207,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
       @Override
       public boolean isSelected() {
-        return false;
+        return true;
       }
 
       @Override
@@ -225,11 +231,15 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
-    point.unregisterExtension(myUnusedCodeExtension);
-    myUnusedCodeExtension = null;
-    ext_src = null;
-    super.tearDown();
+    try {
+      ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
+      point.unregisterExtension(myUnusedCodeExtension);
+      myUnusedCodeExtension = null;
+      ext_src = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
@@ -237,8 +247,8 @@ public abstract class InspectionTestCase extends PsiTestCase {
   }
 
   protected Sdk getTestProjectSdk() {
-    Sdk sdk = IdeaTestUtil.getMockJdk17();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    Sdk sdk = IdeaTestUtil.getMockJdk18();
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
     return sdk;
   }
 

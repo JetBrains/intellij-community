@@ -32,6 +32,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +87,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   @Nullable
-  public OpenFileDescriptor getOpenFileDescriptor(@Nullable Project project) {
+  public Navigatable getNavigatable(@Nullable Project project) {
     if (project == null || project.isDefault() || !myFile.isValid()) return null;
     return new OpenFileDescriptor(project, myFile);
   }
@@ -97,7 +98,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       return new VirtualFileDiffElement[0];
     }
     final VirtualFile[] files = myFile.getChildren();
-    final ArrayList<VirtualFileDiffElement> elements = new ArrayList<VirtualFileDiffElement>();
+    final ArrayList<VirtualFileDiffElement> elements = new ArrayList<>();
     for (VirtualFile file : files) {
       if (!FileTypeManager.getInstance().isFileIgnored(file) && file.isValid()) {
         elements.add(new VirtualFileDiffElement(file));
@@ -129,14 +130,10 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public Callable<DiffElement<VirtualFile>> getElementChooser(final Project project) {
-    return new Callable<DiffElement<VirtualFile>>() {
-      @Nullable
-      @Override
-      public DiffElement<VirtualFile> call() throws Exception {
-        final FileChooserDescriptor descriptor = getChooserDescriptor();
-        final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, getValue());
-        return result.length == 1 ? createElement(result[0]) : null;
-      }
+    return () -> {
+      final FileChooserDescriptor descriptor = getChooserDescriptor();
+      final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, getValue());
+      return result.length == 1 ? createElement(result[0]) : null;
     };
   }
 
@@ -188,7 +185,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   public static void refreshFile(boolean userInitiated, VirtualFile virtualFile) {
     if (userInitiated) {
-      final List<Document> docsToSave = new ArrayList<Document>();
+      final List<Document> docsToSave = new ArrayList<>();
       final FileDocumentManager manager = FileDocumentManager.getInstance();
       for (Document document : manager.getUnsavedDocuments()) {
         VirtualFile file = manager.getFile(document);

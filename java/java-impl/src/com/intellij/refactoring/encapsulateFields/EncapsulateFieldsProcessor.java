@@ -83,7 +83,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   @Override
   protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
-    final List<PsiElement> fields = new ArrayList<PsiElement>();
+    final List<PsiElement> fields = new ArrayList<>();
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
       fields.add(fieldDescriptor.getField());
     }
@@ -95,7 +95,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   @Override
   protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
     RefactoringEventData data = new RefactoringEventData();
-    List<PsiElement> elements = new ArrayList<PsiElement>();
+    List<PsiElement> elements = new ArrayList<>();
     if (myNameToGetter != null) {
       elements.addAll(myNameToGetter.values());
     }
@@ -118,14 +118,14 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     checkExistingMethods(conflicts, true);
     checkExistingMethods(conflicts, false);
     final Collection<PsiClass> classes = ClassInheritorsSearch.search(myClass).findAll();
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
-      final Set<PsiMethod> setters = new HashSet<PsiMethod>();
-      final Set<PsiMethod> getters = new HashSet<PsiMethod>();
+      final Set<PsiMethod> setters = new HashSet<>();
+      final Set<PsiMethod> getters = new HashSet<>();
 
       for (PsiClass aClass : classes) {
         final PsiMethod getterOverrider =
@@ -291,11 +291,11 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
   private void generateAccessors() {
     // generate accessors
-    myNameToGetter = new HashMap<String, PsiMethod>();
-    myNameToSetter = new HashMap<String, PsiMethod>();
+    myNameToGetter = new HashMap<>();
+    myNameToSetter = new HashMap<>();
 
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
-      final DocCommentPolicy<PsiDocComment> commentPolicy = new DocCommentPolicy<PsiDocComment>(myDescriptor.getJavadocPolicy());
+      final DocCommentPolicy<PsiDocComment> commentPolicy = new DocCommentPolicy<>(myDescriptor.getJavadocPolicy());
 
       PsiField field = fieldDescriptor.getField();
       final PsiDocComment docComment = field.getDocComment();
@@ -321,14 +321,14 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   private void processUsagesPerFile(UsageInfo[] usages) {
-    Map<PsiFile, List<EncapsulateFieldUsageInfo>> usagesInFiles = new HashMap<PsiFile, List<EncapsulateFieldUsageInfo>>();
+    Map<PsiFile, List<EncapsulateFieldUsageInfo>> usagesInFiles = new HashMap<>();
     for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
       if (element == null) continue;
       final PsiFile file = element.getContainingFile();
       List<EncapsulateFieldUsageInfo> usagesInFile = usagesInFiles.get(file);
       if (usagesInFile == null) {
-        usagesInFile = new ArrayList<EncapsulateFieldUsageInfo>();
+        usagesInFile = new ArrayList<>();
         usagesInFiles.put(file, usagesInFile);
       }
       usagesInFile.add(((EncapsulateFieldUsageInfo)usage));

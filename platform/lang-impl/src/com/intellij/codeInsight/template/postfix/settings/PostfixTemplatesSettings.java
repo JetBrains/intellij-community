@@ -19,8 +19,10 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -30,19 +32,13 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
 @State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"))
-public class PostfixTemplatesSettings implements PersistentStateComponent<Element>, ExportableComponent {
+public class PostfixTemplatesSettings implements PersistentStateComponent<Element> {
 
-  public static final Factory<Set<String>> SET_FACTORY = new Factory<Set<String>>() {
-    @Override
-    public Set<String> create() {
-      return ContainerUtil.newHashSet();
-    }
-  };
+  public static final Factory<Set<String>> SET_FACTORY = () -> ContainerUtil.newHashSet();
   private Map<String, Set<String>> myLangToDisabledTemplates = ContainerUtil.newHashMap();
 
   private boolean postfixTemplatesEnabled = true;
@@ -53,14 +49,12 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   @NotNull
   private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   @NotNull
   public Map<String, Boolean> getTemplatesState() {
     return myTemplatesState;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public void setTemplatesState(@NotNull Map<String, Boolean> templatesState) {
     myTemplatesState = templatesState;
@@ -142,17 +136,5 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
       myLangToDisabledTemplates.put("JAVA", ContainerUtil.newHashSet(myTemplatesState.keySet()));
       myTemplatesState.clear();
     }
-  }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("postfixCompletion.xml")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return "Postfix Completion";
   }
 }

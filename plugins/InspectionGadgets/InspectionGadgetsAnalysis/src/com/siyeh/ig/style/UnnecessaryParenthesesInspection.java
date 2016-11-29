@@ -71,13 +71,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.parentheses.remove.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("unnecessary.parentheses.remove.quickfix");
     }
 
     @Override

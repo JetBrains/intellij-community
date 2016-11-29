@@ -90,25 +90,22 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   private final FactoryMap<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache = new ConcurrentFactoryMap<String, CachedValue<CanContainAttributeType>>() {
     @Override
     protected CachedValue<CanContainAttributeType> create(final String key) {
-      return CachedValuesManager.getManager(myTag.getProject()).createCachedValue(new CachedValueProvider<CanContainAttributeType>() {
-        @Override
-        public Result<CanContainAttributeType> compute() {
-          THashSet<Object> dependencies = new THashSet<Object>();
-          CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<String>(), dependencies);
-          if (dependencies.isEmpty()) {
-            dependencies.add(myTag.getContainingFile());
-          }
-          if (DumbService.isDumb(myTag.getProject())) {
-            dependencies.add(DumbService.getInstance(myTag.getProject()).getModificationTracker());
-          }
-          return Result.create(type, ArrayUtil.toObjectArray(dependencies));
+      return CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {
+        THashSet<Object> dependencies = new THashSet<>();
+        CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<>(), dependencies);
+        if (dependencies.isEmpty()) {
+          dependencies.add(myTag.getContainingFile());
         }
+        if (DumbService.isDumb(myTag.getProject())) {
+          dependencies.add(DumbService.getInstance(myTag.getProject()).getModificationTracker());
+        }
+        return CachedValueProvider.Result.create(type, ArrayUtil.toObjectArray(dependencies));
       }, false);
     }
   };
 
-  private volatile XmlElementDescriptor[] myElementDescriptors = null;
-  private volatile XmlAttributeDescriptor[] myAttributeDescriptors = null;
+  private volatile XmlElementDescriptor[] myElementDescriptors;
+  private volatile XmlAttributeDescriptor[] myAttributeDescriptors;
   @NonNls
   private static final String PROHIBITED_ATTR_VALUE = "prohibited";
   @NonNls
@@ -144,9 +141,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   // Read-only calculation
   private XmlElementDescriptor[] doCollectElements(@Nullable XmlElement context) {
-    final Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
+    final Map<String,XmlElementDescriptor> map = new LinkedHashMap<>(5);
     createProcessor(map).startProcessing(myTag);
-    addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<XmlNSDescriptorImpl>());
+    addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<>());
     filterAbstractElements(map);
     return map.values().toArray(
       new XmlElementDescriptor[map.values().size()]
@@ -228,7 +225,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   // Read-only calculation
   private XmlAttributeDescriptor[] doCollectAttributes(@Nullable final XmlElement context) {
-    final List<XmlAttributeDescriptorImpl> result = new ArrayList<XmlAttributeDescriptorImpl>();
+    final List<XmlAttributeDescriptorImpl> result = new ArrayList<>();
 
     XmlSchemaTagsProcessor processor = new XmlSchemaTagsProcessor(myDocumentDescriptor, "element") {
       @Override
@@ -288,7 +285,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public boolean canContainTag(String localName, String namespace, XmlElement context) {
-    return _canContainTag(localName, namespace, myTag, context, new HashSet<XmlTag>(5),
+    return _canContainTag(localName, namespace, myTag, context, new HashSet<>(5),
                           new CurrentContextInfo(myDocumentDescriptor, myDocumentDescriptor.getDefaultNamespace()), false);
   }
 
@@ -363,8 +360,12 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       XmlTag descriptorTag = tag;
 
       if (ref != null) {
-        final PsiElement psiElement = SchemaReferencesProvider.createTypeOrElementOrAttributeReference(ref.getValueElement()).resolve();
-        if (psiElement instanceof XmlTag) descriptorTag = (XmlTag)psiElement;
+        XmlAttributeValue element = ref.getValueElement();
+        final PsiElement psiElement;
+        if (element != null) {
+          psiElement = SchemaReferencesProvider.createTypeOrElementOrAttributeReference(element).resolve();
+          if (psiElement instanceof XmlTag) descriptorTag = (XmlTag)psiElement;
+        }
       }
 
       if (TRUE_ATTR_VALUE.equals(descriptorTag.getAttributeValue("abstract"))) {
@@ -398,7 +399,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     if (qName == null) {
       return myAnyAttributeCache.get(namespace).getValue();
     }
-    return _canContainAttribute(namespace, myTag, qName, new THashSet<String>(), null);
+    return _canContainAttribute(namespace, myTag, qName, new THashSet<>(), null);
   }
   
   enum CanContainAttributeType {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
     }
 
     private static boolean isAvailable(PyCallExpression node) {
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(node.getProject()).getInspectionProfile();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(node.getProject()).getCurrentProfile();
       final InspectionToolWrapper inspectionTool = profile.getInspectionTool("PyCompatibilityInspection", node.getProject());
       if (inspectionTool != null) {
         final InspectionProfileEntry inspection = inspectionTool.getTool();

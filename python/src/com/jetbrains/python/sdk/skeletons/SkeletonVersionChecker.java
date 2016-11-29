@@ -58,19 +58,16 @@ public class SkeletonVersionChecker {
   }
 
   private static TreeMap<QualifiedName, Integer> createTreeMap() {
-    return new TreeMap<QualifiedName, Integer>(new Comparator<QualifiedName>() {
-      @Override
-      public int compare(QualifiedName left, QualifiedName right) {
-        Iterator<String> lefts = left.getComponents().iterator();
-        Iterator<String> rights = right.getComponents().iterator();
-        while (lefts.hasNext() && rights.hasNext()) {
-          int res = lefts.next().compareTo(rights.next());
-          if (res != 0) return res;
-        }
-        if (lefts.hasNext()) return 1;
-        if (rights.hasNext()) return -1;
-        return 0;  // equal
+    return new TreeMap<>((left, right) -> {
+      Iterator<String> lefts = left.getComponents().iterator();
+      Iterator<String> rights = right.getComponents().iterator();
+      while (lefts.hasNext() && rights.hasNext()) {
+        int res = lefts.next().compareTo(rights.next());
+        if (res != 0) return res;
       }
+      if (lefts.hasNext()) return 1;
+      if (rights.hasNext()) return -1;
+      return 0;  // equal
     });
   }
 

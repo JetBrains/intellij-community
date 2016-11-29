@@ -78,10 +78,10 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
 
   public synchronized MavenTasksManagerState getState() {
     MavenTasksManagerState result = new MavenTasksManagerState();
-    result.afterCompileTasks = new THashSet<MavenCompilerTask>(myState.afterCompileTasks);
-    result.beforeCompileTasks = new THashSet<MavenCompilerTask>(myState.beforeCompileTasks);
-    result.afterRebuildTask = new THashSet<MavenCompilerTask>(myState.afterRebuildTask);
-    result.beforeRebuildTask = new THashSet<MavenCompilerTask>(myState.beforeRebuildTask);
+    result.afterCompileTasks = new THashSet<>(myState.afterCompileTasks);
+    result.beforeCompileTasks = new THashSet<>(myState.beforeCompileTasks);
+    result.afterRebuildTask = new THashSet<>(myState.afterRebuildTask);
+    result.beforeRebuildTask = new THashSet<>(myState.beforeRebuildTask);
     return result;
   }
 
@@ -122,7 +122,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
   private boolean doExecute(boolean before, CompileContext context) {
     List<MavenRunnerParameters> parametersList;
     synchronized (this) {
-      parametersList = new ArrayList<MavenRunnerParameters>();
+      parametersList = new ArrayList<>();
       Set<MavenCompilerTask> tasks = before ? myState.beforeCompileTasks : myState.afterCompileTasks;
 
       if (context.isRebuild()) {
@@ -162,7 +162,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
   }
 
   public String getDescription(MavenProject project, String goal) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     MavenCompilerTask compilerTask = new MavenCompilerTask(project.getPath(), goal);
     synchronized (this) {
       for (Phase phase : Phase.values()) {

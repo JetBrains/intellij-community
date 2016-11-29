@@ -37,12 +37,10 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.util.ArrayFactory;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
@@ -59,9 +57,8 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   private final ResourceBundle myResourceBundle;
 
   public ResourceBundleStructureViewComponent(final ResourceBundle resourceBundle,
-                                              final ResourceBundleEditor editor,
-                                              final PropertiesAnchorizer anchorizer) {
-    super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle, anchorizer));
+                                              final ResourceBundleEditor editor) {
+    super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle));
     myResourceBundle = resourceBundle;
     tunePopupActionGroup();
     getTree().setCellRenderer(new ResourceBundleEditorRenderer());
@@ -98,6 +95,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     return PsiFile.EMPTY_ARRAY;
   }
 
+  @Override
   public Object getData(final String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return new ResourceBundleAsVirtualFile(myResourceBundle);
@@ -117,24 +115,14 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
       }
       else {
         return ContainerUtil.toArray(ContainerUtil.flatten(
-          ContainerUtil.mapNotNull(selectedElements, new NullableFunction<ResourceBundleEditorViewElement, List<IProperty>>() {
-            @Nullable
-            @Override
-            public List<IProperty> fun(ResourceBundleEditorViewElement element) {
-              final IProperty[] properties = element.getProperties();
-              return properties == null ? null : ContainerUtil.newArrayList(properties);
-            }
-          })), new ArrayFactory<IProperty>() {
-          @NotNull
-          @Override
-          public IProperty[] create(int count) {
-            return new IProperty[count];
-          }
-        });
+          ContainerUtil.mapNotNull(selectedElements, (NullableFunction<ResourceBundleEditorViewElement, List<IProperty>>)element -> {
+            final IProperty[] properties = element.getProperties();
+            return properties == null ? null : ContainerUtil.newArrayList(properties);
+          })), IProperty[]::new);
       }
     }
     else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      final List<PsiElement> elements = new ArrayList<PsiElement>();
+      final List<PsiElement> elements = new ArrayList<>();
       Collections.addAll(elements, getSelectedPsiFiles());
       final IProperty[] properties = (IProperty[])getData(IProperty.ARRAY_KEY.getName());
       if (properties != null) {
@@ -172,7 +160,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
         public void performCopy(@NotNull final DataContext dataContext) {
           final PsiElement[] selectedPsiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
           if (selectedPsiElements != null) {
-            final List<String> names = new ArrayList<String>(selectedPsiElements.length);
+            final List<String> names = new ArrayList<>(selectedPsiElements.length);
             for (final PsiElement element : selectedPsiElements) {
               if (element instanceof PsiNamedElement) {
                 names.add(((PsiNamedElement)element).getName());
@@ -196,6 +184,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     return super.getData(dataId);
   }
 
+  @Override
   protected boolean showScrollToFromSourceActions() {
     return false;
   }
@@ -213,7 +202,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     public void deleteElement(@NotNull final DataContext dataContext) {
       final List<PropertiesFile> bundlePropertiesFiles = myResourceBundle.getPropertiesFiles();
 
-      final List<PsiElement> toDelete = new ArrayList<PsiElement>();
+      final List<PsiElement> toDelete = new ArrayList<>();
       for (IProperty property : myProperties) {
         final String key = property.getKey();
         if (key == null) {
@@ -238,6 +227,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     }
   }
 
+  @Override
   @NonNls
   public String getHelpID() {
     return "editing.propertyFile.bundleEditor";

@@ -97,7 +97,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     presentation.setDescription(IdeBundle.message("action.activate.tool.window", title));
     Icon icon = toolWindow.getIcon();
     if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
-      icon = AllIcons.Ide.Info_notifications;
+      icon = AllIcons.Ide.Notification.InfoEvents;
     }
     presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
   }
@@ -112,11 +112,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     if (event instanceof KeyEvent && event.isShiftDown()) {
       final Content[] contents = window.getContentManager().getContents();
       if (contents.length > 0 && window.getContentManager().getSelectedContent() != contents[0]) {
-        run = new Runnable() {
-          public void run() {
-            window.getContentManager().setSelectedContent(contents[0], true, true);
-          }
-        };
+        run = () -> window.getContentManager().setSelectedContent(contents[0], true, true);
       }
     }
 

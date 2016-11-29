@@ -38,7 +38,7 @@ public final class LogInformation {
 	private String totalRevisions;
 	private String selectedRevisions;
 	private String locks;
-	private final List<Revision> revisions = new ArrayList<Revision>();
+	private final List<Revision> revisions = new ArrayList<>();
 	private List<SymbolicName> symbolicNames;
 	private StringBuilder symNamesBuffer;
 
@@ -216,7 +216,7 @@ public final class LogInformation {
 	}
 
 	private void createSymNames() {
-		symbolicNames = new ArrayList<SymbolicName>();
+		symbolicNames = new ArrayList<>();
 		if (symNamesBuffer == null) {
 			return;
 		}
@@ -255,7 +255,7 @@ public final class LogInformation {
 		if (symbolicNames == null) {
 			createSymNames();
 		}
-		final List<SymbolicName> list = new ArrayList<SymbolicName>();
+		final List<SymbolicName> list = new ArrayList<>();
 		for (int i = 0; i < symbolicNames.size(); i++) {
 			final SymbolicName symbolicName = symbolicNames.get(i);
 			if (symbolicName.getRevision().equals(revNumber)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsManager {
-  @Nullable private Set<VirtualFile> myAnnotationsRoots = null;
+  @Nullable private Set<VirtualFile> myAnnotationsRoots;
 
   public ReadableExternalAnnotationsManager(PsiManager psiManager) {
     super(psiManager);
@@ -41,7 +41,7 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   @NotNull
   private synchronized Set<VirtualFile> initRoots() {
     if (myAnnotationsRoots == null) {
-      myAnnotationsRoots = new HashSet<VirtualFile>();
+      myAnnotationsRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
       for (Module module : modules) {
         for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
@@ -59,13 +59,13 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   @NotNull
   protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
-    Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
+    Set<VirtualFile> result = new LinkedHashSet<>();
     for (OrderEntry entry : fileIndex.getOrderEntriesForFile(libraryFile)) {
       if (!(entry instanceof ModuleOrderEntry)) {
         Collections.addAll(result, AnnotationOrderRootType.getFiles(entry));
       }
     }
-    return new ArrayList<VirtualFile>(result);
+    return new ArrayList<>(result);
   }
 
   @Override

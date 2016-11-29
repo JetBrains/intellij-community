@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -53,7 +54,7 @@ public class CommitNode extends DefaultMutableTreeNode implements CustomRendered
   public String getTooltip() {
     String hash = DvcsUtil.getShortHash(getUserObject().getId().toString());
     String date = DvcsUtil.getDateString(getUserObject());
-    String author = getUserObject().getAuthor().getName();
+    String author = VcsUserUtil.getShortPresentation(getUserObject().getAuthor());
     String message = IssueLinkHtmlRenderer.formatTextWithLinks(myProject, getUserObject().getFullMessage());
     return String.format("%s  %s  by %s\n\n%s", hash, date, author, message);
   }

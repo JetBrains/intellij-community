@@ -18,12 +18,11 @@ package com.intellij.configurationStore
 import com.intellij.idea.Bombed
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.StateStorageBase
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.loadElement
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.hasChildren
 import org.jdom.Element
@@ -39,8 +38,8 @@ private fun StateStorage.ExternalizationSession.save() {
 }
 
 private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
-  var externalizationSession = startExternalization()!!
-  externalizationSession.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state.reader()))
+  val externalizationSession = startExternalization()!!
+  externalizationSession.setState(null, componentName, if (state == null) Element("state") else loadElement(state))
   externalizationSession.save()
 }
 

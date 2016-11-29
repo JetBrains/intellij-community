@@ -7,5 +7,5 @@ contributor ([ctx], {
   method name:"requireProperty", type:"String", params:[key:"String"]
   method name:"requireProperty", type:"String", params:[key:"String", defaultValue:"String"]
   method name:"notifyArtifactBuilt", type:"void", params:[artifactPath:"String"]
-  property name: "productProperties", type: "ProductProperties"
+  property name: "productProperties", type: "org.jetbrains.intellij.build.ProductProperties"
 })

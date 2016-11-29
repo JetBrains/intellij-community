@@ -75,6 +75,11 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
       return myRef.hasMemberPointer() ? collapseReflectedMethods(results) : results;
     }
 
+    candidates = getCandidates(GroovyResolveKind.ENUM_CONST);
+    if (!candidates.isEmpty()) {
+      return candidates;
+    }
+
     candidates = getCandidates(GroovyResolveKind.FIELD);
     if (!candidates.isEmpty()) {
       assert candidates.size() == 1;

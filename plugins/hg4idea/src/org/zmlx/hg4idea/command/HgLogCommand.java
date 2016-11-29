@@ -77,11 +77,15 @@ public class HgLogCommand {
     return execute(hgFile, limit, includeFiles, null);
   }
 
+  @NotNull
+  public HgVersion getVersion() {
+    return myVersion;
+  }
+
   /**
    * @param limit Pass -1 to set no limits on history
    */
-  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd)
-    throws HgCommandException {
+  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd) {
     if ((limit <= 0 && limit != -1) || hgFile == null) {
       return Collections.emptyList();
     }
@@ -99,7 +103,7 @@ public class HgLogCommand {
   @Nullable
   public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
                                  @Nullable List<String> argsForCmd) {
-    List<String> arguments = new LinkedList<String>();
+    List<String> arguments = new LinkedList<>();
     if (myIncludeRemoved) {
       // There is a bug in mercurial that causes --follow --removed <file> to cause
       // an error (http://mercurial.selenic.com/bts/issue2139). Avoid this combination

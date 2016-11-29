@@ -119,7 +119,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   private static final StdArrangementRuleAliasToken VISIBILITY = new StdArrangementRuleAliasToken("visibility");
 
   static {
-    final ArrayList<StdArrangementMatchRule> visibility = new ArrayList<StdArrangementMatchRule>();
+    final ArrayList<StdArrangementMatchRule> visibility = new ArrayList<>();
     and(visibility, PUBLIC);
     and(visibility, PACKAGE_PRIVATE);
     and(visibility, PROTECTED);
@@ -209,7 +209,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   }
 
   private static void setupBreadthFirstDependency(@NotNull ArrangementEntryDependencyInfo info) {
-    Deque<ArrangementEntryDependencyInfo> toProcess = new ArrayDeque<ArrangementEntryDependencyInfo>();
+    Deque<ArrangementEntryDependencyInfo> toProcess = new ArrayDeque<>();
     toProcess.add(info);
     JavaElementArrangementEntry prev = info.getAnchorEntry();
     while (!toProcess.isEmpty()) {
@@ -456,7 +456,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   private static TextAttributes getAttributes(@NotNull EditorColorsScheme scheme, @NotNull TextAttributesKey ... keys) {
     TextAttributes result = null;
     for (TextAttributesKey key : keys) {
-      TextAttributes attributes = scheme.getAttributes(key);
+      TextAttributes attributes = scheme.getAttributes(key).clone();
       if (attributes == null) {
         continue;
       }

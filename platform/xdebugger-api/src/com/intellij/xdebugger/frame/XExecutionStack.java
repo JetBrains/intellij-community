@@ -92,6 +92,6 @@ public abstract class XExecutionStack {
      * @param stackFrames stack frames to add
      * @param last <code>true</code> if all frames are added
      */
-    void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, final boolean last);
+    void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last);
   }
 }

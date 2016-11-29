@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
-import com.intellij.psi.*;
-import com.intellij.util.Function;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,15 +30,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
-* Created by Max Medvedev on 14/03/14
-*/
+ * Created by Max Medvedev on 14/03/14
+ */
 class GrMethodSignatureImpl implements GrClosureSignature {
+
   private final PsiMethod myMethod;
   private final PsiSubstitutor mySubstitutor;
+  private final boolean myEraseParameterTypes;
 
-  public GrMethodSignatureImpl(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+  public GrMethodSignatureImpl(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean eraseParameterTypes) {
     myMethod = method;
     mySubstitutor = substitutor;
+    myEraseParameterTypes = eraseParameterTypes;
   }
 
   @NotNull
@@ -51,18 +57,11 @@ class GrMethodSignatureImpl implements GrClosureSignature {
   @NotNull
   @Override
   public GrClosureParameter[] getParameters() {
-    PsiParameter[] parameters = myMethod.getParameterList().getParameters();
-    return ContainerUtil.map(parameters, new Function<PsiParameter, GrClosureParameter>() {
-      @Override
-      public GrClosureParameter fun(PsiParameter parameter) {
-        return createClosureParameter(parameter);
-      }
-    }, new GrClosureParameter[parameters.length]);
-  }
-
-  @NotNull
-  protected GrClosureParameter createClosureParameter(@NotNull PsiParameter parameter) {
-    return new GrClosureParameterImpl(parameter, getSubstitutor());
+    return ContainerUtil.map(
+      myMethod.getParameterList().getParameters(),
+      (parameter) -> new GrClosureParameterImpl(parameter, mySubstitutor, myEraseParameterTypes),
+      GrClosureParameter.EMPTY_ARRAY
+    );
   }
 
   @Override
@@ -77,7 +76,8 @@ class GrMethodSignatureImpl implements GrClosureSignature {
 
   @Override
   public PsiType getReturnType() {
-    return getSubstitutor().substitute(PsiUtil.getSmartReturnType(myMethod));
+    PsiType type = getSubstitutor().substitute(PsiUtil.getSmartReturnType(myMethod));
+    return myEraseParameterTypes ? TypeConversionUtil.erasure(type) : type;
   }
 
   @Override

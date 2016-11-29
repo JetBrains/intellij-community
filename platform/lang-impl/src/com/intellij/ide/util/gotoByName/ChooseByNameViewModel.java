@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.actions.ChooseByNameItemProvider;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -25,7 +26,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,20 +34,17 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
@@ -65,13 +62,16 @@ import java.util.regex.Pattern;
 public abstract class ChooseByNameViewModel {
   public static final String EXTRA_ELEM = "...";
   public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
-  protected static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
-                                                                                "(?::|@|,| on line | at line |)?" + // separator
-                                                                                "[(\\[]?" + // possible opening paren/brace
-                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
-                                                                                "[)\\]]?"); // possible closing paren/brace
+  public static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" +
+                                                                                // name, non-greedy matching
+                                                                                "(?::|@|,| |#L| on line | at line |:?\\(|:?\\[)" +
+                                                                                // separator
+                                                                                "(\\d+)(?:(?:\\D)(\\d+)?)?" +
+                                                                                // line + column
+                                                                                "[)\\]]?" // possible closing paren/brace
+  );
   public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
-  protected static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
+  public static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
   protected static final String ACTION_NAME = "Show All in View";
   @NonNls protected static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
   @NonNls protected static final String NOT_FOUND_CARD = "nfound";
@@ -96,7 +96,6 @@ public abstract class ChooseByNameViewModel {
   protected boolean mySearchInAnyPlace = false;
   protected boolean myInitialized;
   protected ChooseByNamePopupComponent.Callback myActionListener;
-  protected ActionCallback myPostponedOkAction;
   protected volatile CalcElementsThread myCalcElementsThread;
   protected int myListSizeIncreasing = 30;
   protected int myMaximumListSizeLimit = 30;
@@ -105,7 +104,6 @@ public abstract class ChooseByNameViewModel {
   protected String myFindUsagesTitle;
   protected boolean myInitIsDone;
   private boolean myDisposedFlag = false;
-  private boolean myFixLostTyping = true;
   private boolean myAlwaysHasMore = false;
 
   public ChooseByNameViewModel(Project project,
@@ -126,12 +124,7 @@ public abstract class ChooseByNameViewModel {
   @NotNull
   protected static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
     Set<KeyStroke> result = new HashSet<KeyStroke>();
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] shortcuts = keymap.getShortcuts(actionId);
-    if (shortcuts == null) {
-      return result;
-    }
-    for (Shortcut shortcut : shortcuts) {
+    for (Shortcut shortcut : KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId)) {
       if (shortcut instanceof KeyboardShortcut) {
         KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
         result.add(keyboardShortcut.getFirstKeyStroke());
@@ -159,10 +152,6 @@ public abstract class ChooseByNameViewModel {
   }
 
   public boolean checkDisposed() {
-    if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
-      myPostponedOkAction.setRejected();
-    }
-
     return myDisposedFlag;
   }
 
@@ -300,13 +289,11 @@ public abstract class ChooseByNameViewModel {
     if (checkDisposed()) return;
 
     if (closeForbidden(ok)) return;
-    if (postponeCloseWhenListReady(ok)) return;
 
     cancelListUpdater();
     close(ok);
 
-    clearPostponedOkAction(ok);
-    myListModel.clear();
+    myListModel.removeAll();
   }
 
   protected boolean closeForbidden(boolean ok) {
@@ -325,29 +312,8 @@ public abstract class ChooseByNameViewModel {
     myListUpdater.cancelAll();
   }
 
-  protected boolean postponeCloseWhenListReady(boolean ok) {
-    if (!isToFixLostTyping()) return false;
-
-    final String text = getTrimmedText();
-    if (ok && myCalcElementsThread != null && !text.isEmpty()) {
-      myPostponedOkAction = new ActionCallback();
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(myPostponedOkAction);
-      return true;
-    }
-
-    return false;
-  }
-
   @NotNull public String getTrimmedText() {
     return StringUtil.trimLeading(StringUtil.notNullize(getEnteredText()));
-  }
-
-  public void setFixLostTyping(boolean fixLostTyping) {
-    myFixLostTyping = fixLostTyping;
-  }
-
-  protected boolean isToFixLostTyping() {
-    return myFixLostTyping && Registry.is("actionSystem.fixLostTyping");
   }
 
   @NotNull
@@ -431,12 +397,7 @@ public abstract class ChooseByNameViewModel {
     myAlarm.cancelAllRequests();
 
     if (delay > 0) {
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          rebuildList(pos, 0, modalityState, postRunnable);
-        }
-      }, delay, getModalityStateForTextBox());
+      myAlarm.addRequest(() -> rebuildList(pos, 0, modalityState, postRunnable), delay, getModalityStateForTextBox());
       return;
     }
 
@@ -449,7 +410,7 @@ public abstract class ChooseByNameViewModel {
 
     final String text = getTrimmedText();
     if (!canShowListForEmptyPattern() && text.isEmpty()) {
-      myListModel.clear();
+      myListModel.removeAll();
       hideList();
       doHideHint();
       showCardImpl(CHECK_BOX_CARD);
@@ -458,15 +419,12 @@ public abstract class ChooseByNameViewModel {
 
     configureListRenderer();
 
-    scheduleCalcElements(text, isCheckboxSelected(), modalityState, new Consumer<Set<?>>() {
-      @Override
-      public void consume(Set<?> elements) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        backgroundCalculationFinished(elements, pos);
+    scheduleCalcElements(text, isCheckboxSelected(), modalityState, elements -> {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      backgroundCalculationFinished(elements, pos);
 
-        if (postRunnable != null) {
-          postRunnable.run();
-        }
+      if (postRunnable != null) {
+        postRunnable.run();
       }
     });
   }
@@ -504,25 +462,23 @@ public abstract class ChooseByNameViewModel {
     myListUpdater.cancelAll();
     if (checkDisposed()) return;
     if (elements.isEmpty()) {
-      myListModel.clear();
+      myListModel.removeAll();
       setHasResults(false);
       myListUpdater.cancelAll();
       hideList();
-      clearPostponedOkAction(false);
       return;
     }
 
-    Object[] oldElements = myListModel.toArray();
+    Object[] oldElements = myListModel.getItems().toArray();
     Object[] newElements = elements.toArray();
     List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
     if (commands == null) {
-      myListUpdater.doPostponedOkIfNeeded();
       return; // Nothing changed
     }
 
     setHasResults(true);
     if (commands.isEmpty()) {
-      selectItem(pos);
+      selectItem(pos, newElements);
       updateVisibleRowCount();
       showList();
       repositionHint();
@@ -535,57 +491,46 @@ public abstract class ChooseByNameViewModel {
 
   protected abstract void setHasResults(boolean b);
 
-  protected int detectBestStatisticalPosition() {
+  @VisibleForTesting
+  public int calcSelectedIndex(Object[] modelElements, String trimmedText) {
     if (myModel instanceof Comparator) {
       return 0;
     }
 
-    int best = 0;
-    int bestPosition = 0;
-    int bestMatch = Integer.MIN_VALUE;
-    final int count = myListModel.getSize();
-
-    Matcher matcher = buildPatternMatcher(transformPattern(getTrimmedText()));
+    Matcher matcher = buildPatternMatcher(transformPattern(trimmedText));
 
     final String statContext = statisticsContext();
-    for (int i = 0; i < count; i++) {
-      final Object modelElement = myListModel.getElementAt(i);
-      String text = EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement) ? null : myModel.getFullName(modelElement);
-      if (text != null) {
-        String shortName = myModel.getElementName(modelElement);
-        int match = shortName != null && matcher instanceof MinusculeMatcher
-                    ? ((MinusculeMatcher)matcher).matchingDegree(shortName) : Integer.MIN_VALUE;
-        int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
-        if (match > bestMatch || match == bestMatch && stats > best) {
-          best = stats;
+    Comparator<Object> itemComparator = Comparator.
+      comparing(e -> trimmedText.equalsIgnoreCase(myModel.getElementName(e))).
+      thenComparing(e -> matchingDegree(matcher, e)).
+      thenComparing(e -> getUseCount(statContext, e)).
+      reversed();
+
+    int bestPosition = 0;
+    for (int i = 1; i < modelElements.length; i++) {
+      final Object modelElement = modelElements[i];
+      if (EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement)) continue;
+
+      if (itemComparator.compare(modelElement, modelElements[bestPosition]) < 0) {
           bestPosition = i;
-          bestMatch = match;
-        }
       }
     }
 
-    if (bestPosition < count - 1 && myListModel.getElementAt(bestPosition) == NON_PREFIX_SEPARATOR) {
+    if (bestPosition < modelElements.length - 1 && modelElements[bestPosition] == NON_PREFIX_SEPARATOR) {
       bestPosition++;
     }
 
     return bestPosition;
   }
 
-  protected void clearPostponedOkAction(boolean success) {
-    if (myPostponedOkAction != null) {
-      if (success) {
-        myPostponedOkAction.setDone();
-      }
-      else {
-        myPostponedOkAction.setRejected();
-      }
-    }
-
-    myPostponedOkAction = null;
+  private int getUseCount(String statContext, Object modelElement) {
+    String text = myModel.getFullName(modelElement);
+    return text == null ? Integer.MIN_VALUE : StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
   }
 
-  public boolean hasPostponedAction() {
-    return myPostponedOkAction != null;
+  private int matchingDegree(Matcher matcher, Object modelElement) {
+    String name = myModel.getElementName(modelElement);
+    return name != null && matcher instanceof MinusculeMatcher ? ((MinusculeMatcher)matcher).matchingDegree(name) : Integer.MIN_VALUE;
   }
 
   protected abstract void showList();
@@ -656,7 +601,7 @@ public abstract class ChooseByNameViewModel {
     return "choose_by_name#" + myModel.getPromptText() + "#" + isCheckboxSelected() + "#" + getTrimmedText();
   }
 
-  protected abstract void selectItem(int selectionPos);
+  protected abstract void selectItem(int selectionPos, Object[] newElements);
 
   protected abstract void repositionHint();
 
@@ -694,10 +639,6 @@ public abstract class ChooseByNameViewModel {
     myListSizeIncreasing = listSizeIncreasing;
   }
 
-  public boolean isAlwaysHasMore() {
-    return myAlwaysHasMore;
-  }
-
   /**
    * Display <tt>...</tt> item at the end of the list regardless of whether it was filled up or not.
    * This option can be useful in cases, when it can't be said beforehand, that the next call to {@link ChooseByNameItemProvider}
@@ -710,33 +651,30 @@ public abstract class ChooseByNameViewModel {
   protected void doShowCard(final CalcElementsThread t, final String card, int delay) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     t.myShowCardAlarm.cancelAllRequests();
-    t.myShowCardAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!t.myProgress.isCanceled()) {
-          showCardImpl(card);
-        }
+    t.myShowCardAlarm.addRequest(() -> {
+      if (!t.myProgress.isCanceled()) {
+        showCardImpl(card);
       }
     }, delay, t.myModalityState);
   }
 
   public abstract JTextField getTextField();
 
-  protected static class MyListModel<T> extends DefaultListModel implements ModelDiff.Model<T> {
+  protected static class MyListModel<T> extends CollectionListModel<T> implements ModelDiff.Model<T> {
     @Override
     public void addToModel(int idx, T element) {
-      if (idx < size()) {
-        add(idx, element);
-      }
-      else {
-        addElement(element);
-      }
+        add(Math.min(idx, getSize()), element);
+    }
+
+    @Override
+    public void addAllToModel(int index, List<T> elements) {
+      addAll(Math.min(index, getSize()), elements);
     }
 
     @Override
     public void removeRangeFromModel(int start, int end) {
-      if (start < size() && size() != 0) {
-        removeRange(start, Math.min(end, size()-1));
+      if (start < getSize() && getSize() != 0) {
+        removeRange(start, Math.min(end, getSize()-1));
       }
     }
   }
@@ -771,12 +709,7 @@ public abstract class ChooseByNameViewModel {
     public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
       if (DumbService.isDumbAware(myModel)) return super.runBackgroundProcess(indicator);
 
-      return DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Continuation>() {
-        @Override
-        public Continuation compute() {
-          return performInReadAction(indicator);
-        }
-      });
+      return DumbService.getInstance(myProject).runReadActionInSmartMode(() -> performInReadAction(indicator));
     }
 
 
@@ -786,30 +719,40 @@ public abstract class ChooseByNameViewModel {
       if (myProject != null && myProject.isDisposed()) return null;
 
       final Set<Object> elements = new LinkedHashSet<Object>();
-
-      boolean scopeExpanded = fillWithScopeExpansion(elements, myPattern);
-
-      String lowerCased = patternToLowerCase(myPattern);
-      if (elements.isEmpty() && !lowerCased.equals(myPattern)) {
-        scopeExpanded = fillWithScopeExpansion(elements, lowerCased);
-      }
+      boolean scopeExpanded = populateElements(elements);
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
-      final boolean edt = myModel instanceof EdtSortingModel;
-      final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
-      return new Continuation(new Runnable() {
-        @Override
-        public void run() {
-          if (!checkDisposed() && !myProgress.isCanceled()) {
-            CalcElementsThread currentBgProcess = myCalcElementsThread;
-            LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
 
-            showCard(cardToShow, 0);
+      final Set<Object> filtered = filter(elements);
+      return new Continuation(() -> {
+        if (!checkDisposed() && !myProgress.isCanceled()) {
+          CalcElementsThread currentBgProcess = myCalcElementsThread;
+          LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
 
-            myCallback.consume(edt ? filter(elements) : filtered);
-          }
+          showCard(cardToShow, 0);
+
+          myCallback.consume(filtered);
         }
       }, myModalityState);
+    }
+
+    private boolean populateElements(Set<Object> elements) {
+      boolean scopeExpanded = false;
+      try {
+        scopeExpanded = fillWithScopeExpansion(elements, myPattern);
+
+        String lowerCased = patternToLowerCase(myPattern);
+        if (elements.isEmpty() && !lowerCased.equals(myPattern)) {
+          scopeExpanded = fillWithScopeExpansion(elements, lowerCased);
+        }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      return scopeExpanded;
     }
 
     private boolean fillWithScopeExpansion(Set<Object> elements, String pattern) {
@@ -837,21 +780,16 @@ public abstract class ChooseByNameViewModel {
       long start = System.currentTimeMillis();
       myProvider.filterElements(
         ChooseByNameViewModel.this, pattern, everywhere,
-        indicator,
-        new Processor<Object>() {
-          @Override
-          public boolean process(Object o) {
-            if (indicator.isCanceled()) return false;
-            elements.add(o);
+        indicator, o -> {
+          if (indicator.isCanceled()) return false;
+          elements.add(o);
 
-            if (isOverflow(elements)) {
-              elements.add(EXTRA_ELEM);
-              return false;
-            }
-            return true;
+          if (isOverflow(elements)) {
+            elements.add(EXTRA_ELEM);
+            return false;
           }
-        }
-      );
+          return true;
+        });
       if (myAlwaysHasMore) {
         elements.add(EXTRA_ELEM);
       }
@@ -911,31 +849,19 @@ public abstract class ChooseByNameViewModel {
           if (!myCommands.isEmpty()) {
             myAlarm.addRequest(this, DELAY);
           }
-          else {
-            doPostponedOkIfNeeded();
-          }
           if (!checkDisposed()) {
             showList();
             repositionHint();
 
-            selectItem(selectionPos);
+            selectItem(selectionPos, myListModel.getItems().toArray());
           }
         }
       }, DELAY);
     }
-
-    protected void doPostponedOkIfNeeded() {
-      if (myPostponedOkAction != null) {
-        if (getChosenElement() != null) {
-          doClose(true);
-        }
-        clearPostponedOkAction(checkDisposed());
-      }
-    }
   }
 
   @NotNull
-  protected String patternToLowerCase(String pattern) {
+  protected static String patternToLowerCase(String pattern) {
     return pattern.toLowerCase(Locale.US);
   }
 

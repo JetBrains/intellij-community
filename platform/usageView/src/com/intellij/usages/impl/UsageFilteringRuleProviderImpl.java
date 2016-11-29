@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageViewBundle;
@@ -42,7 +45,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   @Override
   @NotNull
   public UsageFilteringRule[] getActiveRules(@NotNull Project project) {
-    final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
+    final List<UsageFilteringRule> rules = new ArrayList<>();
 
     if (!myReadWriteState.isShowReadAccess()) {
       rules.add(new ReadAccessFilteringRule());
@@ -74,22 +77,22 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     private boolean myShowReadAccess = true;
     private boolean myShowWriteAccess = true;
 
-    public boolean isShowReadAccess() {
+    boolean isShowReadAccess() {
       return myShowReadAccess;
     }
 
-    public void setShowReadAccess(final boolean showReadAccess) {
+    void setShowReadAccess(final boolean showReadAccess) {
       myShowReadAccess = showReadAccess;
       if (!showReadAccess) {
         myShowWriteAccess = true;
       }
     }
 
-    public boolean isShowWriteAccess() {
+    boolean isShowWriteAccess() {
       return myShowWriteAccess;
     }
 
-    public void setShowWriteAccess(final boolean showWriteAccess) {
+    void setShowWriteAccess(final boolean showWriteAccess) {
       myShowWriteAccess = showWriteAccess;
       if (!showWriteAccess) {
         myShowReadAccess = true;
@@ -110,7 +113,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myReadWriteState.setShowReadAccess(state);
-      Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+      Project project = e.getProject();
       if (project == null) return;
       project.getMessageBus().syncPublisher(RULES_CHANGED).run();
     }
@@ -129,7 +132,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myReadWriteState.setShowWriteAccess(state);
-      Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+      Project project = e.getProject();
       if (project == null) return;
       project.getMessageBus().syncPublisher(RULES_CHANGED).run();
     }

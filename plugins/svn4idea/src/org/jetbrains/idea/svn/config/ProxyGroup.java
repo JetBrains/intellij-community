@@ -69,7 +69,7 @@ public class ProxyGroup {
   }
 
   protected Map<String, String> createPropertiesCopy() {
-    final Map<String, String> copyProperties = new HashMap<String, String>();
+    final Map<String, String> copyProperties = new HashMap<>();
     copyProperties.putAll(myProperties);
     return copyProperties;
   }

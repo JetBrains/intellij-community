@@ -27,13 +27,10 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   }
 
   private void doJavaCallTypeHierarchyTest(final String classFqn, final String methodName, final String... fileNames) throws Exception {
-    doHierarchyTest(new Computable<HierarchyTreeStructure>() {
-      @Override
-      public HierarchyTreeStructure compute() {
-        final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
-        final PsiMethod method = psiClass.findMethodsByName(methodName, false) [0];
-        return new CallerMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-      }
+    doHierarchyTest(() -> {
+      final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
+      final PsiMethod method = psiClass.findMethodsByName(methodName, false) [0];
+      return new CallerMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
     }, fileNames);
   }
 
@@ -55,6 +52,10 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
 
   public void testIdeaDev41232() throws Exception {
     doJavaCallTypeHierarchyTest("A", "main", "B.java", "A.java");
+  }
+
+  public void testDefaultConstructor() throws Exception {
+    doJavaCallTypeHierarchyTest("A", "A", "A.java", "B.java");
   }
 
   public void testAnonymous2() throws Exception {

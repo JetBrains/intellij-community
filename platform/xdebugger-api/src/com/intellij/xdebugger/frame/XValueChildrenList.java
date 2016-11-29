@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,24 +24,24 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Represents chunk of values which can be added to a {@link com.intellij.xdebugger.frame.XCompositeNode composite node}
- * @see com.intellij.xdebugger.frame.XCompositeNode#addChildren(XValueChildrenList, boolean)
+ * Represents chunk of values which can be added to a {@link XCompositeNode composite node}
+ * @see XCompositeNode#addChildren(XValueChildrenList, boolean)
  *
  * @author nik
  */
 public class XValueChildrenList {
-  public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
+  public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.emptyList(), Collections.emptyList());
   private final List<String> myNames;
   private final List<XValue> myValues;
   private final List<XValueGroup> myTopGroups;
-  private final List<XValueGroup> myBottomGroups = new SmartList<XValueGroup>();
+  private final List<XValueGroup> myBottomGroups = new SmartList<>();
 
   public XValueChildrenList(int initialCapacity) {
-    this(new ArrayList<String>(initialCapacity), new ArrayList<XValue>(initialCapacity), new SmartList<XValueGroup>());
+    this(new ArrayList<>(initialCapacity), new ArrayList<>(initialCapacity), new SmartList<>());
   }
 
   public XValueChildrenList() {
-    this(new SmartList<String>(), new SmartList<XValue>(), new SmartList<XValueGroup>());
+    this(new SmartList<>(), new SmartList<>(), new SmartList<>());
   }
 
   private XValueChildrenList(@NotNull List<String> names, @NotNull List<XValue> values, @NotNull List<XValueGroup> topGroups) {
@@ -51,7 +51,7 @@ public class XValueChildrenList {
   }
 
   private XValueChildrenList(List<String> names, List<XValue> values) {
-    this(names, values, new SmartList<XValueGroup>());
+    this(names, values, new SmartList<>());
   }
 
   public static XValueChildrenList singleton(String name, @NotNull XValue value) {
@@ -59,7 +59,7 @@ public class XValueChildrenList {
   }
 
   public static XValueChildrenList singleton(@NotNull XNamedValue value) {
-    return new XValueChildrenList(Collections.singletonList(value.getName()), Collections.<XValue>singletonList(value));
+    return new XValueChildrenList(Collections.singletonList(value.getName()), Collections.singletonList(value));
   }
 
   public static XValueChildrenList bottomGroup(@NotNull XValueGroup group) {
@@ -69,7 +69,7 @@ public class XValueChildrenList {
   }
 
   public static XValueChildrenList topGroups(@NotNull List<XValueGroup> topGroups) {
-    return new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList(), topGroups);
+    return new XValueChildrenList(Collections.emptyList(), Collections.emptyList(), topGroups);
   }
 
   public void add(@NonNls String name, @NotNull XValue value) {

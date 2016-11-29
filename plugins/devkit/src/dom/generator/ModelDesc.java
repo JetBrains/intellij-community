@@ -33,10 +33,10 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class ModelDesc {
-  final Map<String, String> name2replaceMap = new HashMap<String, String>();
-  final Map<QName, String> qname2FileMap = new HashMap<QName, String>();
-  final Map<String, NamespaceDesc> nsdMap = new HashMap<String, NamespaceDesc>();
-  final Map<String, TypeDesc> jtMap = new TreeMap<String, TypeDesc>();
+  final Map<String, String> name2replaceMap = new HashMap<>();
+  final Map<QName, String> qname2FileMap = new HashMap<>();
+  final Map<String, NamespaceDesc> nsdMap = new HashMap<>();
+  final Map<String, TypeDesc> jtMap = new TreeMap<>();
 
 
   public String getNSDPrefix(TypeDesc td) {
@@ -125,7 +125,7 @@ public class ModelDesc {
   private void dumpTypeDesc(TypeDesc td, PrintWriter out) {
     final ArrayList<String> superList;
     if (td.supers !=null) {
-      superList = new ArrayList<String>();
+      superList = new ArrayList<>();
       for (TypeDesc aSuper : td.supers) {
         superList.add(getNSDPrefix(aSuper)+aSuper.name);
       }

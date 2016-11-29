@@ -71,11 +71,6 @@ public abstract class WizardStep extends StepAdapter{
   }
 
   public void focus() {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        getPreferredFocusedComponent().requestFocus();
-      }
-    });
+    SwingUtilities.invokeLater(() -> getPreferredFocusedComponent().requestFocus());
   }
 }

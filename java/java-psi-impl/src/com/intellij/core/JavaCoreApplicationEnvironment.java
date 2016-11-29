@@ -91,12 +91,12 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerApplicationService(JavaCodeFoldingSettings.class, new JavaCodeFoldingSettingsBase());
     addExplicitExtension(LanguageFolding.INSTANCE, JavaLanguage.INSTANCE, new JavaFoldingBuilderBase() {
       @Override
-      protected boolean shouldShowExplicitLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression) {
+      protected boolean shouldShowExplicitLambdaType(@NotNull PsiAnonymousClass anonymousClass, @NotNull PsiNewExpression expression) {
         return false;
       }
 
       @Override
-      protected boolean isBelowRightMargin(Project project, int lineLength) {
+      protected boolean isBelowRightMargin(@NotNull Project project, int lineLength) {
         return false;
       }
     });

@@ -37,23 +37,20 @@ public class PlatformProjectConfigurator implements DirectoryProjectConfigurator
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
     if (modules.length == 0) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          String moduleName = baseDir.getName().replace(":", "");     // correct module name when opening root of drive as project (RUBY-5181)
-          String imlName = baseDir.getPath() + "/.idea/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-          ModuleTypeManager instance = ModuleTypeManager.getInstance();
-          String id = instance == null ? "unknown" : instance.getDefaultModuleType().getId();
-          final Module module = moduleManager.newModule(imlName, id);
-          ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-          ModifiableRootModel rootModel = rootManager.getModifiableModel();
-          if (rootModel.getContentRoots().length == 0) {
-            rootModel.addContentEntry(baseDir);
-          }
-          rootModel.inheritSdk();
-          rootModel.commit();
-          moduleRef.set(module);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        String moduleName = baseDir.getName().replace(":", "");     // correct module name when opening root of drive as project (RUBY-5181)
+        String imlName = baseDir.getPath() + "/.idea/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
+        ModuleTypeManager instance = ModuleTypeManager.getInstance();
+        String id = instance == null ? "unknown" : instance.getDefaultModuleType().getId();
+        final Module module = moduleManager.newModule(imlName, id);
+        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        if (rootModel.getContentRoots().length == 0) {
+          rootModel.addContentEntry(baseDir);
         }
+        rootModel.inheritSdk();
+        rootModel.commit();
+        moduleRef.set(module);
       });
     }
   }

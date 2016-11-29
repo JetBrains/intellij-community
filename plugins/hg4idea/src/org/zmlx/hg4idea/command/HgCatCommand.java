@@ -45,7 +45,7 @@ public class HgCatCommand {
   }
 
   private static List<String> createArguments(HgRevisionNumber vcsRevisionNumber, String fileName) {
-    final List<String> arguments = new LinkedList<String>();
+    final List<String> arguments = new LinkedList<>();
     if (vcsRevisionNumber != null) {
       arguments.add("--rev");
       if (!StringUtil.isEmptyOrSpaces(vcsRevisionNumber.getChangeset())) {

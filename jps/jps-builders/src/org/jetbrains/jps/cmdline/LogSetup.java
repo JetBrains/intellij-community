@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.apache.log4j.PropertyConfigurator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.GlobalOptions;
 
 import java.io.*;
@@ -83,8 +84,9 @@ public class LogSetup {
   }
 
   private static class MyLoggerFactory implements Logger.Factory {
+    @NotNull
     @Override
-    public Logger getLoggerInstance(String category) {
+    public Logger getLoggerInstance(@NotNull String category) {
       return new Log4jBasedLogger(org.apache.log4j.Logger.getLogger(category));
     }
   }

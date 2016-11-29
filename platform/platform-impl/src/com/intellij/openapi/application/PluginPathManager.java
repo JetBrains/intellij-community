@@ -33,7 +33,7 @@ public class PluginPathManager {
     public static List<File> subrepos = findSubrepos();
 
     private static List<File> findSubrepos() {
-      List<File> result = new ArrayList<File>();
+      List<File> result = new ArrayList<>();
       File[] gitRoots = getSortedGitRoots(new File(PathManager.getHomePath()));
       for (File subdir : gitRoots) {
         File pluginsDir = new File(subdir, "plugins");
@@ -50,21 +50,11 @@ public class PluginPathManager {
 
     @NotNull
     private static File[] getSortedGitRoots(@NotNull File dir) {
-      File[] gitRoots = dir.listFiles(new FileFilter() {
-        @Override
-        public boolean accept(File child) {
-          return child.isDirectory() && new File(child, ".git").exists();
-        }
-      });
+      File[] gitRoots = dir.listFiles(child -> child.isDirectory() && new File(child, ".git").exists());
       if (gitRoots == null) {
         return new File[0];
       }
-      Arrays.sort(gitRoots, new Comparator<File>() {
-        @Override
-        public int compare(File file, File file2) {
-          return FileUtil.compareFiles(file, file2);
-        }
-      });
+      Arrays.sort(gitRoots, (file, file2) -> FileUtil.compareFiles(file, file2));
       return gitRoots;
     }
   }

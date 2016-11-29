@@ -179,7 +179,7 @@ public class SwitchTaskAction extends BaseTaskAction {
   private static List<TaskListItem> createPopupActionGroup(@NotNull final Project project,
                                                            final Ref<Boolean> shiftPressed,
                                                            final Component contextComponent) {
-    List<TaskListItem> group = new ArrayList<TaskListItem>();
+    List<TaskListItem> group = new ArrayList<>();
 
     final AnAction action = ActionManager.getInstance().getAction(GotoTaskAction.ID);
     assert action instanceof GotoTaskAction;
@@ -197,7 +197,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     LocalTask activeTask = manager.getActiveTask();
     List<LocalTask> localTasks = manager.getLocalTasks();
     Collections.sort(localTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
-    ArrayList<LocalTask> temp = new ArrayList<LocalTask>();
+    ArrayList<LocalTask> temp = new ArrayList<>();
     for (final LocalTask task : localTasks) {
       if (task == activeTask) {
         continue;
@@ -236,11 +236,9 @@ public class SwitchTaskAction extends BaseTaskAction {
     else {
 
       List<ChangeListInfo> infos = task.getChangeLists();
-      List<LocalChangeList> lists = ContainerUtil.mapNotNull(infos, new NullableFunction<ChangeListInfo, LocalChangeList>() {
-        public LocalChangeList fun(ChangeListInfo changeListInfo) {
-          LocalChangeList changeList = ChangeListManager.getInstance(project).getChangeList(changeListInfo.id);
-          return changeList != null && !changeList.isDefault() ? changeList : null;
-        }
+      List<LocalChangeList> lists = ContainerUtil.mapNotNull(infos, (NullableFunction<ChangeListInfo, LocalChangeList>)changeListInfo -> {
+        LocalChangeList changeList = ChangeListManager.getInstance(project).getChangeList(changeListInfo.id);
+        return changeList != null && !changeList.isDefault() ? changeList : null;
       });
 
       boolean removeIt = true;

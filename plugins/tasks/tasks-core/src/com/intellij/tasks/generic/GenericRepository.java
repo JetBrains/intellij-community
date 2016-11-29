@@ -89,9 +89,9 @@ public class GenericRepository extends BaseRepositoryImpl {
 
   private ResponseType myResponseType = ResponseType.XML;
 
-  private EnumMap<ResponseType, ResponseHandler> myResponseHandlersMap = new EnumMap<ResponseType, ResponseHandler>(ResponseType.class);
+  private EnumMap<ResponseType, ResponseHandler> myResponseHandlersMap = new EnumMap<>(ResponseType.class);
 
-  private List<TemplateVariable> myTemplateVariables = new ArrayList<TemplateVariable>();
+  private List<TemplateVariable> myTemplateVariables = new ArrayList<>();
 
   private String mySubtypeName;
   private boolean myDownloadTasksInSeparateRequests;
@@ -126,7 +126,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     myTemplateVariables = other.getTemplateVariables();
     mySubtypeName = other.getSubtypeName();
     myDownloadTasksInSeparateRequests = other.getDownloadTasksInSeparateRequests();
-    myResponseHandlersMap = new EnumMap<ResponseType, ResponseHandler>(ResponseType.class);
+    myResponseHandlersMap = new EnumMap<>(ResponseType.class);
     for (Map.Entry<ResponseType, ResponseHandler> e : other.myResponseHandlersMap.entrySet()) {
       ResponseHandler handler = e.getValue().clone();
       handler.setRepository(this);
@@ -143,8 +143,8 @@ public class GenericRepository extends BaseRepositoryImpl {
     myTasksListMethodType = HTTPMethod.GET;
     mySingleTaskMethodType = HTTPMethod.GET;
     myResponseType = ResponseType.XML;
-    myTemplateVariables = new ArrayList<TemplateVariable>();
-    myResponseHandlersMap = new EnumMap<ResponseType, ResponseHandler>(ResponseType.class);
+    myTemplateVariables = new ArrayList<>();
+    myResponseHandlersMap = new EnumMap<>(ResponseType.class);
     myResponseHandlersMap.put(ResponseType.XML, getXmlResponseHandlerDefault());
     myResponseHandlersMap.put(ResponseType.JSON, getJsonResponseHandlerDefault());
     myResponseHandlersMap.put(ResponseType.TEXT, getTextResponseHandlerDefault());
@@ -373,7 +373,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   )
   public List<ResponseHandler> getResponseHandlers() {
     Collection<ResponseHandler> handlers = myResponseHandlersMap.values();
-    return new ArrayList<ResponseHandler>(handlers);
+    return new ArrayList<>(handlers);
   }
 
   @SuppressWarnings("UnusedDeclaration")

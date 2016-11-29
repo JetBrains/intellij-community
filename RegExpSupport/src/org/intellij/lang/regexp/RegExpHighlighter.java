@@ -92,8 +92,8 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
     }
 
     static {
-        keys1 = new HashMap<IElementType, TextAttributesKey>();
-        keys2 = new HashMap<IElementType, TextAttributesKey>();
+        keys1 = new HashMap<>();
+        keys2 = new HashMap<>();
 
         fillMap(keys1, RegExpTT.KEYWORDS, META);
 

@@ -47,7 +47,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   private final ClasspathPanel myClasspathPanel;
   private final StructureConfigurableContext myContext;
   private final Predicate<Library> myAcceptedLibraries;
-  private final List<Library> myCreatedModuleLibraries = new ArrayList<Library>();
+  private final List<Library> myCreatedModuleLibraries = new ArrayList<>();
   private JButton myCreateLibraryButton;
 
   public ProjectStructureChooseLibrariesDialog(ClasspathPanel classpathPanel,

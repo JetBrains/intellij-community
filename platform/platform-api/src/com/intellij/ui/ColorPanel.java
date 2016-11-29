@@ -35,7 +35,7 @@ import static java.util.Locale.ENGLISH;
 
 public class ColorPanel extends JComponent {
   private static final RelativeFont MONOSPACED_FONT = RelativeFont.SMALL.family(Font.MONOSPACED);
-  private final List<ActionListener> myListeners = new CopyOnWriteArrayList<ActionListener>();
+  private final List<ActionListener> myListeners = new CopyOnWriteArrayList<>();
   private final JTextField myTextField = new JTextField(8);
   private boolean myEditable;
   private ActionEvent myEvent;

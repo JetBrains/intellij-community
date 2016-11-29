@@ -1,5 +1,5 @@
-from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
-from _pydev_imps import _pydev_thread
+from _pydevd_bundle.pydevd_constants import get_frame
+from _pydev_imps._pydev_saved_modules import thread
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -20,7 +20,7 @@ class TracingFunctionHolder:
     '''
     _original_tracing = None
     _warn = True
-    _lock = _pydev_thread.allocate_lock()
+    _lock = thread.allocate_lock()
     _traceback_limit = 1
     _warnings_shown = {}
  

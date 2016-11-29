@@ -90,7 +90,7 @@ public class TestNGDataProviderInspection extends BaseJavaLocalInspectionTool {
       final Properties attributes = new Properties();
       attributes.put(FileTemplate.ATTRIBUTE_NAME, name);
       body = fileTemplate.getText(attributes);
-      body = body.replace("${BODY}", "");
+      body = body.replace("${BODY}\n", "");
       final PsiMethod methodFromTemplate = JavaPsiFacade.getElementFactory(providerClass.getProject()).createMethodFromText(body, providerClass);
       final PsiCodeBlock methodBody = methodFromTemplate.getBody();
       if (methodBody != null) {

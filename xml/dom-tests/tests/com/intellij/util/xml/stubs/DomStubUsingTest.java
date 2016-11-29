@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -36,13 +36,15 @@ import java.util.List;
  */
 public class DomStubUsingTest extends DomStubTest {
 
-  public void testFoo() throws Exception {
-
+  public void testFoo() {
     DomFileElement<Foo> fileElement = prepare("foo.xml", Foo.class);
     PsiFile file = fileElement.getFile();
     assertFalse(file.getNode().isParsed());
 
     Foo foo = fileElement.getRootElement();
+    assertEquals("foo", foo.getId().getValue());
+    assertFalse(file.getNode().isParsed());
+
     List<Bar> bars = foo.getBars();
     assertFalse(file.getNode().isParsed());
 
@@ -73,7 +75,7 @@ public class DomStubUsingTest extends DomStubTest {
     assertFalse(file.getNode().isParsed());
   }
 
-  public void testAccessingPsi() throws Exception {
+  public void testAccessingPsi() {
     DomFileElement<Foo> element = prepare("foo.xml", Foo.class);
     assertNotNull(element.getXmlElement());
 
@@ -90,7 +92,7 @@ public class DomStubUsingTest extends DomStubTest {
     assertNotNull(attribute);
   }
 
-  public void testConverters() throws Exception {
+  public void testConverters() {
     DomFileElement<Foo> element = prepare("converters.xml", Foo.class);
     Bar bar = element.getRootElement().getBars().get(0);
     PsiClass value = bar.getClazz().getValue();
@@ -99,7 +101,7 @@ public class DomStubUsingTest extends DomStubTest {
     assertFalse(element.getFile().getNode().isParsed());
   }
 
-  public void testParent() throws Exception {
+  public void testParent() {
     DomFileElement<Foo> element = prepare("parent.xml", Foo.class);
 
     Bar bar = element.getRootElement().getBars().get(0);
@@ -112,17 +114,16 @@ public class DomStubUsingTest extends DomStubTest {
     assertEquals(bar, parent);
   }
 
-  public void testChildrenOfType() throws Exception {
-
+  public void testChildrenOfType() {
     DomFileElement<Foo> element = prepare("foo.xml", Foo.class);
     Foo foo = element.getRootElement();
     List<Bar> bars = DomUtil.getChildrenOf(foo, Bar.class);
     assertEquals(2, bars.size());
   }
 
-  public void testFileLoading() throws Exception {
+  public void testFileLoading() {
     XmlFile file = prepareFile("foo.xml");
-    ((PsiManagerImpl)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
+    ((PsiManagerEx)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
     DomFileElement<Foo> element = DomManager.getDomManager(getProject()).getFileElement(file, Foo.class);
     assertNotNull(element);
     GenericDomValue<String> id = element.getRootElement().getId();

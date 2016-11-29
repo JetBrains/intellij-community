@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,9 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.ex.ComponentManagerEx;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Factory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * @author max
@@ -39,55 +38,44 @@ import java.util.Set;
 public class InspectionToolRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolRegistrar");
 
-  private final List<Factory<InspectionToolWrapper>> myInspectionToolFactories = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<Supplier<InspectionToolWrapper>> myInspectionToolFactories = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private boolean myInspectionComponentsLoaded = false;
+  private boolean myInspectionComponentsLoaded;
 
   private synchronized void ensureInitialized() {
-    if (!myInspectionComponentsLoaded) {
-      myInspectionComponentsLoaded = true;
-      Set<InspectionToolProvider> providers = new THashSet<InspectionToolProvider>();
-      //noinspection unchecked
-      providers.addAll((((ComponentManagerEx)ApplicationManager.getApplication()).getComponentInstancesOfType(InspectionToolProvider.class)));
-      ContainerUtil.addAll(providers, Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME));
-      List<Factory<InspectionToolWrapper>> factories = new ArrayList<Factory<InspectionToolWrapper>>();
-      registerTools(providers, factories);
-      final boolean isInternal = ApplicationManager.getApplication().isInternal();
-      for (final LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
-        if (!isInternal && ep.isInternal) continue;
-        factories.add(new Factory<InspectionToolWrapper>() {
-          @Override
-          public InspectionToolWrapper create() {
-            return new LocalInspectionToolWrapper(ep);
-          }
-        });
-      }
-      for (final InspectionEP ep : Extensions.getExtensions(InspectionEP.GLOBAL_INSPECTION)) {
-        if (!isInternal && ep.isInternal) continue;
-        factories.add(new Factory<InspectionToolWrapper>() {
-          @Override
-          public InspectionToolWrapper create() {
-            return new GlobalInspectionToolWrapper(ep);
-          }
-        });
-      }
-      for (InspectionToolsFactory factory : Extensions.getExtensions(InspectionToolsFactory.EXTENSION_POINT_NAME)) {
-        for (final InspectionProfileEntry profileEntry : factory.createTools()) {
-          factories.add(new Factory<InspectionToolWrapper>() {
-            @Override
-            public InspectionToolWrapper create() {
-              return wrapTool(profileEntry);
-            }
-          });
-        }
-      }
-      myInspectionToolFactories.addAll(factories);
+    if (myInspectionComponentsLoaded) {
+      return;
     }
+
+    myInspectionComponentsLoaded = true;
+    Set<InspectionToolProvider> providers = new THashSet<>();
+    //noinspection deprecation
+    providers.addAll((((ComponentManagerImpl)ApplicationManager.getApplication()).getComponentInstancesOfType(InspectionToolProvider.class)));
+    ContainerUtil.addAll(providers, InspectionToolProvider.EXTENSION_POINT_NAME.getExtensions());
+    List<Supplier<InspectionToolWrapper>> factories = new ArrayList<>();
+    registerTools(providers, factories);
+    boolean isInternal = ApplicationManager.getApplication().isInternal();
+    for (LocalInspectionEP ep : LocalInspectionEP.LOCAL_INSPECTION.getExtensions()) {
+      if (!isInternal && ep.isInternal) {
+        continue;
+      }
+
+      factories.add(() -> new LocalInspectionToolWrapper(ep));
+    }
+    for (InspectionEP ep : InspectionEP.GLOBAL_INSPECTION.getExtensions()) {
+      if (!isInternal && ep.isInternal) {
+        continue;
+      }
+
+      factories.add(() -> new GlobalInspectionToolWrapper(ep));
+    }
+    myInspectionToolFactories.addAll(factories);
   }
 
   @NotNull
   public static InspectionToolWrapper wrapTool(@NotNull InspectionProfileEntry profileEntry) {
     if (profileEntry instanceof LocalInspectionTool) {
+      //noinspection TestOnlyProblems
       return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
     }
     if (profileEntry instanceof GlobalInspectionTool) {
@@ -97,17 +85,14 @@ public class InspectionToolRegistrar {
   }
 
   private static void registerTools(@NotNull Collection<InspectionToolProvider> providers,
-                                    @NotNull List<Factory<InspectionToolWrapper>> factories) {
+                                    @NotNull List<Supplier<InspectionToolWrapper>> factories) {
     for (InspectionToolProvider provider : providers) {
-      Class[] classes = provider.getInspectionClasses();
-      for (final Class aClass : classes) {
-        Factory<InspectionToolWrapper> factory = new Factory<InspectionToolWrapper>() {
-          @Override
-          public InspectionToolWrapper create() {
-            return wrapTool((InspectionProfileEntry)InspectionToolsRegistrarCore.instantiateTool(aClass));
-          }
-        };
-        factories.add(factory);
+      //noinspection unchecked
+      for (Class<InspectionProfileEntry> aClass : provider.getInspectionClasses()) {
+        factories.add(() -> {
+          InspectionProfileEntry entry = InspectionToolsRegistrarCore.instantiateTool(aClass);
+          return entry == null ? null : wrapTool(entry);
+        });
       }
     }
   }
@@ -120,10 +105,10 @@ public class InspectionToolRegistrar {
   public List<InspectionToolWrapper> createTools() {
     ensureInitialized();
 
-    final List<InspectionToolWrapper> tools = new ArrayList<InspectionToolWrapper>(myInspectionToolFactories.size());
-    for (final Factory<InspectionToolWrapper> factory : myInspectionToolFactories) {
+    List<InspectionToolWrapper> tools = new ArrayList<>(myInspectionToolFactories.size());
+    for (Supplier<InspectionToolWrapper> factory : myInspectionToolFactories) {
       ProgressManager.checkCanceled();
-      final InspectionToolWrapper toolWrapper = factory.create();
+      InspectionToolWrapper toolWrapper = factory.get();
       if (toolWrapper != null && checkTool(toolWrapper) == null) {
         tools.add(toolWrapper);
       }

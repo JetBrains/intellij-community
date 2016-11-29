@@ -68,11 +68,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     final PsiClass[] classes = JavaDirectoryService.getInstance()
       .getPackage(getContentDirectory().findSubdirectory("src").findSubdirectory("com").findSubdirectory("package1")).getClasses();
     sortClassesByName(classes);
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        classes[0].delete();
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> classes[0].delete());
 
 
     PlatformTestUtil.waitForAlarm(600);
@@ -121,12 +117,8 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                                                      getRootFiles() +
                                                      " +External Libraries\n", true);
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        new RenameProcessor(myProject, aClass, "Form1_renamed", false, false).run();
-      }
-    }, null, null);
+    CommandProcessor.getInstance().executeCommand(myProject,
+                                                  () -> new RenameProcessor(myProject, aClass, "Form1_renamed", false, false).run(), null, null);
 
     PlatformTestUtil.waitForAlarm(600);
     PlatformTestUtil.assertTreeEqual(tree, "-Project\n" +
@@ -205,19 +197,10 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     final Document document = FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile());
     final int caretPosition = document.getText().indexOf("public class InnerClass") - 1;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(myProject,
-                                                      new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                          document.insertString(caretPosition, "\n");
-                                                        }
-                                                      },
-                                                      "typing",
-                                                      null);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject,
+                                                                                                         () -> document.insertString(caretPosition, "\n"),
+                                                                                                         "typing",
+                                                                                                         null));
 
 
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
@@ -256,23 +239,15 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                                                      getRootFiles() +
                                                      " +External Libraries\n", true);
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              assertEquals("myField2", lastField.getName());
-              lastField.setName("_firstField");
-            }
-            catch (IncorrectOperationException e) {
-              fail(e.getMessage());
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        assertEquals("myField2", lastField.getName());
+        lastField.setName("_firstField");
       }
-    }, null, null);
+      catch (IncorrectOperationException e) {
+        fail(e.getMessage());
+      }
+    }), null, null);
 
     PlatformTestUtil.waitForAlarm(600);
 
@@ -317,7 +292,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
   class NodeWrapper extends AbstractTreeNode<Object> {
     String myName;
-    List<NodeWrapper> myChildren = new ArrayList<NodeWrapper>();
+    List<NodeWrapper> myChildren = new ArrayList<>();
 
     public NodeWrapper(final Project project, final String value) {
       super(project, new Object());
@@ -384,15 +359,12 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
     final JTree tree = pane.getTree();
 
-    pane.getTreeBuilder().setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
-      @Override
-      public int compare(final NodeDescriptor o1, final NodeDescriptor o2) {
-        if (o1 instanceof NodeWrapper && o2 instanceof NodeWrapper) {
-          return ((NodeWrapper)o1).getName().compareTo(((NodeWrapper)o2).getName());
-        }
-        else {
-          return 0;
-        }
+    pane.getTreeBuilder().setNodeDescriptorComparator((o1, o2) -> {
+      if (o1 instanceof NodeWrapper && o2 instanceof NodeWrapper) {
+        return ((NodeWrapper)o1).getName().compareTo(((NodeWrapper)o2).getName());
+      }
+      else {
+        return 0;
       }
     });
 
@@ -434,7 +406,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
         if (parent instanceof NodeWrapper) {
           return children;
         }
-        List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+        List<AbstractTreeNode> result = new ArrayList<>();
         result.add(rootWrapper);
         return result;
       }

@@ -25,4 +25,5 @@ public interface TextAnnotationPresentation {
   EditorFontType getFontType(int line);
   ColorKey getColor(int line);
   List<AnAction> getActions(int line);
+  void gutterClosed();
 }

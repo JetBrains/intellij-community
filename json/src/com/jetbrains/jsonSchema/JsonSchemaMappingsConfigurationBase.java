@@ -3,31 +3,37 @@ package com.jetbrains.jsonSchema;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.PatternUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
  */
 public class JsonSchemaMappingsConfigurationBase implements PersistentStateComponent<JsonSchemaMappingsConfigurationBase> {
-  private final static Comparator<Item> COMPARATOR = new Comparator<Item>() {
-    @Override
-    public int compare(Item o1, Item o2) {
-      if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
-      if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
-      return o1.getPath().compareToIgnoreCase(o2.getPath());
-    }
+  private final static Comparator<Item> COMPARATOR = (o1, o2) -> {
+    if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
+    if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
+    return o1.getPath().compareToIgnoreCase(o2.getPath());
   };
   @Tag("state") @AbstractCollection(surroundWithTag = false)
-  protected final Map<String, SchemaInfo> myState = new TreeMap<String, SchemaInfo>();
+  protected final Map<String, SchemaInfo> myState = new TreeMap<>();
 
   @Nullable
   @Override
@@ -65,7 +71,9 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
     private String myName;
     private String myRelativePathToSchema;
     private boolean myApplicationLevel;
-    private List<Item> myPatterns = new ArrayList<Item>();
+    private List<Item> myPatterns = new ArrayList<>();
+    @Transient
+    private List<Processor<VirtualFile>> myCalculatedPatterns;
 
     public SchemaInfo() {
     }
@@ -76,7 +84,7 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
       myName = name;
       myRelativePathToSchema = relativePathToSchema;
       myApplicationLevel = applicationLevel;
-      myPatterns = new ArrayList<Item>();
+      myPatterns = new ArrayList<>();
       if (patterns != null) {
         myPatterns.addAll(patterns);
       }
@@ -113,23 +121,58 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
 
     public void setPatterns(List<Item> patterns) {
       myPatterns = patterns;
+      myCalculatedPatterns = null;
     }
 
-    public void addItem(@NotNull final Item item) {
-      myPatterns.add(item);
-      Collections.sort(myPatterns, COMPARATOR);
+    @NotNull
+    public List<Processor<VirtualFile>> getCalculatedPatterns(@NotNull final Project project) {
+      if (myCalculatedPatterns == null) recalculatePatterns(project);
+      return myCalculatedPatterns;
     }
 
-    public void removeItem(@NotNull final Item item) {
-      if (myPatterns.remove(item)) {
-        Collections.sort(myPatterns, COMPARATOR);
+    private void recalculatePatterns(Project project) {
+      myCalculatedPatterns = new ArrayList<>();
+      for (final JsonSchemaMappingsConfigurationBase.Item pattern : myPatterns) {
+        if (pattern.isPattern()) {
+          myCalculatedPatterns.add(new Processor<VirtualFile>() {
+            private Matcher matcher = PatternUtil.fromMask(pattern.getPath()).matcher("");
+
+            @Override
+            public boolean process(VirtualFile file) {
+              matcher.reset(file.getName());
+              return matcher.matches();
+            }
+          });
+        } else {
+          if (project == null || project.getBasePath() == null) {
+            continue;
+          }
+
+          final String path = FileUtilRt.toSystemIndependentName(pattern.getPath());
+          final List<String> parts = ContainerUtil.filter(path.split("/"), s -> !".".equals(s));
+          final VirtualFile relativeFile;
+          if (parts.isEmpty()) {
+            relativeFile = project.getBaseDir();
+          } else {
+            relativeFile = VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(parts));
+            if (relativeFile == null) continue;
+          }
+
+          if (pattern.isDirectory()) {
+            myCalculatedPatterns.add(file12 -> VfsUtilCore.isAncestor(relativeFile, file12, true));
+          } else {
+            myCalculatedPatterns.add(relativeFile::equals);
+          }
+        }
       }
     }
+
 
     @Nullable
     public VirtualFile getSchemaFile(@NotNull final Project project) {
       final String pathToSchema = FileUtil.toSystemIndependentName(getRelativePathToSchema());
-      return VfsUtil.findRelativeFile(project.getBaseDir(), pathToSchema);
+      final List<String> strings = ContainerUtil.filter(pathToSchema.split("/"), s -> !StringUtil.isEmptyOrSpaces(s));
+      return VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(strings));
     }
 
     @Override

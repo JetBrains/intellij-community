@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   }
 
   private void createUIComponents() {
-    myIgnoredFilesPathsChooser = new ElementsChooser<String>(true);
+    myIgnoredFilesPathsChooser = new ElementsChooser<>(true);
     myIgnoredFilesPathsChooser.getEmptyText().setText(ProjectBundle.message("maven.ingored.no.file"));
   }
 
@@ -78,11 +78,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
     MavenUIUtil.setElements(myIgnoredFilesPathsChooser,
                             MavenUtil.collectPaths(myManager.getProjectsFiles()),
                             myOriginallyIgnoredFilesPaths,
-                            new Comparator<String>() {
-                              public int compare(String o1, String o2) {
-                                return FileUtil.comparePaths(o1, o2);
-                              }
-                            });
+                            (o1, o2) -> FileUtil.comparePaths(o1, o2));
     myIgnoredFilesPattersEditor.setText(myOriginallyIgnoredFilesPatterns);
   }
 
@@ -100,9 +96,5 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

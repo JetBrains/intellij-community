@@ -48,7 +48,7 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
   val repository = manager.repository
 
   // we must use the same StoredConfig instance during the operation
-  val config = repository.config
+  val config = repository.config!!
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
   fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null, prefetchedRefToMerge: Ref? = null): UpdateResult? {
@@ -62,7 +62,7 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
       return null
     }
 
-    var refToMerge = prefetchedRefToMerge ?: fetch() ?: return null
+    val refToMerge = prefetchedRefToMerge ?: fetch() ?: return null
     val mergeResult = merge(refToMerge, mergeStrategy, commitMessage = commitMessage)
     val mergeStatus = mergeResult.status
     LOG.debug { mergeStatus.toString() }

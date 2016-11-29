@@ -31,7 +31,7 @@ import java.util.List;
  * @author Sergey Evdokimov
  */
 public class GrLightParameterListBuilder extends LightElement implements GrParameterList {
-  private final List<GrParameter> myParameters = new ArrayList<GrParameter>();
+  private final List<GrParameter> myParameters = new ArrayList<>();
   private GrParameter[] myCachedParameters;
 
   public GrLightParameterListBuilder(PsiManager manager, Language language) {

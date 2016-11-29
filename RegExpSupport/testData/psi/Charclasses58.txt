@@ -1,0 +1,12 @@
+REGEXP_FILE
+  RegExpPatternImpl: <a\p{123}>
+    RegExpBranchImpl: <a\p{123}>
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpPropertyImpl: <\p{123}>
+        PsiElement(PROPERTY)('\p')
+        PsiElement(LBRACE)('{')
+        PsiErrorElement:Property name expected
+          <empty list>
+        PsiElement(NUMBER)('123')
+        PsiElement(RBRACE)('}')

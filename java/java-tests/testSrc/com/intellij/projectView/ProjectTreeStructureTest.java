@@ -1,6 +1,28 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.projectView;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import org.junit.Assert;
 
 public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
 
@@ -109,5 +131,55 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                                                 "    Form2.form\n");
 
     checkContainsMethod(myStructure.getRootElement(), myStructure);
+  }
+
+  public void testNoDuplicateModules() {
+    VirtualFile mainModuleRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
+
+    PsiTestUtil.addExcludedRoot(myModule, mainModuleRoot.findFileByRelativePath("src/com/package1/p2"));
+
+    Module module = createModule("nested_module");
+    ModuleManagerImpl.getInstanceImpl(myProject).setModuleGroupPath(module, new String[]{"modules"});
+    PsiTestUtil.addContentRoot(module, mainModuleRoot.findFileByRelativePath("src/com/package1/p2/p3"));
+
+    myStructure.setShowLibraryContents(false);
+    myStructure.hideExcludedFiles();
+
+    assertStructureEqual("Project\n" +
+                         " nested_module.iml\n" +
+                         " noDuplicateModules\n" +
+                         "  src\n" +
+                         "   com\n" +
+                         "    package1\n" +
+                         "     Test.java\n" +
+                         " testNoDuplicateModules.iml\n");
+  }
+
+  public void testContentRootUnderExcluded() {
+    VirtualFile mainModuleRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
+
+    PsiTestUtil.addExcludedRoot(myModule, mainModuleRoot.findFileByRelativePath("exc"));
+
+    PsiTestUtil.addContentRoot(myModule, mainModuleRoot.findFileByRelativePath("exc/gen"));
+
+    myStructure.setShowLibraryContents(false);
+
+    assertStructureEqual("Project\n" +
+                         " contentRootUnderExcluded\n" +
+                         "  B.txt\n" +
+                         "  exc\n" +
+                         "   excluded.txt\n" +
+                         "   gen\n" +
+                         "    A.java\n" +
+                         " testContentRootUnderExcluded.iml\n");
+
+    myStructure.hideExcludedFiles();
+    assertStructureEqual("Project\n" +
+                         " Module\n" +
+                         "  contentRootUnderExcluded\n" +
+                         "   B.txt\n" +
+                         "  gen\n" +
+                         "   A.java\n" +
+                         " testContentRootUnderExcluded.iml\n");
   }
 }

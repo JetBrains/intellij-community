@@ -77,7 +77,7 @@ public class MvcTargetDialogCompletionUtils {
       return getSystemPropertiesVariants();
     }
     if (text.substring(0, offset).matches("\\s*(grails\\s*)?(?:(:?-D\\S+|dev|prod|test)\\s+)*\\S*")) {
-      List<LookupElement> res = new ArrayList<LookupElement>();
+      List<LookupElement> res = new ArrayList<>();
       // Complete command name because command name is not typed.
       for (String completionVariant : getAllTargetNames(module)) {
         res.add(TailTypeDecorator.withTail(LookupElementBuilder.create(completionVariant), TailType.SPACE));
@@ -133,7 +133,7 @@ public class MvcTargetDialogCompletionUtils {
   }
 
   public static Set<String> getAllTargetNamesInternal(@NotNull Module module) {
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new HashSet<>();
 
     MvcFramework.addAvailableSystemScripts(result, module);
 

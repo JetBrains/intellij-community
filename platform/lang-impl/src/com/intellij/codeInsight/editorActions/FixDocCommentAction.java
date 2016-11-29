@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.documentation.DocCommentFixer;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.CaretModel;
@@ -56,6 +58,7 @@ public class FixDocCommentAction extends EditorAction {
   }
 
   private static final class MyHandler extends EditorActionHandler {
+
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -116,12 +119,7 @@ public class FixDocCommentAction extends EditorAction {
     final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)c;
     final Runnable task;
     if (pair.second == null || pair.second.getTextRange().isEmpty()) {
-      task = new Runnable() {
-        @Override
-        public void run() {
-          generateComment(pair.first, editor, docProvider, commenter, project); 
-        }
-      };
+      task = () -> generateComment(pair.first, editor, docProvider, commenter, project);
     }
     else {
       final DocCommentFixer fixer = DocCommentFixer.EXTENSION.forLanguage(language);
@@ -129,20 +127,10 @@ public class FixDocCommentAction extends EditorAction {
         return;
       }
       else {
-        task = new Runnable() {
-          @Override
-          public void run() {
-            fixer.fixComment(project, editor, pair.second);
-          }
-        };
+        task = () -> fixer.fixComment(project, editor, pair.second);
       }
     }
-    final Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(task);
-      }
-    };
+    final Runnable command = () -> ApplicationManager.getApplication().runWriteAction(task);
     CommandProcessor.getInstance().executeCommand(project, command, "Fix documentation", null);
     
   }
@@ -164,6 +152,7 @@ public class FixDocCommentAction extends EditorAction {
                                       @NotNull CodeDocumentationAwareCommenter commenter,
                                       @NotNull Project project)
   {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(anchor)) return;
     Document document = editor.getDocument();
     int commentStartOffset = anchor.getTextRange().getStartOffset();
     int lineStartOffset = document.getLineStartOffset(document.getLineNumber(commentStartOffset));

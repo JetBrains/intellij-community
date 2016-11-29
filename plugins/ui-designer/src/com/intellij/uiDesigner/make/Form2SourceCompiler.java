@@ -82,70 +82,68 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       return ProcessingItem.EMPTY_ARRAY;
     }
 
-    final ArrayList<ProcessingItem> items = new ArrayList<ProcessingItem>();
-    DumbService.getInstance(project).runReadActionInSmartMode(new Runnable() {
-      public void run() {
-        final CompileScope scope = context.getCompileScope();
-        final CompileScope projectScope = context.getProjectCompileScope();
+    final ArrayList<ProcessingItem> items = new ArrayList<>();
+    DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+      final CompileScope scope = context.getCompileScope();
+      final CompileScope projectScope = context.getProjectCompileScope();
 
-        final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
-        final CompilerManager compilerManager = CompilerManager.getInstance(project);
-        final BindingsCache bindingsCache = new BindingsCache(project);
+      final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
+      final CompilerManager compilerManager = CompilerManager.getInstance(project);
+      final BindingsCache bindingsCache = new BindingsCache(project);
 
-        try {
-          final HashMap<String, VirtualFile> class2form = new HashMap<String, VirtualFile>();
+      try {
+        final HashMap<String, VirtualFile> class2form = new HashMap<>();
 
-          for (final VirtualFile formFile : formFiles) {
-            if (compilerManager.isExcludedFromCompilation(formFile)) {
-              continue;
-            }
-
-            final String classToBind;
-            try {
-              classToBind = bindingsCache.getBoundClassName(formFile);
-            }
-            catch (AlienFormFileException e) {
-              // ignore non-IDEA forms
-              continue;
-            }
-            catch (Exception e) {
-              addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.process.form.file", e)), formFile);
-              continue;
-            }
-
-            if (classToBind == null) {
-              continue;
-            }
-
-            final VirtualFile sourceFile = findSourceFile(context, formFile, classToBind);
-            if (sourceFile == null) {
-              if (scope.belongs(formFile.getUrl())) {
-                addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind)), formFile);
-              }
-              continue;
-            }
-
-            final boolean inScope = scope.belongs(sourceFile.getUrl()) || scope.belongs(formFile.getUrl());
-
-            final VirtualFile alreadyProcessedForm = class2form.get(classToBind);
-            if (alreadyProcessedForm != null) {
-              if (inScope) {
-                addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.duplicate.bind", classToBind, alreadyProcessedForm.getPresentableUrl())), formFile);
-              }
-              continue;
-            }
-            class2form.put(classToBind, formFile);
-
-            if (!inScope) {
-              continue;
-            }
-
-            items.add(new MyInstrumentationItem(sourceFile, formFile));
+        for (final VirtualFile formFile : formFiles) {
+          if (compilerManager.isExcludedFromCompilation(formFile)) {
+            continue;
           }
+
+          final String classToBind;
+          try {
+            classToBind = bindingsCache.getBoundClassName(formFile);
+          }
+          catch (AlienFormFileException e) {
+            // ignore non-IDEA forms
+            continue;
+          }
+          catch (Exception e) {
+            addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.process.form.file", e)), formFile);
+            continue;
+          }
+
+          if (classToBind == null) {
+            continue;
+          }
+
+          final VirtualFile sourceFile = findSourceFile(context, formFile, classToBind);
+          if (sourceFile == null) {
+            if (scope.belongs(formFile.getUrl())) {
+              addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind)), formFile);
+            }
+            continue;
+          }
+
+          final boolean inScope = scope.belongs(sourceFile.getUrl()) || scope.belongs(formFile.getUrl());
+
+          final VirtualFile alreadyProcessedForm = class2form.get(classToBind);
+          if (alreadyProcessedForm != null) {
+            if (inScope) {
+              addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.duplicate.bind", classToBind, alreadyProcessedForm.getPresentableUrl())), formFile);
+            }
+            continue;
+          }
+          class2form.put(classToBind, formFile);
+
+          if (!inScope) {
+            continue;
+          }
+
+          items.add(new MyInstrumentationItem(sourceFile, formFile));
         }
-        finally {
-          bindingsCache.close();
-        }
+      }
+      finally {
+        bindingsCache.close();
       }
     });
 
@@ -153,7 +151,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
-    final ArrayList<ProcessingItem> compiledItems = new ArrayList<ProcessingItem>();
+    final ArrayList<ProcessingItem> compiledItems = new ArrayList<>();
 
     context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
 
@@ -162,9 +160,9 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     final Project project = context.getProject();
     final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(project);
 
-    final HashSet<Module> processedModules = new HashSet<Module>();
+    final HashSet<Module> processedModules = new HashSet<>();
 
-    final List<File> filesToRefresh = new ArrayList<File>();
+    final List<File> filesToRefresh = new ArrayList<>();
     for (ProcessingItem item1 : items) {
       context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
 
@@ -173,57 +171,47 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       final VirtualFile formFile = item.getFormFile();
 
       if (GuiDesignerConfiguration.getInstance(project).COPY_FORMS_RUNTIME_TO_OUTPUT) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final Module module = ModuleUtilCore.findModuleForFile(formFile, project);
-            if (module != null && !processedModules.contains(module)) {
-              processedModules.add(module);
-              final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
-              try {
-                if (moduleOutputPath != null) {
-                  filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false));
-                }
-                final String testsOutputPath = CompilerPaths.getModuleOutputPath(module, true);
-                if (testsOutputPath != null && !testsOutputPath.equals(moduleOutputPath)) {
-                  filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false));
-                }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final Module module = ModuleUtilCore.findModuleForFile(formFile, project);
+          if (module != null && !processedModules.contains(module)) {
+            processedModules.add(module);
+            final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
+            try {
+              if (moduleOutputPath != null) {
+                filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false));
               }
-              catch (IOException e) {
-                addError(
-                  context,
-                  new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime",
-                                           module.getName(), e.toString())),
-                  null
-                );
+              final String testsOutputPath = CompilerPaths.getModuleOutputPath(module, true);
+              if (testsOutputPath != null && !testsOutputPath.equals(moduleOutputPath)) {
+                filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false));
               }
+            }
+            catch (IOException e) {
+              addError(
+                context,
+                new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime",
+                                         module.getName(), e.toString())),
+                null
+              );
             }
           }
         });
       }
 
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  PsiDocumentManager.getInstance(project).commitAllDocuments();
-                  generator.generate(formFile);
-                  final ArrayList<FormErrorInfo> errors = generator.getErrors();
-                  if (errors.size() == 0) {
-                    compiledItems.add(item);
-                  }
-                  else {
-                    for (final FormErrorInfo e : errors) {
-                      addError(context, e, formFile);
-                    }
-                  }
-                }
-              });
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+          generator.generate(formFile);
+          final ArrayList<FormErrorInfo> errors = generator.getErrors();
+          if (errors.size() == 0) {
+            compiledItems.add(item);
+          }
+          else {
+            for (final FormErrorInfo e : errors) {
+              addError(context, e, formFile);
             }
-          }, "", null);
-          FileDocumentManager.getInstance().saveAllDocuments();
-        }
+          }
+        }), "", null);
+        FileDocumentManager.getInstance().saveAllDocuments();
       }, ModalityState.NON_MODAL);
     }
 

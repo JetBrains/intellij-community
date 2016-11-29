@@ -94,13 +94,10 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Con
     public static void editAssociations(Project project, final PsiFile file) {
         final FileAssociationsConfigurable instance = new FileAssociationsConfigurable(project);
 
-        ShowSettingsUtil.getInstance().editConfigurable(project, instance, new Runnable() {
-            @Override
-            public void run() {
-                final AssociationsEditor editor = instance.getEditor();
-                if (file != null) {
-                    editor.select(file);
-                }
+        ShowSettingsUtil.getInstance().editConfigurable(project, instance, () -> {
+            final AssociationsEditor editor = instance.getEditor();
+            if (file != null) {
+                editor.select(file);
             }
         });
     }
@@ -126,10 +123,5 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Con
     @NotNull
     public String getId() {
         return getHelpTopic();
-    }
-
-    @Override
-    public Runnable enableSearch(final String option) {
-        return null;
     }
 }

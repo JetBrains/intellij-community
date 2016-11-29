@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,14 @@ import java.util.Map;
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
-    QuickFixFactory factory = QuickFixFactory.getInstance();
+    if (PsiUtil.isModuleFile(ref.getContainingFile())) {
+      OrderEntryFix.registerFixes(registrar, ref);
+      return;
+    }
+
     registrar.register(new ImportClassFix(ref));
     registrar.register(new StaticImportConstantFix(ref));
-    registrar.register(factory.createSetupJDKFix());
+    registrar.register(QuickFixFactory.getInstance().createSetupJDKFix());
 
     OrderEntryFix.registerFixes(registrar, ref);
 
@@ -85,7 +89,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
                                               @NotNull PsiReferenceExpression refExpr) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
 
-    final Map<VariableKind, IntentionAction> map = new EnumMap<VariableKind, IntentionAction>(VariableKind.class);
+    final Map<VariableKind, IntentionAction> map = new EnumMap<>(VariableKind.class);
     map.put(VariableKind.FIELD, new CreateFieldFromUsageFix(refExpr));
     map.put(VariableKind.STATIC_FINAL_FIELD, new CreateConstantFieldFromUsageFix(refExpr));
     if (!refExpr.isQualified()) {
@@ -107,7 +111,11 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   private static VariableKind getKind(@NotNull JavaCodeStyleManager styleManager, @NotNull PsiReferenceExpression refExpr) {
     final String reference = refExpr.getText();
 
-    if (reference.toUpperCase().equals(reference)){
+    boolean upperCase = true;
+    for (int i = 0; i < reference.length(); i++) {
+      if (!Character.isUpperCase(reference.charAt(i))) { upperCase = false; break; }
+    }
+    if (upperCase) {
       return VariableKind.STATIC_FINAL_FIELD;
     }
 

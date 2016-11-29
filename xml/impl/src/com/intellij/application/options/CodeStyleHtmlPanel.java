@@ -28,6 +28,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
@@ -66,6 +68,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private TextFieldWithBrowseButton myDontBreakIfInlineContent;
   private JBScrollPane myJBScrollPane;
   private JPanel myRightMarginPanel;
+  private JComboBox myQuotesCombo;
+  private JBCheckBox myEnforceQuotesBox;
   private RightMarginForm myRightMarginForm;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
@@ -73,6 +77,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     installPreviewPanel(myPreviewPanel);
 
     fillWrappingCombo(myWrapAttributes);
+    fillQuotesCombo(myQuotesCombo);
 
     customizeField(ApplicationBundle.message("title.insert.new.line.before.tags"), myInsertNewLineTagNames);
     customizeField(ApplicationBundle.message("title.remove.line.breaks.before.tags"), myRemoveNewLineTagNames);
@@ -88,7 +93,14 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myInlineElementsTagNames.getTextField().setColumns(5);
     myDontBreakIfInlineContent.getTextField().setColumns(5);
 
-
+    myQuotesCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean quotesRequired = !CodeStyleSettings.QuoteStyle.None.equals(myQuotesCombo.getSelectedItem());
+        myEnforceQuotesBox.setEnabled(quotesRequired);
+        if (!quotesRequired) myEnforceQuotesBox.setSelected(false);
+      }
+    });
     addPanelToWatch(myPanel);
   }
 
@@ -127,10 +139,10 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       }
 
       private ArrayList<String> createCollectionOn(final String data) {
-        if (data == null) {
-          return new ArrayList<String>();
+        if (data == null || data.trim().isEmpty()) {
+          return new ArrayList<>();
         }
-        return new ArrayList<String>(Arrays.asList(data.split(",")));
+        return new ArrayList<>(Arrays.asList(data.split(",")));
       }
 
     });
@@ -162,7 +174,14 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_KEEP_WHITESPACES_INSIDE = myKeepWhiteSpacesTagNames.getText();
     settings.HTML_KEEP_LINE_BREAKS = myShouldKeepBlankLines.isSelected();
     settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = myShouldKeepLineBreaksInText.isSelected();
+    settings.HTML_QUOTE_STYLE = (CodeStyleSettings.QuoteStyle)myQuotesCombo.getSelectedItem();
+    settings.HTML_ENFORCE_QUOTES = myEnforceQuotesBox.isSelected();
     myRightMarginForm.apply(settings);
+  }
+
+  @NotNull
+  protected String getQuotes() {
+    return ApplicationBundle.message("single.quotes").equals(myQuotesCombo.getSelectedItem()) ? "'" : "\"";
   }
 
   private static int getIntValue(JTextField keepBlankLines) {
@@ -196,6 +215,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myDontBreakIfInlineContent.setText(settings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT);
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
     myRightMarginForm.reset(settings);
+    myQuotesCombo.setSelectedItem(settings.HTML_QUOTE_STYLE);
+    myEnforceQuotesBox.setSelected(settings.HTML_ENFORCE_QUOTES);
   }
 
   @Override
@@ -266,7 +287,12 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    return myRightMarginForm.isModified(settings);
+    if (myQuotesCombo.getSelectedItem() != settings.HTML_QUOTE_STYLE) {
+      return true;
+    }
+
+    return myRightMarginForm.isModified(settings) ||
+           myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES;
   }
 
   @Override
@@ -289,5 +315,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   @Override
   protected void prepareForReformat(final PsiFile psiFile) {
     //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+  }
+
+  private static void fillQuotesCombo(JComboBox combo) {
+    combo.setModel(new EnumComboBoxModel<>(CodeStyleSettings.QuoteStyle.class));
   }
 }

@@ -111,13 +111,13 @@ public class UnusedDefineInspection extends BaseInspection {
         if (processRncUsages(pattern, new LocalSearchScope(file))) return;
       }
 
-      final PsiElementProcessor.CollectElements<XmlFile> collector = new PsiElementProcessor.CollectElements<XmlFile>();
+      final PsiElementProcessor.CollectElements<XmlFile> collector = new PsiElementProcessor.CollectElements<>();
       RelaxIncludeIndex.processBackwardDependencies((XmlFile)file, collector);
 
       if (processRncUsages(pattern, new LocalSearchScope(collector.toArray()))) return;
 
       final ASTNode astNode = ((RncDefineImpl)pattern).getNameNode();
-      myHolder.registerProblem(astNode.getPsi(), "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<RncDefine>(pattern));
+      myHolder.registerProblem(astNode.getPsi(), "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(pattern));
     }
 
     private static boolean processRncUsages(PsiElement tag, LocalSearchScope scope) {
@@ -181,12 +181,12 @@ public class UnusedDefineInspection extends BaseInspection {
         if (processUsages(tag, value, new LocalSearchScope(file))) return;
       }
 
-      final PsiElementProcessor.CollectElements<XmlFile> collector = new PsiElementProcessor.CollectElements<XmlFile>();
+      final PsiElementProcessor.CollectElements<XmlFile> collector = new PsiElementProcessor.CollectElements<>();
       RelaxIncludeIndex.processBackwardDependencies((XmlFile)file, collector);
 
       if (processUsages(tag, value, new LocalSearchScope(collector.toArray()))) return;
 
-      myHolder.registerProblem(value, "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<XmlTag>(tag));
+      myHolder.registerProblem(value, "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(tag));
     }
 
     private static boolean processUsages(PsiElement tag, XmlAttributeValue value, LocalSearchScope scope) {
@@ -212,14 +212,8 @@ public class UnusedDefineInspection extends BaseInspection {
 
       @Override
       @NotNull
-      public String getName() {
-        return "Remove define";
-      }
-
-      @Override
-      @NotNull
       public String getFamilyName() {
-        return getName();
+        return "Remove define";
       }
 
       @Override

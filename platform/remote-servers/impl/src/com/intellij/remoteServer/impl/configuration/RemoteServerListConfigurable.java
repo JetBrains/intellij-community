@@ -71,12 +71,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected String getEmptySelectionString() {
     final String typeNames = StringUtil.join(ServerType.EP_NAME.getExtensions(),
-                                             new Function<ServerType, String>() {
-                      @Override
-                      public String fun(ServerType type) {
-                        return type.getPresentableName();
-                      }
-                    }, ", ");
+                                             type -> type.getPresentableName(), ", ");
 
     if (typeNames.length() > 0) {
       return CloudBundle.getText("clouds.configure.empty.selection.string", typeNames);
@@ -128,12 +123,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Nullable
   @Override
   public Runnable enableSearch(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
-      }
-    };
+    return () -> ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
   }
 
   @Override
@@ -149,12 +139,12 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   @Override
   protected void processRemovedItems() {
-    Set<RemoteServer<?>> servers = new HashSet<RemoteServer<?>>();
+    Set<RemoteServer<?>> servers = new HashSet<>();
     for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
       servers.add(configurable.getEditableObject());
     }
 
-    List<RemoteServer<?>> toDelete = new ArrayList<RemoteServer<?>>();
+    List<RemoteServer<?>> toDelete = new ArrayList<>();
     for (RemoteServer<?> server : getServers()) {
       if (!servers.contains(server)) {
         toDelete.add(server);
@@ -168,7 +158,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    Set<RemoteServer<?>> servers = new HashSet<RemoteServer<?>>(getServers());
+    Set<RemoteServer<?>> servers = new HashSet<>(getServers());
     for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
       RemoteServer<?> server = configurable.getEditableObject();
       server.setName(configurable.getDisplayName());
@@ -181,7 +171,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Nullable
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
-    ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    ArrayList<AnAction> actions = new ArrayList<>();
     ServerType<?> singleServerType = getSingleServerType();
     if (singleServerType == null) {
       actions.add(new AddRemoteServerGroup());
@@ -200,7 +190,14 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   @Override
   public String getHelpTopic() {
-    return ObjectUtils.notNull(super.getHelpTopic(), "reference.settings.clouds");
+    String result = super.getHelpTopic();
+    if (result == null) {
+      ServerType<?> singleServerType = getSingleServerType();
+      if (singleServerType != null) {
+        return singleServerType.getHelpTopic();
+      }
+    }
+    return "reference.settings.clouds";
   }
 
   @Override
@@ -216,7 +213,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   }
 
   private List<NamedConfigurable<RemoteServer<?>>> getConfiguredServers() {
-    List<NamedConfigurable<RemoteServer<?>>> configurables = new ArrayList<NamedConfigurable<RemoteServer<?>>>();
+    List<NamedConfigurable<RemoteServer<?>>> configurables = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       MyNode node = (MyNode)myRoot.getChildAt(i);
       configurables.add((NamedConfigurable<RemoteServer<?>>)node.getConfigurable());
@@ -262,16 +259,13 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      String name = UniqueNameGenerator.generateUniqueName(myServerType.getPresentableName(), new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
-            if (configurable.getDisplayName().equals(s)) {
-              return false;
-            }
+      String name = UniqueNameGenerator.generateUniqueName(myServerType.getPresentableName(), s -> {
+        for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
+          if (configurable.getDisplayName().equals(s)) {
+            return false;
           }
-          return true;
         }
+        return true;
       });
       MyNode node = addServerNode(myServersManager.createServer(myServerType, name), true);
       selectNodeInTree(node);

@@ -60,12 +60,7 @@ public class DiffTreeTest extends TestCase {
 
     @Override
     public String toString() {
-      return getChildren().length == 0 ? String.valueOf(myId) : StringUtil.join(myChildren, new Function<Node, String>() {
-        @Override
-        public String fun(Node node) {
-          return node.toString();
-        }
-      }, "");
+      return getChildren().length == 0 ? String.valueOf(myId) : StringUtil.join(myChildren, node -> node.toString(), "");
     }
 
     public TextRange getTextRange() {
@@ -144,7 +139,7 @@ public class DiffTreeTest extends TestCase {
   }
 
   private static class DiffBuilder implements DiffTreeChangeBuilder<Node, Node> {
-    private final List<String> myResults = new ArrayList<String>();
+    private final List<String> myResults = new ArrayList<>();
 
     @Override
     public void nodeReplaced(@NotNull final Node oldNode, @NotNull final Node newNode) {

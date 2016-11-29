@@ -86,17 +86,12 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     private final Computable<Boolean> myShowHidden;
 
     public FileChooserFilter(final FileChooserDescriptor descriptor, boolean showHidden) {
-      myShowHidden = new Computable.PredefinedValueComputable<Boolean>(showHidden);
+      myShowHidden = new Computable.PredefinedValueComputable<>(showHidden);
       myDescriptor = descriptor;
     }
     public FileChooserFilter(final FileChooserDescriptor descriptor, final FileSystemTree tree) {
       myDescriptor = descriptor;
-      myShowHidden = new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return tree.areHiddensShown();
-        }
-      };
+      myShowHidden = () -> tree.areHiddensShown();
     }
 
     public boolean isAccepted(final LookupFile file) {
@@ -144,7 +139,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     }
 
     public List<LookupFile> getChildren(final LookupFilter filter) {
-      List<LookupFile> result = new ArrayList<LookupFile>();
+      List<LookupFile> result = new ArrayList<>();
       if (myFile == null) return result;
 
       VirtualFile[] kids = myFile.getChildren();
@@ -154,11 +149,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
           result.add(eachFile);
         }
       }
-      Collections.sort(result, new Comparator<LookupFile>() {
-        public int compare(LookupFile o1, LookupFile o2) {
-          return FileUtil.comparePaths(o1.getName(), o2.getName());
-        }
-      });
+      Collections.sort(result, (o1, o2) -> FileUtil.comparePaths(o1.getName(), o2.getName()));
 
       return result;
     }
@@ -217,22 +208,14 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     }
 
     public List<LookupFile> getChildren(final LookupFilter filter) {
-      List<LookupFile> result = new ArrayList<LookupFile>();
-      File[] files = myIoFile.listFiles(new FileFilter() {
-        public boolean accept(final File pathname) {
-          return filter.isAccepted(new IoFile(pathname));
-        }
-      });
+      List<LookupFile> result = new ArrayList<>();
+      File[] files = myIoFile.listFiles(pathname -> filter.isAccepted(new IoFile(pathname)));
       if (files == null) return result;
 
       for (File each : files) {
         result.add(new IoFile(each));
       }
-      Collections.sort(result, new Comparator<LookupFile>() {
-        public int compare(LookupFile o1, LookupFile o2) {
-          return FileUtil.comparePaths(o1.getName(), o2.getName());
-        }
-      });
+      Collections.sort(result, (o1, o2) -> FileUtil.comparePaths(o1.getName(), o2.getName()));
 
       return result;
     }

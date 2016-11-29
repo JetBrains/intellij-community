@@ -112,7 +112,7 @@ public class CreateSnapShotAction extends AnAction {
     if (dir == null) return;
 
     final SnapShotClient client = new SnapShotClient();
-    List<RunnerAndConfigurationSettings> appConfigurations = new ArrayList<RunnerAndConfigurationSettings>();
+    List<RunnerAndConfigurationSettings> appConfigurations = new ArrayList<>();
     RunnerAndConfigurationSettings snapshotConfiguration = null;
     boolean connected = false;
 
@@ -151,25 +151,19 @@ public class CreateSnapShotAction extends AnAction {
       if (rc == Messages.NO) return;
       final ApplicationConfiguration appConfig = (ApplicationConfiguration) snapshotConfiguration.getConfiguration();
       final SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
-      settings.setNotifyRunnable(new Runnable() {
-        public void run() {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.prepare.notice"),
-                                         UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
-              try {
-                client.connect(settings.getLastPort());
-              }
-              catch(IOException ex) {
-                Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.connection.error"),
-                                           UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
-                return;
-              }
-              runSnapShooterSession(client, project, dir, view);
-            }
-          });
+      settings.setNotifyRunnable(() -> SwingUtilities.invokeLater(() -> {
+        Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.prepare.notice"),
+                                   UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
+        try {
+          client.connect(settings.getLastPort());
         }
-      });
+        catch(IOException ex) {
+          Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.connection.error"),
+                                     UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
+          return;
+        }
+        runSnapShooterSession(client, project, dir, view);
+      }));
 
       try {
         ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), snapshotConfiguration).buildAndExecute();
@@ -198,15 +192,13 @@ public class CreateSnapShotAction extends AnAction {
     dlg.show();
     if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       final int id = dlg.getSelectedComponentId();
-      final Ref<Object> result = new Ref<Object>();
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          try {
-            result.set(client.createSnapshot(id));
-          }
-          catch (Exception ex) {
-            result.set(ex);
-          }
+      final Ref<Object> result = new Ref<>();
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        try {
+          result.set(client.createSnapshot(id));
+        }
+        catch (Exception ex) {
+          result.set(ex);
         }
       }, UIDesignerBundle.message("progress.creating.snapshot"), false, project);
 
@@ -222,26 +214,20 @@ public class CreateSnapShotAction extends AnAction {
 
       if (snapshot != null) {
         final String snapshot1 = snapshot;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-              public void run() {
-                try {
-                  PsiFile formFile = PsiFileFactory.getInstance(dir.getProject())
-                    .createFileFromText(dlg.getFormName() + GuiFormFileType.DOT_DEFAULT_EXTENSION, snapshot1);
-                  formFile = (PsiFile)dir.add(formFile);
-                  formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
-                  formFile.getViewProvider().getDocument().setText(snapshot1);
-                  view.selectElement(formFile);
-                }
-                catch (IncorrectOperationException ex) {
-                  Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.save.error", ex.getMessage()),
-                                             UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
-                }
-              }
-            }, "", null);
+        ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+          try {
+            PsiFile formFile = PsiFileFactory.getInstance(dir.getProject())
+              .createFileFromText(dlg.getFormName() + GuiFormFileType.DOT_DEFAULT_EXTENSION, snapshot1);
+            formFile = (PsiFile)dir.add(formFile);
+            formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
+            formFile.getViewProvider().getDocument().setText(snapshot1);
+            view.selectElement(formFile);
           }
-        });
+          catch (IncorrectOperationException ex) {
+            Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.save.error", ex.getMessage()),
+                                       UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
+          }
+        }, "", null));
       }
     }
 
@@ -479,18 +465,16 @@ public class CreateSnapShotAction extends AnAction {
     }
 
     private boolean checkUnknownLayoutManagers(final Project project) {
-      final Set<String> layoutManagerClasses = new TreeSet<String>();
+      final Set<String> layoutManagerClasses = new TreeSet<>();
       final SnapShotRemoteComponent rc = (SnapShotRemoteComponent) myComponentTree.getSelectionPath().getLastPathComponent();
       assert rc != null;
-      final Ref<Exception> err = new Ref<Exception>();
-      Runnable runnable = new Runnable() {
-        public void run() {
-          try {
-            collectUnknownLayoutManagerClasses(project, rc, layoutManagerClasses);
-          }
-          catch (IOException e) {
-            err.set(e);
-          }
+      final Ref<Exception> err = new Ref<>();
+      Runnable runnable = () -> {
+        try {
+          collectUnknownLayoutManagerClasses(project, rc, layoutManagerClasses);
+        }
+        catch (IOException e) {
+          err.set(e);
         }
       };
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,

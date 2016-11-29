@@ -35,8 +35,8 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> keys2;
 
   static {
-    keys1 = new HashMap<IElementType, TextAttributesKey>();
-    keys2 = new HashMap<IElementType, TextAttributesKey>();
+    keys1 = new HashMap<>();
+    keys2 = new HashMap<>();
 
     keys1.put(XmlTokenType.XML_COMMENT_START, XmlHighlighterColors.HTML_COMMENT);
     keys1.put(XmlTokenType.XML_COMMENT_END, XmlHighlighterColors.HTML_COMMENT);

@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 
 public class QueueTest extends TestCase {
   private final Assertion CHECK = new Assertion();
-  private final Queue<String> myQueue = new Queue<String>(1);
+  private final Queue<String> myQueue = new Queue<>(1);
 
   public void testEmpty() {
     assertEquals(0, myQueue.size());
@@ -48,7 +48,7 @@ public class QueueTest extends TestCase {
   }
 
   public void testQuibble() {
-    Queue<String> queue = new Queue<String>(0);
+    Queue<String> queue = new Queue<>(0);
     String xxx = "xxx";
     queue.addLast(xxx);
     CHECK.compareAll(queue.toArray(), new String[] {xxx});
@@ -58,7 +58,7 @@ public class QueueTest extends TestCase {
   }
 
   public void testRemoving() {
-    Queue<Object> queue = new Queue<Object>(10);
+    Queue<Object> queue = new Queue<>(10);
     for (int i = 0; i < 9; i++) {
       queue.addLast(String.valueOf(i));
     }
@@ -78,7 +78,7 @@ public class QueueTest extends TestCase {
   }
 
   public void testSetting() {
-    Queue<Object> queue = new Queue<Object>(10);
+    Queue<Object> queue = new Queue<>(10);
     for (int i = 0; i < 9; i++) {
       queue.addLast(String.valueOf(i));
     }
@@ -102,7 +102,7 @@ public class QueueTest extends TestCase {
 
 
   public void testCycling() {
-    Queue<Object> queue = new Queue<Object>(10);
+    Queue<Object> queue = new Queue<>(10);
     for (int i = 0; i < 9; i++) {
       queue.addLast(String.valueOf(i));
       assertEquals(i+1, queue.size());

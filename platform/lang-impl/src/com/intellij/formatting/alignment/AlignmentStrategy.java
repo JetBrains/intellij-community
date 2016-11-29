@@ -145,7 +145,7 @@ public abstract class AlignmentStrategy {
    */
   private static class SharedAlignmentStrategy extends AlignmentStrategy {
 
-    private final Set<IElementType> myFilterElementTypes = new HashSet<IElementType>();
+    private final Set<IElementType> myFilterElementTypes = new HashSet<>();
 
     private final Alignment myAlignment;
     private final boolean   myIgnoreFilterTypes;
@@ -168,7 +168,7 @@ public abstract class AlignmentStrategy {
    * same types.
    */
   public static class AlignmentPerTypeStrategy extends AlignmentStrategy {
-    private final Map<IElementType, Alignment> myAlignments = new HashMap<IElementType, Alignment>();
+    private final Map<IElementType, Alignment> myAlignments = new HashMap<>();
 
     private final IElementType     myParentType;
     private final boolean          myAllowBackwardShift;

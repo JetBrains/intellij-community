@@ -25,7 +25,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -36,7 +35,6 @@ import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactProperties;
@@ -59,8 +57,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myVendor;
   private String myDescription;
   private String myAppClass;
+  private String myVersion;
   private String myWidth = JavaFxPackagerConstants.DEFAULT_WEIGHT;
   private String myHeight = JavaFxPackagerConstants.DEFAULT_HEIGHT;
+  private String myHtmlTemplateFile;
+  private String myHtmlPlaceholderId;
   private String myHtmlParamFile;
   private String myParamFile;
   private String myUpdateMode = JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND;
@@ -73,7 +74,8 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myKeypass;
   private boolean myConvertCss2Bin;
   private String myNativeBundle = JavaFxPackagerConstants.NativeBundles.none.name();
-  private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<JavaFxManifestAttribute>();
+  private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<>();
+  private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -81,12 +83,8 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       return;
     }
     final Project project = compileContext.getProject();
-    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(new Computable<Set<Module>>() {
-      @Override
-      public Set<Module> compute() {
-        return ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project);
-      }
-    });
+    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(
+      (Computable<Set<Module>>)() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project));
     if (modules.isEmpty()) {
       return;
     }
@@ -167,6 +165,14 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myAppClass = appClass;
   }
 
+  public String getVersion() {
+    return myVersion;
+  }
+
+  public void setVersion(String version) {
+    myVersion = version;
+  }
+
   public String getWidth() {
     return myWidth;
   }
@@ -181,6 +187,22 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
   public void setHeight(String height) {
     myHeight = height;
+  }
+
+  public String getHtmlTemplateFile() {
+    return myHtmlTemplateFile;
+  }
+
+  public void setHtmlTemplateFile(String htmlTemplateFile) {
+    myHtmlTemplateFile = htmlTemplateFile;
+  }
+
+  public String getHtmlPlaceholderId() {
+    return myHtmlPlaceholderId;
+  }
+
+  public void setHtmlPlaceholderId(String htmlPlaceholderId) {
+    myHtmlPlaceholderId = htmlPlaceholderId;
   }
 
   public String getHtmlParamFile() {
@@ -311,6 +333,14 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myCustomManifestAttributes = customManifestAttributes;
   }
 
+  public JavaFxApplicationIcons getIcons() {
+    return myIcons;
+  }
+
+  public void setIcons(JavaFxApplicationIcons icons) {
+    myIcons = icons;
+  }
+
   public static abstract class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -363,6 +393,16 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
 
     @Override
+    protected String getVersion() {
+      return myProperties.getVersion();
+    }
+
+    @Override
+    protected JavaFxApplicationIcons getIcons() {
+      return myProperties.getIcons();
+    }
+
+    @Override
     protected String getWidth() {
       return myProperties.getWidth();
     }
@@ -385,6 +425,16 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     public boolean convertCss2Bin() {
       return myProperties.isConvertCss2Bin();
+    }
+
+    @Override
+    protected String getHtmlTemplateFile() {
+      return myProperties.getHtmlTemplateFile();
+    }
+
+    @Override
+    protected String getHtmlPlaceholderId() {
+      return myProperties.getHtmlPlaceholderId();
     }
 
     @Override

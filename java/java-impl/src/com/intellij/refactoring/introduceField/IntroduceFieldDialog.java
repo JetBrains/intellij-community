@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +141,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 4, 4, 0);
+    gbConstraints.insets = JBUI.insets(4, 4, 4, 0);
     gbConstraints.anchor = GridBagConstraints.EAST;
     gbConstraints.fill = GridBagConstraints.BOTH;
 
@@ -155,12 +156,12 @@ class IntroduceFieldDialog extends DialogWrapper {
     panel.add(type, gbConstraints);
 
     gbConstraints.gridx++;
-    gbConstraints.insets = new Insets(4, 0, 4, 4);
+    gbConstraints.insets = JBUI.insets(4, 0, 4, 4);
     gbConstraints.weightx = 0;
     myTypeSelector = myTypeSelectorManager.getTypeSelector();
     panel.add(myTypeSelector.getComponent(), gbConstraints);
 
-    gbConstraints.insets = new Insets(4, 4, 4, 0);
+    gbConstraints.insets = JBUI.insets(4, 4, 4, 0);
     gbConstraints.gridwidth = 1;
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
@@ -169,7 +170,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     final JLabel namePrompt = new JLabel(RefactoringBundle.message("name.prompt"));
     panel.add(namePrompt, gbConstraints);
 
-    gbConstraints.insets = new Insets(4, 0, 4, 4);
+    gbConstraints.insets = JBUI.insets(4, 0, 4, 4);
     gbConstraints.gridwidth = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridx = 1;

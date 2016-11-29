@@ -77,11 +77,6 @@ public class SplitIfActionTest extends LightCodeInsightTestCase {
   private void perform() throws Exception {
     SplitIfAction action = new SplitIfAction();
     assertTrue(action.isAvailable(getProject(), getEditor(), getFile()));
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        action.invoke(getProject(), getEditor(), getFile());
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> action.invoke(getProject(), getEditor(), getFile()));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ import java.util.List;
 public class UpgradeFormatDialog extends DialogWrapper  {
 
   private ButtonGroup formatGroup = new ButtonGroup();
-  private List<JRadioButton> formatButtons = new ArrayList<JRadioButton>();
+  private List<JRadioButton> formatButtons = new ArrayList<>();
 
   private JBLoadingPanel myLoadingPanel;
 
@@ -113,7 +114,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
 
 
     // top label.
-    gb.insets = new Insets(2, 2, 2, 2);
+    gb.insets = JBUI.insets(2);
     gb.weightx = 1;
     gb.weighty = 0;
     gb.gridwidth = 2;

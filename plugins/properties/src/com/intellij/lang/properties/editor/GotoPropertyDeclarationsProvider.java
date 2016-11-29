@@ -25,11 +25,9 @@ import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -61,15 +59,11 @@ public class GotoPropertyDeclarationsProvider extends GotoRelatedProvider {
     final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(property.getPsiElement().getContainingFile());
     assert file != null;
     final ResourceBundle resourceBundle = file.getResourceBundle();
-    return ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), new NullableFunction<PropertiesFile, GotoRelatedItem>() {
-      @Nullable
-      @Override
-      public GotoRelatedItem fun(PropertiesFile f) {
-        final IProperty foundProperty = f.findPropertyByKey(propertyKey);
-        return foundProperty == null ?
-               null :
-               new GotoRelatedItem(foundProperty.getPsiElement(), "Property Declarations");
-      }
+    return ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), (NullableFunction<PropertiesFile, GotoRelatedItem>)f -> {
+      final IProperty foundProperty = f.findPropertyByKey(propertyKey);
+      return foundProperty == null ?
+             null :
+             new GotoRelatedItem(foundProperty.getPsiElement(), "Property Declarations");
     });
   }
 }

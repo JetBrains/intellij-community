@@ -17,6 +17,7 @@ package git4idea.branch;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -26,7 +27,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import git4idea.*;
+import git4idea.DialogManager;
+import git4idea.GitCommit;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
@@ -47,13 +50,11 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final ProgressIndicator myProgressIndicator;
 
-  public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull ProgressIndicator indicator) {
+  public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myGit = git;
-    myFacade = facade;
     myProgressIndicator = indicator;
   }
 
@@ -90,7 +91,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
               setMergeDescription(String.format("The following files have unresolved conflicts. You need to resolve them before %s.",
                                                 operationName)).
               setErrorNotificationTitle("Unresolved files remain.");
-            new GitConflictResolver(myProject, myGit, myFacade, GitUtil.getRootsFromRepositories(repositories), params).merge();
+            new GitConflictResolver(myProject, myGit, GitUtil.getRootsFromRepositories(repositories), params).merge();
           }
         }
       }
@@ -145,17 +146,14 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull final Map<GitRepository, List<GitCommit>> history,
-                                                  @NotNull final String unmergedBranch, @NotNull final List<String> mergedToBranches,
-                                                  @NotNull final String baseBranch) {
-    final AtomicBoolean forceDelete = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        forceDelete.set(GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, unmergedBranch, mergedToBranches, baseBranch));
-      }
-    });
-    return forceDelete.get();
+  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project,
+                                                  @NotNull Map<GitRepository, List<GitCommit>> history,
+                                                  @NotNull Map<GitRepository, String> baseBranches,
+                                                  @NotNull String removedBranch) {
+    AtomicBoolean restore = new AtomicBoolean();
+    ApplicationManager.getApplication().invokeAndWait(() -> restore.set(
+      GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, baseBranches, removedBranch)));
+    return restore.get();
   }
 
   @NotNull

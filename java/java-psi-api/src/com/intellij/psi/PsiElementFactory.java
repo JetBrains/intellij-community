@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,11 @@ import java.util.Map;
  * Service for creating instances of Java, JavaDoc, JSP and XML PSI elements which don't have
  * an underlying source code file.
  *
- * @see com.intellij.psi.JavaPsiFacade#getElementFactory()
+ * @see JavaPsiFacade#getElementFactory()
  */
 public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactory {
   class SERVICE {
-    private SERVICE() {
-    }
+    private SERVICE() { }
 
     public static PsiElementFactory getInstance(Project project) {
       return ServiceManager.getService(project, PsiElementFactory.class);
@@ -49,7 +48,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param name the name of the class to create.
    * @return the created class instance.
-   * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   * @throws IncorrectOperationException if {@code name} is not a valid Java identifier.
    */
   @Override
   @NotNull PsiClass createClass(@NonNls @NotNull String name) throws IncorrectOperationException;
@@ -59,7 +58,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param name the name of the interface to create.
    * @return the created interface instance.
-   * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   * @throws IncorrectOperationException if {@code name} is not a valid Java identifier.
    */
   @Override
   @NotNull PsiClass createInterface(@NonNls @NotNull String name) throws IncorrectOperationException;
@@ -69,7 +68,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param name the name of the enum to create.
    * @return the created enum instance.
-   * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   * @throws IncorrectOperationException if {@code name} is not a valid Java identifier.
    */
   @Override
   @NotNull PsiClass createEnum(@NotNull @NonNls String name) throws IncorrectOperationException;
@@ -79,7 +78,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param name the name of the annotation type to create.
    * @return the created annotation type instance.
-   * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   * @throws IncorrectOperationException if {@code name} is not a valid Java identifier.
    */
   @Override
   @NotNull
@@ -91,8 +90,8 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param name the name of the field to create.
    * @param type the type of the field to create.
    * @return the created field instance.
-   * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
-   *                                     or <code>type</code> represents an invalid type.
+   * @throws IncorrectOperationException {@code name} is not a valid Java identifier
+   *                                     or {@code type} represents an invalid type.
    */
   @Override
   @NotNull PsiField createField(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException;
@@ -103,8 +102,8 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param name       the name of the method to create.
    * @param returnType the return type of the method to create.
    * @return the created method instance.
-   * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
-   *                                     or <code>type</code> represents an invalid type.
+   * @throws IncorrectOperationException {@code name} is not a valid Java identifier
+   *                                     or {@code type} represents an invalid type.
    */
   @Override
   @NotNull PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType) throws IncorrectOperationException;
@@ -143,8 +142,8 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param name the name of the parameter to create.
    * @param type the type of the parameter to create.
    * @return the created parameter instance.
-   * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
-   *                                     or <code>type</code> represents an invalid type.
+   * @throws IncorrectOperationException {@code name} is not a valid Java identifier
+   *                                     or {@code type} represents an invalid type.
    */
   @Override
   @NotNull PsiParameter createParameter(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException;
@@ -178,12 +177,6 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    */
   @Override
   @NotNull PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel languageLevel);
-
-  @Override
-  @NotNull PsiClassType createType(@NotNull PsiClass resolve,
-                                   @NotNull PsiSubstitutor substitutor,
-                                   @Nullable LanguageLevel languageLevel,
-                                   @NotNull PsiAnnotation[] annotations);
 
   /**
    * Creates a class type for the specified reference pointing to a class.
@@ -221,8 +214,8 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   /**
    * Returns the primitive type instance for the specified type name.
    *
-   * @param text the name of a Java primitive type (for example, <code>int</code>)
-   * @return the primitive type instance, or null if <code>name</code> is not a valid
+   * @param text the name of a Java primitive type (for example, {@code int})
+   * @return the primitive type instance, or null if {@code name} is not a valid
    *         primitive type name.
    */
   @Override
@@ -230,7 +223,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
 
   /**
    * The same as {@link #createTypeByFQClassName(String, GlobalSearchScope)}
-   * with {@link GlobalSearchScope#allScope(com.intellij.openapi.project.Project)}.
+   * with {@link GlobalSearchScope#allScope(Project)}.
    *
    * @param qName the full-qualified name of the class to create the reference to.
    * @return the class type instance.
@@ -299,7 +292,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param aPackage the package to create the reference to.
    * @return the reference element instance.
-   * @throws IncorrectOperationException if <code>aPackage</code> is the default (root) package.
+   * @throws IncorrectOperationException if {@code aPackage} is the default (root) package.
    */
   @NotNull PsiJavaCodeReferenceElement createPackageReferenceElement(@NotNull PsiPackage aPackage) throws IncorrectOperationException;
 
@@ -308,7 +301,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param packageName the name of the package to create the reference to.
    * @return the reference element instance.
-   * @throws IncorrectOperationException if <code>packageName</code> is an empty string.
+   * @throws IncorrectOperationException if {@code packageName} is an empty string.
    */
   @NotNull PsiJavaCodeReferenceElement createPackageReferenceElement(@NotNull String packageName) throws IncorrectOperationException;
 
@@ -326,7 +319,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param aPackage the package to create the reference to.
    * @return the reference expression instance.
-   * @throws IncorrectOperationException if <code>aPackage</code> is the default (root) package.
+   * @throws IncorrectOperationException if {@code aPackage} is the default (root) package.
    */
   @NotNull PsiReferenceExpression createReferenceExpression(@NotNull PsiPackage aPackage) throws IncorrectOperationException;
 
@@ -335,7 +328,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param text the text of the identifier to create.
    * @return the identifier instance.
-   * @throws IncorrectOperationException if <code>text</code> is not a valid Java identifier.
+   * @throws IncorrectOperationException if {@code text} is not a valid Java identifier.
    */
   @NotNull PsiIdentifier createIdentifier(@NotNull @NonNls String text) throws IncorrectOperationException;
 
@@ -344,7 +337,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param keyword the text of the keyword to create.
    * @return the keyword instance.
-   * @throws IncorrectOperationException if <code>text</code> is not a valid Java keyword.
+   * @throws IncorrectOperationException if {@code text} is not a valid Java keyword.
    */
   @NotNull PsiKeyword createKeyword(@NotNull @NonNls String keyword) throws IncorrectOperationException;
   @NotNull PsiKeyword createKeyword(@NotNull @NonNls String keyword, PsiElement context) throws IncorrectOperationException;
@@ -354,7 +347,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param aClass the class to create the import statement for.
    * @return the import statement instance.
-   * @throws IncorrectOperationException if <code>aClass</code> is an anonymous or local class.
+   * @throws IncorrectOperationException if {@code aClass} is an anonymous or local class.
    */
   @NotNull PsiImportStatement createImportStatement(@NotNull PsiClass aClass) throws IncorrectOperationException;
 
@@ -363,7 +356,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param packageName the name of package to create the import statement for.
    * @return the import statement instance.
-   * @throws IncorrectOperationException if <code>packageName</code> is not a valid qualified package name.
+   * @throws IncorrectOperationException if {@code packageName} is not a valid qualified package name.
    */
   @NotNull PsiImportStatement createImportStatementOnDemand(@NotNull @NonNls String packageName) throws IncorrectOperationException;
 
@@ -382,8 +375,8 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param initializer the initializer for the variable.
    * @param context     the context for dummy holder
    * @return the variable instance.
-   * @throws IncorrectOperationException if <code>name</code> is not a valid identifier or
-   *                                     <code>type</code> is not a valid type.
+   * @throws IncorrectOperationException if {@code name} is not a valid identifier or
+   *                                     {@code type} is not a valid type.
    */
   @NotNull PsiDeclarationStatement createVariableDeclarationStatement(@NonNls @NotNull String name, @NotNull PsiType type,
                                                                       @Nullable PsiExpression initializer, @Nullable PsiElement context)
@@ -422,19 +415,19 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    *
    * @param name the name of the package to use in the package statement.
    * @return the created package statement instance.
-   * @throws IncorrectOperationException if <code>name</code> is not a valid package name.
+   * @throws IncorrectOperationException if {@code name} is not a valid package name.
    */
   @NotNull PsiPackageStatement createPackageStatement(@NotNull String name) throws IncorrectOperationException;
 
   /**
-   * Creates an <code>import static</code> statement for importing the specified member
+   * Creates an {@code import static} statement for importing the specified member
    * from the specified class.
    *
    * @param aClass     the class from which the member is imported.
    * @param memberName the name of the member to import.
    * @return the created statement.
    * @throws IncorrectOperationException if the class is inner or local, or
-   *                                     <code>memberName</code> is not a valid identifier.
+   *                                     {@code memberName} is not a valid identifier.
    */
   @NotNull PsiImportStaticStatement createImportStaticStatement(@NotNull PsiClass aClass, @NotNull String memberName) throws IncorrectOperationException;
 
@@ -464,7 +457,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   /**
    * Create a lightweight PsiElement of given element type in a lightweight non-physical PsiFile (aka DummyHolder) in a given context.
    * Element type's language should have a parser definition which supports parsing for this element type (first
-   * parameter in {@link com.intellij.lang.PsiParser#parse(com.intellij.psi.tree.IElementType, com.intellij.lang.PsiBuilder)}.
+   * parameter in {@link com.intellij.lang.PsiParser#parse(IElementType, com.intellij.lang.PsiBuilder)}.
    * @param text text to parse
    * @param type node type
    * @param context context
@@ -474,7 +467,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   PsiElement createDummyHolder(@NotNull String text, @NotNull IElementType type, @Nullable PsiElement context);
 
   /**
-   * Creates a <code>catch</code> section for catching an exception of the specified
+   * Creates a {@code catch} section for catching an exception of the specified
    * type and name.
    *
    * @param exceptionType the type of the exception to catch (either {@linkplain PsiClassType} or {@linkplain PsiDisjunctionType}).

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
- * This class is initialized in two classloaders: the bootstrap classloader and the main IDEA classloader. The bootstrap instance
+ * This class is initialized in two class loaders: the bootstrap classloader and the main IDEA classloader. The bootstrap instance
  * has ourMirrorClass initialized by the Bootstrap class; it calls the main instance of itself via reflection.
  *
  * @author yole
@@ -27,7 +27,7 @@ import java.lang.reflect.Method;
 @SuppressWarnings("UnusedDeclaration")
 public class WindowsCommandLineProcessor {
   // The WindowsCommandLineProcessor class which is loaded in the main IDEA (non-bootstrap) classloader.
-  public static Class ourMirrorClass = null;
+  public static Class<?> ourMirrorClass = null;
 
   public static WindowsCommandLineListener LISTENER = null;
 
@@ -40,12 +40,9 @@ public class WindowsCommandLineProcessor {
         Method method = ourMirrorClass.getMethod("processWindowsLauncherCommandLine", String.class, String.class);
         method.invoke(null, currentDirectory, commandLine);
       }
-      catch (NoSuchMethodException e) {
-      }
-      catch (InvocationTargetException e) {
-      }
-      catch (IllegalAccessException e) {
-      }
+      catch (NoSuchMethodException ignored) { }
+      catch (InvocationTargetException ignored) { }
+      catch (IllegalAccessException ignored) { }
     }
     else {
       if (LISTENER != null) {

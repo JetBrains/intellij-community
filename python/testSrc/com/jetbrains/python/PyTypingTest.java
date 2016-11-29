@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,6 +303,17 @@ public class PyTypingTest extends PyTestCase {
            "    expr = c1, c2\n");
   }
 
+  // PY-19220
+  public void testMultiLineAssignmentComment() {
+    doTest("List[str]", 
+           "from typing import List\n" +
+           "\n" +
+           "expr = [\n" +
+           "    a,\n" +
+           "    b,\n" +
+           "]  # type: List[str]");
+  }
+
   public void testForLoopComment() {
     doTest("int",
            "def foo(xs):\n" +
@@ -451,7 +462,7 @@ public class PyTypingTest extends PyTestCase {
   
   // PY-18254
   public void testFunctionTypeComment() {
-    doTest("(x: int, args: tuple, kwargs: Dict[str, str]) -> List[bool]",
+    doTest("(x: int, args: Tuple[float, ...], kwargs: Dict[str, str]) -> List[bool]",
            "from typing import List\n" +
            "\n" +
            "def f(x, *args, **kwargs):\n" +
@@ -470,6 +481,286 @@ public class PyTypingTest extends PyTestCase {
            "        # type: (int, bool, str) -> bool\n" +
            "        expr = some_int");
 
+  }
+
+  // PY-18726
+  public void testFunctionTypeCommentCallableParameter() {
+    doTest("(bool, str) -> int", 
+           "from typing import Callable\n" +
+           "\n" +
+           "def f(cb):\n" +
+           "    # type: (Callable[[bool, str], int]) -> None\n" +
+           "    expr = cb");
+  }
+
+  // PY-18763  
+  public void testCallableTypeWithEllipsis() {
+    doTest("(...) -> int",
+           "from typing import Callable\n" +
+           "\n" +
+           "expr = unknown() # type: Callable[..., int]");
+  }
+
+  // PY-18763  
+  public void testFunctionTypeCommentCallableParameterWithEllipsis() {
+    doTest("(...) -> int",
+           "from typing import Callable\n" +
+           "\n" +
+           "def f(cb):\n" +
+           "    # type: (Callable[..., int]) -> None\n" +
+           "    expr = cb");
+  }
+
+  // PY-18726
+  public void testFunctionTypeCommentBadCallableParameter1() {
+    doTest("Any",
+           "from typing import Callable, Tuple\n" +
+           "\n" +
+           "def f(cb):\n" +
+           "    # type: (Callable[Tuple[bool, str], int]) -> None\n" +
+           "    expr = cb");
+
+  }
+
+  // PY-18726
+  public void testFunctionTypeCommentBadCallableParameter2() {
+    doTest("Any",
+           "from typing import Callable, Tuple\n" +
+           "\n" +
+           "def f(cb):\n" +
+           "    # type: (Callable[[bool, int], [int]]) -> None\n" +
+           "    expr = cb");
+
+  }
+
+  // PY-18598
+  public void testFunctionTypeCommentEllipsisParameters() {
+   doTest("(x: Any, y: Any, z: Any) -> int", 
+          "def f(x, y=42, z='foo'):\n" +
+          "    # type: (...) -> int \n" +
+          "    pass\n" +
+          "\n" +
+          "expr = f"); 
+  }
+
+  // PY-20421
+  public void testFunctionTypeCommentSingleElementTuple() {
+    doTest("Tuple[int]",
+           "from typing import Tuple\n" +
+           "\n" +
+           "def f():\n" +
+           "    # type: () -> Tuple[int]\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f()");
+  }
+
+  // PY-18762
+  public void testHomogeneousTuple() {
+    doTest("Tuple[int, ...]", 
+           "from typing import Tuple\n" +
+           "\n" +
+           "def f(xs: Tuple[int, ...]):\n" +
+           "    expr = xs");
+  }
+
+  // PY-18762
+  public void testHomogeneousTupleIterationType() {
+    doTest("int",
+           "from typing import Tuple\n" +
+           "\n" +
+           "xs = unknown() # type: Tuple[int, ...]\n" +
+           "\n" +
+           "for x in xs:\n" +
+           "    expr = x");
+  }
+
+  // PY-18762
+  public void testHomogeneousTupleUnpackingTarget() {
+    doTest("int", 
+           "from typing import Tuple\n" +
+           "\n" +
+           "xs = unknown() # type: Tuple[int, ...]\n" +
+           "expr, yx = xs");
+  }
+
+  // PY-18762
+  public void testHomogeneousTupleMultiplication() {
+    doTest("Tuple[int, ...]",
+           "from typing import Tuple\n" +
+           "\n" +
+           "xs = unknown() # type: Tuple[int, ...]\n" +
+           "expr = xs * 42");
+  }
+
+  // PY-18762
+  public void testFunctionTypeCommentHomogeneousTuple() {
+    doTest("Tuple[int, ...]",
+           "from typing import Tuple\n" +
+           "\n" +
+           "def f(xs):\n" +
+           "    # type: (Tuple[int, ...]) -> None\n" +
+           "    expr = xs\n");
+  }
+
+  // PY-18741
+  public void testFunctionTypeCommentWithParamTypeComment() {
+    doTest("(x: int, y: bool, z: Any) -> str",
+           "def f(x, # type: int \n" +
+           "      y # type: bool\n" +
+           "      ,z):\n" +
+           "    # type: (...) -> str\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f");
+  }
+
+  // PY-18877
+  public void testFunctionTypeCommentOnTheSameLine() {
+    doTest("(x: int, y: int) -> None", 
+           "def f(x,\n" +
+           "      y):  # type: (int, int) -> None\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f");
+  }
+  
+  // PY-18386
+  public void testRecursiveType() {
+    doTest("Union[int, Any]",
+           "from typing import Union\n" +
+           "\n" +
+           "Type = Union[int, 'Type']\n" +
+           "expr = 42 # type: Type");
+  }
+
+  // PY-18386
+  public void testRecursiveType2() {
+    doTest("Dict[str, Union[Union[str, int, float], Any]]",
+           "from typing import Dict, Union\n" +
+           "\n" +
+           "JsonDict = Dict[str, Union[str, int, float, 'JsonDict']]\n" +
+           "\n" +
+           "def f(x: JsonDict):\n" +
+           "    expr = x");
+  }
+
+  // PY-18386
+  public void testRecursiveType3() {
+    doTest("Union[Union[str, int], Any]",
+           "from typing import Union\n" +
+           "\n" +
+           "Type1 = Union[str, 'Type2']\n" +
+           "Type2 = Union[int, Type1]\n" +
+           "\n" +
+           "expr = None # type: Type1");
+  }
+
+  // PY-19858
+  public void testGetListItemByIntegral() {
+    doTest("list",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    expr = x[0]\n");
+  }
+
+  // PY-19858
+  public void testGetListItemByIndirectIntegral() {
+    doTest("list",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    y = 0\n" +
+           "    expr = x[y]\n");
+  }
+
+  // PY-19858
+  public void testGetSublistBySlice() {
+    doTest("List[list]",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    expr = x[1:3]\n");
+  }
+
+  // PY-19858
+  public void testGetSublistByIndirectSlice() {
+    doTest("List[list]",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    y = slice(1, 3)\n" +
+           "    expr = x[y]\n");
+  }
+
+  // PY-19858
+  public void testGetListItemByUnknown() {
+    doTest("Union[list, List[list]]",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    expr = x[y]\n");
+  }
+
+  public void testGetListOfListsItemByIntegral() {
+    doTest("Any",
+           "from typing import List\n" +
+           "\n" +
+           "def foo(x: List[List]):\n" +
+           "    sublist = x[0]\n" +
+           "    expr = sublist[0]\n");
+  }
+
+  public void testLocalVariableAnnotation() {
+    doTest("int",
+           "def f():\n" +
+           "    x: int = undefined()\n" +
+           "    expr = x");
+  }
+
+  public void testInstanceAttributeAnnotation() {
+    doTest("int",
+           "class C:\n" +
+           "    attr: int\n" +
+           "    \n" +
+           "expr = C().attr");
+  }
+
+  public void testIllegalAnnotationTargets() {
+    doTest("Tuple[Any, int, Any, Any]", 
+           "(w, _): Tuple[int, Any]\n" +
+           "((x)): int\n" +
+           "y: bool = z = undefined()\n" +
+           "expr = (w, x, y, z)\n");
+  }
+
+  // PY-19723
+  public void testAnnotatedPositionalArgs() {
+    doTest("Tuple[str, ...]",
+           "def foo(*args: str):\n" +
+           "    expr = args\n");
+  }
+
+  // PY-19723
+  public void testAnnotatedKeywordArgs() {
+    doTest("Dict[str, int]",
+           "def foo(**kwargs: int):\n" +
+           "    expr = kwargs\n");
+  }
+
+  // PY-19723
+  public void testTypeCommentedPositionalArgs() {
+    doTest("Tuple[str, ...]",
+           "def foo(*args  # type: str\n):\n" +
+           "    expr = args\n");
+  }
+
+  // PY-19723
+  public void testTypeCommentedKeywordArgs() {
+    doTest("Dict[str, int]",
+           "def foo(**kwargs  # type: int\n):\n" +
+           "    expr = kwargs\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

@@ -187,7 +187,7 @@ public class ManifestFileUtil {
         updatedClasspath = classpath;
       }
       else {
-        updatedClasspath = new ArrayList<String>();
+        updatedClasspath = new ArrayList<>();
         final String oldClasspath = (String)mainAttributes.get(Attributes.Name.CLASS_PATH);
         if (!StringUtil.isEmpty(oldClasspath)) {
           updatedClasspath.addAll(StringUtil.split(oldClasspath, " "));
@@ -206,21 +206,18 @@ public class ManifestFileUtil {
 
     ManifestBuilder.setVersionAttribute(mainAttributes);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        final OutputStream outputStream = file.getOutputStream(ManifestFileUtil.class);
         try {
-          final OutputStream outputStream = file.getOutputStream(ManifestFileUtil.class);
-          try {
-            manifest.write(outputStream);
-          }
-          finally {
-            outputStream.close();
-          }
+          manifest.write(outputStream);
         }
-        catch (IOException e) {
-          LOG.info(e);
+        finally {
+          outputStream.close();
         }
+      }
+      catch (IOException e) {
+        LOG.info(e);
       }
     });
   }
@@ -231,7 +228,7 @@ public class ManifestFileUtil {
     Manifest manifest = readManifest(manifestFile);
     String mainClass = manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
     final String classpathText = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-    final List<String> classpath = new ArrayList<String>();
+    final List<String> classpath = new ArrayList<>();
     if (classpathText != null) {
       classpath.addAll(StringUtil.split(classpathText, " "));
     }
@@ -239,7 +236,7 @@ public class ManifestFileUtil {
   }
 
   public static List<String> getClasspathForElements(List<? extends PackagingElement<?>> elements, PackagingElementResolvingContext context, final ArtifactType artifactType) {
-    final List<String> classpath = new ArrayList<String>();
+    final List<String> classpath = new ArrayList<>();
     final PackagingElementProcessor<PackagingElement<?>> processor = new PackagingElementProcessor<PackagingElement<?>>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
@@ -321,12 +318,10 @@ public class ManifestFileUtil {
 
   public static void addManifestFileToLayout(final @NotNull String path, final @NotNull ArtifactEditorContext context,
                                              final @NotNull CompositePackagingElement<?> element) {
-    context.editLayout(context.getArtifact(), new Runnable() {
-      public void run() {
-        final VirtualFile file = findManifestFile(element, context, context.getArtifactType());
-        if (file == null || !FileUtil.pathsEqual(file.getPath(), path)) {
-          PackagingElementFactory.getInstance().addFileCopy(element, MANIFEST_DIR_NAME, path, MANIFEST_FILE_NAME);
-        }
+    context.editLayout(context.getArtifact(), () -> {
+      final VirtualFile file = findManifestFile(element, context, context.getArtifactType());
+      if (file == null || !FileUtil.pathsEqual(file.getPath(), path)) {
+        PackagingElementFactory.getInstance().addFileCopy(element, MANIFEST_DIR_NAME, path, MANIFEST_FILE_NAME);
       }
     });
   }

@@ -6,4 +6,4 @@ def result():
     pass
 
 
-function(result<arg1>(), result())
+function(result(<arg1>), result())

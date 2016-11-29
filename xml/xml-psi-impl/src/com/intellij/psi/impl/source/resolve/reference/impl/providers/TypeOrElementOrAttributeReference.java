@@ -143,7 +143,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
         case ElementReference: {
           XmlElementDescriptor descriptor = nsDescriptor.getElementDescriptor(
             XmlUtil.findLocalNameByQualifiedName(canonicalText), getNamespace(tag, canonicalText),
-            new HashSet<XmlNSDescriptorImpl>(),
+            new HashSet<>(),
             true
           );
 
@@ -222,15 +222,12 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
 
       URLReference.processWsdlSchemas(
         document.getRootTag(),
-        new Processor<XmlTag>() {
-          @Override
-          public boolean process(final XmlTag xmlTag) {
-            if (namespace.equals(xmlTag.getAttributeValue(TARGET_NAMESPACE))) {
-              descrs[0] = (XmlNSDescriptor)xmlTag.getMetaData();
-              return false;
-            }
-            return true;
+        xmlTag -> {
+          if (namespace.equals(xmlTag.getAttributeValue(TARGET_NAMESPACE))) {
+            descrs[0] = (XmlNSDescriptor)xmlTag.getMetaData();
+            return false;
           }
+          return true;
         }
       );
 
@@ -382,7 +379,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
   }
 
   private static class CompletionProcessor implements PsiElementProcessor<XmlTag> {
-    final List<String> myElements = new ArrayList<String>(1);
+    final List<String> myElements = new ArrayList<>(1);
     String namespace;
     final XmlTag tag;
     private final String prefix;

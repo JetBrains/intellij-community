@@ -15,11 +15,11 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
-import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -37,9 +37,15 @@ import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.basic.BasicScrollPaneUI;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.awt.image.*;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.lang.reflect.Field;
+
+import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBScrollPane extends JScrollPane {
   /**
@@ -53,25 +59,20 @@ public class JBScrollPane extends JScrollPane {
   public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
 
   @Deprecated
-  public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
+  public static final RegionPainter<Float> THUMB_PAINTER = ScrollPainter.EditorThumb.DEFAULT;
 
   @Deprecated
-  public static final RegionPainter<Float> TRACK_DARK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
+  public static final RegionPainter<Float> THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.DARCULA;
 
   @Deprecated
-  public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(new SubtractThumbPainter(.20f, .15f, Gray.x80, Gray.x91),
-                                                                                new ThumbPainter(.7f, .2f, Gray.x99, Gray.x8C));
-  @Deprecated
-  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94);
+  public static final RegionPainter<Float> MAC_THUMB_PAINTER = ScrollPainter.EditorThumb.Mac.DEFAULT;
 
   @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new RoundThumbPainter(2, .5f, .4f, Gray.x99);
+  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.Mac.DARCULA;
 
-  @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .15f, .25f, Gray.x80);
+  private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
   private int myViewportBorderWidth = -1;
-  private boolean myHasOverlayScrollbars;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
 
   public JBScrollPane(int viewportWidth) {
@@ -147,7 +148,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private void init(boolean setupCorners) {
-    setLayout(Registry.is("ide.scroll.new.layout") ? new Layout() : new ScrollPaneLayout());
+    setLayout(new Layout());
 
     if (setupCorners) {
       setupCorners();
@@ -166,15 +167,41 @@ public class JBScrollPane extends JScrollPane {
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
     updateViewportBorder();
+    if (ui instanceof BasicScrollPaneUI) {
+      try {
+        Field field = BasicScrollPaneUI.class.getDeclaredField("mouseScrollListener");
+        field.setAccessible(true);
+        Object value = field.get(ui);
+        if (value instanceof MouseWheelListener) {
+          MouseWheelListener oldListener = (MouseWheelListener)value;
+          MouseWheelListener newListener = event -> {
+            if (isScrollEvent(event)) {
+              Object source = event.getSource();
+              if (source instanceof JScrollPane) {
+                JScrollPane pane = (JScrollPane)source;
+                if (pane.isWheelScrollingEnabled()) {
+                  JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
+                  if (bar != null && bar.isVisible()) oldListener.mouseWheelMoved(event);
+                }
+              }
+            }
+          };
+          field.set(ui, newListener);
+          // replace listener if field updated successfully
+          removeMouseWheelListener(oldListener);
+          addMouseWheelListener(newListener);
+        }
+      }
+      catch (Exception exception) {
+        LOG.warn(exception);
+      }
+    }
   }
 
   @Override
   public boolean isOptimizedDrawingEnabled() {
-    if (getLayout() instanceof Layout) {
-      return isOptimizedDrawingEnabledFor(getVerticalScrollBar()) &&
-             isOptimizedDrawingEnabledFor(getHorizontalScrollBar());
-    }
-    return !myHasOverlayScrollbars;
+    return isOptimizedDrawingEnabledFor(getVerticalScrollBar()) &&
+           isOptimizedDrawingEnabledFor(getHorizontalScrollBar());
   }
 
   /**
@@ -211,112 +238,10 @@ public class JBScrollPane extends JScrollPane {
     return new JBViewport();
   }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  public void layout() {
-    LayoutManager layout = getLayout();
-    ScrollPaneLayout scrollLayout = layout instanceof ScrollPaneLayout ? (ScrollPaneLayout)layout : null;
-
-    // Now we let JScrollPane layout everything as necessary
-    super.layout();
-
-    if (layout instanceof Layout) return;
-
-    if (scrollLayout != null) {
-      // Now it's time to jump in and expand the viewport so it fits the whole area
-      // (taking into consideration corners, headers and other stuff).
-      myHasOverlayScrollbars = relayoutScrollbars(
-        this, scrollLayout,
-        myHasOverlayScrollbars // If last time we did relayouting, we should restore it back.
-      );
-    }
-    else {
-      myHasOverlayScrollbars = false;
-    }
-  }
-
-  private boolean relayoutScrollbars(@NotNull JComponent container, @NotNull ScrollPaneLayout layout, boolean forceRelayout) {
-    JViewport viewport = layout.getViewport();
-    if (viewport == null) return false;
-
-    JScrollBar vsb = layout.getVerticalScrollBar();
-    JScrollBar hsb = layout.getHorizontalScrollBar();
-    JViewport colHead = layout.getColumnHeader();
-    JViewport rowHead = layout.getRowHeader();
-
-    Rectangle viewportBounds = viewport.getBounds();
-
-    boolean extendViewportUnderVScrollbar = vsb != null && shouldExtendViewportUnderScrollbar(vsb);
-    boolean extendViewportUnderHScrollbar = hsb != null && shouldExtendViewportUnderScrollbar(hsb);
-    boolean hasOverlayScrollbars = extendViewportUnderVScrollbar || extendViewportUnderHScrollbar;
-
-    if (!hasOverlayScrollbars && !forceRelayout) return false;
-
-    container.setComponentZOrder(viewport, container.getComponentCount() - 1);
-    if (vsb != null) container.setComponentZOrder(vsb, 0);
-    if (hsb != null) container.setComponentZOrder(hsb, 0);
-
-    if (extendViewportUnderVScrollbar) {
-      int x2 = Math.max(vsb.getX() + vsb.getWidth(), viewportBounds.x + viewportBounds.width);
-      viewportBounds.x = Math.min(viewportBounds.x, vsb.getX());
-      viewportBounds.width = x2 - viewportBounds.x;
-    }
-    if (extendViewportUnderHScrollbar) {
-      int y2 = Math.max(hsb.getY() + hsb.getHeight(), viewportBounds.y + viewportBounds.height);
-      viewportBounds.y = Math.min(viewportBounds.y, hsb.getY());
-      viewportBounds.height = y2 - viewportBounds.y;
-    }
-
-    if (extendViewportUnderVScrollbar) {
-      if (hsb != null) {
-        Rectangle scrollbarBounds = hsb.getBounds();
-        scrollbarBounds.width = viewportBounds.x + viewportBounds.width - scrollbarBounds.x;
-        hsb.setBounds(scrollbarBounds);
-      }
-      if (colHead != null) {
-        Rectangle headerBounds = colHead.getBounds();
-        headerBounds.width = viewportBounds.width;
-        colHead.setBounds(headerBounds);
-      }
-      hideFromView(layout.getCorner(UPPER_RIGHT_CORNER));
-      hideFromView(layout.getCorner(LOWER_RIGHT_CORNER));
-    }
-    if (extendViewportUnderHScrollbar) {
-      if (vsb != null) {
-        Rectangle scrollbarBounds = vsb.getBounds();
-        scrollbarBounds.height = viewportBounds.y + viewportBounds.height - scrollbarBounds.y;
-        vsb.setBounds(scrollbarBounds);
-      }
-      if (rowHead != null) {
-        Rectangle headerBounds = rowHead.getBounds();
-        headerBounds.height = viewportBounds.height;
-        rowHead.setBounds(headerBounds);
-      }
-
-      hideFromView(layout.getCorner(LOWER_LEFT_CORNER));
-      hideFromView(layout.getCorner(LOWER_RIGHT_CORNER));
-    }
-
-    viewport.setBounds(viewportBounds);
-
-    return hasOverlayScrollbars;
-  }
-
-  private boolean shouldExtendViewportUnderScrollbar(@Nullable JScrollBar scrollbar) {
-    if (scrollbar == null || !scrollbar.isVisible()) return false;
-    return isOverlaidScrollbar(scrollbar);
-  }
-
+  @Deprecated
   protected boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
-    if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return false;
-
     ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
-  }
-
-  private static void hideFromView(Component component) {
-    if (component == null) return;
-    component.setBounds(-10, -10, 1, 1);
   }
 
   private class MyScrollBar extends ScrollBar implements IdeGlassPane.TopComponent {
@@ -335,6 +260,33 @@ public class JBScrollPane extends JScrollPane {
     public boolean canBePreprocessed(MouseEvent e) {
       return JBScrollPane.canBePreprocessed(e, this);
     }
+
+    @Override
+    public int getUnitIncrement() {
+      return fixUnitIncrement(super.getUnitIncrement());
+    }
+
+    @Override
+    public int getUnitIncrement(int direction) {
+      return fixUnitIncrement(super.getUnitIncrement(direction));
+    }
+
+    // increases default unit increment for non-scrollable components to provide fast scrolling
+    private int fixUnitIncrement(int increment) {
+      if (increment != 1 || Registry.is("ide.scroll.default.unit.increment")) return increment;
+
+      JViewport viewport = getViewport();
+      if (viewport == null) return increment;
+
+      Component view = viewport.getView();
+      if (view == null) return increment;
+      if (view instanceof Scrollable) {
+        if (Adjustable.VERTICAL == getOrientation()) return increment;
+        if (view instanceof JTable) return increment;
+      }
+      Font font = view.getFont();
+      return font == null ? increment : font.getSize();
+    }
   }
 
 
@@ -352,6 +304,12 @@ public class JBScrollPane extends JScrollPane {
           return true;
         }
       }
+      else if (ui instanceof DefaultScrollBarUI) {
+        DefaultScrollBarUI dui = (DefaultScrollBarUI)ui;
+        Point point = e.getLocationOnScreen();
+        SwingUtilities.convertPointFromScreen(point, bar);
+        return !dui.isThumbContains(point.x, point.y);
+      }
     }
     return true;
   }
@@ -361,32 +319,14 @@ public class JBScrollPane extends JScrollPane {
 
     public Corner(String pos) {
       myPos = pos;
+      ScrollColorProducer.setBackground(this);
+      ScrollColorProducer.setForeground(this);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(ButtonlessScrollBarUI.getTrackBackgroundDefault());
+      g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
-
-      g.setColor(ButtonlessScrollBarUI.getTrackBorderColorDefault());
-
-      int x2 = getWidth() - 1;
-      int y2 = getHeight() - 1;
-
-      if (myPos == UPPER_LEFT_CORNER || myPos == UPPER_RIGHT_CORNER) {
-        g.drawLine(0, y2, x2, y2);
-      }
-      if (myPos == LOWER_LEFT_CORNER || myPos == LOWER_RIGHT_CORNER) {
-        g.drawLine(0, 0, x2, 0);
-      }
-
-      if (myPos == UPPER_LEFT_CORNER || myPos == LOWER_LEFT_CORNER) {
-        g.drawLine(x2, 0, x2, y2);
-      }
-
-      if (myPos == UPPER_RIGHT_CORNER || myPos == LOWER_RIGHT_CORNER) {
-        g.drawLine(0, 0, 0, y2);
-      }
     }
   }
 
@@ -446,6 +386,19 @@ public class JBScrollPane extends JScrollPane {
             return ltr ? LEFT : RIGHT;
           }
         }
+        // assume alignment for a scroll bar,
+        // which is not contained in a scroll pane
+        if (component instanceof JScrollBar) {
+          JScrollBar bar = (JScrollBar)component;
+          switch (bar.getOrientation()) {
+            case Adjustable.HORIZONTAL:
+              return BOTTOM;
+            case Adjustable.VERTICAL:
+              return bar.getComponentOrientation().isLeftToRight()
+                     ? RIGHT
+                     : LEFT;
+          }
+        }
       }
       return null;
     }
@@ -456,7 +409,7 @@ public class JBScrollPane extends JScrollPane {
    * ScrollBar flipping and non-opaque ScrollBars.
    */
   private static class Layout extends ScrollPaneLayout {
-    private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
+    private static final Insets EMPTY_INSETS = emptyInsets();
 
     @Override
     public void layoutContainer(Container parent) {
@@ -512,6 +465,9 @@ public class JBScrollPane extends JScrollPane {
       boolean isEmpty = bounds.width < 0 || bounds.height < 0;
       Component view = viewport == null ? null : viewport.getView();
       Dimension viewPreferredSize = view == null ? new Dimension() : view.getPreferredSize();
+      if (view instanceof JComponent && !view.isPreferredSizeSet()) {
+        JBInsets.removeFrom(viewPreferredSize, JBViewport.getViewInsets((JComponent)view));
+      }
       Dimension viewportExtentSize = viewport == null ? new Dimension() : viewport.toViewCoordinates(bounds.getSize());
       // If the view is tracking the viewports width we don't bother with a horizontal scrollbar.
       // If the view is tracking the viewports height we don't bother with a vertical scrollbar.
@@ -525,6 +481,10 @@ public class JBScrollPane extends JScrollPane {
         viewTracksViewportWidth = scrollable.getScrollableTracksViewportWidth();
         viewTracksViewportHeight = scrollable.getScrollableTracksViewportHeight();
       }
+      // workaround for installed JBViewport.ViewBorder:
+      // do not hide scroll bars if view is not aligned
+      Point viewLocation = new Point();
+      if (view != null) viewLocation = view.getLocation(viewLocation);
       // If there's a vertical scroll bar and we need one, allocate space for it.
       // A vertical scroll bar is considered to be fixed width, arbitrary height.
       boolean vsbOpaque = false;
@@ -532,7 +492,7 @@ public class JBScrollPane extends JScrollPane {
       int vsbPolicy = pane.getVerticalScrollBarPolicy();
       if (!isEmpty && vsbPolicy != VERTICAL_SCROLLBAR_NEVER) {
         vsbNeeded = vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS
-                    || !viewTracksViewportHeight && viewPreferredSize.height > viewportExtentSize.height;
+                    || !viewTracksViewportHeight && (viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0);
       }
       Rectangle vsbBounds = new Rectangle(0, bounds.y - insets.top, 0, 0);
       if (vsb != null) {
@@ -552,7 +512,7 @@ public class JBScrollPane extends JScrollPane {
       int hsbPolicy = pane.getHorizontalScrollBarPolicy();
       if (!isEmpty && hsbPolicy != HORIZONTAL_SCROLLBAR_NEVER) {
         hsbNeeded = hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS
-                    || !viewTracksViewportWidth && viewPreferredSize.width > viewportExtentSize.width;
+                    || !viewTracksViewportWidth && (viewPreferredSize.width > viewportExtentSize.width || viewLocation.x != 0);
       }
       Rectangle hsbBounds = new Rectangle(bounds.x - insets.left, 0, 0, 0);
       if (hsb != null) {
@@ -565,7 +525,7 @@ public class JBScrollPane extends JScrollPane {
             // we may have to add the vertical scrollbar, if that hasn't been done so already.
             if (vsb != null && !vsbNeeded && vsbPolicy != VERTICAL_SCROLLBAR_NEVER) {
               viewportExtentSize = viewport.toViewCoordinates(bounds.getSize());
-              vsbNeeded = viewPreferredSize.height > viewportExtentSize.height;
+              vsbNeeded = viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0;
               if (vsbNeeded) adjustForVSB(bounds, insets, vsbBounds, vsbOpaque, vsbOnLeft);
             }
           }
@@ -583,7 +543,7 @@ public class JBScrollPane extends JScrollPane {
 
           boolean vsbNeededOld = vsbNeeded;
           if (vsb != null && vsbPolicy == VERTICAL_SCROLLBAR_AS_NEEDED) {
-            boolean vsbNeededNew = !viewTracksViewportHeight && viewPreferredSize.height > viewportExtentSize.height;
+            boolean vsbNeededNew = !viewTracksViewportHeight && viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0;
             if (vsbNeeded != vsbNeededNew) {
               vsbNeeded = vsbNeededNew;
               if (vsbNeeded) {
@@ -597,7 +557,7 @@ public class JBScrollPane extends JScrollPane {
           }
           boolean hsbNeededOld = hsbNeeded;
           if (hsb != null && hsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
-            boolean hsbNeededNew = !viewTracksViewportWidth && viewPreferredSize.width > viewportExtentSize.width;
+            boolean hsbNeededNew = !viewTracksViewportWidth && viewPreferredSize.width > viewportExtentSize.width || viewLocation.x != 0;
             if (hsbNeeded != hsbNeededNew) {
               hsbNeeded = hsbNeededNew;
               if (hsbNeeded) {
@@ -608,7 +568,7 @@ public class JBScrollPane extends JScrollPane {
               }
               if (hsbOpaque && vsb != null && !vsbNeeded && vsbPolicy != VERTICAL_SCROLLBAR_NEVER) {
                 viewportExtentSize = viewport.toViewCoordinates(bounds.getSize());
-                vsbNeeded = viewPreferredSize.height > viewportExtentSize.height;
+                vsbNeeded = viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0;
                 if (vsbNeeded) adjustForVSB(bounds, insets, vsbBounds, vsbOpaque, vsbOnLeft);
               }
             }
@@ -735,7 +695,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     private void adjustForVSB(Rectangle bounds, Insets insets, Rectangle vsbBounds, boolean vsbOpaque, boolean vsbOnLeft) {
-      vsbBounds.width = min(bounds.width, vsb.getPreferredSize().width);
+      vsbBounds.width = !vsb.isEnabled() ? 0 : min(bounds.width, vsb.getPreferredSize().width);
       if (vsbOnLeft) {
         vsbBounds.x = bounds.x - insets.left/* + vsbBounds.width*/;
         if (vsbOpaque) bounds.x += vsbBounds.width;
@@ -747,7 +707,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     private void adjustForHSB(Rectangle bounds, Insets insets, Rectangle hsbBounds, boolean hsbOpaque, boolean hsbOnTop) {
-      hsbBounds.height = min(bounds.height, hsb.getPreferredSize().height);
+      hsbBounds.height = !hsb.isEnabled() ? 0 : min(bounds.height, hsb.getPreferredSize().height);
       if (hsbOnTop) {
         hsbBounds.y = bounds.y - insets.top/* + hsbBounds.height*/;
         if (hsbOpaque) bounds.y += hsbBounds.height;
@@ -763,170 +723,19 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  private static class ProtectedPainter implements RegionPainter<Float> {
-    private RegionPainter<Float> myPainter;
-    private RegionPainter<Float> myFallback;
-
-    public ProtectedPainter(RegionPainter<Float> painter, RegionPainter<Float> fallback) {
-      myPainter = painter;
-      myFallback = fallback;
-    }
-
-    @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
-      RegionPainter<Float> painter = myFallback;
-      if (myPainter != null) {
-        try {
-          myPainter.paint(g, x, y, width, height, value);
-          return;
-        }
-        catch (Throwable exception) {
-          // do not try to use myPainter again on other systems
-          if (!SystemInfo.isWindows) myPainter = null;
-        }
-      }
-      if (painter != null) {
-        painter.paint(g, x, y, width, height, value);
-      }
-    }
+  /**
+   * Indicates whether the specified event is not consumed and does not have unexpected modifiers.
+   *
+   * @param event a mouse wheel event to check for validity
+   * @return {@code true} if the specified event is valid, {@code false} otherwise
+   */
+  public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
+    if (event.isConsumed()) return false; // event should not be consumed already
+    if (event.getWheelRotation() == 0) return false; // any rotation expected (forward or backward)
+    return 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }
 
-  private static class AlphaPainter extends RegionPainter.Alpha {
-    private final float myBase;
-    private final float myDelta;
-    final Color myFillColor;
-
-    private AlphaPainter(float base, float delta, Color fill) {
-      myBase = base;
-      myDelta = delta;
-      myFillColor = fill;
-    }
-
-    @Override
-    protected void paint(Graphics2D g, int x, int y, int width, int height) {
-      g.setColor(myFillColor);
-      g.fillRect(x, y, width, height);
-    }
-
-    @Override
-    protected float getAlpha(Float value) {
-      return value != null ? myBase + myDelta * value : 0;
-    }
-  }
-
-  private static class RoundThumbPainter extends AlphaPainter {
-    private final int myBorder;
-
-    private RoundThumbPainter(int border, float base, float delta, Color fill) {
-      super(base, delta, fill);
-      myBorder = border;
-    }
-
-    @Override
-    protected void paint(Graphics2D g, int x, int y, int width, int height) {
-      Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-      width -= myBorder + myBorder;
-      height -= myBorder + myBorder;
-
-      int arc = Math.min(width, height);
-      g.setColor(myFillColor);
-      g.fillRoundRect(x + myBorder, y + myBorder, width, height, arc, arc);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
-    }
-  }
-
-  private static class ThumbPainter extends AlphaPainter {
-    private final Color myDrawColor;
-
-    private ThumbPainter(float base, float delta, Color fill, Color draw) {
-      super(base, delta, fill);
-      myDrawColor = draw;
-    }
-
-    @Override
-    protected void paint(Graphics2D g, int x, int y, int width, int height) {
-      super.paint(g, x + 1, y + 1, width - 2, height - 2);
-      g.setColor(myDrawColor);
-      if (Registry.is("ide.scroll.thumb.border.rounded")) {
-        g.drawLine(x + 1, y, x + width - 2, y);
-        g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
-        g.drawLine(x, y + 1, x, y + height - 2);
-        g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
-      }
-      else {
-        g.drawRect(x, y, width - 1, height - 1);
-      }
-    }
-  }
-
-  private static class SubtractThumbPainter extends ThumbPainter {
-    public SubtractThumbPainter(float base, float delta, Color fill, Color draw) {
-      super(base, delta, fill, draw);
-    }
-
-    @Override
-    protected Composite getComposite(float alpha) {
-      return alpha < 1
-             ? new SubtractComposite(alpha)
-             : AlphaComposite.SrcOver;
-    }
-  }
-
-  private static class SubtractComposite implements Composite, CompositeContext {
-    private final float myAlpha;
-
-    private SubtractComposite(float alpha) {
-      myAlpha = alpha;
-    }
-
-    private int subtract(int newValue, int oldValue) {
-      float value = (oldValue & 0xFF) - (newValue & 0xFF) * myAlpha;
-      return value <= 0 ? 0 : (int)value;
-    }
-
-    @Override
-    public CompositeContext createContext(ColorModel src, ColorModel dst, RenderingHints hints) {
-      return isValid(src) && isValid(dst) ? this : AlphaComposite.SrcOver.derive(myAlpha).createContext(src, dst, hints);
-    }
-
-    private static boolean isValid(ColorModel model) {
-      if (model instanceof DirectColorModel && DataBuffer.TYPE_INT == model.getTransferType()) {
-        DirectColorModel dcm = (DirectColorModel)model;
-        if (0x00FF0000 == dcm.getRedMask() && 0x0000FF00 == dcm.getGreenMask() && 0x000000FF == dcm.getBlueMask()) {
-          return 4 != dcm.getNumComponents() || 0xFF000000 == dcm.getAlphaMask();
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public void compose(Raster srcIn, Raster dstIn, WritableRaster dstOut) {
-      int width = Math.min(srcIn.getWidth(), dstIn.getWidth());
-      int height = Math.min(srcIn.getHeight(), dstIn.getHeight());
-
-      int[] srcPixels = new int[width];
-      int[] dstPixels = new int[width];
-
-      for (int y = 0; y < height; y++) {
-        srcIn.getDataElements(0, y, width, 1, srcPixels);
-        dstIn.getDataElements(0, y, width, 1, dstPixels);
-        for (int x = 0; x < width; x++) {
-          int src = srcPixels[x];
-          int dst = dstPixels[x];
-          int a = subtract(src >> 24, dst >> 24) << 24;
-          int r = subtract(src >> 16, dst >> 16) << 16;
-          int g = subtract(src >> 8, dst >> 8) << 8;
-          int b = subtract(src, dst);
-          dstPixels[x] = a | r | g | b;
-        }
-        dstOut.setDataElements(0, y, width, 1, dstPixels);
-      }
-    }
-
-    @Override
-    public void dispose() {
-    }
-  }
+  private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
+    ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
+    ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
 }

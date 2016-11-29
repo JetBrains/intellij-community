@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -34,7 +33,7 @@ import java.util.List;
 /**
  * User: ktisha
  */
-public class PyConvertStaticMethodToFunctionIntention extends BaseIntentionAction {
+public class PyConvertStaticMethodToFunctionIntention extends PyBaseIntentionAction {
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.convert.static.method.to.function");
@@ -62,7 +61,7 @@ public class PyConvertStaticMethodToFunctionIntention extends BaseIntentionActio
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     PyFunction problemFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (problemFunction == null) return;

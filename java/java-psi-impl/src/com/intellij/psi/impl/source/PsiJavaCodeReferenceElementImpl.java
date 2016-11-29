@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference {
+public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiAnnotatedJavaCodeReferenceElement, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
 
-  private volatile String myCachedQName = null;
+  private volatile String myCachedQName;
   private volatile String myCachedNormalizedText;
   private volatile int myKindWhenDummy = CLASS_NAME_KIND;
 
@@ -134,7 +134,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return CLASS_OR_PACKAGE_NAME_KIND; // incomplete code
       }
     }
-    if (i == JavaElementType.PACKAGE_STATEMENT) {
+    if (i == JavaElementType.PACKAGE_STATEMENT || i == JavaElementType.EXPORTS_STATEMENT) {
       return PACKAGE_NAME_KIND;
     }
     if (i == JavaElementType.IMPORT_STATEMENT) {
@@ -174,6 +174,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (isCodeFragmentType(i)) {
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)treeParent.getPsi();
       return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
+    }
+    if (i == JavaElementType.USES_STATEMENT || i == JavaElementType.PROVIDES_STATEMENT) {
+      return CLASS_FQ_NAME_KIND;
     }
 
     diagnoseUnknownParent();
@@ -263,7 +266,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @NotNull
-  public String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations, @NotNull PsiFile containingFile) {
+  @Override
+  public String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations) {
+    return getCanonicalText(annotated, annotations, getContainingFile());
+  }
+
+  @NotNull
+  private String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations, @NotNull PsiFile containingFile) {
     switch (getKind(containingFile)) {
       case CLASS_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND:
@@ -383,7 +392,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private JavaResolveResult[] resolve(final int kind, @NotNull PsiFile containingFile) {
     switch (kind) {
       case CLASS_FQ_NAME_KIND: {
-        // TODO: support type parameters in FQ names
         String text = getNormalizedText();
         if (StringUtil.isEmptyOrSpaces(text)) return JavaResolveResult.EMPTY_ARRAY;
 
@@ -456,6 +464,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND: {
         int classKind = kind == CLASS_OR_PACKAGE_NAME_KIND ? CLASS_NAME_KIND : CLASS_FQ_NAME_KIND;
+
+        //A single-type-import declaration d in a compilation unit c of package p that imports a type named n shadows, throughout c, the declarations of:
+        //any top level type named n declared in another compilation unit of p
+        if (PsiTreeUtil.getParentOfType(this, PsiImportStatementBase.class) != null) {
+          JavaResolveResult[] result = resolve(PACKAGE_NAME_KIND, containingFile);
+          return result.length == 0 ? resolve(classKind, containingFile) : result;
+        }
+
         JavaResolveResult[] result = resolve(classKind, containingFile);
 
         if (result.length == 1 && !result[0].isAccessible()) {
@@ -551,6 +567,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     if (qName == null) {
       qName = aClass.getName();
+      assert qName != null : aClass;
       PsiClass psiClass = facade.getResolveHelper().resolveReferencedClass(qName, this);
       if (!getManager().areElementsEquivalent(psiClass, aClass)) {
         throw cannotBindError(aClass);
@@ -560,7 +577,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return this;
     }
 
-    List<PsiAnnotation> annotations = getAnnotations();
     String text = qName;
     PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList != null) {
@@ -575,7 +591,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       throw new IncorrectOperationException(e.getMessage() + " [qname=" + qName + " class=" + aClass + ";" + aClass.getClass().getName() + "]");
     }
 
-    ((PsiJavaCodeReferenceElementImpl)ref).setAnnotations(annotations);
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
 
     if (!preserveQualification) {
@@ -707,7 +722,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
         if (element instanceof PsiClass) {
           final String qName = ((PsiClass)element).getQualifiedName();
-          return qName != null && qName.equals(getCanonicalText(false, null, containingFile));
+          if (qName != null && qName.equals(getCanonicalText(false, null, containingFile))) {
+            return !PsiUtil.isFromDefaultPackage((PsiClass)element) ||
+                   PsiTreeUtil.getParentOfType(this, PsiImportStatementBase.class) == null;
+          }
         }
         if (element instanceof PsiPackage) {
           final String qName = ((PsiPackage)element).getQualifiedName();
@@ -964,6 +982,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
+  @Override
   public final String toString() {
     return "PsiJavaCodeReferenceElement:" + getText();
   }

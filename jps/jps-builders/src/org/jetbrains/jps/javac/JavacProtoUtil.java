@@ -41,7 +41,7 @@ public class JavacProtoUtil {
     return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.SHUTDOWN).build();
   }
 
-  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> sourcePath, Map<File, Set<File>> outs) {
+  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> modulePath, Collection<File> sourcePath, Map<File, Set<File>> outs) {
     final JavacRemoteProto.Message.Request.Builder builder = JavacRemoteProto.Message.Request.newBuilder();
     builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);
     builder.addAllOption(options);
@@ -53,6 +53,9 @@ public class JavacProtoUtil {
     }
     for (File file : platformCp) {
       builder.addPlatformClasspath(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+    for (File file : modulePath) {
+      builder.addModulePath(FileUtil.toSystemIndependentName(file.getPath()));
     }
     for (File file : sourcePath) {
       builder.addSourcepath(FileUtil.toSystemIndependentName(file.getPath()));
@@ -99,6 +102,19 @@ public class JavacProtoUtil {
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.OUTPUT_OBJECT).setOutputObject(msgBuilder.build());
 
     return builder.build();
+  }
+
+  public static JavacRemoteProto.Message.Response createCustomDataResponse(String pluginId, String dataName, byte[] data) {
+    final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
+      .setKind(JavacRemoteProto.Message.Response.OutputObject.Kind.OTHER)
+      .setFilePath(pluginId)
+      .setClassName(dataName)
+      .setContent(ByteString.copyFrom(data))
+      .build();
+    return JavacRemoteProto.Message.Response.newBuilder()
+      .setResponseType(JavacRemoteProto.Message.Response.Type.CUSTOM_OUTPUT_OBJECT)
+      .setOutputObject(outObjMsg)
+      .build();
   }
 
   public static JavacRemoteProto.Message.Response createSourceFileLoadedResponse(File srcFile) {

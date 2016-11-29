@@ -16,29 +16,26 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.util.IconUtil;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author max
  */
 public class InspectionGroupNode extends InspectionTreeNode {
-  private static final Icon EMPTY = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
+  @NotNull private final String[] myGroupPath;
 
-  InspectionGroupNode(@NotNull String groupTitle) {
+  InspectionGroupNode(@NotNull String groupTitle, @NotNull String[] groupPath) {
     super(groupTitle);
+    myGroupPath = groupPath;
   }
 
   String getGroupTitle() {
     return (String) getUserObject();
   }
 
-  @Override
-  public Icon getIcon(boolean expanded) {
-    return EMPTY;
+  @NotNull
+  public String[] getGroupPath() {
+    return myGroupPath;
   }
 
   @Override

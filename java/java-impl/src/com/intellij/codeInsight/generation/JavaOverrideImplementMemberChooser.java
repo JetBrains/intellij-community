@@ -69,7 +69,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     if (candidates.isEmpty() && secondary.isEmpty()) return null;
 
     final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
-    final LinkedHashSet<CandidateInfo> allCandidates = new LinkedHashSet<CandidateInfo>(candidates);
+    final LinkedHashSet<CandidateInfo> allCandidates = new LinkedHashSet<>(candidates);
     allCandidates.addAll(secondary);
     final PsiMethodMember[] all = convertToMethodMembers(allCandidates);
     final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent =
@@ -185,12 +185,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
   }
 
   private static PsiMethodMember[] convertToMethodMembers(Collection<CandidateInfo> candidates) {
-    return ContainerUtil.map2Array(candidates, PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
-      @Override
-      public PsiMethodMember fun(final CandidateInfo s) {
-        return new PsiMethodMember(s);
-      }
-    });
+    return ContainerUtil.map2Array(candidates, PsiMethodMember.class, s -> new PsiMethodMember(s));
   }
 
   private class MySortByOverridingAction extends ToggleAction {

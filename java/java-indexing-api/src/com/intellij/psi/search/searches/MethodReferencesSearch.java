@@ -38,6 +38,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     private final PsiMethod myMethod;
     private final Project myProject;
     private final SearchScope myScope;
+    private volatile SearchScope myEffectiveScope;
     private final boolean myStrictSignatureSearch;
     private final SearchRequestCollector myOptimizer;
     private final boolean isSharedOptimizer;
@@ -93,8 +94,11 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
 
     @NotNull
     public SearchScope getEffectiveSearchScope () {
-      SearchScope accessScope = PsiSearchHelper.SERVICE.getInstance(myMethod.getProject()).getUseScope(myMethod);
-      return myScope.intersectWith(accessScope);
+      SearchScope scope = myEffectiveScope;
+      if (scope == null) {
+        myEffectiveScope = scope = myScope.intersectWith(PsiSearchHelper.SERVICE.getInstance(myMethod.getProject()).getUseScope(myMethod));
+      }
+      return scope;
     }
   }
 
@@ -106,12 +110,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
 
   public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch,
                                      @NotNull SearchRequestCollector collector, final Processor<PsiReference> processor) {
-    searchOptimized(method, scope, strictSignatureSearch, collector, false, new PairProcessor<PsiReference, SearchRequestCollector>() {
-      @Override
-      public boolean process(PsiReference psiReference, SearchRequestCollector collector) {
-        return processor.process(psiReference);
-      }
-    });
+    searchOptimized(method, scope, strictSignatureSearch, collector, false, (psiReference, collector1) -> processor.process(psiReference));
   }
 
   public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch,
@@ -131,7 +130,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     final SearchRequestCollector requests = parameters.getOptimizer();
 
     Project project = PsiUtilCore.getProjectInReadAction(parameters.getMethod());
-    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(project, requests)));
+    return uniqueResults(new MergeQuery<>(result, new SearchRequestQuery(project, requests)));
   }
 
   public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {
@@ -143,6 +142,6 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   }
 
   private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<PsiReference> composite) {
-    return new UniqueResultsQuery<PsiReference, ReferenceDescriptor>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
+    return new UniqueResultsQuery<>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 }

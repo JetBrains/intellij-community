@@ -60,7 +60,7 @@ public class GenerateByPatternDialog extends DialogWrapper {
     setTitle("Generate by Pattern");
     setOKButtonText("Generate");
 
-    myMap = new MultiMap<String, PatternDescriptor>();
+    myMap = new MultiMap<>();
     for (PatternDescriptor descriptor : descriptors) {
       myMap.putValue(descriptor.getParentId(), descriptor);
     }

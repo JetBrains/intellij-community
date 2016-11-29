@@ -28,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class XmlSuppressionProvider implements InspectionSuppressor {
 
-  public static final ExtensionPointName<XmlSuppressionProvider> EP_NAME = new ExtensionPointName<XmlSuppressionProvider>("com.intellij.xml.xmlSuppressionProvider");
+  public static final ExtensionPointName<XmlSuppressionProvider> EP_NAME =
+    new ExtensionPointName<>("com.intellij.xml.xmlSuppressionProvider");
 
   public static boolean isSuppressed(@NotNull PsiElement element, @NotNull String inspectionId) {
     for (XmlSuppressionProvider provider : Extensions.getExtensions(EP_NAME)) {

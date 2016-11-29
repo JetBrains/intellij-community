@@ -87,7 +87,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   protected ReplaceConstructorWithBuilderDialog(@NotNull Project project, PsiMethod[] constructors) {
     super(project, false);
     myConstructors = constructors;
-    myParametersMap = new LinkedHashMap<String, ParameterData>();
+    myParametersMap = new LinkedHashMap<>();
     mySetterPrefix = PropertiesComponent.getInstance(project).getValue(SETTER_PREFIX_KEY, "set");
     for (PsiMethod constructor : constructors) {
       ParameterData.createFromConstructor(constructor, mySetterPrefix, myParametersMap);
@@ -331,7 +331,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     }
 
     private ParameterData getParamData(int rowIndex) {
-      return myParametersMap.get(new ArrayList<String>(myParametersMap.keySet()).get(rowIndex));
+      return myParametersMap.get(new ArrayList<>(myParametersMap.keySet()).get(rowIndex));
     }
 
     @Override

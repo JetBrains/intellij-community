@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.*;
@@ -24,6 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.refactoring.rename.PropertyForRename;
 
@@ -54,6 +59,10 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
     @Override
     @NotNull
     public String getType(@NotNull PsiElement element) {
+        if (element instanceof GrTraitTypeDefinition) return "trait";
+        if (element instanceof GrInterfaceDefinition) return LangBundle.message("java.terms.interface");
+        if (element instanceof GrAnnotationTypeDefinition) return LangBundle.message("java.terms.annotation.interface");
+        if (element instanceof GrEnumTypeDefinition) return LangBundle.message("java.terms.enum");
         if (element instanceof PsiClass) return "class";
         if (element instanceof PsiMethod) return "method";
         if (element instanceof PsiField) return "field";

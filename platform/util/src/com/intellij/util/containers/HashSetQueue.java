@@ -23,17 +23,24 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 
 /**
- * Unbounded non-thread-safe {@link Queue} implementation backed by {@link gnu.trove.THashSet}.
+ * Unbounded non-thread-safe {@link Queue} with fast add/remove/contains.<br>
  * Differs from the conventional Queue by:<ul>
  * <li>The new method {@link #find(T)} which finds the queue element equivalent to its parameter in O(1) avg. time</li>
  * <li>The {@link #contains(Object)} method is O(1)</li>
  * <li>The {@link #remove(Object)} method is O(1)</li>
  * </ul>
+ * Implementation is backed by {@link gnu.trove.THashSet} containing double-linked QueueEntry nodes holding elements themselves.
  */
 public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
   private final OpenTHashSet<QueueEntry<T>> set = new OpenTHashSet<QueueEntry<T>>();
-  private QueueEntry<T> last;
-  private QueueEntry<T> first;
+  // Entries in the queue are double-linked circularly, the TOMB serving as a sentinel.
+  // TOMB.next is the first entry; TOMB.prev is the last entry;
+  // TOMB.next == TOMB.prev == TOMB means the queue is empty
+  private final QueueEntry<T> TOMB = new QueueEntry<T>(cast(new Object()));
+
+  public HashSetQueue() {
+    TOMB.next = TOMB.prev = TOMB;
+  }
 
   private static class QueueEntry<T> {
     @NotNull private final T t;
@@ -65,15 +72,12 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
     QueueEntry<T> newLast = new QueueEntry<T>(t);
     boolean added = set.add(newLast);
     if (!added) return false;
-    if (last == null) {
-      last = newLast;
-      first = newLast;
-    }
-    else {
-      last.next = newLast;
-      newLast.prev = last;
-      last = newLast;
-    }
+    QueueEntry<T> oldLast = TOMB.prev;
+
+    oldLast.next = newLast;
+    newLast.prev = oldLast;
+    newLast.next = TOMB;
+    TOMB.prev = newLast;
 
     return true;
   }
@@ -105,7 +109,7 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
 
   @Override
   public T peek() {
-    return first == null ? null : first.t;
+    return TOMB.next == TOMB ? null : TOMB.next.t;
   }
 
   public T find(@NotNull T t) {
@@ -124,18 +128,10 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
     if (entry == null) return false;
     QueueEntry<T> prev = entry.prev;
     QueueEntry<T> next = entry.next;
-    if (prev != null) {
-      prev.next = next;
-    }
-    else {
-      first = next;
-    }
-    if (next != null) {
-      next.prev = prev;
-    }
-    else {
-      last = prev;
-    }
+
+    prev.next = next;
+    next.prev = prev;
+
     set.remove(entry);
     return true;
   }
@@ -157,27 +153,81 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
 
   @NotNull
   @Override
-  public Iterator<T> iterator() {
-    return new Iterator<T>() {
-      QueueEntry<T> cursor = first;
+  public PositionalIterator<T> iterator() {
+    return new PositionalIterator<T>() {
+      private QueueEntry<T> cursor = TOMB;
+      private long count;
       @Override
       public boolean hasNext() {
-        return cursor != null;
+        return cursor.next != TOMB;
       }
 
       @Override
       public T next() {
-        QueueEntry<T> entry = cursor;
         cursor = cursor.next;
-        return entry.t;
+        count++;
+        return cursor.t;
       }
 
       @Override
       public void remove() {
-        QueueEntry<T> toDelete = cursor == null ? last : cursor.prev;
-        if (toDelete == null) throw new NoSuchElementException();
-        HashSetQueue.this.remove(toDelete.t);
+        if (cursor == TOMB) throw new NoSuchElementException();
+        HashSetQueue.this.remove(cursor.t);
+      }
+
+      @NotNull
+      @Override
+      public IteratorPosition<T> position() {
+        return new MyIteratorPosition<T>(cursor, count, TOMB);
       }
     };
+  }
+
+  private static class MyIteratorPosition<T> implements PositionalIterator.IteratorPosition<T> {
+    private final QueueEntry<T> cursor;
+    private final long count;
+    private final QueueEntry<T> TOMB;
+
+    private MyIteratorPosition(@NotNull QueueEntry<T> cursor, long count, QueueEntry<T> TOMB) {
+      this.cursor = cursor;
+      this.count = count;
+      this.TOMB = TOMB;
+    }
+
+    @Override
+    public T peek() {
+      if (cursor == TOMB) {
+        throw new IllegalStateException("Iterator is before the first element. Must call .next() first.");
+      }
+      return cursor.t;
+    }
+
+    @Override
+    public PositionalIterator.IteratorPosition<T> next() {
+      return cursor.next == TOMB ? null : new MyIteratorPosition<T>(cursor.next, count + 1, TOMB);
+    }
+
+    @Override
+    public int compareTo(@NotNull PositionalIterator.IteratorPosition<T> o) {
+      return compare(count, ((MyIteratorPosition)o).count);
+    }
+
+    private static int compare(long x, long y) {
+        return x < y ? -1 : x == y ? 0 : 1;
+    }
+  }
+
+  public interface PositionalIterator<T> extends Iterator<T> {
+    /**
+     * @return the current position of this iterator.
+     * The position of the newly created iterator is before the first element of the queue (so the {@link IteratorPosition#peek()} value is undefined)
+     */
+    @NotNull
+    IteratorPosition<T> position();
+
+    interface IteratorPosition<T> extends Comparable<IteratorPosition<T>>  {
+      T peek();
+      IteratorPosition<T> next();
+    }
   }
 }

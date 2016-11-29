@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class SmartIntToIntArrayMap {
-  @Nullable TIntObjectHashMap<TIntArrayList> myMultipleValuesMap = null;
+  @Nullable TIntObjectHashMap<TIntArrayList> myMultipleValuesMap;
   TIntIntHashMap mySingleValueMap = new TIntIntHashMap(10, 0.9f);
 
   public int[] keys() {
@@ -58,7 +58,7 @@ public class SmartIntToIntArrayMap {
 
   private void addToMultimap(int key, int value) {
     if (myMultipleValuesMap == null) {
-      myMultipleValuesMap = new TIntObjectHashMap<TIntArrayList>(10, 0.9f);
+      myMultipleValuesMap = new TIntObjectHashMap<>(10, 0.9f);
     }
 
     final TIntObjectHashMap<TIntArrayList> map = myMultipleValuesMap;

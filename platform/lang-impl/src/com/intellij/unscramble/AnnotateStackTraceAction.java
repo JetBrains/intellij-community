@@ -29,12 +29,12 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter;
@@ -47,10 +47,14 @@ import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledWithReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,18 +63,13 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
-* @author Konstantin Bulenkov
-*/
-public class AnnotateStackTraceAction extends AnAction implements DumbAware {
+public class AnnotateStackTraceAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AnnotateStackTraceAction.class);
 
   private final EditorHyperlinkSupport myHyperlinks;
-  private Map<Integer, LastRevision> cache;
-  private Date newestDate;
-  private int maxDateLength = 0;
   private final Editor myEditor;
-  private boolean myGutterShowed = false;
+
+  private boolean myIsLoading = false;
 
   public AnnotateStackTraceAction(@NotNull Editor editor, @NotNull EditorHyperlinkSupport hyperlinks) {
     super("Show files modification info", null, AllIcons.Actions.Annotate);
@@ -79,159 +78,95 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public void update(AnActionEvent e) {
+    boolean isShown = myEditor.getGutter().isAnnotationsShown();
+    e.getPresentation().setEnabled(!isShown && !myIsLoading);
+  }
+
+  @Override
   public void actionPerformed(final AnActionEvent e) {
-    cache = new HashMap<Integer, LastRevision>();
+    myIsLoading = true;
 
-    ProgressManager.getInstance().run(
-    new Task.Backgroundable(myEditor.getProject(), "Getting File History", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myEditor.getProject(), "Getting File History", true) {
+      private final Object LOCK = new Object();
+      private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("AnnotateStackTraceAction", 200, true, null);
+
+      private MyActiveAnnotationGutter myGutter;
+
       @Override
-      public boolean shouldStartInBackground() {
-        return true;
+      public void onCancel() {
+        myEditor.getGutter().closeAllAnnotations();
       }
 
       @Override
-      public void onSuccess() {
-      }
-
-      private void showGutter() {
-        ActiveAnnotationGutter gutter = new ActiveAnnotationGutter() {
-          @Override
-          public void doAction(int lineNum) {
-            final LastRevision revision = cache.get(lineNum);
-            if (revision == null) return;
-
-            VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(lineNum));
-            if (file == null) return;
-
-            final Project project = getProject();
-            final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-            if (vcs != null) {
-              final VcsRevisionNumber number = revision.getNumber();
-              final VcsKey vcsKey = vcs.getKeyInstanceMethod();
-              ShowAllAffectedGenericAction.showSubmittedFiles(project, number, file, vcsKey);
-            }
-          }
-
-          @Override
-          public Cursor getCursor(int lineNum) {
-            return cache.containsKey(lineNum) ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor();
-          }
-
-          @Override
-          public String getLineText(int line, Editor editor) {
-            final LastRevision revision = cache.get(line);
-            if (revision != null) {
-              return String.format("%"+maxDateLength+"s", DateFormatUtil.formatPrettyDate(revision.getDate())) + " " + revision.getAuthor();
-            }
-            return "";
-          }
-
-          @Override
-          public String getToolTip(int line, Editor editor) {
-            final LastRevision revision = cache.get(line);
-            if (revision != null) {
-              return XmlStringUtil.escapeString(
-                revision.getAuthor() + " " + DateFormatUtil.formatDateTime(revision.getDate()) + "\n" +
-                revision.getMessage()
-              );
-            }
-            return null;
-          }
-
-          @Override
-          public EditorFontType getStyle(int line, Editor editor) {
-            LastRevision revision = cache.get(line);
-            return revision != null && revision.getDate().equals(newestDate) ? EditorFontType.BOLD : EditorFontType.PLAIN;
-          }
-
-          @Override
-          public ColorKey getColor(int line, Editor editor) {
-            return AnnotationSource.LOCAL.getColor();
-          }
-
-          @Override
-          public Color getBgColor(int line, Editor editor) {
-            return null;
-          }
-
-          @Override
-          public List<AnAction> getPopupActions(int line, Editor editor) {
-            return Collections.emptyList();
-          }
-
-          @Override
-          public void gutterClosed() {
-            myGutterShowed = false;
-          }
-        };
-        myEditor.getGutter().registerTextAnnotation(gutter, gutter);
-
-        myGutterShowed = true;
+      public void onFinished() {
+        myIsLoading = false;
+        Disposer.dispose(myUpdateQueue);
       }
 
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        final List<VirtualFile> files = new ArrayList<VirtualFile>();
-        final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
+      public void run(@NotNull ProgressIndicator indicator) {
+        MultiMap<VirtualFile, Integer> files2lines = new MultiMap<>();
+        Map<Integer, LastRevision> revisions = ContainerUtil.newHashMap();
 
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
-              indicator.checkCanceled();
-              VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(line));
-              if (file == null) continue;
+        ApplicationManager.getApplication().runReadAction(() -> {
+          for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
+            indicator.checkCanceled();
+            VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(line));
+            if (file == null) continue;
 
-              if (files2lines.containsKey(file)) {
-                files2lines.get(file).add(line);
-              }
-              else {
-                final ArrayList<Integer> lines = new ArrayList<Integer>();
-                lines.add(line);
-                files2lines.put(file, lines);
-                files.add(file);
-              }
-            }
+            files2lines.putValue(file, line);
           }
         });
 
-        for (VirtualFile file : files) {
+        files2lines.entrySet().forEach(entry -> {
           indicator.checkCanceled();
+          VirtualFile file = entry.getKey();
+          Collection<Integer> lines = entry.getValue();
 
           LastRevision revision = getLastRevision(file);
-          if (revision != null) {
-            final List<Integer> lines = files2lines.get(file);
+          if (revision == null) return;
 
-            final Date date = revision.getDate();
-            if (newestDate == null || date.after(newestDate)) {
-              newestDate = date;
-            }
-            final int length = DateFormatUtil.formatPrettyDate(date).length();
-            if (length > maxDateLength) {
-              maxDateLength = length;
-            }
+          synchronized (LOCK) {
             for (Integer line : lines) {
-              cache.put(line, revision);
+              revisions.put(line, revision);
             }
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (!myGutterShowed) {
-                  showGutter();
-                }
-                else {
-                  ((EditorGutterComponentEx)myEditor.getGutter()).revalidateMarkup();
-                }
-              }
-            });
           }
+
+          myUpdateQueue.queue(new Update("update") {
+            @Override
+            public void run() {
+              updateGutter(indicator, revisions);
+            }
+          });
+        });
+
+        // myUpdateQueue can be disposed before the last revisions are passed to the gutter
+        ApplicationManager.getApplication().invokeLater(() -> updateGutter(indicator, revisions));
+      }
+
+      @CalledInAwt
+      private void updateGutter(@NotNull ProgressIndicator indicator, @NotNull Map<Integer, LastRevision> revisions) {
+        if (indicator.isCanceled()) return;
+
+        if (myGutter == null) {
+          myGutter = new MyActiveAnnotationGutter(getProject(), myHyperlinks, indicator);
+          myEditor.getGutter().registerTextAnnotation(myGutter, myGutter);
         }
+
+        Map<Integer, LastRevision> revisionsCopy;
+        synchronized (LOCK) {
+          revisionsCopy = ContainerUtil.newHashMap(revisions);
+        }
+
+        myGutter.updateData(revisionsCopy);
+        ((EditorGutterComponentEx)myEditor.getGutter()).revalidateMarkup();
       }
 
       @Nullable
       private LastRevision getLastRevision(@NotNull VirtualFile file) {
         try {
-          final AbstractVcs vcs = VcsUtil.getVcsFor(myEditor.getProject(), file);
+          AbstractVcs vcs = VcsUtil.getVcsFor(myEditor.getProject(), file);
           if (vcs == null) return null;
 
           VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
@@ -243,7 +178,8 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
             VcsFileRevision revision = ((VcsHistoryProviderEx)historyProvider).getLastRevision(filePath);
             if (revision == null) return null;
             return LastRevision.create(revision);
-          } else {
+          }
+          else {
             VcsHistorySession session = historyProvider.createSessionFor(filePath);
             if (session == null) return null;
 
@@ -259,11 +195,6 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
         }
       }
     });
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(!myGutterShowed);
   }
 
   @Nullable
@@ -317,6 +248,114 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
     @NotNull
     public String getMessage() {
       return myMessage;
+    }
+  }
+
+  private static class MyActiveAnnotationGutter implements ActiveAnnotationGutter {
+    @NotNull private final Project myProject;
+    @NotNull private final EditorHyperlinkSupport myHyperlinks;
+    @NotNull private final ProgressIndicator myIndicator;
+
+    @NotNull private Map<Integer, LastRevision> myRevisions = Collections.emptyMap();
+    private Date myNewestDate = null;
+    private int myMaxDateLength = 0;
+
+    public MyActiveAnnotationGutter(@NotNull Project project,
+                                    @NotNull EditorHyperlinkSupport hyperlinks,
+                                    @NotNull ProgressIndicator indicator) {
+      myProject = project;
+      myHyperlinks = hyperlinks;
+      myIndicator = indicator;
+    }
+
+    @Override
+    public void doAction(int lineNum) {
+      LastRevision revision = myRevisions.get(lineNum);
+      if (revision == null) return;
+
+      VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(lineNum));
+      if (file == null) return;
+
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+      if (vcs != null) {
+        VcsRevisionNumber number = revision.getNumber();
+        VcsKey vcsKey = vcs.getKeyInstanceMethod();
+        ShowAllAffectedGenericAction.showSubmittedFiles(myProject, number, file, vcsKey);
+      }
+    }
+
+    @Override
+    public Cursor getCursor(int lineNum) {
+      return myRevisions.containsKey(lineNum) ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor();
+    }
+
+    @Override
+    public String getLineText(int line, Editor editor) {
+      LastRevision revision = myRevisions.get(line);
+      if (revision != null) {
+        return String.format("%" + myMaxDateLength + "s", DateFormatUtil.formatPrettyDate(revision.getDate())) + " " + revision.getAuthor();
+      }
+      return "";
+    }
+
+    @Override
+    public String getToolTip(int line, Editor editor) {
+      LastRevision revision = myRevisions.get(line);
+      if (revision != null) {
+        return XmlStringUtil.escapeString(
+          revision.getAuthor() + " " + DateFormatUtil.formatDateTime(revision.getDate()) + "\n" +
+          revision.getMessage()
+        );
+      }
+      return null;
+    }
+
+    @Override
+    public EditorFontType getStyle(int line, Editor editor) {
+      LastRevision revision = myRevisions.get(line);
+      return revision != null && revision.getDate().equals(myNewestDate) ? EditorFontType.BOLD : EditorFontType.PLAIN;
+    }
+
+    @Override
+    public ColorKey getColor(int line, Editor editor) {
+      return AnnotationSource.LOCAL.getColor();
+    }
+
+    @Override
+    public Color getBgColor(int line, Editor editor) {
+      return null;
+    }
+
+    @Override
+    public List<AnAction> getPopupActions(int line, Editor editor) {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public void gutterClosed() {
+      myIndicator.cancel();
+    }
+
+    @CalledInAwt
+    public void updateData(@NotNull Map<Integer, LastRevision> revisions) {
+      myRevisions = revisions;
+
+      Date newestDate = null;
+      int maxDateLength = 0;
+
+      for (LastRevision revision : myRevisions.values()) {
+        Date date = revision.getDate();
+        if (newestDate == null || date.after(newestDate)) {
+          newestDate = date;
+        }
+        int length = DateFormatUtil.formatPrettyDate(date).length();
+        if (length > maxDateLength) {
+          maxDateLength = length;
+        }
+      }
+
+      myNewestDate = newestDate;
+      myMaxDateLength = maxDateLength;
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.MethodCellRenderer;
@@ -54,9 +55,9 @@ public class CopyAbstractMethodImplementationHandler {
   private final Editor myEditor;
   private final PsiMethod myMethod;
   private PsiClass mySourceClass;
-  private final List<PsiClass> myTargetClasses = new ArrayList<PsiClass>();
-  private final List<PsiEnumConstant> myTargetEnumConstants = new ArrayList<PsiEnumConstant>();
-  private final List<PsiMethod> mySourceMethods = new ArrayList<PsiMethod>();
+  private final List<PsiClass> myTargetClasses = new ArrayList<>();
+  private final List<PsiEnumConstant> myTargetEnumConstants = new ArrayList<>();
+  private final List<PsiMethod> mySourceMethods = new ArrayList<>();
 
   public CopyAbstractMethodImplementationHandler(final Project project, final Editor editor, final PsiMethod method) {
     myProject = project;
@@ -65,17 +66,7 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   public void invoke() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            searchExistingImplementations();
-          }
-        });
-      }
-    }, CodeInsightBundle.message("searching.for.implementations"), false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> searchExistingImplementations()), CodeInsightBundle.message("searching.for.implementations"), false, myProject);
     if (mySourceMethods.isEmpty()) {
       Messages.showErrorDialog(myProject, CodeInsightBundle.message("copy.abstract.method.no.existing.implementations.found"),
                                CodeInsightBundle.message("copy.abstract.method.title"));
@@ -85,25 +76,19 @@ public class CopyAbstractMethodImplementationHandler {
       copyImplementation(mySourceMethods.get(0));
     }
     else {
-      Collections.sort(mySourceMethods, new Comparator<PsiMethod>() {
-        @Override
-        public int compare(final PsiMethod o1, final PsiMethod o2) {
-          PsiClass c1 = o1.getContainingClass();
-          PsiClass c2 = o2.getContainingClass();
-          return Comparing.compare(c1.getName(), c2.getName());
-        }
+      Collections.sort(mySourceMethods, (o1, o2) -> {
+        PsiClass c1 = o1.getContainingClass();
+        PsiClass c2 = o2.getContainingClass();
+        return Comparing.compare(c1.getName(), c2.getName());
       });
       final PsiMethod[] methodArray = mySourceMethods.toArray(new PsiMethod[mySourceMethods.size()]);
       final JList list = new JBList(methodArray);
       list.setCellRenderer(new MethodCellRenderer(true));
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          int index = list.getSelectedIndex();
-          if (index < 0) return;
-          PsiMethod element = (PsiMethod)list.getSelectedValue();
-          copyImplementation(element);
-        }
+      final Runnable runnable = () -> {
+        int index = list.getSelectedIndex();
+        if (index < 0) return;
+        PsiMethod element = (PsiMethod)list.getSelectedValue();
+        copyImplementation(element);
       };
       new PopupChooserBuilder(list)
         .setTitle(CodeInsightBundle.message("copy.abstract.method.popup.title"))
@@ -116,7 +101,7 @@ public class CopyAbstractMethodImplementationHandler {
   private void searchExistingImplementations() {
     mySourceClass = myMethod.getContainingClass();
     if (!mySourceClass.isValid()) return;
-    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass, true)) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass)) {
       if (!inheritor.isInterface()) {
         PsiMethod method = ImplementAbstractMethodAction.findExistingImplementation(inheritor, myMethod);
         if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -156,10 +141,11 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   private void copyImplementation(final PsiMethod sourceMethod) {
-    final List<PsiMethod> generatedMethods = new ArrayList<PsiMethod>();
+    final List<PsiMethod> generatedMethods = new ArrayList<>();
     new WriteCommandAction(myProject, getTargetFiles()) {
       @Override
       protected void run(@NotNull final Result result) throws Throwable {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(sourceMethod)) return;
         for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
           PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();
           myTargetClasses.add(initializingClass);
@@ -206,7 +192,7 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   private PsiFile[] getTargetFiles() {
-    Collection<PsiFile> fileList = new HashSet<PsiFile>();
+    Collection<PsiFile> fileList = new HashSet<>();
     for(PsiClass psiClass: myTargetClasses) {
       fileList.add(psiClass.getContainingFile());
     }

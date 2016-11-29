@@ -11,7 +11,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -61,11 +61,11 @@ public class JavaFxCompletionContributor extends CompletionContributor {
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
       final Object object = item.getObject();
-      if (object instanceof JavaFxClassBackedElementDescriptor) {
+      if (object instanceof JavaFxClassTagDescriptorBase) {
         final XmlFile xmlFile = (XmlFile)context.getFile();
-        final String shortName = ((JavaFxClassBackedElementDescriptor)object).getName();
+        final String shortName = ((JavaFxClassTagDescriptorBase)object).getName();
         context.commitDocument();
-        JavaFxPsiUtil.insertImportWhenNeeded(xmlFile, shortName, ((JavaFxClassBackedElementDescriptor)object).getQualifiedName());
+        JavaFxPsiUtil.insertImportWhenNeeded(xmlFile, shortName, ((JavaFxClassTagDescriptorBase)object).getQualifiedName());
       }
     }
   }

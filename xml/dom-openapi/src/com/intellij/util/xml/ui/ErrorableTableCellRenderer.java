@@ -58,7 +58,8 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(myRowDomElement.getManager().getProject());
     final DomElementsProblemsHolder holder = annotationsManager.getCachedProblemHolder(myRoot);
     final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(myCellValueDomElement);
-    final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(myCellValueDomElement, true, HighlightSeverity.WARNING));
+    final List<DomElementProblemDescriptor> warningProblems =
+      new ArrayList<>(holder.getProblems(myCellValueDomElement, true, HighlightSeverity.WARNING));
     warningProblems.removeAll(errorProblems);
 
     final boolean hasErrors = errorProblems.size() > 0;

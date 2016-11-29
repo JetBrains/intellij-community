@@ -15,25 +15,20 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,10 +49,6 @@ public abstract class AbstractFix implements IntentionAction {
 
   protected static void moveTo(Editor editor, XmlTag xmlTag) {
     editor.getCaretModel().moveToOffset(xmlTag.getTextRange().getStartOffset());
-  }
-
-  protected static void deleteFromDocument(Editor editor, PsiElement dummy) {
-    editor.getDocument().deleteString(dummy.getTextRange().getStartOffset(), dummy.getTextRange().getEndOffset());
   }
 
   protected static TemplateBuilderImpl createTemplateBuilder(XmlTag xmlTag) {
@@ -97,7 +88,7 @@ public abstract class AbstractFix implements IntentionAction {
         if (requiresEditor) {
           final DataContext dataContext = DataManager.getInstance().getDataContext();
 
-          editor = LangDataKeys.EDITOR.getData(dataContext);
+          editor = CommonDataKeys.EDITOR.getData(dataContext);
           if (editor == null) {
             if ((editor = FileEditorManager.getInstance(project).getSelectedTextEditor()) == null) {
               return;
@@ -112,25 +103,13 @@ public abstract class AbstractFix implements IntentionAction {
         if (!isAvailable(project, editor, psiFile)) {
           return;
         }
-        if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) {
-          return;
-        }
-        try {
-          invoke(project, editor, psiFile);
-        }
-        catch (IncorrectOperationException e) {
-          Logger.getInstance(getClass().getName()).error(e);
-        }
+        invoke(project, editor, psiFile);
       }
     };
   }
 
   public static LocalQuickFix[] createFixes(LocalQuickFix... fixes) {
-    final List<LocalQuickFix> result = ContainerUtil.findAll(fixes, new Condition<LocalQuickFix>() {
-      public boolean value(LocalQuickFix localQuickFix) {
-        return localQuickFix != null;
-      }
-    });
+    final List<LocalQuickFix> result = ContainerUtil.findAll(fixes, localQuickFix -> localQuickFix != null);
     return result.toArray(new LocalQuickFix[result.size()]);
   }
 }

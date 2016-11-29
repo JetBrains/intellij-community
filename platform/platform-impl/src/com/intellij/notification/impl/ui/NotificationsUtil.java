@@ -19,13 +19,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,12 +76,11 @@ public class NotificationsUtil {
       subtitle = StringUtil.trimLog(StringUtil.notNullize(subtitle), TITLE_LIMIT);
       content = StringUtil.trimLog(content, CONTENT_LIMIT);
     }
+    if (isContent) {
+      content = StringUtil.replace(content, "<p/>", "<br>");
+    }
     String colorText = color == null ? null : "#" + ColorUtil.toHex(color);
     return buildHtml(title, subtitle, content, style, isContent ? null : colorText, isContent ? colorText : null, contentStyle);
-  }
-
-  public static String buildHtml(@Nullable String title, @Nullable String subtitle, @Nullable String content, @Nullable String style) {
-    return buildHtml(title, subtitle, content, style, null, null, null);
   }
 
   @NotNull
@@ -125,18 +122,23 @@ public class NotificationsUtil {
 
   @Nullable
   public static String getFontStyle() {
-    String fontName = null;
+    String fontName = getFontName();
+    return StringUtil.isEmpty(fontName) ? null : "font-family:" + fontName + ";";
+  }
+
+  @Nullable
+  public static Pair<String, Integer> getFontData() {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
-      fontName = uiSettings.FONT_FACE;
+      return Pair.create(uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
     }
-    else {
-      Pair<String, Integer> systemFontData = UIUtil.getSystemFontData();
-      if (systemFontData != null) {
-        fontName = systemFontData.first;
-      }
-    }
-    return StringUtil.isEmpty(fontName) ? null : "font-family:" + fontName + ";";
+    return UIUtil.getSystemFontData();
+  }
+
+  @Nullable
+  public static String getFontName() {
+    Pair<String, Integer> data = getFontData();
+    return data == null ? null : data.first;
   }
 
   @Nullable
@@ -163,10 +165,6 @@ public class NotificationsUtil {
       return icon;
     }
 
-    if (!NotificationsManagerImpl.newEnabled()) {
-      return getMessageType(notification).getDefaultIcon();
-    }
-
     switch (notification.getType()) {
       case WARNING:
         return AllIcons.General.BalloonWarning;
@@ -188,24 +186,6 @@ public class NotificationsUtil {
       case INFORMATION:
       default:
         return MessageType.INFO;
-    }
-  }
-
-  @NotNull
-  public static Color getBackground(@NotNull final Notification notification) {
-    return getMessageType(notification).getPopupBackground();
-  }
-
-  @NotNull
-  public static Color getBorderColor(@NotNull Notification notification) {
-    switch (notification.getType()) {
-      case ERROR:
-        return new JBColor(Color.gray, new Color(0xc8c8c8));
-      case WARNING:
-        return new JBColor(Color.gray, new Color(0x615f51));
-      case INFORMATION:
-      default:
-        return new JBColor(Color.gray, new Color(0x205c00));
     }
   }
 }

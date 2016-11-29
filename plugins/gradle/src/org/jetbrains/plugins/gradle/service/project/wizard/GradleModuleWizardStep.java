@@ -19,10 +19,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -30,7 +28,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -56,8 +53,6 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   private final GradleModuleBuilder myBuilder;
   @NotNull
   private final WizardContext myContext;
-  @Nullable
-  private ProjectData myParent;
 
   private final GradleParentProjectForm myParentProjectForm;
 
@@ -77,13 +72,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     myProjectOrNull = context.getProject();
     myBuilder = builder;
     myContext = context;
-    myParentProjectForm = new GradleParentProjectForm(context, new NullableConsumer<ProjectData>() {
-      @Override
-      public void consume(@Nullable ProjectData data) {
-        myParent = data;
-        updateComponents();
-      }
-    });
+    myParentProjectForm = new GradleParentProjectForm(context, parentProject -> updateComponents());
     initComponents();
     loadSettings();
   }
@@ -143,39 +132,23 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public boolean validate() throws ConfigurationException {
     if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true));
       throw new ConfigurationException("Please, specify artifactId");
     }
 
     return true;
   }
 
-  @Nullable
-  public ProjectData findPotentialParentProject(@Nullable Project project) {
-    if (project == null) return null;
-
-    final ExternalProjectInfo projectInfo =
-      ProjectDataManager.getInstance().getExternalProjectData(project, GradleConstants.SYSTEM_ID, myContext.getProjectFileDirectory());
-    return projectInfo != null && projectInfo.getExternalProjectStructure() != null
-           ? projectInfo.getExternalProjectStructure().getData()
-           : null;
-  }
-
   @Override
   public void updateStep() {
-    myParent = findPotentialParentProject(myProjectOrNull);
-
+    ProjectData parentProject = myParentProjectForm.getParentProject();
     ProjectId projectId = myBuilder.getProjectId();
 
     if (projectId == null) {
       setTestIfEmpty(myArtifactIdField, myBuilder.getName());
-      setTestIfEmpty(myGroupIdField, myParent == null ? myBuilder.getName() : myParent.getGroup());
-      setTestIfEmpty(myVersionField, myParent == null ? DEFAULT_VERSION : myParent.getVersion());
+      setTestIfEmpty(myGroupIdField, parentProject == null ? myBuilder.getName() : parentProject.getGroup());
+      setTestIfEmpty(myVersionField, parentProject == null ? DEFAULT_VERSION : parentProject.getVersion());
     }
     else {
       setTestIfEmpty(myArtifactIdField, projectId.getArtifactId());
@@ -197,8 +170,8 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     myInheritVersionCheckBox.setVisible(isAddToVisible);
 
     myParentProjectForm.updateComponents();
-
-    if (myParent == null) {
+    ProjectData parentProject = myParentProjectForm.getParentProject();
+    if (parentProject == null) {
       myContext.putUserData(ExternalModuleSettingsStep.SKIP_STEP_KEY, Boolean.FALSE);
       myGroupIdField.setEnabled(true);
       myVersionField.setEnabled(true);
@@ -216,11 +189,11 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
 
       if (myInheritGroupIdCheckBox.isSelected()
           || myGroupIdField.getText().equals(myInheritedGroupId)) {
-        myGroupIdField.setText(myParent.getGroup());
+        myGroupIdField.setText(parentProject.getGroup());
       }
       if (myInheritVersionCheckBox.isSelected()
           || myVersionField.getText().equals(myInheritedVersion)) {
-        myVersionField.setText(myParent.getVersion());
+        myVersionField.setText(parentProject.getVersion());
       }
       myInheritedGroupId = myGroupIdField.getText();
       myInheritedVersion = myVersionField.getText();
@@ -240,7 +213,8 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public void updateDataModel() {
     myContext.setProjectBuilder(myBuilder);
-    myBuilder.setParentProject(myParent);
+    ProjectData parentProject = myParentProjectForm.getParentProject();
+    myBuilder.setParentProject(parentProject);
 
     myBuilder.setProjectId(new ProjectId(myGroupIdField.getText(),
                                          myArtifactIdField.getText(),
@@ -251,8 +225,8 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     if (StringUtil.isNotEmpty(myBuilder.getProjectId().getArtifactId())) {
       myContext.setProjectName(myBuilder.getProjectId().getArtifactId());
     }
-    if (myParent != null) {
-      myContext.setProjectFileDirectory(myParent.getLinkedExternalProjectPath() + '/' + myContext.getProjectName());
+    if (parentProject != null) {
+      myContext.setProjectFileDirectory(parentProject.getLinkedExternalProjectPath() + '/' + myContext.getProjectName());
     }
     else {
       if (myProjectOrNull != null) {
@@ -270,6 +244,11 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     if (StringUtil.isEmpty(field.getText())) {
       field.setText(StringUtil.notNullize(text));
     }
+  }
+
+  @Override
+  public String getHelpId() {
+    return "Gradle_Archetype_Dialog";
   }
 }
 

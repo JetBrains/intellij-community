@@ -71,7 +71,9 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-surefire-plugin", "maven-eclipse-plugin");
+    assertCompletionVariants(myProjectPom, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin", "maven-resources-plugin",
+                             "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin", "maven-install-plugin",
+                             "maven-compiler-plugin", "maven-deploy-plugin");
   }
 
   public void testVersionCompletion() throws Exception {
@@ -89,7 +91,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2");
+    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2", "3.1");
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {
@@ -106,11 +108,9 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "</build>");
 
     assertCompletionVariants(myProjectPom,
-                             "maven-compiler-plugin", 
-                             "maven-war-plugin",
-                             "build-helper-maven-plugin",
-                             "maven-surefire-plugin",
-                             "maven-eclipse-plugin");
+                             "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin", "maven-resources-plugin",
+                             "maven-surefire-plugin", "maven-jar-plugin", "build-helper-maven-plugin", "maven-clean-plugin",
+                             "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
   }
 
   public void testVersionWithoutGroupCompletion() throws Exception {
@@ -127,7 +127,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2");
+    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2", "3.1");
   }
 
   public void testResolvingPlugins() throws Exception {
@@ -286,16 +286,8 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
-
-    String pluginPath =
-      "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
-    VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
-
-
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
-    assertEquals(findPsiFile(f), resolved.getContainingFile());
     assertTrue(resolved instanceof XmlTag);
     assertEquals("parameter", ((XmlTag)resolved).getName());
     assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
@@ -321,15 +313,8 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
-
-    String pluginPath =
-      "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
-    VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
-
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
-    assertEquals(findPsiFile(f), resolved.getContainingFile());
     assertTrue(resolved instanceof XmlTag);
     assertEquals("parameter", ((XmlTag)resolved).getName());
     assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
@@ -355,7 +340,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "compile", "testCompile");
+    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -436,7 +421,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </pluginManagement>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "compile", "testCompile");
+    assertCompletionVariants(myProjectPom, "help", "compile", "testCompile");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -485,14 +470,8 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
 
-    String pluginPath =
-      "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
-    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
-    VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
-
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
-    assertEquals(findPsiFile(f), resolved.getContainingFile());
     assertTrue(resolved instanceof XmlTag);
     assertEquals("mojo", ((XmlTag)resolved).getName());
     assertEquals("compile", ((XmlTag)resolved).findFirstSubTag("goal").getValue().getText());
@@ -834,7 +813,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertDocumentation("Type: <b>java.lang.String</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
+    assertDocumentation("Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
   }
 
   public void testDoNotCompleteNorHighlightNonPluginConfiguration() throws Throwable {

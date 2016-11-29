@@ -29,11 +29,6 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class PyMakePublicQuickFix implements LocalQuickFix {
-  @NotNull
-  @Override
-  public String getName() {
-    return PyBundle.message("QFIX.make.public");
-  }
 
   @NotNull
   @Override
@@ -58,5 +53,10 @@ public class PyMakePublicQuickFix implements LocalQuickFix {
         new RenameProcessor(project, element, publicName, false, false).run();
       }
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

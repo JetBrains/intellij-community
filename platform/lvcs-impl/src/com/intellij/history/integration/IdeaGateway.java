@@ -32,7 +32,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +39,8 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,21 +66,86 @@ public class IdeaGateway {
 
     if (!f.isDirectory() && StringUtil.endsWith(f.getNameSequence(), ".class")) return false;
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    VersionedFilterData versionedFilterData = getVersionedFilterData();
+
     boolean isInContent = false;
-    for (Project each : openProjects) {
-      if (each.isDefault()) continue;
-      if (!each.isInitialized()) continue;
-      if (Comparing.equal(each.getWorkspaceFile(), f)) return false;
-      ProjectFileIndex index = ProjectRootManager.getInstance(each).getFileIndex();
-      
+    int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
+    for (int i = 0; i < numberOfOpenProjects; ++i) {
+      if (f.equals(versionedFilterData.myWorkspaceFiles.get(i))) return false;
+      ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
+
       if (index.isExcluded(f)) return false;
       isInContent |= index.isInContent(f);
     }
     if (shouldBeInContent && !isInContent) return false;
-    
+
     // optimisation: FileTypeManager.isFileIgnored(f) already checked inside ProjectFileIndex.isIgnored()
-    return openProjects.length != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
+    return numberOfOpenProjects != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
+  }
+
+  @NotNull
+  protected static VersionedFilterData getVersionedFilterData() {
+    VersionedFilterData versionedFilterData;
+    VfsEventDispatchContext vfsEventDispatchContext = ourCurrentEventDispatchContext.get();
+    if (vfsEventDispatchContext != null) {
+      versionedFilterData = vfsEventDispatchContext.myFilterData;
+      if (versionedFilterData == null) versionedFilterData = vfsEventDispatchContext.myFilterData = new VersionedFilterData();
+    } else {
+      versionedFilterData = new VersionedFilterData();
+    }
+    return versionedFilterData;
+  }
+
+  private static final ThreadLocal<VfsEventDispatchContext> ourCurrentEventDispatchContext = new ThreadLocal<>();
+
+  private static class VfsEventDispatchContext implements AutoCloseable {
+    final List<? extends VFileEvent> myEvents;
+    final boolean myBeforeEvents;
+    final VfsEventDispatchContext myPreviousContext;
+
+    VersionedFilterData myFilterData;
+
+    VfsEventDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents) {
+      myEvents = events;
+      myBeforeEvents = beforeEvents;
+      myPreviousContext = ourCurrentEventDispatchContext.get();
+      if (myPreviousContext != null) {
+        myFilterData = myPreviousContext.myFilterData;
+      }
+      ourCurrentEventDispatchContext.set(this);
+    }
+
+    public void close() {
+      ourCurrentEventDispatchContext.set(myPreviousContext);
+      if (myPreviousContext != null && myPreviousContext.myFilterData == null && myFilterData != null) {
+        myPreviousContext.myFilterData = myFilterData;
+      }
+    }
+  }
+
+  public void runWithVfsEventsDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents, Runnable action) {
+    try (VfsEventDispatchContext ignored = new VfsEventDispatchContext(events, beforeEvents)) {
+      action.run();
+    }
+  }
+
+  private static class VersionedFilterData {
+    final List<Project> myOpenedProjects = new ArrayList<>();
+    final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
+    final List<VirtualFile> myWorkspaceFiles = new ArrayList<>();
+
+    VersionedFilterData() {
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+
+      for (Project each : openProjects) {
+        if (each.isDefault()) continue;
+        if (!each.isInitialized()) continue;
+
+        myWorkspaceFiles.add(each.getWorkspaceFile());
+        myOpenedProjects.add(each);
+        myProjectFileIndices.add(ProjectRootManager.getInstance(each).getFileIndex());
+      }
+    }
   }
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
@@ -135,7 +201,7 @@ public class IdeaGateway {
   public List<VirtualFile> getAllFilesFrom(@NotNull String path) {
     VirtualFile f = findVirtualFile(path);
     if (f == null) return Collections.emptyList();
-    return collectFiles(f, new ArrayList<VirtualFile>());
+    return collectFiles(f, new ArrayList<>());
   }
 
   @NotNull
@@ -207,8 +273,7 @@ public class IdeaGateway {
     if (!file.isDirectory()) {
       if (!isVersioned(file)) return null;
 
-      Pair<StoredContent, Long> contentAndStamps = getActualContentNoAcquire(file);
-      return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+      return doCreateFileEntry(file, getActualContentNoAcquire(file));
     }
     DirectoryEntry newDir = new DirectoryEntry(file.getName());
     doCreateChildrenForPathOnly(newDir, path, iterateDBChildren(file));
@@ -242,36 +307,49 @@ public class IdeaGateway {
       else {
         contentAndStamps = getActualContentNoAcquire(file);
       }
-      return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+
+      return doCreateFileEntry(file, contentAndStamps);
     }
-    DirectoryEntry newDir = new DirectoryEntry(file.getName());
+
+    DirectoryEntry newDir = null;
+    if (file instanceof VirtualFileSystemEntry) {
+      int nameId = ((VirtualFileSystemEntry)file).getNameId();
+      if (nameId > 0) {
+        newDir = new DirectoryEntry(nameId);
+      }
+    }
+
+    if (newDir == null) {
+      newDir = new DirectoryEntry(file.getName());
+    }
+
     doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
     if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
     return newDir;
   }
 
+  @NotNull
+  private Entry doCreateFileEntry(@NotNull VirtualFile file, Pair<StoredContent, Long> contentAndStamps) {
+    if (file instanceof VirtualFileSystemEntry) {
+      return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+    }
+    return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+  }
+
   private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<VirtualFile> children, final boolean forDeletion) {
-    List<Entry> entries = ContainerUtil.mapNotNull(children, new NullableFunction<VirtualFile, Entry>() {
-      @Override
-      public Entry fun(@NotNull VirtualFile each) {
-        return doCreateEntry(each, forDeletion);
-      }
-    });
+    List<Entry> entries = ContainerUtil.mapNotNull(children, (NullableFunction<VirtualFile, Entry>)each -> doCreateEntry(each, forDeletion));
     parent.addChildren(entries);
   }
 
   public void registerUnsavedDocuments(@NotNull final LocalHistoryFacade vcs) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        vcs.beginChangeSet();
-        for (Document d : FileDocumentManager.getInstance().getUnsavedDocuments()) {
-          VirtualFile f = getFile(d);
-          if (!shouldRegisterDocument(f)) continue;
-          registerDocumentContents(vcs, f, d);
-        }
-        vcs.endChangeSet(null);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      vcs.beginChangeSet();
+      for (Document d : FileDocumentManager.getInstance().getUnsavedDocuments()) {
+        VirtualFile f = getFile(d);
+        if (!shouldRegisterDocument(f)) continue;
+        registerDocumentContents(vcs, f, d);
       }
+      vcs.endChangeSet(null);
     });
   }
 

@@ -27,7 +27,7 @@ import java.awt.FlowLayout;
  * @author yole
  */
 public class FlowLayoutSourceGenerator extends LayoutSourceGenerator {
-  @NonNls private static final TIntObjectHashMap<String> myAlignMap = new TIntObjectHashMap<String>();
+  @NonNls private static final TIntObjectHashMap<String> myAlignMap = new TIntObjectHashMap<>();
 
   static {
     myAlignMap.put(FlowLayout.CENTER, "FlowLayout.CENTER");

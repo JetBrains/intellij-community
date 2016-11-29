@@ -199,7 +199,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       myAppletParameters = null;
     }
     else {
-      List<AppletParameter> parameters = new SmartList<AppletParameter>();
+      List<AppletParameter> parameters = new SmartList<>();
       for (Element element : paramList) {
         parameters.add(new AppletParameter(element.getAttributeValue(NAME_ATTR), element.getAttributeValue(VALUE_ATTR)));
       }

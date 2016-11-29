@@ -122,12 +122,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   public abstract String getTestDataPath();
 
   protected void init() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined");
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined"));
   }
 
   @Override
@@ -181,8 +176,6 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
       Pass.POPUP_HINTS,
       Pass.UPDATE_ALL,
       Pass.UPDATE_FOLDING,
-      Pass.UPDATE_OVERRIDEN_MARKERS,
-      Pass.VISIBLE_LINE_MARKERS,
     } : new int[]{Pass.EXTERNAL_TOOLS};
     return CodeInsightTestFixtureImpl.instantiateAndRun(myTestFixture.getFile(), editor, ignore, false);
   }

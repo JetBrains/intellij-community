@@ -56,10 +56,10 @@ public class HgMergeCommand {
   }
 
   @Nullable
-  private HgCommandResult execute() {
+  private HgCommandResult executeInCurrentThread() {
     HgPromptCommandExecutor commandExecutor = new HgPromptCommandExecutor(project);
     commandExecutor.setShowOutput(true);
-    List<String> arguments = new LinkedList<String>();
+    List<String> arguments = new LinkedList<>();
     if (!StringUtil.isEmptyOrSpaces(revision)) {
       arguments.add("--rev");
       arguments.add(revision);
@@ -76,8 +76,8 @@ public class HgMergeCommand {
   }
 
   @Nullable
-  public HgCommandResult merge() throws VcsException {
-    HgCommandResult commandResult = ensureSuccess(execute());
+  public HgCommandResult mergeSynchronously() throws VcsException {
+    HgCommandResult commandResult = ensureSuccess(executeInCurrentThread());
     try {
       HgUtil.markDirectoryDirty(project, repo.getRoot());
     }
@@ -109,7 +109,7 @@ public class HgMergeCommand {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          HgCommandResult result = hgMergeCommand.merge();
+          HgCommandResult result = hgMergeCommand.mergeSynchronously();
           if (HgErrorUtil.isAncestorMergeError(result)) {
             //skip and notify
             VcsNotifier.getInstance(project).notifyMinorWarning("Merging is skipped for " + repositoryRoot.getPresentableName(),

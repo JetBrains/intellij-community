@@ -16,11 +16,11 @@
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.ide.highlighter.custom.tokens.KeywordParser;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * @author Yura Cangea
@@ -48,10 +48,10 @@ public class SyntaxTable implements Cloneable {
   private volatile KeywordParser myKeywordParser;
 
   public SyntaxTable() {
-    myKeywords1 = new TreeSet<String>();
-    myKeywords2 = new TreeSet<String>();
-    myKeywords3 = new TreeSet<String>();
-    myKeywords4 = new TreeSet<String>();
+    myKeywords1 = new THashSet<>();
+    myKeywords2 = new THashSet<>();
+    myKeywords3 = new THashSet<>();
+    myKeywords4 = new THashSet<>();
   }
 
   KeywordParser getKeywordParser() {
@@ -70,10 +70,10 @@ public class SyntaxTable implements Cloneable {
   @Override
   protected Object clone() throws CloneNotSupportedException {
     SyntaxTable cl = (SyntaxTable)super.clone();
-    cl.myKeywords1 = new TreeSet<String>(myKeywords1);
-    cl.myKeywords2 = new TreeSet<String>(myKeywords2);
-    cl.myKeywords3 = new TreeSet<String>(myKeywords3);
-    cl.myKeywords4 = new TreeSet<String>(myKeywords4);
+    cl.myKeywords1 = new THashSet<>(myKeywords1);
+    cl.myKeywords2 = new THashSet<>(myKeywords2);
+    cl.myKeywords3 = new THashSet<>(myKeywords3);
+    cl.myKeywords4 = new THashSet<>(myKeywords4);
     cl.myKeywordParser = null;
     return cl;
   }

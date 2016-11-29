@@ -17,14 +17,26 @@ package com.intellij.util.concurrency;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class FixedFuture<T> implements Future<T> {
   private final T myValue;
+  private final Throwable myThrowable;
 
   public FixedFuture(T value) {
     myValue = value;
+    myThrowable = null;
+  }
+
+  private FixedFuture(@NotNull Throwable throwable) {
+    myValue = null;
+    myThrowable = throwable;
+  }
+
+  public static <T> FixedFuture<T> completeExceptionally(@NotNull Throwable throwable) {
+    return new FixedFuture<T>(throwable);
   }
 
   @Override
@@ -43,7 +55,10 @@ public class FixedFuture<T> implements Future<T> {
   }
 
   @Override
-  public T get() {
+  public T get() throws ExecutionException {
+    if (myThrowable != null) {
+      throw new ExecutionException(myThrowable);
+    }
     return myValue;
   }
 

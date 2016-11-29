@@ -32,7 +32,7 @@ public abstract class CodeStyleSchemes {
   public abstract CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme);
 
   @TestOnly
-  public abstract void deleteScheme(CodeStyleScheme scheme);
+  public abstract void deleteScheme(@NotNull CodeStyleScheme scheme);
 
   @Nullable
   protected abstract CodeStyleScheme findSchemeByName(@NotNull String name);
@@ -44,16 +44,17 @@ public abstract class CodeStyleSchemes {
    * @return A found scheme or a default scheme if the scheme name was not found or, if neither exists or the scheme name is null, the
    *         currently selected scheme.
    */
+  @NotNull
   public CodeStyleScheme findPreferredScheme(@Nullable String preferredSchemeName) {
     CodeStyleScheme scheme = null;
     if (preferredSchemeName != null) {
       scheme = findSchemeByName(preferredSchemeName);
-      if (scheme == null) {
-        scheme = getDefaultScheme();
-      }
     }
     if (scheme == null) {
       scheme = getCurrentScheme();
+    }
+    if (scheme == null) {
+      scheme = getDefaultScheme();
     }
     return scheme;
   }

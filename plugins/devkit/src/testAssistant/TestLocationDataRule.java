@@ -61,7 +61,7 @@ public class TestLocationDataRule implements GetDataRule {
   protected static List<Location> collectRelativeLocations(Project project, VirtualFile file) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 
-    final List<Location> locations = new ArrayList<Location>();
+    final List<Location> locations = new ArrayList<>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInContent(file) && !fileIndex.isInSource(file) && !fileIndex.isInLibraryClasses(file)) {
       final VirtualFile parent = file.getParent();
@@ -72,12 +72,7 @@ public class TestLocationDataRule implements GetDataRule {
           final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(project);
           final List<String> words = StringUtil.getWordsIn(relativePath);
           // put longer strings first
-          Collections.sort(words, new Comparator<String>() {
-            @Override
-            public int compare(final String o1, final String o2) {
-              return o2.length() - o1.length();
-            }
-          });
+          Collections.sort(words, (o1, o2) -> o2.length() - o1.length());
 
           final GlobalSearchScope testScope = GlobalSearchScopesCore.projectTestScope(project);
           Set<PsiFile> resultFiles = null;
@@ -85,8 +80,8 @@ public class TestLocationDataRule implements GetDataRule {
             if (word.length() < 5) {
               continue;
             }
-            final Set<PsiFile> files = new THashSet<PsiFile>();
-            searchHelper.processAllFilesWithWordInLiterals(word, testScope, new CommonProcessors.CollectProcessor<PsiFile>(files));
+            final Set<PsiFile> files = new THashSet<>();
+            searchHelper.processAllFilesWithWordInLiterals(word, testScope, new CommonProcessors.CollectProcessor<>(files));
             if (resultFiles == null) {
               resultFiles = files;
             }

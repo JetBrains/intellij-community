@@ -21,44 +21,59 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 
-@State(
-  name = "XmlFoldingSettings",
-  storages = @Storage("editor.codeinsight.xml")
-)
-public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings> {
+@State(name = "XmlFoldingSettings", storages = @Storage("editor.codeinsight.xml"))
+public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings.State> {
+  private final XmlFoldingSettings.State myState = new State();
+
   public static XmlFoldingSettings getInstance() {
     return ServiceManager.getService(XmlFoldingSettings.class);
   }
 
-  @Override
-  public boolean isCollapseXmlTags() {
-    return COLLAPSE_XML_TAGS;
+  public XmlFoldingSettings() {
+    // todo: remove after 2017.1 release
+    CssFoldingSettings cssFoldingSettings = CssFoldingSettings.getInstance();
+    if (cssFoldingSettings != null) {
+      myState.COLLAPSE_DATA_URI = cssFoldingSettings.isCollapseDataUri();
+    }
   }
 
-  public void setCollapseXmlTags(boolean value) {
-    COLLAPSE_XML_TAGS = value;
+  @Override
+  public boolean isCollapseXmlTags() {
+    return myState.COLLAPSE_XML_TAGS;
   }
 
   @Override
   public boolean isCollapseHtmlStyleAttribute() {
-    return COLLAPSE_HTML_STYLE_ATTRIBUTE;
-  }
-
-  public void setCollapseHtmlStyleAttribute(boolean value) {
-    this.COLLAPSE_HTML_STYLE_ATTRIBUTE = value;
-  }
-
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_TAGS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
-
-  @Override
-  public XmlFoldingSettings getState() {
-    return this;
+    return myState.COLLAPSE_HTML_STYLE_ATTRIBUTE;
   }
 
   @Override
-  public void loadState(final XmlFoldingSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public boolean isCollapseEntities() {
+    return myState.COLLAPSE_ENTITIES;
+  }
+
+  @Override
+  public boolean isCollapseDataUri() {
+    return myState.COLLAPSE_DATA_URI;
+  }
+
+  @Override
+  @NotNull
+  public State getState() {
+    return myState;
+  }
+
+  @Override
+  public void loadState(State state) {
+    XmlSerializerUtil.copyBean(state, myState);
+  }
+
+  public static final class State {
+    public boolean COLLAPSE_XML_TAGS;
+    public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
+    public boolean COLLAPSE_ENTITIES = true;
+    public boolean COLLAPSE_DATA_URI = true;
   }
 }

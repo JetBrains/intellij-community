@@ -186,8 +186,8 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
   public void testChangeSelectionAction() {
     final Marker onSelectedHappend = new Marker();
-    final Ref<SMTestProxy> proxyRef = new Ref<SMTestProxy>();
-    final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
+    final Ref<SMTestProxy> proxyRef = new Ref<>();
+    final Ref<Boolean> focusRequestedRef = new Ref<>();
 
     myResultsViewer.setShowStatisticForProxyHandler(new PropagateSelectionHandler() {
       @Override

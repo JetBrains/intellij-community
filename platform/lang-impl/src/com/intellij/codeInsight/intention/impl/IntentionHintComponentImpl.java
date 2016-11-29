@@ -23,18 +23,15 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -56,8 +53,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
@@ -278,15 +273,7 @@ public class IntentionHintComponentImpl extends IntentionHintComponent implement
 
     myComponentHint = new MyComponentHint(myPanel);
     recreateMyPopup(myIntentionListStep);
-    // dispose myself when editor closed
-    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
-      @Override
-      public void editorReleased(@NotNull EditorFactoryEvent event) {
-        if (event.getEditor() == myEditor) {
-          hide();
-        }
-      }
-    }, this);
+    EditorUtil.disposeWithEditor(myEditor, this);
   }
 
   @Override
@@ -378,31 +365,28 @@ public class IntentionHintComponentImpl extends IntentionHintComponent implement
         myPopupShown = false;
       }
     });
-    myPopup.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(@NotNull ListSelectionEvent e) {
-        final Object source = e.getSource();
-        highlighter.dropHighlight();
-        injectionHighlighter.dropHighlight();
+    myPopup.addListSelectionListener(e -> {
+      final Object source = e.getSource();
+      highlighter.dropHighlight();
+      injectionHighlighter.dropHighlight();
 
-        if (source instanceof DataProvider) {
-          final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
-          if (selectedItem instanceof IntentionActionWithTextCaching) {
-            final IntentionAction action = ((IntentionActionWithTextCaching)selectedItem).getAction();
-            if (action instanceof SuppressIntentionActionFromFix) {
-              if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
-                final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
-                final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-                if (container != null) {
-                  injectionHighlighter.highlight(container, Collections.singletonList(container));
-                }
+      if (source instanceof DataProvider) {
+        final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
+        if (selectedItem instanceof IntentionActionWithTextCaching) {
+          final IntentionAction action = ((IntentionActionWithTextCaching)selectedItem).getAction();
+          if (action instanceof SuppressIntentionActionFromFix) {
+            if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+              final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
+              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+              if (container != null) {
+                injectionHighlighter.highlight(container, Collections.singletonList(container));
               }
-              else {
-                final PsiElement at = myFile.findElementAt(myEditor.getCaretModel().getOffset());
-                final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-                if (container != null) {
-                  highlighter.highlight(container, Collections.singletonList(container));
-                }
+            }
+            else {
+              final PsiElement at = myFile.findElementAt(myEditor.getCaretModel().getOffset());
+              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+              if (container != null) {
+                highlighter.highlight(container, Collections.singletonList(container));
               }
             }
           }
@@ -427,12 +411,7 @@ public class IntentionHintComponentImpl extends IntentionHintComponent implement
     }
 
     Disposer.register(this, myPopup);
-    Disposer.register(myPopup, new Disposable() {
-      @Override
-      public void dispose() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-      }
-    });
+    Disposer.register(myPopup, () -> ApplicationManager.getApplication().assertIsDispatchThread());
   }
 
   @Override
@@ -461,12 +440,7 @@ public class IntentionHintComponentImpl extends IntentionHintComponent implement
       myVisible = true;
       if (myShouldDelay) {
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            showImpl(parentComponent, x, y, focusBackComponent);
-          }
-        }, DELAY);
+        myAlarm.addRequest(() -> showImpl(parentComponent, x, y, focusBackComponent), DELAY);
       }
       else {
         showImpl(parentComponent, x, y, focusBackComponent);

@@ -58,7 +58,7 @@ public class GitTag extends GitReference {
 
   @Deprecated
   public static void list(final Project project, final VirtualFile root, final Collection<? super GitTag> tags) throws VcsException {
-    ArrayList<String> temp = new ArrayList<String>();
+    ArrayList<String> temp = new ArrayList<>();
     listAsStrings(project, root, temp, null);
     for (String t : temp) {
       tags.add(new GitTag(t));

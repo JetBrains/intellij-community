@@ -32,9 +32,13 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
-import git4idea.repo.*;
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitConfig;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import git4idea.validators.GitNewBranchNameValidator;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +82,11 @@ public class GitBranchUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static GitBranchTrackInfo getTrackInfo(@NotNull GitRepository repository, @NotNull String localBranchName) {
+    return ContainerUtil.find(repository.getBranchTrackInfos(), it -> it.getLocalBranch().getName().equals(localBranchName));
   }
 
   @NotNull
@@ -170,7 +179,7 @@ public class GitBranchUtil {
   @Deprecated
   @Nullable
   public static GitRemoteBranch tracked(@NotNull Project project, @NotNull VirtualFile root, @NotNull String branchName) throws VcsException {
-    final HashMap<String, String> result = new HashMap<String, String>();
+    final HashMap<String, String> result = new HashMap<>();
     GitConfigUtil.getValues(project, root, null, result);
     String remoteName = result.get(trackedRemoteKey(branchName));
     if (remoteName == null) {
@@ -256,7 +265,7 @@ public class GitBranchUtil {
    */
   @Nullable
   public static String getNewBranchNameFromUser(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull String dialogTitle) {
-    return Messages.showInputDialog(project, "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
+    return Messages.showInputDialog(project, "New branch name:", dialogTitle, null, "",
                                     GitNewBranchNameValidator.newInstance(repositories));
   }
 
@@ -311,6 +320,7 @@ public class GitBranchUtil {
    *         or if the current Git root couldn't be determined.
    */
   @Nullable
+  @CalledInAwt
   public static GitRepository getCurrentRepository(@NotNull Project project) {
     return getRepositoryOrGuess(project, DvcsUtil.getSelectedFile(project));
   }
@@ -341,7 +351,7 @@ public class GitBranchUtil {
     }
 
     if (commonBranches != null) {
-      ArrayList<String> common = new ArrayList<String>(commonBranches);
+      ArrayList<String> common = new ArrayList<>(commonBranches);
       Collections.sort(common);
       return common;
     }

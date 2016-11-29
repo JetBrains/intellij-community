@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -66,16 +65,16 @@ public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectio
 
     final CharSequence paramName = value.getContainingFile().getViewProvider().getContents().subSequence(textOffset, value.getTextRange().getEndOffset());
     final String params = "<code>" + paramName + "</code>";
-    final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+    final List<LocalQuickFix> fixes = new ArrayList<>();
     if (onTheFly && "param".equals(tagName)) {
       final PsiDocCommentOwner commentOwner = PsiTreeUtil.getParentOfType(tag, PsiDocCommentOwner.class);
       if (commentOwner instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)commentOwner;
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         final PsiDocTag[] tags = tag.getContainingComment().getTags();
-        final Set<String> unboundParams = new HashSet<String>();
+        final Set<String> unboundParams = new HashSet<>();
         for (PsiParameter parameter : parameters) {
-          if (!JavaDocLocalInspectionBase.isFound(tags, parameter)) {
+          if (!JavadocHighlightUtil.hasTagForParameter(tags, parameter)) {
             unboundParams.add(parameter.getName());
           }
         }
@@ -143,8 +142,8 @@ public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectio
   private ProblemDescriptor[] checkComment(PsiDocComment docComment, PsiElement context, InspectionManager manager, boolean isOnTheFly) {
     if (docComment == null) return null;
 
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    final Set<PsiJavaCodeReferenceElement> references = new HashSet<PsiJavaCodeReferenceElement>();
+    final List<ProblemDescriptor> problems = new ArrayList<>();
+    final Set<PsiJavaCodeReferenceElement> references = new HashSet<>();
     docComment.accept(getVisitor(references, context, problems, manager, isOnTheFly));
     for (PsiJavaCodeReferenceElement reference : references) {
       final PsiElement referenceNameElement = reference.getReferenceNameElement();
@@ -248,14 +247,13 @@ public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectio
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return "Remove tag";
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
       if (myTag == null) return;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(myTag)) return;
       myTag.delete();
     }
   }

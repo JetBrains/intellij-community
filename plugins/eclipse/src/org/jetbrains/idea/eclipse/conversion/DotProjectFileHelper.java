@@ -61,10 +61,8 @@ public class DotProjectFileHelper {
       }
 
       EclipseJDOMUtil.output(doc.getRootElement(), projectFile, module.getProject());
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectFile.getPath()));
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectFile.getPath()));
       });
     }
     catch (JDOMException e) {

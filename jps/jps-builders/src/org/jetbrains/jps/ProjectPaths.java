@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,7 @@ import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
-import org.jetbrains.jps.model.module.JpsDependencyElement;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
-import org.jetbrains.jps.model.module.JpsSdkDependency;
+import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -36,17 +33,16 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/30/11
+ * @since 30.09.2011
  */
 public class ProjectPaths {
-  private ProjectPaths() {
-  }
+  private ProjectPaths() { }
 
   @NotNull
   public static Collection<File> getCompilationClasspathFiles(ModuleChunk chunk,
-                                                       boolean includeTests,
-                                                       final boolean excludeMainModuleOutput,
-                                                       final boolean exportedOnly) {
+                                                              boolean includeTests,
+                                                              boolean excludeMainModuleOutput,
+                                                              boolean exportedOnly) {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(includeTests), excludeMainModuleOutput, ClasspathPart.WHOLE, exportedOnly);
   }
 
@@ -61,10 +57,16 @@ public class ProjectPaths {
   }
 
   @NotNull
+  public static Collection<File> getCompilationModulePath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, false);
+  }
+
+  @NotNull
   private static Collection<File> getClasspathFiles(ModuleChunk chunk,
-                                             JpsJavaClasspathKind kind,
-                                             final boolean excludeMainModuleOutput,
-                                             ClasspathPart classpathPart, final boolean exportedOnly) {
+                                                    JpsJavaClasspathKind kind,
+                                                    boolean excludeMainModuleOutput,
+                                                    ClasspathPart classpathPart,
+                                                    boolean exportedOnly) {
     final Set<File> files = new LinkedHashSet<File>();
     for (JpsModule module : chunk.getModules()) {
       JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).includedIn(kind).recursively();
@@ -102,9 +104,7 @@ public class ProjectPaths {
   }
 
   /**
-   *
-   * @param chunk
-   * @return mapping "sourceRoot" -> "package prefix" Package prefix uses slashes instead of dots and ends with trailing slash
+   * Returns a mapping "sourceRoot" -> "package prefix". A package prefix uses slashes instead of dots and ends with a trailing slash.
    */
   @NotNull
   public static Map<File, String> getSourceRootsWithDependents(ModuleChunk chunk) {
@@ -144,10 +144,6 @@ public class ProjectPaths {
       }
     });
     return sourcePaths;
-  }
-
-  public static Set<JpsModule> getModulesWithDependentsRecursively(final JpsModule module, final boolean includeTests) {
-    return JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.compile(includeTests)).recursively().getModules();
   }
 
   private static void processModulesRecursively(ModuleChunk chunk, JpsJavaClasspathKind kind, Consumer<JpsModule> processor) {
@@ -226,5 +222,4 @@ public class ProjectPaths {
       return mySdkFound;
     }
   }
-
 }

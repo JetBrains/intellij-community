@@ -55,7 +55,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   @Override
   @NotNull
   public UsageGroupingRule[] getActiveRules(Project project) {
-    List<UsageGroupingRule> rules = new ArrayList<UsageGroupingRule>();
+    List<UsageGroupingRule> rules = new ArrayList<>();
     if (supportsNonCodeRule()) {
       rules.add(new NonCodeUsageGroupingRule(project));
     }

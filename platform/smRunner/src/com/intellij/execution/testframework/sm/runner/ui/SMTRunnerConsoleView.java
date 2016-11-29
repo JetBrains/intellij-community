@@ -96,12 +96,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
         }
 
         // print selected content
-        SMRunnerUtil.runInEventDispatchThread(new Runnable() {
-          @Override
-          public void run() {
-            getPrinter().updateOnTestSelected(selectedTestProxy);
-          }
-        }, ModalityState.NON_MODAL);
+        SMRunnerUtil.runInEventDispatchThread(() -> getPrinter().updateOnTestSelected(selectedTestProxy), ModalityState.NON_MODAL);
       }
     });
   }
@@ -133,7 +128,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * @param info          HyperlinkInfo
    */
   @Override
-  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
+  public void printHyperlink(@NotNull String hyperlinkText, HyperlinkInfo info) {
     myResultsViewer.getRoot().addLast(new HyperLink(hyperlinkText, info));
   }
 

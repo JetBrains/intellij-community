@@ -140,4 +140,10 @@ public interface MessageBus {
    * {@link #connect(Disposable) connections}.
    */
   void dispose();
+
+  /**
+   * @return true when events in the given topic are being dispatched in the current thread,
+   * and not all listeners have received the events yet.
+   */
+  boolean hasUndeliveredEvents(@NotNull Topic<?> topic);
 }

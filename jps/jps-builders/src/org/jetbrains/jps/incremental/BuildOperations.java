@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -39,24 +40,26 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/30/12
+ * @since 30.10.2012
  */
 public class BuildOperations {
-  private BuildOperations() {
-  }
+  private BuildOperations() { }
 
   public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
-    if (context.isProjectRebuild()) {
+    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
       FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, timestamps, true, null, null);
       pd.fsState.markInitialScanPerformed(target);
       configuration.save(context);
     }
     else if (context.getScope().isBuildForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
-      IncProjectBuilder.clearOutputFiles(context, target);
+      if (!context.getScope().isBuildForced(target)) {
+        // case when target build is forced, is handled separately
+        IncProjectBuilder.clearOutputFiles(context, target);
+      }
       pd.dataManager.cleanTargetStorages(target);
       configuration.save(context);
     }
@@ -132,13 +135,13 @@ public class BuildOperations {
   Map<T, Set<File>> cleanOutputsCorrespondingToChangedFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
-      final Map<T, Set<File>> cleanedSources = new java.util.HashMap<T, Set<File>>();
+      final Map<T, Set<File>> cleanedSources = new HashMap<T, Set<File>>();
 
       final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       final Collection<String> deletedPaths = new ArrayList<String>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
-        private final Map<T, SourceToOutputMapping> mappingsCache = new java.util.HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
+        private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
         private final TObjectIntHashMap<T> idsCache = new TObjectIntHashMap<T>();
 
         @Override
@@ -178,7 +181,7 @@ public class BuildOperations {
 
       });
 
-      if (context.isMake()) {
+      if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         if (logger.isEnabled()) {
           logger.logDeletedFiles(deletedPaths);

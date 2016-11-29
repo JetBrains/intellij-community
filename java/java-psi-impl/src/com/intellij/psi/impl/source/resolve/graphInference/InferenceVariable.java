@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
+import com.intellij.psi.augment.TypeAnnotationModifier;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -35,7 +36,7 @@ public class InferenceVariable extends LightTypeParameter {
     return getDelegate();
   }
 
-  private boolean myThrownBound = false;
+  private boolean myThrownBound;
   private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
   private final String myName;
 
@@ -66,6 +67,22 @@ public class InferenceVariable extends LightTypeParameter {
       }
     }
     return result.toArray(new PsiClassType[result.size()]);
+  }
+
+  public static void addBound(PsiType inferenceVariableType, PsiType boundType, InferenceBound inferenceBound, InferenceSession session) {
+    final InferenceVariable variable = session.getInferenceVariable(inferenceVariableType);
+    if (variable != null) {
+      for (TypeAnnotationModifier modifier : TypeAnnotationModifier.EP_NAME.getExtensions()) {
+        if (boundType instanceof PsiClassType) {
+          final TypeAnnotationProvider annotationProvider = modifier.modifyAnnotations(inferenceVariableType, (PsiClassType)boundType);
+          if (annotationProvider != null) {
+            boundType = boundType.annotate(annotationProvider);
+          }
+        }
+      }
+
+      variable.addBound(boundType, inferenceBound, session.myIncorporationPhase);
+    }
   }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound, @Nullable InferenceIncorporationPhase incorporationPhase) {
@@ -150,16 +167,6 @@ public class InferenceVariable extends LightTypeParameter {
         }
       }
     }
-  }
-
-  public boolean hasInstantiation(InferenceSession session) {
-    List<PsiType> bounds = getBounds(InferenceBound.EQ);
-    if (bounds != null) {
-      for (PsiType bound : bounds) {
-        if (session.isProperType(bound)) return true;
-      }
-    }
-    return false;
   }
 
   public boolean isThrownBound() {

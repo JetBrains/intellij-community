@@ -22,51 +22,46 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchPanel;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class CreatePatchConfigurationPanel {
-  private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName());
+  private static final int TEXT_FIELD_WIDTH = 70;
 
   private JPanel myMainPanel;
   private TextFieldWithBrowseButton myFileNameField;
+  private TextFieldWithBrowseButton myBasePathField;
   private JCheckBox myReversePatchCheckbox;
-  private JComboBox myEncoding;
-  private JLabel myErrorLabel;
-  private JCheckBox myIncludeBaseRevisionTextCheckBox;
-  private Consumer<Boolean> myOkEnabledListener;
+  private ComboBox<Charset> myEncoding;
+  private JLabel myWarningLabel;
   private final Project myProject;
-  private List<Change> myChanges;
-  private boolean myExecute;
+  @Nullable private File myCommonParentDir;
 
   public CreatePatchConfigurationPanel(@NotNull final Project project) {
     myProject = project;
@@ -86,132 +81,73 @@ public class CreatePatchConfigurationPanel {
         final VirtualFileWrapper fileWrapper = dialog.save(baseDir, name);
         if (fileWrapper != null) {
           myFileNameField.setText(fileWrapper.getFile().getPath());
-          checkName();
         }
       }
     });
 
-    myIncludeBaseRevisionTextCheckBox.setVisible(false);
-    myFileNameField.getTextField().addInputMethodListener(new InputMethodListener() {
-      public void inputMethodTextChanged(final InputMethodEvent event) {
-        checkName();
-      }
-
-      public void caretPositionChanged(final InputMethodEvent event) {
-      }
-    });
-    myFileNameField.setTextFieldPreferredWidth(70);
-    myFileNameField.getTextField().addKeyListener(new KeyListener() {
-      public void keyTyped(final KeyEvent e) {
-        checkName();
-      }
-
-      public void keyPressed(final KeyEvent e) {
-        checkName();
-      }
-
-      public void keyReleased(final KeyEvent e) {
-        checkName();
-      }
-    });
-    myErrorLabel.setForeground(JBColor.RED);
-    checkName();
+    myFileNameField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
+    myBasePathField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
+    myBasePathField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
+    myWarningLabel.setForeground(JBColor.RED);
+    selectBasePath(ObjectUtils.assertNotNull(myProject.getBaseDir()));
     initEncodingCombo();
   }
 
-  private void initEncodingCombo() {
-    final DefaultComboBoxModel encodingsModel = new DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets());
-    encodingsModel.insertElementAt(SYSTEM_DEFAULT, 0);
-    myEncoding.setModel(encodingsModel);
-
-    final String name = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
-    if (StringUtil.isEmpty(name)) {
-      myEncoding.setSelectedItem(SYSTEM_DEFAULT);
-    }
-    else {
-      myEncoding.setSelectedItem(EncodingProjectManager.getInstance(myProject).getDefaultCharset());
-    }
+  public void selectBasePath(@NotNull VirtualFile baseDir) {
+    myBasePathField.setText(baseDir.getPresentableUrl());
   }
 
-  @Nullable
+  private void initEncodingCombo() {
+    final DefaultComboBoxModel<Charset> encodingsModel = new DefaultComboBoxModel<>(CharsetToolkit.getAvailableCharsets());
+    myEncoding.setModel(encodingsModel);
+    Charset projectCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
+    myEncoding.setSelectedItem(projectCharset);
+  }
+
+  @NotNull
   public Charset getEncoding() {
-    final Object selectedItem = myEncoding.getSelectedItem();
-    if (SYSTEM_DEFAULT.equals(selectedItem)) {
-      return CharsetToolkit.getDefaultSystemCharset();
-    }
-    return (Charset)selectedItem;
+    return (Charset)myEncoding.getSelectedItem();
   }
 
   private void initMainPanel() {
     myFileNameField = new TextFieldWithBrowseButton();
+    myBasePathField = new TextFieldWithBrowseButton();
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
-    myEncoding = new ComboBox();
-    myIncludeBaseRevisionTextCheckBox = new JCheckBox(VcsBundle.message("create.patch.base.revision", 0));
-    myIncludeBaseRevisionTextCheckBox.setToolTipText(VcsBundle.message("create.patch.base.revision.tooltip"));
-    myErrorLabel = new JLabel();
+    myEncoding = new ComboBox<>();
+    myWarningLabel = new JLabel();
 
     myMainPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(VcsBundle.message("create.patch.file.path"), myFileNameField)
+      .addLabeledComponent("&Base path:", myBasePathField)
       .addComponent(myReversePatchCheckbox)
-      .addComponent(myIncludeBaseRevisionTextCheckBox)
       .addLabeledComponent(VcsBundle.message("create.patch.encoding"), myEncoding)
-      .addComponent(myErrorLabel)
+      .addComponent(myWarningLabel)
       .getPanel();
   }
 
-  public void showTextStoreOption() {
-    if (myChanges.size() > 0) {
-      myIncludeBaseRevisionTextCheckBox.setVisible(true);
-      final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-      myIncludeBaseRevisionTextCheckBox.setSelected(configuration.INCLUDE_TEXT_INTO_PATCH);
-    }
+  public void setCommonParentPath(@Nullable File commonParentPath) {
+    myCommonParentDir = commonParentPath == null || commonParentPath.isDirectory() ? commonParentPath : commonParentPath.getParentFile();
   }
 
-  private void checkName() {
-    final PatchNameChecker patchNameChecker = new PatchNameChecker(getFileName());
-    if (patchNameChecker.nameOk()) {
-      myErrorLabel.setText("");
-    }
-    else {
-      myErrorLabel.setText(patchNameChecker.getError());
-    }
-    myExecute = patchNameChecker.nameOk() || !patchNameChecker.isPreventsOk();
-    if (myOkEnabledListener != null) {
-      myOkEnabledListener.consume(myExecute);
-    }
-  }
-
-  public void onOk() {
-    if (myIncludeBaseRevisionTextCheckBox.isVisible()) {
-      final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-      vcsConfiguration.INCLUDE_TEXT_INTO_PATCH = myIncludeBaseRevisionTextCheckBox.isSelected();
-    }
-  }
-
-  public boolean isStoreTexts() {
-    return myIncludeBaseRevisionTextCheckBox.isSelected();
-  }
-
-  public Collection<Change> getIncludedChanges() {
-    myChanges.removeAll(SelectFilesToAddTextsToPatchPanel.getBig(myChanges)) ;
-    return myChanges;
+  private void checkExist() {
+    myWarningLabel.setText(new File(getFileName()).exists() ? "File with the same name already exists" : "");
   }
 
   public JComponent getPanel() {
     return myMainPanel;
   }
 
-  public void installOkEnabledListener(final Consumer<Boolean> runnable) {
-    myOkEnabledListener = runnable;
-  }
-
   public String getFileName() {
     return FileUtil.expandUserHome(myFileNameField.getText().trim());
   }
 
+  @NotNull
+  public String getBaseDirName() {
+    return FileUtil.expandUserHome(myBasePathField.getText().trim());
+  }
+
   public void setFileName(final File file) {
     myFileNameField.setText(file.getPath());
-    checkName();
   }
 
   public boolean isReversePatch() {
@@ -223,14 +159,27 @@ public class CreatePatchConfigurationPanel {
   }
 
   public boolean isOkToExecute() {
-    return myExecute;
+    return validateFields() == null;
   }
 
-  public String getError() {
-    return myErrorLabel.getText() == null ? "" : myErrorLabel.getText();
+  @Nullable
+  private ValidationInfo verifyBaseDirPath() {
+    String baseDirName = getBaseDirName();
+    if (StringUtil.isEmptyOrSpaces(baseDirName)) return new ValidationInfo("Base path can't be empty!", myBasePathField);
+    File baseFile = new File(baseDirName);
+    if (!baseFile.exists()) return new ValidationInfo("Base dir doesn't exist", myBasePathField);
+    if (myCommonParentDir != null && !FileUtil.isAncestor(baseFile, myCommonParentDir, false)) {
+      return new ValidationInfo(String.format("Base path doesn't contain all selected changes (use %s)", myCommonParentDir.getPath()),
+                                myBasePathField);
+    }
+    return null;
   }
 
-  public void setChanges(@NotNull Collection<Change> changes) {
-    myChanges = new ArrayList<Change>(changes);
+  @Nullable
+  public ValidationInfo validateFields() {
+    checkExist();
+    String validateNameError = PatchNameChecker.validateName(getFileName());
+    if (validateNameError != null) return new ValidationInfo(validateNameError, myFileNameField);
+    return verifyBaseDirPath();
   }
 }

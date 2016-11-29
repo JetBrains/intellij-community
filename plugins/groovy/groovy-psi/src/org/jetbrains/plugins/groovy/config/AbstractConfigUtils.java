@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,7 @@ public abstract class AbstractConfigUtils {
   // SDK-dependent entities
   @NonNls protected String STARTER_SCRIPT_FILE_NAME;
 
-  private final Condition<Library> LIB_SEARCH_CONDITION = new Condition<Library>() {
-    @Override
-    public boolean value(Library library) {
-      return isSDKLibrary(library);
-    }
-  };
+  private final Condition<Library> LIB_SEARCH_CONDITION = library -> isSDKLibrary(library);
 
   // Common entities
   @NonNls public static final String UNDEFINED_VERSION = "undefined";
@@ -145,7 +140,7 @@ public abstract class AbstractConfigUtils {
   }
 
   public Library[] getProjectSDKLibraries(Project project) {
-    if (project == null || project.isDisposed()) return new Library[0];
+    if (project == null || project.isDisposed()) return Library.EMPTY_ARRAY;
     final LibraryTable table = ProjectLibraryTable.getInstance(project);
     final List<Library> all = ContainerUtil.findAll(table.getLibraries(), LIB_SEARCH_CONDITION);
     return all.toArray(new Library[all.size()]);
@@ -156,7 +151,7 @@ public abstract class AbstractConfigUtils {
   }
 
   public Library[] getAllUsedSDKLibraries(Project project) {
-    final List<Library> libraries = new ArrayList<Library>();
+    final List<Library> libraries = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       libraries.addAll(Arrays.asList(getSDKLibrariesByModule(module)));
     }

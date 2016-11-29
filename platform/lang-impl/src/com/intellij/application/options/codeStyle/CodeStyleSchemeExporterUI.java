@@ -15,9 +15,8 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
@@ -60,19 +59,14 @@ class CodeStyleSchemeExporterUI {
       new BaseListPopupStep<String>(ApplicationBundle.message("scheme.exporter.ui.export.as.title"), enumExporters()) {
         @Override
         public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-          return doFinalStep(new Runnable() {
-            @Override
-            public void run() {
-              exportSchemeUsing(selectedValue);
-            }
-          });
+          return doFinalStep(() -> exportSchemeUsing(selectedValue));
         }
       });
     popup.showInCenterOf(myParentComponent);
   }
 
   private static String[] enumExporters() {
-    List<String> names = new ArrayList<String>();
+    List<String> names = new ArrayList<>();
     Collection<SchemeExporterEP<CodeStyleScheme>> extensions = SchemeExporterEP.getExtensions(CodeStyleScheme.class);
     for (SchemeExporterEP<CodeStyleScheme> extension : extensions) {
       names.add(extension.name);
@@ -96,15 +90,16 @@ class CodeStyleSchemeExporterUI {
         String message;
         MessageType messageType;
         if (targetFile != null) {
-          final AccessToken writeToken = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
           try {
-            OutputStream outputStream = targetFile.getOutputStream(this);
-            try {
-              exporter.exportScheme(myScheme, outputStream);
-            }
-            finally {
-              outputStream.close();
-            }
+            WriteAction.run(() -> {
+              OutputStream outputStream = targetFile.getOutputStream(this);
+              try {
+                exporter.exportScheme(myScheme, outputStream);
+              }
+              finally {
+                outputStream.close();
+              }
+            });
             message = ApplicationBundle
               .message("scheme.exporter.ui.code.style.exported.message", myScheme.getName(), targetFile.getPresentableUrl());
             messageType = MessageType.INFO;
@@ -112,9 +107,6 @@ class CodeStyleSchemeExporterUI {
           catch (Exception e) {
             message = ApplicationBundle.message("scheme.exporter.ui.export.failed", e.getMessage());
             messageType = MessageType.ERROR;
-          }
-          finally {
-            writeToken.finish();
           }
         }
         else {

@@ -55,8 +55,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private volatile ConnectionStatus myStatus = ConnectionStatus.DISCONNECTED;
   private volatile String myStatusText;
   private volatile ServerRuntimeInstance<D> myRuntimeInstance;
-  private final Map<String, DeploymentImpl> myRemoteDeployments = new HashMap<String, DeploymentImpl>();
-  private final Map<String, LocalDeploymentImpl> myLocalDeployments = new HashMap<String, LocalDeploymentImpl>();
+  private final Map<String, DeploymentImpl> myRemoteDeployments = new HashMap<>();
+  private final Map<String, LocalDeploymentImpl> myLocalDeployments = new HashMap<>();
   private final Map<String, DeploymentLogManagerImpl> myLogManagers = ContainerUtil.newConcurrentMap();
 
   public ServerConnectionImpl(RemoteServer<?> server,
@@ -179,7 +179,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   private void computeDeployments(ServerRuntimeInstance<D> instance, final Runnable onFinished) {
     instance.computeDeployments(new ServerRuntimeInstance.ComputeDeploymentsCallback() {
-      private final List<DeploymentImpl> myDeployments = new ArrayList<DeploymentImpl>();
+      private final List<DeploymentImpl> myDeployments = new ArrayList<>();
 
       @Override
       public void addDeployment(@NotNull String deploymentName) {
@@ -275,15 +275,12 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     myEventDispatcher.queueDeploymentsChanged(this);
     DeploymentLogManagerImpl logManager = myLogManagers.get(deploymentName);
     final LoggingHandlerImpl loggingHandler = logManager == null ? null : logManager.getMainLoggingHandler();
-    final Consumer<String> logConsumer = new Consumer<String>() {
-      @Override
-      public void consume(String message) {
-        if (loggingHandler == null) {
-          LOG.info(message);
-        }
-        else {
-          loggingHandler.printlnSystemMessage(message);
-        }
+    final Consumer<String> logConsumer = message -> {
+      if (loggingHandler == null) {
+        LOG.info(message);
+      }
+      else {
+        loggingHandler.printlnSystemMessage(message);
       }
     };
 
@@ -323,9 +320,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @NotNull
   @Override
   public Collection<Deployment> getDeployments() {
-    Set<Deployment> result = new LinkedHashSet<Deployment>();
+    Set<Deployment> result = new LinkedHashSet<>();
     Map<Deployment, DeploymentImpl> orderedDeployments
-      = new TreeMap<Deployment, DeploymentImpl>(getServer().getType().getDeploymentComparator());
+      = new TreeMap<>(getServer().getType().getDeploymentComparator());
     synchronized (myLocalDeployments) {
       synchronized (myRemoteDeployments) {
 
@@ -435,15 +432,13 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
                                                                                              @NotNull DeploymentRuntime runtime) {
       try {
         final D debugInfo = debugConnector.getConnectionData((R)runtime);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            try {
-              debugConnector.getLauncher().startDebugSession(debugInfo, myDeploymentTask.getExecutionEnvironment(), myServer);
-            }
-            catch (ExecutionException e) {
-              myLoggingHandler.print("Cannot start debugger: " + e.getMessage() + "\n");
-              LOG.info(e);
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          try {
+            debugConnector.getLauncher().startDebugSession(debugInfo, myDeploymentTask.getExecutionEnvironment(), myServer);
+          }
+          catch (ExecutionException e) {
+            myLoggingHandler.print("Cannot start debugger: " + e.getMessage() + "\n");
+            LOG.info(e);
           }
         });
       }

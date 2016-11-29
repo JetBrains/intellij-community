@@ -24,11 +24,25 @@ import org.jetbrains.annotations.NotNull;
 public class FieldAccessedNotGuardedInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testItself() throws Exception {
     myFixture.addClass("package net.jcip.annotations;\n" + getGuardedByAnnotationText());
-    myFixture.testHighlighting(true, false, false, getTestName(true) + ".java");
+    doTest();
   }
 
   public void testJavax_itself() throws Exception {
     myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
+    doTest();
+  }
+
+  public void testSyncOnFieldQualifier() throws Exception {
+    myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
+    doTest();
+  }
+
+  public void testFieldAccessNotGuarded() {
+    myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
+    doTest();
+  }
+
+  private void doTest() {
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".java");
   }
 

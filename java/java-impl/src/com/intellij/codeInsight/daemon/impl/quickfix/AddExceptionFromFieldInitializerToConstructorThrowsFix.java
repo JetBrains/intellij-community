@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,11 +54,10 @@ public class AddExceptionFromFieldInitializerToConstructorThrowsFix extends Base
     final PsiField field = (PsiField)maybeField;
     if (field.hasModifierProperty(PsiModifier.STATIC)) return false;
     final PsiClass containingClass = field.getContainingClass();
-    if ((containingClass == null ||
-             containingClass instanceof PsiAnonymousClass ||
-             containingClass.isInterface() ||
-             !containingClass.isWritable())) {
-               return false;
+    if (containingClass == null ||
+        containingClass instanceof PsiAnonymousClass ||
+        containingClass.isInterface()) {
+      return false;
     }
     final List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(field);
     if (exceptions.isEmpty()) {
@@ -82,17 +81,12 @@ public class AddExceptionFromFieldInitializerToConstructorThrowsFix extends Base
         PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length == 0) {
           final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(aClass);
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              defaultConstructorFix.invoke(project, null, file);
-            }
-          });
+          ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, null, file));
           constructors = aClass.getConstructors();
           LOG.assertTrue(constructors.length != 0);
         }
 
-        Set<PsiClassType> unhandledExceptions = new THashSet<PsiClassType>(ExceptionUtil.getUnhandledExceptions(field));
+        Set<PsiClassType> unhandledExceptions = new THashSet<>(ExceptionUtil.getUnhandledExceptions(field));
         for (PsiMethod constructor : constructors) {
           AddExceptionToThrowsFix.addExceptionsToThrowsList(project, constructor, unhandledExceptions);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,30 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 
 public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameterizedTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.REPLACE_CAST = settings.REPLACE_INSTANCEOF = true;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.REPLACE_CAST = settings.REPLACE_INSTANCEOF = false;
+    super.tearDown();
+  }
+
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new LambdaCanBeMethodReferenceInspection(),
-    };
+    return new LocalInspectionTool[]{new LambdaCanBeMethodReferenceInspection()};
   }
 
   public void test() throws Exception { doAllTests(); }
@@ -36,10 +48,5 @@ public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameter
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/lambda2methodReference";
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

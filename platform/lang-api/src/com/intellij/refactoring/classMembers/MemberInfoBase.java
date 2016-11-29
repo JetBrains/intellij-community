@@ -70,7 +70,9 @@ public abstract class MemberInfoBase<T extends PsiElement> {
 
   public T getMember() {
     T element = myMember.getElement();
-    PsiUtilCore.ensureValid(element);
+    if (element != null) {
+      PsiUtilCore.ensureValid(element);
+    }
     return element;
   }
 

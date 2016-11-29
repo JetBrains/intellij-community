@@ -12,15 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class HgRevisionNumber implements VcsRevisionNumber {
 
@@ -69,10 +69,19 @@ public class HgRevisionNumber implements VcsRevisionNumber {
                           @NotNull String authorInfo,
                           @NotNull String commitMessage,
                           @NotNull List<HgRevisionNumber> parents) {
+    this(revision, changeset, HgUtil.parseUserNameAndEmail(authorInfo).getFirst(), HgUtil.parseUserNameAndEmail(authorInfo).getSecond(),
+         commitMessage, parents);
+  }
+
+  public HgRevisionNumber(@NotNull String revision,
+                          @NotNull String changeset,
+                          @NotNull String author,
+                          @NotNull String email,
+                          @NotNull String commitMessage,
+                          @NotNull List<HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
-    Couple<String> authorArgs = HgUtil.parseUserNameAndEmail(authorInfo);
-    this.author = authorArgs.getFirst();
-    this.email = authorArgs.getSecond();
+    this.author = author;
+    this.email = email;
     this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();
@@ -100,8 +109,18 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   @NotNull
-  public String getAuthor() {
+  public String getName() {
     return author;
+  }
+
+  @NotNull
+  public String getEmail() {
+    return email;
+  }
+
+  @NotNull
+  public String getAuthor() {
+    return VcsUserUtil.getUserName(author, email);
   }
 
   public boolean isWorkingVersion() {
@@ -175,7 +194,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   @Override
   public int hashCode() {
     // if short revision number is not empty, then short changeset is enough, a.e. annotations
-    return Objects.hashCode(revision, revision.isEmpty() ? changeset : getShortHash(changeset));
+    return Objects.hash(revision, revision.isEmpty() ? changeset : getShortHash(changeset));
   }
 
   @Override
@@ -198,10 +217,5 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   @NotNull
   public String getSubject() {
     return mySubject;
-  }
-
-  @NotNull
-  public String getEmail() {
-    return email;
   }
 }

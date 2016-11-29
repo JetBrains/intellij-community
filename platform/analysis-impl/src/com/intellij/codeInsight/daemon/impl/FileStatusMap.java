@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,8 +34,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
-import gnu.trove.TObjectFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 public class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
   private final Project myProject;
-  private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
+  private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
 
   // Don't reduce visibility rules here because this class is used in Upsource as well.
@@ -100,7 +97,7 @@ public class FileStatusMap implements Disposable {
     private boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinished;
     // if contains the special value "WHOLE_FILE_MARKER" then the corresponding range is (0, document length)
-    private final TIntObjectHashMap<RangeMarker> dirtyScopes = new TIntObjectHashMap<RangeMarker>();
+    private final TIntObjectHashMap<RangeMarker> dirtyScopes = new TIntObjectHashMap<>();
     private boolean errorFound;
 
     private FileStatus(@NotNull Project project) {
@@ -111,6 +108,7 @@ public class FileStatusMap implements Disposable {
       setDirtyScope(Pass.UPDATE_ALL, WHOLE_FILE_DIRTY_MARKER);
       setDirtyScope(Pass.EXTERNAL_TOOLS, WHOLE_FILE_DIRTY_MARKER);
       setDirtyScope(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.LINE_MARKERS, WHOLE_FILE_DIRTY_MARKER);
       TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
         setDirtyScope(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
@@ -125,15 +123,12 @@ public class FileStatusMap implements Disposable {
     }
 
     private void combineScopesWith(@NotNull final TextRange scope, final int fileLength, @NotNull final Document document) {
-      dirtyScopes.transformValues(new TObjectFunction<RangeMarker, RangeMarker>() {
-        @Override
-        public RangeMarker execute(RangeMarker oldScope) {
-          RangeMarker newScope = combineScopes(oldScope, scope, fileLength, document);
-          if (newScope != oldScope && oldScope != null) {
-            oldScope.dispose();
-          }
-          return newScope;
+      dirtyScopes.transformValues(oldScope -> {
+        RangeMarker newScope = combineScopes(oldScope, scope, fileLength, document);
+        if (newScope != oldScope && oldScope != null) {
+          oldScope.dispose();
         }
+        return newScope;
       });
     }
 
@@ -144,12 +139,9 @@ public class FileStatusMap implements Disposable {
       s.append("; wolfPassFinfished = ").append(wolfPassFinished);
       s.append("; errorFound = ").append(errorFound);
       s.append("; dirtyScopes: (");
-      dirtyScopes.forEachEntry(new TIntObjectProcedure<RangeMarker>() {
-        @Override
-        public boolean execute(int passId, RangeMarker rangeMarker) {
-          s.append(" pass: ").append(passId).append(" -> ").append(rangeMarker == WHOLE_FILE_DIRTY_MARKER ? "Whole file" : rangeMarker).append(";");
-          return true;
-        }
+      dirtyScopes.forEachEntry((passId, rangeMarker) -> {
+        s.append(" pass: ").append(passId).append(" -> ").append(rangeMarker == WHOLE_FILE_DIRTY_MARKER ? "Whole file" : rangeMarker).append(";");
+        return true;
       });
       s.append(")");
       return s.toString();
@@ -168,8 +160,10 @@ public class FileStatusMap implements Disposable {
 
   void markAllFilesDirty(@NotNull @NonNls Object reason) {
     assertAllowModifications();
-    LOG.debug("Mark all dirty: ", reason);
     synchronized (myDocumentToStatusMap) {
+      if (!myDocumentToStatusMap.isEmpty()) {
+        log("Mark all dirty: ", reason);
+      }
       myDocumentToStatusMap.clear();
     }
   }
@@ -185,11 +179,7 @@ public class FileStatusMap implements Disposable {
 
   public void markFileUpToDate(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
-      FileStatus status = myDocumentToStatusMap.get(document);
-      if (status == null){
-        status = new FileStatus(myProject);
-        myDocumentToStatusMap.put(document, status);
-      }
+      FileStatus status = myDocumentToStatusMap.computeIfAbsent(document, __ -> new FileStatus(myProject));
       status.defensivelyMarked=false;
       if (passId == Pass.WOLF) {
         status.wolfPassFinished = true;
@@ -216,7 +206,7 @@ public class FileStatusMap implements Disposable {
         status.markWholeFileDirty(myProject);
         status.defensivelyMarked = false;
       }
-      LOG.assertTrue(status.dirtyScopes.containsKey(passId), "Unknown pass " + passId);
+      if (!status.dirtyScopes.containsKey(passId)) throw new IllegalStateException("Unknown pass " + passId);
       RangeMarker marker = status.dirtyScopes.get(passId);
       return marker == null ? null : marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
     }
@@ -224,9 +214,7 @@ public class FileStatusMap implements Disposable {
 
   void markFileScopeDirtyDefensively(@NotNull PsiFile file, @NotNull @NonNls Object reason) {
     assertAllowModifications();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Mark dirty file defensively: "+file.getName()+": "+reason);
-    }
+    log("Mark dirty file defensively: ",file.getName(),reason);
     // mark whole file dirty in case no subsequent PSI events will come, but file requires rehighlighting nevertheless
     // e.g. in the case of quick typing/backspacing char
     synchronized(myDocumentToStatusMap){
@@ -240,9 +228,7 @@ public class FileStatusMap implements Disposable {
 
   void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, int fileLength, @NotNull @NonNls Object reason) {
     assertAllowModifications();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Mark scope dirty: "+scope+" : "+reason);
-    }
+    log("Mark scope dirty: ",scope,reason);
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
@@ -359,29 +345,14 @@ public class FileStatusMap implements Disposable {
   };
 
   // logging
-  private static final ConcurrentMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
+  private static final ConcurrentMap<Thread, Integer> threads = new ConcurrentHashMap<>();
   private static int getThreadNum() {
     return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }
-  private static final StringBuilder log = new StringBuilder();
-  private static final boolean IN_TESTS = ApplicationManager.getApplication().isUnitTestMode();
   public static void log(@NonNls @NotNull Object... info) {
-    if (IN_TESTS) {
-      synchronized (log) {
-        if (log.length() > 10000) {
-          log.replace(0, log.length()-5000, "");
-        }
-        String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
-        log.append(s);
-      }
-    }
-  }
-  @NotNull
-  static String getAndClearLog() {
-    synchronized (log) {
-      String l = log.toString();
-      log.setLength(0);
-      return l;
+    if (LOG.isDebugEnabled()) {
+      String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
+      LOG.debug(s);
     }
   }
 }

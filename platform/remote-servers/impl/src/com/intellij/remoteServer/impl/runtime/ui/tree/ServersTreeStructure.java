@@ -134,14 +134,9 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      List<AbstractTreeNode<?>> result = new ArrayList<AbstractTreeNode<?>>();
+      List<AbstractTreeNode<?>> result = new ArrayList<>();
       result.addAll(myContribution.createServerNodes(doGetProject()));
-      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(), new Function<RemoteServer<?>, AbstractTreeNode<?>>() {
-        @Override
-        public AbstractTreeNode<?> fun(RemoteServer<?> server) {
-          return new RemoteServerNode(server);
-        }
-      }));
+      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(), (Function<RemoteServer<?>, AbstractTreeNode<?>>)server -> new RemoteServerNode(server)));
       return result;
     }
 
@@ -168,7 +163,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
         return Collections.emptyList();
       }
 
-      final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+      final List<AbstractTreeNode> children = new ArrayList<>();
       for (Deployment deployment : connection.getDeployments()) {
         if (deployment.getParentRuntime() == null) {
           children.add(createDeploymentNode(connection, this, deployment));
@@ -208,15 +203,12 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       final RemoteServer<?> server = getServer();
       final ServerType<? extends ServerConfiguration> serverType = server.getType();
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(doGetProject());
-      final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(ContainerUtil.filter(
+      final List<RunnerAndConfigurationSettings> list = new ArrayList<>(ContainerUtil.filter(
         configurationManager.getDeploymentConfigurations(serverType),
-        new Condition<RunnerAndConfigurationSettings>() {
-          @Override
-          public boolean value(RunnerAndConfigurationSettings settings) {
-            DeployToServerRunConfiguration configuration =
-              (DeployToServerRunConfiguration)settings.getConfiguration();
-            return StringUtil.equals(server.getName(), configuration.getServerName());
-          }
+        settings -> {
+          DeployToServerRunConfiguration configuration =
+            (DeployToServerRunConfiguration)settings.getConfiguration();
+          return StringUtil.equals(server.getName(), configuration.getServerName());
         }
       ));
       if (canCreate) {
@@ -237,15 +229,12 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
           @Override
           public PopupStep onChosen(final RunnerAndConfigurationSettings selectedValue, boolean finalChoice) {
-            return doFinalStep(new Runnable() {
-              @Override
-              public void run() {
-                if (selectedValue != null) {
-                  ProgramRunnerUtil.executeConfiguration(doGetProject(), selectedValue, executor);
-                }
-                else {
-                  configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue());
-                }
+            return doFinalStep(() -> {
+              if (selectedValue != null) {
+                ProgramRunnerUtil.executeConfiguration(doGetProject(), selectedValue, executor);
+              }
+              else {
+                configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue());
               }
             });
           }
@@ -399,7 +388,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      List<AbstractTreeNode> result = new ArrayList<>();
       collectDeploymentChildren(result);
       collectLogChildren(result);
       return result;

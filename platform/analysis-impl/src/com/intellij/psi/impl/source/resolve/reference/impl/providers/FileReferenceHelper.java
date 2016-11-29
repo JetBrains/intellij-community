@@ -34,7 +34,7 @@ import java.util.List;
  */
 public abstract class FileReferenceHelper {
 
-  public static final ExtensionPointName<FileReferenceHelper> EP_NAME = new ExtensionPointName<FileReferenceHelper>("com.intellij.psi.fileReferenceHelper");
+  public static final ExtensionPointName<FileReferenceHelper> EP_NAME = new ExtensionPointName<>("com.intellij.psi.fileReferenceHelper");
 
   @NotNull
   public String trimUrl(@NotNull String url) {

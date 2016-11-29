@@ -117,7 +117,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Nullable
   public EventSet getEventSet() {
-    assertNotResumed();
     return myEventSet;
   }
 
@@ -258,7 +257,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
             currentStack = stack;
           }
         }
-        Collections.sort(res, THREADS_COMPARATOR);
+        res.sort(THREADS_COMPARATOR);
         if (currentStack != null) {
           res.add(0, currentStack);
         }
@@ -267,14 +266,11 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     });
   }
 
-  private static final Comparator<JavaExecutionStack> THREADS_COMPARATOR = new Comparator<JavaExecutionStack>() {
-    @Override
-    public int compare(JavaExecutionStack th1, JavaExecutionStack th2) {
-      int res = Comparing.compare(th2.getThreadProxy().isSuspended(), th1.getThreadProxy().isSuspended());
-      if (res == 0) {
-        return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
-      }
-      return res;
+  private static final Comparator<JavaExecutionStack> THREADS_COMPARATOR = (th1, th2) -> {
+    int res = Comparing.compare(th2.getThreadProxy().isSuspended(), th1.getThreadProxy().isSuspended());
+    if (res == 0) {
+      return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
     }
+    return res;
   };
 }

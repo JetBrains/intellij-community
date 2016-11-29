@@ -63,7 +63,7 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
   private MultiMap<PsiElement, String> isOKImpl(String varName, boolean replaceAllOccurrences) {
     PsiElement firstOccurrence = getFirstOccurrence(replaceAllOccurrences);
 
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     assert varName != null;
 
     final int offset = firstOccurrence.getTextRange().getStartOffset();
@@ -106,12 +106,7 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
     MultiMap<PsiElement, String> list = isOKImpl(varName, allOccurences);
     String result = "";
     final String[] strings = ArrayUtil.toStringArray((Collection<String>)list.values());
-    Arrays.sort(strings, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return o1.compareTo(o2);
-      }
-    });
+    Arrays.sort(strings, (o1, o2) -> o1.compareTo(o2));
 
     for (String s : strings) {
       result = result + s.replaceAll("<b><code>", "").replaceAll("</code></b>", "") + "\n";

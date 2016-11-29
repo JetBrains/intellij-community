@@ -59,10 +59,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final boolean myInlineKeysNoMapping;
   private boolean myExternalKeysNoMapping;
 
-  private static final int DIRTY_MAGIC = 0xbabe1977;
-  private static final int VERSION = 7 + IntToIntBtree.version();
-  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafd + VERSION + PAGE_SIZE;
-  @NotNull private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+  static final int VERSION = 7 + IntToIntBtree.version() + PAGE_SIZE;
   private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
@@ -73,6 +70,14 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
                                    @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+    this(file, dataDescriptor, initialSize, lockContext, 0);
+  }
+
+  public PersistentBTreeEnumerator(@NotNull File file,
+                                   @NotNull KeyDescriptor<Data> dataDescriptor,
+                                   int initialSize,
+                                   @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                   int version) throws IOException {
     super(file,
           new ResizeableMappedFile(
             file,
@@ -84,7 +89,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           ),
           dataDescriptor,
           initialSize,
-          ourVersion,
+          new Version(VERSION + version),
           new RecordBufferHandler(),
           false
     );
@@ -362,7 +367,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
+  protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
       lockStorage();
       if (IntToIntBtree.doDump) System.out.println(value);

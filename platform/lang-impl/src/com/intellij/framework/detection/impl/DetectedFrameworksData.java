@@ -45,18 +45,18 @@ public class DetectedFrameworksData {
   private final MultiMap<Integer, DetectedFrameworkDescription> myDetectedFrameworks;
 
   public DetectedFrameworksData(Project project) {
-    myDetectedFrameworks = new MultiMap<Integer, DetectedFrameworkDescription>();
+    myDetectedFrameworks = new MultiMap<>();
     File file = new File(FrameworkDetectorRegistryImpl.getDetectionDirPath() + File.separator + project.getName() + "." + project.getLocationHash() +
                          File.separator + "files");
-    myNewFiles = new TIntObjectHashMap<TIntHashSet>();
+    myNewFiles = new TIntObjectHashMap<>();
     try {
-      myExistentFrameworkFiles = new PersistentHashMap<Integer, TIntHashSet>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
+      myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
     }
     catch (IOException e) {
       LOG.info(e);
       PersistentHashMap.deleteFilesStartingWith(file);
       try {
-        myExistentFrameworkFiles = new PersistentHashMap<Integer, TIntHashSet>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
+        myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
       }
       catch (IOException e1) {
         LOG.error(e1);
@@ -87,7 +87,7 @@ public class DetectedFrameworksData {
     catch (IOException e) {
       LOG.info(e);
     }
-    final ArrayList<VirtualFile> newFiles = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> newFiles = new ArrayList<>();
     TIntHashSet newSet = new TIntHashSet();
     for (VirtualFile file : files) {
       final int fileId = FileBasedIndex.getFileId(file);

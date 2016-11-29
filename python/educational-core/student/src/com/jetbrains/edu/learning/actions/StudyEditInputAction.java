@@ -20,12 +20,12 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.PlatformIcons;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.UserTest;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyTestContentPanel;
@@ -45,7 +45,7 @@ public class StudyEditInputAction extends DumbAwareAction {
 
   private static final Logger LOG = Logger.getInstance(StudyEditInputAction.class.getName());
   private JBEditorTabs tabbedPane;
-  private Map<TabInfo, UserTest> myEditableTabs = new HashMap<TabInfo, UserTest>();
+  private Map<TabInfo, UserTest> myEditableTabs = new HashMap<>();
 
   public StudyEditInputAction() {
     super("Watch Test Input", "Watch test input", InteractiveLearningIcons.WatchInput);
@@ -67,7 +67,7 @@ public class StudyEditInputAction extends DumbAwareAction {
         public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
           if (newSelection.getIcon() != null) {
             int tabCount = tabbedPane.getTabCount();
-            VirtualFile taskDir = openedFile.getParent();
+            VirtualFile taskDir = StudyUtils.getTaskDir(openedFile);
             VirtualFile testsDir = taskDir.findChild(EduNames.USER_TESTS);
             assert testsDir != null;
             UserTest userTest = createUserTest(testsDir, currentTask, studyTaskManager);
@@ -174,15 +174,12 @@ public class StudyEditInputAction extends DumbAwareAction {
     @Override
     public void onClosed(LightweightWindowEvent event) {
       for (final UserTest userTest : myStudyTaskManager.getUserTests(myTask)) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (userTest.isEditable()) {
-              File inputFile = new File(userTest.getInput());
-              File outputFile = new File(userTest.getOutput());
-              flushBuffer(userTest.getInputBuffer(), inputFile);
-              flushBuffer(userTest.getOutputBuffer(), outputFile);
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (userTest.isEditable()) {
+            File inputFile = new File(userTest.getInput());
+            File outputFile = new File(userTest.getOutput());
+            flushBuffer(userTest.getInputBuffer(), inputFile);
+            flushBuffer(userTest.getOutputBuffer(), outputFile);
           }
         });
       }

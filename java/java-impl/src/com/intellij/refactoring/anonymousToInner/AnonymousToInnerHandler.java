@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   private VariableInfo[] myVariableInfos;
   protected boolean myMakeStatic;
-  private final Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<PsiTypeParameter>();
+  private final Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<>();
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
@@ -114,43 +114,36 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myTargetClass)) return;
 
-    Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<PsiVariable, VariableInfo>();
+    Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<>();
     collectUsedVariables(variableInfoMap, myAnonClass);
     final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
     myVariableInfos = infos;
-    Arrays.sort(myVariableInfos, new Comparator<VariableInfo>() {
-      @Override
-      public int compare(VariableInfo o1, VariableInfo o2) {
-        final PsiType type1 = o1.variable.getType();
-        final PsiType type2 = o2.variable.getType();
-        if (type1 instanceof PsiEllipsisType) {
-          return 1;
-        }
-        if (type2 instanceof PsiEllipsisType) {
-          return -1;
-        }
-        return ArrayUtil.find(infos, o1) > ArrayUtil.find(infos, o2) ? 1 : -1;
+    Arrays.sort(myVariableInfos, (o1, o2) -> {
+      final PsiType type1 = o1.variable.getType();
+      final PsiType type2 = o2.variable.getType();
+      if (type1 instanceof PsiEllipsisType) {
+        return 1;
       }
+      if (type2 instanceof PsiEllipsisType) {
+        return -1;
+      }
+      return ArrayUtil.find(infos, o1) > ArrayUtil.find(infos, o2) ? 1 : -1;
     });
     if (!showRefactoringDialog()) return;
 
     CommandProcessor.getInstance().executeCommand(
-        myProject, new Runnable() {
-              public void run() {
-                final Runnable action = new Runnable() {
-                  public void run() {
-                    try {
-                      doRefactoring();
-                    } catch (IncorrectOperationException e) {
-                      LOG.error(e);
-                    }
-                  }
-                };
-                ApplicationManager.getApplication().runWriteAction(action);
-              }
-            },
-        REFACTORING_NAME,
-        null
+      myProject, () -> {
+        final Runnable action = () -> {
+          try {
+            doRefactoring();
+          } catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(action);
+      },
+      REFACTORING_NAME,
+      null
     );
 
   }
@@ -265,14 +258,14 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     });
   }
 
-  private Boolean cachedNeedsThis = null;
+  private Boolean cachedNeedsThis;
   public boolean needsThis() {
     if(cachedNeedsThis == null) {
 
       ElementNeedsThis memberNeedsThis = new ElementNeedsThis(myTargetClass, myAnonClass);
       myAnonClass.accept(memberNeedsThis);
       class HasExplicitThis extends JavaRecursiveElementWalkingVisitor {
-        boolean hasExplicitThis = false;
+        boolean hasExplicitThis;
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         }
 
@@ -396,7 +389,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     PsiCodeBlock constructorBody = constructor.getBody();
     assert constructorBody != null;
 
-    List<PsiElement> toAdd = new ArrayList<PsiElement>();
+    List<PsiElement> toAdd = new ArrayList<>();
     for (PsiClassInitializer initializer : myAnonClass.getInitializers()) {
       if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
         toAdd.add(initializer);
@@ -408,11 +401,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       }
     }
 
-    Collections.sort(toAdd, new Comparator<PsiElement>() {
-      public int compare(PsiElement e1, PsiElement e2) {
-        return e1.getTextRange().getStartOffset() - e2.getTextRange().getStartOffset();
-      }
-    });
+    Collections.sort(toAdd, (e1, e2) -> e1.getTextRange().getStartOffset() - e2.getTextRange().getStartOffset());
 
     for (PsiElement element : toAdd) {
       if (element instanceof PsiClassInitializer) {

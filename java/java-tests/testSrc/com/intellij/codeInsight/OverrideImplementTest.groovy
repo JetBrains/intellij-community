@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,15 @@ package com.intellij.codeInsight
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.generation.OverrideImplementUtil
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -33,15 +37,21 @@ class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
     JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/overrideImplement"
   }
 
-  public void testImplementExtensionMethods() { doTest(true) }
-  public void testOverrideExtensionMethods() { doTest(false) }
-  public void testDoNotImplementExtensionMethods() { doTest(true) }
-  public void testSkipUnknownAnnotations() { doTest(true) }
-  public void testMultipleInheritedThrows() { doTest(false) }
-  public void testOverrideInInterface() { doTest(false) }
-  public void testMultipleInheritanceWithThrowables() { doTest(true) }
+  void testImplementExtensionMethods() { doTest(true) }
 
-  public void testImplementInInterface() {
+  void testOverrideExtensionMethods() { doTest(false) }
+
+  void testDoNotImplementExtensionMethods() { doTest(true) }
+
+  void testSkipUnknownAnnotations() { doTest(true) }
+
+  void testMultipleInheritedThrows() { doTest(false) }
+
+  void testOverrideInInterface() { doTest(false) }
+
+  void testMultipleInheritanceWithThrowables() { doTest(true) }
+
+  void testImplementInInterface() {
     myFixture.addClass """\
 interface A {
     void foo();
@@ -54,7 +64,7 @@ interface B extends A {
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
 
-    def Presentation presentation = new Presentation()
+    Presentation presentation = new Presentation()
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
     CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
 
@@ -68,7 +78,40 @@ interface B extends A {
 """
   }
 
-  public void testImplementSameNamedInterfaces() {
+  void testImplementInterfaceWhenClassProvidesProtectedImplementation() {
+    myFixture.addClass """\
+interface A {
+  void f();
+}
+"""
+    myFixture.addClass """\
+class B {
+  protected void f() {}
+}
+"""
+
+    def file = myFixture.addClass("""\
+class C extends B implements A {
+   <caret>
+}
+""").containingFile.virtualFile
+    myFixture.configureFromExistingVirtualFile(file)
+
+    Presentation presentation = new Presentation()
+    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
+    CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
+
+    myFixture.checkResult """\
+class C extends B implements A {
+    @Override
+    public void f() {
+        <caret>
+    }
+}
+"""
+  }
+
+  void testImplementSameNamedInterfaces() {
     myFixture.addClass """\
 class Main1 {
    interface I {
@@ -91,7 +134,7 @@ class B implements Main1.I, Main2.I {
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
 
-    def Presentation presentation = new Presentation()
+    Presentation presentation = new Presentation()
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
     CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
 
@@ -110,7 +153,7 @@ class B implements Main1.I, Main2.I {
 """
   }
 
-  public void "test overriding overloaded method"() {
+  void "test overriding overloaded method"() {
     myFixture.addClass """\
 package bar;
 interface A {
@@ -144,7 +187,7 @@ class Test implements A {
 """
   }
 
-  public void testTypeAnnotationsInImplementedMethod() {
+  void testTypeAnnotationsInImplementedMethod() {
     myFixture.addClass """\
       import java.lang.annotation.*;
       @Target(ElementType.TYPE_USE)
@@ -173,6 +216,79 @@ class Test implements A {
       class C implements I {
           @Override
           public @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] @TA(3) [] p2) throws @TA IllegalArgumentException {
+              return null;
+          }
+      }""".stripIndent()
+  }
+
+  void testNoCustomOverrideImplementsHandler() {
+    myFixture.addClass """package a; public @interface A { }"""
+
+    myFixture.configureByText "test.java", """\
+      import java.util.*;
+      import a.*;
+
+      interface I {
+          @A List<String> i(@A String p);
+      }
+
+      class C implements I {
+          <caret>
+      }""".stripIndent()
+
+    invokeAction(true)
+
+    myFixture.checkResult """\
+      import java.util.*;
+      import a.*;
+
+      interface I {
+          @A List<String> i(@A String p);
+      }
+
+      class C implements I {
+          @Override
+          public List<String> i(String p) {
+              return null;
+          }
+      }""".stripIndent()
+  }
+
+  void testCustomOverrideImplementsHandler() throws Exception {
+    myFixture.addClass """package a; public @interface A { }"""
+
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), OverrideImplementsAnnotationsHandler.EP_NAME, new OverrideImplementsAnnotationsHandler() {
+      @Override
+      String[] getAnnotations(Project project) {
+        return ["a.A"]
+      }
+    }, getTestRootDisposable())
+    myFixture.configureByText "test.java", """\
+      import java.util.*;
+      import a.*;
+
+      interface I {
+          @A List<String> i(@A String p);
+      }
+
+      class C implements I {
+          <caret>
+      }""".stripIndent()
+
+    invokeAction(true)
+
+    myFixture.checkResult """\
+      import java.util.*;
+      import a.*;
+
+      interface I {
+          @A List<String> i(@A String p);
+      }
+
+      class C implements I {
+          @A
+          @Override
+          public List<String> i(@A String p) {
               return null;
           }
       }""".stripIndent()

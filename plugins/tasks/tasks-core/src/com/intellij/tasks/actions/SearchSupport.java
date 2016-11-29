@@ -75,19 +75,14 @@ public abstract class SearchSupport<T extends Task> {
     });
 
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myTextField.addKeyListener(new KeyAdapter() {
-          public void keyPressed(final KeyEvent e) {
-              processListSelection(e);
-          }
-        });
+    SwingUtilities.invokeLater(() -> myTextField.addKeyListener(new KeyAdapter() {
+      public void keyPressed(final KeyEvent e) {
+          processListSelection(e);
       }
-    });
+    }));
     
     myList.setVisibleRowCount(10);
-    myListModel = new SortedListModel<T>(null);
+    myListModel = new SortedListModel<>(null);
     myList.setModel(myListModel);
   }
 
@@ -238,23 +233,13 @@ public abstract class SearchSupport<T extends Task> {
       }
     });
     myCurrentPopup =
-      builder.setRequestFocus(false).setAutoSelectIfEmpty(false).setResizable(false).setCancelCallback(new Computable<Boolean>() {
-        public Boolean compute() {
-          final int caret = myTextField.getCaretModel().getOffset();
-          getEditor().getSelectionModel().setSelection(caret, caret);
-          myTextField.setFocusTraversalKeysEnabled(true);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              myTextField.requestFocus();
-            }
-          });
-          return Boolean.TRUE;
-        }
-      }).setItemChoosenCallback(new Runnable() {
-        public void run() {
-          processChosenFromCompletion();
-        }
-      }).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myTextField}).
+      builder.setRequestFocus(false).setAutoSelectIfEmpty(false).setResizable(false).setCancelCallback(() -> {
+        final int caret = myTextField.getCaretModel().getOffset();
+        getEditor().getSelectionModel().setSelection(caret, caret);
+        myTextField.setFocusTraversalKeysEnabled(true);
+        ApplicationManager.getApplication().invokeLater(() -> myTextField.requestFocus());
+        return Boolean.TRUE;
+      }).setItemChoosenCallback(() -> processChosenFromCompletion()).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myTextField}).
           createPopup();
 
     adjustPopupSize();

@@ -61,7 +61,7 @@ public class JavaFindJarFix extends FindJarFix<PsiQualifiedReferenceElement> {
           }
         }
         else {
-          List<String> res = new ArrayList<String>();
+          List<String> res = new ArrayList<>();
           // iterate through *
           for (PsiImportStatementBase imp : importList.getAllImportStatements()) {
             if (imp.isOnDemand() && imp instanceof PsiImportStatement) {

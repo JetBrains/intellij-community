@@ -115,7 +115,7 @@ public class MultipleTypedDeclarationInspection extends BaseInspection {
     }
 
     public static List<PsiField> getSiblingFields(PsiField field) {
-      final List<PsiField> out = new ArrayList<PsiField>(5);
+      final List<PsiField> out = new ArrayList<>(5);
       out.add(field);
       PsiField nextField =
         PsiTreeUtil.getNextSiblingOfType(field,

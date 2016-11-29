@@ -15,31 +15,29 @@
  */
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import com.intellij.rt.execution.testFrameworks.ChildVMStarter;
-
-import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 
-public class JUnitForkedStarter extends ChildVMStarter {
+public class JUnitForkedStarter {
 
   public static void main(String[] args) throws Exception {
-    new JUnitForkedStarter().startVM(args);
-  }
-
-  protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err)
-    throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-    final int lastIdx = Integer.parseInt(args[1]);
-    final String[] childTestDescription = {args[2]};
-    final boolean isJUnit4 = args[3].equalsIgnoreCase("true");
+    List argList = new ArrayList();
+    for (int i = 0; i < args.length; i++) {
+      final int count = RepeatCount.getCount(args[i]);
+      if (count != 0) {
+        JUnitStarter.ourCount = count;
+        continue;
+      }
+      argList.add(args[i]);
+    }
+    args = (String[])argList.toArray(new String[argList.size()]);
+    final String[] childTestDescription = {args[0]};
+    final String argentName = args[1];
     final ArrayList listeners = new ArrayList();
-    for (int i = 4, argsLength = args.length; i < argsLength; i++) {
+    for (int i = 2, argsLength = args.length; i < argsLength; i++) {
       listeners.add(args[i]);
     }
-    IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    testRunner.setStreams(new SegmentedOutputStream(out, true), new SegmentedOutputStream(err, true), lastIdx);
-    System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, 1, false));
+    IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(argentName).newInstance();
+    System.exit(IdeaTestRunner.Repeater.startRunnerWithArgs(testRunner, childTestDescription, listeners, null, JUnitStarter.ourCount, false));
   }
-
 }

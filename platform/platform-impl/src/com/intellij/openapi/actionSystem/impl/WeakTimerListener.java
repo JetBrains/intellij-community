@@ -32,7 +32,7 @@ public class WeakTimerListener implements TimerListener {
 
   public WeakTimerListener(@NotNull ActionManagerEx manager, @NotNull TimerListener delegate) {
     myManager = manager;
-    myRef = new WeakReference<TimerListener>(delegate);
+    myRef = new WeakReference<>(delegate);
   }
 
   @Override

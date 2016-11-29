@@ -28,8 +28,8 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class ResourceRegistrarImpl implements ResourceRegistrar {
-  private final Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> myResources = new THashMap<String, Map<String, ExternalResourceManagerExImpl.Resource>>();
-  private final List<String> myIgnored = new ArrayList<String>();
+  private final Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> myResources = new THashMap<>();
+  private final List<String> myIgnored = new ArrayList<>();
 
   @Override
   public void addStdResource(@NonNls String resource, @NonNls String fileName) {

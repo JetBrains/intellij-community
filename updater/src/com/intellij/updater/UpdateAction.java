@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import java.io.*;
@@ -22,8 +37,12 @@ public class UpdateAction extends BaseUpdateAction {
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
     if (!myIsMove) {
       patchOutput.putNextEntry(new ZipEntry(myPath));
-      writeExecutableFlag(patchOutput, newerFile);
-      writeDiff(olderFile, newerFile, patchOutput);
+      if (Utils.isLink(newerFile)) {
+        writeLinkInfo(newerFile, patchOutput);
+      } else {
+        writeExecutableFlag(patchOutput, newerFile);
+        writeDiff(olderFile, newerFile, patchOutput);
+      }
       patchOutput.closeEntry();
     }
   }
@@ -35,22 +54,27 @@ public class UpdateAction extends BaseUpdateAction {
     if (!myIsMove) {
       updated = Utils.createTempFile();
       InputStream in = Utils.findEntryInputStream(patchFile, myPath);
-      boolean executable = readExecutableFlag(in);
-
-      OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
-      try {
-        InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized());
+      int filePermissions = in.read();
+      if (filePermissions > 1 ) {
+        Utils.createLink(readLinkInfo(in, filePermissions), toFile);
+        in.close();
+        return;
+      } else {
+        OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
         try {
-          applyDiff(in, oldFileIn, out);
+          InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized());
+          try {
+            applyDiff(in, oldFileIn, out);
+          }
+          finally {
+            oldFileIn.close();
+          }
         }
         finally {
-          oldFileIn.close();
+          out.close();
         }
       }
-      finally {
-        out.close();
-      }
-      Utils.setExecutable(updated, executable);
+      Utils.setExecutable(updated, filePermissions == 1);
     } else {
       updated = source;
     }

@@ -63,7 +63,7 @@ public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspecti
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
+    public void visitSynchronizedStatement(@NotNull GrSynchronizedStatement synchronizedStatement) {
       super.visitSynchronizedStatement(synchronizedStatement);
       final GrExpression lock = synchronizedStatement.getMonitor();
       if (lock == null || !(lock instanceof GrReferenceExpression)) {

@@ -85,8 +85,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     setModalityProgress(shouldShowBackground ? null : this);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
     myDialog = ProgressDialogFactory.SERVICE.getInstance().createProgressDialog(this, project, cancelText, shouldShowBackground, parentComponent);
-  }
 
+    if (myProject != null) {
+      Disposer.register(myProject, this);
+    }
+  }
 
   @Override
   public synchronized void start() {
@@ -109,7 +112,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    * <p/>
    * Default value is {@link #DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS}
    *
-   * @param delayInMillis new delay time in milliseconds
+   * @param delayInMillis   new delay time in milliseconds
    */
   public void setDelayInMillis(int delayInMillis) {
     myDelayInMillis = delayInMillis;
@@ -139,12 +142,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       LOG.assertTrue(!myStoppedAlready);
     }
 
-    enterModality();
     init.run();
 
     myDialog.startBlocking(myShouldShowCancel);
-
-    exitModality();
   }
 
   @NotNull
@@ -196,19 +196,19 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       myDialog.setWillBeSheduledForRestore();
     }
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
+    UIUtil.invokeLaterIfNeeded(() ->{
+
         if (myDialog != null) {
           myDialog.hide();
         }
 
-        synchronized (ProgressWindow.this) {
+
+
+        synchronized (this) {
           myStoppedAlready = true;
         }
 
-        Disposer.dispose(ProgressWindow.this);
-      }
+      Disposer.dispose(this);
     });
 
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
@@ -298,6 +298,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public void dispose() {
     stopSystemActivity();
+    if (isRunning()) {
+      cancel();
+    }
   }
 
   @Override
@@ -309,5 +312,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     if (myDialog != null) {
       myDialog.enableCancelButtonIfNeeded(enable);
     }
+  }
+
+  @Override
+  public String toString() {
+    return getTitle() + " " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -44,8 +43,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -129,11 +130,6 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   @NotNull
   public String getId() {
     return getDisplayName();
-  }
-
-  @Override
-  public Runnable enableSearch(final String option) {
-    return null;
   }
 
   private class MyTreeTable extends AbstractFileTreeTable<T> {
@@ -235,12 +231,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
           if (editCellAt(getSelectedRow(), 1)) {
             TableCellEditor editor = getCellEditor(editingRow, editingColumn);
             Component component = ((DefaultCellEditor)editor).getComponent();
-            JButton button = (JButton)UIUtil.uiTraverser().withRoot(component).bfsTraversal().filter(new Condition<Component>() {
-              @Override
-              public boolean value(Component component) {
-                return component instanceof JButton;
-              }
-            }).first();
+            JButton button = UIUtil.uiTraverser(component).bfsTraversal().filter(JButton.class).first();
             if (button != null) {
               button.doClick();
             }
@@ -299,13 +290,8 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
       if (showClear) {
         group.add(createChooseAction(myVirtualFile, null));
       }
-      final List<T> values = new ArrayList<T>(myMappings.getAvailableValues(myVirtualFile));
-      Collections.sort(values, new Comparator<T>() {
-        @Override
-        public int compare(final T o1, final T o2) {
-          return visualize(o1).compareTo(visualize(o2));
-        }
-      });
+      final List<T> values = new ArrayList<>(myMappings.getAvailableValues(myVirtualFile));
+      Collections.sort(values, (o1, o2) -> visualize(o1).compareTo(visualize(o2)));
       for (T t : values) {
         if (myMappings.isSelectable(t)) {
           group.add(createChooseAction(myVirtualFile, t));

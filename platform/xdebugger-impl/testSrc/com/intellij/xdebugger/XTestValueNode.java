@@ -48,4 +48,9 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
       throw new AssertionError("Waiting timed out");
     }
   }
+
+  @Override
+  public String toString() {
+    return myName + "{" + myType + "} = " + myValue + ", hasChildren = " + myHasChildren;
+  }
 }

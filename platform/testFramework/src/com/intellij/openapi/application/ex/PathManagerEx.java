@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
  * User: mike
  * Date: Aug 19, 2002
  * Time: 8:21:52 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.openapi.application.ex;
@@ -120,7 +120,7 @@ public class PathManagerEx {
    * Hence, the order of relative paths for the single test group matters.
    */
   private static final Map<TestDataLookupStrategy, List<String>> TEST_DATA_RELATIVE_PATHS
-    = new EnumMap<TestDataLookupStrategy, List<String>>(TestDataLookupStrategy.class);
+    = new EnumMap<>(TestDataLookupStrategy.class);
 
   static {
     TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.ULTIMATE, Collections.singletonList(toSystemDependentName("testData")));
@@ -369,7 +369,7 @@ public class PathManagerEx {
       CLASS_STRATEGY_CACHE.put(aClass, determineLookupStrategy(substitutor));
     }
   }
-  
+
   private static FileSystemLocation computeClassLocation(Class<?> clazz) {
     String classRootPath = PathManager.getJarPathForClass(clazz);
     if (classRootPath == null) {
@@ -399,14 +399,14 @@ public class PathManagerEx {
       return ourCommunityModules;
     }
 
-    ourCommunityModules = new THashSet<String>();
+    ourCommunityModules = new THashSet<>();
     File modulesXml = findFileUnderCommunityHome(Project.DIRECTORY_STORE_FOLDER + "/modules.xml");
     if (!modulesXml.exists()) {
       throw new IllegalStateException("Cannot obtain test data path: " + modulesXml.getAbsolutePath() + " not found");
     }
 
     try {
-      Element element = JDomSerializationUtil.findComponent(JDOMUtil.loadDocument(modulesXml).getRootElement(), ModuleManagerImpl.COMPONENT_NAME);
+      Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), ModuleManagerImpl.COMPONENT_NAME);
       assert element != null;
       ModuleManagerImpl.ModulePath[] files = ModuleManagerImpl.getPathsToModuleFiles(element);
       for (ModuleManagerImpl.ModulePath file : files) {

@@ -51,8 +51,9 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
     }
 
     public boolean isNegated() {
-        final ASTNode node = getNode().findChildByType(RegExpTT.PROPERTY);
-        return node != null && node.textContains('P');
+        final ASTNode node1 = getNode().findChildByType(RegExpTT.PROPERTY);
+        final ASTNode node2 = getNode().findChildByType(RegExpTT.CARET);
+        return (node1 != null && node1.textContains('P')) ^ (node2 != null);
     }
 
     @Nullable
@@ -70,12 +71,15 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
         }
 
         public TextRange getRangeInElement() {
-            final ASTNode lbrace = getNode().findChildByType(RegExpTT.LBRACE);
-            assert lbrace != null;
+            ASTNode firstNode = getNode().findChildByType(RegExpTT.CARET);
+            if (firstNode == null) {
+              firstNode = getNode().findChildByType(RegExpTT.LBRACE);
+            }
+            assert firstNode != null;
             final ASTNode rbrace = getNode().findChildByType(RegExpTT.RBRACE);
             int to = rbrace == null ? getTextRange().getEndOffset() : rbrace.getTextRange().getEndOffset() - 1;
 
-            final TextRange t = new TextRange(lbrace.getStartOffset() + 1, to);
+            final TextRange t = new TextRange(firstNode.getStartOffset() + 1, to);
             return t.shiftRight(-getTextRange().getStartOffset());
         }
 
@@ -139,7 +143,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
     private static final String[] UNICODE_BLOCKS;
     static {
         final Field[] fields = Character.UnicodeBlock.class.getFields();
-        final List<String> unicodeBlocks = new ArrayList<String>(fields.length);
+        final List<String> unicodeBlocks = new ArrayList<>(fields.length);
         for (Field field : fields) {
             if (field.getType().equals(Character.UnicodeBlock.class)) {
                 if (Modifier.isStatic(field.getModifiers()) && Modifier.isFinal(field.getModifiers())) {

@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class ExceptionRangeCFG {
 
-  private List<BasicBlock> protectedRange = new ArrayList<BasicBlock>(); // FIXME: replace with set
+  private List<BasicBlock> protectedRange = new ArrayList<>(); // FIXME: replace with set
 
   private BasicBlock handler;
 
@@ -35,7 +35,7 @@ public class ExceptionRangeCFG {
     this.handler = handler;
 
     if (exceptionType != null) {
-      this.exceptionTypes = new ArrayList<String>(exceptionType);
+      this.exceptionTypes = new ArrayList<>(exceptionType);
     }
   }
 
@@ -105,7 +105,7 @@ public class ExceptionRangeCFG {
       return null;
     }
 
-    Set<String> setExceptionStrings = new HashSet<String>();
+    Set<String> setExceptionStrings = new HashSet<>();
 
     for (String exceptionType : exceptionTypes) { // normalize order
       setExceptionStrings.add(exceptionType);

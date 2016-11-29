@@ -15,18 +15,13 @@
  */
 package com.intellij.openapi.externalSystem.service.execution;
 
-import com.intellij.execution.*;
+import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -37,12 +32,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,15 +96,12 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
     }
     if (tasks.isEmpty()) return true;
 
-    final Pair<ProgramRunner, ExecutionEnvironment> pair =
-      ExternalSystemUtil.createRunner(executionSettings, DefaultRunExecutor.EXECUTOR_ID, myProject, mySystemId);
 
-    if (pair == null) return false;
+    ExecutionEnvironment environment =
+      ExternalSystemUtil.createExecutionEnvironment(myProject, mySystemId, executionSettings, DefaultRunExecutor.EXECUTOR_ID);
+    if (environment == null) return false;
 
-    final ProgramRunner runner = pair.first;
-    final ExecutionEnvironment environment = pair.second;
-
-    return runner.canRun(DefaultRunExecutor.EXECUTOR_ID, environment.getRunProfile());
+    return environment.getRunner().canRun(DefaultRunExecutor.EXECUTOR_ID, environment.getRunProfile());
   }
 
   @Override
@@ -130,74 +118,14 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
     }
     if (tasks.isEmpty()) return true;
 
-    final Pair<ProgramRunner, ExecutionEnvironment> pair =
-      ExternalSystemUtil.createRunner(executionSettings, DefaultRunExecutor.EXECUTOR_ID, myProject, mySystemId);
+    ExecutionEnvironment environment =
+      ExternalSystemUtil.createExecutionEnvironment(myProject, mySystemId, executionSettings, DefaultRunExecutor.EXECUTOR_ID);
+    if (environment == null) return false;
 
-    if (pair == null) return false;
-
-    final ProgramRunner runner = pair.first;
-    final ExecutionEnvironment environment = pair.second;
+    final ProgramRunner runner = environment.getRunner();
     environment.setExecutionId(env.getExecutionId());
 
-    final Semaphore targetDone = new Semaphore();
-    final Ref<Boolean> result = new Ref<Boolean>(false);
-    final Disposable disposable = Disposer.newDisposable();
-
-    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    final String executorId = executor.getId();
-
-    myProject.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
-      public void processStartScheduled(final String executorIdLocal, final ExecutionEnvironment environmentLocal) {
-        if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-          targetDone.down();
-        }
-      }
-
-      public void processNotStarted(final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
-        if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-          targetDone.up();
-        }
-      }
-
-      public void processStarted(final String executorIdLocal,
-                                 @NotNull final ExecutionEnvironment environmentLocal,
-                                 @NotNull final ProcessHandler handler) {
-        if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-          handler.addProcessListener(new ProcessAdapter() {
-            public void processTerminated(ProcessEvent event) {
-              result.set(event.getExitCode() == 0);
-              targetDone.up();
-              environmentLocal.getContentToReuse();
-            }
-          });
-        }
-      }
-    });
-
-    try {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            runner.execute(environment);
-          }
-          catch (ExecutionException e) {
-            targetDone.up();
-            LOG.error(e);
-          }
-        }
-      }, ModalityState.NON_MODAL);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      Disposer.dispose(disposable);
-      return false;
-    }
-
-    targetDone.waitFor();
-    Disposer.dispose(disposable);
-
-    return result.get();
+    return RunConfigurationBeforeRunProvider.doRunTask(DefaultRunExecutor.getRunExecutorInstance().getId(), environment, runner);
   }
 
   @Override

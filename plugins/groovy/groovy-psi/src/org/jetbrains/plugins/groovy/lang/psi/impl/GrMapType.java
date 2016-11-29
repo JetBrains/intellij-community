@@ -110,7 +110,7 @@ public abstract class GrMapType extends GrLiteralClassType {
       return name + "<" + getInternalText(params[0]) + ", " + getInternalText(params[1]) + ">";
     }
 
-    List<String> components = new ArrayList<String>();
+    List<String> components = new ArrayList<>();
     for (String s : stringKeys) {
       components.add("'" + s + "':" + getInternalCanonicalText(getTypeByStringKey(s)));
     }
@@ -148,7 +148,7 @@ public abstract class GrMapType extends GrLiteralClassType {
     strings.putAll(l.getStringEntries());
     strings.putAll(r.getStringEntries());
 
-    List<Couple<PsiType>> other = new ArrayList<Couple<PsiType>>();
+    List<Couple<PsiType>> other = new ArrayList<>();
     other.addAll(l.getOtherEntries());
     other.addAll(r.getOtherEntries());
 

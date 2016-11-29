@@ -21,10 +21,11 @@ import gnu.trove.PrimeFinder;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class HashSetQueueTest extends TestCase {
   private final Assertion CHECK = new Assertion();
-  private final HashSetQueue<String> myQueue = new HashSetQueue<String>();
+  private final HashSetQueue<String> myQueue = new HashSetQueue<>();
 
   public void testEmpty() {
     assertEquals(0, myQueue.size());
@@ -44,7 +45,7 @@ public class HashSetQueueTest extends TestCase {
     assertEquals(1, myQueue.size());
     myQueue.add("3");
     assertEquals(2, myQueue.size());
-    CHECK.compareAll(new Object[]{"2", "3"}, new ArrayList<String>(myQueue));
+    CHECK.compareAll(new Object[]{"2", "3"}, new ArrayList<>(myQueue));
     assertEquals("2", myQueue.poll());
     assertEquals("3", myQueue.poll());
     testEmpty();
@@ -113,5 +114,56 @@ public class HashSetQueueTest extends TestCase {
 
       toRemove = (toRemove + delta) % N;
     }
+  }
+
+  public void testIteratorCatchesUpQueueModificationImmediately() {
+    assertTrue(myQueue.add("1"));
+    Iterator<String> iterator = myQueue.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals("1", iterator.next());
+    assertFalse(iterator.hasNext());
+
+    myQueue.add("2");
+    assertTrue(iterator.hasNext());
+    assertEquals("2", iterator.next());
+    assertFalse(iterator.hasNext());
+  }
+
+  public void testIterator() {
+    assertTrue(myQueue.add("1"));
+    Iterator<String> iterator = myQueue.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals("1", iterator.next());
+    assertFalse(iterator.hasNext());
+  }
+
+  public void testIteratorPosition() {
+    String o = "1";
+    assertTrue(myQueue.add(o));
+    HashSetQueue.PositionalIterator<String> iterator = myQueue.iterator();
+    HashSetQueue.PositionalIterator.IteratorPosition<String> position = iterator.position();
+    try {
+      position.peek();
+      fail("Must have thrown ISE");
+    }
+    catch (IllegalStateException ignored) {
+    }
+
+    HashSetQueue.PositionalIterator.IteratorPosition<String> nextPos = position.next();
+    assertTrue(position.compareTo(nextPos) < 0);
+    assertTrue(position.compareTo(position) == 0);
+    assertTrue(nextPos.compareTo(position) > 0);
+    assertSame(o, nextPos.peek());
+
+    assertNull(nextPos.next());
+
+    HashSetQueue.PositionalIterator.IteratorPosition<String> nextPos2 = position.next();
+    assertTrue(nextPos2.compareTo(nextPos) == 0);
+    assertSame(o, nextPos2.peek());
+
+    assertTrue(iterator.hasNext());
+    assertSame(o, iterator.next());
+    assertSame(o, nextPos.peek());
+    assertNull(nextPos.next());
   }
 }

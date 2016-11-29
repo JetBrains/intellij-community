@@ -17,28 +17,38 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
+import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidatorEx;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import java.awt.*;
+
 /**
  * @author peter
  */
 public class EditContractIntention extends BaseIntentionAction implements LowPriorityAction {
+  private static final String ourPrompt = "<html>Please specify the contract text<p>" +
+                                          "Example: <code>_, null -> false</code><br>" +
+                                          "<small>See intention action description for more details</small></html>";
 
   @NotNull
   @Override
@@ -49,8 +59,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   @Nullable
   private static PsiMethod getTargetMethod(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
-    if (owner instanceof PsiMethod &&
-        (!owner.getManager().isInProject(owner) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS)) {
+    if (owner instanceof PsiMethod && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
       PsiElement original = owner.getOriginalElement();
       return original instanceof PsiMethod ? (PsiMethod)original : (PsiMethod)owner;
     }
@@ -74,45 +83,59 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     assert method != null;
     Contract existingAnno = AnnotationUtil.findAnnotationInHierarchy(method, Contract.class);
     String oldContract = existingAnno == null ? null : existingAnno.value();
-    String prompt =
-      "<html>Please specify the contract text<p>" +
-      "Example: <code>_, null -> false</code><br>" +
-      "<small>See intention action description for more details</small></html>";
-    String newContract = Messages.showInputDialog(project, prompt, "Edit Method Contract", null, oldContract, new InputValidatorEx() {
-      @Nullable
-      @Override
-      public String getErrorText(String inputString) {
-        if (StringUtil.isEmpty(inputString)) return null;
+    boolean oldPure = existingAnno != null && existingAnno.pure();
 
-        return ContractInspection.checkContract(method, inputString);
-      }
-
+    JBTextField contractText = new JBTextField(oldContract);
+    JCheckBox pureCB = createPureCheckBox(oldPure);
+    DialogBuilder builder = createDialog(project, contractText, pureCB);
+    contractText.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public boolean checkInput(String inputString) {
-        return getErrorText(inputString) == null;
-      }
-
-      @Override
-      public boolean canClose(String inputString) {
-        return checkInput(inputString);
+      protected void textChanged(DocumentEvent e) {
+        String error = getErrorMessage(contractText.getText(), method);
+        builder.setOkActionEnabled(error == null);
+        builder.setErrorText(error);
       }
     });
-    if (newContract == null) return;
+    if (builder.showAndGet()) {
+      updateContract(method, contractText.getText(), pureCB.isSelected());
+    }
+  }
 
-    AccessToken token = WriteAction.start();
-    try {
+  private static DialogBuilder createDialog(@NotNull Project project, JBTextField contractText, JCheckBox pureCB) {
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(Messages.configureMessagePaneUi(new JTextPane(), ourPrompt), BorderLayout.NORTH);
+    panel.add(contractText, BorderLayout.CENTER);
+    panel.add(pureCB, BorderLayout.SOUTH);
+
+    DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title("Edit Method Contract");
+    builder.setPreferredFocusComponent(contractText);
+    return builder;
+  }
+
+  private static JCheckBox createPureCheckBox(boolean selected) {
+    JCheckBox pureCB = new NonFocusableCheckBox("Method is pure (has no side effects)");
+    pureCB.setMnemonic('p');
+    pureCB.setSelected(selected);
+    return pureCB;
+  }
+
+  private static void updateContract(PsiMethod method, String contract, boolean pure) {
+    Project project = method.getProject();
+    WriteAction.run(() -> {
       ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
       manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-      if (!StringUtil.isEmpty(newContract)) {
-        PsiAnnotation mockAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@Foo(\"" + newContract + "\")", null);
-        manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, file,
+      PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract);
+      if (mockAnno != null) {
+        manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
                                    mockAnno.getParameterList().getAttributes());
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
     DaemonCodeAnalyzer.getInstance(project).restart();
+  }
+
+  @Nullable
+  private static String getErrorMessage(String contract, PsiMethod method) {
+    return StringUtil.isEmpty(contract) ? null : ContractInspection.checkContract(method, contract);
   }
 
   @Override

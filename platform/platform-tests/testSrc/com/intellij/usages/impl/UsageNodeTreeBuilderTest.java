@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,12 +90,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     model.setRoot(rootNode);
     UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(UsageTarget.EMPTY_ARRAY, rules, UsageFilteringRule.EMPTY_ARRAY, rootNode, ourProject);
     for (Usage usage : usages) {
-      usageNodeTreeBuilder.appendUsage(usage, new Consumer<Runnable>() {
-        @Override
-        public void consume(Runnable runnable) {
-          runnable.run();
-        }
-      });
+      usageNodeTreeBuilder.appendUsage(usage, runnable -> runnable.run());
       UIUtil.dispatchAllInvocationEvents();
     }
 
@@ -266,7 +260,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
         @Override
         @NotNull
         public TextChunk[] getText() {
-          return new TextChunk[0];
+          return TextChunk.EMPTY_ARRAY;
         }
 
         @Override

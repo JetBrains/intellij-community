@@ -210,7 +210,7 @@ class TreeHasherBase extends AbstractTreeHasher {
   }
 
   public static List<PsiElement> filter(PsiElement[] elements, NodeSpecificHasherBase hasher) {
-    List<PsiElement> filteredElements = new ArrayList<PsiElement>();
+    List<PsiElement> filteredElements = new ArrayList<>();
     for (PsiElement element : elements) {
       if (!hasher.getNodeFilter().accepts(element)) {
         filteredElements.add(element);
@@ -324,7 +324,7 @@ class TreeHasherBase extends AbstractTreeHasher {
   private TreeHashResult[] computeHashesForChildren(PsiElement element,
                                                     PsiFragment parentFragment,
                                                     NodeSpecificHasher nodeSpecificHasher) {
-    final List<TreeHashResult> result = new ArrayList<TreeHashResult>();
+    final List<TreeHashResult> result = new ArrayList<>();
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       final TreeHashResult childResult = hash(element, parentFragment, nodeSpecificHasher);

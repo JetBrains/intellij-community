@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class ColorChooser {
-  @Nullable
-  @Deprecated
   /**
    * @deprecated Use {@link #chooseColor(Component, String, Color, boolean, java.util.List, boolean)}
    */
+  @Nullable
+  @Deprecated
   public static Color chooseColor(Component parent,
                                   @Nls(capitalization = Nls.Capitalization.Title) String caption,
                                   @Nullable Color preselectedColor,

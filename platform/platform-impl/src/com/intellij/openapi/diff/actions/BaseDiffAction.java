@@ -35,13 +35,11 @@ abstract class BaseDiffAction extends AnAction implements PreloadableAction, Dum
     if (diffData == null) return;
     final DiffContent[] contents = diffData.getContents();
     final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (DiffContent content : contents) {
-          Document document = content.getDocument();
-          if (document != null) {
-            documentManager.saveDocument(document);
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (DiffContent content : contents) {
+        Document document = content.getDocument();
+        if (document != null) {
+          documentManager.saveDocument(document);
         }
       }
     });

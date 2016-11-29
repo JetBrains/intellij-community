@@ -33,7 +33,7 @@ public abstract class TestClassesFilter {
   public abstract boolean matches(String className, String moduleName);
 
   protected static ArrayList<Pattern> compilePatterns(Collection<String> filterList) {
-    ArrayList<Pattern> patterns = new ArrayList<Pattern>();
+    ArrayList<Pattern> patterns = new ArrayList<>();
     for (String aFilter : filterList) {
       String filter = aFilter.trim();
       if (filter.length() == 0) continue;

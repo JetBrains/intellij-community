@@ -8,6 +8,6 @@ interface A
 
 <error descr="Class 'B' must either be declared abstract or implement abstract method 'foo(S)' in 'A'">class B  implements A</error>
 {
-    public void foo(Collection<?> x) { }
+    <error descr="'foo(Collection<?>)' in 'B' clashes with 'foo(S)' in 'A'; both methods have same erasure, yet neither overrides the other">public void foo(Collection<?> x)</error> { }
     public <S extends List<?> & Collection<?>> void foo(S x) { }
 }

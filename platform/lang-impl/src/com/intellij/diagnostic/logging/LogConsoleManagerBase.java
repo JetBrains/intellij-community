@@ -39,7 +39,7 @@ import java.util.Map;
 
 public abstract class LogConsoleManagerBase implements LogConsoleManager, Disposable {
   private final Project myProject;
-  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new THashMap<AdditionalTabComponent, Content>();
+  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new THashMap<>();
   private final GlobalSearchScope mySearchScope;
 
   protected LogConsoleManagerBase(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
@@ -48,17 +48,13 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
   }
 
   @Override
-  public void addLogConsole(@NotNull String name, @NotNull String path, @NotNull Charset charset, long skippedContent, @NotNull RunConfigurationBase runConfiguration) {
-    addLogConsole(name, path, charset, skippedContent, getDefaultIcon(), runConfiguration);
-  }
-
-  public void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent, Icon icon, @Nullable RunProfile runProfile) {
+  public void addLogConsole(@NotNull final String name, @NotNull final String path, @NotNull Charset charset, final long skippedContent, @NotNull RunConfigurationBase runConfiguration) {
     doAddLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false, mySearchScope) {
       @Override
       public boolean isActive() {
         return isConsoleActive(path);
       }
-    }, path, icon, runProfile);
+    }, path, getDefaultIcon(), runConfiguration);
   }
 
   private void doAddLogConsole(@NotNull final LogConsoleBase log, String id,  Icon icon, @Nullable RunProfile runProfile) {

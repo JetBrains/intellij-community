@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testInheritUnrelatedDefaults() { doTest(true, false); }
   public void testExtensionMethods() { doTest(false, false); }
   public void testInheritDefaultMethodInInterface() { doTest(false, false); }
+  public void testCheckForFunctionalInterfaceCandidatesWhenOverrideEquivalentMethodsAreFoundInSuperInterfaces() { doTest(false, false);}
   public void testStaticMethodsInFunctionalInterface() { doTest(false, false); }
   public void testCyclicSubstitutor() { doTest(false, false); }
   public void testThisAccessibility() { doTest(false, false); }
@@ -59,6 +60,14 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   }
 
   public void testUnrelatedDefaultsOverriddenWithConcreteMethodNonEmptySubstitutor() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testUnrelatedDefaultsWithTypeParameter() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testUnrelatedDefaultsWhenOneInterfaceOverrides2Unrelated() throws Exception {
     doTest(false, false);
   }
 
@@ -99,6 +108,14 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   }
 
   public void testSubsignatureCheckWhen2DifferentMethodsBecomeOverrideEquivalent() throws Exception {
+    doTest();
+  }
+
+  public void testUnrelatedDefaultsWhenAbstractIsOverridden() throws Exception {
+    doTest();
+  }
+
+  public void testAbstractOverriddenBySecondDefault() throws Exception {
     doTest();
   }
 

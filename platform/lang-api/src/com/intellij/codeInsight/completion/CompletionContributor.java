@@ -18,13 +18,13 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -33,13 +33,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Completion FAQ:<p>
@@ -54,9 +52,7 @@ import java.util.Set;
  * A: There are two ways. The easier and preferred one is to provide constructor in your contributor and register completion providers there:
  * {@link #extend(CompletionType, ElementPattern, CompletionProvider)}.<br>
  * A more generic way is to override default {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} implementation
- * and provide your own. It's easier to debug, but harder to write. Remember, that completion variant collection is done in a dedicated thread
- * WITHOUT read action, so you'll have to manually invoke {@link com.intellij.openapi.application.Application#runReadAction(Runnable)} each time
- * you access PSI. Don't spend long time inside read action, since this will prevent user from selecting lookup element or cancelling completion.<p>
+ * and provide your own. It's easier to debug, but harder to write.<p>
  *
  * Q: What does the {@link CompletionParameters#getPosition()} return?<br>
  * A: When completion is invoked, the file being edited is first copied (the original file can be accessed from {@link com.intellij.psi.PsiFile#getOriginalFile()}
@@ -128,11 +124,11 @@ import java.util.Set;
 public abstract class CompletionContributor {
 
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
-      new MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>>();
+    new MultiMap<>();
 
   public final void extend(@Nullable CompletionType type,
                            @NotNull final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
-    myMap.putValue(type, new Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>(place, provider));
+    myMap.putValue(type, new Pair<>(place, provider));
   }
 
   /**
@@ -244,33 +240,15 @@ public abstract class CompletionContributor {
 
   @NotNull
   public static List<CompletionContributor> forLanguage(@NotNull Language language) {
-    return MyExtensionPointManager.INSTANCE.forKey(language);
+    return INSTANCE.forKey(language);
   }
 
-  private static class MyExtensionPointManager extends KeyedExtensionCollector<CompletionContributor, Language> {
-    public static final MyExtensionPointManager INSTANCE = new MyExtensionPointManager();
-
-    MyExtensionPointManager() {
-      super("com.intellij.completion.contributor");
-    }
-
+  private static final LanguageExtension<CompletionContributor> INSTANCE = new LanguageExtension<CompletionContributor>("com.intellij.completion.contributor") {
     @NotNull
     @Override
     protected List<CompletionContributor> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-      Set<String> allowed = new THashSet<String>();
-      while (key != null) {
-        allowed.add(keyToString(key));
-        key = key.getBaseLanguage();
-      }
-      allowed.add("any");
-      return buildExtensions(allowed);
+      return buildExtensions(getAllBaseLanguageIdsWithAny(key));
     }
-
-    @NotNull
-    @Override
-    protected String keyToString(@NotNull Language key) {
-      return key.getID();
-    }
-  }
+  };
 
 }

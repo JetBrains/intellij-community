@@ -19,20 +19,26 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandler;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +46,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.util.containers.ContainerUtil.map2Map;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 public class GitVFSListener extends VcsVFSListener {
   /**
@@ -95,7 +104,7 @@ public class GitVFSListener extends VcsVFSListener {
     catch (VcsException e) {
       throw new RuntimeException("The exception is not expected here", e);
     }
-    final HashSet<VirtualFile> retainedFiles = new HashSet<VirtualFile>();
+    final HashSet<VirtualFile> retainedFiles = new HashSet<>();
     final ProgressManager progressManager = ProgressManager.getInstance();
     progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
       @Override
@@ -139,7 +148,7 @@ public class GitVFSListener extends VcsVFSListener {
 
   protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
     // copied files (copyFromMap) are ignored, because they are included into added files.
-    performAdding(ObjectsConvertor.vf2fp(new ArrayList<VirtualFile>(addedFiles)));
+    performAdding(ObjectsConvertor.vf2fp(new ArrayList<>(addedFiles)));
   }
 
   private GitVcs gitVcs() {
@@ -176,7 +185,7 @@ public class GitVFSListener extends VcsVFSListener {
 
   protected void performDeletion(final List<FilePath> filesToDelete) {
     performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
-      HashSet<File> filesToRefresh = new HashSet<File>();
+      HashSet<File> filesToRefresh = new HashSet<>();
 
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
         final File rootFile = new File(root.getPath());
@@ -198,17 +207,46 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   protected void performMoveRename(final List<MovedFileInfo> movedFiles) {
-    // because git does not tracks moves, the file are just added and deleted.
-    ArrayList<FilePath> added = new ArrayList<FilePath>();
-    ArrayList<FilePath> removed = new ArrayList<FilePath>();
-    for (MovedFileInfo info : movedFiles) {
-      if (!GitFileUtils.shouldIgnoreCaseChange(info.myNewPath, info.myOldPath)) {
-        added.add(VcsUtil.getFilePath(info.myNewPath));
-        removed.add(VcsUtil.getFilePath(info.myOldPath));
+    List<FilePath> toAdd = ContainerUtil.newArrayList();
+    List<FilePath> toRemove = ContainerUtil.newArrayList();
+    List<MovedFileInfo> toForceMove = ContainerUtil.newArrayList();
+    for (MovedFileInfo movedInfo : movedFiles) {
+      String oldPath = movedInfo.myOldPath;
+      String newPath = movedInfo.myNewPath;
+      if (!SystemInfo.isFileSystemCaseSensitive && GitUtil.isCaseOnlyChange(oldPath, newPath)) {
+        toForceMove.add(movedInfo);
+      }
+      else {
+        toRemove.add(VcsUtil.getFilePath(oldPath));
+        toAdd.add(VcsUtil.getFilePath(newPath));
       }
     }
-    performAdding(added);
-    performDeletion(removed);
+    performAdding(toAdd);
+    performDeletion(toRemove);
+    performForceMove(toForceMove);
+  }
+
+  private void performForceMove(@NotNull List<MovedFileInfo> files) {
+    Map<FilePath, MovedFileInfo> filesToMove = map2Map(files, (info) -> Pair.create(VcsUtil.getFilePath(info.myNewPath), info));
+    Set<File> toRefresh = newHashSet();
+    performBackgroundOperation(filesToMove.keySet(), "Moving Files...", new LongOperationPerRootExecutor() {
+      @Override
+      public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
+        for (FilePath file : files) {
+          GitHandler h = new GitSimpleHandler(myProject, root, GitCommand.MV);
+          MovedFileInfo info = filesToMove.get(file);
+          h.addParameters("-f", info.myOldPath, info.myNewPath);
+          h.runInCurrentThread(null);
+          toRefresh.add(new File(info.myOldPath));
+          toRefresh.add(new File(info.myNewPath));
+        }
+      }
+
+      @Override
+      public Collection<File> getFilesToRefresh() {
+        return toRefresh;
+      }
+    });
   }
 
   protected boolean isDirectoryVersioningSupported() {
@@ -246,7 +284,7 @@ public class GitVFSListener extends VcsVFSListener {
             });
           }
         }
-        LocalFileSystem.getInstance().refreshIoFiles(executor.getFilesToRefresh());
+        RefreshVFsSynchronously.refreshFiles(executor.getFilesToRefresh());
       }
     });
   }

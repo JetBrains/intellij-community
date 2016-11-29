@@ -15,17 +15,19 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WrapInTransaction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PausesStat;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,14 +48,14 @@ public class ActionUtil {
 
   public static void showDumbModeWarning(@NotNull AnActionEvent... events) {
     Project project = null;
-    List<String> actionNames = new ArrayList<String>();
+    List<String> actionNames = new ArrayList<>();
     for (final AnActionEvent event : events) {
       final String s = event.getPresentation().getText();
       if (StringUtil.isNotEmpty(s)) {
         actionNames.add(s);
       }
 
-      final Project _project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+      final Project _project = event.getProject();
       if (_project != null && project == null) {
         project = _project;
       }
@@ -88,7 +90,6 @@ public class ActionUtil {
            + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
   }
 
-  public static final PausesStat ACTION_UPDATE_PAUSES = new PausesStat("AnAction.update()");
   private static int insidePerformDumbAwareUpdate;
   /**
    * @param action action
@@ -99,10 +100,10 @@ public class ActionUtil {
    * {@link AnAction#update(AnActionEvent)}
    * @return true if update tried to access indices in dumb mode
    */
-  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+  public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     final Presentation presentation = e.getPresentation();
     final Boolean wasEnabledBefore = (Boolean)presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
-    final boolean dumbMode = isDumbMode(CommonDataKeys.PROJECT.getData(e.getDataContext()));
+    final boolean dumbMode = isDumbMode(e.getProject());
     if (wasEnabledBefore != null && !dumbMode) {
       presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null);
       presentation.setEnabled(wasEnabledBefore.booleanValue());
@@ -110,10 +111,10 @@ public class ActionUtil {
     }
     final boolean enabledBeforeUpdate = presentation.isEnabled();
 
-    final boolean notAllowed = dumbMode && !action.isDumbAware();
+    final boolean notAllowed = dumbMode && !action.isDumbAware() || (Registry.is("actionSystem.honor.modal.context") && isInModalContext && !action.isEnabledInModalContext());
 
     if (insidePerformDumbAwareUpdate++ == 0) {
-      ACTION_UPDATE_PAUSES.started();
+      ActionPauses.STAT.started();
     }
     try {
       if (beforeActionPerformed) {
@@ -133,7 +134,7 @@ public class ActionUtil {
     }
     finally {
       if (--insidePerformDumbAwareUpdate == 0) {
-        ACTION_UPDATE_PAUSES.finished(presentation.getText()+" action update ("+action.getClass()+")");
+        ActionPauses.STAT.finished(presentation.getText() + " action update (" + action.getClass() + ")");
       }
       if (notAllowed) {
         if (wasEnabledBefore == null) {
@@ -144,6 +145,16 @@ public class ActionUtil {
     }
     
     return false;
+  }
+
+  @Deprecated
+  // Use #performDumbAwareUpdate with isModalContext instead
+  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+    return performDumbAwareUpdate(false, action, e, beforeActionPerformed);
+  }
+
+  public static class ActionPauses {
+    public static final PausesStat STAT = new PausesStat("AnAction.update()");
   }
 
   /**
@@ -164,9 +175,9 @@ public class ActionUtil {
   }
 
   public static boolean lastUpdateAndCheckDumb(AnAction action, AnActionEvent e, boolean visibilityMatters) {
-    performDumbAwareUpdate(action, e, true);
+    performDumbAwareUpdate(false, action, e, true);
 
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     if (project != null && DumbService.getInstance(project).isDumb() && !action.isDumbAware()) {
       if (Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
         return false;
@@ -190,25 +201,43 @@ public class ActionUtil {
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
-    WrapInTransaction annotation = action.getClass().getAnnotation(WrapInTransaction.class);
-    AccessToken token = annotation == null ? AccessToken.EMPTY_ACCESS_TOKEN
-                                           : TransactionGuard.getInstance().startSynchronousTransaction(annotation.value());
-    try {
-      action.actionPerformed(e);
-    }
-    catch (IndexNotReadyException e1) {
-      showDumbModeWarning(e);
-    }
-    finally {
-      token.finish();
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          action.actionPerformed(e);
+        }
+        catch (IndexNotReadyException e1) {
+          showDumbModeWarning(e);
+        }
+      }
+
+      @Override
+      public String toString() {
+        return action + " of " + action.getClass();
+      }
+    };
+
+    if (action.startInTransaction()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(runnable);
+    } else {
+      runnable.run();
     }
   }
 
   @NotNull
   public static List<AnAction> getActions(@NotNull JComponent component) {
-    Object property = component.getClientProperty(AnAction.ourClientProperty);
-    //noinspection unchecked
-    return property == null ? Collections.<AnAction>emptyList() : (List<AnAction>)property;
+    return ObjectUtils.notNull(UIUtil.getClientProperty(component, AnAction.ACTIONS_KEY), Collections.emptyList());
+  }
+
+  public static void clearActions(@NotNull JComponent component) {
+    UIUtil.putClientProperty(component, AnAction.ACTIONS_KEY, null);
+  }
+
+  public static void copyRegisteredShortcuts(@NotNull JComponent to, @NotNull JComponent from) {
+    for (AnAction anAction : getActions(from)) {
+      anAction.registerCustomShortcutSet(anAction.getShortcutSet(), to);
+    }
   }
 
   public static void registerForEveryKeyboardShortcut(@NotNull JComponent component,
@@ -224,5 +253,53 @@ public class ActionUtil {
         }
       }
     }
+  }
+
+  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
+                                                  @NotNull JComponent component,
+                                                  @Nullable Disposable parentDisposable) {
+    for (AnAction action : group.getChildren(null)) {
+      if (action instanceof ActionGroup) {
+        recursiveRegisterShortcutSet(((ActionGroup)action), component, parentDisposable);
+      }
+      action.registerCustomShortcutSet(component, parentDisposable);
+    }
+  }
+
+  /**
+   * Convenience method for copying properties from a registered action
+   *
+   * @param actionId action id
+   */
+  public static AnAction copyFrom(@NotNull AnAction action, @NotNull String actionId) {
+    action.copyFrom(ActionManager.getInstance().getAction(actionId));
+    return action;
+  }
+
+  /**
+   * Convenience method for merging not null properties from a registered action
+   *
+   * @param action action to merge to
+   * @param actionId action id to merge from
+   */
+  public static AnAction mergeFrom(@NotNull AnAction action, @NotNull String actionId) {
+    //noinspection UnnecessaryLocalVariable
+    AnAction a1 = action;
+    AnAction a2 = ActionManager.getInstance().getAction(actionId);
+    Presentation p1 = a1.getTemplatePresentation();
+    Presentation p2 = a2.getTemplatePresentation();
+    p1.setIcon(ObjectUtils.chooseNotNull(p1.getIcon(), p2.getIcon()));
+    p1.setDisabledIcon(ObjectUtils.chooseNotNull(p1.getDisabledIcon(), p2.getDisabledIcon()));
+    p1.setSelectedIcon(ObjectUtils.chooseNotNull(p1.getSelectedIcon(), p2.getSelectedIcon()));
+    p1.setHoveredIcon(ObjectUtils.chooseNotNull(p1.getHoveredIcon(), p2.getHoveredIcon()));
+    if (StringUtil.isEmpty(p1.getText())) {
+      p1.setText(p2.getTextWithMnemonic(), p2.getDisplayedMnemonicIndex() >= 0);
+    }
+    p1.setDescription(ObjectUtils.chooseNotNull(p1.getDescription(), p2.getDescription()));
+    ShortcutSet ss1 = a1.getShortcutSet();
+    if (ss1 == null || ss1 == CustomShortcutSet.EMPTY) {
+      a1.copyShortcutFrom(a2);
+    }
+    return a1;
   }
 }

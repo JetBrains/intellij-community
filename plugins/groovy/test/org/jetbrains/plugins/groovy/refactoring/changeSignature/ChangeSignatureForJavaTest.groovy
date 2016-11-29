@@ -32,21 +32,21 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Maxim.Medvedev
  */
 @CompileStatic
-public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase {
+class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + "/refactoring/changeSignatureForJava/"
 
-  public void testSimple() throws Exception {
+  void testSimple() throws Exception {
     doTest null, null, null, [], [], false
   }
 
-  public void testParameterReorder() throws Exception {
+  void testParameterReorder() throws Exception {
     doTest null, [new ParameterInfoImpl(1), new ParameterInfoImpl(0)], false
   }
 
-  public void testGenericTypes() throws Exception {
+  void testGenericTypes() throws Exception {
     doTest null, null, "T", { PsiMethod method ->
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
       return [
         new ParameterInfoImpl(-1, "x", factory.createTypeFromText("T", method.getParameterList()), "null"),
         new ParameterInfoImpl(-1, "y", factory.createTypeFromText("C<T>", method.getParameterList()), "null")
@@ -54,18 +54,18 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
     }, false
   }
 
-  public void testGenericTypesInOldParameters() throws Exception {
+  void testGenericTypesInOldParameters() throws Exception {
     doTest null, null, null, { PsiMethod method ->
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
       return [
         new ParameterInfoImpl(0, "t", factory.createTypeFromText("T", method), null)
       ]
     }, false
   }
 
-  public void testTypeParametersInMethod() throws Exception {
+  void testTypeParametersInMethod() throws Exception {
     doTest null, null, null, { PsiMethod method ->
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
       return [
         new ParameterInfoImpl(-1, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
         new ParameterInfoImpl(-1, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
@@ -74,11 +74,11 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
     }, false
   }
 
-  public void testDefaultConstructor() throws Exception {
+  void testDefaultConstructor() throws Exception {
     doTest null, [new ParameterInfoImpl(-1, "j", PsiType.INT, "27")], false
   }
 
-  public void testGenerateDelegate() throws Exception {
+  void testGenerateDelegate() throws Exception {
     doTest null, [new ParameterInfoImpl(-1, "i", PsiType.INT, "27")], true
   }
 
@@ -110,7 +110,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
   }
   */
 
-  public void testGenerateDelegateDefaultConstructor() throws Exception {
+  void testGenerateDelegateDefaultConstructor() throws Exception {
     doTest null, [new ParameterInfoImpl(-1, "i", PsiType.INT, "27")], true
   }
 
@@ -155,18 +155,18 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
   }
   */
 
-  public void testVarargs1() throws Exception {
+  void testVarargs1() throws Exception {
     doTest null, [
       new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "true"),
       new ParameterInfoImpl(0)
     ], false
   }
 
-  public void testCovariantReturnType() throws Exception {
+  void testCovariantReturnType() throws Exception {
     doTest CommonClassNames.JAVA_LANG_RUNNABLE, [], false
   }
 
-  public void testReorderExceptions() throws Exception {
+  void testReorderExceptions() throws Exception {
     doTest null, null, null, [], [new JavaThrownExceptionInfo(1), new JavaThrownExceptionInfo(0)], false
   }
 
@@ -197,7 +197,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
   }
   */
 
-  public void testAddException() throws Exception {
+  void testAddException() throws Exception {
     doTest null, null, null, new SimpleParameterGen(), { PsiMethod method ->
       return [
         new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().
@@ -253,7 +253,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
     @Nullable @NonNls String newReturnType,
     GenParams gen,
     final boolean generateDelegate) {
-    doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
+    doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate)
   }
 
   private void doTest(
@@ -263,13 +263,13 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
     GenParams genParams,
     GenExceptions genExceptions,
     final boolean generateDelegate) throws Exception {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.configureByFile(getTestName(false) + ".java");
-    final PsiElement targetElement = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
-    PsiMethod method = (PsiMethod)targetElement;
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    PsiType newType = newReturnType != null ? factory.createTypeFromText(newReturnType, method) : method.getReturnType();
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    myFixture.configureByFile(getTestName(false) + ".java")
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED)
+    assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod)
+    PsiMethod method = (PsiMethod)targetElement
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
+    PsiType newType = newReturnType != null ? factory.createTypeFromText(newReturnType, method) : method.getReturnType()
     new ChangeSignatureProcessor(
       getProject(),
       method,
@@ -279,41 +279,41 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
       newType,
       genParams.genParams(method) as ParameterInfoImpl[],
       genExceptions.genExceptions(method) as ThrownExceptionInfo[]
-    ).run();
-    myFixture.checkResultByFile(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy", true);
+    ).run()
+    myFixture.checkResultByFile(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy", true)
   }
 
   private interface GenParams {
-    List<ParameterInfoImpl> genParams(PsiMethod method) throws IncorrectOperationException;
+    List<ParameterInfoImpl> genParams(PsiMethod method) throws IncorrectOperationException
   }
 
   private static class SimpleParameterGen implements GenParams {
-    private final List<ParameterInfoImpl> myInfos;
+    private final List<ParameterInfoImpl> myInfos
 
-    public SimpleParameterGen(List<ParameterInfoImpl> infos = []) {
-      myInfos = infos;
+    SimpleParameterGen(List<ParameterInfoImpl> infos = []) {
+      myInfos = infos
     }
 
     @Override
-    public List<ParameterInfoImpl> genParams(PsiMethod method) {
+    List<ParameterInfoImpl> genParams(PsiMethod method) {
       myInfos*.updateFromMethod method
       myInfos
     }
   }
 
   private interface GenExceptions {
-    List<ThrownExceptionInfo> genExceptions(PsiMethod method) throws IncorrectOperationException;
+    List<ThrownExceptionInfo> genExceptions(PsiMethod method) throws IncorrectOperationException
   }
 
   private static class SimpleExceptionsGen implements GenExceptions {
-    private final List<ThrownExceptionInfo> myInfos;
+    private final List<ThrownExceptionInfo> myInfos
 
-    public SimpleExceptionsGen(List<? extends ThrownExceptionInfo> infos = []) {
-      myInfos = infos;
+    SimpleExceptionsGen(List<? extends ThrownExceptionInfo> infos = []) {
+      myInfos = infos
     }
 
     @Override
-    public List<ThrownExceptionInfo> genExceptions(PsiMethod method) {
+    List<ThrownExceptionInfo> genExceptions(PsiMethod method) {
       myInfos*.updateFromMethod method
       myInfos
     }

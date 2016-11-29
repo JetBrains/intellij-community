@@ -40,7 +40,10 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
+import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -94,8 +97,8 @@ public class FormsInstrumenter extends FormsBuilder {
       classpath.add(getResourcePath(GridConstraints.class)); // forms_rt.jar
       final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
       classpath.addAll(chunkSourcePath.keySet()); // sourcepath for loading forms resources
-
-      final InstrumentationClassFinder finder = ClassProcessingBuilder.createInstrumentationClassFinder(platformCp, classpath, outputConsumer);
+      final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
+      final InstrumentationClassFinder finder = ClassProcessingBuilder.createInstrumentationClassFinder(sdk, platformCp, classpath, outputConsumer);
 
       try {
         final Map<File, Collection<File>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer);
@@ -141,8 +144,7 @@ public class FormsInstrumenter extends FormsBuilder {
     final Map<File, Collection<File>> instrumented = new THashMap<File, Collection<File>>(FileUtil.FILE_HASHING_STRATEGY);
     final Map<String, File> class2form = new HashMap<String, File>();
 
-    final MyNestedFormLoader nestedFormsLoader =
-      new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk));
+    final MyNestedFormLoader nestedFormsLoader = new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk), finder);
 
     for (File formFile : forms) {
       final LwRootContainer rootContainer;
@@ -194,7 +196,10 @@ public class FormsInstrumenter extends FormsBuilder {
       }
 
       class2form.put(classToBind, formFile);
-      addBinding(compiled.getSourceFile(), formFile, instrumented);
+      for (File file : compiled.getSourceFiles()) {
+        addBinding(file, formFile, instrumented);
+      }
+
 
       try {
         context.processMessage(new ProgressMessage("Instrumenting forms... [" + chunk.getPresentableShortName() + "]"));
@@ -260,15 +265,17 @@ public class FormsInstrumenter extends FormsBuilder {
   private static class MyNestedFormLoader implements NestedFormLoader {
     private final Map<File, String> mySourceRoots;
     private final Collection<File> myOutputRoots;
+    private final InstrumentationClassFinder myClassFinder;
     private final HashMap<String, LwRootContainer> myCache = new HashMap<String, LwRootContainer>();
 
     /**
      * @param sourceRoots all source roots for current module chunk and all dependent recursively
      * @param outputRoots output roots for this module chunk and all dependent recursively
      */
-    public MyNestedFormLoader(Map<File, String> sourceRoots, Collection<File> outputRoots) {
+    public MyNestedFormLoader(Map<File, String> sourceRoots, Collection<File> outputRoots, InstrumentationClassFinder classFinder) {
       mySourceRoots = sourceRoots;
       myOutputRoots = outputRoots;
+      myClassFinder = classFinder;
     }
 
     public LwRootContainer loadForm(String formFileName) throws Exception {
@@ -295,6 +302,16 @@ public class FormsInstrumenter extends FormsBuilder {
             stream.close();
           }
         }
+      }
+
+      InputStream fromLibraries = null;
+      try {
+        fromLibraries = myClassFinder.getResourceAsStream(relPath);
+      }
+      catch (IOException ignored) {
+      }
+      if (fromLibraries != null) {
+        return loadForm(formFileName, fromLibraries);
       }
 
       throw new Exception("Cannot find nested form file " + formFileName);

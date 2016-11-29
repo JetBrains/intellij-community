@@ -21,9 +21,9 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
@@ -464,13 +464,7 @@ public class ConsoleHistoryController {
           if (loadHistoryOld(id)) {
             if (!myRootType.isHidden()) {
               // migrate content
-              AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-              try {
-                VfsUtil.saveText(consoleFile, myContent);
-              }
-              finally {
-                token.finish();
-              }
+              WriteAction.run(() -> VfsUtil.saveText(consoleFile, myContent));
             }
             return true;
           }
@@ -560,14 +554,10 @@ public class ConsoleHistoryController {
           saveHistoryOld();
           return;
         }
-        AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-        try {
+        WriteAction.run(() -> {
           VirtualFile file = HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, myId), ScratchFileService.Option.create_if_missing);
           VfsUtil.saveText(file, StringUtil.join(getModel().getEntries(), myRootType.getEntrySeparator()));
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
       catch (Exception ex) {
         LOG.error(ex);
@@ -641,12 +631,9 @@ public class ConsoleHistoryController {
     }
     catch (final IOException e) {
       LOG.warn(e);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          String message = String.format("Unable to open '%s/%s'\nReason: %s", rootType.getId(), pathName, e.getLocalizedMessage());
-          Messages.showErrorDialog(message, "Unable to Open File");
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        String message = String.format("Unable to open '%s/%s'\nReason: %s", rootType.getId(), pathName, e.getLocalizedMessage());
+        Messages.showErrorDialog(message, "Unable to Open File");
       });
       return null;
     }
@@ -672,7 +659,7 @@ public class ConsoleHistoryController {
   }
 
   private static Collection<KeyStroke> getKeystrokesUpDown(boolean isUp) {
-    Collection<KeyStroke> result = new ArrayList<KeyStroke>();
+    Collection<KeyStroke> result = new ArrayList<>();
 
     final ShortcutSet shortcutSet = getShortcutUpDown(isUp);
     for (Shortcut shortcut : shortcutSet.getShortcuts()) {

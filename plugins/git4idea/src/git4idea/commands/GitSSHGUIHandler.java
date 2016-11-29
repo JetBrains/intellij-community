@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package git4idea.commands;
 
-import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
+import com.intellij.credentialStore.CredentialPromptDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.PathUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.config.SSHConnectionSettings;
 import git4idea.i18n.GitBundle;
@@ -33,6 +35,8 @@ import java.awt.*;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 /**
  * Swing GUI handler for the SSH events
@@ -68,10 +72,9 @@ public class GitSSHGUIHandler {
   @Nullable
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
-    return PasswordSafePromptDialog.askPassphrase(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
-                                                  GitBundle.message("ssh.askPassphrase.message", keyPath, username),
-                                                  GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath, resetPassword, error
-    );
+    return CredentialPromptDialog.askPassword(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
+                                              "Password for the SSH key \"" + PathUtil.getFileName(keyPath) + "\":",
+                                              CredentialAttributes(GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath), resetPassword, error);
   }
 
   /**
@@ -124,7 +127,7 @@ public class GitSSHGUIHandler {
                                          final Vector<String> prompt,
                                          final Vector<Boolean> echo,
                                          final String lastError) {
-    final AtomicReference<Vector<String>> rc = new AtomicReference<Vector<String>>();
+    final AtomicReference<Vector<String>> rc = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         showError(lastError);
@@ -148,9 +151,12 @@ public class GitSSHGUIHandler {
   @Nullable
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
-    return PasswordSafePromptDialog.askPassword(myProject, GitBundle.getString("ssh.password.title"),
-                                                GitBundle.message("ssh.password.message", username),
-                                                GitSSHGUIHandler.class, "PASSWORD:" + username, resetPassword, error);
+    return CredentialPromptDialog.askPassword(myProject,
+                                              GitBundle.getString("ssh.password.title"),
+                                              GitBundle.message("ssh.password.message", username),
+                                              CredentialAttributes(GitSSHGUIHandler.class, "PASSWORD:" + username),
+                                              resetPassword,
+                                              error);
   }
 
   /**
@@ -244,7 +250,7 @@ public class GitSSHGUIHandler {
         contents = new JPanel(new GridBagLayout());
         inputs = new JTextComponent[myNumPrompts];
         GridBagConstraints c;
-        Insets insets = new Insets(1, 1, 1, 1);
+        Insets insets = JBUI.insets(1);
         if (myInstruction.length() != 0) {
           JLabel instructionLabel = new JLabel(myInstruction);
           c = new GridBagConstraints();
@@ -325,7 +331,7 @@ public class GitSSHGUIHandler {
      */
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
     public Vector<String> getResults() {
-      Vector<String> rc = new Vector<String>(myNumPrompts);
+      Vector<String> rc = new Vector<>(myNumPrompts);
       for (int i = 0; i < myNumPrompts; i++) {
         rc.add(inputs[i].getText());
       }

@@ -15,44 +15,127 @@
  */
 package com.intellij.ui;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.PlainPrefixMatcher;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
+import com.intellij.util.textCompletion.TextCompletionProvider;
+import com.intellij.util.textCompletion.TextCompletionValueDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
+ * Extend this provider for:
+ * <ol><li> caching (implement {@link #getItems(String, boolean, CompletionParameters)}, see {@link #fillCompletionVariants(CompletionParameters, String, CompletionResultSet)});
+ * <li> changing completion variants (see {@link #setItems(Collection)}).</ol>
+ * <p>
+ * Otherwise, use {@link com.intellij.util.textCompletion.ValuesCompletionProvider} for completion from a fixed set of elements
+ * or {@link com.intellij.util.TextFieldCompletionProvider} in other cases.
+ *
  * @author Roman.Chernyatchik
  */
-public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comparator<T> {
+public abstract class TextFieldWithAutoCompletionListProvider<T> extends DefaultTextCompletionValueDescriptor<T> implements
+                                                                                                                 TextCompletionProvider {
+  private static final Logger LOG = Logger.getInstance(TextFieldWithAutoCompletionListProvider.class);
   @NotNull protected Collection<T> myVariants;
   @Nullable
   private String myCompletionAdvertisement;
 
-  @Nullable
-  protected abstract Icon getIcon(@NotNull final T item);
-
-  @NotNull
-  protected abstract String getLookupString(@NotNull final T item);
-
-  @Nullable
-  protected abstract String getTailText(@NotNull final T item);
-
-  @Nullable
-  protected abstract String getTypeText(@NotNull final T item);
-
-  @Override
-  public abstract int compare(T item1, T item2);
-
   protected TextFieldWithAutoCompletionListProvider(@Nullable final Collection<T> variants) {
     setItems(variants);
     myCompletionAdvertisement = null;
+  }
+
+  @Nullable
+  @Override
+  public String getPrefix(@NotNull String text, int offset) {
+    return getCompletionPrefix(text, offset);
+  }
+
+  @NotNull
+  @Override
+  public CompletionResultSet applyPrefixMatcher(@NotNull CompletionResultSet result, @NotNull String prefix) {
+    PrefixMatcher prefixMatcher = createPrefixMatcher(prefix);
+    if (prefixMatcher != null) {
+      return result.withPrefixMatcher(prefixMatcher);
+    }
+    return result;
+  }
+
+  @Nullable
+  @Override
+  public CharFilter.Result acceptChar(char c) {
+    return null;
+  }
+
+  @Override
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters,
+                                     @NotNull String prefix,
+                                     @NotNull CompletionResultSet result) {
+    Collection<T> items = getItems(prefix, true, parameters);
+    addCompletionElements(result, this, items, -10000);
+
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    ProgressIndicator mainIndicator = progressManager.getProgressIndicator();
+    final ProgressIndicator indicator = mainIndicator != null ? new SensitiveProgressWrapper(mainIndicator) : new EmptyProgressIndicator();
+    Future<Collection<T>>
+      future =
+      ApplicationManager.getApplication().executeOnPooledThread(() -> progressManager.runProcess(() -> getItems(prefix, false, parameters), indicator));
+
+    while (true) {
+      try {
+        Collection<T> tasks = future.get(100, TimeUnit.MILLISECONDS);
+        if (tasks != null) {
+          addCompletionElements(result, this, tasks, 0);
+          return;
+        }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception ignore) {
+
+      }
+      ProgressManager.checkCanceled();
+    }
+  }
+
+  private static <T> void addCompletionElements(final CompletionResultSet result,
+                                                final TextCompletionValueDescriptor<T> descriptor,
+                                                final Collection<T> items,
+                                                final int index) {
+    final AutoCompletionPolicy completionPolicy = ApplicationManager.getApplication().isUnitTestMode()
+                                                  ? AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE
+                                                  : AutoCompletionPolicy.NEVER_AUTOCOMPLETE;
+    int grouping = index;
+    for (final T item : items) {
+      if (item == null) {
+        LOG.error("Null item from " + descriptor);
+        continue;
+      }
+
+      LookupElementBuilder builder = descriptor.createLookupBuilder(item);
+      result.addElement(PrioritizedLookupElement.withGrouping(builder.withAutoCompletionPolicy(completionPolicy), grouping--));
+    }
   }
 
   public void setItems(@Nullable final Collection<T> variants) {
@@ -65,25 +148,10 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
       return Collections.emptyList();
     }
 
-    final List<T> items = new ArrayList<T>(myVariants);
+    final List<T> items = new ArrayList<>(myVariants);
 
     Collections.sort(items, this);
     return items;
-  }
-
-  /**
-   * Completion list advertisement for documentation popup
-   *
-   * @param shortcut
-   * @return text
-   */
-  @Nullable
-  public String getQuickDocHotKeyAdvertisement(@NotNull final String shortcut) {
-    final String advertisementTail = getQuickDocHotKeyAdvertisementTail(shortcut);
-    if (advertisementTail == null) {
-      return null;
-    }
-    return "Pressing " + shortcut + " would show " + advertisementTail;
   }
 
   /**
@@ -94,10 +162,21 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
    */
   @Nullable
   public String getAdvertisement() {
-    return myCompletionAdvertisement;
+    if (myCompletionAdvertisement != null) return myCompletionAdvertisement;
+    String shortcut = KeymapUtil.getFirstKeyboardShortcutText((IdeActions.ACTION_QUICK_JAVADOC));
+    String advertisementTail = getQuickDocHotKeyAdvertisementTail(shortcut);
+    if (advertisementTail == null) {
+      return null;
+    }
+    return "Pressing " + shortcut + " would show " + advertisementTail;
   }
 
-  public void setAdvertisement(@Nullable final String completionAdvertisement) {
+  @Nullable
+  protected String getQuickDocHotKeyAdvertisementTail(@NotNull final String shortcut) {
+    return null;
+  }
+
+  public void setAdvertisement(@Nullable String completionAdvertisement) {
     myCompletionAdvertisement = completionAdvertisement;
   }
 
@@ -106,47 +185,17 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
     return new PlainPrefixMatcher(prefix);
   }
 
-  public LookupElementBuilder createLookupBuilder(@NotNull final T item) {
-    LookupElementBuilder builder = LookupElementBuilder.create(item, getLookupString(item))
-      .withIcon(getIcon(item));
-
-    final InsertHandler<LookupElement> handler = createInsertHandler(item);
-    if (handler != null) {
-      builder = builder.withInsertHandler(handler);
-    }
-
-    final String tailText = getTailText(item);
-    if (tailText != null) {
-      builder = builder.withTailText(tailText, true);
-    }
-
-    final String typeText = getTypeText(item);
-    if (typeText != null) {
-      builder = builder.withTypeText(typeText);
-    }
-    return builder;
-  }
-
-  @Nullable
-  public String getPrefix(@NotNull final CompletionParameters parameters) {
-    return getCompletionPrefix(parameters);
-  }
-
+  @NotNull
   public static String getCompletionPrefix(CompletionParameters parameters) {
     String text = parameters.getOriginalFile().getText();
     int offset = parameters.getOffset();
+    return getCompletionPrefix(text, offset);
+  }
+
+  @NotNull
+  private static String getCompletionPrefix(String text, int offset) {
     int i = text.lastIndexOf(' ', offset - 1) + 1;
     int j = text.lastIndexOf('\n', offset - 1) + 1;
     return text.substring(Math.max(i, j), offset);
-  }
-
-  @Nullable
-  protected String getQuickDocHotKeyAdvertisementTail(@NotNull final String shortcut) {
-    return null;
-  }
-
-  @Nullable
-  protected InsertHandler<LookupElement> createInsertHandler(@NotNull final T item) {
-    return null;
   }
 }

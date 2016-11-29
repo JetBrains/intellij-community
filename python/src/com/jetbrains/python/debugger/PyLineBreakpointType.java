@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.google.common.collect.Sets;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
@@ -23,21 +24,32 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Processor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 
 public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   public static final String ID = "python-line";
   private static final String NAME = "Python Line Breakpoint";
+
+  private final static Set<IElementType> UNSTOPPABLE_ELEMENT_TYPES = Sets.newHashSet(PyTokenTypes.TRIPLE_QUOTED_STRING,
+                                                                                     PyTokenTypes.SINGLE_QUOTED_STRING,
+                                                                                     PyTokenTypes.SINGLE_QUOTED_UNICODE,
+                                                                                     PyTokenTypes.DOCSTRING);
+
+
+  private final static Class[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
+
 
   public PyLineBreakpointType() {
     super(ID, NAME, new PyDebuggerEditorsProvider());
@@ -48,37 +60,53 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     final Ref<Boolean> stoppable = Ref.create(false);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      if (file.getFileType() == PythonFileType.INSTANCE || isPythonScratch(project, file)) {
-        XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
-          @Override
-          public boolean process(PsiElement psiElement) {
-            if (psiElement instanceof PsiWhiteSpace || psiElement instanceof PsiComment) return true;
-            if (psiElement.getNode() != null && notStoppableElementType(psiElement.getNode().getElementType())) return true;
-
-            // Python debugger seems to be able to stop on pretty much everything
-            stoppable.set(true);
-            return false;
-          }
-        });
-
-        if (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {
-          stoppable.set(false);
-        }
-      }
+      lineHasStoppablePsi(project, file, line, PythonFileType.INSTANCE, document, UNSTOPPABLE_ELEMENTS, UNSTOPPABLE_ELEMENT_TYPES, stoppable
+      );
     }
 
     return stoppable.get();
   }
 
-  private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {
-    return ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == PythonLanguage.INSTANCE;
+  public static void lineHasStoppablePsi(@NotNull Project project,
+                                         @NotNull VirtualFile file,
+                                         int line,
+                                         PythonFileType fileType,
+                                         Document document,
+                                         Class[] unstoppablePsiElements,
+                                         Set<IElementType> unstoppableElementTypes,
+                                         Ref<Boolean> stoppable) {
+    if (file.getFileType() == fileType || isPythonScratch(project, file)) {
+      XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
+
+        if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) {
+          return true;
+        }
+
+        if (psiElement.getNode() != null && unstoppableElementTypes.contains(psiElement.getNode().getElementType())) return true;
+
+        // Python debugger seems to be able to stop on pretty much everything
+        stoppable.set(true);
+        return false;
+      });
+
+      if (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {
+        stoppable.set(false);
+      }
+    }
   }
 
-  private static boolean notStoppableElementType(IElementType elementType) {
-    return elementType == PyTokenTypes.TRIPLE_QUOTED_STRING ||
-           elementType == PyTokenTypes.SINGLE_QUOTED_STRING ||
-           elementType == PyTokenTypes.SINGLE_QUOTED_UNICODE ||
-           elementType == PyTokenTypes.DOCSTRING;
+  @Override
+  public boolean isSuspendThreadSupported() {
+    return true;
+  }
+
+  @Override
+  public SuspendPolicy getDefaultSuspendPolicy() {
+    return SuspendPolicy.THREAD;
+  }
+
+  private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {
+    return ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == PythonLanguage.INSTANCE;
   }
 
   @Override

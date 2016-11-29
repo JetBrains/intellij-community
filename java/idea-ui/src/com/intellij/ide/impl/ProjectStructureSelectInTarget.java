@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.ide.impl;
 
 import com.intellij.facet.*;
-import com.intellij.ide.*;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SelectInContext;
+import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.StandardTargetWeights;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -41,7 +44,7 @@ import java.util.Iterator;
 /**
  * @author nik
  */
-public class ProjectStructureSelectInTarget extends SelectInTargetBase implements SelectInTarget, DumbAware {
+public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware {
   @Override
   public boolean canSelect(final SelectInContext context) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
@@ -73,15 +76,12 @@ public class ProjectStructureSelectInTarget extends SelectInTargetBase implement
       facet = fileIndex.isInSourceContent(file) ? null : findFacet(project, file);
     }
     if (module != null || facet != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (facet != null) {
-            ModulesConfigurator.showFacetSettingsDialog(facet, null);
-          }
-          else {
-            ProjectSettingsService.getInstance(project).openModuleSettings(module);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (facet != null) {
+          ModulesConfigurator.showFacetSettingsDialog(facet, null);
+        }
+        else {
+          ProjectSettingsService.getInstance(project).openModuleSettings(module);
         }
       });
       return;
@@ -89,12 +89,8 @@ public class ProjectStructureSelectInTarget extends SelectInTargetBase implement
 
     final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(file, project);
     if (orderEntry != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry));
     }
   }
 

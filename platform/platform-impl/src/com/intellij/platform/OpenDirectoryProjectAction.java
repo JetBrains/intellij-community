@@ -36,11 +36,6 @@ public class OpenDirectoryProjectAction extends AnAction implements DumbAware {
     final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(false);
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
-    FileChooser.chooseFiles(descriptor, project, null, new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(final List<VirtualFile> files) {
-        PlatformProjectOpenProcessor.getInstance().doOpenProject(files.get(0), project, false);
-      }
-    });
+    FileChooser.chooseFiles(descriptor, project, null, files -> PlatformProjectOpenProcessor.getInstance().doOpenProject(files.get(0), project, false));
   }
 }

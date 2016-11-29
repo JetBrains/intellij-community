@@ -159,11 +159,13 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
 
   @Override
   public int size() {
+    processQueue();
     return myMap.size();
   }
 
   @Override
   public boolean isEmpty() {
+    processQueue();
     return myMap.isEmpty();
   }
 

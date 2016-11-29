@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
@@ -133,7 +135,16 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   public void testInjectedController() throws Exception {
     myFixture.copyFileToProject("injected/MyController.java");
     myFixture.copyFileToProject("injected/FooVBox.java");
-    doTestNavigation("injected.MyController", "label", "injected/" + getTestName(true) + ".fxml");
+
+    final RegistryValue registryValue = Registry.get("javafx.fxml.controller.from.loader");
+    final boolean injectionAllowed = registryValue.asBoolean();
+    try {
+      registryValue.setValue(true);
+      doTestNavigation("injected.MyController", "label", "injected/" + getTestName(true) + ".fxml");
+    }
+    finally {
+      registryValue.setValue(injectionAllowed);
+    }
   }
 
   public void testControllerInExpression() throws Exception{
@@ -236,7 +247,7 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.addClass("package p;\n" +
                        "public class Root extends javafx.scene.layout.GridPane{\n" +
                        "  public Root(@javafx.beans.NamedArg(\"axis\") javafx.scene.Node node ) {\n" +
-                       "    super(node)\n" +
+                       "    super(node);\n" +
                        "  }\n" +
                        "  public javafx.beans.property.Property<javafx.scene.Node> axis;" +
                        "  public void setAxis() {}" + 
@@ -274,6 +285,18 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
 
   public void testScriptSource() throws Exception {
     doTest("s1.js");
+  }
+
+  public void testPropertyNameExpression() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyChainExpression() throws Exception {
+    doTest();
+  }
+
+  public void testIncorrectPropertyExpressionSyntax() throws Exception {
+    doTest();
   }
 
   private void doTest(String additionalPath) {
@@ -346,16 +369,72 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testEnumConstantValue() throws Exception {
+    doTest();
+  }
+
+  public void testNestedClassConstants() throws Exception {
+    doTest("model/" + getTestName(false) + "Model.java");
+  }
+
+  public void testBoxedConstantValue() throws Exception {
+    doTest();
+  }
+
+  public void testLiteralValue() throws Exception {
+    doTest();
+  }
+
+  public void testNullObjectValue() throws Exception {
+    doTest();
+  }
+
+  public void testNullPrimitiveValue() throws Exception {
+    doTest();
+  }
+
+  public void testFactoryMethod() throws Exception {
+    doTest();
+  }
+
+  public void testPrivateControllerMethod() throws Exception {
+    doTest(getTestName(false) + ".java");
+  }
+
+  public void testPropertyTagCompatibleClass() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyTagCompatiblePrimitive() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyTagIncompatibleClass() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyTagIncompatiblePrimitive() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyTagUnrelatedClass() throws Exception {
+    doWarningsTest();
+  }
+
+  public void testPropertyTagUnrelatedPrimitive() throws Exception {
+    doWarningsTest();
+  }
+
   public void testCharsetInInclude() throws Exception {
     myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
                                                  "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
-    myFixture.testHighlighting(true, false, false, getTestName(true) + ".fxml");
+    doWarningsTest();
   }
 
   public void testIncludedForm() throws Exception {
     myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
                                               "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
-    myFixture.testHighlighting(true, false, false, getTestName(true) + ".fxml");
+    doWarningsTest();
   }
   
   public void testInjectedControllerFields() throws Exception {
@@ -368,8 +447,66 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
 
+  public void testAbsoluteRemoteUrl() throws Exception {
+    doTest();
+  }
+
+  public void testMultipleStylesheetsAttribute() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
+  public void testMultipleStylesheetsTag() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
+  public void testPrivateEventHandler() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
+    myFixture.testHighlighting(true, true, true, getTestName(false) + ".java");
+  }
+
+  public void testFxIdInSuperclass() throws Exception {
+    doTestControllerSuperclass();
+  }
+
+  public void testEventHandlerInSuperclass() throws Exception {
+    doTestControllerSuperclass();
+  }
+
+  private void doTestControllerSuperclass() {
+    final String superclass = getTestName(false);
+    myFixture.copyFileToProject(superclass + ".java");
+    myFixture.addClass("public class SubclassingController extends " + superclass + " {}");
+    myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.VBox?>\n" +
+                                              "<?import javafx.scene.control.Button?>\n" +
+                                              "<VBox xmlns:fx=\"http://javafx.com/fxml/1\" xmlns=\"http://javafx.com/javafx/8\"\n" +
+                                              "      fx:controller=\"SubclassingController\">\n" +
+                                              "    <Button fx:id=\"inheritedButton\" onAction=\"#onAction\"/>\n" +
+                                              "</VBox>");
+
+    myFixture.testHighlighting(true, true, true, superclass + ".java");
+  }
+
+  public void testResourceKeyInAttribute() throws Exception {
+    myFixture.addFileToProject("messages.properties", "string.key=My text\n" +
+                                                      "double.key=123.456\n");
+    doTest();
+  }
+
+  public void testFxIdUsedInSameNode() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
+  }
+
+  private void doWarningsTest() {
+    myFixture.testHighlighting(true, false, false, getTestName(true) + ".fxml");
   }
 
   @Override

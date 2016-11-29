@@ -19,115 +19,64 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.Range;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-/**
- * author: lesya
- */
 public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvider {
   private final Document myDocument;
-  private final Project myProject;
   private final LineStatusTrackerManagerI myLineStatusTrackerManagerI;
 
   public UpToDateLineNumberProviderImpl(Document document, Project project) {
     myDocument = document;
-    myProject = project;
-    myLineStatusTrackerManagerI = LineStatusTrackerManager.getInstance(myProject);
+    myLineStatusTrackerManagerI = LineStatusTrackerManager.getInstance(project);
   }
 
-  public int getLineNumber(int currentNumber) {
-    LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
-    if (tracker == null) {
-      return currentNumber;
-    }
-    return calcLineNumber(tracker, currentNumber);
-  }
-
+  @Override
   public boolean isRangeChanged(final int start, final int end) {
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
+    LineStatusTracker tracker = getTracker();
     if (tracker == null) {
       return false;
     }
-    for (Range range : tracker.getRanges()) {
-      if (lineInRange(range, start) || lineInRange(range, end)) {
-        return true;
-      }
-      if (range.getLine1() > start) {
-        return range.getLine1() < end;
-      }
+    else {
+      return tracker.isRangeModified(start, end);
     }
-    return false;
-  }
-
-  private static boolean lineInRange(final Range range, final int currentNumber) {
-    return range.getLine1() <= currentNumber && range.getLine2() >= currentNumber;
   }
 
   @Override
   public boolean isLineChanged(int currentNumber) {
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
+    LineStatusTracker tracker = getTracker();
     if (tracker == null) {
       return false;
     }
-    for (Range range : tracker.getRanges()) {
-      if (range.getLine1() <= currentNumber && range.getLine2() >= currentNumber) {
-        return true;
-      }
+    else {
+      return tracker.isLineModified(currentNumber);
     }
-    return false;
   }
 
-  private boolean endsWithSeparator(final CharSequence string) {
-    if ((string == null) || (string.length() == 0)) {
-      return false;
+  @Override
+  public int getLineNumber(int currentNumber) {
+    LineStatusTracker tracker = getTracker();
+    if (tracker == null) {
+      return currentNumber;
     }
-    final char latest = string.charAt(string.length() - 1);
-    return ('\n' == latest) || ('\r' == latest);
+    else {
+      return tracker.transferLineToVcs(currentNumber, false);
+    }
   }
 
-  // annotated content is not aware about latest line ends with end-line separator or not. ignore latest separator difference then
-  private String fixLatestLineSeparator(final Document document, final String content) {
-    final CharSequence documentSequence = document.getCharsSequence();
-    if (endsWithSeparator(documentSequence) && (! endsWithSeparator(content))) {
-      int numCharsToCopy = 1;
-      final int docLen = documentSequence.length();
-      if (docLen > 1) {
-        final char beforeLatest = documentSequence.charAt(docLen - 2);
-        if (('\r' == beforeLatest) || ('\n' == beforeLatest)) {
-          numCharsToCopy = 2;
-        }
-      }
-      return content + documentSequence.subSequence(docLen - numCharsToCopy, docLen);
+  @Override
+  public int getLineCount() {
+    LineStatusTracker tracker = getTracker();
+    if (tracker == null) {
+      return myDocument.getLineCount();
     }
-    return content;
+    else {
+      return tracker.getVcsDocument().getLineCount();
+    }
   }
 
-  private static int calcLineNumber(@NotNull LineStatusTracker tracker, int currentNumber) {
-    List<Range> ranges = tracker.getRanges();
-    int result = currentNumber;
-
-    for (final Range range : ranges) {
-      int startLine = range.getLine1();
-      int endLine = range.getLine2();
-
-      if ((startLine <= currentNumber) && (endLine > currentNumber)) {
-        return ABSENT_LINE_NUMBER;
-      }
-
-      if (endLine > currentNumber) return result;
-
-      int currentRangeLength = endLine - startLine;
-      int vcsRangeLength = range.getVcsLine2() - range.getVcsLine1();
-
-      result += vcsRangeLength - currentRangeLength;
-    }
-    return result;
-
+  @Nullable
+  private LineStatusTracker getTracker() {
+    LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
+    return tracker != null && tracker.isOperational() ? tracker : null;
   }
-
 }
-
-

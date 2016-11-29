@@ -51,12 +51,7 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
             performOnElement(editor, expression);
           }
         },
-        new Function<T, String>() {
-          @Override
-          public String fun(@NotNull T expression) {
-            return expression.getText();
-          }
-        }
+        expression -> expression.getText()
       );
     }
     else if (expressions.size() == 1 && first != null) {
@@ -68,12 +63,9 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
   }
 
   protected void showError(@NotNull final Editor editor) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final String errorHint = "Cannot find element of class " + myClass.getSimpleName() + " at selection/offset";
-        HintManager.getInstance().showErrorHint(editor, errorHint);
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final String errorHint = "Cannot find element of class " + myClass.getSimpleName() + " at selection/offset";
+      HintManager.getInstance().showErrorHint(editor, errorHint);
     });
   }
 
@@ -82,20 +74,10 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
     editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
     final String informationHint = getInformationHint(first);
     if (informationHint != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          HintManager.getInstance().showInformationHint(editor, informationHint);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> HintManager.getInstance().showInformationHint(editor, informationHint));
     }
     else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          HintManager.getInstance().showErrorHint(editor, getErrorHint());
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> HintManager.getInstance().showErrorHint(editor, getErrorHint()));
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,20 +59,20 @@ object ValueModifierUtil {
 }
 
 private fun doAppendName(builder: StringBuilder, name: String, quoted: Boolean) {
-  val useKeyNotation = !quoted && KEY_NOTATION_PROPERTY_NAME_PATTERN.matcher(name).matches()
-  if (builder.length != 0) {
-    builder.append(if (useKeyNotation) '.' else '[')
-  }
-  if (useKeyNotation) {
-    builder.append(name)
-  }
-  else {
-    if (quoted) {
-      builder.append(name)
+  val isProperty = !builder.isEmpty()
+  if (isProperty) {
+    val useKeyNotation = !quoted && KEY_NOTATION_PROPERTY_NAME_PATTERN.matcher(name).matches()
+    if (useKeyNotation) {
+      builder.append('.').append(name)
     }
     else {
-      JsonUtil.escape(name, builder)
+      builder.append('[')
+      if (quoted) builder.append(name) 
+      else JsonUtil.escape(name, builder)
+      builder.append(']')
     }
-    builder.append(']')
+  }
+  else {
+    builder.append(name)
   }
 }

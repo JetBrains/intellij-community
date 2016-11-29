@@ -116,12 +116,8 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     final AbstractExternalSystemSettings externalSystemSettings = ExternalSystemApiUtil.getSettings(myProject, myProjectSystemId);
     //noinspection unchecked
     Collection<ExternalProjectSettings> projectsSettings = externalSystemSettings.getLinkedProjectsSettings();
-    List<ProjectItem> projects = ContainerUtil.map(projectsSettings, new Function<ExternalProjectSettings, ProjectItem>() {
-      @Override
-      public ProjectItem fun(ExternalProjectSettings settings) {
-        return new ProjectItem(uiAware.getProjectRepresentationName(settings.getExternalProjectPath(), null), settings);
-      }
-    });
+    List<ProjectItem> projects = ContainerUtil.map(projectsSettings,
+                                                   settings -> new ProjectItem(uiAware.getProjectRepresentationName(settings.getExternalProjectPath(), null), settings));
 
     myTree = new SimpleTree();
     myRootNode = new RootNode();
@@ -168,12 +164,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
             if(moduleDataNode.isIgnored()) continue;
 
             final List<String> tasks = ContainerUtil.map(
-              ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TASK), new Function<DataNode<TaskData>, String>() {
-                @Override
-                public String fun(DataNode<TaskData> node) {
-                  return node.getData().getName();
-                }
-              });
+              ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TASK), node -> node.getData().getName());
             if (!tasks.isEmpty()) {
               popupItems.add(new ProjectPopupItem(moduleDataNode.getData(), tasks));
             }
@@ -327,24 +318,16 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     List<String> paths = ContainerUtil.newArrayList(stateProvider.getProjectsTasksActivationMap(myProjectSystemId).keySet());
     paths.retainAll(projectSettings.getModules());
 
-    return ContainerUtil.mapNotNull(ArrayUtil.toStringArray(paths), new Function<String, MyNode>() {
-      @Override
-      public MyNode fun(final String path) {
-        final MyNode node = new ProjectNode(parent, stateProvider, projectSettings.getExternalProjectPath(), path);
-        return node.getChildren().length > 0 ? node : null;
-      }
+    return ContainerUtil.mapNotNull(ArrayUtil.toStringArray(paths), path -> {
+      final MyNode node = new ProjectNode(parent, stateProvider, projectSettings.getExternalProjectPath(), path);
+      return node.getChildren().length > 0 ? node : null;
     }, new MyNode[]{});
   }
 
   private MyNode[] buildProjectPhasesNodes(final String projectPath,
                                            final TaskActivationState tasksActivation,
                                            final MyNode parent) {
-    return ContainerUtil.mapNotNull(Phase.values(), new Function<Phase, MyNode>() {
-      @Override
-      public MyNode fun(final Phase phase) {
-        return tasksActivation.getTasks(phase).isEmpty() ? null : new PhaseNode(projectPath, phase, tasksActivation, parent);
-      }
-    }, new MyNode[]{});
+    return ContainerUtil.mapNotNull(Phase.values(), phase -> tasksActivation.getTasks(phase).isEmpty() ? null : new PhaseNode(projectPath, phase, tasksActivation, parent), new MyNode[]{});
   }
 
   private static class ProjectItem {
@@ -466,12 +449,9 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
           return new BaseListPopupStep<String>("Choose task", tasksToSuggest) {
             @Override
             public PopupStep onChosen(final String taskName, boolean finalChoice) {
-              return doFinalStep(new Runnable() {
-                @Override
-                public void run() {
-                  myTaskActivator.addTask(new TaskActivationEntry(myProjectSystemId, selectedPhase, projectPath, taskName));
-                  updateTree(myRootNode);
-                }
+              return doFinalStep(() -> {
+                myTaskActivator.addTask(new TaskActivationEntry(myProjectSystemId, selectedPhase, projectPath, taskName));
+                updateTree(myRootNode);
               });
             }
           };
@@ -588,12 +568,8 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
 
     @Override
     public MyNode[] buildChildren() {
-      return ContainerUtil.map2Array(myTaskActivationState.getTasks(myPhase), MyNode.class, new Function<String, MyNode>() {
-        @Override
-        public MyNode fun(final String taskName) {
-          return new TaskNode(taskName, PhaseNode.this);
-        }
-      });
+      return ContainerUtil.map2Array(myTaskActivationState.getTasks(myPhase), MyNode.class,
+                                     (Function<String, MyNode>)taskName -> new TaskNode(taskName, this));
     }
 
     @Override

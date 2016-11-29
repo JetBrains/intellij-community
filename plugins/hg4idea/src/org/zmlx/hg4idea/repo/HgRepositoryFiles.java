@@ -26,7 +26,6 @@ import java.util.Collection;
  * Stores paths to Hg service files (from .hg/ directory) that are used by IDEA, and provides methods to check if a file
  * matches once of them.
  *
- * @author Nadya Zabrodina
  */
 public class HgRepositoryFiles {
 
@@ -43,6 +42,7 @@ public class HgRepositoryFiles {
   private static final String CURRENT_BOOKMARK = "bookmarks.current";
   private static final String MQDIR = "patches";
   private static final String CONFIG_HGRC = "hgrc";
+  private static final String HGIGNORE = ".hgignore";
 
 
   @NotNull private final String myBranchHeadsPath;
@@ -57,6 +57,7 @@ public class HgRepositoryFiles {
   @NotNull private final String myCurrentBookmarkPath;
   @NotNull private final String myMQDirPath;
   @NotNull private final String myConfigHgrcPath;
+  @NotNull private final String myHgIgnorePath;
 
   @NotNull
   public static HgRepositoryFiles getInstance(@NotNull VirtualFile hgDir) {
@@ -71,11 +72,13 @@ public class HgRepositoryFiles {
     myMergePath = hgDir.getPath() + slash(MERGE);
     myRebasePath = hgDir.getPath() + slash(REBASE);
     myBookmarksPath = hgDir.getPath() + slash(BOOKMARKS);
-    myTagsPath = hgDir.getParent().getPath() + slash(TAGS);
+    VirtualFile repoDir = hgDir.getParent();
+    myTagsPath = repoDir.getPath() + slash(TAGS);
     myLocalTagsPath = hgDir.getPath() + slash(LOCAL_TAGS);
     myCurrentBookmarkPath = hgDir.getPath() + slash(CURRENT_BOOKMARK);
     myMQDirPath = hgDir.getPath() + slash(MQDIR);
     myConfigHgrcPath = hgDir.getPath() + slash(CONFIG_HGRC);
+    myHgIgnorePath = repoDir.getPath() + slash(HGIGNORE);
   }
 
   @NotNull
@@ -143,5 +146,9 @@ public class HgRepositoryFiles {
 
   public boolean isMqFile(String filePath) {
     return filePath.startsWith(myMQDirPath);
+  }
+
+  public boolean isHgIgnore(String filePath) {
+    return filePath.equals(myHgIgnorePath);
   }
 }

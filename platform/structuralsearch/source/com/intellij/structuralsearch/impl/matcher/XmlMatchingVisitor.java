@@ -99,7 +99,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
   }
 
   private static PsiElement[] filterOutWhitespace(PsiElement[] children) {
-    final List<PsiElement> result = new ArrayList<PsiElement>(children.length);
+    final List<PsiElement> result = new ArrayList<>(children.length);
     for(PsiElement child : children) {
       if (child instanceof XmlText) {
         final PsiElement[] grandChildren = child.getChildren();

@@ -181,12 +181,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
     assertTrue("Must be READY, but was: BUSY", busy.isReady());
     
     final boolean[] done = {false};
-    busy.getReady(this).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        done[0] = true;
-      }
-    });
+    busy.getReady(this).doWhenDone(() -> done[0] = true);
 
     assertTrue(done[0]);
   }

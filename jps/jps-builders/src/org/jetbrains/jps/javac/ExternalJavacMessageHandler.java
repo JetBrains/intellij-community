@@ -122,6 +122,15 @@ public class ExternalJavacMessageHandler {
           return false;
         }
   
+        if (responseType == JavacRemoteProto.Message.Response.Type.CUSTOM_OUTPUT_OBJECT) {
+          final JavacRemoteProto.Message.Response.OutputObject outputObject = response.getOutputObject();
+          final String pluginId = outputObject.getFilePath();
+          final String name = outputObject.getClassName();
+          final byte[] content = outputObject.hasContent()? outputObject.getContent().toByteArray() : new byte[0];
+          myDiagnosticSink.customOutputData(pluginId, name, content);
+          return false;
+        }
+
         if (responseType == JavacRemoteProto.Message.Response.Type.BUILD_COMPLETED) {
           if (response.hasCompletionStatus()) {
             myTerminatedSuccessfully = response.getCompletionStatus();

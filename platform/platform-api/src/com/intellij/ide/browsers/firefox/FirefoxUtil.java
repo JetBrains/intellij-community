@@ -103,7 +103,7 @@ public class FirefoxUtil {
       BufferedReader reader;
       reader = new BufferedReader(new FileReader(profilesFile));
       try {
-        final List<FirefoxProfile> profiles = new SmartList<FirefoxProfile>();
+        final List<FirefoxProfile> profiles = new SmartList<>();
         boolean insideProfile = false;
         String currentName = null;
         String currentPath = null;

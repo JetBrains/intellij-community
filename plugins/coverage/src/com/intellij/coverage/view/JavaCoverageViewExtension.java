@@ -149,15 +149,15 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public List<AbstractTreeNode> createTopLevelNodes() {
-    final List<AbstractTreeNode> topLevelNodes = new ArrayList<AbstractTreeNode>();
-    final LinkedHashSet<PsiPackage> packages = new LinkedHashSet<PsiPackage>();
-    final LinkedHashSet<PsiClass> classes = new LinkedHashSet<PsiClass>();
+    final List<AbstractTreeNode> topLevelNodes = new ArrayList<>();
+    final LinkedHashSet<PsiPackage> packages = new LinkedHashSet<>();
+    final LinkedHashSet<PsiClass> classes = new LinkedHashSet<>();
     for (CoverageSuite suite : mySuitesBundle.getSuites()) {
       packages.addAll(((JavaCoverageSuite)suite).getCurrentSuitePackages(myProject));
       classes.addAll(((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject));
     }
 
-    final Set<PsiPackage> packs = new HashSet<PsiPackage>();
+    final Set<PsiPackage> packs = new HashSet<>();
     for (PsiPackage aPackage : packages) {
       final String qualifiedName = aPackage.getQualifiedName();
       for (PsiPackage psiPackage : packages) {
@@ -216,7 +216,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public List<AbstractTreeNode> getChildrenNodes(final AbstractTreeNode node) {
-    List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    List<AbstractTreeNode> children = new ArrayList<>();
     if (node instanceof CoverageListNode) {
       final Object val = node.getValue();
       if (val instanceof PsiClass) return Collections.emptyList();

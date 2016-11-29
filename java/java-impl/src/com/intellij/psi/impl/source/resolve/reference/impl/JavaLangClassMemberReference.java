@@ -125,7 +125,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
       if (type == Type.DECLARED_FIELD) {
         return psiClass.getFields();
       } else if (type == Type.FIELD) {
-        final List<PsiField> fields = new ArrayList<PsiField>();
+        final List<PsiField> fields = new ArrayList<>();
         for (PsiField field : psiClass.getFields()) {
           if (isPublic(field)) {
             fields.add(field);
@@ -133,7 +133,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
         }
         return fields.toArray();
       } else if (type == Type.DECLARED_METHOD || type == Type.METHOD) {
-        final List<LookupElementBuilder> elements = new ArrayList<LookupElementBuilder>();
+        final List<LookupElementBuilder> elements = new ArrayList<>();
         for (PsiMethod method : psiClass.getMethods()) {
           if (type == Type.DECLARED_METHOD || isPublic(method)) {
             elements.add(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).withInsertHandler(this));

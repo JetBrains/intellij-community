@@ -36,7 +36,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   private @Nullable String myCommandLineOptions;
   private @Nullable String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
-  private @NotNull Map<String, String> myEnvironmentVariables = new THashMap<String, String>();
+  private @NotNull Map<String, String> myEnvironmentVariables = new THashMap<>();
 
   public ChromeSettings() {
   }
@@ -110,7 +110,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   @Override
   public ChromeSettings clone() {
     ChromeSettings clone = (ChromeSettings)super.clone();
-    clone.myEnvironmentVariables = new THashMap<String, String>(myEnvironmentVariables);
+    clone.myEnvironmentVariables = new THashMap<>(myEnvironmentVariables);
     return clone;
   }
 

@@ -32,12 +32,7 @@ public class PyStatementEffectInspectionTest extends PyInspectionTestCase {
   }
 
   private void doTest(@NotNull LanguageLevel level) {
-    runWithLanguageLevel(level, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(level, () -> doTest());
   }
 
   @NotNull

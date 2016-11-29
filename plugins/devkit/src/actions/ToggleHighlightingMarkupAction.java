@@ -22,10 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
@@ -34,7 +31,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -63,19 +59,19 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     final Project project = file.getProject();
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();
     Object commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
-      final SelectionModel selectionModel = editor.getSelectionModel();
-      int[] starts = selectionModel.getBlockSelectionStarts();
-      int[] ends = selectionModel.getBlockSelectionEnds();
+      WriteAction.run(() -> {
+        final SelectionModel selectionModel = editor.getSelectionModel();
+        int[] starts = selectionModel.getBlockSelectionStarts();
+        int[] ends = selectionModel.getBlockSelectionEnds();
 
-      int startOffset = starts.length == 0? 0 : starts[0];
-      int endOffset = ends.length == 0? editor.getDocument().getTextLength() : ends[ends.length - 1];
+        int startOffset = starts.length == 0? 0 : starts[0];
+        int endOffset = ends.length == 0? editor.getDocument().getTextLength() : ends[ends.length - 1];
 
-      perform(project, editor.getDocument(), startOffset, endOffset);
+        perform(project, editor.getDocument(), startOffset, endOffset);
+      });
     }
     finally {
-      token.finish();
       commandProcessor.finishCommand(project, commandToken, null);
     }
   }
@@ -85,7 +81,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     final StringBuilder sb = new StringBuilder();
     Pattern pattern = Pattern.compile("<(error|warning|EOLError|EOLWarning|info|weak_warning)((?:\\s|=|\\w+|\\\"(?:[^\"]|\\\\\\\")*?\\\")*?)>(.*?)</\\1>");
     Matcher matcher = pattern.matcher(sequence);
-    List<TextRange> ranges = new ArrayList<TextRange>();
+    List<TextRange> ranges = new ArrayList<>();
     if (matcher.find(startOffset)) {
       boolean compactMode = false;
       int pos;
@@ -117,19 +113,16 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     }
     else {
       final int[] offset = new int[] {0};
-      final ArrayList<HighlightInfo> infos = new ArrayList<HighlightInfo>();
+      final ArrayList<HighlightInfo> infos = new ArrayList<>();
       DaemonCodeAnalyzerEx.processHighlights(
         document, project, HighlightSeverity.WARNING, 0, sequence.length(),
-        new Processor<HighlightInfo>() {
-          @Override
-          public boolean process(HighlightInfo info) {
-            if (info.getSeverity() != HighlightSeverity.WARNING && info.getSeverity() != HighlightSeverity.ERROR) return true;
-            if (info.getStartOffset() >= endOffset) return false;
-            if (info.getEndOffset() > startOffset) {
-              offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
-            }
-            return true;
+        info -> {
+          if (info.getSeverity() != HighlightSeverity.WARNING && info.getSeverity() != HighlightSeverity.ERROR) return true;
+          if (info.getStartOffset() >= endOffset) return false;
+          if (info.getEndOffset() > startOffset) {
+            offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
           }
+          return true;
         });
       offset[0] = appendInfo(null, sb, sequence, offset[0], infos, false);
       sb.append(sequence.subSequence(offset[0], sequence.length()));
@@ -153,7 +146,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
       }
       else {
         // process overlapped
-        LinkedList<HighlightInfo> stack = new LinkedList<HighlightInfo>();
+        LinkedList<HighlightInfo> stack = new LinkedList<>();
         for (HighlightInfo cur : infos) {
           offset = processStack(stack, sb, sequence, offset, cur.getStartOffset(), compact);
           sb.append(sequence.subSequence(offset, cur.getStartOffset()));

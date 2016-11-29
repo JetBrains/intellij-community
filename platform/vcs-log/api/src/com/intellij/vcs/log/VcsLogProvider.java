@@ -41,6 +41,13 @@ public interface VcsLogProvider {
   LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException;
 
   /**
+   * Reads full details of all commits in the repository.
+   * <p/>
+   * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
+   */
+  void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException;
+
+  /**
    * Reads those details of the given commits, which are necessary to be shown in the log table.
    */
   @NotNull

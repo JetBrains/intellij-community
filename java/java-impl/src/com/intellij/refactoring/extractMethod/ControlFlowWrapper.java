@@ -90,10 +90,15 @@ public class ControlFlowWrapper {
     return myFirstExitStatementCopy;
   }
 
-  public Collection<PsiStatement> prepareExitStatements(final PsiElement[] elements) throws ExitStatementsNotSameException {
+  public Collection<PsiStatement> prepareExitStatements(final @NotNull PsiElement[] elements,
+                                                        final @NotNull PsiElement enclosingCodeFragment)
+    throws ExitStatementsNotSameException {
     myExitPoints = new IntArrayList();
     myExitStatements = ControlFlowUtil
       .findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, myExitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+    if (ControlFlowUtil.hasObservableThrowExitPoints(myControlFlow, myFlowStart, myFlowEnd, elements, enclosingCodeFragment)) {
+      throw new ExitStatementsNotSameException();
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit points:");
       for (int i = 0; i < myExitPoints.size(); i++) {
@@ -156,7 +161,7 @@ public class ControlFlowWrapper {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toArray());
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
-      final Set<PsiVariable> outputVariables = new HashSet<PsiVariable>(Arrays.asList(myOutputVariables));
+      final Set<PsiVariable> outputVariables = new HashSet<>(Arrays.asList(myOutputVariables));
       for (PsiStatement statement : myExitStatements) {
         statement.accept(new JavaRecursiveElementVisitor() {
 
@@ -246,12 +251,12 @@ public class ControlFlowWrapper {
     final List<PsiVariable> inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
     List<PsiVariable> myInputVariables;
     if (skipVariablesFromExitStatements(outputVariables)) {
-      List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(inputVariables);
+      List<PsiVariable> inputVariableList = new ArrayList<>(inputVariables);
       removeParametersUsedInExitsOnly(codeFragment, inputVariableList);
       myInputVariables = inputVariableList;
     }
     else {
-      List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(inputVariables);
+      List<PsiVariable> inputVariableList = new ArrayList<>(inputVariables);
       for (Iterator<PsiVariable> iterator = inputVariableList.iterator(); iterator.hasNext(); ) {
         PsiVariable variable = iterator.next();
         for (PsiElement element : elements) {
@@ -264,16 +269,14 @@ public class ControlFlowWrapper {
       myInputVariables = inputVariableList;
     }
     //varargs variables go last, otherwise order is induced by original ordering
-    Collections.sort(myInputVariables, new Comparator<PsiVariable>() {
-      public int compare(final PsiVariable v1, final PsiVariable v2) {
-        if (v1.getType() instanceof PsiEllipsisType) {
-          return 1;
-        }
-        if (v2.getType() instanceof PsiEllipsisType) {
-          return -1;
-        }
-        return v1.getTextOffset() - v2.getTextOffset();
+    Collections.sort(myInputVariables, (v1, v2) -> {
+      if (v1.getType() instanceof PsiEllipsisType) {
+        return 1;
       }
+      if (v2.getType() instanceof PsiEllipsisType) {
+        return -1;
+      }
+      return v1.getTextOffset() - v2.getTextOffset();
     });
     return myInputVariables;
   }

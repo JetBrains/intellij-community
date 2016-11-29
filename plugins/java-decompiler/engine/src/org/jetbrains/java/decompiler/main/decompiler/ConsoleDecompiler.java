@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       return;
     }
 
-    Map<String, Object> mapOptions = new HashMap<String, Object>();
-    List<File> lstSources = new ArrayList<File>();
-    List<File> lstLibraries = new ArrayList<File>();
+    Map<String, Object> mapOptions = new HashMap<>();
+    List<File> lstSources = new ArrayList<>();
+    List<File> lstLibraries = new ArrayList<>();
 
     boolean isOption = true;
     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
@@ -113,8 +113,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
   private final File root;
   private final Fernflower fernflower;
-  private final Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<String, ZipOutputStream>();
-  private final Map<String, Set<String>> mapArchiveEntries = new HashMap<String, Set<String>>();
+  private final Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<>();
+  private final Map<String, Set<String>> mapArchiveEntries = new HashMap<>();
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public ConsoleDecompiler(File destination, Map<String, Object> options) {
@@ -150,16 +150,10 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       return InterpreterUtil.getBytes(file);
     }
     else {
-      ZipFile archive = new ZipFile(file);
-      try {
+      try (ZipFile archive = new ZipFile(file)) {
         ZipEntry entry = archive.getEntry(internalPath);
-        if (entry == null) {
-          throw new IOException("Entry not found: " + internalPath);
-        }
+        if (entry == null) throw new IOException("Entry not found: " + internalPath);
         return InterpreterUtil.getBytes(archive, entry);
-      }
-      finally {
-        archive.close();
       }
     }
   }
@@ -193,14 +187,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   @Override
   public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
     File file = new File(getAbsolutePath(path), entryName);
-    try {
-      Writer out = new OutputStreamWriter(new FileOutputStream(file), "UTF8");
-      try {
-        out.write(content);
-      }
-      finally {
-        out.close();
-      }
+    try (Writer out = new OutputStreamWriter(new FileOutputStream(file), "UTF8")) {
+      out.write(content);
     }
     catch (IOException ex) {
       DecompilerContext.getLogger().writeMessage("Cannot write class file " + file, ex);
@@ -238,20 +226,14 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       return;
     }
 
-    try {
-      ZipFile srcArchive = new ZipFile(new File(source));
-      try {
-        ZipEntry entry = srcArchive.getEntry(entryName);
-        if (entry != null) {
-          InputStream in = srcArchive.getInputStream(entry);
+    try (ZipFile srcArchive = new ZipFile(new File(source))) {
+      ZipEntry entry = srcArchive.getEntry(entryName);
+      if (entry != null) {
+        try (InputStream in = srcArchive.getInputStream(entry)) {
           ZipOutputStream out = mapArchiveStreams.get(file);
           out.putNextEntry(new ZipEntry(entryName));
           InterpreterUtil.copyStream(in, out);
-          in.close();
         }
-      }
-      finally {
-        srcArchive.close();
       }
     }
     catch (IOException ex) {
@@ -284,7 +266,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   private boolean checkEntry(String entryName, String file) {
     Set<String> set = mapArchiveEntries.get(file);
     if (set == null) {
-      mapArchiveEntries.put(file, set = new HashSet<String>());
+      mapArchiveEntries.put(file, set = new HashSet<>());
     }
 
     boolean added = set.add(entryName);

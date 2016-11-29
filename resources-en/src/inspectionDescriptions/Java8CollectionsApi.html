@@ -1,11 +1,13 @@
 <html>
 <body>
-Inspection detects usages of java's <b>Map</b> when they can be replaced with methods <b>putIfAbsent</b>. For example:
-<code><pre>
+Inspection detects usages of java's <b>Map</b> when they can be replaced with methods <b>putIfAbsent</b>.
+<!-- tooltip end -->
+<p>For example:</p>
+<pre>
   if (!map.containsKey(aKey)) {
     map.put(aKey, aValue);
   }
 </pre>
-</code>
+<p>This conversion is available since Java 8 only.</p>
 </body>
 </html>

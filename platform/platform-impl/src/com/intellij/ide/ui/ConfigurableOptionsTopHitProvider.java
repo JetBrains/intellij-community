@@ -36,7 +36,7 @@ import java.util.*;
  */
 public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitProvider {
   private static final Logger LOG = Logger.getInstance(ConfigurableOptionsTopHitProvider.class);
-  private final Deque<String> myPrefix = new ArrayDeque<String>();
+  private final Deque<String> myPrefix = new ArrayDeque<>();
 
   protected abstract Configurable getConfigurable(Project project);
 
@@ -130,7 +130,7 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
       if (name != null) {
         myPrefix.push(name);
       }
-      Collection<BooleanOptionDescription> options = new ArrayList<BooleanOptionDescription>();
+      Collection<BooleanOptionDescription> options = new ArrayList<>();
       init(options, configurable, component);
       return Collections.unmodifiableCollection(options);
     }

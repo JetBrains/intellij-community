@@ -24,6 +24,16 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
+ * Implement this class to provide a custom type of deployment source which can be used in 'Deploy to Server' run configurations.
+ * <p>
+ * The implementation should be registered in {@code plugin.xml} file:
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ * &nbsp;&nbsp;&lt;remoteServer.deploymentSource.type implementation="qualified-class-name"/&gt;
+ * &lt;/extensions&gt;
+ * </pre>
+ * </p>
+ *
  * @author nik
  */
 public abstract class DeploymentSourceType<S extends DeploymentSource> {

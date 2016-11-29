@@ -67,13 +67,46 @@ class Test5 {
   private final String something = new String("something");
   private final String somethingElse = "somethingElse";
 
+  public Test5() {
+    super();
+  }
+
   public Integer someLength() {
-    //May produce nullpointer warning
     return something.length();
   }
 
   public Integer someElseLength() {
-    //No warning
     return somethingElse.length();
+  }
+}
+
+class BadSuper {
+  public BadSuper() {
+    overrideableMethod();
+  }
+
+  protected void overrideableMethod() {}
+
+}
+class Test6 extends BadSuper {
+  private final String something = new String("something");
+
+  public Test6() {
+  }
+
+  public Integer someLength() {
+    return something.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>();
+  }
+
+  protected void overrideableMethod() {
+    someLength();
+  }
+}
+
+class Test7 extends BadSuper {
+  private final String something = new String("something");
+
+  protected void overrideableMethod() {
+    something.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>();
   }
 }

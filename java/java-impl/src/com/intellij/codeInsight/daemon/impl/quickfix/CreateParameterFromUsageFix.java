@@ -87,7 +87,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     if (method == null) return;
 
     final List<ParameterInfoImpl> parameterInfos =
-      new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
+      new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
     ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, varName, false);
     if (!method.isVarArgs()) {
       parameterInfos.add(parameterInfo);
@@ -97,52 +97,49 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     }
 
     final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
-      String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
-      ChangeSignatureProcessor processor =
-        new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
-      processor.run();
-    }
-    else {
-      final PsiMethod finalMethod = method;
-      application.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (project.isDisposed()) return;
-          try {
-            JavaChangeSignatureDialog dialog =
-              JavaChangeSignatureDialog.createAndPreselectNew(project, finalMethod, parameterInfos, true, myReferenceExpression);
-            dialog.setParameterInfos(parameterInfos);
-            if (dialog.showAndGet()) {
-              for (ParameterInfoImpl info : parameterInfos) {
-                if (info.getOldIndex() == -1) {
-                  final String newParamName = info.getName();
-                  if (!Comparing.strEqual(varName, newParamName)) {
-                    final PsiExpression newExpr =
-                      JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, finalMethod);
-                    new WriteCommandAction(project) {
-                      @Override
-                      protected void run(@NotNull Result result) throws Throwable {
-                        final PsiReferenceExpression[] refs =
-                          CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
-                        for (PsiReferenceExpression ref : refs) {
-                          ref.replace(newExpr.copy());
-                        }
+    final PsiMethod finalMethod = method;
+    application.invokeLater(() -> {
+      if (project.isDisposed()) return;
+      if (application.isUnitTestMode()) {
+        ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
+        String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(finalMethod.getModifierList()));
+        ChangeSignatureProcessor processor =
+          new ChangeSignatureProcessor(project, finalMethod, false, modifier, finalMethod.getName(), finalMethod.getReturnType(), array);
+        processor.run();
+      }
+      else {
+        try {
+          JavaChangeSignatureDialog dialog =
+            JavaChangeSignatureDialog.createAndPreselectNew(project, finalMethod, parameterInfos, true, myReferenceExpression);
+          dialog.setParameterInfos(parameterInfos);
+          if (dialog.showAndGet()) {
+            for (ParameterInfoImpl info : parameterInfos) {
+              if (info.getOldIndex() == -1) {
+                final String newParamName = info.getName();
+                if (!Comparing.strEqual(varName, newParamName)) {
+                  final PsiExpression newExpr =
+                    JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, finalMethod);
+                  new WriteCommandAction(project) {
+                    @Override
+                    protected void run(@NotNull Result result) throws Throwable {
+                      final PsiReferenceExpression[] refs =
+                        CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
+                      for (PsiReferenceExpression ref : refs) {
+                        ref.replace(newExpr.copy());
                       }
-                    }.execute();
-                  }
-                  break;
+                    }
+                  }.execute();
                 }
+                break;
               }
             }
           }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
         }
-      });
-    }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @Override

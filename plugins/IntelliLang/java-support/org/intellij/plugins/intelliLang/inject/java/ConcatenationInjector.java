@@ -31,7 +31,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
@@ -97,6 +96,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
       @Override
       protected boolean areThereInjectionsWithName(String methodName, boolean annoOnly) {
+        if (methodName == null) return false;
         if (getAnnotatedElementsValue().contains(methodName)) {
           return true;
         }
@@ -136,8 +136,8 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
       final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
-      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
-      final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
+      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
+      final LinkedList<PsiElement> places = new LinkedList<>();
       places.add(firstOperand);
       class MyAnnoVisitor implements AnnotationUtilEx.AnnotatedElementVisitor {
         public boolean visitMethodParameter(PsiExpression expression, PsiCallExpression psiCallExpression) {
@@ -183,19 +183,16 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         private void visitVariableUsages(PsiVariable variable) {
           if (variable == null) return;
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
-            ReferencesSearch.search(variable, searchScope).forEach(new Processor<PsiReference>() {
-              @Override
-              public boolean process(PsiReference psiReference) {
-                final PsiElement element = psiReference.getElement();
-                if (element instanceof PsiExpression) {
-                  final PsiExpression refExpression = (PsiExpression)element;
-                  places.add(refExpression);
-                  if (!myUnparsable) {
-                    myUnparsable = checkUnparsableReference(refExpression);
-                  }
+            ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
+              final PsiElement element = psiReference.getElement();
+              if (element instanceof PsiExpression) {
+                final PsiExpression refExpression = (PsiExpression)element;
+                places.add(refExpression);
+                if (!myUnparsable) {
+                  myUnparsable = checkUnparsableReference(refExpression);
                 }
-                return true;
               }
+              return true;
             });
           }
         }
@@ -209,7 +206,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           if (anchor != null && !processCommentInjection(anchor)) {
             myShouldStop = true;
           }
-          else if (areThereInjectionsWithName(variable.getName(), false)) {
+          else {
             process(variable, null, -1);
           }
           return false;
@@ -290,16 +287,12 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     private boolean processAnnotationInjections(final PsiModifierListOwner annoElement) {
-      final String checkName;
       if (annoElement instanceof PsiParameter) {
         final PsiElement scope = ((PsiParameter)annoElement).getDeclarationScope();
-        checkName = scope instanceof PsiMethod ? ((PsiNamedElement)scope).getName() : ((PsiNamedElement)annoElement).getName();
+        if (scope instanceof PsiMethod && !areThereInjectionsWithName(((PsiNamedElement)scope).getName(), true)) {
+          return true;
+        }
       }
-      else if (annoElement instanceof PsiNamedElement) {
-        checkName = ((PsiNamedElement)annoElement).getName();
-      }
-      else checkName = null;
-      if (checkName == null || !areThereInjectionsWithName(checkName, true)) return true;
       final PsiAnnotation[] annotations =
         AnnotationUtilEx.getAnnotationFrom(annoElement, myConfiguration.getAdvancedConfiguration().getLanguageAnnotationPair(), true);
       if (annotations.length > 0) {
@@ -342,7 +335,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
       if (objects.isEmpty()) return;
       final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result =
-        new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
+        new ArrayList<>();
       final int len = objects.size();
       for (int i = 0; i < len; i++) {
         String curPrefix = null;

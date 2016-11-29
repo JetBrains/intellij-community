@@ -39,6 +39,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.DialogUtil;
@@ -50,10 +51,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 
 /**
@@ -136,15 +136,18 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     return true;
   }
 
+  @Override
   public boolean isMakeStatic() {
     if (myStaticFlag) return true;
     return myCanBeStatic && myMakeStatic.isSelected();
   }
 
+  @Override
   public boolean isChainedConstructor() {
     return myCbChainedConstructor != null && myCbChainedConstructor.isSelected();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     if (myHelpId != null) {
@@ -154,14 +157,17 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     }
   }
 
+  @Override
   public String getChosenMethodName() {
     return myNameField.getEnteredName();
   }
 
+  @Override
   public VariableData[] getChosenParameters() {
     return myInputVariables;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
@@ -171,8 +177,9 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     return myHelpId;
   }
 
+  @Override
   protected void doOKAction() {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     checkMethodConflicts(conflicts);
     if (!conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
@@ -199,6 +206,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     super.doOKAction();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     final JPanel main = new JPanel(new BorderLayout());
     final JPanel namePanel = new JPanel(new BorderLayout(0, 2));
@@ -208,12 +216,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     namePanel.add(myNameField, BorderLayout.SOUTH);
     nameLabel.setLabelFor(myNameField);
 
-    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
-      @Override
-      public void dataChanged() {
-        update();
-      }
-    });
+    myNameField.addDataChangedListener(this::update);
 
     myVisibilityPanel = createVisibilityPanel();
     myVisibilityPanel.registerUpDownActionsFor(myNameField);
@@ -266,22 +269,19 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       returnTypePanel.add(label, BorderLayout.NORTH);
       returnTypePanel.add(component, BorderLayout.SOUTH);
       DialogUtil.registerMnemonic(label, component);
-      ((JComboBox)component).addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final PsiType selectedType = mySelector.getSelectedType();
-          if (myGenerateAnnotations != null) {
-            final boolean enabled = PsiUtil.resolveClassInType(selectedType) != null;
-            if (!enabled) {
-              myGenerateAnnotations.setSelected(false);
-            }
-            myGenerateAnnotations.setEnabled(enabled);
+      ((JComboBox)component).addActionListener(e -> {
+        final PsiType selectedType = mySelector.getSelectedType();
+        if (myGenerateAnnotations != null) {
+          final boolean enabled = PsiUtil.resolveClassInType(selectedType) != null;
+          if (!enabled) {
+            myGenerateAnnotations.setSelected(false);
           }
-          resizeReturnCombo(component, selectedType);
-          returnTypePanel.revalidate();
-          returnTypePanel.repaint();
-          updateSignature();
+          myGenerateAnnotations.setEnabled(enabled);
         }
+        resizeReturnCombo(component, selectedType);
+        returnTypePanel.revalidate();
+        returnTypePanel.repaint();
+        updateSignature();
       });
       resizeReturnCombo(component, mySelector.getSelectedType());
       return returnTypePanel;
@@ -312,16 +312,14 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       if (myVariableData.hasInstanceFields()) {
         myMakeStatic.setText(RefactoringBundle.message("declare.static.pass.fields.checkbox"));
       }
-      myMakeStatic.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          if (myVariableData.hasInstanceFields()) {
-            myVariableData.setPassFields(myMakeStatic.isSelected());
-            myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
-            updateVarargsEnabled();
-            createParametersPanel();
-          }
-          updateSignature();
+      myMakeStatic.addItemListener(e -> {
+        if (myVariableData.hasInstanceFields()) {
+          myVariableData.setPassFields(myMakeStatic.isSelected());
+          myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+          updateVarargsEnabled();
+          createParametersPanel();
         }
+        updateSignature();
       });
       optionsPanel.add(myMakeStatic);
     } else {
@@ -335,15 +333,13 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     myFoldParameters.setVisible(myVariableData.isFoldable());
     myVariableData.setFoldingAvailable(myFoldParameters.isSelected());
     myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
-    myFoldParameters.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myVariableData.setFoldingAvailable(myFoldParameters.isSelected());
-        myInputVariables =
-          myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
-        updateVarargsEnabled();
-        createParametersPanel();
-        updateSignature();
-      }
+    myFoldParameters.addActionListener(e -> {
+      myVariableData.setFoldingAvailable(myFoldParameters.isSelected());
+      myInputVariables =
+        myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+      updateVarargsEnabled();
+      createParametersPanel();
+      updateSignature();
     });
     optionsPanel.add(myFoldParameters);
     myFoldParameters.setBorder(emptyBorder);
@@ -360,11 +356,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       myMakeVarargs = new NonFocusableCheckBox(RefactoringBundle.message("declare.varargs.checkbox"));
       myMakeVarargs.setBorder(emptyBorder);
       updateVarargsEnabled();
-      myMakeVarargs.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          updateSignature();
-        }
-      });
+      myMakeVarargs.addItemListener(e -> updateSignature());
       myMakeVarargs.setSelected(false);
       optionsPanel.add(myMakeVarargs);
     }
@@ -372,36 +364,29 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     if (myNullness != null && myNullness != Nullness.UNKNOWN) {
       final boolean isSelected = PropertiesComponent.getInstance(myProject).getBoolean(EXTRACT_METHOD_GENERATE_ANNOTATIONS, true);
       myGenerateAnnotations = new JCheckBox(RefactoringBundle.message("declare.generated.annotations"), isSelected);
-      myGenerateAnnotations.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-          updateSignature();
-        }
-      });
+      myGenerateAnnotations.addItemListener(e -> updateSignature());
       optionsPanel.add(myGenerateAnnotations);
     }
 
     if (myCbChainedConstructor != null) {
       optionsPanel.add(myCbChainedConstructor);
       myCbChainedConstructor.setBorder(emptyBorder);
-      myCbChainedConstructor.addItemListener(new ItemListener() {
-        public void itemStateChanged(final ItemEvent e) {
-          if (myDefaultVisibility) {
-            myChangingVisibility = true;
-            try {
-              if (isChainedConstructor()) {
-                myVisibilityPanel.setVisibility(VisibilityUtil.getVisibilityModifier(myTargetClass.getModifierList()));
-              }
-              else {
-                myVisibilityPanel.setVisibility(PsiModifier.PRIVATE);
-              }
+      myCbChainedConstructor.addItemListener(e -> {
+        if (myDefaultVisibility) {
+          myChangingVisibility = true;
+          try {
+            if (isChainedConstructor()) {
+              myVisibilityPanel.setVisibility(VisibilityUtil.getVisibilityModifier(myTargetClass.getModifierList()));
             }
-            finally {
-              myChangingVisibility = false;
+            else {
+              myVisibilityPanel.setVisibility(PsiModifier.PRIVATE);
             }
           }
-          update();
+          finally {
+            myChangingVisibility = false;
+          }
         }
+        update();
       });
     }
     return optionsPanel;
@@ -413,13 +398,10 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     panel.setVisibility(containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC) 
                         ? PropertiesComponent.getInstance(myProject).getValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, PsiModifier.PRIVATE)
                         : PsiModifier.PRIVATE);
-    panel.addListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        updateSignature();
-        if (!myChangingVisibility) {
-          myDefaultVisibility = false;
-        }
+    panel.addListener(e -> {
+      updateSignature();
+      if (!myChangingVisibility) {
+        myDefaultVisibility = false;
       }
     });
     return panel;
@@ -445,11 +427,13 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
                        isChainedConstructor());
   }
 
+  @Override
+  @NotNull
   public String getVisibility() {
-    return myTargetClass.isInterface() ? PsiModifier.PUBLIC : myVisibilityPanel.getVisibility();
+    return myTargetClass.isInterface() ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
   }
 
-
+  @Override
   protected JComponent createCenterPanel() {
     myCenterPanel = new JPanel(new BorderLayout());
     createParametersPanel();
@@ -494,19 +478,23 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
 
   protected ParameterTablePanel createParameterTableComponent() {
     return new ParameterTablePanel(myProject, myInputVariables, myElementsToExtract) {
+      @Override
       protected void updateSignature() {
         updateVarargsEnabled();
         ExtractMethodDialog.this.updateSignature();
       }
 
+      @Override
       protected void doEnterAction() {
         clickDefaultButton();
       }
 
+      @Override
       protected void doCancelAction() {
         ExtractMethodDialog.this.doCancelAction();
       }
 
+      @Override
       protected boolean areTypesDirected() {
         return ExtractMethodDialog.this.areTypesDirected();
       }
@@ -534,7 +522,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   }
 
   protected String getSignature() {
-    final @NonNls StringBuilder buffer = new StringBuilder();
+    @NonNls final StringBuilder buffer = new StringBuilder();
     if (myGenerateAnnotations != null && myGenerateAnnotations.isSelected()) {
       final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       buffer.append("@");
@@ -630,6 +618,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     ConflictsUtil.checkMethodConflicts(myTargetClass, null, prototype, conflicts);
   }
 
+  @Override
   public PsiType getReturnType() {
     return mySelector != null ? mySelector.getSelectedType() : myReturnType;
   }

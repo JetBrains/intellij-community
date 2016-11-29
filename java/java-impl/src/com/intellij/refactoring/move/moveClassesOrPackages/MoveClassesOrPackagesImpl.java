@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Nov 27, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.history.LocalHistory;
@@ -82,7 +78,7 @@ public class MoveClassesOrPackagesImpl {
   @Nullable
   public static PsiElement[] adjustForMove(final Project project, final PsiElement[] elements, final PsiElement targetElement) {
     final PsiElement[] psiElements = new PsiElement[elements.length];
-    List<String> names = new ArrayList<String>();
+    List<String> names = new ArrayList<>();
     for (int idx = 0; idx < elements.length; idx++) {
       PsiElement element = elements[idx];
       if (element instanceof PsiDirectory) {
@@ -322,19 +318,9 @@ public class MoveClassesOrPackagesImpl {
     }
     final PsiDirectory selectedTarget = chooser.getSelectedDirectory();
     if (selectedTarget == null) return;
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final Runnable analyzeConflicts = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            RefactoringConflictsUtil
-              .analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts);
-          }
-        });
-      }
-    };
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final Runnable analyzeConflicts = () -> ApplicationManager.getApplication().runReadAction(() -> RefactoringConflictsUtil
+      .analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts));
     if (!ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(analyzeConflicts, "Analyze Module Conflicts...", true, project)) {
       return;
@@ -352,26 +338,18 @@ public class MoveClassesOrPackagesImpl {
     }
     final Ref<IncorrectOperationException> ex = Ref.create(null);
     final String commandDescription = RefactoringBundle.message("moving.directories.command");
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            LocalHistoryAction a = LocalHistory.getInstance().startAction(commandDescription);
-            try {
-              rearrangeDirectoriesToTarget(directories, selectedTarget);
-            }
-            catch (IncorrectOperationException e) {
-              ex.set(e);
-            }
-            finally {
-              a.finish();
-            }
-          }
-        });
+    Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      LocalHistoryAction a = LocalHistory.getInstance().startAction(commandDescription);
+      try {
+        rearrangeDirectoriesToTarget(directories, selectedTarget);
       }
-    };
+      catch (IncorrectOperationException e) {
+        ex.set(e);
+      }
+      finally {
+        a.finish();
+      }
+    });
     CommandProcessor.getInstance().executeCommand(project, runnable, commandDescription, null);
     if (ex.get() != null) {
       RefactoringUIUtil.processIncorrectOperation(project, ex.get());
@@ -380,7 +358,7 @@ public class MoveClassesOrPackagesImpl {
 
   private static List<PsiDirectory> buildRearrangeTargetsList(final Project project, final PsiDirectory[] directories) {
     final List<VirtualFile> sourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
-    List<PsiDirectory> sourceRootDirectories = new ArrayList<PsiDirectory>();
+    List<PsiDirectory> sourceRootDirectories = new ArrayList<>();
     sourceRoots:
     for (final VirtualFile sourceRoot : sourceRoots) {
       PsiDirectory sourceRootDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);

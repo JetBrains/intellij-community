@@ -58,8 +58,26 @@ public class VcsFileUtil {
   public static <T> List<T> foreachChunk(@NotNull List<String> arguments,
                                          @NotNull ThrowableNotNullFunction<List<String>, List<? extends T>, VcsException> processor)
     throws VcsException {
+    return foreachChunk(arguments, 1, processor);
+  }
+
+  /**
+   * Execute function for each chunk of arguments. Check for being cancelled in process.
+   *
+   * @param arguments the arguments to chunk
+   * @param groupSize size of argument groups that should be put in the same chunk (like a name and a value)
+   * @param processor function to execute on each chunk
+   * @param <T>       type of result value
+   * @return list of result values
+   * @throws VcsException
+   */
+  @NotNull
+  public static <T> List<T> foreachChunk(@NotNull List<String> arguments,
+                                         int groupSize,
+                                         @NotNull ThrowableNotNullFunction<List<String>, List<? extends T>, VcsException> processor)
+    throws VcsException {
     List<T> result = ContainerUtil.newArrayList();
-    List<List<String>> chunks = chunkArguments(arguments);
+    List<List<String>> chunks = chunkArguments(arguments, groupSize);
 
     for (List<String> chunk : chunks) {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -79,16 +97,34 @@ public class VcsFileUtil {
    */
   @NotNull
   public static List<List<String>> chunkArguments(@NotNull List<String> arguments) {
-    ArrayList<List<String>> rc = new ArrayList<List<String>>();
+    return chunkArguments(arguments, 1);
+  }
+
+  /**
+   * Chunk arguments on the command line
+   *
+   * @param arguments the arguments to chunk, number of arguments should be divisible by groupSize
+   * @param groupSize size of argument groups that should be put in the same chunk
+   * @return a list of lists of arguments
+   */
+  @NotNull
+  public static List<List<String>> chunkArguments(@NotNull List<String> arguments, int groupSize) {
+    assert arguments.size() % groupSize == 0 : "Arguments size should be divisible by group size";
+
+    ArrayList<List<String>> rc = new ArrayList<>();
     int start = 0;
     int size = 0;
     int i = 0;
-    for (; i < arguments.size(); i++) {
-      String p = arguments.get(i);
-      if (size + p.length() > FILE_PATH_LIMIT) {
+    for (; i < arguments.size(); i += groupSize) {
+      int length = 0;
+      for (int j = 0; j < groupSize; j++) {
+        length += arguments.get(i + j).length();
+      }
+      if (size + length > FILE_PATH_LIMIT) {
         if (start == i) {
-          rc.add(arguments.subList(i, i + 1));
-          start = i + 1;
+          // to avoid empty chunks
+          rc.add(arguments.subList(i, i + groupSize));
+          start = i + groupSize;
         }
         else {
           rc.add(arguments.subList(start, i));
@@ -97,7 +133,7 @@ public class VcsFileUtil {
         size = 0;
       }
       else {
-        size += p.length();
+        size += length;
       }
     }
     if (start != arguments.size()) {
@@ -242,7 +278,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if some path is not under root.
    */
   public static List<String> toRelativePaths(@NotNull VirtualFile root, @NotNull final Collection<FilePath> filePaths) {
-    ArrayList<String> rc = new ArrayList<String>(filePaths.size());
+    ArrayList<String> rc = new ArrayList<>(filePaths.size());
     for (FilePath path : filePaths) {
       rc.add(relativePath(root, path));
     }
@@ -258,7 +294,7 @@ public class VcsFileUtil {
    * @throws IllegalArgumentException if some path is not under root.
    */
   public static List<String> toRelativeFiles(@NotNull VirtualFile root, @NotNull final Collection<VirtualFile> files) {
-    ArrayList<String> rc = new ArrayList<String>(files.size());
+    ArrayList<String> rc = new ArrayList<>(files.size());
     for (VirtualFile file : files) {
       rc.add(relativePath(root, file));
     }
@@ -301,15 +337,16 @@ public class VcsFileUtil {
     if (file == null || path.length == 0) return null;
 
     VirtualFile current = file;
-    final List<VirtualFile> backTrace = new ArrayList<VirtualFile>();
+    final List<VirtualFile> backTrace = new ArrayList<>();
     int idx = path.length - 1;
     while (current != null) {
       if (SystemInfo.isFileSystemCaseSensitive ? current.getName().equals(path[idx]) : current.getName().equalsIgnoreCase(path[idx])) {
         if (idx == 0) {
           return current;
         }
-        -- idx;
-      } else if (idx != path.length - 1) {
+        --idx;
+      }
+      else if (idx != path.length - 1) {
         int diff = path.length - 1 - idx - 1;
         for (int i = 0; i < diff; i++) {
           current = backTrace.remove(backTrace.size() - 1);

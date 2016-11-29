@@ -48,18 +48,15 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
         if (startsWithSlash || !directory.isValid()) {
           return super.getDefaultContexts();
         }
-        return Collections.<PsiFileSystemItem>singletonList(directory);
+        return Collections.singletonList(directory);
       }
 
       @Override
       protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
-        return new Condition<PsiFileSystemItem>() {
-          @Override
-          public boolean value(PsiFileSystemItem item) {
-            if (item instanceof PsiDirectory) return true;
-            final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(item);
-            return virtualFile != null && acceptedExtension.equals(virtualFile.getExtension());
-          }
+        return item -> {
+          if (item instanceof PsiDirectory) return true;
+          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(item);
+          return virtualFile != null && acceptedExtension.equals(virtualFile.getExtension());
         };
       }
     };

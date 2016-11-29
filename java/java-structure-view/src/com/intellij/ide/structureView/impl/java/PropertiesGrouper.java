@@ -36,7 +36,7 @@ public class PropertiesGrouper implements Grouper{
   @NotNull
   public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
     if (parent.getValue() instanceof PropertyGroup) return Collections.emptyList();
-    Map<Group,Group> result = new THashMap<Group, Group>();
+    Map<Group,Group> result = new THashMap<>();
     for (TreeElement o : children) {
       if (o instanceof JavaClassTreeElementBase) {
         PsiElement element = ((JavaClassTreeElementBase)o).getElement();

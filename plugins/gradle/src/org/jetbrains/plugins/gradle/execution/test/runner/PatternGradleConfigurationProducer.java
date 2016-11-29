@@ -62,7 +62,7 @@ public class PatternGradleConfigurationProducer extends GradleTestRunConfigurati
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
 
-    final LinkedHashSet<String> tests = new LinkedHashSet<String>();
+    final LinkedHashSet<String> tests = new LinkedHashSet<>();
     final PsiElement element = myBaseConfigurationProducer.checkPatterns(context, tests);
     if (element == null) {
       return false;

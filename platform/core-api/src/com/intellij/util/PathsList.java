@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.*;
-
 public class PathsList  {
-  private final List<String>  myPath = new ArrayList<String>();
+  private final List<String> myPath = new ArrayList<String>();
   private final List<String> myPathTail = new ArrayList<String>();
   private final Set<String> myPathSet = new HashSet<String>();
 
@@ -66,7 +63,11 @@ public class PathsList  {
     }
   };
 
-  public void add(@NonNls String path) {
+  public boolean isEmpty() {
+    return myPathSet.isEmpty();
+  }
+
+  public void add(String path) {
     addAllLast(chooseFirstTimeItems(path), myPath);
   }
 
@@ -76,15 +77,19 @@ public class PathsList  {
     myPathSet.remove(path);
   }
 
+  public void clear() {
+    myPath.clear();
+    myPathTail.clear();
+    myPathSet.clear();
+  }
+
   public void add(VirtualFile file) {
     add(LOCAL_PATH.fun(file));
   }
 
-  public void addFirst(@NonNls String path) {
-    final Iterator<String> elements = chooseFirstTimeItems(path);
+  public void addFirst(String path) {
     int index = 0;
-    while (elements.hasNext()) {
-      final String element = elements.next();
+    for (String element : chooseFirstTimeItems(path)) {
       myPath.add(index, element);
       myPathSet.add(element);
       index++;
@@ -95,35 +100,23 @@ public class PathsList  {
     addAllLast(chooseFirstTimeItems(path), myPathTail);
   }
 
-  private Iterator<String> chooseFirstTimeItems(String path) {
+  private Iterable<String> chooseFirstTimeItems(String path) {
     if (path == null) {
-      return emptyIterator();
+      return Collections.emptyList();
     }
-    final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator);
-    // in JDK 1.5 StringTokenizer implements Enumeration<Object> rather then Enumeration<String>, need to convert
-    final Enumeration<String> en = new Enumeration<String>() {
-      @Override
-      public boolean hasMoreElements() {
-        return tokenizer.hasMoreElements();
-      }
-
-      @Override
-      public String nextElement() {
-        return (String)tokenizer.nextElement();
-      }
-    };
-    return FilteringIterator.create(iterate(en), new Condition<String>() {
-      @Override
-      public boolean value(String element) {
-        element = element.trim();
-        return !element.isEmpty() && !myPathSet.contains(element);
-      }
-    });
+    else {
+      return JBIterable.from(StringUtil.tokenize(path, File.pathSeparator)).filter(new Condition<String>() {
+        @Override
+        public boolean value(String element) {
+          element = element.trim();
+          return !element.isEmpty() && !myPathSet.contains(element);
+        }
+      });
+    }
   }
 
-  private void addAllLast(Iterator<String> elements, List<String> toArray) {
-    while (elements.hasNext()) {
-      final String element = elements.next();
+  private void addAllLast(Iterable<String> elements, List<String> toArray) {
+    for (String element : elements) {
       toArray.add(element);
       myPathSet.add(element);
     }
@@ -134,8 +127,9 @@ public class PathsList  {
     return StringUtil.join(getPathList(), File.pathSeparator);
   }
 
+  @NotNull
   public List<String> getPathList() {
-    final List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<String>();
     result.addAll(myPath);
     result.addAll(myPathTail);
     return result;
@@ -145,14 +139,14 @@ public class PathsList  {
    * @return {@link VirtualFile}s on local file system (returns jars as files).
    */
   public List<VirtualFile> getVirtualFiles() {
-    return skipNulls(map(getPathList(), PATH_TO_LOCAL_VFILE));
+    return JBIterable.from(getPathList()).map(PATH_TO_LOCAL_VFILE).filter(Condition.NOT_NULL).toList();
   }
 
   /**
-   * @return The same as {@link #getVirtualFiles()} but returns jars as {@link JarFileSystem} roots.
+   * @return The same as {@link #getVirtualFiles()} but returns jars as {@code JarFileSystem} roots.
    */
   public List<VirtualFile> getRootDirs() {
-    return skipNulls(map(getPathList(), PATH_TO_DIR));
+    return JBIterable.from(getPathList()).map(PATH_TO_DIR).filter(Condition.NOT_NULL).toList();
   }
 
   public void addAll(List<String> allClasspath) {
@@ -161,12 +155,12 @@ public class PathsList  {
     }
   }
 
-  public void addAllFiles(File[] classpathList) {
-    addAllFiles(Arrays.asList(classpathList));
+  public void addAllFiles(File[] files) {
+    addAllFiles(Arrays.asList(files));
   }
 
-  public void addAllFiles(List<File> classpathList) {
-    for (File file : classpathList) {
+  public void addAllFiles(List<File> files) {
+    for (File file : files) {
       add(file);
     }
   }
@@ -176,14 +170,12 @@ public class PathsList  {
   }
 
   public void addVirtualFiles(Collection<VirtualFile> files) {
-    for (final VirtualFile file : files) {
+    for (VirtualFile file : files) {
       add(file);
     }
   }
 
   public void addVirtualFiles(VirtualFile[] files) {
-    for (VirtualFile file : files) {
-      add(file);
-    }
+    addVirtualFiles(Arrays.asList(files));
   }
 }

@@ -51,11 +51,8 @@ public class GrConstructorImpl extends GrMethodBaseImpl implements GrMethod {
   @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrReflectedMethod[]>() {
-      @Override
-      public Result<GrReflectedMethod[]> compute() {
-        return Result.create(GrReflectedMethodImpl.createReflectedConstructors(GrConstructorImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(this,
+                                              () -> CachedValueProvider.Result
+                                                .create(GrReflectedMethodImpl.createReflectedConstructors(this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
   }
 }

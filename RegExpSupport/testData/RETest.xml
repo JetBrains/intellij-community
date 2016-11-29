@@ -1,434 +1,60 @@
 <tests>
   <simple>
-    <test>
-      <pattern>|</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(|\$.*)\.class</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>abc</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>multiple words of text</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>ab|cd</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>ab*c</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>ab*bc</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>ab+bc</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>ab?bc</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>ab?c</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a.c</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a.*c</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>*a</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Single repetition">{1}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>a{}</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a{</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a{1,}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a{1,2}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a{1,foo}</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test info="true" verify="false">
+    <test verify="false">
       <pattern><![CDATA[<weak_warning descr="Redundant character escape">\;</weak_warning>]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>\b \b{g} \B \A \z \Z \G</pattern>
       <expected>OK</expected>
     </test>
   </simple>
   <quantifiers>
-    <test>
-      <pattern>a?</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a+</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a??</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a+?</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a*?</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a?+</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a++</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a*+</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a**</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a{2}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a{1,2}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a{2,1}</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Repetition range replaceable by '?'">{0,1}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Repetition range replaceable by '+'">{1,}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Repetition range replaceable by '*'">{0,}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Single repetition">{1}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test verify="false" info="true">
+    <test verify="false">
       <pattern><![CDATA[a<weak_warning descr="Fixed repetition range">{3,3}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>a{</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a{}</pattern>
-      <expected>ERR</expected>
-    </test>
   </quantifiers>
   <charclasses>
-    <test>
-      <pattern>a[bc]d</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[b-d]e</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[b-d]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[b-a]</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a[-b]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[b-]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[a-[b]]</pattern>
-      <expected jdk="OK">OK</expected>
-    </test>
-    <test>
-      <pattern>a[b&amp;&amp;[cd]]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[b-&amp;&amp;[cd]]</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a[b&amp;&amp;-]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[b&amp;&amp;-b]</pattern>
-      <expected jdk="OK">OK</expected>
-    </test>
-    <test>
-      <pattern>[&amp;&amp;]</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a[b&amp;&amp;c&amp;&amp;d]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[b&amp;&amp;c&amp;&amp;d-e&amp;&amp;f]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[a[b][c]]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[a-[]]</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>[a-[b</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>[a[^b]]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[a[b[c]][d]]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[\t--]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[\t--]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[\t---]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[-]?c</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[a-[</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a[]]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[^bc]d</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[^bc]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[]b</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>[^]</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>[abhgefdc]ij</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[a-zA-Z_][a-zA-Z0-9_]*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>([a-c]+?)c</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>([ab]*?)b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>([ab]*)b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>([ab]??)b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(c[ab]?)b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(c[ab]??)b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(c[ab]*?)b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[bcd]+dcdcde</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[k]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[bcd]*dcdcde</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[^ab]*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[.]b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[+*?]b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a[\p{IsDigit}\p{IsAlpha}]b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[\p{L}&amp;&amp;[^\p{Lu}]]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\pL\pM\pZ\pS\pN\pP\pC\PL\PM\PZ\PS\PN\PP\PC</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\pA</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>\pl</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a\p</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a\p{}</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a\p}</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a\p{123}</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test verify="false">
-      <pattern><![CDATA[a\p{<error descr="Character family name expected">*</error>}b]]></pattern>
-      <expected>OK</expected>
-    </test>
     <test verify="false">
       <pattern><![CDATA[[<warning descr="Redundant character range">\w-\w</warning>]]]></pattern>
       <expected>OK</expected>
     </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>\X</pattern>
+      <expected>OK</expected>
+    </test>
     <test>
-      <pattern>[a-\w]</pattern>
+      <pattern><![CDATA[<weak_warning descr="Redundant character escape">\-</weak_warning>[<weak_warning descr="Redundant character escape">\*</weak_warning>\-\[\]\\<weak_warning descr="Redundant character escape">\+</weak_warning>]]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>[\b]</pattern>
       <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>(?x)abc #foo \q bar
-# foo
-(?-xi)xyz(?i:ABC)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[\ud800\udc00-\udbff\udfff]</pattern>
-      <expected>OK</expected>
     </test>
   </charclasses>
 
   <groups>
-    <test warning="false">
-      <pattern>()ef</pattern>
-      <expected>OK</expected>
-    </test>
-    <test warning="false">
-      <pattern>()*</pattern>
-      <expected>OK</expected>
-    </test>
     <test verify="false">
       <pattern><![CDATA[<warning descr="Empty group">()</warning>]]></pattern>
       <expected>OK</expected>
@@ -437,117 +63,9 @@
       <pattern><![CDATA[<warning descr="Empty group">(|)</warning>]]></pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>(*)b</pattern>
-      <expected>ERR</expected>
-    </test>
     <test verify="false">
       <pattern><![CDATA[<warning descr="Redundant group nesting">((a))</warning>]]></pattern>
       <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a)b(c)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a*)*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a*)+</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a|)*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(ab|cd)e</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(.*)c(.*)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\((.*), (.*)\)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a(bc)d</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>([abc])*d</pattern>
-      <expected>OK</expected>
-    </test>
-    <test warning="false">
-      <pattern>((((((((((a)))))))))</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>([abc])*bcd</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a|b)c*d</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a([bc]*)c*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>((a)(b)c)(d)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(ab|a)b*c</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(ab|ab*)bc</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a|b|c|d|e)f</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a([bc]*)(c*d)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a([bc]+)(c*d)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a([bc]*)(c+d)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a+|b)*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a+|b)+</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a+|b)?</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(^*</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>)(</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>(?i:*)</pattern>
-      <expected>ERR</expected>
     </test>
     <test host="com.intellij.psi.impl.JavaRegExpHost">
       <pattern>(?&lt;asdf&gt;[a-c])\1</pattern>
@@ -558,316 +76,73 @@
       <expected>OK</expected>
     </test>
     <test host="com.intellij.psi.impl.JavaRegExpHost">
-      <pattern><![CDATA[<error descr="Unresolved named group reference">\k<adsf></error>]]></pattern>
+      <pattern><![CDATA[\k<<error descr="Unresolved named group reference">adsf</error>>]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>(?&lt;<error descr="Invalid group name">important_value1</error>&gt;\d\d)</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>(?&lt;importantValue1&gt;\d\d)</pattern>
       <expected>OK</expected>
     </test>
   </groups>
   <escapes>
-    <test>
-      <pattern>\q</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>\#</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a\</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>a\(b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a\(*b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a\\b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\u004a</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\0123</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\0</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>\x4a</pattern>
-      <expected>OK</expected>
-    </test>
-    <test host="com.intellij.psi.impl.JavaRegExpHost">
-      <pattern>\x{0}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test host="com.intellij.psi.impl.JavaRegExpHost">
-      <pattern>\x{2011F}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[\x4a-\x4b]</pattern>
-      <expected>OK</expected>
-    </test>
     <test verify="false">
       <pattern><![CDATA[[<warning descr="Redundant character range">a-a</warning>]]]></pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>[\x4a-\x3f]</pattern>
-      <expected>ERR</expected>
+    <test verify="false">
+      <pattern><![CDATA[[<error descr="Illegal character range (to < from)">\x4a-\x3f</error>]]]></pattern>
+      <expected>OK</expected>
     </test>
-    <test>
+    <test verify="false">
       <pattern><![CDATA[[<error descr="Illegal character range (to < from)">\udbff\udfff-\ud800\udc00</error>]]]></pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>[\ud800\udc00-\udbff\udfff]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
+    <test verify="false">
       <pattern><![CDATA[[<error descr="Illegal character range (to < from)">z-a</error>]]]></pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[a-z]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>a\Qabc?*+.))]][]\Eb</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a\Qabc?*+.))]][]\Eb)</pattern>
       <expected>OK</expected>
     </test>
     <test>
       <pattern><![CDATA[[\Qabc?*+.)<warning descr="Duplicate character ')' in character class">)</warning>]<warning descr="Duplicate character ']' in character class">]</warning>[<warning descr="Duplicate character ']' in character class">]</warning>\E]]]></pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>a\Qabc?*+.))]][]\E)</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>\Q\j\E</pattern>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>]}</pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>\c0</pattern>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern><![CDATA[<weak_warning descr="Redundant character escape">\]</weak_warning><weak_warning descr="Redundant character escape">\}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
   </escapes>
 
-  <anchors>
-    <test>
-      <pattern>^*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>$*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>^abc</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>^abc$</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>abc$</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>^</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>$</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>$b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>^(ab|cd)e</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>^a(bc+|b[eh])g|.h$</pattern>
-      <expected>OK</expected>
-    </test>
-  </anchors>
   <namedchars>
-    <test>
-      <pattern>a*b\s+c</pattern>
-      <expected>OK</expected>
+    <test verify="false">
+      <pattern>^\p{javaJavaIdentifierStart}+\p{javaJavaIdentifierPart}+$</pattern>
+      <expected>ERR</expected>
     </test>
-    <test>
-      <pattern>\d+</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
       <pattern>^\p{javaJavaIdentifierStart}+\p{javaJavaIdentifierPart}+$</pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>\p{IsDigit}\p{IsAlpha}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\p{InLATIN_1_SUPPLEMENT}</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[a-e]?d\\e</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>((\w+)/)*(\w+)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\p{Digit}+</pattern>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>\p{InArabiC}\p{IsTitleCase}\p{IsAlphabetic}\p{all}\p{IsGreeK}</pattern>
       <expected>OK</expected>
     </test>
     <test>
       <pattern><![CDATA[[:xdig<warning descr="Duplicate character 'i' in character class">i</warning>t<warning descr="Duplicate character ':' in character class">:</warning>]+]]></pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>\p{unknown}+</pattern>
-      <expected>ERR</expected>
-    </test>
   </namedchars>
   <backrefs>
-    <test>
-      <pattern>(ac*)c*d[ac]*\1</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(.)=\1</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>([ab])=\1</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>([ab]+)=\1</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\105</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(.)\11</pattern>
-      <expected>OK</expected>
-    </test>
-    <test verify="false">
-      <pattern>([ab]+)=\2</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test verify="false">
-      <pattern>([ab]+)=\3</pattern>
-      <expected>ERR</expected>
-    </test>
     <test verify="false">
       <pattern><![CDATA[([ab]+=<warning descr="Back reference is nested into the capturing group it refers to">\1</warning>)]]></pattern>
       <expected>OK</expected>
     </test>
   </backrefs>
-  <complex>
-    <test>
-      <pattern>z(\w\s+(?:\w\s+\w)+)z</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(([hH][tT]{2}[pP]|[fF][tT][pP]):\/\/)?[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>((?:[hH][tT]{2}[pP]|[fF][tT][pP]):\/\/)?[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(([hH][tT]{2}[pP]|[fF][tT][pP]):\/\/)?[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(?:([hH][tT]{2}[pP]|[fF][tT][pP]):\/\/)?[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>^(?:([hH][tT]{2}[pP]|[fF][tT][pP]):\/\/)?[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*$</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>^(?:(?:[hH][tT]{2}[pP]|[fF][tT][pP]):\/\/)?[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$</pattern>
-      <expected>OK</expected>
-    </test>
-  </complex>
-
-  <incomplete>
-    <test>
-      <pattern>abc\</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>abc[\</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>abc\x</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>abc\x1</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>abc\x{</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>abc\x{}</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>abc\x{0</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>abc\u</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>abc\u22</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>\Qabc</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\Q</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\E</pattern>
-      <expected>ERR</expected>
-    </test>
-  </incomplete>
 
   <regressions>
     <!-- caused NPE in Annotator -->
@@ -875,212 +150,19 @@
       <pattern>(</pattern>
       <expected>ERR</expected>
     </test>
-    <!-- broke by TokenType modifications -->
-    <test>
-      <pattern>[^^]</pattern>
-      <expected>OK</expected>
-    </test>
-    <!-- caused "Probably a bug: eating token without its type checking" errors in Diana -->
-    <test verify="false">
-      <pattern><![CDATA[a<error>)</error><error descr="Pattern expected">b</error>]]></pattern>
-      <expected>OK</expected>
-    </test>
-    <test verify="false">
-      <pattern><![CDATA[\s*@return(?:s)?\s*(?:(?:\{|:)?\s*(?(<error descr="Group name or number expected">[</error><error descr="Pattern expected">^</error><error descr="Pattern expected">\</error>s<error descr="Pattern expected">\</error>}<error descr="Pattern expected">]</error><error descr="Dangling metacharacter">+</error><error descr="Unmatched closing ')'">)</error><error descr="Pattern expected">\</error>s<error descr="Dangling metacharacter">*</error><error descr="Pattern expected">\</error>}<error descr="Dangling metacharacter">?</error><error descr="Pattern expected">\</error>s<error descr="Dangling metacharacter">*</error><error descr="Unmatched closing ')'">)</error><error descr="Dangling metacharacter">?</error><error descr="Pattern expected">(</error><error descr="Pattern expected">.</error><error descr="Dangling metacharacter">*</error><error descr="Unmatched closing ')'">)</error>]]></pattern>
-      <expected>OK</expected>
-    </test>
   </regressions>
 
-  <test>
-    <pattern>abc)</pattern>
-    <expected>ERR</expected>
-  </test>
-  <test>
-    <pattern>(abc</pattern>
-    <expected>ERR</expected>
-  </test>
-  <test>
-    <pattern>a+b+c</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>a**</pattern>
-    <expected>ERR</expected>
-  </test>
-  <test>
-    <pattern>a++</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>ab*</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>abcd*efg</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>a|b|c|d|e</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>(bc+d$|ef*g.|h?i(j|k))</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>a*(b*c*)</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>a?b+c*</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>i am a green (giant|man|martian)</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>(wee|week)(knights|knight)</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>(a.*b)(a.*b)</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>(\s*\w+)?</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>(?:a)</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>(?:\w)</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>(?:\w\s\w)+</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>(a\w)(?:,(a\w))+</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>abc.*?x+yz</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>abc.+?x+yz</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>a.+?(c|d)</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>a.+(c|d)</pattern>
-    <expected>OK</expected>
-  </test>
-  <test>
-    <pattern>a+?b+?c+?</pattern>
-    <expected>OK</expected>
-  </test>
-  <real-life>
-    <test>
-      <pattern>x:found="(true|false)"</pattern>
+  <options>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern><![CDATA[(?i<error descr="Unknown inline option flag">Z</error>m)abc]]></pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>(?:\s)|(?:/\*.*\*/)|(?://[^\n]*)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>((?:\p{Alpha}\:)?[0-9 a-z_A-Z\-\\./]+)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>^[\w\+\.\-]{2,}:</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>#(.*)$</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>usd [+-]?[0-9]+.[0-9][0-9]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\b(\w+)(\s+\1)+\b</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>.*?(&lt;(error|warning|info)(?: descr="((?:[^"\\]|\\")*)")?(?: type="([0-9A-Z_]+)")?(?: foreground="([0-9xa-f]+)")?(?: background="([0-9xa-f]+)")?(?: effectcolor="([0-9xa-f]+)")?(?: effecttype="([A-Z]+)")?(?: fonttype="([0-9]+)")?(/)?>)(.*)</pattern>
-      <expected>OK</expected>
-    </test>
-  </real-life>
+  </options>
 
-  <bug id="IDEADEV-29851">
-    <test>
-      <pattern>[{][\w\.]*[}]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[a-z0-9!\#$%&amp;'*+/=?^_`{|}~-]+</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>[\{]</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>{</pattern>
-      <expected>ERR</expected>
-    </test>
-    <test>
-      <pattern>\{</pattern>
-      <expected>OK</expected>
-    </test>
-  </bug>
-
-  <bug id="IDEADEV-35269">
-    <test>
-      <pattern><![CDATA[(<=\s)-{3,}(?>\s)]]></pattern>
-      <expected>OK</expected>
-    </test>
-  </bug>
 
   <bug id="IDEA-25680">
-    <test info="true">
-      <pattern>(?x)a\ b\ c</pattern>
-      <expected>OK</expected>
-    </test>
-    <test verify="false" info="true">
-      <pattern><![CDATA[a<weak_warning descr="Redundant character escape">\ </weak_warning>b]]></pattern>
-      <expected>OK</expected>
-    </test>
-  </bug>
-  
-  <bug id="IDEA-52291">
-    <test>
-      <pattern>(^|\.)\*(?=(\.|$))</pattern>
-      <expected>OK</expected>
-    </test>
-  </bug>
-
-  <bug id="IDEA-131542">
     <test verify="false">
-      <pattern>\h \H \v \V</pattern>
+      <pattern><![CDATA[a<weak_warning descr="Redundant character escape">\ </weak_warning>b]]></pattern>
       <expected>OK</expected>
     </test>
   </bug>

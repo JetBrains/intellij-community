@@ -30,14 +30,14 @@ public class MvcCommand {
   public static final Collection<String> ourEnvironments = Arrays.asList("prod", "test", "dev");
 
   private final Map<String, String> myEnvVariables = ContainerUtil.newHashMap();
-  private boolean myPassParentEnvs;
+  private boolean myPassParentEnvs = true;
 
   private @Nullable String myEnv;
   private @Nullable String myCommand;
   private @Nullable String myVmOptions;
 
-  private final ArrayList<String> myArgs = new ArrayList<String>();
-  private final ArrayList<String> myProperties = new ArrayList<String>();
+  private final ArrayList<String> myArgs = new ArrayList<>();
+  private final ArrayList<String> myProperties = new ArrayList<>();
 
   public MvcCommand() {
   }

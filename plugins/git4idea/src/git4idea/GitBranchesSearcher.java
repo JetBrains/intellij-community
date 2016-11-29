@@ -32,7 +32,7 @@ public class GitBranchesSearcher {
 
   public GitBranchesSearcher(final Project project, final VirtualFile root, final boolean findRemote) throws VcsException {
     LOG.debug("constructing, root: " + root.getPath() + " findRemote = " + findRemote);
-    final Set<GitBranch> usedBranches = new HashSet<GitBranch>();
+    final Set<GitBranch> usedBranches = new HashSet<>();
     myLocal = GitBranchUtil.getCurrentBranch(project, root);
     LOG.debug("local: " + myLocal);
     if (myLocal == null) return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.dataFlow.PurityInference
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
  */
 class PurityInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test getter"() {
+  void "test getter"() {
     assertPure true, """
 Object getField() {
   return field;
@@ -30,7 +31,7 @@ Object getField() {
 """
   }
 
-  public void "test setter"() {
+  void "test setter"() {
     assertPure false, """
 void setField(String s) {
   field = s;
@@ -38,7 +39,7 @@ void setField(String s) {
 """
   }
 
-  public void "test unknown"() {
+  void "test unknown"() {
     assertPure false, """
 int random() {
   launchMissiles();
@@ -47,7 +48,7 @@ int random() {
 """
   }
 
-  public void "test print"() {
+  void "test print"() {
     assertPure false, """
 int random() {
   System.out.println("hello");
@@ -56,7 +57,7 @@ int random() {
 """
   }
 
-  public void "test local var assignment"() {
+  void "test local var assignment"() {
     assertPure true, """
 int random(boolean b) {
   int i = 4;
@@ -70,7 +71,7 @@ int random(boolean b) {
 """
   }
 
-  public void "test local array var assignment"() {
+  void "test local array var assignment"() {
     assertPure true, """
 int[] randomArray() {
   int[] i = new int[0];
@@ -81,7 +82,7 @@ int random() { return 2; }
 """
   }
 
-  public void "test field array assignment"() {
+  void "test field array assignment"() {
     assertPure false, """
 int[] randomArray() {
   i[0] = random();
@@ -92,7 +93,19 @@ int random() { return 2; }
 """
   }
 
-  public void "test use explicit pure contract"() {
+  void "test field array assignment as local var"() {
+    assertPure false, """
+int[] randomArray() {
+  int[] local = i;
+  local[0] = random();
+  return local;
+}
+int random() { return 2; }
+  int[] i = new int[0];
+"""
+  }
+
+  void "test use explicit pure contract"() {
     assertPure true, """
 int method() {
   return smthPure();
@@ -101,7 +114,7 @@ int method() {
 """
   }
 
-  public void "test don't analyze more than one call"() {
+  void "test don't analyze more than one call"() {
     assertPure false, """
 int method() {
   return smthPure(smthPure2());
@@ -111,7 +124,7 @@ int smthPure2() { return 42; }
 """
   }
 
-  public void "test don't analyze void methods"() {
+  void "test don't analyze void methods"() {
     assertPure false, """
 void method() {
   smthPure();
@@ -120,7 +133,7 @@ int smthPure() { return 3; }
 """
   }
 
-  public void "test don't analyze methods without returns"() {
+  void "test don't analyze methods without returns"() {
     assertPure false, """
 Object method() {
     smthPure();
@@ -129,14 +142,14 @@ int smthPure() { return 3; }
 """
   }
 
-  public void "test don't analyze constructors"() {
+  void "test don't analyze constructors"() {
     assertPure false, """
 public Foo() {
 }
 """
   }
 
-  public void "test calling constructor with side effects"() {
+  void "test calling constructor with side effects"() {
     assertPure false, """
     Object newExample() {
         return new Example1();
@@ -150,9 +163,61 @@ public Foo() {
     """
   }
 
+  void "test anonymous class initializer"() {
+    assertPure false, """
+    Object smth() {
+        return new I(){{ created++; }};
+    }
+
+    private static int created = 0;
+    
+    interface I {}
+    """
+  }
+
+  void "test simple anonymous class creation"() {
+    assertPure true, """
+    Object smth() {
+        return new I(){};
+    }
+    
+    interface I {}
+    """
+  }
+
+  void "test anonymous class with arguments"() {
+    assertPure false, """
+    Object smth() {
+        return new I(unknown()){};
+    }
+    
+    class I {
+      I(int a) {}
+    }
+    """
+  }
+
+  void "test class with impure initializer creation"() {
+    assertPure false, """
+    Object smth() {
+        return new I(42);
+    }
+    
+    class I {
+      I(int answer) {}
+      {
+        launchMissiles();
+      }
+    }
+    """
+  }
+
   private void assertPure(boolean expected, String classBody) {
     def clazz = myFixture.addClass("final class Foo { $classBody }")
-    assert expected == PurityInference.inferPurity(clazz.methods[0])
+    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
+    def purity = PurityInference.inferPurity(clazz.methods[0])
+    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
+    assert expected == purity
   }
 
 }

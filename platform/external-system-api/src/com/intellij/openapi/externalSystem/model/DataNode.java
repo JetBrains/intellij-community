@@ -74,7 +74,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   @NotNull
   public <T> DataNode<T> createChild(@NotNull Key<T> key, @NotNull T data) {
-    DataNode<T> result = new DataNode<T>(key, data, this);
+    DataNode<T> result = new DataNode<>(key, data, this);
     myChildren.add(result);
     return result;
   }
@@ -390,7 +390,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   @NotNull
   public static <T> DataNode<T> nodeCopy(@NotNull DataNode<T> dataNode) {
-    DataNode<T> copy = new DataNode<T>(dataNode.myKey);
+    DataNode<T> copy = new DataNode<>(dataNode.myKey);
     copy.myData = dataNode.myData;
     copy.myRawData = dataNode.myRawData;
     copy.myIgnored = dataNode.myIgnored;

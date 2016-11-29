@@ -34,10 +34,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.TabbedPaneContentUI;
-import com.intellij.util.Function;
+import com.intellij.ui.content.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +44,7 @@ import java.util.*;
 
 public class InspectionManagerEx extends InspectionManagerBase {
   private final NotNullLazyValue<ContentManager> myContentManager;
-  private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<GlobalInspectionContextImpl>();
+  private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<>();
   private GlobalInspectionContextImpl myGlobalInspectionContext;
 
   public InspectionManagerEx(final Project project) {
@@ -73,6 +70,37 @@ public class InspectionManagerEx extends InspectionManagerBase {
           ContentManager contentManager = toolWindow.getContentManager();
           toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
           new ContentManagerWatcher(toolWindow, contentManager);
+          contentManager.addContentManagerListener(new ContentManagerAdapter() {
+            private static final String PREFIX = "of ";
+
+            @Override
+            public void contentAdded(ContentManagerEvent event) {
+              handleContentSizeChanged();
+            }
+
+            @Override
+            public void contentRemoved(ContentManagerEvent event) {
+              handleContentSizeChanged();
+            }
+
+            private void handleContentSizeChanged() {
+              final int count = contentManager.getContentCount();
+              if (count == 1) {
+                final Content content = contentManager.getContent(0);
+                final String displayName = content.getDisplayName();
+                if (!content.getDisplayName().startsWith(PREFIX)) {
+                  content.setDisplayName(PREFIX + displayName);
+                }
+              }
+              else if (count > 1) {
+                for (Content content : contentManager.getContents()) {
+                  if (content.getDisplayName().startsWith(PREFIX)) {
+                    content.setDisplayName(content.getDisplayName().substring(PREFIX.length()));
+                  }
+                }
+              }
+            }
+          });
           return contentManager;
         }
       };
@@ -85,23 +113,18 @@ public class InspectionManagerEx extends InspectionManagerBase {
     if (tool instanceof CustomSuppressableInspectionTool) {
       return ((CustomSuppressableInspectionTool)tool).getSuppressActions(null);
     }
-    final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(Arrays.asList(tool.getBatchSuppressActions(null)));
+    final List<LocalQuickFix> actions = new ArrayList<>(Arrays.asList(tool.getBatchSuppressActions(null)));
     if (actions.isEmpty()) {
       final Language language = Language.findLanguageByID(toolWrapper.getLanguage());
       if (language != null) {
         final List<InspectionSuppressor> suppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(language);
-        for (InspectionSuppressor suppressor : suppressors) {
+            for (InspectionSuppressor suppressor : suppressors) {
           final SuppressQuickFix[] suppressActions = suppressor.getSuppressActions(null, toolWrapper.getID());
           Collections.addAll(actions, suppressActions);
         }
       }
     }
-    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<LocalQuickFix, SuppressIntentionAction>() {
-      @Override
-      public SuppressIntentionAction fun(final LocalQuickFix fix) {
-        return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction((SuppressQuickFix)fix);
-      }
-    });
+    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, fix -> SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction((SuppressQuickFix)fix));
   }
 
 

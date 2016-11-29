@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * class NewArrayInstanceEvaluator
- * created Jun 27, 2001
- * @author Jeka
- */
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -148,9 +143,5 @@ class NewArrayInstanceEvaluator implements Evaluator {
     catch (ClassCastException ex) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.initialize.array"));
     }
-  }
-
-  public Modifier getModifier() {
-    return null;
   }
 }

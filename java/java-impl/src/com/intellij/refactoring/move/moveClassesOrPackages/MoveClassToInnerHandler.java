@@ -32,7 +32,7 @@ import java.util.Map;
  * @author Max Medvedev
  */
 public interface MoveClassToInnerHandler {
-  ExtensionPointName<MoveClassToInnerHandler> EP_NAME = new ExtensionPointName<MoveClassToInnerHandler>("com.intellij.refactoring.moveClassToInnerHandler");
+  ExtensionPointName<MoveClassToInnerHandler> EP_NAME = new ExtensionPointName<>("com.intellij.refactoring.moveClassToInnerHandler");
 
   @Nullable
   PsiClass moveClass(@NotNull PsiClass aClass, @NotNull PsiClass targetClass);

@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -68,22 +69,18 @@ public final class PyExtractSuperclassHelper {
 
     //We will need to change it probably while param may be read-only
     //noinspection AssignmentToMethodParameter
-    selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
+    selectedMemberInfos = new ArrayList<>(selectedMemberInfos);
 
     final RefactoringEventData beforeData = new RefactoringEventData();
-    beforeData.addElements(JBIterable.from(selectedMemberInfos).transform(new Function<PyMemberInfo<PyElement>, PsiElement>() {
-      @Override
-      public PsiElement fun(PyMemberInfo<PyElement> info) {
-        return info.getMember();
-      }
-    }).toList());
+    beforeData.addElements(JBIterable.from(selectedMemberInfos).transform(
+      (Function<PyMemberInfo<PyElement>, PsiElement>)info -> info.getMember()).toList());
 
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(getRefactoringId(), beforeData);
 
     // PY-12171
     final PyMemberInfo<PyElement> objectMember = MembersManager.findMember(selectedMemberInfos, ALLOW_OBJECT);
-    if (LanguageLevel.forElement(clazz).isPy3K()) {
+    if (LanguageLevel.forElement(clazz).isPy3K() && !isObjectParentDeclaredExplicitly(clazz)) {
       // Remove object from list if Py3
       if (objectMember != null) {
         selectedMemberInfos.remove(objectMember);
@@ -114,7 +111,13 @@ public final class PyExtractSuperclassHelper {
     afterData.addElement(newClass);
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringDone(getRefactoringId(), afterData);
+  }
 
+  /**
+   * If class explicitly extends object we shall move it even in Py3K
+   */
+  private static boolean isObjectParentDeclaredExplicitly(@NotNull final PyClass clazz) {
+    return Arrays.stream(clazz.getSuperClassExpressions()).filter(o -> PyNames.OBJECT.equals(o.getName())).findFirst().isPresent();
   }
 
   private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {

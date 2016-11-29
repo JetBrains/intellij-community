@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,6 +202,23 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest("AddClass.py", PyUnresolvedReferencesInspection.class, "Create class 'Xyzzy'", true, true);
   }
 
+  // PY-21204
+  public void testAddClassFromTypeComment() {
+    doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'MyClass'", true, true);
+  }
+
+  // PY-21204
+  public void testAddClassFromFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, 
+                         () -> doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'MyClass'", true, true));
+  }
+
+  // PY-21204
+  public void testAddFunctionFromFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36,
+                         () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.unresolved.reference.create.function", "my_function"), true, true));
+  }
+
   // PY-1602
   public void testAddFunctionToModule() {
     doInspectionTest(
@@ -279,9 +296,19 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
+  // PY-20004
+  public void testChainedComparison7() {
+    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
   // PY-14002
   public void testChainedComparisonWithCommonBinaryExpression() {
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
+  // PY-19583
+  public void testChainedComparison6() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
   }
 
   // PY-1362, PY-2585
@@ -296,25 +323,20 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-2083
   public void testUnresolvedWith() {
-    runWithLanguageLevel(LanguageLevel.PYTHON25, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference.add.future"), true, true);
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference.add.future"), true, true));
   }
 
   // PY-2092
   public void testUnresolvedRefCreateFunction() {
     doInspectionTest(PyUnresolvedReferencesInspection.class,
-                     PyBundle.message("QFIX.unresolved.reference.create.function.$0", "ref"), true, true);
+                     PyBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"), true, true);
   }
 
   public void testUnresolvedRefNoCreateFunction() {
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.configureByFile("UnresolvedRefNoCreateFunction.py");
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.unresolved.reference.create.function.$0", "ref"));
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"));
     assertNull(intentionAction);
   }
 
@@ -434,12 +456,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3120
   public void testSetFunctionToLiteral() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PySetFunctionToLiteralInspection.class, PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doInspectionTest(PySetFunctionToLiteralInspection.class, PyBundle.message("QFIX.replace.function.set.with.literal"), true, true));
   }
 
   public void testDictComprehensionToCall() {
@@ -449,119 +466,73 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-3394
   public void testDocstringParams() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true));
   }
 
   public void testDocstringParams1() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true));
   }
 
   // PY-4964
   public void testDocstringParams2() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "ham"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "ham"), true, true));
   }
 
   // PY-9795
   public void testGoogleDocStringAddParam() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true));
   }
 
   // PY-9795
   public void testGoogleDocStringRemoveParam() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true));
   }
 
   // PY-9795
   public void testGoogleDocStringRemoveParamWithSection() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true));
   }
 
   // PY-16761
   public void testGoogleDocStringRemovePositionalVararg() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true));
   }
 
   // PY-16761
   public void testGoogleDocStringRemoveKeywordVararg() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "kwargs"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "kwargs"), true, true));
   }
 
   // PY-16908
   public void testNumpyDocStringRemoveFirstOfCombinedParams() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "x"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.NUMPY,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "x"), true, true));
   }
 
   // PY-16908
   public void testNumpyDocStringRemoveMidOfCombinedParams() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "y"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.NUMPY,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "y"), true, true));
   }
   
   // PY-16908
   public void testNumpyDocStringRemoveLastOfCombinedParams() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "z"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.NUMPY,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "z"), true, true));
   }
 
   // PY-16908
   public void testNumpyDocStringRemoveCombinedVarargParam() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.NUMPY,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true));
   }
 
   public void testUnnecessaryBackslash() {
@@ -597,7 +568,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.configureByFile(fileName);
     myFixture.enableInspections(PyShadowingBuiltinsInspection.class);
     myFixture.checkHighlighting(true, false, true);
-    final IntentionAction intentionAction = myFixture.getAvailableIntention("Rename element");
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.NAME.rename.element"));
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"));
@@ -609,7 +580,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.configureByFile(fileName);
     myFixture.enableInspections(PyShadowingBuiltinsInspection.class);
     myFixture.checkHighlighting(true, false, true);
-    final IntentionAction intentionAction = myFixture.getAvailableIntention("Rename element");
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.NAME.rename.element"));
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"));
@@ -632,6 +603,47 @@ public class PyQuickFixTest extends PyTestCase {
   public void testImplementAbstractProperty1() {
     doInspectionTest("ImplementAbstractProperty.py", PyAbstractClassInspection.class, PyBundle.message("QFIX.NAME.implement.methods"),
                      true, true);
+  }
+
+  public void testRemovingUnderscoresInNumericLiterals() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "1_0_0");
+
+    final IntentionAction action = myFixture.findSingleIntention(PyBundle.message("QFIX.NAME.remove.underscores.in.numeric"));
+    myFixture.launchAction(action);
+
+    myFixture.checkResult("100");
+  }
+
+  // PY-20452
+  public void testRemoveRedundantEscapeInOnePartRegExp() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "import re\nre.compile(\"(?P<foo>((\\/(?P<bar>.+))?))\")");
+
+    final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
+    assertEquals(1, quickFixes.size());
+
+    final IntentionAction removeRedundantEscapeFix = quickFixes.get(0);
+    assertEquals("Remove redundant escape", removeRedundantEscapeFix.getText());
+
+    myFixture.launchAction(removeRedundantEscapeFix);
+    myFixture.checkResult("import re\nre.compile(\"(?P<foo>((/(?P<bar>.+))?))\")");
+  }
+
+  // PY-20452
+  public void testRemoveRedundantEscapeInMultiPartRegExp() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "import re\n" +
+                                                       "re.compile(\"(?P<foo>\"\n" +
+                                                       "           \"((\\/(?P<bar>.+))?))\")");
+
+    final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
+    assertEquals(1, quickFixes.size());
+
+    final IntentionAction removeRedundantEscapeFix = quickFixes.get(0);
+    assertEquals("Remove redundant escape", removeRedundantEscapeFix.getText());
+
+    myFixture.launchAction(removeRedundantEscapeFix);
+    myFixture.checkResult("import re\n" +
+                          "re.compile(\"(?P<foo>\"\n" +
+                          "           \"((/(?P<bar>.+))?))\")");
   }
 
   @Override

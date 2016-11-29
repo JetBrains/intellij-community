@@ -1,4 +1,4 @@
 class Test {
-  <caret> void foo() {
+  <caret>void foo() {
   }
 }

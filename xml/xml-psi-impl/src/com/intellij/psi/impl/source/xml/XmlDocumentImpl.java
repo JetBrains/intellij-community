@@ -44,6 +44,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlExtension;
@@ -72,6 +73,11 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDocumentImpl");
+  private static final AtomicFieldUpdater<XmlDocumentImpl, XmlProlog>
+    MY_PROLOG_UPDATER = AtomicFieldUpdater.forFieldOfType(XmlDocumentImpl.class, XmlProlog.class);
+  private static final AtomicFieldUpdater<XmlDocumentImpl, XmlTag>
+    MY_ROOT_TAG_UPDATER = AtomicFieldUpdater.forFieldOfType(XmlDocumentImpl.class, XmlTag.class);
+
   private volatile XmlProlog myProlog;
   private volatile XmlTag myRootTag;
   private volatile long myExtResourcesModCount = -1;
@@ -115,12 +121,9 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     if (prolog == null) {
       prolog = (XmlProlog)findElementByTokenType(XmlElementType.XML_PROLOG);
-      synchronized (PsiLock.LOCK) {
-        if (myProlog == null) {
-          myProlog = prolog;
-        } else {
-          prolog = myProlog;
-        }
+
+      if(!MY_PROLOG_UPDATER.compareAndSet(this, null, prolog)) {
+        prolog = MY_PROLOG_UPDATER.get(this);
       }
     }
 
@@ -133,12 +136,9 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     if (rootTag == null) {
       rootTag = (XmlTag)findElementByTokenType(XmlElementType.XML_TAG);
-      synchronized (PsiLock.LOCK) {
-        if (myRootTag == null) {
-          myRootTag = rootTag;
-        } else {
-          rootTag = myRootTag;
-        }
+
+      if (!MY_ROOT_TAG_UPDATER.compareAndSet(this, null, rootTag)) {
+        rootTag = MY_ROOT_TAG_UPDATER.get(this);
       }
     }
 
@@ -161,10 +161,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
     myDefaultDescriptorsCacheNotStrict.clear();
-    synchronized (PsiLock.LOCK) {
-      myProlog = null;
-      myRootTag = null;
-    }
+    myRootTag = null;
+    myProlog = null;
     super.clearCaches();
   }
 
@@ -187,19 +185,16 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
     if (cachedValue == null) {
-      defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
-        @Override
-        public Result<XmlNSDescriptor> compute() {
-          final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
+      defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl<>(getManager(), () -> {
+        final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
-          if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
-            return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, XmlDocumentImpl.this, ExternalResourceManager.getInstance());
-          }
-
-          return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
-                                                                       ? defaultNSDescriptorInner.getDependences()
-                                                                       : ExternalResourceManager.getInstance());
+        if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
+          return new CachedValueProvider.Result<>(defaultNSDescriptorInner, this, ExternalResourceManager.getInstance());
         }
+
+        return new CachedValueProvider.Result<>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
+                                                                          ? defaultNSDescriptorInner.getDependences()
+                                                                          : ExternalResourceManager.getInstance());
       }));
     }
     return cachedValue.getValue();
@@ -304,14 +299,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   private static XmlNSDescriptor getCachedHtmlNsDescriptor(final XmlFile descriptorFile) {
-    return CachedValuesManager.getCachedValue(descriptorFile, new CachedValueProvider<XmlNSDescriptor>() {
-      @Nullable
-      @Override
-      public Result<XmlNSDescriptor> compute() {
-        final XmlDocument document = descriptorFile.getDocument();
-        if (document == null) return Result.create(null, descriptorFile);
-        return Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData()), descriptorFile);
-      }
+    return CachedValuesManager.getCachedValue(descriptorFile, () -> {
+      final XmlDocument document = descriptorFile.getDocument();
+      if (document == null) return CachedValueProvider.Result.create(null, descriptorFile);
+      return CachedValueProvider.Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData()), descriptorFile);
     });
   }
 
@@ -374,10 +365,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   @NotNull
   @Override
   public CompositePsiElement clone() {
-    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<>(
       myDefaultDescriptorsCacheStrict
     );
-    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<>(
       myDefaultDescriptorsCacheNotStrict
     );
     final XmlDocumentImpl copy = (XmlDocumentImpl) super.clone();
@@ -387,10 +378,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
   @Override
   public PsiElement copy() {
-    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<>(
       myDefaultDescriptorsCacheStrict
     );
-    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<>(
       myDefaultDescriptorsCacheNotStrict
     );
     final XmlDocumentImpl copy = (XmlDocumentImpl)super.copy();
@@ -426,7 +417,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void dumpStatistics(){
     System.out.println("Statistics:");
-    final TObjectIntHashMap<Object> map = new TObjectIntHashMap<Object>();
+    final TObjectIntHashMap<Object> map = new TObjectIntHashMap<>();
 
     final PsiElementVisitor psiRecursiveElementVisitor = new XmlRecursiveElementVisitor(){
       @NonNls private static final String TOKENS_KEY = "Tokens";

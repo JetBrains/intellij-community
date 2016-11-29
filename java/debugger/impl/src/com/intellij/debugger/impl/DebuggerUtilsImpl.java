@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,19 +34,32 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.Value;
 import com.sun.jdi.connect.spi.TransportService;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
+  public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsImpl");
 
   @Override
@@ -95,15 +108,33 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
 
   @Override
   public void writeTextWithImports(Element root, String name, TextWithImports value) {
-    LOG.assertTrue(value.getKind() == CodeFragmentKind.EXPRESSION);
-    JDOMExternalizerUtil.writeField(root, name, value.toExternalForm());
+    if (value.getKind() == CodeFragmentKind.EXPRESSION) {
+      JDOMExternalizerUtil.writeField(root, name, value.toExternalForm());
+    }
+    else {
+      Element element = JDOMExternalizerUtil.writeOption(root, name);
+      XExpression expression = TextWithImportsImpl.toXExpression(value);
+      if (expression != null) {
+        XmlSerializer.serializeInto(new XExpressionState(expression), element, new SkipDefaultValuesSerializationFilters());
+      }
+    }
   }
 
   @Override
   public TextWithImports readTextWithImports(Element root, String name) {
     String s = JDOMExternalizerUtil.readField(root, name);
-    if(s == null) return null;
-    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, s);
+    if (s != null) {
+      return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, s);
+    }
+    else {
+      Element option = JDOMExternalizerUtil.getOption(root, name);
+      if (option != null) {
+        XExpressionState state = new XExpressionState();
+        XmlSerializer.deserializeInto(state, option);
+        return TextWithImportsImpl.fromXExpression(state.toXExpression());
+      }
+    }
+    return null;
   }
 
   @Override
@@ -116,6 +147,33 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return PositionUtil.getContextElement(context);
   }
 
+  @NotNull
+  public static Pair<PsiElement, PsiType> getPsiClassAndType(@Nullable String className, Project project) {
+    PsiElement contextClass = null;
+    PsiType contextType = null;
+    if (!StringUtil.isEmpty(className)) {
+      PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(className);
+      if (primitiveType != null) {
+        contextClass = JavaPsiFacade.getInstance(project).findClass(primitiveType.getBoxedTypeName(), GlobalSearchScope.allScope(project));
+        contextType = primitiveType;
+      }
+      else {
+        contextClass = findClass(className, project, GlobalSearchScope.allScope(project));
+        if (contextClass != null) {
+          contextClass = contextClass.getNavigationElement();
+        }
+        if (contextClass instanceof PsiCompiledElement) {
+          contextClass = ((PsiCompiledElement)contextClass).getMirror();
+        }
+        contextType = getType(className, project);
+      }
+      if (contextClass != null) {
+        contextClass.putUserData(PSI_TYPE_KEY, contextType);
+      }
+    }
+    return Pair.create(contextClass, contextType);
+  }
+
   @Override
   public PsiClass chooseClassDialog(String title, Project project) {
     TreeClassChooser dialog = TreeClassChooserFactory.getInstance(project).createAllProjectScopeChooser(title);
@@ -124,8 +182,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  public String findAvailableDebugAddress(final boolean useSockets) throws ExecutionException {
-    final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
+  public String findAvailableDebugAddress(boolean useSockets) throws ExecutionException {
     if (useSockets) {
       final int freePort;
       try {
@@ -136,32 +193,85 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
       return Integer.toString(freePort);
     }
-
-    try {
-      TransportService.ListenKey listenKey = transportService.startListening();
-      final String address = listenKey.address();
-      transportService.stopListening(listenKey);
-      return address;
-    }
-    catch (IOException e) {
-      int tryNum = 0;
-      while (true) {
-        try {
-          TransportService.ListenKey listenKey = transportService.startListening("javadebug_" + (int)(Math.random()*1000));
-          final String address = listenKey.address();
-          transportService.stopListening(listenKey);
-          return address;
-        }
-        catch (Exception ex) {
-          if (tryNum++ > 10) {
-            throw new ExecutionException(DebugProcessImpl.processError(ex));
+    else {
+      TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(false);
+      try {
+        return tryShmemConnect(transportService, null);
+      }
+      catch (IOException e) {
+        int tryNum = 0;
+        while (true) {
+          try {
+            return tryShmemConnect(transportService, "javadebug_" + (int)(Math.random() * 1000));
+          }
+          catch (Exception ex) {
+            if (tryNum++ > 10) {
+              throw new ExecutionException(DebugProcessImpl.processError(ex));
+            }
           }
         }
       }
     }
   }
 
+  private static String tryShmemConnect(TransportServiceWrapper transportService, String address) throws IOException {
+    TransportService.ListenKey listenKey = transportService.startListening(address);
+    address = listenKey.address();
+    transportService.stopListening(listenKey);
+    return address;
+  }
+
   public static boolean isRemote(DebugProcess debugProcess) {
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
+  }
+
+  public interface SupplierThrowing<T, E extends Throwable> {
+    T get() throws E;
+  }
+
+  public static <T, E extends Exception> T suppressExceptions(SupplierThrowing<T, E> supplier, T defaultValue) throws E {
+    return suppressExceptions(supplier, defaultValue, true, null);
+  }
+
+  public static <T, E extends Exception> T suppressExceptions(SupplierThrowing<T, E> supplier,
+                                                              T defaultValue,
+                                                              boolean ignorePCE,
+                                                              Class<E> rethrow) throws E {
+    try {
+      return supplier.get();
+    }
+    catch (ProcessCanceledException e) {
+      if (!ignorePCE) {
+        throw e;
+      }
+    }
+    catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
+    catch (InternalException e) {LOG.info(e);}
+    catch (Exception | AssertionError e) {
+      if (rethrow != null && rethrow.isInstance(e)) {
+        throw e;
+      }
+      else {
+        LOG.error(e);
+      }
+    }
+    return defaultValue;
+  }
+
+  public static <T> T runInReadActionWithWriteActionPriorityWithRetries(@NotNull Computable<T> action) {
+    Ref<T> res = Ref.create();
+    while (true) {
+      if (ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
+        return res.get();
+      }
+      try {
+        //noinspection BusyWait
+        Thread.sleep(50);
+      }
+      catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return null;
+      }
+    }
   }
 }

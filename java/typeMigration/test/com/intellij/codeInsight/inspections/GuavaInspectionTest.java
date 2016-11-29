@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,14 @@ import java.util.List;
  * @author Dmitry Batkovich
  */
 public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
+  private GuavaInspection myInspection;
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myInspection = new GuavaInspection();
+    myFixture.enableInspections(myInspection);
+  }
 
   @Override
   protected String getTestDataPath()  {
@@ -48,7 +56,8 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-17.0.jar");
+    moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-19.0.jar");
+    moduleBuilder.addLibraryJars("jsr305", PathManager.getHomePathFor(Assert.class) + "/lib/", "jsr305.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
@@ -73,7 +82,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testFluentIterableChainWithoutVariable() {
-    doTestAllFile();;
+    doTestAllFile();
   }
 
   public void testChainedFluentIterableWithChainedInitializer() {
@@ -112,7 +121,6 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  //needs Guava 18.0 as dependency
   public void _testChainedFluentIterableWithOf() {
     doTest();
   }
@@ -259,9 +267,35 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  // for ex: javax.annotations.Nullable is runtime annotation
+  public void testFunctionAnnotatedWithRuntimeAnnotation() {
+    doTestAllFile();
+  }
+
+  public void testFunctionAnnotatedWithRuntimeAnnotation2() {
+    try {
+      myInspection.ignoreJavaxNullable = false;
+      doTestAllFile();
+    } finally {
+      myInspection.ignoreJavaxNullable = true;
+    }
+  }
+
+  public void testFluentIterableFromAndParenthesises() {
+    doTestAllFile();
+  }
+
+  public void testFunctionIsMethodReference() {
+    doTest();
+  }
+
+  public void testFluentIterableLast() {
+    doTest();
+  }
+
   private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
-    myFixture.enableInspections(new GuavaInspection());
+
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
       if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {

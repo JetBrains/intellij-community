@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -62,6 +63,8 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
   private final boolean mySpaceBetweenParentheses;
   private final boolean myMayInsertRightParenthesis;
   private final boolean myAllowParametersOnNextLine;
+  private final char myLeftParenthesis;
+  private final char myRightParenthesis;
 
   protected ParenthesesInsertHandler(final boolean spaceBeforeParentheses,
                                      final boolean spaceBetweenParentheses,
@@ -73,10 +76,21 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
                                      boolean spaceBetweenParentheses,
                                      boolean mayInsertRightParenthesis,
                                      boolean allowParametersOnNextLine) {
+    this(spaceBeforeParentheses, spaceBetweenParentheses, mayInsertRightParenthesis, allowParametersOnNextLine, '(', ')');
+  }
+
+  protected ParenthesesInsertHandler(boolean spaceBeforeParentheses, 
+                                     boolean spaceBetweenParentheses, 
+                                     boolean mayInsertRightParenthesis,
+                                     boolean allowParametersOnNextLine, 
+                                     char leftParenthesis, 
+                                     char rightParenthesis) {
     mySpaceBeforeParentheses = spaceBeforeParentheses;
     mySpaceBetweenParentheses = spaceBetweenParentheses;
     myMayInsertRightParenthesis = mayInsertRightParenthesis;
     myAllowParametersOnNextLine = allowParametersOnNextLine;
+    myLeftParenthesis = leftParenthesis;
+    myRightParenthesis = rightParenthesis;
   }
 
   protected ParenthesesInsertHandler() {
@@ -94,23 +108,23 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();
     context.commitDocument();
-    PsiElement element = findNextToken(context);
+    PsiElement lParen = findExistingLeftParenthesis(context);
 
     final char completionChar = context.getCompletionChar();
-    final boolean putCaretInside = completionChar == '(' || placeCaretInsideParentheses(context, item);
+    final boolean putCaretInside = completionChar == myLeftParenthesis || placeCaretInsideParentheses(context, item);
 
-    if (completionChar == '(') {
+    if (completionChar == myLeftParenthesis) {
       context.setAddCompletionChar(false);
     }
 
-    if (isToken(element, "(")) {
-      int lparenthOffset = element.getTextRange().getStartOffset();
+    if (lParen != null) {
+      int lparenthOffset = lParen.getTextRange().getStartOffset();
       if (mySpaceBeforeParentheses && lparenthOffset == context.getTailOffset()) {
         document.insertString(context.getTailOffset(), " ");
         lparenthOffset++;
       }
 
-      if (completionChar == '(' || completionChar == '\t') {
+      if (completionChar == myLeftParenthesis || completionChar == '\t') {
         editor.getCaretModel().moveToOffset(lparenthOffset + 1);
       } else {
         editor.getCaretModel().moveToOffset(context.getTailOffset());
@@ -118,9 +132,9 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
 
       context.setTailOffset(lparenthOffset + 1);
 
-      PsiElement list = element.getParent();
+      PsiElement list = lParen.getParent();
       PsiElement last = list.getLastChild();
-      if (isToken(last, ")")) {
+      if (isToken(last, String.valueOf(myRightParenthesis))) {
         int rparenthOffset = last.getTextRange().getStartOffset();
         context.setTailOffset(rparenthOffset + 1);
         if (!putCaretInside) {
@@ -130,21 +144,23 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
             }
           }
           editor.getCaretModel().moveToOffset(context.getTailOffset());
-        } else if (mySpaceBetweenParentheses && document.getCharsSequence().charAt(lparenthOffset) == ' ') {
+        }
+        else if (mySpaceBetweenParentheses && document.getCharsSequence().charAt(lparenthOffset) == ' ') {
           editor.getCaretModel().moveToOffset(lparenthOffset + 2);
-        } else {
+        }
+        else {
           editor.getCaretModel().moveToOffset(lparenthOffset + 1);
         }
         return;
       }
     } else {
-      document.insertString(context.getTailOffset(), getSpace(mySpaceBeforeParentheses) + "(" + getSpace(mySpaceBetweenParentheses));
+      document.insertString(context.getTailOffset(), getSpace(mySpaceBeforeParentheses) + myLeftParenthesis + getSpace(mySpaceBetweenParentheses));
       editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
 
     if (!myMayInsertRightParenthesis) return;
 
-    if (context.getCompletionChar() == '(') {
+    if (context.getCompletionChar() == myLeftParenthesis) {
       //todo use BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType
       int tail = context.getTailOffset();
       if (tail < document.getTextLength() && StringUtil.isJavaIdentifierPart(document.getCharsSequence().charAt(tail))) {
@@ -152,7 +168,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
       }
     }
 
-    document.insertString(context.getTailOffset(), getSpace(mySpaceBetweenParentheses) + ")");
+    document.insertString(context.getTailOffset(), getSpace(mySpaceBetweenParentheses) + myRightParenthesis);
     if (!putCaretInside) {
       editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
@@ -163,7 +179,13 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
   }
 
   @Nullable
-  protected PsiElement findNextToken(final InsertionContext context) {
+  protected PsiElement findExistingLeftParenthesis(@NotNull InsertionContext context) {
+    PsiElement element = findNextToken(context);
+    return isToken(element, String.valueOf(myLeftParenthesis)) ? element : null;
+  }
+
+  @Nullable
+  protected PsiElement findNextToken(@NotNull InsertionContext context) {
     final PsiFile file = context.getFile();
     PsiElement element = file.findElementAt(context.getTailOffset());
     if (element instanceof PsiWhiteSpace) {

@@ -16,7 +16,7 @@ class Box<T>
   }
 
   {
-    foo(Box<String>::getValue);
+    foo((Function<Box<String>, String>) Box::getValue);
   }
   
   <K> void foo(Function<Box<K>, K> f){}

@@ -45,7 +45,7 @@ public class DownloadableFileServiceImpl extends DownloadableFileService {
     return new FileSetVersionsFetcherBase<DownloadableFileSetDescription, DownloadableFileDescription>(groupId, localUrls) {
       @Override
       protected DownloadableFileSetDescription createVersion(Artifact version, List<DownloadableFileDescription> files) {
-        return new DownloadableFileSetDescriptionImpl<DownloadableFileDescription>(version.getName(), version.getVersion(), files);
+        return new DownloadableFileSetDescriptionImpl<>(version.getName(), version.getVersion(), files);
       }
 
       @Override

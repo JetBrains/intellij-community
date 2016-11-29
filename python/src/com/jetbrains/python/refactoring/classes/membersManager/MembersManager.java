@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Moves members between classes via its plugins (managers).
@@ -64,7 +65,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    */
   @NotNull
   public static List<PyMemberInfo<PyElement>> getAllMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    final List<PyMemberInfo<PyElement>> result = new ArrayList<PyMemberInfo<PyElement>>();
+    final List<PyMemberInfo<PyElement>> result = new ArrayList<>();
 
     for (final MembersManager<? extends PyElement> manager : MANAGERS) {
       result.addAll(transformSafely(pyClass, manager));
@@ -104,13 +105,8 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     @NotNull final PyClass from,
     @NotNull final PyClass... to
   ) {
-    List<PyMemberInfo<PyElement>> memberInfosSorted = new ArrayList<PyMemberInfo<PyElement>>(memberInfos);
-    Collections.sort(memberInfosSorted, new Comparator<PyMemberInfo<PyElement>>() {
-      @Override
-      public int compare(PyMemberInfo<PyElement> o1, PyMemberInfo<PyElement> o2) {
-        return PyDependenciesComparator.INSTANCE.compare(o1.getMember(), o2.getMember());
-      }
-    });
+    List<PyMemberInfo<PyElement>> memberInfosSorted = new ArrayList<>(memberInfos);
+    Collections.sort(memberInfosSorted, (o1, o2) -> PyDependenciesComparator.INSTANCE.compare(o1.getMember(), o2.getMember()));
 
     for (PyMemberInfo<PyElement> info : memberInfosSorted) {
       TypeSafeMovingStrategy.moveCheckingTypesAtRunTime(from, info.getMembersManager(), Collections.singleton(info), to);
@@ -256,7 +252,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    */
   @NotNull
   protected static <T extends PyElement> Collection<T> fetchElements(@NotNull final Collection<PyMemberInfo<T>> memberInfos) {
-    return Collections2.transform(memberInfos, new PyMemberExtractor<T>());
+    return memberInfos.stream().map(o -> o.getMember()).filter(o -> o != null).collect(Collectors.toList());
   }
 
   /**
@@ -288,9 +284,9 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     final Collection<? extends PyElement> elementsToCheckDependency =
       memberInfo.getMembersManager().getElementsToStoreReferences(Collections.singleton(member));
 
-    final MultiMap<PyClass, PyElement> dependencies = new MultiMap<PyClass, PyElement>();
+    final MultiMap<PyClass, PyElement> dependencies = new MultiMap<>();
 
-    final Collection<PyElement> result = new HashSet<PyElement>();
+    final Collection<PyElement> result = new HashSet<>();
     for (final MembersManager<? extends PyElement> manager : MANAGERS) {
       for (final PyElement elementToCheckDependency : elementsToCheckDependency) {
         dependencies.putAllValues(manager.getDependencies(elementToCheckDependency));
@@ -337,13 +333,6 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   @NotNull
   protected abstract Collection<PyElement> getDependencies(@NotNull MultiMap<PyClass, PyElement> usedElements);
 
-  private static class PyMemberExtractor<T extends PyElement> implements Function<PyMemberInfo<T>, T> {
-    @SuppressWarnings("NullableProblems") //IDEA-120100
-    @Override
-    public T apply(@NotNull final PyMemberInfo<T> input) {
-      return input.getMember();
-    }
-  }
 
   private static class FindByElement extends NotNullPredicate<PyMemberInfo<PyElement>> {
     private final PyElement myPyElement;

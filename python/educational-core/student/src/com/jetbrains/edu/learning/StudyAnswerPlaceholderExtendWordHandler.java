@@ -9,8 +9,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -37,8 +37,7 @@ public class StudyAnswerPlaceholderExtendWordHandler implements ExtendWordSelect
       return null;
     }
     Editor editor = FileEditorManager.getInstance(e.getProject()).getSelectedTextEditor();
-    return editor == null ? null : taskFile.getAnswerPlaceholder(document,
-                                          editor.offsetToLogicalPosition(offset));
+    return editor == null ? null : taskFile.getAnswerPlaceholder(offset);
   }
 
 
@@ -55,10 +54,7 @@ public class StudyAnswerPlaceholderExtendWordHandler implements ExtendWordSelect
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     AnswerPlaceholder placeholder = getAnswerPlaceholder(e, cursorOffset);
     assert placeholder != null;
-    VirtualFile file = e.getContainingFile().getVirtualFile();
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    assert document != null;
-    int startOffset = placeholder.getRealStartOffset(document);
-    return Collections.singletonList(new TextRange(startOffset, startOffset + placeholder.getLength()));
+    int startOffset = placeholder.getOffset();
+    return Collections.singletonList(new TextRange(startOffset, startOffset + placeholder.getRealLength()));
   }
 }

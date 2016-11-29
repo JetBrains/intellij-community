@@ -141,12 +141,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
         public void hyperlinkUpdate(HyperlinkEvent e) {
           final FileTemplateConfigurable configurable = new FileTemplateConfigurable(myProject);
           final FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              configurable.setTemplate(template, null);
-            }
-          });
+          SwingUtilities.invokeLater(() -> configurable.setTemplate(template, null));
           boolean ok = ShowSettingsUtil.getInstance().editConfigurable(myPanel, configurable);
           if (ok) {
             FileTemplateManager.getInstance(myProject).saveAllTemplates();
@@ -214,12 +209,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     }
 
     myRBEditorTextField.setHistory(ArrayUtil.toStringArray(result));
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myRBEditorTextField.setSelectedIndex(0);
-      }
-    });
+    SwingUtilities.invokeLater(() -> myRBEditorTextField.setSelectedIndex(0));
   }
 
   @Override
@@ -255,7 +245,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     String templateName = getTemplateName();
     LOG.assertTrue(templateName != null);
     FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
-    Map<String, String> attributes = new THashMap<String, String>();
+    Map<String, String> attributes = new THashMap<>();
     attributes.put(PROPERTY_KEY_OPTION_KEY, propertyKey);
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
     attributes.put(PROPERTY_VALUE_ATTR, StringUtil.escapeStringCharacters(myDefaultPropertyValue));

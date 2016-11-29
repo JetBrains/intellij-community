@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,7 @@ public class VcsRootErrorsFinder {
   public Collection<VcsRootError> find() {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     Collection<VcsRoot> vcsRoots = myRootDetector.detect();
-    Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
+    Collection<VcsRootError> errors = new ArrayList<>();
     errors.addAll(findExtraMappings(mappings));
     errors.addAll(findUnregisteredRoots(mappings, vcsRoots));
     return errors;
@@ -40,7 +39,7 @@ public class VcsRootErrorsFinder {
   @NotNull
   private Collection<VcsRootError> findUnregisteredRoots(@NotNull List<VcsDirectoryMapping> mappings,
                                                          @NotNull Collection<VcsRoot> vcsRoots) {
-    Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
+    Collection<VcsRootError> errors = new ArrayList<>();
     List<String> mappedPaths = mappingsToPathsWithSelectedVcs(mappings);
     for (VcsRoot root : vcsRoots) {
       VirtualFile virtualFileFromRoot = root.getPath();
@@ -57,7 +56,7 @@ public class VcsRootErrorsFinder {
 
   @NotNull
   private Collection<VcsRootError> findExtraMappings(@NotNull List<VcsDirectoryMapping> mappings) {
-    Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
+    Collection<VcsRootError> errors = new ArrayList<>();
     for (VcsDirectoryMapping mapping : mappings) {
       if (!hasVcsChecker(mapping.getVcs())) {
         continue;
@@ -90,18 +89,8 @@ public class VcsRootErrorsFinder {
     return false;
   }
 
-  @NotNull
-  public static Collection<VirtualFile> vcsRootsToVirtualFiles(@NotNull Collection<VcsRoot> vcsRoots) {
-    return ContainerUtil.map(vcsRoots, new Function<VcsRoot, VirtualFile>() {
-      @Override
-      public VirtualFile fun(VcsRoot root) {
-        return root.getPath();
-      }
-    });
-  }
-
   private List<String> mappingsToPathsWithSelectedVcs(@NotNull List<VcsDirectoryMapping> mappings) {
-    List<String> paths = new ArrayList<String>();
+    List<String> paths = new ArrayList<>();
     for (VcsDirectoryMapping mapping : mappings) {
       if (StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
         continue;

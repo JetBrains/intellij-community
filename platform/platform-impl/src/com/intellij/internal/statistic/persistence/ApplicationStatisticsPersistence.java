@@ -8,11 +8,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public abstract class ApplicationStatisticsPersistence {
-  private final Map<GroupDescriptor, Map<String, CollectedUsages>> myApplicationData = new THashMap<GroupDescriptor, Map<String, CollectedUsages>>();
+  private final Map<GroupDescriptor, Map<String, CollectedUsages>> myApplicationData = new THashMap<>();
 
   public void persistUsages(@NotNull GroupDescriptor groupDescriptor, @NotNull Project project, @NotNull CollectedUsages usageDescriptors) {
     if (!myApplicationData.containsKey(groupDescriptor)) {
-      myApplicationData.put(groupDescriptor, new THashMap<String, CollectedUsages>());
+      myApplicationData.put(groupDescriptor, new THashMap<>());
     }
     myApplicationData.get(groupDescriptor).put(project.getName(), usageDescriptors);
   }
@@ -20,7 +20,7 @@ public abstract class ApplicationStatisticsPersistence {
   @NotNull
   public Map<String, CollectedUsages> getApplicationData(@NotNull GroupDescriptor groupDescriptor) {
     if (!myApplicationData.containsKey(groupDescriptor)) {
-      myApplicationData.put(groupDescriptor, new THashMap<String, CollectedUsages>());
+      myApplicationData.put(groupDescriptor, new THashMap<>());
     }
     return myApplicationData.get(groupDescriptor);
   }

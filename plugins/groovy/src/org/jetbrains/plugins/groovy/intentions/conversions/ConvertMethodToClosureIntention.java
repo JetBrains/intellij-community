@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,8 @@ public class ConvertMethodToClosureIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final GrMethod method;
     if (element.getParent() instanceof GrMethod) {
       method = (GrMethod)element.getParent();
@@ -83,7 +83,7 @@ public class ConvertMethodToClosureIntention extends Intention {
     }
 
     final Collection<PsiReference> references = MethodReferencesSearch.search(method).findAll();
-    final Collection<GrReferenceExpression> usagesToConvert = new HashSet<GrReferenceExpression>(references.size());
+    final Collection<GrReferenceExpression> usagesToConvert = new HashSet<>(references.size());
     for (PsiReference ref : references) {
       final PsiElement psiElement = ref.getElement();
       if (!GroovyLanguage.INSTANCE.equals(psiElement.getLanguage())) {
@@ -98,12 +98,7 @@ public class ConvertMethodToClosureIntention extends Intention {
       }
     }
     if (!conflicts.isEmpty()) {
-      ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
-        @Override
-        public void run() {
-          execute(method, usagesToConvert);
-        }
-      });
+      ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, () -> execute(method, usagesToConvert));
       conflictsDialog.show();
       if (conflictsDialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
     }
@@ -111,32 +106,29 @@ public class ConvertMethodToClosureIntention extends Intention {
   }
 
   private static void execute(final GrMethod method, final Collection<GrReferenceExpression> usagesToConvert) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
 
-        StringBuilder builder = new StringBuilder(method.getTextLength());
-        String modifiers = method.getModifierList().getText();
-        if (modifiers.trim().isEmpty()) {
-          modifiers = GrModifier.DEF;
-        }
-        builder.append(modifiers).append(' ');
-        builder.append(method.getName()).append("={");
-        builder.append(method.getParameterList().getText()).append(" ->");
-        final GrOpenBlock block = method.getBlock();
-        builder.append(block.getText().substring(1));
-        final GrVariableDeclaration variableDeclaration =
-          GroovyPsiElementFactory.getInstance(method.getProject()).createFieldDeclarationFromText(builder.toString());
-        method.replace(variableDeclaration);
+      StringBuilder builder = new StringBuilder(method.getTextLength());
+      String modifiers = method.getModifierList().getText();
+      if (modifiers.trim().isEmpty()) {
+        modifiers = GrModifier.DEF;
+      }
+      builder.append(modifiers).append(' ');
+      builder.append(method.getName()).append("={");
+      builder.append(method.getParameterList().getText()).append(" ->");
+      final GrOpenBlock block = method.getBlock();
+      builder.append(block.getText().substring(1));
+      final GrVariableDeclaration variableDeclaration =
+        GroovyPsiElementFactory.getInstance(method.getProject()).createFieldDeclarationFromText(builder.toString());
+      method.replace(variableDeclaration);
 
-        for (GrReferenceExpression element : usagesToConvert) {
-          final PsiElement qualifier = element.getQualifier();
-          final StringBuilder text = new StringBuilder(qualifier.getText());
-          element.setQualifier(null);
-          text.append('.').append(element.getText());
-          element.replace(factory.createExpressionFromText(text.toString()));
-        }
+      for (GrReferenceExpression element : usagesToConvert) {
+        final PsiElement qualifier = element.getQualifier();
+        final StringBuilder text = new StringBuilder(qualifier.getText());
+        element.setQualifier(null);
+        text.append('.').append(element.getText());
+        element.replace(factory.createExpressionFromText(text.toString()));
       }
     });
   }

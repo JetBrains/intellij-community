@@ -1,7 +1,27 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import java.io.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -31,7 +51,7 @@ public class Utils {
       myTempDir = getTempFile(Runner.getDir(requiredFreeSpace) + "/idea.updater.files");
       delete(myTempDir);
       myTempDir.mkdirs();
-      Runner.logger.info("created temp file: " + myTempDir.getPath());
+      Runner.logger().info("created temp file: " + myTempDir.getPath());
     }
     return getTempFile(myTempDir + "/temp");
   }
@@ -39,9 +59,9 @@ public class Utils {
   public static File createTempDir() throws IOException {
     File result = createTempFile();
     delete(result);
-    Runner.logger.info("deleted tmp dir: " + result.getPath());
+    Runner.logger().info("deleted tmp dir: " + result.getPath());
     result.mkdirs();
-    Runner.logger.info("created tmp dir: " + result.getPath());
+    Runner.logger().info("created tmp dir: " + result.getPath());
     if (! result.exists()) throw new IOException("Cannot create temp dir: " + result);
     return result;
   }
@@ -49,7 +69,7 @@ public class Utils {
   public static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
-    Runner.logger.info("deleted file " + myTempDir.getPath());
+    Runner.logger().info("deleted file " + myTempDir.getPath());
     myTempDir = null;
   }
 
@@ -59,7 +79,7 @@ public class Utils {
       if (files != null) {
         for (File each : files) {
           delete(each);
-          Runner.logger.info("deleted file " + each.getPath());
+          Runner.logger().info("deleted file " + each.getPath());
         }
       }
     }
@@ -76,13 +96,28 @@ public class Utils {
 
   public static void setExecutable(File file, boolean executable) throws IOException {
     if (executable && !file.setExecutable(true, false)) {
-      Runner.logger.error("Can't set executable permissions for file");
+      Runner.logger().error("Can't set executable permissions for file");
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
 
+  public static boolean isLink(File file) throws IOException {
+    return Files.isSymbolicLink(Paths.get(file.getAbsolutePath()));
+  }
+
+  public static void createLink(String target, File link) throws IOException {
+    if (target == "") {
+      Runner.logger().error("Can't create link for " +  link.getName());
+    } else {
+      if (link.exists()) {
+        delete(link);
+      }
+      Files.createSymbolicLink(Paths.get(link.getAbsolutePath()), Paths.get(target));
+    }
+  }
+
   public static void copy(File from, File to) throws IOException {
-    Runner.logger.info("from " + from.getPath() + " to " + to.getPath());
+    Runner.logger().info("from " + from.getPath() + " to " + to.getPath());
     if (from.isDirectory()) {
       to.mkdirs();
       File[] files = from.listFiles();
@@ -92,14 +127,16 @@ public class Utils {
       }
     }
     else {
-      InputStream in = new BufferedInputStream(new FileInputStream(from));
-      try {
-        copyStreamToFile(in, to);
+      if (! isLink(from)) {
+        InputStream in = new BufferedInputStream(new FileInputStream(from));
+        try {
+          copyStreamToFile(in, to);
+        }
+        finally {
+          in.close();
+        }
+        setExecutable(to, from.canExecute());
       }
-      finally {
-        in.close();
-      }
-      setExecutable(to, from.canExecute());
     }
   }
 
@@ -180,7 +217,7 @@ public class Utils {
   public static ZipEntry getZipEntry(ZipFile zipFile, String entryPath) throws IOException {
     ZipEntry entry = zipFile.getEntry(entryPath);
     if (entry == null) throw new IOException("Entry " + entryPath + " not found");
-    Runner.logger.info("entryPath: " + entryPath);
+    Runner.logger().info("entryPath: " + entryPath);
     return entry;
   }
 
@@ -195,7 +232,7 @@ public class Utils {
   }
 
   public static LinkedHashSet<String> collectRelativePaths(File dir, boolean includeDirectories) {
-    LinkedHashSet<String> result = new LinkedHashSet<String>();
+    LinkedHashSet<String> result = new LinkedHashSet<>();
     collectRelativePaths(dir, result, null, includeDirectories);
     return result;
   }
@@ -220,15 +257,11 @@ public class Utils {
   }
 
   public static InputStream newFileInputStream(File file, boolean normalize) throws IOException {
-    if (!normalize || !isZipFile(file.getName())) {
-      return new FileInputStream(file);
-    }
-    return new NormalizedZipInputStream(file);
+    return normalize && isZipFile(file.getName()) ? new NormalizedZipInputStream(file) : new FileInputStream(file);
   }
 
-  static class NormalizedZipInputStream extends InputStream {
-
-    private ArrayList<? extends ZipEntry> myEntries;
+  private static class NormalizedZipInputStream extends InputStream {
+    private List<? extends ZipEntry> myEntries;
     private InputStream myStream = null;
     private int myNextEntry = 0;
     private final ZipFile myZip;
@@ -237,12 +270,7 @@ public class Utils {
     NormalizedZipInputStream(File file) throws IOException {
       myZip = new ZipFile(file);
       myEntries = Collections.list(myZip.entries());
-      Collections.sort(myEntries, new Comparator<ZipEntry>() {
-        @Override
-        public int compare(ZipEntry a, ZipEntry b) {
-          return a.getName().compareTo(b.getName());
-        }
-      });
+      Collections.sort(myEntries, (Comparator<ZipEntry>)(a, b) -> a.getName().compareTo(b.getName()));
 
       loadNextEntry();
     }

@@ -17,7 +17,9 @@ package org.jetbrains.java.generate;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.generate.config.Config;
 import org.jetbrains.java.generate.config.FilterPattern;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
@@ -34,7 +36,7 @@ public class GenerateToStringUtils {
     private GenerateToStringUtils() {}
 
     /**
-     * Filters the list of fields from the class with the given parameters from the {@link org.jetbrains.java.generate.config.Config config} settings.
+     * Filters the list of fields from the class with the given parameters from the {@link Config config} settings.
      *
      * @param clazz          the class to filter it's fields
      * @param pattern        the filter pattern to filter out unwanted fields
@@ -42,12 +44,29 @@ public class GenerateToStringUtils {
      */
     @NotNull
     public static PsiField[] filterAvailableFields(PsiClass clazz, FilterPattern pattern) {
+        return filterAvailableFields(clazz, false, pattern);
+    }
+
+    /**
+     * Filters the list of fields from the class with the given parameters from the {@link org.jetbrains.java.generate.config.Config config} settings.
+     *
+     * @param clazz          the class to filter it's fields
+     * @param pattern        the filter pattern to filter out unwanted fields
+     * @return fields available for this action after the filter process.
+     */
+    @NotNull
+    public static PsiField[] filterAvailableFields(PsiClass clazz,
+                                                   boolean includeSuperClass,
+                                                   FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering fields using the pattern: " + pattern);
-        List<PsiField> availableFields = new ArrayList<PsiField>();
+        List<PsiField> availableFields = new ArrayList<>();
 
         // performs til filtering process
-        PsiField[] fields = clazz.getFields();
+        PsiField[] fields = includeSuperClass ? clazz.getAllFields() : clazz.getFields();
         for (PsiField field : fields) {
+            if (!JavaResolveUtil.isAccessible(field, field.getContainingClass(), field.getModifierList(), clazz, null, null)) {
+                continue;
+            }
             // if the field matches the pattern then it shouldn't be in the list of available fields
             if (!pattern.fieldMatches(field)) {
                 availableFields.add(field);
@@ -73,8 +92,8 @@ public class GenerateToStringUtils {
     @NotNull
     public static PsiMethod[] filterAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering methods using the pattern: " + pattern);
-        List<PsiMethod> availableMethods = new ArrayList<PsiMethod>();
-        PsiMethod[] methods = clazz.getMethods();
+        List<PsiMethod> availableMethods = new ArrayList<>();
+        PsiMethod[] methods = clazz.getAllMethods();
         for (PsiMethod method : methods) {
             // the method should be a getter
             if (!PsiAdapter.isGetterMethod(method)) {

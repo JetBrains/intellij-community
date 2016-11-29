@@ -46,7 +46,7 @@ public class SpockVariableDescriptor {
   public SpockVariableDescriptor(PsiElement navigationElement, String name) {
     myName = name;
     myNavigationElement = navigationElement;
-    myExpressions = new ArrayList<GrExpression>();
+    myExpressions = new ArrayList<>();
   }
 
   public SpockVariableDescriptor addExpression(@Nullable GrExpression expression) {
@@ -56,7 +56,7 @@ public class SpockVariableDescriptor {
 
   public SpockVariableDescriptor addExpressionOfCollection(@Nullable GrExpression expression) {
     if (myExpressionsOfCollection == null) {
-      myExpressionsOfCollection = new ArrayList<GrExpression>();
+      myExpressionsOfCollection = new ArrayList<>();
     }
 
     myExpressionsOfCollection.add(expression);
@@ -75,38 +75,35 @@ public class SpockVariableDescriptor {
     if (myVariable == null) {
       final PsiManager manager = myNavigationElement.getManager();
 
-      PsiType type = RecursionManager.doPreventingRecursion(this, true, new Computable<PsiType>() {
-        @Override
-        public PsiType compute() {
-          PsiType res = null;
+      PsiType type = RecursionManager.doPreventingRecursion(this, true, () -> {
+        PsiType res = null;
 
-          for (GrExpression expression : myExpressions) {
+        for (GrExpression expression : myExpressions) {
+          if (expression == null) continue;
+
+          res = TypesUtil.getLeastUpperBoundNullable(res, expression.getType(), manager);
+        }
+
+        if (myExpressionsOfCollection != null) {
+          for (GrExpression expression : myExpressionsOfCollection) {
             if (expression == null) continue;
 
-            res = TypesUtil.getLeastUpperBoundNullable(res, expression.getType(), manager);
-          }
+            PsiType listType = expression.getType();
+            PsiType type1 = PsiUtil.extractIterableTypeParameter(listType, true);
 
-          if (myExpressionsOfCollection != null) {
-            for (GrExpression expression : myExpressionsOfCollection) {
-              if (expression == null) continue;
+            if (type1 == null) {
+              if (listType == null) continue;
 
-              PsiType listType = expression.getType();
-              PsiType type = PsiUtil.extractIterableTypeParameter(listType, true);
-
-              if (type == null) {
-                if (listType == null) continue;
-
-                if (listType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-                  type = PsiType.getJavaLangString(expression.getManager(), expression.getResolveScope());
-                }
+              if (listType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+                type1 = PsiType.getJavaLangString(expression.getManager(), expression.getResolveScope());
               }
-
-              res = TypesUtil.getLeastUpperBoundNullable(res, type, manager);
             }
-          }
 
-          return res;
+            res = TypesUtil.getLeastUpperBoundNullable(res, type1, manager);
+          }
         }
+
+        return res;
       });
 
       if (type == null) {

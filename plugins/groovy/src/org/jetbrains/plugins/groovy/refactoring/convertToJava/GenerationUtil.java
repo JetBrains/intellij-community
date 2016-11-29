@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
@@ -235,7 +234,7 @@ public class GenerationUtil {
 
   @Nullable
   static PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
-    Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
+    Set<PsiClass> visitedClasses = new HashSet<>();
     PsiClass curClass = initialClass;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
 
@@ -275,7 +274,7 @@ public class GenerationUtil {
                                  @NotNull PsiParameter[] parameters,
                                  @NotNull final ClassNameProvider classNameProvider,
                                  @Nullable ExpressionContext context) {
-    Set<String> usedNames = new HashSet<String>();
+    Set<String> usedNames = new HashSet<>();
     text.append('(');
 
     //writes myParameters
@@ -339,7 +338,7 @@ public class GenerationUtil {
   static Set<String> getVarTypes(GrVariableDeclaration variableDeclaration) {
     GrVariable[] variables = variableDeclaration.getVariables();
     final GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
-    Set<String> types = new HashSet<String>(variables.length);
+    Set<String> types = new HashSet<>(variables.length);
     if (typeElement == null) {
       if (variables.length > 1) {
         for (GrVariable variable : variables) {
@@ -368,7 +367,7 @@ public class GenerationUtil {
   }
 
   public static ArrayList<GrParameter> getActualParams(GrParameter[] parameters, int skipOptional) {
-    final ArrayList<GrParameter> actual = new ArrayList<GrParameter>(Arrays.asList(parameters));
+    final ArrayList<GrParameter> actual = new ArrayList<>(Arrays.asList(parameters));
     if (skipOptional == 0) return actual;
     for (int i = parameters.length - 1; i >= 0; i--) {
       if (!actual.get(i).isOptional()) continue;
@@ -476,7 +475,7 @@ public class GenerationUtil {
     writeVariableWithoutType(builder, expressionContext, variable, wrapped, originalType);
   }
 
-  private static final Map<IElementType, Pair<String, IElementType>> binOpTypes = new HashMap<IElementType, Pair<String, IElementType>>();
+  private static final Map<IElementType, Pair<String, IElementType>> binOpTypes = new HashMap<>();
 
   static {
     binOpTypes.put(GroovyTokenTypes.mPLUS_ASSIGN, Pair.create("+", GroovyTokenTypes.mPLUS));
@@ -484,9 +483,9 @@ public class GenerationUtil {
     binOpTypes.put(GroovyTokenTypes.mSTAR_ASSIGN, Pair.create("*", GroovyTokenTypes.mSTAR));
     binOpTypes.put(GroovyTokenTypes.mDIV_ASSIGN, Pair.create("/", GroovyTokenTypes.mDIV));
     binOpTypes.put(GroovyTokenTypes.mMOD_ASSIGN, Pair.create("%", GroovyTokenTypes.mMOD));
-    binOpTypes.put(GroovyTokenTypes.mSL_ASSIGN, new Pair<String, IElementType>("<<", GroovyElementTypes.COMPOSITE_LSHIFT_SIGN));
-    binOpTypes.put(GroovyTokenTypes.mSR_ASSIGN, new Pair<String, IElementType>(">>", GroovyElementTypes.COMPOSITE_RSHIFT_SIGN));
-    binOpTypes.put(GroovyTokenTypes.mBSR_ASSIGN, new Pair<String, IElementType>(">>>", GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN));
+    binOpTypes.put(GroovyTokenTypes.mSL_ASSIGN, new Pair<>("<<", GroovyElementTypes.COMPOSITE_LSHIFT_SIGN));
+    binOpTypes.put(GroovyTokenTypes.mSR_ASSIGN, new Pair<>(">>", GroovyElementTypes.COMPOSITE_RSHIFT_SIGN));
+    binOpTypes.put(GroovyTokenTypes.mBSR_ASSIGN, new Pair<>(">>>", GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN));
     binOpTypes.put(GroovyTokenTypes.mBAND_ASSIGN, Pair.create("&", GroovyTokenTypes.mBAND));
     binOpTypes.put(GroovyTokenTypes.mBOR_ASSIGN, Pair.create("|", GroovyTokenTypes.mBOR));
     binOpTypes.put(GroovyTokenTypes.mBXOR_ASSIGN, Pair.create("^", GroovyTokenTypes.mBXOR));
@@ -517,12 +516,18 @@ public class GenerationUtil {
     if (declared == null) return false;
 
     final CheckProcessElement checker = new CheckProcessElement(member);
-    ResolveUtil.processAllDeclarationsSeparately(declared, checker, new BaseScopeProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        return false;
+
+    if (ResolveUtil.resolvesToClass(qualifier)) {
+      PsiType type = ResolveUtil.unwrapClassType(declared);
+      if (type != null) {
+        ResolveUtil.processAllDeclarations(type, checker, false, qualifier);
+        if (checker.isFound()) {
+          return false;
+        }
       }
-    }, ResolveState.initial(), qualifier);
+    }
+
+    ResolveUtil.processAllDeclarations(declared, checker, false, qualifier);
     return !checker.isFound();
   }
 

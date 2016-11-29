@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,13 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConsta
  */
 public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConstant {
   GrEnumConstant[] EMPTY_ARRAY = new GrEnumConstant[0];
-  ArrayFactory<GrEnumConstant> ARRAY_FACTORY = new ArrayFactory<GrEnumConstant>() {
-    @NotNull
-    @Override
-    public GrEnumConstant[] create(int count) {
-      return new GrEnumConstant[count];
-    }
-  };
+  ArrayFactory<GrEnumConstant> ARRAY_FACTORY = count -> new GrEnumConstant[count];
 
   @Override
   @Nullable
@@ -46,4 +41,10 @@ public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConst
   @Nullable
   @Override
   GrArgumentList getArgumentList();
+
+  @Nullable
+  @Override
+  default PsiMethod resolveMethod() {
+    return GrConstructorCall.super.resolveMethod();
+  }
 }

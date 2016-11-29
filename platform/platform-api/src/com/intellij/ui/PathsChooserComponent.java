@@ -55,7 +55,7 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myInitialCollection = collection;
     myProject = project;
-    myWorkingCollection = new ArrayList<String>(myInitialCollection);
+    myWorkingCollection = new ArrayList<>(myInitialCollection);
     myListModel = new DefaultListModel();
     myList.setModel(myListModel);
 
@@ -66,15 +66,12 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
         dirChooser.setShowFileSystemRoots(true);
         dirChooser.setHideIgnored(true);
         dirChooser.setTitle(UIBundle.message("file.chooser.default.title"));
-        FileChooser.chooseFiles(dirChooser, myProject, null, new Consumer<List<VirtualFile>>() {
-          @Override
-          public void consume(List<VirtualFile> files) {
-            for (VirtualFile file : files) {
-              // adding to the end
-              final String path = file.getPath();
-              if (processor.addPath(myWorkingCollection, path)) {
-                myListModel.addElement(path);
-              }
+        FileChooser.chooseFiles(dirChooser, myProject, null, files -> {
+          for (VirtualFile file : files) {
+            // adding to the end
+            final String path = file.getPath();
+            if (processor.addPath(myWorkingCollection, path)) {
+              myListModel.addElement(path);
             }
           }
         });
@@ -113,7 +110,7 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
 
   public void reset() {
     myListModel.clear();
-    myWorkingCollection = new ArrayList<String>(myInitialCollection);
+    myWorkingCollection = new ArrayList<>(myInitialCollection);
     for (String path : myWorkingCollection) {
       myListModel.addElement(path);
     }

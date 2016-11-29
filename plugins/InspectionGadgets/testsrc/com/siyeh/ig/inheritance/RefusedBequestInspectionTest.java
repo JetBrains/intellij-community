@@ -6,9 +6,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class RefusedBequestInspectionTest extends LightInspectionTestCase {
 
-  public void testRefusedBequest() throws Exception {
-    doTest();
-  }
+  public void testRefusedBequest() { doTest(); }
+  public void testCloneCallsSuperClone() { doTest(); }
+  public void testSetupCallsSuperSetup() { doTest(); }
+  public void testFinalizeCallsSuperFinalize() { doTest(); }
 
   @Nullable
   @Override
@@ -25,6 +26,12 @@ public class RefusedBequestInspectionTest extends LightInspectionTestCase {
       "@Retention(RetentionPolicy.RUNTIME)\n" +
       "@Target(ElementType.METHOD)\n" +
       "public @interface Before {\n" +
+      "}",
+
+      "package junit.framework;" +
+      "public abstract class TestCase {" +
+      "    protected void setUp() throws Exception {}" +
+      "    protected void tearDown() throws Exception {}" +
       "}"
     };
   }

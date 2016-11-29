@@ -41,7 +41,7 @@ public class XmlTagUtil extends XmlTagUtilBase {
   private static final Map<String, Character> ourCharacterEntities;
 
   static {
-    ourCharacterEntities = new HashMap<String, Character>();
+    ourCharacterEntities = new HashMap<>();
     ourCharacterEntities.put("lt", '<');
     ourCharacterEntities.put("gt", '>');
     ourCharacterEntities.put("apos", '\'');
@@ -156,7 +156,7 @@ public class XmlTagUtil extends XmlTagUtilBase {
   @Nullable
   public static TextRange getStartTagRange(@NotNull XmlTag tag) {
     XmlToken tagName = getStartTagNameElement(tag);
-    return getTag(tagName, XmlTokenType.XML_START_TAG_START);
+    return getTagRange(tagName, XmlTokenType.XML_START_TAG_START);
   }
 
 
@@ -164,27 +164,29 @@ public class XmlTagUtil extends XmlTagUtilBase {
   public static TextRange getEndTagRange(@NotNull XmlTag tag) {
     XmlToken tagName = getEndTagNameElement(tag);
 
-    return getTag(tagName, XmlTokenType.XML_END_TAG_START);
+    return getTagRange(tagName, XmlTokenType.XML_END_TAG_START);
   }
 
-  private static TextRange getTag(XmlToken tagName, IElementType tagStart) {
-    if (tagName != null) {
-      PsiElement s = tagName.getPrevSibling();
+  @Nullable
+  private static TextRange getTagRange(@Nullable XmlToken tagName, IElementType tagStart) {
+    if (tagName == null) {
+      return null;
+    }
+    PsiElement s = tagName.getPrevSibling();
 
-      while (s != null && s.getNode().getElementType() != tagStart) {
-        s = s.getPrevSibling();
-      }
+    while (s != null && s.getNode().getElementType() != tagStart) {
+      s = s.getPrevSibling();
+    }
 
-      PsiElement f = tagName.getNextSibling();
+    PsiElement f = tagName.getNextSibling();
 
-      while (f != null &&
-             !(f.getNode().getElementType() == XmlTokenType.XML_TAG_END ||
-               f.getNode().getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END)) {
-        f = f.getNextSibling();
-      }
-      if (s != null && f != null) {
-        return new TextRange(s.getTextRange().getStartOffset(), f.getTextRange().getEndOffset());
-      }
+    while (f != null &&
+           !(f.getNode().getElementType() == XmlTokenType.XML_TAG_END ||
+             f.getNode().getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END)) {
+      f = f.getNextSibling();
+    }
+    if (s != null && f != null) {
+      return new TextRange(s.getTextRange().getStartOffset(), f.getTextRange().getEndOffset());
     }
     return null;
   }

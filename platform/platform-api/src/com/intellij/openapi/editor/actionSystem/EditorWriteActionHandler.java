@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,14 +37,9 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
 
   @Override
   public void doExecute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
-    if (editor.isViewer()) return;
+    if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
 
-    if (dataContext != null) {
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (project != null && !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) return;
-    }
-
-    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
+    DocumentRunnable runnable = new DocumentRunnable(editor.getDocument(), editor.getProject()) {
       @Override
       public void run() {
         final Document doc = editor.getDocument();
@@ -62,7 +55,12 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
           doc.stopGuardedBlockChecking();
         }
       }
-    });
+    };
+    if (editor instanceof TextComponentEditor) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().runWriteAction(runnable);
+    }
   }
 
   /**

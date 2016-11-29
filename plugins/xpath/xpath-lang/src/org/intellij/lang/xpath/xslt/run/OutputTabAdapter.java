@@ -22,7 +22,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -30,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -95,7 +95,7 @@ class OutputTabAdapter extends ProcessAdapter {
     @Nullable
     private InputStream connect(int port) throws IOException {
         final long s = System.currentTimeMillis();
-        final InetSocketAddress endpoint = new InetSocketAddress(NetUtils.getLoopbackAddress(), port);
+        final InetSocketAddress endpoint = new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
 
         myStartedProcess.notifyTextAvailable("Connecting to XSLT runner on " + endpoint + "\n", ProcessOutputTypes.SYSTEM);
 

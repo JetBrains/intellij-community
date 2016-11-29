@@ -15,9 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
-
 /**
  * @author Dmitry Batkovich
  */
@@ -29,10 +26,5 @@ public class WrapLongWithMathToIntExactFixTest extends LightQuickFixParameterize
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapLongWithMathToIntExact";
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

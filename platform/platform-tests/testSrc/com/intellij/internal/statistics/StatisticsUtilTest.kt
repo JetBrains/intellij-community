@@ -46,6 +46,18 @@ class StatisticsUtilTest {
     assertCountingUsage("test.value.count.1M+", 2000 * 1000, steps)
   }
 
+  @Test
+  fun `test counting usage on empty list`() {
+    val emptySteps = listOf<Int>()
+    assertCountingUsage("test.value.count.1", 1, emptySteps)
+  }
+
+  @Test
+  fun `test counting usage if value is less than the first step`() {
+    val steps = listOf(1, 5, 10)
+    assertCountingUsage("test.value.count.<1", 0, steps)
+  }
+
   private fun assertCountingUsage(expectedKey: String, actualValue: Int, steps: List<Int>) {
     assertUsage(expectedKey, 1, getCountingUsage("test.value.count", actualValue, steps), "Incorrect key for value '$actualValue'")
   }

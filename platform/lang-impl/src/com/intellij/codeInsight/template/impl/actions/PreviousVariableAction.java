@@ -32,7 +32,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ public class PreviousVariableAction extends EditorAction {
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorWriteActionHandler {
+  private static class Handler extends EditorActionHandler {
     @Override
     public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);

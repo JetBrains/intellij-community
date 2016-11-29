@@ -45,7 +45,7 @@ public class PlaybackRunner {
   private final String myScript;
   private final StatusCallback myCallback;
 
-  private final ArrayList<PlaybackCommand> myCommands = new ArrayList<PlaybackCommand>();
+  private final ArrayList<PlaybackCommand> myCommands = new ArrayList<>();
   private ActionCallback myActionCallback;
   private boolean myStopRequested;
 
@@ -56,13 +56,13 @@ public class PlaybackRunner {
   private boolean myStopOnAppDeactivation;
   private final ApplicationActivationListener myAppListener;
 
-  private HashSet<Class> myFacadeClasses = new HashSet<Class>();
-  private ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<StageInfo>();
-  private ArrayList<StageInfo> myPassedStages = new ArrayList<StageInfo>();
+  private HashSet<Class> myFacadeClasses = new HashSet<>();
+  private ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<>();
+  private ArrayList<StageInfo> myPassedStages = new ArrayList<>();
 
   private long myContextTimestamp;
 
-  private Map<String, String> myRegistryValues = new HashMap<String, String>();
+  private Map<String, String> myRegistryValues = new HashMap<>();
 
   private Disposable myOnStop = Disposer.newDisposable();
 
@@ -98,19 +98,13 @@ public class PlaybackRunner {
 
     try {
       myActionCallback = new ActionCallback();
-      myActionCallback.doWhenProcessed(new Runnable() {
-        @Override
-        public void run() {
-          stop();
+      myActionCallback.doWhenProcessed(() -> {
+        stop();
 
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              activityMonitor.setActive(false);
-              restoreRegistryValues();
-            }
-          });
-        }
+        SwingUtilities.invokeLater(() -> {
+          activityMonitor.setActive(false);
+          restoreRegistryValues();
+        });
       });
 
       myRobot = new Robot();
@@ -124,11 +118,7 @@ public class PlaybackRunner {
             executeFrom(0, getScriptDir());
           }
           else {
-            IdeEventQueue.getInstance().doWhenReady(new Runnable() {
-              public void run() {
-                executeFrom(0, getScriptDir());
-              }
-            });
+            IdeEventQueue.getInstance().doWhenReady(() -> executeFrom(0, getScriptDir()));
           }
         }
       }.start();
@@ -194,21 +184,17 @@ public class PlaybackRunner {
           }
         };
       final ActionCallback cmdCallback = cmd.execute(context);
-      cmdCallback.doWhenDone(new Runnable() {
-        public void run() {
-          if (cmd.canGoFurther()) {
-            executeFrom(cmdIndex + 1, context.getBaseDir());
-          }
-          else {
-            myCallback.message(null, "Stopped", StatusCallback.Type.message);
-            myActionCallback.setDone();
-          }
+      cmdCallback.doWhenDone(() -> {
+        if (cmd.canGoFurther()) {
+          executeFrom(cmdIndex + 1, context.getBaseDir());
         }
-      }).doWhenRejected(new Runnable() {
-        public void run() {
+        else {
           myCallback.message(null, "Stopped", StatusCallback.Type.message);
-          myActionCallback.setRejected();
+          myActionCallback.setDone();
         }
+      }).doWhenRejected(() -> {
+        myCallback.message(null, "Stopped", StatusCallback.Type.message);
+        myActionCallback.setRejected();
       });
     }
     else {
@@ -347,11 +333,7 @@ public class PlaybackRunner {
           messageEdt(context, text, type);
         }
         else {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              messageEdt(context, text, type);
-            }
-          });
+          SwingUtilities.invokeLater(() -> messageEdt(context, text, type));
         }
       }
 

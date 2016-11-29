@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,12 +53,7 @@ public class ClockPanel extends JComponent {
   protected final Calendar myCalendar;
   private final boolean is24Hours;
   private ScheduledFuture<?> myScheduledFuture;
-  private final Runnable myRepaintRunnable = new Runnable() {
-    @Override
-    public void run() {
-      ClockPanel.this.repaint();
-    }
-  };
+  private final Runnable myRepaintRunnable = () -> this.repaint();
 
   public ClockPanel() {
     myCalendar = getInstance();
@@ -71,12 +65,7 @@ public class ClockPanel extends JComponent {
       myScheduledFuture.cancel(false);
     }
     myCalendar.setTimeInMillis(System.currentTimeMillis());
-    myScheduledFuture = JobScheduler.getScheduler().schedule(new Runnable() {
-      @Override
-      public void run() {
-        UIUtil.invokeLaterIfNeeded(myRepaintRunnable);
-      }
-    }, 60 - myCalendar.get(SECOND), TimeUnit.SECONDS);
+    myScheduledFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(myRepaintRunnable, 60 - myCalendar.get(SECOND), TimeUnit.SECONDS);
   }
 
   @Override

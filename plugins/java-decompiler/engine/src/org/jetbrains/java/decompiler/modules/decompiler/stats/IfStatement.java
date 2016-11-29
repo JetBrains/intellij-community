@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
 import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
-import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +52,7 @@ public class IfStatement extends Statement {
 
   private boolean iffflag;
 
-  private final List<Exprent> headexprent = new ArrayList<Exprent>(); // contains IfExprent
+  private final List<Exprent> headexprent = new ArrayList<>(); // contains IfExprent
 
   // *****************************************************************************
   // constructors
@@ -182,7 +181,7 @@ public class IfStatement extends Statement {
 
       boolean ok = (regsize < 2);
       if (!ok) {
-        List<Statement> lst = new ArrayList<Statement>();
+        List<Statement> lst = new ArrayList<>();
         if (DecHelper.isChoiceStatement(head, lst)) {
           p = lst.remove(0);
 
@@ -205,7 +204,7 @@ public class IfStatement extends Statement {
   }
 
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-    String indstr = InterpreterUtil.getIndentString(indent);
+    String indstr = TextUtil.getIndentString(indent);
     TextBuffer buf = new TextBuffer();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
@@ -296,7 +295,7 @@ public class IfStatement extends Statement {
 
   public List<Object> getSequentialObjects() {
 
-    List<Object> lst = new ArrayList<Object>(stats);
+    List<Object> lst = new ArrayList<>(stats);
     lst.add(1, headexprent.get(0));
 
     return lst;

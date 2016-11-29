@@ -51,7 +51,7 @@ public class ArtifactsGenerator {
   public ArtifactsGenerator(Project project, GenerationOptions genOptions) {
     myResolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
 
-    myAllArtifacts = new ArrayList<Artifact>(Arrays.asList(ArtifactManager.getInstance(project).getSortedArtifacts()));
+    myAllArtifacts = new ArrayList<>(Arrays.asList(ArtifactManager.getInstance(project).getSortedArtifacts()));
 
     myContext = new ArtifactAntGenerationContextImpl(project, genOptions, myAllArtifacts);
   }
@@ -61,7 +61,7 @@ public class ArtifactsGenerator {
   }
 
   public List<Generator> generate() {
-    final List<Generator> generators = new ArrayList<Generator>();
+    final List<Generator> generators = new ArrayList<>();
 
     final Target initTarget = new Target(INIT_ARTIFACTS_TARGET, null, null, null);
     generators.add(initTarget);
@@ -120,25 +120,22 @@ public class ArtifactsGenerator {
   private Target createArtifactTarget(Artifact artifact) {
     final StringBuilder depends = new StringBuilder(INIT_ARTIFACTS_TARGET);
 
-    ArtifactUtil.processRecursivelySkippingIncludedArtifacts(artifact, new Processor<PackagingElement<?>>() {
-      @Override
-      public boolean process(@NotNull PackagingElement<?> packagingElement) {
-        if (packagingElement instanceof ArtifactPackagingElement) {
-          final Artifact included = ((ArtifactPackagingElement)packagingElement).findArtifact(myResolvingContext);
-          if (included != null) {
-            if (depends.length() > 0) depends.append(", ");
-            depends.append(myContext.getTargetName(included));
-          }
+    ArtifactUtil.processRecursivelySkippingIncludedArtifacts(artifact, packagingElement -> {
+      if (packagingElement instanceof ArtifactPackagingElement) {
+        final Artifact included = ((ArtifactPackagingElement)packagingElement).findArtifact(myResolvingContext);
+        if (included != null) {
+          if (depends.length() > 0) depends.append(", ");
+          depends.append(myContext.getTargetName(included));
         }
-        else if (packagingElement instanceof ModuleOutputPackagingElement) {
-          final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(myResolvingContext);
-          if (module != null) {
-            if (depends.length() > 0) depends.append(", ");
-            depends.append(BuildProperties.getCompileTargetName(module.getName()));
-          }
-        }
-        return true;
       }
+      else if (packagingElement instanceof ModuleOutputPackagingElement) {
+        final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(myResolvingContext);
+        if (module != null) {
+          if (depends.length() > 0) depends.append(", ");
+          depends.append(BuildProperties.getCompileTargetName(module.getName()));
+        }
+      }
+      return true;
     }, myResolvingContext);
 
     final Couple<String> xmlNs = getArtifactXmlNs(artifact.getArtifactType());
@@ -158,7 +155,7 @@ public class ArtifactsGenerator {
 
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(outputPath);
 
-    List<Generator> copyInstructions = new ArrayList<Generator>();
+    List<Generator> copyInstructions = new ArrayList<>();
     if (needAntArtifactInstructions(artifact.getArtifactType())) {
       copyInstructions.addAll(artifact.getRootElement().computeAntInstructions(myResolvingContext, creator, myContext, artifact.getArtifactType()));
     }
@@ -201,7 +198,7 @@ public class ArtifactsGenerator {
   }
 
   public List<String> getCleanTargetNames() {
-    final List<String> targets = new ArrayList<String>();
+    final List<String> targets = new ArrayList<>();
     for (Artifact artifact : myAllArtifacts) {
       if (!myContext.shouldBuildIntoTempDirectory(artifact)) {
         targets.add(myContext.getCleanTargetName(artifact));

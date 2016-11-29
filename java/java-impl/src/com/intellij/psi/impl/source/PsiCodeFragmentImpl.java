@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   private boolean myPhysical;
   private PsiType myThisType;
   private PsiType mySuperType;
-  private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<String, String>();
+  private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<>();
   private VisibilityChecker myVisibilityChecker;
   private ExceptionHandler myExceptionHandler;
   private GlobalSearchScope myResolveScope;
@@ -63,7 +63,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
                              @Nullable PsiElement context) {
     super(TokenType.CODE_FRAGMENT,
           contentElementType,
-          ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().createFileViewProvider(
+          PsiManagerEx.getInstanceEx(project).getFileManager().createFileViewProvider(
             new LightVirtualFile(name, FileTypeManager.getInstance().getFileTypeByFileName(name), text), isPhysical)
     );
     myContext = context;
@@ -82,7 +82,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     final PsiCodeFragmentImpl clone = (PsiCodeFragmentImpl)cloneImpl((FileElement)calcTreeElement().clone());
     clone.myPhysical = false;
     clone.myOriginalFile = this;
-    clone.myPseudoImports = new LinkedHashMap<String, String>(myPseudoImports);
+    clone.myPseudoImports = new LinkedHashMap<>(myPseudoImports);
     FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
     SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(
       getName(),
@@ -93,7 +93,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     return clone;
   }
 
-  private FileViewProvider myViewProvider = null;
+  private FileViewProvider myViewProvider;
 
   @Override
   @NotNull

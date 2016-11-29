@@ -57,14 +57,14 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
   @NonNls private static final String ELEMENT_FILTER = "filter";
   private final MessageBus myMessageBus;
 
-  public TodoConfiguration(@NotNull MessageBus messageBus, EditorColorsManager manager) {
+  public TodoConfiguration(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;
-    manager.addEditorColorsListener(new EditorColorsListener() {
+    messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         colorSettingsChanged();
       }
-    }, this);
+    });
     resetToDefaultTodoPatterns();
   }
 
@@ -177,8 +177,8 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
 
   @Override
   public void loadState(Element element) {
-    List<TodoPattern> patternsList = new SmartList<TodoPattern>();
-    List<TodoFilter> filtersList = new SmartList<TodoFilter>();
+    List<TodoPattern> patternsList = new SmartList<>();
+    List<TodoFilter> filtersList = new SmartList<>();
     for (Element child : element.getChildren()) {
       if (ELEMENT_PATTERN.equals(child.getName())) {
         TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());

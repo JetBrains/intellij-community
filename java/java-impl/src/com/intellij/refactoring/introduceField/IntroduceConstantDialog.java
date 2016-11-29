@@ -130,7 +130,11 @@ class IntroduceConstantDialog extends DialogWrapper {
     myVisibilityPanel.add(myVPanel, BorderLayout.CENTER);
     init();
 
-    myVPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
+    String initialVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
+    if (initialVisibility == null) {
+      initialVisibility = PsiModifier.PUBLIC;
+    }
+    myVPanel.setVisibility(initialVisibility);
     myIntroduceEnumConstantCb.setEnabled(isSuitableForEnumConstant());
     updateVisibilityPanel();
     updateButtons();
@@ -191,7 +195,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myNameSuggestionPanel.add(myNameField.getComponent(), BorderLayout.CENTER);
     myNameSuggestionLabel.setLabelFor(myNameField.getFocusableComponent());
 
-    Set<String> possibleClassNames = new LinkedHashSet<String>();
+    Set<String> possibleClassNames = new LinkedHashSet<>();
     for (final PsiExpression occurrence : myOccurrences) {
       final PsiClass parentClass = new IntroduceConstantHandler().getParentClass(occurrence);
       if (parentClass != null && parentClass.getQualifiedName() != null) {
@@ -206,6 +210,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     for (String possibleClassName : possibleClassNames) {
       myTfTargetClassName.prependItem(possibleClassName);
     }
+    myTfTargetClassName.getChildComponent().setSelectedItem(myParentClass.getQualifiedName());
     myTfTargetClassName.getChildComponent().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         targetClassChanged();
@@ -382,7 +387,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     else {
       UIUtil.setEnabled(myVisibilityPanel, true, true);
       // exclude all modifiers not visible from all occurrences
-      final Set<String> visible = new THashSet<String>();
+      final Set<String> visible = new THashSet<>();
       visible.add(PsiModifier.PRIVATE);
       visible.add(PsiModifier.PROTECTED);
       visible.add(PsiModifier.PACKAGE_LOCAL);

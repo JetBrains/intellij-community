@@ -52,12 +52,4 @@
     <entry_point TYPE="method" FQNAME="x.S void g()" />
   </problem>
 
-  <problem>
-    <file>X.java</file>
-    <line>67</line>
-    <problem_class>Redundant suppression</problem_class>
-    <description>Redundant suppression</description>
-    <entry_point TYPE="method" FQNAME="x.S void foo1()" />
-  </problem>
-
 </problems>

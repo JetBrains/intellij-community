@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase {
   protected Editor myEditor;
-
-  @Override
-  protected void beforeTest() throws Exception {
-    createProjectFiles();
-  }
 
   @Override
   protected void afterTest() throws Exception {
@@ -46,7 +40,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   }
 
   public void testCreateFromFile() throws Throwable {
-    List<FileContent> expected = new ArrayList<FileContent>();
+    List<FileContent> expected = new ArrayList<>();
     expected.add(new FileContent("file.txt", "file.txt content"));
 
     VirtualFile file = myProjectRoot.findFileByRelativePath("file.txt");
@@ -58,7 +52,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   }
 
   public void testCreateFromDirectory() throws Throwable {
-    List<FileContent> expected = new ArrayList<FileContent>();
+    List<FileContent> expected = new ArrayList<>();
     expected.add(new FileContent("folder_file1", "file1 content"));
     expected.add(new FileContent("folder_file2", "file2 content"));
     expected.add(new FileContent("folder_dir_file3", "file3 content"));
@@ -72,7 +66,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   }
 
   public void testCreateFromEmptyDirectory() throws Throwable {
-    List<FileContent> expected = new ArrayList<FileContent>();
+    List<FileContent> expected = new ArrayList<>();
 
     VirtualFile file = myProjectRoot.findFileByRelativePath("folder/empty_folder");
     assertNotNull(file);
@@ -83,7 +77,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   }
 
   public void testCreateFromEmptyFile() throws Throwable {
-    List<FileContent> expected = new ArrayList<FileContent>();
+    List<FileContent> expected = new ArrayList<>();
 
     VirtualFile file = myProjectRoot.findFileByRelativePath("folder/empty_file");
     assertNotNull(file);
@@ -94,7 +88,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   }
 
   public void testCreateFromFiles() throws Throwable {
-    List<FileContent> expected = new ArrayList<FileContent>();
+    List<FileContent> expected = new ArrayList<>();
     expected.add(new FileContent("file.txt", "file.txt content"));
     expected.add(new FileContent("file2", "file2 content"));
     expected.add(new FileContent("file3", "file3 content"));
@@ -113,9 +107,9 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   }
 
   public void testCreateFromEmptyFiles() throws Throwable {
-    List<FileContent> expected = new ArrayList<FileContent>();
+    List<FileContent> expected = new ArrayList<>();
 
-    VirtualFile[] files = new VirtualFile[0];
+    VirtualFile[] files = VirtualFile.EMPTY_ARRAY;
 
     List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, null, files);
 
@@ -132,7 +126,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     myEditor = EditorFactory.getInstance().createEditor(document, myProject);
     assertNotNull(myEditor);
 
-    List<FileContent> expected = new ArrayList<FileContent>();
+    List<FileContent> expected = new ArrayList<>();
     expected.add(new FileContent("file.txt", "file.txt content"));
 
     List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, myEditor, file, null);
@@ -150,7 +144,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     myEditor = EditorFactory.getInstance().createEditor(document, myProject);
     assertNotNull(myEditor);
 
-    List<FileContent> expected = new ArrayList<FileContent>();
+    List<FileContent> expected = new ArrayList<>();
     expected.add(new FileContent("", "file.txt content"));
 
     List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, myEditor, null, null);

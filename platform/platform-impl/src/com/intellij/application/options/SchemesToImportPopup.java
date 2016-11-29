@@ -40,16 +40,11 @@ public abstract class SchemesToImportPopup<T> {
       return;
     }
 
-    final JList list = new JBList(new CollectionListModel<T>(schemes));
+    final JList list = new JBList(new CollectionListModel<>(schemes));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new SchemesToImportListCellRenderer());
 
-    Runnable selectAction = new Runnable() {
-      @Override
-      public void run() {
-        onSchemeSelected((T)list.getSelectedValue());
-      }
-    };
+    Runnable selectAction = () -> onSchemeSelected((T)list.getSelectedValue());
 
     showList(list, selectAction);
   }

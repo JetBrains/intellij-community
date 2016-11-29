@@ -90,60 +90,51 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       return;
     }
     final Application application = ApplicationManager.getApplication();
-    application.executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        PyExecutionException exception = null;
-        try {
-          myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement(false);
-          if (!myHasManagement) {
-            throw new PyExecutionException("Python packaging tools not found", "pip", Collections.<String>emptyList(), "", "", 0,
-                                           ImmutableList.of(new PyInstallPackageManagementFix()));
-          }
+    application.executeOnPooledThread(() -> {
+      PyExecutionException exception = null;
+      try {
+        myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement();
+        if (!myHasManagement) {
+          throw new PyExecutionException("Python packaging tools not found", "pip", Collections.<String>emptyList(), "", "", 0,
+                                         ImmutableList.of(new PyInstallPackageManagementFix()));
         }
-        catch (PyExecutionException e) {
-          exception = e;
-        }
-        catch (ExecutionException e) {
-          return;
-        }
-        final PyExecutionException problem = exception;
-        application.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (selectedSdk == getSelectedSdk()) {
-              myNotificationArea.hide();
-              if (problem != null) {
-                final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
-                if (!invalid) {
-                  final StringBuilder builder = new StringBuilder(problem.getMessage());
-                  builder.append(". ");
-                  for (final PyExecutionFix fix : problem.getFixes()) {
-                    final String key = "id" + fix.hashCode();
-                    final String link = "<a href=\"" + key + "\">" + fix.getName() + "</a>";
-                    builder.append(link);
-                    builder.append(" ");
-                    myNotificationArea.addLinkHandler(key, new Runnable() {
-                      @Override
-                      public void run() {
-                        final Sdk sdk = getSelectedSdk();
-                        if (sdk != null) {
-                          fix.run(sdk);
-                          myNotificationArea.removeLinkHandler(key);
-                          updatePackages(PyPackageManagers.getInstance().getManagementService(myProject, sdk));
-                          updateNotifications(sdk);
-                        }
-                      }
-                    });
-                  }
-                  myNotificationArea.showWarning(builder.toString());
-                }
-                myInstallButton.setEnabled(!invalid && installEnabled());
-              }
-            }
-          }
-        }, ModalityState.any());
       }
+      catch (PyExecutionException e) {
+        exception = e;
+      }
+      catch (ExecutionException e) {
+        return;
+      }
+      final PyExecutionException problem = exception;
+      application.invokeLater(() -> {
+        if (selectedSdk == getSelectedSdk()) {
+          myNotificationArea.hide();
+          if (problem != null) {
+            final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
+            if (!invalid) {
+              final StringBuilder builder = new StringBuilder(problem.getMessage());
+              builder.append(". ");
+              for (final PyExecutionFix fix : problem.getFixes()) {
+                final String key = "id" + fix.hashCode();
+                final String link = "<a href=\"" + key + "\">" + fix.getName() + "</a>";
+                builder.append(link);
+                builder.append(" ");
+                myNotificationArea.addLinkHandler(key, () -> {
+                  final Sdk sdk = getSelectedSdk();
+                  if (sdk != null) {
+                    fix.run(sdk);
+                    myNotificationArea.removeLinkHandler(key);
+                    updatePackages(PyPackageManagers.getInstance().getManagementService(myProject, sdk));
+                    updateNotifications(sdk);
+                  }
+                });
+              }
+              myNotificationArea.showWarning(builder.toString());
+            }
+            myInstallButton.setEnabled(!invalid && installEnabled());
+          }
+        }
+      }, ModalityState.any());
     });
   }
 
@@ -165,9 +156,9 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       }
     }
     final String name = pkg.getName();
-    if (PyPackageManager.PIP.equals(name) ||
-        PyPackageManager.SETUPTOOLS.equals(name) ||
-        PyPackageManager.DISTRIBUTE.equals(name) ||
+    if (PyPackageUtil.PIP.equals(name) ||
+        PyPackageUtil.SETUPTOOLS.equals(name) ||
+        PyPackageUtil.DISTRIBUTE.equals(name) ||
         PyCondaPackageManagerImpl.PYTHON.equals(name)) {
       return false;
     }

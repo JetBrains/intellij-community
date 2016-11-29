@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,10 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,18 +36,8 @@ import java.awt.*;
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
 
-  protected String myLicenseInfo = null;
-  protected boolean myPaidUpgrade;
-  protected boolean mySubscriptionLicense = false;
-
   protected AbstractUpdateDialog(boolean enableLink) {
     super(true);
-    myEnableLink = enableLink;
-    setTitle(IdeBundle.message("update.notifications.title"));
-  }
-
-  protected AbstractUpdateDialog(Component parent, boolean enableLink) {
-    super(parent, true);
     myEnableLink = enableLink;
     setTitle(IdeBundle.message("update.notifications.title"));
   }
@@ -70,57 +57,20 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     return CommonBundle.getCancelButtonText();
   }
 
-  protected void restart() {
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    // do not stack several modal dialogs (native & swing)
-    app.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        app.restart(true);
-      }
-    });
-  }
-
-  protected void initLicensingInfo(@NotNull UpdateChannel channel, @NotNull BuildInfo build) {
-    LicensingFacade facade = LicensingFacade.getInstance();
-    if (facade != null) {
-      mySubscriptionLicense = facade.isSubscriptionLicense();
-      if (!channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        int majorVersion = build.getMajorVersion();
-        if (majorVersion < 0) {
-          majorVersion = channel.getMajorVersion(); // fallback
-        }
-        final Boolean paidUpgrade = facade.isPaidUpgrade(majorVersion, build.getReleaseDate());
-        if (paidUpgrade == Boolean.TRUE) {
-          myPaidUpgrade = true;
-          myLicenseInfo = IdeBundle.message("updates.channel.key.needed", channel.getEvalDays());
-        }
-        else if (paidUpgrade == Boolean.FALSE) {
-          myLicenseInfo = IdeBundle.message("updates.channel.existing.key");
-        }
-      }
-      else {
-        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
-      }
-    }
-  }
-
-
   protected void configureMessageArea(@NotNull JEditorPane area) {
     String messageBody = myEnableLink ? IdeBundle.message("updates.configure.label", ShowSettingsUtil.getSettingsMenuName()) : "";
     configureMessageArea(area, messageBody, null, null);
   }
 
-  protected void configureMessageArea(final @NotNull JEditorPane area,
+  protected void configureMessageArea(@NotNull JEditorPane area,
                                       @NotNull String messageBody,
                                       @Nullable Color fontColor,
                                       @Nullable HyperlinkListener listener) {
-    String text = "<html><head>" +
-                 UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), fontColor, null, null) +
-                 "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
-                 "</head><body>" +
-                 messageBody +
-                 "</body></html>";
+    String text =
+      "<html><head>" +
+      UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), fontColor, null, null) +
+      "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
+      "</head><body>" + messageBody + "</body></html>";
 
     area.setBackground(UIUtil.getPanelBackground());
     area.setBorder(IdeBorderFactory.createEmptyBorder());
@@ -128,13 +78,9 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     area.setEditable(false);
 
     if (listener == null && myEnableLink) {
-      listener = new HyperlinkListener() {
-        @Override
-        public void hyperlinkUpdate(final HyperlinkEvent e) {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            UpdateSettingsConfigurable settings = new UpdateSettingsConfigurable(false);
-            ShowSettingsUtil.getInstance().editConfigurable(area, settings);
-          }
+      listener = (e) -> {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          ShowSettingsUtil.getInstance().editConfigurable(area, new UpdateSettingsConfigurable(false));
         }
       };
     }

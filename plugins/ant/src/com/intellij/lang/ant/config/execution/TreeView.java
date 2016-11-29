@@ -56,7 +56,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   private Tree myTree;
   private DefaultTreeModel myTreeModel;
   private TreePath myParentPath = null;
-  private final ArrayList<MessageNode> myMessageItems = new ArrayList<MessageNode>();
+  private final ArrayList<MessageNode> myMessageItems = new ArrayList<>();
   private final JPanel myPanel;
   private boolean myActionsEnabled = true;
   private String myCurrentTaskName;
@@ -227,12 +227,10 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
       final VirtualFile file = message.getFile();
       if (message.getLine() > 0) {
         if (file != null) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              String presentableUrl = file.getPresentableUrl();
-              builder.append(presentableUrl);
-              builder.append(' ');
-            }
+          ApplicationManager.getApplication().runReadAction(() -> {
+            String presentableUrl = file.getPresentableUrl();
+            builder.append(presentableUrl);
+            builder.append(' ');
           });
         }
         else if (url != null) {

@@ -47,7 +47,7 @@ public class PerIndexDocumentVersionMap {
   public long set(@NotNull Document document, @NotNull ID<?, ?> indexId, long value) {
     List<IdVersionInfo> list = document.getUserData(KEY);
     if (list == null) {
-      list = ((UserDataHolderEx)document).putUserDataIfAbsent(KEY, new ArrayList<IdVersionInfo>());
+      list = ((UserDataHolderEx)document).putUserDataIfAbsent(KEY, new ArrayList<>());
     }
 
     synchronized (list) {
@@ -88,7 +88,7 @@ public class PerIndexDocumentVersionMap {
   }
 
   public void clearForDocument(@NotNull Document document) {
-    document.putUserData(KEY, new ArrayList<IdVersionInfo>());
+    document.putUserData(KEY, new ArrayList<>());
   }
   public void clear() {
     mapVersion++;

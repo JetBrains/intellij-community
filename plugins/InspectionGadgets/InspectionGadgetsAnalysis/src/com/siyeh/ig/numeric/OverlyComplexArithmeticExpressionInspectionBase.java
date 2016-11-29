@@ -28,7 +28,7 @@ import java.util.Set;
 
 public class OverlyComplexArithmeticExpressionInspectionBase extends BaseInspection {
   protected static final Set<IElementType> arithmeticTokens =
-    new HashSet<IElementType>(5);
+    new HashSet<>(5);
   private static final int TERM_LIMIT = 6;
   /**
    * @noinspection PublicField

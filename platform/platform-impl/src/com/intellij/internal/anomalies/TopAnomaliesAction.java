@@ -36,29 +36,26 @@ import java.util.TreeSet;
  * User: Vassiliy.Kudryashov
  */
 public class TopAnomaliesAction extends ActionGroup {
-  private static final Comparator<Pair<?, Integer>> COMPARATOR = new Comparator<Pair<?, Integer>>() {
-    @Override
-    public int compare(Pair<?, Integer> o1, Pair<?, Integer> o2) {
-      int i = o2.getSecond() - o1.getSecond();
-      if (i != 0) {
-        return i;
-      }
-      int h1 = o1.hashCode();
-      int h2 = o2.hashCode();
-      if (h1 > h2) {
-        return 1;
-      }
-      if (h1 < h2) {
-        return -1;
-      }
-      return 0;
+  private static final Comparator<Pair<?, Integer>> COMPARATOR = (o1, o2) -> {
+    int i = o2.getSecond() - o1.getSecond();
+    if (i != 0) {
+      return i;
     }
+    int h1 = o1.hashCode();
+    int h2 = o2.hashCode();
+    if (h1 > h2) {
+      return 1;
+    }
+    if (h1 < h2) {
+      return -1;
+    }
+    return 0;
   };
   private static final int LIMIT = 10;
 
   private static final ResettableAction TOP_PARENTS = new ResettableAction("Parents") {
-    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<Pair<JComponent, Integer>>(COMPARATOR);
-    TreeSet<Pair<JComponent, Integer>> old = new TreeSet<Pair<JComponent, Integer>>(COMPARATOR);
+    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
+    TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override
     public void update(AnActionEvent e) {
@@ -73,7 +70,7 @@ public class TopAnomaliesAction extends ActionGroup {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      old = new TreeSet<Pair<JComponent, Integer>>(top);
+      old = new TreeSet<>(top);
       top.clear();
       Window[] windows = Window.getWindows();
       for (Window window : windows) {
@@ -105,8 +102,8 @@ public class TopAnomaliesAction extends ActionGroup {
   };
 
   private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction("ClientProperties") {
-    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<Pair<JComponent, Integer>>(COMPARATOR);
-    TreeSet<Pair<JComponent, Integer>> old = new TreeSet<Pair<JComponent, Integer>>(COMPARATOR);
+    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
+    TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override
     public void update(AnActionEvent e) {
@@ -121,7 +118,7 @@ public class TopAnomaliesAction extends ActionGroup {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      old = new TreeSet<Pair<JComponent, Integer>>(top);
+      old = new TreeSet<>(top);
       top.clear();
       Window[] windows = Window.getWindows();
       for (Window window : windows) {

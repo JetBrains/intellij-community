@@ -26,6 +26,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -88,7 +90,7 @@ public class GitChangeUtils {
   }
 
   public static Collection<String> parseDiffForPaths(final String rootPath, final StringScanner s) throws VcsException {
-    final Collection<String> result = new ArrayList<String>();
+    final Collection<String> result = new ArrayList<>();
 
     while (s.hasMoreData()) {
       if (s.isEol()) {
@@ -307,7 +309,7 @@ public class GitChangeUtils {
                                                        boolean skipDiffsForMerge,
                                                        GitHandler handler,
                                                        boolean local, boolean revertable) throws VcsException {
-    ArrayList<Change> changes = new ArrayList<Change>();
+    ArrayList<Change> changes = new ArrayList<>();
     // parse commit information
     final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
     final String revisionNumber = s.line();
@@ -390,8 +392,19 @@ public class GitChangeUtils {
     }
     String output = getDiffOutput(project, root, range, dirtyPaths);
 
-    Collection<Change> changes = new ArrayList<Change>();
+    Collection<Change> changes = new ArrayList<>();
     parseChanges(project, root, newRev, oldRev, output, changes, Collections.<String>emptySet());
+    return changes;
+  }
+
+  @NotNull
+  public static Collection<Change> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    diff.addParameters("--name-status", "--cached", "-M");
+    String output = diff.run();
+
+    Collection<Change> changes = new ArrayList<>();
+    parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes, Collections.emptySet());
     return changes;
   }
 
@@ -401,7 +414,7 @@ public class GitChangeUtils {
                                                          @NotNull String oldRevision,
                                                          @Nullable Collection<FilePath> dirtyPaths, boolean reverse) throws VcsException {
     String output = getDiffOutput(project, root, oldRevision, dirtyPaths, reverse);
-    Collection<Change> changes = new ArrayList<Change>();
+    Collection<Change> changes = new ArrayList<>();
     final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
     parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes,
                  Collections.<String>emptySet());

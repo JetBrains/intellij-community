@@ -15,23 +15,26 @@
  */
 package com.intellij.refactoring.memberPushDown;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,67 +44,73 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = file.findElementAt(offset);
+    ArrayList<PsiElement> elements = new ArrayList<>();
+    String errorMessage = null;
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      int offset = caret.getOffset();
+      PsiElement element = file.findElementAt(offset);
+      String errorFromElement = collectElementsUnderCaret(element, elements);
+      if (errorFromElement != null) {
+        errorMessage = errorFromElement;
+      }
+    }
 
+    if (elements.isEmpty()) {
+      String message = errorMessage != null ? errorMessage
+                                            : RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
+      return;
+    }
+
+    invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
+  }
+
+  private static String collectElementsUnderCaret(PsiElement element, List<PsiElement> elements) {
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        String message = RefactoringBundle.getCannotRefactorMessage(
-          RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
-        return;
+        return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
       }
 
-      if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
+      if (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null || element instanceof PsiField || element instanceof PsiMethod) {
         if (element instanceof JspClass) {
-          RefactoringMessageUtil.showNotSupportedForJspClassesError(project, editor, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
-          return;
+          return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
         }
-        invoke(project, new PsiElement[]{element}, dataContext);
-        return;
+        elements.add(element);
+        return null;
       }
       element = element.getParent();
     }
   }
 
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    if (elements.length != 1) return;
+    PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
+    if (aClass == null) return;
 
-    PsiElement element = elements[0];
-    PsiClass aClass;
-    PsiElement aMember = null;
+    String qualifiedName = aClass.getQualifiedName();
+    if (qualifiedName == null) return;
 
-    if (element instanceof PsiClass) {
-      aClass = (PsiClass) element;
-    } else if (element instanceof PsiMethod) {
-      aClass = ((PsiMethod) element).getContainingClass();
-      aMember = element;
-    } else if (element instanceof PsiField) {
-      aClass = ((PsiField) element).getContainingClass();
-      aMember = element;
-    } else
+    final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
+    if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("refactoring.cannot.be.performed") +
+                                                           ": Class " + aClass.getName() + " is final", REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
       return;
+    }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, new MemberInfo.Filter<PsiMember>() {
-      public boolean includeMember(PsiMember element) {
-        return !(element instanceof PsiEnumConstant);
-      }
-    });
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, element -> !(element instanceof PsiEnumConstant));
+
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(aClass);
-    PsiManager manager = aClass.getManager();
 
     for (MemberInfoBase<PsiMember> member : members) {
-      if (manager.areElementsEquivalent(member.getMember(), aMember)) {
-        member.setChecked(true);
-        break;
+      for (PsiElement element : elements) {
+        if (PsiTreeUtil.isAncestor(member.getMember(), element, false)) {
+          member.setChecked(true);
+          break;
+        }
       }
     }
-    PushDownDialog dialog = new PushDownDialog(
-            project,
-            members.toArray(new MemberInfo[members.size()]),
-            aClass);
+    PushDownDialog dialog = new PushDownDialog(project, members.toArray(new MemberInfo[members.size()]), aClass);
     dialog.show();
   }
 

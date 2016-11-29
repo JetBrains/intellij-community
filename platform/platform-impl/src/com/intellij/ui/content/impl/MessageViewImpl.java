@@ -35,29 +35,23 @@ import java.util.List;
  */
 public class MessageViewImpl implements MessageView {
   private ToolWindow myToolWindow;
-  private final List<Runnable> myPostponedRunnables = new ArrayList<Runnable>();
+  private final List<Runnable> myPostponedRunnables = new ArrayList<>();
 
   public MessageViewImpl(final Project project, final StartupManager startupManager, final ToolWindowManager toolWindowManager) {
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
-        myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowMessages);
-        new ContentManagerWatcher(myToolWindow, getContentManager());
-        for (Runnable postponedRunnable : myPostponedRunnables) {
-          postponedRunnable.run();
-        }
-        myPostponedRunnables.clear();
+    final Runnable runnable = () -> {
+      myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
+      myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowMessages);
+      new ContentManagerWatcher(myToolWindow, getContentManager());
+      for (Runnable postponedRunnable : myPostponedRunnables) {
+        postponedRunnable.run();
       }
+      myPostponedRunnables.clear();
     };
     if (project.isInitialized()) {
       runnable.run();
     }
     else {
-      startupManager.registerPostStartupActivity(new Runnable(){
-        public void run() {
-          runnable.run();
-        }
-      });
+      startupManager.registerPostStartupActivity(() -> runnable.run());
     }
 
   }

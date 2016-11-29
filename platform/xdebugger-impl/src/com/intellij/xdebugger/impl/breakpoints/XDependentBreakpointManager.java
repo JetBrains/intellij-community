@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import java.util.*;
  * @author nik
  */
 public class XDependentBreakpointManager {
-  private final Map<XBreakpoint<?>,  XDependentBreakpointInfo> mySlave2Info = new HashMap<XBreakpoint<?>, XDependentBreakpointInfo>();
-  private final MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo> myMaster2Info = new MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo>();
+  private final Map<XBreakpoint<?>,  XDependentBreakpointInfo> mySlave2Info = new HashMap<>();
+  private final MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo> myMaster2Info = new MultiValuesMap<>();
   private final XBreakpointManagerImpl myBreakpointManager;
   private final EventDispatcher<XDependentBreakpointListener> myDispatcher;
 
@@ -68,7 +68,7 @@ public class XDependentBreakpointManager {
   public void loadState() {
     mySlave2Info.clear();
     myMaster2Info.clear();
-    Map<String, XBreakpointBase<?,?,?>> id2Breakpoint = new HashMap<String, XBreakpointBase<?,?,?>>();
+    Map<String, XBreakpointBase<?,?,?>> id2Breakpoint = new HashMap<>();
     for (XBreakpointBase<?,?,?> breakpoint : myBreakpointManager.getAllBreakpoints()) {
       XBreakpointDependencyState state = breakpoint.getDependencyState();
       if (state != null) {
@@ -94,7 +94,7 @@ public class XDependentBreakpointManager {
   }
 
   public void saveState() {
-    Map<XBreakpointBase<?,?,?>, String> breakpoint2Id = new HashMap<XBreakpointBase<?,?,?>, String>();
+    Map<XBreakpointBase<?,?,?>, String> breakpoint2Id = new HashMap<>();
     int id = 0;
     for (XBreakpointBase breakpoint : myMaster2Info.keySet()) {
       breakpoint2Id.put(breakpoint, String.valueOf(id++));
@@ -161,7 +161,7 @@ public class XDependentBreakpointManager {
     if (slaveInfos == null) {
       return Collections.emptyList();
     }
-    List<XBreakpoint<?>> breakpoints = new SmartList<XBreakpoint<?>>();
+    List<XBreakpoint<?>> breakpoints = new SmartList<>();
     for (XDependentBreakpointInfo slaveInfo : slaveInfos) {
       breakpoints.add(slaveInfo.mySlaveBreakpoint);
     }

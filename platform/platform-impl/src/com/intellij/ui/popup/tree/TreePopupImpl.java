@@ -18,6 +18,9 @@ package com.intellij.ui.popup.tree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -41,14 +44,16 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreePopupImpl extends WizardPopup implements TreePopup {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.tree.TreePopupImpl");
   private MyTree myWizardTree;
 
   private MouseMotionListener myMouseMotionListener;
   private MouseListener myMouseListener;
 
-  private final List<TreePath> mySavedExpanded = new ArrayList<TreePath>();
+  private final List<TreePath> mySavedExpanded = new ArrayList<>();
   private TreePath mySavedSelected;
 
   private TreePath myShowingChildPath;
@@ -249,8 +254,20 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
   }
 
   private class MyMouseMotionListener extends MouseMotionAdapter {
+    private Point myLastMouseLocation;
+
+    private boolean isMouseMoved(Point location) {
+      if (myLastMouseLocation == null) {
+        myLastMouseLocation = location;
+        return false;
+      }
+      return !myLastMouseLocation.equals(location);
+    }
+
     @Override
     public void mouseMoved(MouseEvent e) {
+      if (!isMouseMoved(e.getLocationOnScreen())) return;
+
       final TreePath path = getPath(e);
       if (path != null) {
         myWizardTree.setSelectionPath(path);
@@ -337,7 +354,20 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
           return;
         }
 
-        final PopupStep queriedStep = myStep.onChosen(userObject, handleFinalChoices);
+        AtomicBoolean insideOnChosen = new AtomicBoolean(true);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (insideOnChosen.get()) {
+            LOG.error("Showing dialogs from popup onChosen can result in focus issues. Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
+          }
+        }, ModalityState.any());
+
+        final PopupStep queriedStep;
+        try {
+          queriedStep = myStep.onChosen(userObject, handleFinalChoices);
+        }
+        finally {
+          insideOnChosen.set(false);
+        }
         if (queriedStep == PopupStep.FINAL_CHOICE || !hasNextStep) {
           setFinalRunnable(myStep.getFinalRunnable());
           setOk(true);

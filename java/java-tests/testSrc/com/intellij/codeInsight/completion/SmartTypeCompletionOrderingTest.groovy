@@ -1,8 +1,20 @@
 /*
- * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package com.intellij.codeInsight.completion;
+package com.intellij.codeInsight.completion
 
 
 import com.intellij.JavaTestUtil
@@ -13,44 +25,44 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 
-public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
-  private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting"; 
+class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
+  private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting"
 
-  public SmartTypeCompletionOrderingTest() {
-    super(CompletionType.SMART);
+  SmartTypeCompletionOrderingTest() {
+    super(CompletionType.SMART)
   }
 
-  public void testJComponentAdd() throws Throwable {
-    checkPreferredItems(0, "name", "b", "fooBean239", "foo", "this");
+  void testJComponentAdd() throws Throwable {
+    checkPreferredItems(0, "name", "b", "fooBean239", "foo", "this")
   }
-  
-  public void testJComponentAddNew() throws Throwable {
+
+  void testJComponentAddNew() throws Throwable {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+    checkPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")
   }
 
-  public void testJComponentAddNewWithStats() throws Throwable {
+  void testJComponentAddNewWithStats() throws Throwable {
     //there's no PopupMenu in mock jdk
-    final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java");
-    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
-    incUseCount(lookup, 4); //Container
-    assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent");
-    imitateItemSelection(lookup, 3); //FooBean3
+    final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java")
+    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")
+    incUseCount(lookup, 4) //Container
+    assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent")
+    imitateItemSelection(lookup, 3) //FooBean3
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
-      imitateItemSelection(lookup, 2); //Container
+      imitateItemSelection(lookup, 2) //Container
     }
-    refreshSorting(lookup);
-    assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent");
+    refreshSorting(lookup)
+    assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent")
 
     int component = lookup.items.findIndexOf { it.lookupString == 'Component' }
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
-      imitateItemSelection(lookup, component);
+      imitateItemSelection(lookup, component)
     }
-    refreshSorting(lookup);
-    assertPreferredItems(1, "String", "Component", "FooBean3");
+    refreshSorting(lookup)
+    assertPreferredItems(1, "String", "Component", "FooBean3")
   }
 
-  public void testNewListAlwaysFirst() {
+  void testNewListAlwaysFirst() {
     def lookup = invokeCompletion(getTestName(false) + ".java")
     assertPreferredItems 1, 'List', 'ArrayList', 'AbstractList', 'AbstractSequentialList'
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD + 10; i++) {
@@ -59,283 +71,289 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     refreshSorting(lookup)
     assertPreferredItems 1, 'List', 'AbstractSequentialList', 'ArrayList', 'AbstractList'
   }
-  
-  public void testNoStatsOnUnsuccessfulAttempt() {
-    final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java");
-    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+
+  void testNoStatsOnUnsuccessfulAttempt() {
+    final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java")
+    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")
     lookup.currentItem = lookup.items[4] //Container
     myFixture.type('\n\b')
     CompletionLookupArranger.applyLastCompletionStatisticsUpdate()
     FileDocumentManager.instance.saveAllDocuments()
     invokeCompletion("/JComponentAddNew.java")
-    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")
   }
 
-  public void testMethodStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(0, "bar", "foo", "goo");
-    incUseCount(lookup, 2);
-    assertPreferredItems(0, "goo", "bar", "foo");
+  void testMethodStats() throws Throwable {
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems(0, "bar", "foo", "goo")
+    incUseCount(lookup, 2)
+    assertPreferredItems(0, "goo", "bar", "foo")
   }
 
-  public void testNewRunnable() throws Throwable {
-    checkPreferredItems(0, "Runnable", "MyAnotherRunnable", "MyRunnable", "Thread");
+  void testNewRunnable() throws Throwable {
+    checkPreferredItems(0, "Runnable", "MyAnotherRunnable", "MyRunnable", "Thread")
   }
 
-  public void testNewComponent() throws Throwable {
-    checkPreferredItems(1, "Component", "Foo", "JComponent", "Container");
-  }
-  
-  public void testClassLiteral() throws Throwable {
-    checkPreferredItems(0, "String.class");
+  void testNewComponent() throws Throwable {
+    checkPreferredItems(1, "Component", "Foo", "JComponent", "Container")
   }
 
-  public void testMethodsWithSubstitutableReturnType() throws Throwable {
-    checkPreferredItems(0, "foo", "toString", "bar");
+  void testClassLiteral() throws Throwable {
+    checkPreferredItems(0, "String.class")
   }
 
-  public void testDontPreferKeywords() throws Throwable {
-    checkPreferredItems(0, "o1", "foo", "name", "this");
+  void testMethodsWithSubstitutableReturnType() throws Throwable {
+    checkPreferredItems(0, "foo", "toString", "bar")
   }
 
-  public void testEnumValueOf() throws Throwable {
-    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "valueOf", "valueOf");
+  void testDontPreferKeywords() throws Throwable {
+    checkPreferredItems(0, "o1", "foo", "name", "this")
   }
 
-  public void testEnumValueOf2() throws Throwable {
-    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "bar", "valueOf");
+  void testEnumValueOf() throws Throwable {
+    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "valueOf", "valueOf")
   }
 
-  public void testPreferMatchedWords() throws Throwable {
-    checkPreferredItems(0, "getVersionString", "getTitle");
+  void testEnumValueOf2() throws Throwable {
+    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "bar", "valueOf")
   }
 
-  public void testPreferImportedClasses() throws Throwable {
+  void testPreferMatchedWords() throws Throwable {
+    checkPreferredItems(0, "getVersionString", "getTitle")
+  }
+
+  void testPreferImportedClasses() throws Throwable {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(2, "Component", "String", "FooBean3", "JPanel", "JComponent");
+    checkPreferredItems(2, "Component", "String", "FooBean3", "JPanel", "JComponent")
   }
-  
-  public void testPreferNestedClasses() throws Throwable {
+
+  void testPreferNestedClasses() throws Throwable {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(2, "Component", "String", "FooBean3", "NestedClass", "JComponent");
+    checkPreferredItems(2, "Component", "String", "FooBean3", "NestedClass", "JComponent")
   }
 
-  public void testSmartCollections() throws Throwable {
-    checkPreferredItems(0, "s");
+  void testSmartCollections() throws Throwable {
+    checkPreferredItems(0, "s")
   }
 
-  public void testSmartEquals() throws Throwable {
-    checkPreferredItems(0, "s");
+  void testSmartEquals() throws Throwable {
+    checkPreferredItems(0, "s")
   }
 
-  public void testSmartEquals2() throws Throwable {
-    checkPreferredItems(0, "foo", "this", "o", "s");
+  void testSmartEquals2() throws Throwable {
+    checkPreferredItems(0, "foo", "this", "o", "s")
   }
 
-  public void testSmartEquals3() throws Throwable {
-    checkPreferredItems(0, "b", "this", "a", "z");
+  void testSmartEquals3() throws Throwable {
+    checkPreferredItems(0, "b", "this", "a", "z")
   }
 
-  public void testSmartCollectionsNew() throws Throwable {
-    checkPreferredItems(1, "Foo", "Bar");
+  void testSmartCollectionsNew() throws Throwable {
+    checkPreferredItems(1, "Foo", "Bar")
   }
 
-  public void testSmartEqualsNew() throws Throwable {
-    checkPreferredItems(1, "Foo", "Bar");
-  }
-  
-  public void testSmartEqualsNew2() throws Throwable {
-    checkPreferredItems(0, "Foo");
+  void testSmartEqualsNew() throws Throwable {
+    checkPreferredItems(1, "Foo", "Bar")
   }
 
-  public void testBooleanValueOf() throws Throwable {
-    checkPreferredItems(0, "b", "Boolean.FALSE", "Boolean.TRUE", "equals", "false", "true", "valueOf", "valueOf");
-  }
-  
-  public void testXmlTagGetAttribute() throws Throwable {
-    checkPreferredItems(0, "getAttributeValue", "getNamespace", "toString");
+  void testSmartEqualsNew2() throws Throwable {
+    checkPreferredItems(0, "Foo")
   }
 
-  public void testPreferFieldsToMethods() throws Throwable {
-    checkPreferredItems(0, "myVersion", "getVersion", "getSelectedVersion", "calculateVersion");
+  void testBooleanValueOf() throws Throwable {
+    checkPreferredItems(0, "b", "Boolean.FALSE", "Boolean.TRUE", "equals", "false", "true", "valueOf", "valueOf")
   }
 
-  public void testPreferFieldsToConstants() {
-    checkPreferredItems(0, "dateField", "LocalDate.MAX", "LocalDate.MIN");
+  void testXmlTagGetAttribute() throws Throwable {
+    checkPreferredItems(0, "getAttributeValue", "getNamespace", "toString")
   }
 
-  public void testPreferParametersToGetters() throws Throwable {
-    checkPreferredItems(0, "a", "I._1", "getLastI", "valueOf");
+  void testPreferFieldsToMethods() throws Throwable {
+    checkPreferredItems(0, "myVersion", "getVersion", "getSelectedVersion", "calculateVersion")
   }
 
-  public void testExpectedInterfaceShouldGoFirst() throws Throwable {
-    checkPreferredItems(0, "MyProcessor", "Proc1");
+  void testPreferFieldsToConstants() {
+    checkPreferredItems(0, "dateField", "LocalDate.MAX", "LocalDate.MIN")
   }
 
-  public void testStatisticsAffectsNonPreferableExpectedItems() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
-    incUseCount(lookup, 0);
-    assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
-    incUseCount(lookup, 0);
-    assertPreferredItems(0, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
+  void testPreferParametersToGetters() throws Throwable {
+    checkPreferredItems(0, "a", "I._1", "getLastI", "valueOf")
   }
 
-  public void testPreferNonRecursiveMethodParams() throws Throwable {
-    checkPreferredItems(0, "b", "s", "a", "hashCode");
+  void testExpectedInterfaceShouldGoFirst() throws Throwable {
+    checkPreferredItems(0, "MyProcessor", "Proc1")
   }
 
-  public void testPreferDelegatingMethodParams() throws Throwable {
+  void testStatisticsAffectsNonPreferableExpectedItems() throws Throwable {
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList")
+    incUseCount(lookup, 0)
+    assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList")
+    incUseCount(lookup, 0)
+    assertPreferredItems(0, "List", "ArrayList", "AbstractList", "AbstractSequentialList")
+  }
+
+  void testPreferNonRecursiveMethodParams() throws Throwable {
+    checkPreferredItems(0, "b", "s", "a", "hashCode")
+  }
+
+  void testPreferDelegatingMethodParams() throws Throwable {
     //there's no PopupMenu in mock jdk
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(0, "xyz", "abc");
-    incUseCount(lookup, 1);
-    assertPreferredItems(0, "xyz", "abc");
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems(0, "xyz", "abc")
+    incUseCount(lookup, 1)
+    assertPreferredItems(0, "xyz", "abc")
   }
 
-  public void testGwtButtons() throws Throwable {
-    checkPreferredItems(0, "Button", "ButtonBase");
+  void testGwtButtons() throws Throwable {
+    checkPreferredItems(0, "Button", "ButtonBase")
   }
 
-  public void testNewArrayList() throws Throwable {
-    checkPreferredItems(0, "ArrayList", "OtherList");
+  void testNewArrayList() throws Throwable {
+    checkPreferredItems(0, "ArrayList", "OtherList")
   }
 
-  public void testPassingQualifierToMethodCall() throws Throwable {
-    checkPreferredItems(0, "this", "param");
+  void testPassingQualifierToMethodCall() throws Throwable {
+    checkPreferredItems(0, "this", "param")
   }
 
-  public void testPassingThisToUnqualifiedMethodCall() throws Throwable {
-    checkPreferredItems(0, "param", "this");
+  void testPassingThisToUnqualifiedMethodCall() throws Throwable {
+    checkPreferredItems(0, "param", "this")
   }
 
-  public void testPreferAccessibleMembers() throws Throwable {
-    checkPreferredItems(0, "Foo.C_NORMAL", "Foo.B_DEPRECATED");
+  void testPreferAccessibleMembers() throws Throwable {
+    checkPreferredItems(0, "Foo.C_NORMAL", "Foo.B_DEPRECATED")
   }
 
-  public void testNoSkippingInSmartCast() throws Throwable {
-    checkPreferredItems(0, "Foo", "Bar", "Goo");
+  void testNoSkippingInSmartCast() throws Throwable {
+    checkPreferredItems(0, "Foo", "Bar", "Goo")
   }
 
-  public void testLiteralInReturn() throws Throwable {
-    checkPreferredItems(0, "false", "true", "equals");
+  void testLiteralInReturn() throws Throwable {
+    checkPreferredItems(0, "false", "true", "equals")
   }
 
-  public void testLiteralInIf() throws Throwable {
-    checkPreferredItems(0, "equals", "false", "true");
+  void testLiteralInIf() throws Throwable {
+    checkPreferredItems(0, "equals", "false", "true")
   }
 
-  public void testFactoryMethodForDefaultType() throws Throwable {
-    checkPreferredItems(0, "create", "this");
+  void testFactoryMethodForDefaultType() throws Throwable {
+    checkPreferredItems(0, "create", "this")
   }
 
-  public void testLocalVarsBeforeClassLiterals() throws Throwable {
-    checkPreferredItems(0, "local", "Foo.class", "Bar.class");
+  void testLocalVarsBeforeClassLiterals() throws Throwable {
+    checkPreferredItems(0, "local", "Foo.class", "Bar.class")
   }
 
-  public void testPreferInstanceofed() throws Throwable {
-    checkPreferredItems(0, "_o", "b");
+  void testPreferInstanceofed() throws Throwable {
+    checkPreferredItems(0, "_o", "b")
   }
 
-  public void testInnerClassesProximity() throws Throwable {
-    checkPreferredItems(0, "Goo", "InnerGoo", "Bar", "AGoo");
+  void testInnerClassesProximity() throws Throwable {
+    checkPreferredItems(0, "Goo", "InnerGoo", "Bar", "AGoo")
   }
 
-  public void testLocalVariablesOutweighStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(0, "foo", "param", "this", "bar", "goo");
-    incUseCount(lookup, 4);
-    assertPreferredItems(0, "foo", "param", "this", "goo", "bar");
+  void testLocalVariablesOutweighStats() throws Throwable {
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems(0, "foo", "param", "this", "bar", "goo")
+    incUseCount(lookup, 4)
+    assertPreferredItems(0, "foo", "param", "this", "goo", "bar")
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
-      imitateItemSelection(lookup, 3); //goo
+      imitateItemSelection(lookup, 3) //goo
     }
-    refreshSorting(lookup);
-    assertPreferredItems(0, "foo", "param", "this", "goo", "bar");
+    refreshSorting(lookup)
+    assertPreferredItems(0, "foo", "param", "this", "goo", "bar")
   }
 
-  public void testPreferredByNameDontChangeStatistics() throws Throwable {
-    invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(0, "foo", "false");
-    myFixture.type(',');
-    complete();
-    assertPreferredItems(0, "bar", "foo", "equals", "false", "true");
+  void testPreferredByNameDontChangeStatistics() throws Throwable {
+    invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems(0, "foo", "false")
+    myFixture.type(',')
+    myFixture.complete(CompletionType.SMART)
+    assertPreferredItems(0, "bar", "foo", "equals", "false", "true")
   }
 
-  public void testExpectedNameDependentStats() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(0, "myFoo", "myBar");
-    incUseCount(lookup, 1); //myBar
-    assertPreferredItems(0, "myBar", "myFoo");
+  void testExpectedNameDependentStats() throws Throwable {
+    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems(0, "myFoo", "myBar")
+    incUseCount(lookup, 1) //myBar
+    assertPreferredItems(0, "myBar", "myFoo")
   }
 
-  public void testPreferSameNamedMethods() {
-    checkPreferredItems(0, "foo", "boo", "doo", "hashCode");
+  void testPreferSameNamedMethods() {
+    checkPreferredItems(0, "foo", "boo", "doo", "hashCode")
   }
 
-  public void testErasureNotAffectingProximity() {
-    myFixture.addClass("package foo; public interface Foo<T> {}");
-    myFixture.addClass("package bar; public class Bar implements foo.Foo {}");
-    myFixture.addClass("public class Bar<T> implements foo.Foo<T> {}");
-    checkPreferredItems(0, "Bar", "Bar");
+  void testErasureNotAffectingProximity() {
+    myFixture.addClass("package foo; public interface Foo<T> {}")
+    myFixture.addClass("package bar; public class Bar implements foo.Foo {}")
+    myFixture.addClass("public class Bar<T> implements foo.Foo<T> {}")
+    checkPreferredItems(0, "Bar", "Bar")
 
-    LookupElementPresentation presentation = new LookupElementPresentation();
-    List<LookupElement> items = getLookup().getItems();
+    LookupElementPresentation presentation = new LookupElementPresentation()
+    List<LookupElement> items = getLookup().getItems()
 
-    LookupElement first = items.get(0);
-    assertEquals("Bar", ((PsiClass)first.getObject()).getQualifiedName());
-    first.renderElement(presentation);
-    assertEquals("Bar<String>", presentation.getItemText());
+    LookupElement first = items.get(0)
+    assertEquals("Bar", ((PsiClass)first.getObject()).getQualifiedName())
+    first.renderElement(presentation)
+    assertEquals("Bar<String>", presentation.getItemText())
 
-    LookupElement second = items.get(1);
-    assertEquals("bar.Bar", ((PsiClass)second.getObject()).getQualifiedName());
-    second.renderElement(presentation);
-    assertEquals("Bar", presentation.getItemText());
+    LookupElement second = items.get(1)
+    assertEquals("bar.Bar", ((PsiClass)second.getObject()).getQualifiedName())
+    second.renderElement(presentation)
+    assertEquals("Bar", presentation.getItemText())
   }
 
-  public void testAssertEquals() throws Throwable {
-    myFixture.addClass("package junit.framework; public class Assert { public static void assertEquals(Object a, Object b) {} }");
+  void testAssertEquals() throws Throwable {
+    myFixture.addClass("package junit.framework; public class Assert { public static void assertEquals(Object a, Object b) {} }")
     checkPreferredItems(0, "boo", "bar")
   }
 
-  public void testPreferCollectionsEmptyList() throws Throwable {
-    myFixture.addClass("package foo; public class FList<T> implements java.util.List<T> { public static <T> FList<T> emptyList() {} }");
-    configureNoCompletion(getTestName(false) + ".java");
-    myFixture.complete(CompletionType.SMART, 2);
+  void testPreferCollectionsEmptyList() throws Throwable {
+    myFixture.addClass("package foo; public class FList<T> implements java.util.List<T> { public static <T> FList<T> emptyList() {} }")
+    configureNoCompletion(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.SMART, 2)
     assert lookup.items.findIndexOf { 'Collections.emptyList' in it.allLookupStrings } < lookup.items.findIndexOf { 'FList.emptyList' in it.allLookupStrings }
     assertPreferredItems(0, "local", "local.subList", "locMethod")
   }
 
-  public void testDispreferGetterInSetterCall() {
+  void testDispreferGetterInSetterCall() {
     checkPreferredItems 0, 'color', 'getZooColor', 'getColor', 'hashCode'
   }
-  public void testPreferOtherGetterInSetterCall() {
+
+  void testPreferOtherGetterInSetterCall() {
     checkPreferredItems 0, 'color', 'getColor', 'getZooColor', 'hashCode'
   }
-  public void testPreferLocalOverFactoryMatchingName() {
+
+  void testPreferLocalOverFactoryMatchingName() {
     checkPreferredItems 0, 'e', 'createEvent'
   }
-  public void testPreferLocalOverThis() {
+
+  void testPreferLocalOverThis() {
     checkPreferredItems 0, 'value', 'this', 'hashCode'
   }
 
-  public void testGetLogger() {
+  void testGetLogger() {
     checkPreferredItems 0, 'Foo.class', 'forName'
   }
-  public void testGetWildcardLogger() {
+
+  void testGetWildcardLogger() {
     checkPreferredItems 0, 'Foo.class', 'forName'
   }
-  public void testGetWildcardFactoryLogger() {
+
+  void testGetWildcardFactoryLogger() {
     checkPreferredItems 0, 'Foo.class', 'forName'
   }
-  public void testPreferLocalWildcardClassOverObject() {
+
+  void testPreferLocalWildcardClassOverObject() {
     checkPreferredItems 0, 'type', 'Object.class'
   }
 
-  public void testPreferStringsInStringConcatenation() {
+  void testPreferStringsInStringConcatenation() {
     checkPreferredItems 0, 'toString'
   }
 
-  public void testGlobalStaticMemberStats() {
+  void testGlobalStaticMemberStats() {
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.SMART, 2)
     assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
@@ -343,7 +361,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
-  public void testPreferExpectedTypeMembers() {
+  void testPreferExpectedTypeMembers() {
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.SMART, 2)
     assertPreferredItems 0, 'MyColor.RED', 'Another.RED'
@@ -352,6 +370,6 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
+    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH
   }
 }

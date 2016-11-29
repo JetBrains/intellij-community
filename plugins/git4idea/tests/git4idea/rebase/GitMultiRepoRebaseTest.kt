@@ -62,7 +62,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     rebase("master")
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     assertAllRebased()
     assertNoRebaseInProgress(myAllRepositories)
   }
@@ -165,7 +165,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.continueRebase(myProject)
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     assertAllRebased()
     assertNoRebaseInProgress(myAllRepositories)
   }
@@ -212,7 +212,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     Mockito.`when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
     try {
-      GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler).rebaseOnCurrent(myAllRepositories, "feature")
+      GitBranchWorker(myProject, myGit, uiHandler).rebaseOnCurrent(myAllRepositories, "feature")
     }
     finally {
       myGit.setShouldRebaseFail { false }

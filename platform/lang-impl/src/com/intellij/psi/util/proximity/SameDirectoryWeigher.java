@@ -39,7 +39,7 @@ public class SameDirectoryWeigher extends ProximityWeigher {
   private static PsiDirectory getParentDirectory(PsiElement element) {
     PsiFile file = InjectedLanguageUtil.getTopLevelFile(element);
     if (file != null) {
-      element = file;
+      element = file.getOriginalFile();
     }
     while (element != null && !(element instanceof PsiDirectory)) {
       element = element.getParent();

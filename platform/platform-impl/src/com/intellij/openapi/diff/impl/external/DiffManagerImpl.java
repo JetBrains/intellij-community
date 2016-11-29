@@ -89,10 +89,10 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
   public static final BooleanProperty ENABLE_MERGE = new BooleanProperty("enableMerge", false);
 
   private final ExternalizablePropertyContainer myProperties;
-  private final List<DiffTool> myAdditionTools = new SmartList<DiffTool>();
+  private final List<DiffTool> myAdditionTools = new SmartList<>();
   public static final DiffTool INTERNAL_DIFF = new FrameDiffTool();
 
-  public static final Key<Boolean> EDITOR_IS_DIFF_KEY = new Key<Boolean>("EDITOR_IS_DIFF_KEY");
+  public static final Key<Boolean> EDITOR_IS_DIFF_KEY = new Key<>("EDITOR_IS_DIFF_KEY");
   private static final MarkupEditorFilter DIFF_EDITOR_FILTER = new MarkupEditorFilter() {
     @Override
     public boolean avaliableIn(Editor editor) {
@@ -156,7 +156,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
       return new CompositeDiffTool(standardTools);
     }
     else {
-      List<DiffTool> allTools = new ArrayList<DiffTool>(myAdditionTools);
+      List<DiffTool> allTools = new ArrayList<>(myAdditionTools);
       ContainerUtil.addAll(allTools, standardTools);
       return new CompositeDiffTool(allTools);
     }

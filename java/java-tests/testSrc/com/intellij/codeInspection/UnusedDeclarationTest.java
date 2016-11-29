@@ -15,36 +15,14 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.InspectionTestCase;
 
 /**
  * @author max
  */
-public class UnusedDeclarationTest extends InspectionTestCase {
-  private UnusedDeclarationInspection myTool;
-  private GlobalInspectionToolWrapper myToolWrapper;
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myToolWrapper = getUnusedDeclarationWrapper();
-    myTool = (UnusedDeclarationInspection)myToolWrapper.getTool();
-  }
-
-  private void doTest() {
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
-  }
+public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
 
   public void testSCR6067() {
     myTool.ADD_NONJAVA_TO_ENTRIES = false;
@@ -71,6 +49,10 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   }
 
   public void testPackageLocal() {
+    doTest();
+  }
+
+  public void testDefaultConstructor() throws Exception {
     doTest();
   }
 
@@ -143,6 +125,11 @@ public class UnusedDeclarationTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testUnusedEnum() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    doTest();
+  }
+
   public void testJunitEntryPoint() {
     doTest();
   }
@@ -156,6 +143,10 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   }
 
   public void testJunitEntryPointCustomRunWith() {
+    doTest();
+  }
+
+  public void testMockedField() {
     doTest();
   }
 
@@ -193,6 +184,14 @@ public class UnusedDeclarationTest extends InspectionTestCase {
 
   public void testFunctionalExpressions() {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest();
+  }
+
+  public void testClassUsedInMethodParameter() {
+    doTest();
+  }
+
+  public void testDeprecatedAsEntryPoint() {
     doTest();
   }
 }

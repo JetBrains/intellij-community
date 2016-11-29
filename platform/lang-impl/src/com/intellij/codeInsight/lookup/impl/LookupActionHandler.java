@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollingUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,11 +40,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class LookupActionHandler extends EditorActionHandler {
   protected final EditorActionHandler myOriginalHandler;
-  private final boolean myRequireFocusedLookup;
 
-  public LookupActionHandler(EditorActionHandler originalHandler, boolean requireFocusedLookup) {
+  public LookupActionHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
-    myRequireFocusedLookup = requireFocusedLookup;
   }
 
   @Override
@@ -54,9 +53,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   @Override
   public void doExecute(Editor editor, Caret caret, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup == null || !lookup.isAvailableToUser() || myRequireFocusedLookup && !lookup.isFocused()) {
+    if (lookup == null || !lookup.isAvailableToUser()) {
       Project project = editor.getProject();
-      if (project != null) {
+      if (project != null && lookup != null) {
         LookupManager.getInstance(project).hideActiveLookup();
       }
       myOriginalHandler.execute(editor, caret, dataContext);
@@ -70,9 +69,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   protected abstract void executeInLookup(LookupImpl lookup, DataContext context, @Nullable Caret caret);
 
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    return lookup != null || myOriginalHandler.isEnabled(editor, dataContext);
+    return lookup != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
   }
 
   private static void executeUpOrDown(LookupImpl lookup, boolean up) {
@@ -96,7 +95,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   public static class DownHandler extends LookupActionHandler {
 
     public DownHandler(EditorActionHandler originalHandler){
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -130,7 +129,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     public void actionPerformed(AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
-      assert lookup != null;
+      assert lookup != null : LookupImpl.getLastLookupDisposeTrace();
       lookup.hideLookup(true);
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).actionPerformed(e);
     }
@@ -144,7 +143,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class UpHandler extends LookupActionHandler {
     public UpHandler(EditorActionHandler originalHandler){
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -160,7 +159,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class PageDownHandler extends LookupActionHandler {
     public PageDownHandler(final EditorActionHandler originalHandler) {
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -172,7 +171,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class PageUpHandler extends LookupActionHandler {
     public PageUpHandler(EditorActionHandler originalHandler){
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -184,7 +183,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class LeftHandler extends LookupActionHandler {
     public LeftHandler(EditorActionHandler originalHandler) {
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -194,12 +193,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
-      if (!lookup.performGuardedChange(new Runnable() {
-        @Override
-        public void run() {
-          lookup.getEditor().getSelectionModel().removeSelection();
-        }
-      })) {
+      if (!lookup.performGuardedChange(() -> lookup.getEditor().getSelectionModel().removeSelection())) {
         return;
       }
 
@@ -208,7 +202,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
   public static class RightHandler extends LookupActionHandler {
     public RightHandler(EditorActionHandler originalHandler) {
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -229,25 +223,22 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
-      if (!lookup.performGuardedChange(new Runnable() {
-        @Override
-        public void run() {
-          CaretAction action = new CaretAction() {
-            @Override
-            public void perform(Caret caret) {
-              caret.removeSelection();
-              int caretOffset = caret.getOffset();
-              if (caretOffset < seq.length()) {
-                caret.moveToOffset(caretOffset + 1);
-              }
+      if (!lookup.performGuardedChange(() -> {
+        CaretAction action = new CaretAction() {
+          @Override
+          public void perform(Caret caret1) {
+            caret1.removeSelection();
+            int caretOffset = caret1.getOffset();
+            if (caretOffset < seq.length()) {
+              caret1.moveToOffset(caretOffset + 1);
             }
-          };
-          if (caret == null) {
-            editor.getCaretModel().runForEachCaret(action);
           }
-          else {
-            action.perform(caret);
-          }
+        };
+        if (caret == null) {
+          editor.getCaretModel().runForEachCaret(action);
+        }
+        else {
+          action.perform(caret);
         }
       })) {
         return;

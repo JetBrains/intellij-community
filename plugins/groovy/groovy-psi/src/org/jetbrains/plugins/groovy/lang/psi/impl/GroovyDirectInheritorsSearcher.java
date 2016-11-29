@@ -15,15 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.search.StubHierarchyInheritorSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
   private static List<PsiClass> getDerivingClassCandidates(PsiClass clazz, GlobalSearchScope scope, boolean includeAnonymous) {
     final String name = clazz.getName();
     if (name == null) return Collections.emptyList();
-    final ArrayList<PsiClass> inheritors = new ArrayList<PsiClass>();
+    final ArrayList<PsiClass> inheritors = new ArrayList<>();
     for (GrReferenceList list : StubIndex.getElements(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope,
                                                       GrReferenceList.class)) {
       final PsiElement parent = list.getParent();
@@ -69,16 +70,15 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
     final PsiClass clazz = queryParameters.getClassToProcess();
     final SearchScope scope = queryParameters.getScope();
+    Project project = PsiUtilCore.getProjectInReadAction(clazz);
     if (scope instanceof GlobalSearchScope) {
-      final List<PsiClass> candidates = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiClass>>() {
-        @Override
-        public List<PsiClass> compute() {
-          if (!clazz.isValid()) return Collections.emptyList();
-          return getDerivingClassCandidates(clazz, (GlobalSearchScope)scope, queryParameters.includeAnonymous());
-        }
-      });
+      final List<PsiClass> candidates = DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+        if (!clazz.isValid()) return Collections.emptyList();
+          GlobalSearchScope restrictedScope = StubHierarchyInheritorSearcher.restrictScope((GlobalSearchScope)scope);
+          return getDerivingClassCandidates(clazz, restrictedScope, queryParameters.includeAnonymous());
+        });
       for (final PsiClass candidate : candidates) {
-        if (!queryParameters.isCheckInheritance() || isInheritor(clazz, candidate)) {
+        if (!queryParameters.isCheckInheritance() || isInheritor(clazz, candidate, project)) {
           if (!consumer.process(candidate)) {
             return false;
           }
@@ -91,13 +91,7 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
     return true;
   }
 
-  private static boolean isInheritor(PsiClass clazz, PsiClass candidate) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      return candidate.isValid() && candidate.isInheritor(clazz, false);
-    }
-    finally {
-      accessToken.finish();
-    }
+  private static boolean isInheritor(PsiClass clazz, PsiClass candidate, Project project) {
+    return DumbService.getInstance(project).runReadActionInSmartMode(() -> candidate.isValid() && candidate.isInheritor(clazz, false));
   }
 }

@@ -63,12 +63,7 @@ public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageI
     presentation.setTooltip(myUsagePresentation.getTooltipText());
     final TextChunk[] text = myUsagePresentation.getText();
     updatePresentationWithTextChunks(presentation, text);
-    presentation.setPresentableText(StringUtil.join(text, new Function<TextChunk, String>() {
-      @Override
-      public String fun(TextChunk chunk) {
-        return chunk.getText();
-      }
-    }, ""));
+    presentation.setPresentableText(StringUtil.join(text, chunk -> chunk.getText(), ""));
   }
 
   public static void updatePresentationWithTextChunks(PresentationData presentation, TextChunk[] text) {

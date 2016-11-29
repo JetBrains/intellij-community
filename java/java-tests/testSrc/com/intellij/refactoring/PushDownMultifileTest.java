@@ -23,12 +23,15 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 //push first method from class a.A to class b.B
 public class PushDownMultifileTest extends MultiFileTestCase {
@@ -62,12 +65,9 @@ public class PushDownMultifileTest extends MultiFileTestCase {
 
         final PsiMethod[] methods = srcClass.getMethods();
         assertTrue("No methods found", methods.length > 0);
-        final MemberInfo[] membersToMove = new MemberInfo[1];
         final MemberInfo memberInfo = new MemberInfo(methods[0]);
         memberInfo.setChecked(true);
-        membersToMove[0] = memberInfo;
-
-        new PushDownProcessor(srcClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+        new PushDownProcessor<>(srcClass, Collections.singletonList(memberInfo), new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
 
 
         //LocalFileSystem.getInstance().refresh(false);
@@ -115,12 +115,9 @@ public class PushDownMultifileTest extends MultiFileTestCase {
 
         final PsiField[] fields = srcClass.getFields();
         assertTrue("No methods found", fields.length > 0);
-        final MemberInfo[] membersToMove = new MemberInfo[1];
         final MemberInfo memberInfo = new MemberInfo(fields[0]);
         memberInfo.setChecked(true);
-        membersToMove[0] = memberInfo;
-
-        new PushDownProcessor(srcClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+        new PushDownProcessor<>(srcClass, Collections.singletonList(memberInfo), new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
 
 
         //LocalFileSystem.getInstance().refresh(false);

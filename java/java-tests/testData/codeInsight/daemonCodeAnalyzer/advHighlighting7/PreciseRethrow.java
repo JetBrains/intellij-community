@@ -193,6 +193,14 @@ class C {
     }
   }
 
+  void m11_5() {
+    try {}
+    catch (Exception e) {
+      //parentesis expr
+      throw (e);
+    }
+  }
+
   static class MyResource implements AutoCloseable {
     public void close() throws E1 { }
   }

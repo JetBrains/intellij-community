@@ -96,8 +96,8 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private final GitRepositoryFiles myRepositoryFiles;
   private final Git myGit;
 
-  private final Set<VirtualFile> myDefinitelyUntrackedFiles = new HashSet<VirtualFile>();
-  private final Set<VirtualFile> myPossiblyUntrackedFiles = new HashSet<VirtualFile>();
+  private final Set<VirtualFile> myDefinitelyUntrackedFiles = new HashSet<>();
+  private final Set<VirtualFile> myPossiblyUntrackedFiles = new HashSet<>();
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
   private final GitRepositoryManager myRepositoryManager;
@@ -173,7 +173,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
       rescanAll();
     }
     synchronized (myDefinitelyUntrackedFiles) {
-      return new ArrayList<VirtualFile>(myDefinitelyUntrackedFiles);
+      return new ArrayList<>(myDefinitelyUntrackedFiles);
     }
   }
 
@@ -211,7 +211,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
    * Queries Git to check the status of {@code myPossiblyUntrackedFiles} and moves them to {@code myDefinitelyUntrackedFiles}.
    */
   private void verifyPossiblyUntrackedFiles() throws VcsException {
-    Set<VirtualFile> suspiciousFiles = new HashSet<VirtualFile>();
+    Set<VirtualFile> suspiciousFiles = new HashSet<>();
     synchronized (LOCK) {
       suspiciousFiles.addAll(myPossiblyUntrackedFiles);
       myPossiblyUntrackedFiles.clear();
@@ -236,7 +236,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
     boolean allChanged = false;
-    Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
+    Set<VirtualFile> filesToRefresh = new HashSet<>();
 
     for (VFileEvent event : events) {
       if (allChanged) {

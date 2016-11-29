@@ -50,10 +50,10 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     if (content.getFileType() == XmlFileType.INSTANCE) {
       CharSequence inputDataContentAsText = content.getContentAsText();
       if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return FileIncludeInfo.EMPTY;
-      infos = new ArrayList<FileIncludeInfo>();
+      infos = new ArrayList<>();
       NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(content.getContentAsText()), new RngBuilderAdapter(infos));
     } else if (content.getFileType() == RncFileType.getInstance()) {
-      infos = new ArrayList<FileIncludeInfo>();
+      infos = new ArrayList<>();
       content.getPsiFile().acceptChildren(new RncElementVisitor() {
         @Override
         public void visitElement(RncElement element) {

@@ -50,7 +50,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
   public static final String QUICKFIX_NAME = "Convert TestCase to TestNG";
 
   static {
-    ANNOTATIONS_MAP = new HashMap<String, String>();
+    ANNOTATIONS_MAP = new HashMap<>();
     ANNOTATIONS_MAP.put("org.junit.Test", "@org.testng.annotations.Test");
     ANNOTATIONS_MAP.put("org.junit.BeforeClass", "@org.testng.annotations.BeforeClass");
     ANNOTATIONS_MAP.put("org.junit.Before", "@org.testng.annotations.BeforeMethod");
@@ -92,13 +92,8 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
   public static class JUnitConverterQuickFix implements LocalQuickFix {
 
     @NotNull
-    public String getName() {
-      return QUICKFIX_NAME;
-    }
-
-     @NotNull
     public String getFamilyName() {
-      return getName();
+      return QUICKFIX_NAME;
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
@@ -110,7 +105,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiJavaFile javaFile = (PsiJavaFile)psiClass.getContainingFile();
 
-        final List<PsiElement> convertedElements = new SmartList<PsiElement>();
+        final List<PsiElement> convertedElements = new SmartList<>();
 
         for (PsiMethod method : psiClass.getMethods()) {
           final PsiMethodCallExpression[] methodCalls = getTestCaseCalls(method);
@@ -213,16 +208,13 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
 
     private static List<PsiElement> convertJunitAnnotations(final PsiElementFactory factory, final PsiMethod method) throws IncorrectOperationException {
       PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
-      return ContainerUtil.mapNotNull(annotations, new Function<PsiAnnotation, PsiElement>() {
-        @Override
-        public PsiElement fun(PsiAnnotation annotation) {
-          final String testNgAnnotation = ANNOTATIONS_MAP.get(annotation.getQualifiedName());
-          if (testNgAnnotation != null) {
-            final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.Test", method);
-            return annotation.replace(newAnnotation);
-          }
-          return null;
+      return ContainerUtil.mapNotNull(annotations, annotation -> {
+        final String testNgAnnotation = ANNOTATIONS_MAP.get(annotation.getQualifiedName());
+        if (testNgAnnotation != null) {
+          final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.Test", method);
+          return annotation.replace(newAnnotation);
         }
+        return null;
       });
     }
 

@@ -54,14 +54,11 @@ public class CustomFoldingRegionsPopup {
         .setTitle(IdeBundle.message("goto.custom.region.command"))
         .setResizable(false)
         .setMovable(false)
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            PsiElement navigationElement = getNavigationElement();
-            if (navigationElement != null) {
-              navigateTo(editor, navigationElement);
-              IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-            }
+        .setItemChoosenCallback(() -> {
+          PsiElement navigationElement = getNavigationElement();
+          if (navigationElement != null) {
+            navigateTo(editor, navigationElement);
+            IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
           }
         }).createPopup();
   }
@@ -108,15 +105,12 @@ public class CustomFoldingRegionsPopup {
   }
 
   private static Collection<FoldingDescriptor> orderByPosition(Collection<FoldingDescriptor> descriptors) {
-    List<FoldingDescriptor> sorted = new ArrayList<FoldingDescriptor>(descriptors.size());
+    List<FoldingDescriptor> sorted = new ArrayList<>(descriptors.size());
     sorted.addAll(descriptors);
-    Collections.sort(sorted, new Comparator<FoldingDescriptor>() {
-      @Override
-      public int compare(FoldingDescriptor descriptor1, FoldingDescriptor descriptor2) {
-        int pos1 = descriptor1.getElement().getTextRange().getStartOffset();
-        int pos2 = descriptor2.getElement().getTextRange().getStartOffset();
-        return pos1 - pos2;
-      }
+    Collections.sort(sorted, (descriptor1, descriptor2) -> {
+      int pos1 = descriptor1.getElement().getTextRange().getStartOffset();
+      int pos2 = descriptor2.getElement().getTextRange().getStartOffset();
+      return pos1 - pos2;
     });
     return sorted;
   }

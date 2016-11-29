@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,10 +96,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     else {
       nameIdentifier = aClass.getNameIdentifier();
     }
-    if (nameIdentifier != null && !nameIdentifier.isPhysical()) {
-      nameIdentifier = nameIdentifier.getNavigationElement();
-    }
-    if (nameIdentifier == null || !nameIdentifier.isPhysical()) {
+    if (nameIdentifier == null) {
       registerError(aClass.getContainingFile(), infos);
     }
     else {
@@ -180,13 +179,8 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   protected final void registerError(@NotNull PsiElement location,
                                      final ProblemHighlightType highlightType,
                                      Object... infos) {
-    if (location.getTextLength() == 0 && !(location instanceof PsiFile)) {
-      return;
-    }
-    final InspectionGadgetsFix[] fixes = createFixes(infos);
-    for (InspectionGadgetsFix fix : fixes) {
-      fix.setOnTheFly(onTheFly);
-    }
+    assert location.getTextLength() != 0 || location instanceof PsiFile;
+    final LocalQuickFix[] fixes = createAndInitFixes(infos);
     final String description = inspection.buildErrorString(infos);
     holder.registerProblem(location, description, highlightType, fixes);
   }
@@ -198,16 +192,31 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   protected final void registerErrorAtOffset(@NotNull PsiElement location, int offset, int length,
                                              ProblemHighlightType highlightType,
                                              Object... infos) {
-    if (location.getTextLength() == 0 || length == 0) {
+    assert !(location.getTextLength() == 0 || length == 0);
+    final LocalQuickFix[] fixes = createAndInitFixes(infos);
+    final String description = inspection.buildErrorString(infos);
+    final TextRange range = new TextRange(offset, offset + length);
+    holder.registerProblem(location, description, highlightType, range, fixes);
+  }
+
+  protected final void registerErrorAtRange(@NotNull PsiElement startLocation, @NotNull PsiElement endLocation, Object... infos) {
+    if (startLocation.getTextLength() == 0 && startLocation == endLocation) {
       return;
     }
+    final LocalQuickFix[] fixes = createAndInitFixes(infos);
+    final String description = inspection.buildErrorString(infos);
+    final ProblemDescriptor problemDescriptor = holder.getManager()
+      .createProblemDescriptor(startLocation, endLocation, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly, fixes);
+    holder.registerProblem(problemDescriptor);
+  }
+
+  @NotNull
+  private LocalQuickFix[] createAndInitFixes(Object[] infos) {
     final InspectionGadgetsFix[] fixes = createFixes(infos);
     for (InspectionGadgetsFix fix : fixes) {
       fix.setOnTheFly(onTheFly);
     }
-    final String description = inspection.buildErrorString(infos);
-    final TextRange range = new TextRange(offset, offset + length);
-    holder.registerProblem(location, description, highlightType, range, fixes);
+    return fixes;
   }
 
   @NotNull
@@ -233,5 +242,15 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   public final void setProblemsHolder(ProblemsHolder holder) {
     this.holder = holder;
+  }
+
+  protected boolean isVisibleHighlight(@NotNull PsiElement element) {
+    if (!isOnTheFly()) {
+      return true;
+    }
+    final HighlightDisplayKey key = HighlightDisplayKey.find(inspection.getShortName());
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
+    final HighlightDisplayLevel errorLevel = profile.getErrorLevel(key, element);
+    return !HighlightDisplayLevel.DO_NOT_SHOW.equals(errorLevel);
   }
 }

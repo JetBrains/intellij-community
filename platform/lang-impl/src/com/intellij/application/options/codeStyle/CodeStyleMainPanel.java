@@ -26,7 +26,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.ui.components.labels.SwingActionLink;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,14 +39,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
   private final CardLayout myLayout = new CardLayout();
   private final JPanel mySettingsPanel = new JPanel(myLayout);
 
-  private final Map<String, NewCodeStyleSettingsPanel> mySettingsPanels = new HashMap<String, NewCodeStyleSettingsPanel>();
+  private final Map<String, NewCodeStyleSettingsPanel> mySettingsPanels = new HashMap<>();
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Future<?> myAlarm = CompletableFuture.completedFuture(null);
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesPanel mySchemesPanel;
@@ -103,7 +106,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
       @Override
       public void schemeChanged(final CodeStyleScheme scheme) {
-        ensurePanel(scheme).reset();
+        ensurePanel(scheme).reset(scheme.getCodeStyleSettings());
       }
     });
 
@@ -137,28 +140,19 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
   public void onCurrentSchemeChanged() {
     myLayout.show(mySettingsPanel, WAIT_CARD);
-    final Runnable replaceLayout = new Runnable() {
-      @Override
-      public void run() {
-        if (!myIsDisposed) {
-          ensureCurrentPanel().onSomethingChanged();
-          String schemeName = myModel.getSelectedScheme().getName();
-          updateSetFrom();
-          myLayout.show(mySettingsPanel, schemeName);
-        }
+    final Runnable replaceLayout = () -> {
+      if (!myIsDisposed) {
+        ensureCurrentPanel().onSomethingChanged();
+        String schemeName = myModel.getSelectedScheme().getName();
+        updateSetFrom();
+        myLayout.show(mySettingsPanel, schemeName);
       }
     };
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       replaceLayout.run();
     } else {
-      myAlarm.cancelAllRequests();
-      final Runnable request = new Runnable() {
-        @Override
-        public void run() {
-          SwingUtilities.invokeLater(replaceLayout);
-        }
-      };
-      myAlarm.addRequest(request, 200);
+      myAlarm.cancel(false);
+      myAlarm = EdtExecutorService.getScheduledExecutorInstance().schedule(replaceLayout, 200, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -219,7 +213,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     String name = scheme.getName();
     if (!mySettingsPanels.containsKey(name)) {
       NewCodeStyleSettingsPanel panel = myFactory.createPanel(scheme);
-      panel.reset();
+      panel.reset(scheme.getCodeStyleSettings());
       panel.setModel(myModel);
       CodeStyleAbstractPanel settingsPanel = panel.getSelectedPanel();
       if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {
@@ -242,7 +236,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   }
 
   public void disposeUIResources() {
-    myAlarm.cancelAllRequests();
+    myAlarm.cancel(false);
     clearPanels();
     myIsDisposed = true;
   }

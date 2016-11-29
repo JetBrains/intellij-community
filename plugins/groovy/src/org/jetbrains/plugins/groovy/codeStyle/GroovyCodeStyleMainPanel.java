@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 /**
@@ -31,5 +33,10 @@ public class GroovyCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
   protected void initTabs(CodeStyleSettings settings) {
     super.initTabs(settings);
     addTab(new GrCodeStyleImportsPanelWrapper(settings));
+    for (CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
+      if (provider.getLanguage() == GroovyLanguage.INSTANCE && !provider.hasSettingsPage()) {
+        createTab(provider);
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,7 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
-import com.intellij.util.OnOffListener;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,33 +29,30 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/22/11
- * Time: 2:33 PM
- */
 public abstract class SplitterWithSecondHideable {
+  public interface OnOffListener<T> {
+    void on(T t);
+    void off(T t);
+  }
+
   private final PseudoSplitter mySplitter;
   private final AbstractTitledSeparatorWithIcon myTitledSeparator;
-  private final boolean myVertical;
   private final OnOffListener<Integer> myListener;
   private final JPanel myFictivePanel;
   private Splitter.DividerImpl mySuperDivider;
   private float myPreviousProportion;
 
-  public SplitterWithSecondHideable(final boolean vertical,
-                                    final String separatorText,
-                                    final JComponent firstComponent,
-                                    final OnOffListener<Integer> listener) {
-    myVertical = vertical;
+  public SplitterWithSecondHideable(boolean vertical,
+                                    String separatorText,
+                                    JComponent firstComponent,
+                                    OnOffListener<Integer> listener) {
     myListener = listener;
     myFictivePanel = new JPanel(new BorderLayout());
     Icon icon;
     Icon openIcon;
     if (vertical) {
-      icon = AllIcons.General.ComboArrow;
-      openIcon = AllIcons.General.ComboUpPassive;
+      icon = AllIcons.General.ComboArrowRight;
+      openIcon = AllIcons.General.ComboArrowDown;
     }
     else {
       icon = AllIcons.General.ComboArrowRight;
@@ -75,14 +71,11 @@ public abstract class SplitterWithSecondHideable {
         mySplitter.setSecondComponent(myDetailsComponent.getPanel());
         mySuperDivider.setResizeEnabled(true);
 
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            mySplitter.fixFirst(proportion);
-            mySplitter.invalidate();
-            mySplitter.validate();
-            mySplitter.repaint();
-          }
+        SwingUtilities.invokeLater(() -> {
+          mySplitter.fixFirst(proportion);
+          mySplitter.invalidate();
+          mySplitter.validate();
+          mySplitter.repaint();
         });
       }
 
@@ -118,8 +111,7 @@ public abstract class SplitterWithSecondHideable {
         myTitledSeparator.mySeparator.addMouseListener(new MouseAdapter() {
           @Override
           public void mouseEntered(MouseEvent e) {
-            myTitledSeparator.mySeparator
-              .setCursor(myTitledSeparator.myOn ? new Cursor(Cursor.S_RESIZE_CURSOR) : new Cursor(Cursor.DEFAULT_CURSOR));
+            myTitledSeparator.mySeparator.setCursor(new Cursor(myTitledSeparator.myOn ? Cursor.S_RESIZE_CURSOR : Cursor.DEFAULT_CURSOR));
             ((MyDivider)mySuperDivider).processMouseEvent(e);
           }
 
@@ -178,7 +170,7 @@ public abstract class SplitterWithSecondHideable {
         mySuperDivider = new MyDivider();
         mySuperDivider.add(myTitledSeparator,
                            new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                  new Insets(0, 0, 0, 0), 0, 0));
+                                                  JBUI.emptyInsets(), 0, 0));
         return mySuperDivider;
       }
 
@@ -208,10 +200,6 @@ public abstract class SplitterWithSecondHideable {
 
   public void setText(final String value) {
     myTitledSeparator.setText(value);
-  }
-
-  public void setEnabledColor(final boolean enabled) {
-    myTitledSeparator.myLabel.setForeground(enabled ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
   }
 
   public Splitter getComponent() {

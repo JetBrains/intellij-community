@@ -41,7 +41,7 @@ public class StructureViewModuleNode extends AbstractModuleNode {
       // just deleted a module from project view
       return Collections.emptyList();
     }
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>(2);
+    final List<AbstractTreeNode> children = new ArrayList<>(2);
     children.add(new LibraryGroupNode(getProject(), new LibraryGroupElement(module), getSettings()) {
       @Override
       public boolean isAlwaysExpand() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.psi.impl.cache;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.BitUtil;
+import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 
 /**
@@ -39,6 +41,7 @@ public final class ModifierFlags {
   public static final int PACKAGE_LOCAL_MASK = 0x1000;
 
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
+  public static final TIntObjectHashMap<String> MODIFIER_FLAG_TO_NAME_MAP = new TIntObjectHashMap<String>();
   public static final TObjectIntHashMap<IElementType> KEYWORD_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<IElementType>();
   static {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PUBLIC, PUBLIC_MASK);
@@ -54,6 +57,10 @@ public final class ModifierFlags {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.ABSTRACT, ABSTRACT_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.STRICTFP, STRICTFP_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PACKAGE_LOCAL, PACKAGE_LOCAL_MASK);
+
+    for (Object name : NAME_TO_MODIFIER_FLAG_MAP.keys()) {
+      MODIFIER_FLAG_TO_NAME_MAP.put(NAME_TO_MODIFIER_FLAG_MAP.get((String)name), (String)name);
+    }
 
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.PUBLIC_KEYWORD, PUBLIC_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.PRIVATE_KEYWORD, PRIVATE_MASK);
@@ -72,6 +79,6 @@ public final class ModifierFlags {
   public static boolean hasModifierProperty(String name, int mask) {
     int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
     assert flag != 0 : name;
-    return (mask & flag) != 0;
+    return BitUtil.isSet(mask, flag);
   }
 }

@@ -46,7 +46,7 @@ public class UngroupRowsColumnsAction extends RowColumnAction {
   protected void actionPerformed(CaptionSelection selection) {
     FormLayout layout = (FormLayout) selection.getContainer().getLayout();
     int[][] oldGroups = selection.isRow() ? layout.getRowGroups() : layout.getColumnGroups();
-    List<int[]> newGroups = new ArrayList<int[]>();
+    List<int[]> newGroups = new ArrayList<>();
     int[] selInts = selection.getSelection();
     for(int[] group: oldGroups) {
       if (!GroupRowsColumnsAction.intersect(group, selInts)) {

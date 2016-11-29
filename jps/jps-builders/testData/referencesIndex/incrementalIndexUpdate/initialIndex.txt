@@ -1,0 +1,24 @@
+Backward Hierarchy:
+Foo -> FooImpl
+java.lang.Object -> Bar FooImpl
+
+Backward References:
+Bar in Bar
+Bar.<init>(0) in Bar
+Bar.m(1) in Bar
+Foo in Foo FooImpl
+Foo.getSomeText(0) in Foo
+FooImpl in Bar FooImpl
+FooImpl.<init>(0) in FooImpl
+FooImpl.TITLE in Bar FooImpl
+FooImpl.getSomeText(0) in Bar FooImpl
+java.io.PrintStream.println(1) in Bar
+java.lang.Object.<init>(0) in Bar FooImpl
+java.lang.String in Foo FooImpl
+java.lang.System in Bar
+java.lang.System.out in Bar
+
+Class Definitions:
+Bar in Bar
+Foo in Foo
+FooImpl in FooImpl

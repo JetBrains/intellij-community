@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -57,16 +54,13 @@ public class MoveModuleToGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
 
-    List<ModuleGroup> children = new ArrayList<ModuleGroup>(myModuleGroup.childGroups(e.getDataContext()));
-    Collections.sort ( children, new Comparator<ModuleGroup>() {
-      @Override
-      public int compare(final ModuleGroup moduleGroup1, final ModuleGroup moduleGroup2) {
-        assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
-        return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
-      }
+    List<ModuleGroup> children = new ArrayList<>(myModuleGroup.childGroups(e.getDataContext()));
+    Collections.sort (children, (moduleGroup1, moduleGroup2) -> {
+      assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
+      return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
     });
 
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
     result.add(new MoveModulesToGroupAction(myModuleGroup, IdeBundle.message("action.move.module.to.this.group")));
     result.add(new MoveModulesToSubGroupAction(myModuleGroup));
      result.add(Separator.getInstance());

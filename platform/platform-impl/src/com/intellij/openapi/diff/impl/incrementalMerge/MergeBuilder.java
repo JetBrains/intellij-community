@@ -26,7 +26,7 @@ import java.util.List;
 class MergeBuilder {
   @NotNull private final ContextLogger LOG;
 
-  @NotNull private final ArrayList<MergeFragment> myResult = new ArrayList<MergeFragment>();
+  @NotNull private final ArrayList<MergeFragment> myResult = new ArrayList<>();
 
   @NotNull private final int[] myProcessed = new int[]{0, 0, 0}; // LEFT aka SIDE1, RIGHT aka SIDE2, BASE
   @NotNull private final EqualPair[] myPairs = new EqualPair[2]; // LEFT, RIGHT

@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.easymock.classextension.EasyMock.*;
+import static org.easymock.EasyMock.*;
 
 public class SelectionCalculatorTest extends LocalHistoryTestCase {
   IdeaGateway gw = new MyIdeaGateway();

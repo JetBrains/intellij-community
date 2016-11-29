@@ -33,6 +33,7 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.project.Project;
@@ -48,6 +49,8 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class Tool implements SchemeElement {
+  private static final Logger LOG = Logger.getInstance("#" + Tool.class.getPackage().getName());
+  
   @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
 
   public static final String DEFAULT_GROUP_NAME = "External Tools";
@@ -69,7 +72,7 @@ public class Tool implements SchemeElement {
   private String myProgram;
   private String myParameters;
 
-  private ArrayList<FilterInfo> myOutputFilters = new ArrayList<FilterInfo>();
+  private ArrayList<FilterInfo> myOutputFilters = new ArrayList<>();
 
   public Tool() {
   }
@@ -200,7 +203,7 @@ public class Tool implements SchemeElement {
   }
 
   public void setOutputFilters(FilterInfo[] filters) {
-    myOutputFilters = new ArrayList<FilterInfo>();
+    myOutputFilters = new ArrayList<>();
     if (filters != null) {
       Collections.addAll(myOutputFilters, filters);
     }
@@ -226,7 +229,7 @@ public class Tool implements SchemeElement {
     myWorkingDirectory = source.getWorkingDirectory();
     myProgram = source.getProgram();
     myParameters = source.getParameters();
-    myOutputFilters = new ArrayList<FilterInfo>(Arrays.asList(source.getOutputFilters()));
+    myOutputFilters = new ArrayList<>(Arrays.asList(source.getOutputFilters()));
   }
 
   public boolean equals(Object obj) {
@@ -283,6 +286,7 @@ public class Tool implements SchemeElement {
           public void processStarted(RunContentDescriptor descriptor) {
             ProcessHandler processHandler = descriptor.getProcessHandler();
             if (processHandler != null && processListener != null) {
+              LOG.assertTrue(!processHandler.isStartNotified(), "ProcessHandler is already startNotified, the listener won't be correctly notified");
               processHandler.addProcessListener(processListener);
             }
           }

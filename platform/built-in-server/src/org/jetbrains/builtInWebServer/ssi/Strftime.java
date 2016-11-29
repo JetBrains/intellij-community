@@ -44,7 +44,7 @@ import java.util.TimeZone;
  */
 @SuppressWarnings("SpellCheckingInspection")
 public class Strftime {
-  protected static final Map<String, String> translate = new THashMap<String, String>();
+  protected static final Map<String, String> translate = new THashMap<>();
   protected final SimpleDateFormat simpleDateFormat;
 
   static {

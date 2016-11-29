@@ -25,7 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.VariableSearchUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -75,15 +75,9 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.code.block.unwrap.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override
@@ -127,7 +121,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
       }
       final PsiCodeBlock parentBlock = (PsiCodeBlock)parent;
       if (parentBlock.getStatements().length > 1 &&
-          VariableSearchUtils.containsConflictingDeclarations(codeBlock, parentBlock)) {
+          DeclarationSearchUtils.containsConflictingDeclarations(codeBlock, parentBlock)) {
         return;
       }
       registerError(brace);

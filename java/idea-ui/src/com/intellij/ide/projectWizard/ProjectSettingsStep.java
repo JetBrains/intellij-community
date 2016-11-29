@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -199,23 +200,23 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   static void addField(String label, JComponent field, JPanel panel) {
     JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
-    panel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                 GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 4, 0));
+    panel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                             GridBagConstraints.NONE, JBUI.insets(10, 0, 5, 0), 4, 0));
     panel.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+                                            GridBagConstraints.HORIZONTAL, JBUI.insetsBottom(5), 0, 0));
   }
 
   @Override
   public void addSettingsComponent(@NotNull JComponent component) {
     JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : getModulePanel();
     panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                   GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+                                                GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
   }
 
   @Override
   public void addExpertPanel(@NotNull JComponent panel) {
     myExpertPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                    GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+                                                    GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
   }
 
   @Override

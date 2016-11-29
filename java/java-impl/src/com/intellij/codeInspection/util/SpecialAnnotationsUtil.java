@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,13 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -55,18 +56,19 @@ public class SpecialAnnotationsUtil {
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
                                                            final String borderTitle,
                                                            final boolean acceptPatterns) {
-    final SortedListModel<String> listModel = new SortedListModel<String>(new Comparator<String>() {
-      @Override
-      public int compare(final String o1, final String o2) {
-        return o1.compareTo(o2);
-      }
-    });
-    final JList injectionList = new JBList(listModel);
+    return createSpecialAnnotationsListControl(list, borderTitle, acceptPatterns, aClass -> aClass.isAnnotationType());
+  }
+
+  public static JPanel createSpecialAnnotationsListControl(final List<String> list,
+                                                           final String borderTitle,
+                                                           final boolean acceptPatterns,
+                                                           final Condition<PsiClass> isApplicable) {
+    @SuppressWarnings("Convert2Diamond")
+    SortedListModel<String> listModel = new SortedListModel<String>(Comparator.naturalOrder());
     for (String s : list) {
       listModel.add(s);
     }
-    injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-    injectionList.getModel().addListDataListener(new ListDataListener() {
+    listModel.addListDataListener(new ListDataListener() {
       @Override
       public void intervalAdded(ListDataEvent e) {
         listChanged();
@@ -89,7 +91,16 @@ public class SpecialAnnotationsUtil {
         listChanged();
       }
     });
+    return createSpecialAnnotationsListControl(borderTitle, acceptPatterns, isApplicable, listModel);
+  }
 
+  public static JPanel createSpecialAnnotationsListControl(final String borderTitle,
+                                                           final boolean acceptPatterns,
+                                                           final Condition<PsiClass> isApplicable,
+                                                           final SortedListModel<String> listModel) {
+    final JList injectionList = new JBList(listModel);
+
+    injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(injectionList)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -101,7 +112,7 @@ public class SpecialAnnotationsUtil {
                                                 GlobalSearchScope.allScope(project), new ClassFilter() {
               @Override
               public boolean isAccepted(PsiClass aClass) {
-                return aClass.isAnnotationType();
+                return isApplicable.value(aClass);
               }
             }, null);
           chooser.showDialog();
@@ -168,7 +179,7 @@ public class SpecialAnnotationsUtil {
 
       @Override
       public boolean startInWriteAction() {
-        return true;
+        return false;
       }
     };
   }

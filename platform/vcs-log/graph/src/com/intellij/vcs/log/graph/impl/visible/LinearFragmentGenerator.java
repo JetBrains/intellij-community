@@ -149,10 +149,10 @@ public class LinearFragmentGenerator {
                                            Function<Integer, List<Integer>> getNextNodes,
                                            Function<Integer, List<Integer>> getPrevNodes,
                                            Set<Integer> thisNodeCantBeInMiddle, boolean isDown) {
-    Set<Integer> blackNodes = new HashSet<Integer>();
+    Set<Integer> blackNodes = new HashSet<>();
     blackNodes.add(startNode);
 
-    Set<Integer> grayNodes = new HashSet<Integer>();
+    Set<Integer> grayNodes = new HashSet<>();
     grayNodes.addAll(getNextNodes.fun(startNode));
 
     int endNode = -1;

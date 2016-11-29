@@ -20,8 +20,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Base64Converter;
+import com.intellij.util.Base64;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
 
@@ -38,6 +39,7 @@ import java.util.List;
 public abstract class AbstractJavaFxPackager {
   private static final Logger LOG = Logger.getInstance("#" + AbstractJavaFxPackager.class.getName());
   private static final String JB_JFX_JKS = "jb-jfx.jks";
+  private static final String NATIVE_BUNDLES = "bundles";
 
   //artifact description
   protected String getArtifactRootName() {
@@ -59,9 +61,15 @@ public abstract class AbstractJavaFxPackager {
 
   protected abstract String getDescription();
 
+  protected abstract String getVersion();
+
   protected abstract String getWidth();
 
   protected abstract String getHeight();
+
+  protected abstract String getHtmlTemplateFile();
+
+  protected abstract String getHtmlPlaceholderId();
 
   protected abstract String getHtmlParamFile();
 
@@ -73,6 +81,7 @@ public abstract class AbstractJavaFxPackager {
 
   protected abstract void registerJavaFxPackagerError(final String message);
 
+  protected abstract JavaFxApplicationIcons getIcons();
 
   public void buildJavaFxArtifact(final String homePath) {
     if (!checkNotEmpty(getAppClass(), "Application class")) return;
@@ -103,7 +112,7 @@ public abstract class AbstractJavaFxPackager {
       buf.append("<target name=\"build artifact\" xmlns:fx=\"javafx:com.sun.javafx.tools.ant\">");
       final String artifactFileName = getArtifactRootName();
       final List<JavaFxAntGenerator.SimpleTag> tags =
-        JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, getArtifactName(), tempUnzippedArtifactOutput.getPath());
+        JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, getArtifactName(), tempUnzippedArtifactOutput.getPath(), tempDirectory.getPath(), null);
       for (JavaFxAntGenerator.SimpleTag tag : tags) {
         tag.generate(buf);
       }
@@ -129,7 +138,7 @@ public abstract class AbstractJavaFxPackager {
   private void copyLibraries(String zipPath, File tempUnzippedArtifactOutput) throws IOException {
     final File[] outFiles = new File(getArtifactOutputPath()).listFiles();
     if (outFiles != null) {
-      final String[] generatedItems = new String[] {JB_JFX_JKS, zipPath + ".jar", zipPath + ".jnlp", zipPath + ".html"};
+      final String[] generatedItems = new String[]{JB_JFX_JKS, zipPath + ".jar", zipPath + ".jnlp", zipPath + ".html", NATIVE_BUNDLES};
       for (File file : outFiles) {
         final String fileName = file.getName();
         if (ArrayUtilRt.find(generatedItems, fileName) < 0) {
@@ -318,7 +327,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private String getKeypass(boolean selfSigning) {
-    return selfSigning ? "keypass" : Base64Converter.decode(getKeypass());
+    return selfSigning ? "keypass" : new String(Base64.decode(getKeypass()), CharsetToolkit.UTF8_CHARSET);
   }
 
   private String getKeystore(boolean selfSigning) {
@@ -326,7 +335,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private String getStorepass(boolean selfSigning) {
-    return selfSigning ? "storepass" : Base64Converter.decode(getStorepass());
+    return selfSigning ? "storepass" : new String(Base64.decode(getStorepass()), CharsetToolkit.UTF8_CHARSET);
   }
 
   public abstract String getKeypass();

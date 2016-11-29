@@ -83,7 +83,7 @@ public abstract class AbstractTagInjection extends BaseInjection {
   }
 
   public void setTagNamespace(@NotNull @NonNls String tagNamespace) {
-    myTagNamespace = new TreeSet<String>(StringUtil.split(tagNamespace,"|"));
+    myTagNamespace = new TreeSet<>(StringUtil.split(tagNamespace, "|"));
   }
 
   @NotNull

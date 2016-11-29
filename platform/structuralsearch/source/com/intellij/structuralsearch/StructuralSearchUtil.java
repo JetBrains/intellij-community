@@ -5,8 +5,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.tokenindex.LanguageTokenizer;
-import com.intellij.tokenindex.Tokenizer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,12 +45,12 @@ public class StructuralSearchUtil {
     if (profile == null) {
       return element;
     }
-    return getParentIfIdentifier(profile.getPresentableElement(element));
+    return profile.getPresentableElement(getParentIfIdentifier(element));
   }
 
   private static StructuralSearchProfile[] getNewStyleProfiles() {
     if (ourNewStyleProfiles == null) {
-      final List<StructuralSearchProfile> list = new ArrayList<StructuralSearchProfile>();
+      final List<StructuralSearchProfile> list = new ArrayList<>();
 
       for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
         if (profile instanceof StructuralSearchProfileBase) {
@@ -95,11 +93,6 @@ public class StructuralSearchUtil {
     return null;
   }
 
-  @Nullable
-  public static Tokenizer getTokenizerForLanguage(@NotNull Language language) {
-    return LanguageTokenizer.INSTANCE.forLanguage(language);
-  }
-
   public static boolean isTypedVariable(@NotNull final String name) {
     return name.length() > 1 && name.charAt(0)=='$' && name.charAt(name.length()-1)=='$';
   }
@@ -118,7 +111,7 @@ public class StructuralSearchUtil {
 
   @NotNull
   public static FileType[] getSuitableFileTypes() {
-    Set<FileType> allFileTypes = new HashSet<FileType>();
+    Set<FileType> allFileTypes = new HashSet<>();
     Collections.addAll(allFileTypes, FileTypeManager.getInstance().getRegisteredFileTypes());
     for (Language language : Language.getRegisteredLanguages()) {
       FileType fileType = language.getAssociatedFileType();
@@ -127,7 +120,7 @@ public class StructuralSearchUtil {
       }
     }
 
-    List<FileType> result = new ArrayList<FileType>();
+    List<FileType> result = new ArrayList<>();
     for (FileType fileType : allFileTypes) {
       if (fileType instanceof LanguageFileType) {
         result.add(fileType);
@@ -152,7 +145,7 @@ public class StructuralSearchUtil {
 
   public static List<Configuration> getPredefinedTemplates() {
     if (ourPredefinedConfigurations == null) {
-      final List<Configuration> result = new ArrayList<Configuration>();
+      final List<Configuration> result = new ArrayList<>();
       for (StructuralSearchProfile profile : getProfiles()) {
         Collections.addAll(result, profile.getPredefinedTemplates());
       }

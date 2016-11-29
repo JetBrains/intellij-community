@@ -55,18 +55,17 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.LocatableEvent;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author egor
@@ -76,6 +75,14 @@ public class JavaDebugProcess extends XDebugProcess {
   private final JavaDebuggerEditorsProvider myEditorsProvider;
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
+
+  private static final JavaBreakpointHandlerFactory[] ourDefaultBreakpointHandlerFactories = {
+    JavaBreakpointHandler.JavaLineBreakpointHandler::new,
+    JavaBreakpointHandler.JavaExceptionBreakpointHandler::new,
+    JavaBreakpointHandler.JavaFieldBreakpointHandler::new,
+    JavaBreakpointHandler.JavaMethodBreakpointHandler::new,
+    JavaBreakpointHandler.JavaWildcardBreakpointHandler::new
+  };
 
   public static JavaDebugProcess create(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
     JavaDebugProcess res = new JavaDebugProcess(session, javaSession);
@@ -89,18 +96,10 @@ public class JavaDebugProcess extends XDebugProcess {
     myEditorsProvider = new JavaDebuggerEditorsProvider();
     final DebugProcessImpl process = javaSession.getProcess();
 
-    List<XBreakpointHandler> handlers = new ArrayList<>();
-    handlers.add(new JavaBreakpointHandler.JavaLineBreakpointHandler(process));
-    handlers.add(new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process));
-    handlers.add(new JavaBreakpointHandler.JavaFieldBreakpointHandler(process));
-    handlers.add(new JavaBreakpointHandler.JavaMethodBreakpointHandler(process));
-    handlers.add(new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process));
-
-    for (JavaBreakpointHandlerFactory factory : Extensions.getExtensions(JavaBreakpointHandlerFactory.EP_NAME)) {
-      handlers.add(factory.createHandler(process));
-    }
-
-    myBreakpointHandlers = handlers.toArray(new XBreakpointHandler[handlers.size()]);
+    myBreakpointHandlers = StreamEx.of(ourDefaultBreakpointHandlerFactories)
+      .append(Extensions.getExtensions(JavaBreakpointHandlerFactory.EP_NAME))
+      .map(factory -> factory.createHandler(process))
+      .toArray(XBreakpointHandler[]::new);
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
@@ -240,22 +239,22 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Override
-  public void startStepOver() {
+  public void startStepOver(@Nullable XSuspendContext context) {
     myJavaSession.stepOver(false);
   }
 
   @Override
-  public void startStepInto() {
+  public void startStepInto(@Nullable XSuspendContext context) {
     myJavaSession.stepInto(false, null);
   }
 
   @Override
-  public void startForceStepInto() {
+  public void startForceStepInto(@Nullable XSuspendContext context) {
     myJavaSession.stepInto(true, null);
   }
 
   @Override
-  public void startStepOut() {
+  public void startStepOut(@Nullable XSuspendContext context) {
     myJavaSession.stepOut();
   }
 
@@ -271,12 +270,12 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Override
-  public void resume() {
+  public void resume(@Nullable XSuspendContext context) {
     myJavaSession.resume();
   }
 
   @Override
-  public void runToPosition(@NotNull XSourcePosition position) {
+  public void runToPosition(@NotNull XSourcePosition position, @Nullable XSuspendContext context) {
     myJavaSession.runToCursor(position, false);
   }
 

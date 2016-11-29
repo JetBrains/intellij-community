@@ -38,7 +38,7 @@ import java.util.List;
 * @author nik
 */
 class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implements ItemRemovable {
-  private static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
+  static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
   private static final ColumnInfo<ClasspathTableItem<?>, Boolean> EXPORT_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, Boolean>(EXPORT_COLUMN_NAME) {
     @Nullable
     @Override
@@ -62,19 +62,10 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     }
   };
   private static final String SCOPE_COLUMN_NAME = ProjectBundle.message("modules.order.export.scope.column");
-  private static final Comparator<DependencyScope> DEPENDENCY_SCOPE_COMPARATOR = new Comparator<DependencyScope>() {
-    @Override
-    public int compare(DependencyScope o1, DependencyScope o2) {
-      return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
-    }
-  };
+  private static final Comparator<DependencyScope> DEPENDENCY_SCOPE_COMPARATOR =
+    (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
   private static final Comparator<ClasspathTableItem<?>> CLASSPATH_ITEM_SCOPE_COMPARATOR =
-    new Comparator<ClasspathTableItem<?>>() {
-      @Override
-      public int compare(ClasspathTableItem<?> o1, ClasspathTableItem<?> o2) {
-        return Comparing.compare(o1.getScope(), o2.getScope(), DEPENDENCY_SCOPE_COMPARATOR);
-      }
-    };
+    (o1, o2) -> Comparing.compare(o1.getScope(), o2.getScope(), DEPENDENCY_SCOPE_COMPARATOR);
   private static final ColumnInfo<ClasspathTableItem<?>, DependencyScope> SCOPE_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, DependencyScope>(SCOPE_COLUMN_NAME) {
     @Nullable
     @Override
@@ -128,7 +119,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   public void init() {
     final OrderEntry[] orderEntries = getModel().getOrderEntries();
     boolean hasJdkOrderEntry = false;
-    List<ClasspathTableItem<?>> items = new ArrayList<ClasspathTableItem<?>>();
+    List<ClasspathTableItem<?>> items = new ArrayList<>();
     for (final OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof JdkOrderEntry) {
         hasJdkOrderEntry = true;
@@ -154,7 +145,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
 
   private List<OrderEntry> getEntries() {
     final int count = getRowCount();
-    final List<OrderEntry> entries = new ArrayList<OrderEntry>(count);
+    final List<OrderEntry> entries = new ArrayList<>(count);
     for (int row = 0; row < count; row++) {
       final OrderEntry entry = getItem(row).getEntry();
       if (entry != null) {
@@ -169,13 +160,10 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
 
     public ClasspathTableItemClasspathColumnInfo(final StructureConfigurableContext context) {
       super("");
-      myItemComparator = new Comparator<ClasspathTableItem<?>>() {
-        @Override
-        public int compare(ClasspathTableItem<?> o1, ClasspathTableItem<?> o2) {
-          String text1 = ClasspathPanelImpl.getCellAppearance(o1, context, false).getText();
-          String text2 = ClasspathPanelImpl.getCellAppearance(o2, context, false).getText();
-          return text1.compareToIgnoreCase(text2);
-        }
+      myItemComparator = (o1, o2) -> {
+        String text1 = ClasspathPanelImpl.getCellAppearance(o1, context, false).getText();
+        String text2 = ClasspathPanelImpl.getCellAppearance(o2, context, false).getText();
+        return text1.compareToIgnoreCase(text2);
       };
     }
 

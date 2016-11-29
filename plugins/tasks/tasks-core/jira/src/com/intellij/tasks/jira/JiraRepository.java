@@ -16,6 +16,7 @@
 package com.intellij.tasks.jira;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -72,6 +74,7 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   private JiraRemoteApi myApiVersion;
   private String myJiraVersion;
+  private boolean myInCloud = false;
 
   /**
    * Serialization constructor
@@ -91,6 +94,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     super(other);
     mySearchQuery = other.mySearchQuery;
     myJiraVersion = other.myJiraVersion;
+    myInCloud = other.myInCloud;
     if (other.myApiVersion != null) {
       myApiVersion = other.myApiVersion.getType().createApi(this);
     }
@@ -105,6 +109,7 @@ public class JiraRepository extends BaseRepositoryImpl {
 
     if (!Comparing.equal(mySearchQuery, repository.getSearchQuery())) return false;
     if (!Comparing.equal(myJiraVersion, repository.getJiraVersion())) return false;
+    if (!Comparing.equal(myInCloud, repository.isInCloud())) return false;
     return true;
   }
 
@@ -202,9 +207,10 @@ public class JiraRepository extends BaseRepositoryImpl {
     // when JIRA 4.x support will be dropped 'versionNumber' array in response
     // may be used instead version string parsing
     myJiraVersion = serverInfo.get("version").getAsString();
-    LOG.info("JIRA version (from serverInfo): " + myJiraVersion);
-    if (isOnDemand()) {
-      LOG.info("Connecting to JIRA on-Demand. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
+    myInCloud = isHostedInCloud(serverInfo);
+    LOG.info("JIRA version (from serverInfo): " + getPresentableVersion());
+    if (isInCloud()) {
+      LOG.info("Connecting to JIRA Cloud. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
     }
     JiraRestApi restApi = JiraRestApi.fromJiraVersion(myJiraVersion, this);
     if (restApi == null) {
@@ -213,10 +219,34 @@ public class JiraRepository extends BaseRepositoryImpl {
     return restApi;
   }
 
+  private static boolean isHostedInCloud(@NotNull JsonObject serverInfo) {
+    final JsonElement deploymentType = serverInfo.get("deploymentType");
+    if (deploymentType != null) {
+      return deploymentType.getAsString().equals("Cloud");  
+    }
+    // Legacy heuristics 
+    final boolean atlassianSubDomain = hostEndsWith(serverInfo.get("baseUrl").getAsString(), ".atlassian.net");
+    if (atlassianSubDomain) {
+      return true;
+    }
+    // JIRA OnDemand versions contained "OD" abbreviation
+    return serverInfo.get("version").getAsString().contains("OD") ;
+  }
+
+  private static boolean hostEndsWith(@NotNull String url, @NotNull String suffix) {
+    try {
+      final URL parsed = new URL(url);
+      return parsed.getHost().endsWith(suffix);
+    }
+    catch (MalformedURLException ignored) {
+    }
+    return false;
+  }
+
   private JiraLegacyApi createLegacyApi() {
     try {
       XmlRpcClient client = new XmlRpcClient(getUrl());
-      Vector<String> parameters = new Vector<String>(Collections.singletonList(""));
+      Vector<String> parameters = new Vector<>(Collections.singletonList(""));
       XmlRpcRequest request = new XmlRpcRequest("jira1.getServerInfo", parameters);
       @SuppressWarnings("unchecked") Hashtable<String, Object> response =
         (Hashtable<String, Object>)client.execute(request, new CommonsXmlRpcTransport(new URL(getUrl()), getHttpClient()));
@@ -245,7 +275,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     // See https://confluence.atlassian.com/display/ONDEMANDKB/Getting+randomly+logged+out+of+OnDemand for details
     // IDEA-128824, IDEA-128706 Use cookie authentication only for JIRA on-Demand
     // TODO Make JiraVersion more suitable for such checks
-    if (BASIC_AUTH_ONLY || !isOnDemand()) {
+    if (BASIC_AUTH_ONLY || !isInCloud()) {
       // to override persisted settings
       setUseHttpAuthentication(true);
     }
@@ -296,10 +326,19 @@ public class JiraRepository extends BaseRepositoryImpl {
     throw new Exception(TaskBundle.message("failure.http.error", statusCode, statusText));
   }
 
-  public boolean isOnDemand() {
-    return StringUtil.notNullize(myJiraVersion).contains("OD");
+  public boolean isInCloud() {
+    return myInCloud;
   }
 
+  public void setInCloud(boolean inCloud) {
+    myInCloud = inCloud;
+  }
+
+  @NotNull
+  String getPresentableVersion() {
+    return StringUtil.notNullize(myJiraVersion, "unknown") + (myInCloud ? " (Cloud)" : "");
+  }
+  
   private static boolean containsCookie(@NotNull HttpClient client, @NotNull String cookieName) {
     for (Cookie cookie : client.getState().getCookies()) {
       if (cookie.getName().equals(cookieName) && !cookie.isExpired()) {
@@ -371,6 +410,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     // reset remote API version, only if server URL was changed
     if (!getUrl().equals(oldUrl)) {
       myApiVersion = null;
+      myInCloud = false;
     }
   }
 

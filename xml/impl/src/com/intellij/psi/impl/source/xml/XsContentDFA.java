@@ -17,12 +17,10 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
@@ -101,17 +99,13 @@ class XsContentDFA extends XmlContentDFA {
   @Override
   public List<XmlElementDescriptor> getPossibleElements() {
     final List vector = myContentModel.whatCanGoHere(myState);
-    ArrayList<XmlElementDescriptor> list = new ArrayList<XmlElementDescriptor>();
+    ArrayList<XmlElementDescriptor> list = new ArrayList<>();
     for (Object o : vector) {
       if (o instanceof XSElementDecl) {
         final XSElementDecl elementDecl = (XSElementDecl)o;
-        XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors, new Condition<XmlElementDescriptor>() {
-          @Override
-          public boolean value(XmlElementDescriptor elementDescriptor) {
-            return elementDecl.getName().equals(elementDescriptor.getName());
-          }
-        });
-        ContainerUtil.addIfNotNull(descriptor, list);
+        XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors,
+                                                             elementDescriptor -> elementDecl.getName().equals(elementDescriptor.getName()));
+        ContainerUtil.addIfNotNull(list, descriptor);
       }
     }
     return list;
@@ -134,7 +128,7 @@ class XsContentDFA extends XmlContentDFA {
   @Nullable
   private static XSElementDeclaration getElementDeclaration(XmlTag tag, XSModel xsModel) {
 
-    List<XmlTag> ancestors = new ArrayList<XmlTag>();
+    List<XmlTag> ancestors = new ArrayList<>();
     for (XmlTag t = tag; t != null; t = t.getParentTag()) {
       ancestors.add(t);
     }
@@ -204,12 +198,7 @@ class XsContentDFA extends XmlContentDFA {
     }
     Grammar[] grammars = grammarPool.retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
 
-    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, new Function<Grammar, XSGrammar>() {
-      @Override
-      public XSGrammar fun(Grammar grammar) {
-        return (XSGrammar)grammar;
-      }
-    }, new XSGrammar[0]));
+    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, grammar -> (XSGrammar)grammar, new XSGrammar[0]));
   }
 
   private static class MyXSElementDeclHelper implements XSElementDeclHelper {

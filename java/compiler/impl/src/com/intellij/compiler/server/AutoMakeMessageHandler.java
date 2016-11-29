@@ -82,15 +82,12 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         final int errors = myContext.getMessageCount(CompilerMessageCategory.ERROR);
         final int warnings = myContext.getMessageCount(CompilerMessageCategory.WARNING);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) {
-              return;
-            }
-            final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
-            publisher.automakeCompilationFinished(errors, warnings, myContext);
+        SwingUtilities.invokeLater(() -> {
+          if (myProject.isDisposed()) {
+            return;
           }
+          final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
+          publisher.automakeCompilationFinished(errors, warnings, myContext);
         });
         return;
 
@@ -169,7 +166,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
     if (descr == null) {
       descr = failure.hasStacktrace()? failure.getStacktrace() : "";
     }
-    final String msg = "Auto make failure: " + descr;
+    final String msg = "Auto build failure: " + descr;
     CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO);
     ProblemsView.SERVICE.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, msg), sessionId);
   }
@@ -185,7 +182,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         //statusMessage = "All files are up-to-date";
         break;
       case ERRORS:
-        statusMessage = "Auto make completed with errors";
+        statusMessage = "Auto build completed with errors";
         break;
       case CANCELED:
         //statusMessage = "Auto make has been canceled";

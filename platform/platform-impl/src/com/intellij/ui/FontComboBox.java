@@ -15,10 +15,13 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ui.FontInfo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
@@ -47,9 +50,7 @@ public final class FontComboBox extends ComboBox {
   public void setMonospacedOnly(boolean monospaced) {
     if (myModel.myMonospacedOnly != monospaced) {
       myModel.myMonospacedOnly = monospaced;
-      Object item = myModel.getSelectedItem();
-      myModel.setSelectedItem(null);
-      myModel.setSelectedItem(item);
+      myModel.updateSelectedItem();
     }
   }
 
@@ -74,19 +75,42 @@ public final class FontComboBox extends ComboBox {
   }
 
   private static final class Model extends AbstractListModel implements ComboBoxModel {
-    private final List<FontInfo> myAllFonts;
-    private final List<FontInfo> myMonoFonts;
+    private volatile List<FontInfo> myAllFonts = Collections.emptyList();
+    private volatile List<FontInfo> myMonoFonts = Collections.emptyList();
     private boolean myMonospacedOnly;
     private Object mySelectedItem;
 
     private Model(boolean withAllStyles) {
-      myAllFonts = FontInfo.getAll(withAllStyles);
-      myMonoFonts = new ArrayList<FontInfo>();
-      for (FontInfo info : myAllFonts) {
+      Application application = ApplicationManager.getApplication();
+      if (application == null || application.isUnitTestMode()) {
+        setFonts(FontInfo.getAll(withAllStyles));
+      }
+      else {
+        application.executeOnPooledThread(() -> {
+          List<FontInfo> allFonts = FontInfo.getAll(withAllStyles);
+          application.invokeLater(() -> {
+            setFonts(allFonts);
+            updateSelectedItem();
+          }, application.getAnyModalityState());
+        });
+      }
+    }
+
+    private void setFonts(List<FontInfo> allFonts) {
+      List<FontInfo> monoFonts = new ArrayList<>();
+      for (FontInfo info : allFonts) {
         if (info.isMonospaced()) {
-          myMonoFonts.add(info);
+          monoFonts.add(info);
         }
       }
+      myAllFonts = allFonts;
+      myMonoFonts = monoFonts;
+    }
+
+    private void updateSelectedItem() {
+      Object item = getSelectedItem();
+      setSelectedItem(null);
+      setSelectedItem(item);
     }
 
     @Override

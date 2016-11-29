@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author Yura Cangea
- */
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.SchemeManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,16 +36,30 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   @Override
   @Nullable
   public TextAttributes getAttributes(TextAttributesKey key) {
-    if (key == null) return null;
+    return key == null ? null : getAttributes(key, true);
+  }
+
+  @Nullable
+  public TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean isUseDefault) {
     TextAttributes attrs = myAttributesMap.get(key);
     if (attrs == null) {
       if (key.getFallbackAttributeKey() != null) {
         attrs = getFallbackAttributes(key.getFallbackAttributeKey());
-        if (attrs != null && !attrs.isFallbackEnabled()) return attrs;
+        if (attrs != null && attrs != TextAttributes.USE_INHERITED_MARKER) {
+          return attrs;
+        }
       }
-      attrs = key.getDefaultAttributes();
+
+      if (isUseDefault) {
+        attrs = getKeyDefaults(key);
+      }
     }
     return attrs;
+  }
+
+  @Nullable
+  protected TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
+    return key.getDefaultAttributes();
   }
 
   @Nullable
@@ -72,7 +83,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
 
   @Override
-  public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
+  public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
   }
 
   @Override
@@ -88,6 +99,25 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(this);
     copyTo(newScheme);
     newScheme.setName(DEFAULT_SCHEME_NAME);
+    newScheme.setDefaultMetaInfo(this);
     return newScheme;
+  }
+
+  /**
+   * Tells if there is an editable user copy of the scheme to be edited.
+   * 
+   * @return True if the editable copy shall exist, false if the scheme is non-editable.
+   */
+  public boolean hasEditableCopy() {
+    return true;
+  }
+  
+  public String getEditableCopyName() {
+    return SchemeManager.EDITABLE_COPY_PREFIX + myName;
+  }
+
+  @Override
+  public boolean isVisible() {
+    return false;
   }
 }

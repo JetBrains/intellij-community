@@ -15,7 +15,11 @@
  */
 package com.intellij.psi.presentation.java;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,6 +82,10 @@ public class ClassPresentationUtil {
   }
 
   public static String getFunctionalExpressionPresentation(PsiFunctionalExpression functionalExpression, boolean qualified) {
-    return "Functional expression in " + getContextName(functionalExpression, qualified);
+    final StubElement stub = ((StubBasedPsiElementBase<?>)functionalExpression).getGreenStub();
+    final String lambdaText = stub instanceof FunctionalExpressionStub
+                              ? ((FunctionalExpressionStub)stub).getPresentableText()
+                              : PsiExpressionTrimRenderer.render(functionalExpression);
+    return PsiBundle.message("class.context.display", lambdaText, getContextName(functionalExpression, qualified)) ;
   }
 }

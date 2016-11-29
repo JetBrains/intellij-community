@@ -46,16 +46,16 @@ import java.util.*;
 
 public abstract class SpellCheckerDictionaryGenerator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.generator.SpellCheckerDictionaryGenerator");
-  private final Set<String> globalSeenNames = new HashSet<String>();
+  private final Set<String> globalSeenNames = new HashSet<>();
   protected final Project myProject;
   private final String myDefaultDictName;
   protected final String myDictOutputFolder;
   protected final MultiMap<String, VirtualFile> myDict2FolderMap;
-  protected final Set<VirtualFile> myExcludedFolders = new HashSet<VirtualFile>();
+  protected final Set<VirtualFile> myExcludedFolders = new HashSet<>();
   protected SpellCheckerManager mySpellCheckerManager;
 
   public SpellCheckerDictionaryGenerator(final Project project, final String dictOutputFolder, final String defaultDictName) {
-    myDict2FolderMap = new MultiMap<String, VirtualFile>();
+    myDict2FolderMap = new MultiMap<>();
     myProject = project;
     myDefaultDictName = defaultDictName;
     mySpellCheckerManager = SpellCheckerManager.getInstance(myProject);
@@ -71,25 +71,22 @@ public abstract class SpellCheckerDictionaryGenerator {
   }
 
   public void generate() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        // let's do result a bit more predictable
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      // let's do result a bit more predictable
 
-        // ruby dictionary
-        generate(myDefaultDictName, progressIndicator);
+      // ruby dictionary
+      generate(myDefaultDictName, progressIndicator);
 
-        // other gem-related dictionaries in alphabet order
-        final List<String> dictionaries = new ArrayList<String>(myDict2FolderMap.keySet());
-        Collections.sort(dictionaries);
+      // other gem-related dictionaries in alphabet order
+      final List<String> dictionaries = new ArrayList<>(myDict2FolderMap.keySet());
+      Collections.sort(dictionaries);
 
-        for (String dict : dictionaries) {
-          if (myDefaultDictName.equals(dict)) {
-            continue;
-          }
-          generate(dict, progressIndicator);
+      for (String dict : dictionaries) {
+        if (myDefaultDictName.equals(dict)) {
+          continue;
         }
+        generate(dict, progressIndicator);
       }
     }, "Generating Dictionaries", false, myProject);
   }
@@ -101,7 +98,7 @@ public abstract class SpellCheckerDictionaryGenerator {
 
   private void generateDictionary(final Project project, final Collection<VirtualFile> folderPaths, final String outFile,
                                   final ProgressIndicator progressIndicator) {
-    final HashSet<String> seenNames = new HashSet<String>();
+    final HashSet<String> seenNames = new HashSet<>();
     // Collect stuff
     for (VirtualFile folder : folderPaths) {
       progressIndicator.setText2("Scanning folder: " + folder.getPath());
@@ -116,7 +113,7 @@ public abstract class SpellCheckerDictionaryGenerator {
 
     final StringBuilder builder = new StringBuilder();
     // Sort names
-    final ArrayList<String> names = new ArrayList<String>(seenNames);
+    final ArrayList<String> names = new ArrayList<>(seenNames);
     Collections.sort(names);
     for (String name : names) {
       if (builder.length() > 0){
@@ -164,7 +161,7 @@ public abstract class SpellCheckerDictionaryGenerator {
     final int endOffset = element.getTextRange().getEndOffset();
 
     // collect leafs  (spell checker inspection works with leafs)
-    final List<PsiElement> leafs = new ArrayList<PsiElement>();
+    final List<PsiElement> leafs = new ArrayList<>();
     if (element.getChildren().length == 0) {
       // if no children - it is a leaf!
       leafs.add(element);
@@ -187,12 +184,9 @@ public abstract class SpellCheckerDictionaryGenerator {
     SpellCheckingInspection.tokenize(leafElement, language, new TokenConsumer() {
       @Override
       public void consumeToken(PsiElement element, final String text, boolean useRename, int offset, TextRange rangeToCheck, Splitter splitter) {
-        splitter.split(text, rangeToCheck, new Consumer<TextRange>() {
-          @Override
-          public void consume(TextRange textRange) {
-            final String word = textRange.substring(text);
-            addSeenWord(seenNames, word, language);
-          }
+        splitter.split(text, rangeToCheck, textRange -> {
+          final String word = textRange.substring(text);
+          addSeenWord(seenNames, word, language);
         });
       }
     });

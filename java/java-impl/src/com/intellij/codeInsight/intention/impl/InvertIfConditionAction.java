@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightServicesUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -76,8 +75,6 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-
     PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
 
     LOG.assertTrue(ifStatement != null);
@@ -205,15 +202,12 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       statement = (PsiStatement) codeStyle.reformat(statement);
       if (thenBranch instanceof PsiBlockStatement) {
         PsiStatement[] statements = ((PsiBlockStatement) thenBranch).getCodeBlock().getStatements();
-        int len = statements.length;
-        if (len > 0) {
-          if (len > 0) {
-            PsiElement firstElement = statements [0];
-            while (firstElement.getPrevSibling() instanceof PsiWhiteSpace || firstElement.getPrevSibling() instanceof PsiComment) {
-              firstElement = firstElement.getPrevSibling();
-            }
-            ifStatement.getParent().addRangeAfter(firstElement, statements[len - 1], ifStatement);
+        if (statements.length > 0) {
+          PsiElement firstElement = statements [0];
+          while (firstElement.getPrevSibling() instanceof PsiWhiteSpace || firstElement.getPrevSibling() instanceof PsiComment) {
+            firstElement = firstElement.getPrevSibling();
           }
+          ifStatement.getParent().addRangeAfter(firstElement, statements[statements.length - 1], ifStatement);
         }
       } else {
         if (!(thenBranch instanceof PsiReturnStatement)) {
@@ -321,9 +315,11 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   private static void addAfter(PsiIfStatement ifStatement, PsiStatement thenBranch) throws IncorrectOperationException {
     if (thenBranch instanceof PsiBlockStatement) {
       PsiBlockStatement blockStatement = (PsiBlockStatement) thenBranch;
-      PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
-      if (statements.length > 0) {
-        ifStatement.getParent().addRangeAfter(statements[0], statements[statements.length - 1], ifStatement);
+      final PsiCodeBlock block = blockStatement.getCodeBlock();
+      final PsiElement firstBodyElement = block.getFirstBodyElement();
+      final PsiElement lastBodyElement = block.getLastBodyElement();
+      if (firstBodyElement != null && lastBodyElement != null) {
+        ifStatement.getParent().addRangeAfter(firstBodyElement, lastBodyElement, ifStatement);
       }
     } else {
       ifStatement.getParent().addAfter(thenBranch, ifStatement);

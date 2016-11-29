@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.Arrays;
 
@@ -95,6 +96,16 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
   //PY-17824
   public void testTestClasses() {
     doTest();
+  }
+
+  // PY-18866
+  public void testSuperSamePy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest());
+  }
+
+  // PY-18866
+  public void testSuperNotSamePy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest());
   }
 
   private void doTest() {

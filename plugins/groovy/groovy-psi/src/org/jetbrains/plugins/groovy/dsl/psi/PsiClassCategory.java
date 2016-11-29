@@ -68,7 +68,7 @@ public class PsiClassCategory implements PsiEnhancerCategory {
 
   @NotNull
   public static Collection<PsiAnnotation> getAnnotations(PsiMember clazz, String annotName) {
-   final ArrayList<PsiAnnotation> list = new ArrayList<PsiAnnotation>();
+   final ArrayList<PsiAnnotation> list = new ArrayList<>();
     if (annotName == null) return list;
     final PsiModifierList mlist = clazz.getModifierList();
     if (mlist == null) return list;

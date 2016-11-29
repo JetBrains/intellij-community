@@ -204,6 +204,11 @@ public class JVMNameUtil {
     public void setName(String name) {
       myText = name;
     }
+
+    @Override
+    public String toString() {
+      return myText;
+    }
   }
 
   private static class JVMClassAt implements JVMName {

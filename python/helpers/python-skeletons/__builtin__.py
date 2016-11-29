@@ -202,9 +202,19 @@ def map(function, sequence, *sequence_1):
     """Return a list of the results of applying the function to the items of
     the argument sequence(s).
 
-    :type function: ((T) -> V) | None
+    :type function: None | (T) -> V
     :type sequence: collections.Iterable[T]
-    :rtype: list[V] | bytes | unicode
+    :rtype: list[V]
+    """
+    pass
+
+
+def min(*args, key=None, default=None):
+    """Return the smallest item in an iterable or the smallest of two or more
+    arguments.
+
+    :type args: tuple[T]
+    :rtype: T
     """
     pass
 
@@ -1071,6 +1081,15 @@ class float(object):
         """
         return 0.0
 
+    @staticmethod
+    def fromhex(string):
+        """Create a floating-point number from a hexadecimal string.
+
+        :type string: str
+        :rtype: float
+        """
+        pass
+
 
 class complex(object):
     """Complex numeric type."""
@@ -1269,9 +1288,9 @@ class str(basestring):
         return b''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
+        :type y: numbers.Integral | slice
         :rtype: str
         """
         return b''
@@ -1659,9 +1678,9 @@ class unicode(basestring):
         return ''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
+        :type y: numbers.Integral | slice
         :rtype: unicode
         """
         return ''
@@ -2047,10 +2066,10 @@ class list(object):
         return []
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or sublist, origin 0.
 
-        :type y: numbers.Integral
-        :rtype: T
+        :type y: numbers.Integral | slice
+        :rtype: T | list[T]
         """
         pass
 
@@ -2141,6 +2160,366 @@ class list(object):
         pass
 
 
+class set(object):
+    """Set object."""
+
+    def __init__(self, iterable=None):
+        """Create a set object.
+
+        :type iterable: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        pass
+
+    def add(self, x):
+        """Add an element x to a set.
+
+        :type x: T
+        :rtype: None
+        """
+        pass
+
+    def discard(self, x):
+        """Remove an element x from the set, do nothing if it's not present.
+
+        :type x: T
+        :rtype: None
+        """
+        pass
+
+    def remove(self, x):
+        """Remove an element x from the set, raise KeyError if it's not present.
+
+        :type x: T
+        :rtype: None
+        """
+        pass
+
+    def pop(self):
+        """Remove and return arbitrary element from the set.
+
+        :rtype: T
+        """
+        pass
+
+    def copy(self):
+        """Return shallow copy of the set.
+
+        :rtype: set[T]
+        """
+        pass
+
+    def clear(self):
+        """Delete all elements from the set.
+
+        :rtype: None
+        """
+        pass
+
+    def union(self, *other):
+        """Return the union of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def __or__(self, other):
+        """Return the union of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def update(self, *other):
+        """Update a set with the union of itself and other collections.
+
+        :type other: collections.Iterable[T]
+        :rtype: None
+        """
+        pass
+
+    def difference(self, *other):
+        """Return the difference of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def __sub__(self, other):
+        """Return the difference of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def difference_update(self, *other):
+        """Remove all elements of other collections from this set.
+
+        :type other: collections.Iterable[T]
+        :rtype: None
+        """
+        pass
+
+    def symmetric_difference(self, other):
+        """Return the symmetric difference of this set and another collection as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def __xor__(self, other):
+        """Return the symmetric difference of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def symmetric_difference_update(self, other):
+        """Update the set with the symmetric difference of itself and another collection.
+
+        :type other: collections.Iterable[T]
+        :rtype: None
+        """
+        pass
+
+    def intersection(self, *other):
+        """Return the intersection of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def __and__(self, other):
+        """Return the intersection of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def intersection_update(self, *other):
+        """Update a set with the intersection of itself and other collections.
+
+        :type other: collections.Iterable[T]
+        :rtype: None
+        """
+        pass
+
+    def isdisjoint(self, other):
+        """Return True if this set and another collection have a null intersection.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def issubset(self, other):
+        """Report whether another collection contains this set.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def __le__(self, other):
+        """Report whether another set contains this set.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __lt__(self, other):
+        """Report whether this set is a proper subset of other.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def issuperset(self, other):
+        """Report whether this set contains another collection.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def __ge__(self, other):
+        """Report whether this set contains other set.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __gt__(self, other):
+        """Report whether this set is a proper superset of other.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
+
+class frozenset(object):
+    """frozenset object."""
+
+    def __init__(self, iterable=None):
+        """Create a frozenset object.
+
+        :type iterable: collections.Iterable[T]
+        :rtype: frozenset[T]
+        """
+        pass
+
+    def copy(self):
+        """Return shallow copy of the set.
+
+        :rtype: set[T]
+        """
+        pass
+
+    def union(self, *other):
+        """Return the union of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def __or__(self, other):
+        """Return the union of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def difference(self, *other):
+        """Return the difference of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def __sub__(self, other):
+        """Return the difference of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def symmetric_difference(self, other):
+        """Return the symmetric difference of this set and another collection as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def __xor__(self, other):
+        """Return the symmetric difference of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def intersection(self, *other):
+        """Return the intersection of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def __and__(self, other):
+        """Return the intersection of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def isdisjoint(self, other):
+        """Return True if this set and another collection have a null intersection.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def issubset(self, other):
+        """Report whether another collection contains this set.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def __le__(self, other):
+        """Report whether another set contains this set.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __lt__(self, other):
+        """Report whether this set is a proper subset of other.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def issuperset(self, other):
+        """Report whether this set contains another collection.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def __ge__(self, other):
+        """Report whether this set contains other set.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __gt__(self, other):
+        """Report whether this set is a proper superset of other.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
+
 class tuple(object):
     """Tuple object."""
 
@@ -2169,10 +2548,10 @@ class tuple(object):
         pass
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or subtuple, origin 0.
 
-        :type y: numbers.Integral
-        :rtype: object | unknown
+        :type y: numbers.Integral | slice
+        :rtype: object | tuple | unknown
         """
         pass
 
@@ -2193,6 +2572,12 @@ class tuple(object):
         :rtype: int
         """
         return 0
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[object | unknown]
+        """
+        pass
 
 
 class dict(object):
@@ -2349,7 +2734,7 @@ class dict(object):
         """
         pass
 
-    def values():
+    def values(self):
         """Return a copy of the dictionary's list of values.
 
         :rtype: list[V]
@@ -2390,7 +2775,7 @@ class file(object):
     def next(self):
         """Returns the next input line.
 
-        :rtype: bytes | unicode
+        :rtype: bytes
         """
         return ''
 
@@ -2399,7 +2784,7 @@ class file(object):
         before obtaining size bytes).
 
         :type size: numbers.Integral
-        :rtype: bytes | unicode
+        :rtype: bytes
         """
         return ''
 
@@ -2407,7 +2792,7 @@ class file(object):
         """Read one entire line from the file.
 
         :type size: numbers.Integral
-        :rtype: bytes | unicode
+        :rtype: bytes
         """
         return ''
 
@@ -2416,14 +2801,14 @@ class file(object):
         lines thus read.
 
         :type sizehint: numbers.Integral
-        :rtype: list[bytes | unicode]
+        :rtype: list[bytes]
         """
         return []
 
     def xreadlines(self):
         """This method returns the same thing as iter(f).
 
-        :rtype: collections.Iterable[bytes | unicode]
+        :rtype: collections.Iterable[bytes]
         """
         return []
 
@@ -2454,7 +2839,7 @@ class file(object):
     def write(self, str):
         """"Write a string to the file.
 
-        :type str: bytes | unicode
+        :type str: bytes
         :rtype: None
         """
         pass
@@ -2462,8 +2847,14 @@ class file(object):
     def writelines(self, sequence):
         """Write a sequence of strings to the file.
 
-        :type sequence: collections.Iterable[bytes | unicode]
+        :type sequence: collections.Iterable[bytes]
         :rtype: None
+        """
+        pass
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[bytes]
         """
         pass
 
@@ -2553,3 +2944,19 @@ class __method(object):
         if sys.version_info >= (2, 6):
             self.__func__ = None
             self.__self__ = None
+
+
+def input(prompt=None):
+    """
+    :type prompt: Any
+    :rtype: Any
+    """
+    pass
+
+
+def raw_input(prompt=None):
+    """
+    :type prompt: Any
+    :rtype: str
+    """
+    pass

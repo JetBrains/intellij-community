@@ -210,12 +210,9 @@ public class RegistryUi implements Disposable {
 
   private void startEditingAtSelection() {
     myTable.editCellAt(myTable.getSelectedRow(), 2);
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myTable.isEditing()) {
-          myTable.getEditorComponent().requestFocus();
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (myTable.isEditing()) {
+        myTable.getEditorComponent().requestFocus();
       }
     });
   }
@@ -228,20 +225,22 @@ public class RegistryUi implements Disposable {
       myAll = Registry.getAll();
       final List<String> recent = getRecent();
 
-      Collections.sort(myAll, new Comparator<RegistryValue>() {
-        @Override
-        public int compare(@NotNull RegistryValue o1, @NotNull RegistryValue o2) {
-          final String key1 = o1.getKey();
-          final String key2 = o2.getKey();
-          final int i1 = recent.indexOf(key1);
-          final int i2 = recent.indexOf(key2);
-          final boolean c1 = i1 != -1;
-          final boolean c2 = i2 != -1;
-          if (c1 && !c2) return -1;
-          if (!c1 && c2) return 1;
-          if (c1 && c2) return i1 - i2;
-          return key1.compareToIgnoreCase(key2);
-        }
+      Collections.sort(myAll, (o1, o2) -> {
+        final String key1 = o1.getKey();
+        boolean changed1 = o1.isChangedFromDefault();
+        boolean changed2 = o2.isChangedFromDefault();
+        if (changed1 && !changed2) return -1;
+        if (!changed1 && changed2) return 1;
+
+        final String key2 = o2.getKey();
+        final int i1 = recent.indexOf(key1);
+        final int i2 = recent.indexOf(key2);
+        final boolean c1 = i1 != -1;
+        final boolean c2 = i2 != -1;
+        if (c1 && !c2) return -1;
+        if (!c1 && c2) return 1;
+        if (c1 && c2) return i1 - i2;
+        return key1.compareToIgnoreCase(key2);
       });
     }
 
@@ -286,7 +285,7 @@ public class RegistryUi implements Disposable {
 
   private static List<String> getRecent() {
     String value = PropertiesComponent.getInstance().getValue(RECENT_PROPERTIES_KEY);
-    return StringUtil.isEmpty(value) ? new ArrayList<String>(0) : StringUtil.split(value, "=");
+    return StringUtil.isEmpty(value) ? new ArrayList<>(0) : StringUtil.split(value, "=");
   }
 
   private static void keyChanged(String key) {
@@ -387,12 +386,7 @@ public class RegistryUi implements Disposable {
 
 
       if (r == Messages.OK) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            app.restart(true);
-          }
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> app.restart(true), ModalityState.NON_MODAL);
       }
     }
   }
@@ -461,7 +455,7 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  private static final Map<Color, Icon> icons_cache = new HashMap<Color, Icon>();
+  private static final Map<Color, Icon> icons_cache = new HashMap<>();
   private static Icon createColoredIcon(Color color) {
     Icon icon = icons_cache.get(color);
     if (icon != null) return icon;

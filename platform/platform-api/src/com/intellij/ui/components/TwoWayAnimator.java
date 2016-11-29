@@ -32,10 +32,10 @@ abstract class TwoWayAnimator {
 
   abstract void onValueUpdate();
 
-  TwoWayAnimator(String name, int totalFrames, int cycleDuration, int pauseForward, int pauseBackward) {
+  TwoWayAnimator(String name, int totalFrames, int pauseForward, int durationForward, int pauseBackward, int durationBackward) {
     myMaxFrame = totalFrames - 1;
-    myForwardAnimator = new MyAnimator(name + "ForwardAnimator", totalFrames, cycleDuration, pauseForward, true);
-    myBackwardAnimator = new MyAnimator(name + "BackwardAnimator", totalFrames, cycleDuration, pauseBackward, false);
+    myForwardAnimator = new MyAnimator(name + "ForwardAnimator", totalFrames, durationForward, pauseForward, true);
+    myBackwardAnimator = new MyAnimator(name + "BackwardAnimator", totalFrames, durationBackward, pauseBackward, false);
   }
 
   void start(boolean forward) {

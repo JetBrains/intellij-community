@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy;
 
 
-import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -26,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
@@ -55,7 +55,7 @@ public class GroovyGotoImplementationTest extends JavaCodeInsightFixtureTestCase
       PsiFile inProject = myFixture.addFileToProject("Foo.groovy", "class <caret>Foo {}\n class Bar extends Foo {}");
       myFixture.configureFromExistingVirtualFile(inProject.getVirtualFile());
 
-      final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), inProject).targets;
+      final PsiElement[] impls = CodeInsightTestUtil.gotoImplementation(myFixture.getEditor(), inProject).targets;
       assertEquals(1, impls.length);
     }
     finally {

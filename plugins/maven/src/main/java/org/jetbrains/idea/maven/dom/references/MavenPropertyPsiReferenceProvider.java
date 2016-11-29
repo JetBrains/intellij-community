@@ -98,7 +98,7 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
       TextRange range = TextRange.from(textRange.getStartOffset() + from, propertyName.length());
 
       if (result == null) {
-        result = new ArrayList<PsiReference>();
+        result = new ArrayList<>();
 
         mavenProject = findMavenProject(element);
         if (mavenProject == null) {

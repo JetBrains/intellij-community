@@ -114,11 +114,7 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    final CheckoutCommand command = new CheckoutCommand(new ThrowableRunnable<IOCommandException>() {
-      public void run() throws IOCommandException {
-        ((CheckoutAdminWriter) myAdminWriter).finish();
-      }
-    });
+    final CheckoutCommand command = new CheckoutCommand(() -> ((CheckoutAdminWriter) myAdminWriter).finish());
     command.setRecursive(true);
     for (String myModuleName : myModuleNames) {
       command.addModule(myModuleName);

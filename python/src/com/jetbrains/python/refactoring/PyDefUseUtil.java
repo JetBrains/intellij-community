@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,12 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
-import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,37 +59,34 @@ public class PyDefUseUtil {
       }
     }
     final Collection<Instruction> result = getLatestDefs(varName, instructions, instr, acceptTypeAssertions, acceptImplicitImports);
-    return new ArrayList<Instruction>(result);
+    return new ArrayList<>(result);
   }
 
   private static Collection<Instruction> getLatestDefs(final String varName, final Instruction[] instructions, final int instr,
                                                        final boolean acceptTypeAssertions, final boolean acceptImplicitImports) {
-    final Collection<Instruction> result = new LinkedHashSet<Instruction>();
+    final Collection<Instruction> result = new LinkedHashSet<>();
     ControlFlowUtil.iteratePrev(instr, instructions,
-                                new Function<Instruction, ControlFlowUtil.Operation>() {
-                                  @Override
-                                  public ControlFlowUtil.Operation fun(Instruction instruction) {
-                                    final PsiElement element = instruction.getElement();
-                                    final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
-                                    if (instruction instanceof ReadWriteInstruction) {
-                                      final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
-                                      final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                                      if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
-                                        final String name = elementName(element);
-                                        if (Comparing.strEqual(name, varName)) {
-                                          result.add(rwInstruction);
-                                          return ControlFlowUtil.Operation.CONTINUE;
-                                        }
-                                      }
-                                    }
-                                    else if (acceptImplicitImports && implicit != null) {
-                                      if (!implicit.multiResolveName(varName).isEmpty()) {
-                                        result.add(instruction);
+                                instruction -> {
+                                  final PsiElement element = instruction.getElement();
+                                  final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
+                                  if (instruction instanceof ReadWriteInstruction) {
+                                    final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+                                    final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
+                                    if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
+                                      final String name = elementName(element);
+                                      if (Comparing.strEqual(name, varName)) {
+                                        result.add(rwInstruction);
                                         return ControlFlowUtil.Operation.CONTINUE;
                                       }
                                     }
-                                    return ControlFlowUtil.Operation.NEXT;
                                   }
+                                  else if (acceptImplicitImports && implicit != null) {
+                                    if (!implicit.multiResolveName(varName).isEmpty()) {
+                                      result.add(instruction);
+                                      return ControlFlowUtil.Operation.CONTINUE;
+                                    }
+                                  }
+                                  return ControlFlowUtil.Operation.NEXT;
                                 });
     return result;
   }
@@ -115,7 +111,7 @@ public class PyDefUseUtil {
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
     if (instr < 0) {
-      return new PyElement[0];
+      return PyElement.EMPTY_ARRAY;
     }
     final boolean[] visited = new boolean[instructions.length];
     final Collection<PyElement> result = Sets.newHashSet();

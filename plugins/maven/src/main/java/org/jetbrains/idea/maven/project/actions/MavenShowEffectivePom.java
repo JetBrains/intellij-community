@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -54,37 +53,29 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
     final MavenProject mavenProject = manager.findProject(file);
     assert mavenProject != null;
 
-    manager.evaluateEffectivePom(mavenProject, new NullableConsumer<String>() {
-      @Override
-      public void consume(final String s) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (project.isDisposed()) return;
+    manager.evaluateEffectivePom(mavenProject, s -> ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed()) return;
 
-            if (s == null) { // null means UnsupportedOperationException
-              new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                               "Error",
-                               "Failed to evaluate effective pom.",
-                               NotificationType.ERROR).notify(project);
-              return;
-            }
-
-            String fileName = mavenProject.getMavenId().getArtifactId() + "-effective-pom.xml";
-            PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, XMLLanguage.INSTANCE, s);
-            try {
-              //noinspection ConstantConditions
-              file.getVirtualFile().setWritable(false);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-
-            file.navigate(true);
-          }
-        });
+      if (s == null) { // null means UnsupportedOperationException
+        new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                         "Error",
+                         "Failed to evaluate effective pom.",
+                         NotificationType.ERROR).notify(project);
+        return;
       }
-    });
+
+      String fileName = mavenProject.getMavenId().getArtifactId() + "-effective-pom.xml";
+      PsiFile file1 = PsiFileFactory.getInstance(project).createFileFromText(fileName, XMLLanguage.INSTANCE, s);
+      try {
+        //noinspection ConstantConditions
+        file1.getVirtualFile().setWritable(false);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+
+      file1.navigate(true);
+    }));
   }
 
   @Nullable

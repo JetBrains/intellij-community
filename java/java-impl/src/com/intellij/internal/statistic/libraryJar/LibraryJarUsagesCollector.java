@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.util.io.JarUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -44,33 +46,36 @@ public class LibraryJarUsagesCollector extends AbstractApplicationUsagesCollecto
 
   private static final String DIGIT_VERSION_PATTERN_PART = "(\\d+.\\d+|\\d+)";
   private static final Pattern JAR_FILE_NAME_PATTERN = Pattern.compile("[\\w|\\-|\\.]+-(" + DIGIT_VERSION_PATTERN_PART + "[\\w|\\.]*)jar");
-  private static final Pattern DIGIT_VERSION_PATTERN = Pattern.compile(DIGIT_VERSION_PATTERN_PART + ".*");
 
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) throws CollectUsagesException {
     final LibraryJarDescriptor[] descriptors = LibraryJarStatisticsService.getInstance().getTechnologyDescriptors();
-    final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>(descriptors.length);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        for (LibraryJarDescriptor descriptor : descriptors) {
-          String className = descriptor.myClass;
-          if (className == null) continue;
+    final Set<UsageDescriptor> result = new HashSet<>(descriptors.length);
 
-          PsiClass[] psiClasses = JavaPsiFacade.getInstance(project).findClasses(className, ProjectScope.getLibrariesScope(project));
-          for (PsiClass psiClass : psiClasses) {
-            if (psiClass == null) continue;
+    ApplicationManager.getApplication().runReadAction(() -> {
+      for (LibraryJarDescriptor descriptor : descriptors) {
+        String className = descriptor.myClass;
+        if (className == null) continue;
 
-            VirtualFile localFile = JarFileSystem.getInstance().getLocalVirtualFileFor(psiClass.getContainingFile().getVirtualFile());
-            if (localFile == null) continue;
+        PsiClass[] psiClasses = JavaPsiFacade.getInstance(project).findClasses(className, ProjectScope.getLibrariesScope(project));
+        for (PsiClass psiClass : psiClasses) {
+          if (psiClass == null) continue;
 
-            String version = getVersionByJarManifest(localFile);
-            if (version == null) version = getVersionByJarFileName(localFile.getName());
-            if (version == null) continue;
+          VirtualFile jarFile = JarFileSystem.getInstance().getLocalVirtualFileFor(psiClass.getContainingFile().getVirtualFile());
+          if (jarFile == null) continue;
 
-            result.add(new UsageDescriptor(descriptor.myName + "_" + version, 1));
+          String version = getVersionByJarManifest(jarFile);
+          if (version == null) {
+            version = getVersionByJarFileName(jarFile.getName());
           }
+
+          if (version == null ||
+              !StringUtil.containsChar(version, '.')) {
+            continue;
+          }
+
+          result.add(new UsageDescriptor(descriptor.myName + "_" + version, 1));
         }
       }
     });
@@ -79,21 +84,15 @@ public class LibraryJarUsagesCollector extends AbstractApplicationUsagesCollecto
 
   @Nullable
   private static String getVersionByJarManifest(@NotNull VirtualFile file) {
-    String version = JdkUtil.getJarMainAttribute(file, Attributes.Name.IMPLEMENTATION_VERSION);
-    if (version == null) return null;
-
-    Matcher versionMatcher = DIGIT_VERSION_PATTERN.matcher(version);
-    if (!versionMatcher.matches()) return null;
-
-    return versionMatcher.group(1);
+    return JarUtil.getJarAttribute(VfsUtilCore.virtualToIoFile(file), Attributes.Name.IMPLEMENTATION_VERSION);
   }
 
   @Nullable
-  public String getVersionByJarFileName(@NotNull String fileName) {
+  private static String getVersionByJarFileName(@NotNull String fileName) {
     Matcher fileNameMatcher = JAR_FILE_NAME_PATTERN.matcher(fileName);
     if (!fileNameMatcher.matches()) return null;
 
-    return fileNameMatcher.group(2);
+    return StringUtil.trimTrailing(fileNameMatcher.group(1), '.');
   }
 
   @NotNull

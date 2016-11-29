@@ -21,22 +21,7 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
                         final int[] hashCode,
                         final int[] nonNull,
                         boolean insertOverride) throws Exception {
-    doTest(new Function<PsiField[], PsiField[]>() {
-      @Override
-      public PsiField[] fun(PsiField[] fields) {
-        return getIndexed(fields, equals);
-      }
-    }, new Function<PsiField[], PsiField[]>() {
-      @Override
-      public PsiField[] fun(PsiField[] fields) {
-        return getIndexed(fields, hashCode);
-      }
-    }, new Function<PsiField[], PsiField[]>() {
-      @Override
-      public PsiField[] fun(PsiField[] fields) {
-        return getIndexed(fields, nonNull);
-      }
-    }, insertOverride);
+    doTest(fields -> getIndexed(fields, equals), fields -> getIndexed(fields, hashCode), fields -> getIndexed(fields, nonNull), insertOverride);
   }
 
   protected void doTest(Function<PsiField[], PsiField[]> eqFunction,
@@ -79,7 +64,7 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
   }
 
   private static PsiField[] getIndexed(PsiField[] fields, int[] indices) {
-    ArrayList<PsiField> result = new ArrayList<PsiField>();
+    ArrayList<PsiField> result = new ArrayList<>();
     for (int indice : indices) {
       result.add(fields[indice]);
     }

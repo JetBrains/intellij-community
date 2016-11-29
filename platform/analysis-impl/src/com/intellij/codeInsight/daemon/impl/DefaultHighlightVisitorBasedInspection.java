@@ -30,7 +30,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.Nls;
@@ -131,7 +130,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                                             final boolean runAnnotators, boolean isOnTheFly) {
     MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators, isOnTheFly);
     file.accept(visitor);
-    return new ArrayList<Pair<PsiFile, HighlightInfo>>(visitor.result);
+    return new ArrayList<>(visitor.result);
   }
 
   @Nls
@@ -144,7 +143,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   private static class MyPsiElementVisitor extends PsiElementVisitor {
     private final boolean highlightErrorElements;
     private final boolean runAnnotators;
-    private final List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<Pair<PsiFile, HighlightInfo>>();
+    private final List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<>();
 
     public MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators, boolean isOnTheFly) {
       this.highlightErrorElements = highlightErrorElements;
@@ -168,16 +167,12 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
         List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
         List<GeneralHighlightingPass> gpasses = ContainerUtil.collect(passes.iterator(), FilteringIterator.instanceOf(GeneralHighlightingPass.class));
         for (final GeneralHighlightingPass gpass : gpasses) {
-          gpass.setHighlightVisitorProducer(new NotNullProducer<HighlightVisitor[]>() {
-            @NotNull
-            @Override
-            public HighlightVisitor[] produce() {
-              gpass.incVisitorUsageCount(1);
+          gpass.setHighlightVisitorProducer(() -> {
+            gpass.incVisitorUsageCount(1);
 
-              HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true,
-                                                                            ServiceManager.getService(project, CachedAnnotators.class));
-              return new HighlightVisitor[]{visitor};
-            }
+            HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true,
+                                                                          ServiceManager.getService(project, CachedAnnotators.class));
+            return new HighlightVisitor[]{visitor};
           });
         }
 

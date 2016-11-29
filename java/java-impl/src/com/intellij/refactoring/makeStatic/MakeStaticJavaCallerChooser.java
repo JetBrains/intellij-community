@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.MethodNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
@@ -49,7 +49,8 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
         !containingMethod.hasModifierProperty(PsiModifier.STATIC) &&
         !containingMethod.isConstructor() &&
          containingMethod.findDeepestSuperMethods().length == 0 &&
-        !containingMethod.equals(member)) {
+        !containingMethod.equals(member) &&
+         OverridingMethodsSearch.search(containingMethod).findFirst() == null) {
       final PsiClass containingClass = containingMethod.getContainingClass();
       if (containingClass != null) {
         final PsiClass gContainingClass = containingClass.getContainingClass();
@@ -95,12 +96,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
     protected List<PsiMethod> computeCallers() {
       if (getTopMethod().equals(getMethod())) {
         final ArrayList<UsageInfo> items = getTopLevelItems();
-        return ContainerUtil.map(items, new Function<UsageInfo, PsiMethod>() {
-          @Override
-          public PsiMethod fun(UsageInfo info) {
-            return (PsiMethod)info.getElement();
-          }
-        });
+        return ContainerUtil.map(items, info -> (PsiMethod)info.getElement());
       }
       return super.computeCallers();
     }
@@ -113,12 +109,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
 
     @Override
     protected Condition<PsiMethod> getFilter() {
-      return new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return !myMethod.equals(method) && isTheLastClassRef(method, myMethod) != null;
-        }
-      };
+      return method -> !myMethod.equals(method) && isTheLastClassRef(method, myMethod) != null;
     }
   }
 }

@@ -26,8 +26,10 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
+  private RefModule myRefModule;
   protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
     super(psiElement.getName(), psiElement, refManager);
     final PsiDirectory parentDirectory = psiElement.getParentDirectory();
@@ -38,25 +40,23 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
         return;
       }
     }
-    final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
-    if (module != null) {
-      final RefModuleImpl refModule = (RefModuleImpl)refManager.getRefModule(module);
-      if (refModule != null) {
-        refModule.add(this);
-        return;
-      }
+    myRefModule = refManager.getRefModule(ModuleUtilCore.findModuleForPsiElement(psiElement));
+    if (myRefModule != null) {
+      ((RefModuleImpl)myRefModule).add(this);
+      return;
     }
     ((RefProjectImpl)refManager.getRefProject()).add(this);
   }
 
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        visitor.visitDirectory(RefDirectoryImpl.this);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> visitor.visitDirectory(this));
+  }
+
+  @Nullable
+  @Override
+  public RefModule getModule() {
+    return myRefModule;
   }
 
   @Override

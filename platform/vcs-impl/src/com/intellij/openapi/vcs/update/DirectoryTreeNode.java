@@ -53,7 +53,7 @@ public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
 
   @NotNull
   public Collection<VirtualFile> getVirtualFiles() {
-    Collection<VirtualFile> result = new ArrayList<VirtualFile>();
+    Collection<VirtualFile> result = new ArrayList<>();
     for (int i = 0;  i < getChildCount(); i++){
       FileOrDirectoryTreeNode child = (FileOrDirectoryTreeNode)getChildAt(i);
       result.addAll(child.getVirtualFiles());
@@ -63,7 +63,7 @@ public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
 
   @NotNull
   public Collection<File> getFiles() {
-    Collection<File> result = new ArrayList<File>();
+    Collection<File> result = new ArrayList<>();
     for (int i = 0;  i < getChildCount(); i++){
       FileOrDirectoryTreeNode child = (FileOrDirectoryTreeNode)getChildAt(i);
       result.addAll(child.getFiles());

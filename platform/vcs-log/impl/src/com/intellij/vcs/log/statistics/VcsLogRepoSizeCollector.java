@@ -27,9 +27,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -46,20 +46,20 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
-    VcsLogManager logManager = VcsLogManager.getInstance(project);
-    VcsLogDataManager dataManager = logManager.getDataManager();
-    if (dataManager != null) {
-      DataPack dataPack = dataManager.getDataPack();
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    VcsLogData logData = projectLog.getDataManager();
+    if (logData != null) {
+      DataPack dataPack = logData.getDataPack();
       if (dataPack.isFull()) {
         PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
         MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
 
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
         usages.add(StatisticsUtilKt.getCountingUsage("data.commit.count", permanentGraph.getAllCommits().size(),
-                                                     asList(0, 1, 100, 1000, 10 * 1000, 100 * 1000, 500 * 1000)));
+                                                     asList(0, 1, 100, 1000, 10 * 1000, 100 * 1000, 500 * 1000, 1000 * 1000)));
         for (VcsKey vcs : groupedRoots.keySet()) {
           usages.add(StatisticsUtilKt.getCountingUsage("data." + vcs.getName().toLowerCase() + ".root.count", groupedRoots.get(vcs).size(),
-                                                       asList(0, 1, 2, 5, 8, 15, 30, 50, 100)));
+                                                       asList(0, 1, 2, 5, 8, 15, 30, 50, 100, 300, 500)));
         }
         return usages;
       }

@@ -32,4 +32,29 @@ public class StringSearcherTest extends TestCase {
     assertEquals(text.indexOf("bc"), index);
   }
 
+  public void testCaseInsensitiveWithUnicode() {
+    String pattern = "SİL";
+    final String text = "SİL SIL";
+    final int firstPos = text.indexOf(pattern);
+    final int secondPos = text.indexOf("SIL");
+
+    StringSearcher searcher = new StringSearcher(pattern, false, true);
+    int index = searcher.scan(text);
+
+    assertEquals(firstPos, index);
+    assertEquals(secondPos, searcher.scan(text, index + 1, text.length()));
+    pattern = "sil";
+
+    searcher = new StringSearcher(pattern, false, true);
+    index = searcher.scan(text);
+
+    assertEquals(firstPos, index);
+    assertEquals(secondPos, searcher.scan(text, index + 1, text.length()));
+
+    searcher = new StringSearcher(pattern, false, false);
+    index = searcher.scan(text, 0, text.length());
+
+    assertEquals(secondPos, index);
+    assertEquals(firstPos, searcher.scan(text, 0, index - 1));
+  }
 }

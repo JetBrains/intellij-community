@@ -19,18 +19,24 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.Patches;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
+import com.sun.tools.jdi.JNITypeParser;
+import com.sun.tools.jdi.TargetVM;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,11 +54,14 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   // cached data
   private final Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<>();
+  private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
+
   @NotNull
   private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
+  private MultiMap<String, ReferenceType> myAllClassesByName;
   private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<>();
 
   public final Throwable mySuspendLogger = new Throwable();
@@ -92,8 +101,41 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine;
   }
 
+  static final class JNITypeParserReflect {
+    static final Method typeNameToSignatureMethod;
+
+    static {
+      typeNameToSignatureMethod = ReflectionUtil.getDeclaredMethod(JNITypeParser.class, "typeNameToSignature", String.class);
+      if (typeNameToSignatureMethod == null) {
+        LOG.warn("Unable to find JNITypeParser.typeNameToSignature method");
+      }
+    }
+
+    @Nullable
+    static String typeNameToSignature(@NotNull String name) {
+      if (typeNameToSignatureMethod != null) {
+        try {
+          return (String)typeNameToSignatureMethod.invoke(null, name);
+        }
+        catch (Exception ignored) {
+        }
+      }
+      return null;
+    }
+  }
+
   public List<ReferenceType> classesByName(String s) {
-    return myVirtualMachine.classesByName(s);
+    String signature = JNITypeParserReflect.typeNameToSignature(s);
+    if (signature != null) {
+      if (myAllClassesByName == null) {
+        myAllClassesByName = new MultiMap<>();
+        allClasses().forEach(t -> myAllClassesByName.putValue(t.signature(), t));
+      }
+      return (List<ReferenceType>)myAllClassesByName.get(signature);
+    }
+    else {
+      return myVirtualMachine.classesByName(s);
+    }
   }
 
   public List<ReferenceType> nestedTypes(ReferenceType refType) {
@@ -208,15 +250,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     clearCaches();
   }
 
-  public void resume() {    
+  public void resume() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myPausePressedCount > 0) {
       myPausePressedCount--;
     }
     clearCaches();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("before resume VM");
-    }
+    LOG.debug("before resume VM");
     try {
       myVirtualMachine.resume();
     }
@@ -225,9 +265,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       // sometimes this leads to com.sun.jdi.InternalException: Unexpected JDWP Error: 13 (THREAD_NOT_SUSPENDED)
       LOG.info(e);
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("VM resumed");
-    }
+    LOG.debug("VM resumed");
     //logThreads();
   }
 
@@ -323,6 +361,17 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.mirrorOf(s);
   }
 
+  public StringReference mirrorOfStringLiteral(String s, DebuggerUtilsImpl.SupplierThrowing<StringReference, EvaluateException> generator)
+    throws EvaluateException {
+    StringReference reference = myStringLiteralCache.get(s);
+    if (reference != null && !reference.isCollected()) {
+      return reference;
+    }
+    reference = generator.get();
+    myStringLiteralCache.put(s, reference);
+    return reference;
+  }
+
   public Process process() {
     return myVirtualMachine.process();
   }
@@ -333,6 +382,17 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     catch (UnsupportedOperationException e) {
       LOG.info(e);
+    }
+
+    if (Patches.JDK_BUG_EVENT_CONTROLLER_LEAK) {
+      // Memory leak workaround, see IDEA-163334
+      TargetVM target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, TargetVM.class, "target");
+      if (target != null) {
+        Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
+        if (controller != null) {
+          controller.stop();
+        }
+      }
     }
   }
 
@@ -628,11 +688,11 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void clearCaches() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("VM cleared");
-    }
+    LOG.debug("VM cleared");
 
     myAllClasses = null;
+    myAllClassesByName = null;
+
     if (!myNestedClassesCache.isEmpty()) {
       myNestedClassesCache = new HashMap<>(myNestedClassesCache.size());
     }
@@ -667,12 +727,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public boolean isSuspended() {
-    for (ThreadReferenceProxyImpl thread : allThreads()) {
-      if (thread.getSuspendCount() != 0) {
-        return true;
-      }
-    }
-    return false;
+    return allThreads().stream().anyMatch(thread -> thread.getSuspendCount() != 0);
   }
 
   public void logThreads() {

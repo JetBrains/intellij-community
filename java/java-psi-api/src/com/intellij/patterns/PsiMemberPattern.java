@@ -35,10 +35,12 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
     super(aClass);
   }
 
+  @NotNull
   public Self inClass(final @NonNls String qname) {
     return inClass(PsiJavaPatterns.psiClass().withQualifiedName(qname));
   }
 
+  @NotNull
   public Self inClass(final ElementPattern pattern) {
     return with(new PatternConditionPlus<T, PsiClass>("inClass", pattern) {
       @Override

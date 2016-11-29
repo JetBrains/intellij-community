@@ -32,9 +32,9 @@ public class GenericType {
   public final int arrayDim;
   public final String value;
 
-  private final List<GenericType> enclosingClasses = new ArrayList<GenericType>();
-  private final List<GenericType> arguments = new ArrayList<GenericType>();
-  private final List<Integer> wildcards = new ArrayList<Integer>();
+  private final List<GenericType> enclosingClasses = new ArrayList<>();
+  private final List<GenericType> arguments = new ArrayList<>();
+  private final List<Integer> wildcards = new ArrayList<>();
 
   public GenericType(int type, int arrayDim, String value) {
     this.type = type;

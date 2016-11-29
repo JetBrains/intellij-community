@@ -45,14 +45,8 @@ public class DictCreationQuickFix implements LocalQuickFix {
 
   @Override
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.dict.creation");
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.dict.creation");
   }
 
   @Override

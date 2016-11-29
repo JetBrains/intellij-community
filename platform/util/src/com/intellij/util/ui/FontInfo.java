@@ -171,7 +171,7 @@ public final class FontInfo {
       if (font == null) {
         font = new Font(name, Font.PLAIN, DEFAULT_SIZE);
         // Java uses Dialog family for nonexistent fonts 
-        if (!Font.DIALOG.equals(name) && Font.DIALOG.equals(font.getFamily(ENGLISH))) {
+        if (!Font.DIALOG.equals(name) && UIUtil.isDialogFont(font)) {
           throw new IllegalArgumentException("not supported " + font);
         }
       }
@@ -215,7 +215,7 @@ public final class FontInfo {
       Rectangle bounds = font.getStringBounds(new char[]{ch}, 0, 1, DEFAULT_CONTEXT).getBounds();
       if (!bounds.isEmpty()) return bounds.width;
     }
-    throw new IllegalArgumentException(Integer.toHexString(ch) + " cannot be rendered by " + font);
+    return 0;
   }
 
   private static final class LazyListByName {
@@ -231,7 +231,7 @@ public final class FontInfo {
     public int compare(FontInfo one, FontInfo two) {
       if (one.isMonospaced() && !two.isMonospaced()) return -1;
       if (!one.isMonospaced() && two.isMonospaced()) return 1;
-      return one.toString().compareTo(two.toString());
+      return one.toString().compareToIgnoreCase(two.toString());
     }
   }
 }

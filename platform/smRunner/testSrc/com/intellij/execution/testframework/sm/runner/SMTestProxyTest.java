@@ -15,11 +15,17 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.easymock.classextension.EasyMock;
+import org.easymock.EasyMock;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude;
 
@@ -225,6 +231,40 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
     assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+  }
+
+  public void testMultipleAssertions() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestComparisonFailed("a", "stacktrace", "actual1", "expected1");
+    mySimpleTest.setTestComparisonFailed("b", "stacktrace", "actual2", "expected2");
+    mySimpleTest.setTestFailed("c", "stacktrace", false);
+    mySimpleTest.setFinished();
+
+    final MockPrinter printer = new MockPrinter(true) {
+      @Override
+      public void printHyperlink(String text, HyperlinkInfo info) {
+        print(text, ConsoleViewContentType.SYSTEM_OUTPUT);
+      }
+    };
+    mySimpleTest.printOn(printer);
+    assertEquals("", printer.getStdOut());
+    assertEquals("\n" +
+                 "a\n" +
+                 "Expected :expected1\n" +
+                 "Actual   :actual1\n" +
+                 " <Click to see difference>\n" +
+                 "\n" +
+                 "stacktrace\n" +
+                 "\n" +
+                 "b\n" +
+                 "Expected :expected2\n" +
+                 "Actual   :actual2\n" +
+                 " <Click to see difference>\n" +
+                 "\n" +
+                 "stacktrace\n" +
+                 "\n" +
+                 "c\n" +
+                 "stacktrace\n", printer.getAllOut());
   }
 
   public void testTestFailed_ComparisonAssertion() {

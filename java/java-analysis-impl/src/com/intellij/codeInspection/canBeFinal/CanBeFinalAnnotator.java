@@ -89,6 +89,12 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         }
       }
     }
+    else if (refElement instanceof RefField) {
+      final PsiElement element = refElement.getElement();
+      if (element != null && RefUtil.isImplicitWrite(element)) {
+        ((RefElementImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
+      }
+    }
   }
 
 
@@ -123,13 +129,13 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         PsiMethod[] psiMethods = psiClass.getMethods();
         PsiField[] psiFields = psiClass.getFields();
 
-        Set<PsiVariable> allFields = new HashSet<PsiVariable>();
+        Set<PsiVariable> allFields = new HashSet<>();
         ContainerUtil.addAll(allFields, psiFields);
-        List<PsiVariable> instanceInitializerInitializedFields = new ArrayList<PsiVariable>();
-        boolean hasInitializers = false;
+        List<PsiVariable> instanceInitializerInitializedFields = new ArrayList<>();
+        Set<PsiField> fieldsInitializedInInitializers = null;
+
         for (PsiClassInitializer initializer : psiClass.getInitializers()) {
           PsiCodeBlock body = initializer.getBody();
-          hasInitializers = true;
           ControlFlow flow;
           try {
             flow = ControlFlowFactory.getInstance(body.getProject())
@@ -138,8 +144,11 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           catch (AnalysisCanceledException e) {
             flow = ControlFlow.EMPTY;
           }
-          Collection<PsiVariable> writtenVariables = new ArrayList<PsiVariable>();
+          Collection<PsiVariable> writtenVariables = new ArrayList<>();
           ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false, writtenVariables);
+          if (fieldsInitializedInInitializers == null) {
+            fieldsInitializedInInitializers = new HashSet<>();
+          }
           for (PsiVariable psiVariable : writtenVariables) {
             if (allFields.contains(psiVariable)) {
               if (instanceInitializerInitializedFields.contains(psiVariable)) {
@@ -149,6 +158,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
               else {
                 instanceInitializerInitializedFields.add(psiVariable);
               }
+              fieldsInitializedInInitializers.add((PsiField)psiVariable);
             }
           }
           for (PsiVariable psiVariable : writtenVariables) {
@@ -162,7 +172,6 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           if (psiMethod.isConstructor()) {
             PsiCodeBlock body = psiMethod.getBody();
             if (body != null) {
-              hasInitializers = true;
               ControlFlow flow;
               try {
                 flow = ControlFlowFactory.getInstance(body.getProject())
@@ -182,7 +191,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
               List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(psiMethod);
               if (redirectedConstructors == null || redirectedConstructors.isEmpty()) {
                 List<PsiVariable> ssaVariables = ControlFlowUtil.getSSAVariables(flow);
-                ArrayList<PsiVariable> good = new ArrayList<PsiVariable>(ssaVariables);
+                ArrayList<PsiVariable> good = new ArrayList<>(ssaVariables);
                 good.addAll(instanceInitializerInitializedFields);
                 allFields.retainAll(good);
               }
@@ -194,7 +203,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         }
 
         for (PsiField psiField : psiFields) {
-          if ((!hasInitializers || !allFields.contains(psiField)) && psiField.getInitializer() == null) {
+          if ((fieldsInitializedInInitializers != null && !fieldsInitializedInInitializers.contains(psiField) ||
+               !allFields.contains(psiField)) && psiField.getInitializer() == null) {
             final RefFieldImpl refField = (RefFieldImpl)myManager.getReference(psiField);
             if (refField != null) {
               refField.setFlag(false, CAN_BE_FINAL_MASK);

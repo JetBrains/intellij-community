@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
@@ -114,6 +115,7 @@ public class GroovycRunner {
 
     ClassLoader loader = optimize ? buildMainLoader(argPath) : GroovycRunner.class.getClassLoader();
     if (loader == null) {
+      System.err.println("Cannot find class loader for groovyc; optimized=" + optimize + "; " + GroovycRunner.class.getClassLoader());
       return 1;
     }
     if (optimize) {
@@ -134,7 +136,8 @@ public class GroovycRunner {
       method.invoke(null, forStubs, argPath, configScript, mailbox);
     }
     catch (Throwable e) {
-      while (e.getCause() != null) {
+      //noinspection InstanceofCatchParameter
+      while (e instanceof InvocationTargetException) {
         e = e.getCause();
       }
       e.printStackTrace();

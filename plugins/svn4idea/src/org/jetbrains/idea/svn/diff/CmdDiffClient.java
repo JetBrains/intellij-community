@@ -67,7 +67,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
       }
     }
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
     CommandUtil.put(parameters, target1);
     CommandUtil.put(parameters, target2);
     parameters.add("--xml");
@@ -199,7 +199,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
     @XmlElementWrapper(name = "paths")
     @XmlElement(name = "path")
-    public List<DiffPath> diffPaths = new ArrayList<DiffPath>();
+    public List<DiffPath> diffPaths = new ArrayList<>();
   }
 
   public static class DiffPath {

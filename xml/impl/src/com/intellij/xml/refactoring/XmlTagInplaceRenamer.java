@@ -54,7 +54,7 @@ public class XmlTagInplaceRenamer {
 
   private final Editor myEditor;
 
-  private final static Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<XmlTagInplaceRenamer>();
+  private final static Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<>();
   private ArrayList<RangeHighlighter> myHighlighters;
 
   private XmlTagInplaceRenamer(@NotNull final Editor editor) {
@@ -78,7 +78,7 @@ public class XmlTagInplaceRenamer {
     final Project project = myEditor.getProject();
     if (project != null) {
 
-      final List<TextRange> highlightRanges = new ArrayList<TextRange>();
+      final List<TextRange> highlightRanges = new ArrayList<>();
       highlightRanges.add(pair.first.getTextRange());
       if (pair.second != null) {
         highlightRanges.add(pair.second.getTextRange());
@@ -88,43 +88,30 @@ public class XmlTagInplaceRenamer {
         return;
       }
 
-      myHighlighters = new ArrayList<RangeHighlighter>();
+      myHighlighters = new ArrayList<>();
 
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              final int offset = myEditor.getCaretModel().getOffset();
-              myEditor.getCaretModel().moveToOffset(tag.getTextOffset());
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        final int offset = myEditor.getCaretModel().getOffset();
+        myEditor.getCaretModel().moveToOffset(tag.getTextOffset());
 
-              final Template t = buildTemplate(tag, pair);
-              TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
-                @Override
-                public void templateFinished(final Template template, boolean brokenOff) {
-                  finish();
-                }
+        final Template t = buildTemplate(tag, pair);
+        TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
+          @Override
+          public void templateFinished(final Template template, boolean brokenOff) {
+            finish();
+          }
 
-                @Override
-                public void templateCancelled(final Template template) {
-                  finish();
-                }
-              }, new PairProcessor<String, String>() {
-                @Override
-                public boolean process(final String variableName, final String value) {
-                  return value.length() == 0 || value.charAt(value.length() - 1) != ' ';
-                }
-              });
+          @Override
+          public void templateCancelled(final Template template) {
+            finish();
+          }
+        }, (variableName, value) -> value.length() == 0 || value.charAt(value.length() - 1) != ' ');
 
-              // restore old offset
-              myEditor.getCaretModel().moveToOffset(offset);
+        // restore old offset
+        myEditor.getCaretModel().moveToOffset(offset);
 
-              addHighlights(highlightRanges, myEditor, myHighlighters);
-            }
-          });
-        }
-      }, RefactoringBundle.message("rename.title"), null);
+        addHighlights(highlightRanges, myEditor, myHighlighters);
+      }), RefactoringBundle.message("rename.title"), null);
     }
   }
 

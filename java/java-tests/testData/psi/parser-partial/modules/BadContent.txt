@@ -1,0 +1,15 @@
+PsiJavaFile:BadContent.java
+  PsiJavaModule:X
+    PsiKeyword:module('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:X('X')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n ')
+    PsiErrorElement:Module statement expected
+      PsiIdentifier:some('some')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:junk('junk')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

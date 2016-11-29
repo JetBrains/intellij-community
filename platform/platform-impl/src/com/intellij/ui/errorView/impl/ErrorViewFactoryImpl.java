@@ -25,6 +25,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 
+import javax.swing.*;
+
 public class ErrorViewFactoryImpl implements ErrorViewFactory {
   public ErrorTreeView createErrorTreeView(Project project,
                                            String helpId,
@@ -52,12 +54,17 @@ public class ErrorViewFactoryImpl implements ErrorViewFactory {
       }
 
       public void close() {
-        ContentManager contentManager = contentManagerProvider.getParentContent();
-        Content content = contentManager.getContent(this);
-        if (content != null) {
-          contentManager.removeContent(content, true);
-        }
+        removeFromContentManager(contentManagerProvider.getParentContent(), this);
       }
     };
+  }
+
+  public static void removeFromContentManager(ContentManager contentManager, ErrorTreeView view) {
+    if (view instanceof JComponent) {
+      Content content = contentManager.getContent((JComponent)view);
+      if (content != null) {
+        contentManager.removeContent(content, true);
+      }
+    }
   }
 }

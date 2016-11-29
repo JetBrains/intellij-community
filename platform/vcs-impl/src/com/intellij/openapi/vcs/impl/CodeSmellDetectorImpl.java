@@ -109,7 +109,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   @Override
   public List<CodeSmellInfo> findCodeSmells(@NotNull final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
+    final List<CodeSmellInfo> result = new ArrayList<>();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
 

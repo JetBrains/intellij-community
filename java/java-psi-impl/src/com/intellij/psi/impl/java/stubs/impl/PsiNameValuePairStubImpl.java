@@ -20,7 +20,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiNameValuePairStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,22 +28,24 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiNameValuePairStubImpl extends StubBase<PsiNameValuePair> implements PsiNameValuePairStub {
 
-  @Nullable private final StringRef myName;
-  @Nullable private final StringRef myValue;
+  @Nullable private final String myName;
+  @Nullable private final String myValue;
 
-  public PsiNameValuePairStubImpl(StubElement parent, @Nullable StringRef name, @Nullable StringRef value) {
+  public PsiNameValuePairStubImpl(StubElement parent, @Nullable String name, @Nullable String value) {
     super(parent, JavaStubElementTypes.NAME_VALUE_PAIR);
     myName = name;
     myValue = value;
   }
 
+  @Nullable
   @Override
   public String getName() {
-    return myName == null ? "value" : myName.getString();
+    return myName;
   }
 
+  @Nullable
   @Override
   public String getValue() {
-    return myValue == null ? null : myValue.getString();
+    return myValue;
   }
 }

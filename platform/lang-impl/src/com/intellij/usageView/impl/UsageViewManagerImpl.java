@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public class UsageViewManagerImpl extends UsageViewManager {
   private final Key<Boolean> REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.REUSABLE_CONTENT_KEY");
@@ -62,9 +63,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
                             boolean toOpenInNewTab, boolean isLockable) {
     Key<Boolean> contentKey = reusable ? REUSABLE_CONTENT_KEY : NOT_REUSABLE_CONTENT_KEY;
 
+    Content contentToDelete = null;
     if (!toOpenInNewTab && reusable) {
       Content[] contents = myFindContentManager.getContents();
-      Content contentToDelete = null;
 
       for (Content content : contents) {
         if (!content.isPinned() &&
@@ -76,9 +77,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
           }
         }
       }
-      if (contentToDelete != null) {
-        myFindContentManager.removeContent(contentToDelete, true);
-      }
     }
     Content content = ContentFactory.SERVICE.getInstance().createContent(component, contentName, isLockable);
     content.setTabName(tabName);
@@ -87,6 +85,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
 
     myFindContentManager.addContent(content);
+    if (contentToDelete != null) {
+      myFindContentManager.removeContent(contentToDelete, true);
+    }
     myFindContentManager.setSelectedContent(content);
 
     return content;
@@ -99,14 +100,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   private int getContentCount(boolean reusable) {
     Key<Boolean> contentKey = reusable ? REUSABLE_CONTENT_KEY : NOT_REUSABLE_CONTENT_KEY;
-    int count = 0;
     Content[] contents = myFindContentManager.getContents();
-    for (Content content : contents) {
-      if (content.getUserData(contentKey) != null) {
-        count++;
-      }
-    }
-    return count;
+    return (int)Arrays.stream(contents).filter(content -> content.getUserData(contentKey) != null).count();
   }
 
   @Override

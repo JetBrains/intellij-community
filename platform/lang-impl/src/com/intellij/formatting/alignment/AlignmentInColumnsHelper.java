@@ -329,7 +329,7 @@ public class AlignmentInColumnsHelper {
   }
 
   private static List<IElementType> findSubNodeTypes(ASTNode node, TokenSet types) {
-    List<IElementType> foundTypes = new SmartList<IElementType>();
+    List<IElementType> foundTypes = new SmartList<>();
     for (ASTNode child = node.getFirstChildNode(); child != null && child.getTreeParent() == node; child = child.getTreeNext()) {
       IElementType type = child.getElementType();
       if (types.contains(type)) {

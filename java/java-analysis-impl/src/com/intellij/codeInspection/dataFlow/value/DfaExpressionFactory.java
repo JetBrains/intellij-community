@@ -45,12 +45,7 @@ public class DfaExpressionFactory {
       String regex = Registry.stringValue("ide.dfa.getters.with.side.effects").trim();
       if (!StringUtil.isEmpty(regex)) {
         final Pattern pattern = Pattern.compile(regex);
-        return new Condition<String>() {
-          @Override
-          public boolean value(String s) {
-            return pattern.matcher(s).matches();
-          }
-        };
+        return s -> pattern.matcher(s).matches();
       }
     }
     catch (Exception e) {

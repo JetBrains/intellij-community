@@ -31,7 +31,7 @@ public final class ErrorInfo {
   private final String myName;
   private final String myPropertyName;
   private final HighlightDisplayLevel myLevel;
-  private final List<QuickFix> myQuickFixes = new ArrayList<QuickFix>();
+  private final List<QuickFix> myQuickFixes = new ArrayList<>();
 
   public ErrorInfo(@NotNull String name, @Nullable String propertyName, @NotNull HighlightDisplayLevel level) {
     myName = name;

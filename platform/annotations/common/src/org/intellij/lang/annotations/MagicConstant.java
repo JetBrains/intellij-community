@@ -97,15 +97,17 @@ public @interface MagicConstant {
   String[] stringValues() default {};
 
   /**
-   * @return allowed int flags (i.e. values (typically named constants) which can be combined with bitwise or operator (|).
-   *         Also 0 and -1 are considered allowed.
+   * @return allowed int flags (i.e. values (typically named constants) which can be combined with bitwise OR operator (|).
+   * The difference from the {@link #intValues()} is that flags are allowed to be combined (via plus:+ or bitwise OR: |) whereas values aren't.
+   * The literals "0" and "-1" are also allowed to denote absence and presense of all flags respectively.
+   *
    * E.g.
    * <pre><tt>
    * {@code @MagicConstant(flags = {HierarchyEvent.PARENT_CHANGED,HierarchyEvent.DISPLAYABILITY_CHANGED,HierarchyEvent.SHOWING_CHANGED})
    * int hFlags;
    *
-   * hFlags = 3; // not allowed
-   * if (hFlags & (HierarchyEvent.PARENT_CHANGED | HierarchyEvent.SHOWING_CHANGED) != 0); // OK
+   * hFlags = 3; // not allowed; should be "magic" constant.
+   * if (hFlags & (HierarchyEvent.PARENT_CHANGED | HierarchyEvent.SHOWING_CHANGED) != 0); // OK: combined several constants via bitwise OR
    * }</tt></pre>
    */
   long[] flags() default {};
@@ -118,22 +120,24 @@ public @interface MagicConstant {
    * {@code @MagicConstant(valuesFromClass = Cursor.class)
    * int cursorType;
    *
-   * cursorType = 11; // not allowed;
-   * cursorType = Cursor.E_RESIZE_CURSOR; // OK
+   * cursorType = 11; // not allowed; should be "magic" constant.
+   * cursorType = Cursor.E_RESIZE_CURSOR; // OK: "magic" constant used.
    * }</tt></pre>
    */
   Class valuesFromClass() default void.class;
 
   /**
    * @return allowed int flags which are defined in the specified class public static final constants.
+   * The difference from the {@link #valuesFromClass()} is that flags are allowed to be combined (via plus:+ or bitwise OR: |) whereas values aren't.
+   * The literals "0" and "-1" are also allowed to denote absence and presense of all flags respectively.
    *
    * E.g.
    * <pre><tt>
    * {@code @MagicConstant(flagsFromClass = java.awt.InputEvent.class)
    * int eventMask;
    *
-   * eventMask = 10; // not allowed;
-   * eventMask = InputEvent.CTRL_MASK | InputEvent.ALT_MASK; // OK
+   * eventMask = 10; // not allowed; should be "magic" constant.
+   * eventMask = InputEvent.CTRL_MASK | InputEvent.ALT_MASK; // OK: combined several constants via bitwise OR
    * }</tt></pre>
    */
   Class flagsFromClass() default void.class;

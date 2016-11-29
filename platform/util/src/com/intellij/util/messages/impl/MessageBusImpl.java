@@ -17,10 +17,12 @@ package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -80,7 +82,7 @@ public class MessageBusImpl implements MessageBus {
   private final Disposable myConnectionDisposable;
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
-    myOwner = owner.toString() + " of " + owner.getClass();
+    myOwner = owner + " of " + owner.getClass();
     myConnectionDisposable = Disposer.newDisposable(myOwner);
     myParentBus = (MessageBusImpl)parentBus;
     myParentBus.onChildBusCreated(this);
@@ -89,7 +91,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private MessageBusImpl(Object owner) {
-    myOwner = owner.toString() + " of " + owner.getClass();
+    myOwner = owner + " of " + owner.getClass();
     myConnectionDisposable = Disposer.newDisposable(myOwner);
     myOrderRef.set(Collections.<Integer>emptyList());
   }
@@ -102,6 +104,10 @@ public class MessageBusImpl implements MessageBus {
   @NotNull
   private RootBus getRootBus() {
     return myParentBus != null ? myParentBus.getRootBus() : asRoot();
+  }
+
+  private MessageBusImpl rootBus() { // return MessageBusImpl instead of RootBus to save one cast when accessing MessageBusImpl's private members
+    return getRootBus();
   }
 
   private RootBus asRoot() {
@@ -119,15 +125,15 @@ public class MessageBusImpl implements MessageBus {
   /**
    * Notifies current bus that a child bus is created. Has two responsibilities:
    * <ul>
-   *   <li>stores given child bus in {@link #myChildBuses} collection</li>
-   *   <li>
-   *     calculates {@link #myOrderRef} for the given child bus
-   *   </li>
+   * <li>stores given child bus in {@link #myChildBuses} collection</li>
+   * <li>
+   * calculates {@link #myOrderRef} for the given child bus
+   * </li>
    * </ul>
    * <p/>
    * Thread-safe.
    *
-   * @param childBus            newly created child bus
+   * @param childBus newly created child bus
    */
   private void onChildBusCreated(final MessageBusImpl childBus) {
     LOG.assertTrue(childBus.myParentBus == this);
@@ -169,7 +175,7 @@ public class MessageBusImpl implements MessageBus {
     }
     childBus.myOrderRef.set(childOrder);
     myChildBuses.add(childBus);
-    getRootBus().clearSubscriberCache();
+    rootBus().clearSubscriberCache();
   }
 
   private void onChildBusDisposed(final MessageBusImpl childBus) {
@@ -177,7 +183,7 @@ public class MessageBusImpl implements MessageBus {
     myChildOrders.remove(childBus.myOrderRef.get());
     Map<MessageBusImpl, Integer> map = getRootBus().myWaitingBuses.get();
     if (map != null) map.remove(childBus);
-    getRootBus().clearSubscriberCache();
+    rootBus().clearSubscriberCache();
     LOG.assertTrue(removed);
   }
 
@@ -193,7 +199,7 @@ public class MessageBusImpl implements MessageBus {
     @NonNls
     @Override
     public String toString() {
-      return "{ DJob connection:" + connection.toString() + "; message: " + message + " }";
+      return "{ DJob connection:" + connection + "; message: " + message + " }";
     }
   }
 
@@ -214,7 +220,7 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   @NotNull
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public <L> L syncPublisher(@NotNull final Topic<L> topic) {
     checkNotDisposed();
     L publisher = (L)mySyncPublishers.get(topic);
@@ -235,7 +241,7 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   @NotNull
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public <L> L asyncPublisher(@NotNull final Topic<L> topic) {
     checkNotDisposed();
     L publisher = (L)myAsyncPublishers.get(topic);
@@ -266,14 +272,33 @@ public class MessageBusImpl implements MessageBus {
     if (myParentBus != null) {
       myParentBus.onChildBusDisposed(this);
       myParentBus = null;
-    } else {
+    }
+    else {
       asRoot().myWaitingBuses.remove();
     }
     myDisposed = true;
   }
 
+  @Override
+  public boolean hasUndeliveredEvents(@NotNull Topic<?> topic) {
+    if (!isDispatchingAnything()) return false;
+
+    for (MessageBusConnectionImpl connection : getTopicSubscribers(topic)) {
+      if (connection.containsMessage(topic)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isDispatchingAnything() {
+    return getRootBus().myWaitingBuses.get() != null;
+  }
+
   private void checkNotDisposed() {
-    if (myDisposed) LOG.error("Already disposed: " + this);
+    if (myDisposed) {
+      LOG.error("Already disposed: " + this);
+    }
   }
 
   private void calcSubscribers(Topic topic, List<MessageBusConnectionImpl> result) {
@@ -297,13 +322,7 @@ public class MessageBusImpl implements MessageBus {
 
   private void postMessage(Message message) {
     checkNotDisposed();
-    final Topic topic = message.getTopic();
-    List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
-    if (topicSubscribers == null) {
-      topicSubscribers = new SmartList<MessageBusConnectionImpl>();
-      calcSubscribers(topic, topicSubscribers);
-      mySubscriberCache.put(topic, topicSubscribers);
-    }
+    List<MessageBusConnectionImpl> topicSubscribers = getTopicSubscribers(message.getTopic());
     if (!topicSubscribers.isEmpty()) {
       for (MessageBusConnectionImpl subscriber : topicSubscribers) {
         subscriber.getBus().myMessageQueue.get().offer(new DeliveryJob(subscriber, message));
@@ -311,6 +330,17 @@ public class MessageBusImpl implements MessageBus {
         subscriber.scheduleMessageDelivery(message);
       }
     }
+  }
+
+  @NotNull
+  private List<MessageBusConnectionImpl> getTopicSubscribers(Topic topic) {
+    List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
+    if (topicSubscribers == null) {
+      topicSubscribers = new SmartList<MessageBusConnectionImpl>();
+      calcSubscribers(topic, topicSubscribers);
+      mySubscriberCache.put(topic, topicSubscribers);
+    }
+    return topicSubscribers;
   }
 
   private void notifyPendingJobChange(int delta) {
@@ -325,9 +355,11 @@ public class MessageBusImpl implements MessageBus {
     if (newCount > 0) {
       checkNotDisposed();
       map.put(this, newCount);
-    } else if (newCount == 0) {
+    }
+    else if (newCount == 0) {
       map.remove(this);
-    } else {
+    }
+    else {
       LOG.error("Negative job count: " + this);
     }
   }
@@ -349,32 +381,70 @@ public class MessageBusImpl implements MessageBus {
       if (map != null) {
         Set<MessageBusImpl> buses = map.keySet();
         if (!buses.isEmpty()) {
-          for (MessageBusImpl bus : new ArrayList<MessageBusImpl>(buses)) {
-            if (bus.myDisposed) {
-              map.remove(bus);
-              LOG.error("Accessing disposed message bus " + bus);
-              continue;
-            }
-
-            bus.doPumpMessages();
-          }
+          pumpWaitingBuses(map, new ArrayList<MessageBusImpl>(buses));
         }
       }
     }
   }
 
-  private void doPumpMessages() {
+  private static void pumpWaitingBuses(Map<MessageBusImpl, Integer> map, ArrayList<MessageBusImpl> buses) {
+    List<Throwable> exceptions = null;
+    for (MessageBusImpl bus : buses) {
+      if (!ensureAlive(map, bus)) continue;
+
+      exceptions = appendExceptions(exceptions, bus.doPumpMessages());
+    }
+    rethrowExceptions(exceptions);
+  }
+
+  private static List<Throwable> appendExceptions(List<Throwable> exceptions, List<Throwable> busExceptions) {
+    if (!busExceptions.isEmpty()) {
+      if (exceptions == null) exceptions = new SmartList<Throwable>();
+      exceptions.addAll(busExceptions);
+    }
+    return exceptions;
+  }
+
+  private static void rethrowExceptions(List<Throwable> exceptions) {
+    if (exceptions == null) return;
+
+    ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
+    if (pce != null) throw pce;
+
+    CompoundRuntimeException.throwIfNotEmpty(exceptions);
+  }
+
+  private static boolean ensureAlive(Map<MessageBusImpl, Integer> map, MessageBusImpl bus) {
+    if (bus.myDisposed) {
+      map.remove(bus);
+      LOG.error("Accessing disposed message bus " + bus);
+      return false;
+    }
+    return true;
+  }
+
+  private List<Throwable> doPumpMessages() {
     Queue<DeliveryJob> queue = myMessageQueue.get();
+    List<Throwable> exceptions = null;
     do {
       DeliveryJob job = queue.poll();
       if (job == null) break;
       notifyPendingJobChange(-1);
-      job.connection.deliverMessage(job.message);
+      try {
+        job.connection.deliverMessage(job.message);
+      }
+      catch (Throwable e) {
+        if (exceptions == null) {
+          exceptions = new SmartList<Throwable>();
+        }
+        exceptions.add(e);
+      }
     }
     while (true);
+    return exceptions == null ? Collections.<Throwable>emptyList() : exceptions;
   }
 
-  void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
+  void notifyOnSubscription(@NotNull MessageBusConnectionImpl connection, @NotNull Topic<?> topic) {
     checkNotDisposed();
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
@@ -383,10 +453,10 @@ public class MessageBusImpl implements MessageBus {
     }
 
     topicSubscribers.add(connection);
-    getRootBus().clearSubscriberCache();
+    rootBus().clearSubscriberCache();
   }
 
-  void clearSubscriberCache() {
+  private void clearSubscriberCache() {
     mySubscriberCache.clear();
     for (MessageBusImpl bus : myChildBuses) {
       bus.clearSubscriberCache();
@@ -398,7 +468,7 @@ public class MessageBusImpl implements MessageBus {
       topicSubscribers.remove(connection);
     }
     if (myDisposed) return;
-    getRootBus().clearSubscriberCache();
+    rootBus().clearSubscriberCache();
 
     final Iterator<DeliveryJob> i = myMessageQueue.get().iterator();
     while (i.hasNext()) {
@@ -433,7 +503,7 @@ public class MessageBusImpl implements MessageBus {
      * Holds the counts of pending messages for all message buses in the hierarchy
      * This field is null for non-root buses
      * The map's keys are sorted by {@link #myOrderRef}
-     *
+     * <p>
      * Used to avoid traversing the whole hierarchy when there are no messages to be sent in most of it
      */
     private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<SortedMap<MessageBusImpl, Integer>>();

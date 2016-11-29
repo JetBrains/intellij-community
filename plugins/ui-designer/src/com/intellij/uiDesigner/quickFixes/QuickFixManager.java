@@ -220,7 +220,7 @@ public abstract class QuickFixManager <T extends JComponent>{
       return;
     }
 
-    final ArrayList<ErrorWithFix> fixList = new ArrayList<ErrorWithFix>();
+    final ArrayList<ErrorWithFix> fixList = new ArrayList<>();
     for(ErrorInfo errorInfo: errorInfos) {
       final QuickFix[] quickFixes = errorInfo.myFixes;
       if (quickFixes.length > 0) {
@@ -277,19 +277,12 @@ public abstract class QuickFixManager <T extends JComponent>{
         return ((PopupQuickFix) selectedValue.second).getPopupStep();
       }
       if (finalChoice || !myShowSuppresses) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
-              public void run() {
-                selectedValue.second.run();
-              }
-            }, selectedValue.second.getName(), null);
-          }
-        });
+        return doFinalStep(
+          () -> CommandProcessor.getInstance().executeCommand(myEditor.getProject(), () -> selectedValue.second.run(), selectedValue.second.getName(), null));
       }
       if (selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
           !(selectedValue.second instanceof SuppressFix)) {
-        ArrayList<ErrorWithFix> suppressList = new ArrayList<ErrorWithFix>();
+        ArrayList<ErrorWithFix> suppressList = new ArrayList<>();
         buildSuppressFixes(selectedValue.first, suppressList, false);
         return new QuickFixPopupStep(suppressList, false);
       }

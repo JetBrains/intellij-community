@@ -18,10 +18,13 @@ package org.jetbrains.idea.eclipse;
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder;
 import org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider;
@@ -50,16 +53,26 @@ public class EclipseImportWizardTest extends ProjectWizardTestCase {
     assertEquals("root", module.getName());
   }
 
-  private Module doTest(final String fileName) throws IOException {
-    copyTestData();
-    return importProjectFrom(getProject().getBaseDir().getPath() + "/" + fileName, null,
+  public void testDontImportOpenProject() throws Exception {
+    copyTestData("");
+    Module module = importProjectFrom(getProject().getBaseDir().getPath(), null,
                                       new EclipseProjectImportProvider(new EclipseImportBuilder()));
+    assertNull(module);
   }
 
-  private void copyTestData() throws IOException {
+  private Module doTest(String filePath) throws IOException {
+    copyTestData("subdir");
+    return importProjectFrom(getProject().getBaseDir().getPath() + "/subdir/" + filePath, null,
+                             new EclipseProjectImportProvider(new EclipseImportBuilder()));
+  }
+
+  private void copyTestData(String subdirName) throws IOException {
     final File currentTestRoot = new File(PluginPathManager.getPluginHomePath("eclipse") + "/testData", "import");
     VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
-    copyDirContentsTo(vTestRoot, getProject().getBaseDir());
+    assertNotNull(vTestRoot);
+    VirtualFile subdir = StringUtil.isEmpty(subdirName) ? getProject().getBaseDir() :
+                         WriteAction.compute(() -> VfsUtil.createDirectoryIfMissing(getProject().getBaseDir(), subdirName));
+    copyDirContentsTo(vTestRoot, subdir);
   }
 
   public void testImportingFromTwoProviders() throws Exception {

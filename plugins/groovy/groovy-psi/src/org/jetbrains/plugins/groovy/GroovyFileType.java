@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ import java.util.List;
  * @author ilyas
  */
 public class GroovyFileType extends LanguageFileType {
-  public static final List<FileType> GROOVY_FILE_TYPES = new ArrayList<FileType>();
-  public static final GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
+  public static final List<FileType> GROOVY_FILE_TYPES = new ArrayList<>();
+  public static final @NotNull GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "groovy";
 
   private GroovyFileType() {

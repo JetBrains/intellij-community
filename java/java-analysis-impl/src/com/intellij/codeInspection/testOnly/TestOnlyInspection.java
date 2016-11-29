@@ -121,7 +121,13 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
   @Nullable
   private static PsiAnnotation findVisibleForTestingAnnotation(@NotNull PsiMember member) {
     PsiAnnotation anno = AnnotationUtil.findAnnotation(member, "com.google.common.annotations.VisibleForTesting");
-    return anno != null ? anno : AnnotationUtil.findAnnotation(member, "com.android.annotations.VisibleForTesting");
+    if (anno == null) {
+      anno = AnnotationUtil.findAnnotation(member, "com.android.annotations.VisibleForTesting");
+    }
+    if (anno != null) return anno;
+
+    PsiClass containingClass = member.getContainingClass();
+    return containingClass != null ? findVisibleForTestingAnnotation(containingClass) : null;
   }
 
   private static boolean isInsideTestOnlyMethod(PsiElement e) {

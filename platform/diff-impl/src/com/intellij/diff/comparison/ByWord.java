@@ -17,25 +17,23 @@ package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.LineFragmentSplitter.WordBlock;
 import com.intellij.diff.comparison.iterables.DiffIterable;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
-import com.intellij.diff.fragments.MergeWordFragmentImpl;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.diff.comparison.ComparisonManagerImpl.convertIntoDiffFragments;
+import static com.intellij.diff.comparison.ComparisonManagerImpl.convertIntoMergeWordFragments;
 import static com.intellij.diff.comparison.TrimUtil.*;
 import static com.intellij.diff.comparison.TrimUtil.trim;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
@@ -67,7 +65,7 @@ public class ByWord {
     FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(text1, text2, words1, words2, wordChanges, indicator);
     DiffIterable iterable = matchAdjustmentWhitespaces(text1, text2, delimitersIterable, policy, indicator);
 
-    return convertIntoFragments(iterable);
+    return convertIntoDiffFragments(iterable);
   }
 
   @NotNull
@@ -93,7 +91,7 @@ public class ByWord {
     List<MergeRange> wordConflicts = ComparisonMergeUtil.buildFair(iterable1, iterable2, indicator);
     List<MergeRange> result = matchAdjustmentWhitespaces(text1, text2, text3, wordConflicts, policy, indicator);
 
-    return convertIntoFragments(result);
+    return convertIntoMergeWordFragments(result);
   }
 
   @NotNull
@@ -128,7 +126,7 @@ public class ByWord {
 
     List<WordBlock> wordBlocks = new LineFragmentSplitter(text1, text2, words1, words2, wordChanges, indicator).run();
 
-    List<LineBlock> lineBlocks = new ArrayList<LineBlock>(wordBlocks.size());
+    List<LineBlock> lineBlocks = new ArrayList<>(wordBlocks.size());
     for (WordBlock block : wordBlocks) {
       Range offsets = block.offsets;
       Range words = block.words;
@@ -145,7 +143,7 @@ public class ByWord {
                                                                       offsets.start1, offsets.start2, indicator);
       DiffIterable iterable = matchAdjustmentWhitespaces(subtext1, subtext2, delimitersIterable, policy, indicator);
 
-      List<DiffFragment> fragments = convertIntoFragments(iterable);
+      List<DiffFragment> fragments = convertIntoDiffFragments(iterable);
 
       int newlines1 = countNewlines(subwords1);
       int newlines2 = countNewlines(subwords2);
@@ -159,21 +157,6 @@ public class ByWord {
   //
   // Impl
   //
-
-  @NotNull
-  private static List<MergeWordFragment> convertIntoFragments(@NotNull List<MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, new Function<MergeRange, MergeWordFragment>() {
-      @Override
-      public MergeWordFragment fun(MergeRange ch) {
-        return new MergeWordFragmentImpl(ch);
-      }
-    });
-  }
-
-  @NotNull
-  private static List<DiffFragment> convertIntoFragments(@NotNull DiffIterable iterable) {
-    return DiffIterableUtil.convertIntoFragments(iterable);
-  }
 
   @NotNull
   private static FairDiffIterable optimizeWordChunks(@NotNull CharSequence text1,
@@ -485,8 +468,8 @@ public class ByWord {
 
   @NotNull
   private static Couple<List<Range>> splitIterable2Side(@NotNull FairDiffIterable changes, int offset) {
-    final List<Range> ranges1 = new ArrayList<Range>();
-    final List<Range> ranges2 = new ArrayList<Range>();
+    final List<Range> ranges1 = new ArrayList<>();
+    final List<Range> ranges2 = new ArrayList<>();
     for (Range ch : changes.iterateUnchanged()) {
       if (ch.end2 <= offset) {
         ranges1.add(new Range(ch.start1, ch.end1, ch.start2, ch.end2));
@@ -524,7 +507,7 @@ public class ByWord {
       myText2 = text2;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<Range>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
@@ -564,7 +547,7 @@ public class ByWord {
       myText3 = text3;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<MergeRange>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
@@ -607,15 +590,18 @@ public class ByWord {
       myText2 = text2;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<Range>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
     public DiffIterable build() {
       for (Range range : myIterable.iterateChanges()) {
-        Range trimmed = trim(myText1, myText2, range);
+        // match spaces if we can, ignore them if we can't
+        Range expanded = expandW(myText1, myText2, range);
+        Range trimmed = trim(myText1, myText2, expanded);
 
-        if (!trimmed.isEmpty()) {
+        if (!trimmed.isEmpty() &&
+            !isEqualsIW(myText1, myText2, trimmed)) {
           myChanges.add(trimmed);
         }
       }
@@ -644,15 +630,17 @@ public class ByWord {
       myText3 = text3;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<MergeRange>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
     public List<MergeRange> build() {
       for (MergeRange range : myIterable) {
-        MergeRange trimmed = trim(myText1, myText2, myText3, range);
+        MergeRange expanded = expandW(myText1, myText2, myText3, range);
+        MergeRange trimmed = trim(myText1, myText2, myText3, expanded);
 
-        if (!trimmed.isEmpty()) {
+        if (!trimmed.isEmpty() &&
+            !isEqualsIW(myText1, myText2, myText3, trimmed)) {
           myChanges.add(trimmed);
         }
       }
@@ -678,7 +666,7 @@ public class ByWord {
       myText2 = text2;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<Range>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
@@ -704,7 +692,8 @@ public class ByWord {
 
         Range trimmed = new Range(start1, end1, start2, end2);
 
-        if (!trimmed.isEmpty()) {
+        if (!trimmed.isEmpty() &&
+            !isEquals(myText1, myText2, trimmed)) {
           myChanges.add(trimmed);
         }
       }
@@ -733,7 +722,7 @@ public class ByWord {
       myText3 = text3;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<MergeRange>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
@@ -767,7 +756,8 @@ public class ByWord {
 
         MergeRange trimmed = new MergeRange(start1, end1, start2, end2, start3, end3);
 
-        if (!trimmed.isEmpty()) {
+        if (!trimmed.isEmpty() &&
+            !isEquals(myText1, myText2, myText3, trimmed)) {
           myChanges.add(trimmed);
         }
       }
@@ -823,7 +813,7 @@ public class ByWord {
 
   @NotNull
   public static List<InlineChunk> getInlineChunks(@NotNull final CharSequence text) {
-    final List<InlineChunk> chunks = new ArrayList<InlineChunk>();
+    final List<InlineChunk> chunks = new ArrayList<>();
 
     final int len = text.length();
 
@@ -866,12 +856,30 @@ public class ByWord {
     int getOffset2();
   }
 
-  static class WordChunk extends TextChunk implements InlineChunk {
+  static class WordChunk implements InlineChunk {
+    @NotNull private final CharSequence myText;
+    private final int myOffset1;
+    private final int myOffset2;
     private final int myHash;
 
     public WordChunk(@NotNull CharSequence text, int offset1, int offset2, int hash) {
-      super(text, offset1, offset2);
+      myText = text;
+      myOffset1 = offset1;
+      myOffset2 = offset2;
       myHash = hash;
+    }
+
+    @NotNull
+    public CharSequence getContent() {
+      return myText.subSequence(myOffset1, myOffset2);
+    }
+
+    public int getOffset1() {
+      return myOffset1;
+    }
+
+    public int getOffset2() {
+      return myOffset2;
     }
 
     @Override

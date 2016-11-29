@@ -118,12 +118,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes((GrExpression)map)) {
         if (expected instanceof PsiClassType) {
           final List<Pair<PsiMethod, PsiSubstitutor>> pairs = getMethodsToOverrideImplementInInheritor((PsiClassType)expected, false);
-          return ContainerUtil.findAll(pairs, new Condition<Pair<PsiMethod, PsiSubstitutor>>() {
-              @Override
-              public boolean value(Pair<PsiMethod, PsiSubstitutor> pair) {
-                return methodName.equals(pair.first.getName());
-              }
-            });
+          return ContainerUtil.findAll(pairs, pair -> methodName.equals(pair.first.getName()));
         }
       }
     }
@@ -152,12 +147,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
   }
 
   public static PsiType[] getParameterTypes(final Pair<PsiMethod, PsiSubstitutor> pair) {
-    return ContainerUtil.map2Array(pair.first.getParameterList().getParameters(), PsiType.class, new Function<PsiParameter, PsiType>() {
-      @Override
-      public PsiType fun(PsiParameter psiParameter) {
-        return pair.second.substitute(psiParameter.getType());
-      }
-    });
+    return ContainerUtil.map2Array(pair.first.getParameterList().getParameters(), PsiType.class, psiParameter -> pair.second.substitute(psiParameter.getType()));
   }
 
   @NotNull
@@ -192,7 +182,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
   }
 
   private static ArrayList<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplement(PsiClass psiClass, final boolean toImplement) {
-    final ArrayList<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
+    final ArrayList<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<>();
     for (CandidateInfo info : OverrideImplementExploreUtil.getMethodsToOverrideImplement(psiClass, toImplement)) {
       result.add(Pair.create((PsiMethod) info.getElement(), info.getSubstitutor()));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,18 @@ import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Register DOM extenders via dom.extender extension point. Specify 2 attributes:
- *   domClass - the DOM element class for which this extender will be called. Should be equal to T.
- *   extenderClass - this class qualified name.
- *
- * For registering extenders, use "com.intellij.dom.extender" extension point.
+ * Register DOM extenders via {@code dom.extender} extension point. Specify 2 attributes:
+ * <ul>
+ * <li>domClass - the DOM element class for which this extender will be called, must be equal to T</li>
+ * <li>extenderClass - this class qualified name</li>
+ * </ul>
  *
  * @author peter
  */
 public abstract class DomExtender<T extends DomElement> {
 
   /**
-   * @param t DOM element where new children may be added to
+   * @param t         DOM element where new children may be added to
    * @param registrar a place to register your own DOM children descriptions
    */
   public abstract void registerExtensions(@NotNull T t, @NotNull final DomExtensionsRegistrar registrar);
@@ -39,6 +39,7 @@ public abstract class DomExtender<T extends DomElement> {
   /**
    * Makes stub building for extensions available.
    * To be compatible with general stubs contract, extension should NOT depend on anything beyond current file's content.
+   *
    * @since 13.1
    */
   public boolean supportsStubs() {

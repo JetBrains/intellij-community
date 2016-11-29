@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -91,20 +90,14 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
     @Override
     public final boolean isSelected(final AnActionEvent event) {
-      return myTypeName.equals(myCurrentViewType);
+      return myTypeName.equals(getCurrentViewType());
     }
 
     @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       if (flag) {
-//        setWaitCursor();
         // invokeLater is called to update state of button before long tree building operation
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            changeView(myTypeName);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));
       }
     }
 
@@ -117,9 +110,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_CALL_HIERARCHY, CALL_HIERARCHY_BROWSER_DATA_KEY,
-            LanguageCallHierarchy.INSTANCE);
+      super(IdeBundle.message("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
     }
   }
-
 }

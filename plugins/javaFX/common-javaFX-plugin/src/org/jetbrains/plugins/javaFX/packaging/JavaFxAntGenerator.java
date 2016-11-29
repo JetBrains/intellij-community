@@ -19,14 +19,12 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * User: anna
@@ -36,7 +34,9 @@ public class JavaFxAntGenerator {
   public static List<SimpleTag> createJarAndDeployTasks(AbstractJavaFxPackager packager,
                                                         String artifactFileName,
                                                         String artifactName,
-                                                        String tempDirPath) {
+                                                        String tempDirPath,
+                                                        String tempDirDeployPath,
+                                                        String relativeToBaseDirPath) {
     final String artifactFileNameWithoutExtension = FileUtil.getNameWithoutExtension(artifactFileName);
     final List<SimpleTag> topLevelTagsCollector = new ArrayList<SimpleTag>(); 
     final String preloaderJar = packager.getPreloaderJar();
@@ -83,6 +83,10 @@ public class JavaFxAntGenerator {
     if (preloaderFiles != null) {
       applicationTag.addAttribute(Couple.of("preloaderClass", preloaderClass));
     }
+    final String version = packager.getVersion();
+    if (!StringUtil.isEmptyOrSpaces(version)) {
+      applicationTag.addAttribute(Couple.of("version", version.trim().replaceAll("\\s", "-")));
+    }
 
     appendValuesFromPropertiesFile(applicationTag, packager.getHtmlParamFile(), "fx:htmlParam", false);
     //also loads fx:argument values
@@ -98,7 +102,7 @@ public class JavaFxAntGenerator {
 
     //create jar task
     final SimpleTag createJarTag = new SimpleTag("fx:jar",
-                                                 Couple.of("destfile", tempDirPath + File.separator + artifactFileName));
+                                                 Couple.of("destfile", tempDirPath + "/" + artifactFileName));
     createJarTag.add(new SimpleTag("fx:application", Couple.of("refid", appId)));
 
     final List<Pair> fileset2Jar = new ArrayList<Pair>();
@@ -108,8 +112,8 @@ public class JavaFxAntGenerator {
 
     createJarTag.add(createResourcesTag(preloaderFiles, false, allButPreloader, allButSelf, all));
 
-    List<JavaFxManifestAttribute> manifestAttributes = packager.getCustomManifestAttributes();
-    if (manifestAttributes != null) {
+    final List<JavaFxManifestAttribute> manifestAttributes = getManifestAttributes(packager);
+    if (!manifestAttributes.isEmpty()) {
       final SimpleTag manifestTag = new SimpleTag("manifest");
       for (JavaFxManifestAttribute pair : manifestAttributes) {
         manifestTag.add(new SimpleTag("attribute",
@@ -121,16 +125,21 @@ public class JavaFxAntGenerator {
 
     topLevelTagsCollector.add(createJarTag);
 
+    final JavaFxPackagerConstants.NativeBundles bundle = packager.getNativeBundle();
+    final SimpleTag iconTag = appendApplicationIconPath(topLevelTagsCollector, bundle, packager.getIcons(), relativeToBaseDirPath);
+
     //deploy task
     final SimpleTag deployTag = new SimpleTag("fx:deploy",
                                               Couple.of("width", packager.getWidth()),
                                               Couple.of("height", packager.getHeight()),
                                               Couple.of("updatemode", packager.getUpdateMode()),
-                                              Couple.of("outdir", tempDirPath + File.separator + "deploy"),
+                                              Couple.of("outdir", tempDirDeployPath),
                                               Couple.of("outfile", artifactFileNameWithoutExtension));
-    final JavaFxPackagerConstants.NativeBundles bundle = packager.getNativeBundle();
-    if (bundle != JavaFxPackagerConstants.NativeBundles.none) {
+    if (bundle != null && bundle != JavaFxPackagerConstants.NativeBundles.none) {
       deployTag.addAttribute(Couple.of("nativeBundles", bundle.name()));
+    }
+    if (!StringUtil.isEmpty(packager.getHtmlPlaceholderId())) {
+      deployTag.addAttribute(Couple.of("placeholderId", packager.getHtmlPlaceholderId()));
     }
 
     if (packager.isEnabledSigning()) {
@@ -143,13 +152,88 @@ public class JavaFxAntGenerator {
     appendIfNotEmpty(infoPairs, "title", packager.getTitle());
     appendIfNotEmpty(infoPairs, "vendor", packager.getVendor());
     appendIfNotEmpty(infoPairs, "description", packager.getDescription());
-    if (!infoPairs.isEmpty()) {
-      deployTag.add(new SimpleTag("fx:info", infoPairs.toArray(new Pair[infoPairs.size()])));
+    if (!infoPairs.isEmpty() || iconTag != null) {
+      final SimpleTag infoTag = new SimpleTag("fx:info", infoPairs);
+      deployTag.add(infoTag);
+      if (iconTag != null) infoTag.add(iconTag);
     }
     deployTag.add(createResourcesTag(preloaderFiles, true, allButPreloader, allButSelf, all));
+    final SimpleTag templateTag = createTemplateTag(packager, tempDirDeployPath, relativeToBaseDirPath);
+    if (templateTag != null) deployTag.add(templateTag);
 
     topLevelTagsCollector.add(deployTag);
     return topLevelTagsCollector;
+  }
+
+  @NotNull
+  private static List<JavaFxManifestAttribute> getManifestAttributes(@NotNull AbstractJavaFxPackager packager) {
+    final List<JavaFxManifestAttribute> manifestAttributes = new ArrayList<JavaFxManifestAttribute>();
+    final String title = packager.getTitle();
+    if (title != null) {
+      manifestAttributes.add(new JavaFxManifestAttribute("Implementation-Title", title));
+    }
+    final String version = packager.getVersion();
+    if (version != null) {
+      manifestAttributes.add(new JavaFxManifestAttribute("Implementation-Version", version));
+    }
+    final String vendor = packager.getVendor();
+    if (vendor != null) {
+      manifestAttributes.add(new JavaFxManifestAttribute("Implementation-Vendor", vendor));
+    }
+    final List<JavaFxManifestAttribute> customManifestAttributes = packager.getCustomManifestAttributes();
+    if (customManifestAttributes != null) {
+      manifestAttributes.addAll(customManifestAttributes);
+    }
+    return manifestAttributes;
+  }
+
+  private static SimpleTag appendApplicationIconPath(List<SimpleTag> topLevelTagsCollector,
+                                                     JavaFxPackagerConstants.NativeBundles bundle,
+                                                     JavaFxApplicationIcons appIcons,
+                                                     String relativeToPath) {
+    boolean haveAppIcon = false;
+    if (appIcons == null || bundle == null || appIcons.isEmpty()) return null;
+    if (bundle.isOnLinux()) {
+      String iconPath = appIcons.getLinuxIcon(relativeToPath);
+      if (!StringUtil.isEmpty(iconPath)) {
+        final SimpleTag and = new SimpleTag("and");
+        and.add(new SimpleTag("os", Couple.of("family", "unix")));
+        final SimpleTag not = new SimpleTag("not");
+        not.add(new SimpleTag("os", Couple.of("family", "mac")));
+        and.add(not);
+        appendIconPropertyTag(topLevelTagsCollector, iconPath, relativeToPath != null, and);
+        haveAppIcon = true;
+      }
+    }
+    if (bundle.isOnMac()) {
+      String iconPath = appIcons.getMacIcon(relativeToPath);
+      if (!StringUtil.isEmpty(iconPath)) {
+        appendIconPropertyTag(topLevelTagsCollector, iconPath, relativeToPath != null, new SimpleTag("os", Couple.of("family", "mac")));
+        haveAppIcon = true;
+      }
+    }
+    if (bundle.isOnWindows()) {
+      String iconPath = appIcons.getWindowsIcon(relativeToPath);
+      if (!StringUtil.isEmpty(iconPath)) {
+        appendIconPropertyTag(topLevelTagsCollector, iconPath, relativeToPath != null, new SimpleTag("os", Couple.of("family", "windows")));
+        haveAppIcon = true;
+      }
+    }
+    if (haveAppIcon) {
+      return new SimpleTag("fx:icon", Couple.of("href", "${app.icon.path}"));
+    }
+    return null;
+  }
+
+  private static void appendIconPropertyTag(List<SimpleTag> tagsCollector,
+                                            String iconPath,
+                                            boolean isRelativeIconPath,
+                                            SimpleTag osFamily) {
+    final SimpleTag condition = new SimpleTag("condition",
+                                              Couple.of("property", "app.icon.path"),
+                                              Couple.of("value", isRelativeIconPath ? "${basedir}/" + iconPath : iconPath));
+    condition.add(osFamily);
+    tagsCollector.add(condition);
   }
 
   private static SimpleTag createResourcesTag(String preloaderFiles, boolean includeSelf,
@@ -164,6 +248,20 @@ public class JavaFxAntGenerator {
       resourcesTag.add(new SimpleTag("fx:fileset", Couple.of("refid", includeSelf ? all : allButSelf)));
     }
     return resourcesTag;
+  }
+
+  private static SimpleTag createTemplateTag(AbstractJavaFxPackager packager, String deployOutDir, String relativeToBaseDirPath) {
+    String htmlTemplate = packager.getHtmlTemplateFile();
+    if (!StringUtil.isEmpty(htmlTemplate)) {
+      final String shortName = new File(htmlTemplate).getName();
+      if (!StringUtil.isEmpty(relativeToBaseDirPath)) {
+        htmlTemplate = "${basedir}/" + FileUtil.getRelativePath(relativeToBaseDirPath, htmlTemplate, '/');
+      }
+      return new SimpleTag("fx:template",
+                           Couple.of("file", htmlTemplate),
+                           Couple.of("tofile", deployOutDir + "/" + shortName));
+    }
+    return null;
   }
 
   private static void appendIfNotEmpty(final List<Pair> pairs, final String propertyName, final String propValue) {
@@ -217,6 +315,12 @@ public class JavaFxAntGenerator {
     public SimpleTag(String name, Pair... pairs) {
       myName = name;
       myPairs = new ArrayList<Pair>(Arrays.asList(pairs));
+      myValue = null;
+    }
+
+    public SimpleTag(String name, Collection<Pair> pairs) {
+      myName = name;
+      myPairs = new ArrayList<Pair>(pairs);
       myValue = null;
     }
 

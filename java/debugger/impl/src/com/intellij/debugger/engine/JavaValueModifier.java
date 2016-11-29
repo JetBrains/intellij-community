@@ -18,6 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.*;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -29,6 +30,7 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -91,12 +93,10 @@ public abstract class JavaValueModifier extends XValueModifier {
   //}
   //
   protected static void update(final DebuggerContextImpl context) {
-    DebuggerInvocationUtil.swingInvokeLater(context.getProject(), new Runnable() {
-      public void run() {
-        final DebuggerSession session = context.getDebuggerSession();
-        if (session != null) {
-          session.refresh(false);
-        }
+    DebuggerInvocationUtil.swingInvokeLater(context.getProject(), () -> {
+      final DebuggerSession session = context.getDebuggerSession();
+      if (session != null) {
+        session.refresh(false);
       }
     });
     //node.setState(context);
@@ -214,17 +214,16 @@ public abstract class JavaValueModifier extends XValueModifier {
         return Priority.HIGH;
       }
 
-      public void threadAction() {
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         ExpressionEvaluator evaluator;
         try {
-          final Project project = evaluationContext.getProject();
+          Project project = evaluationContext.getProject();
+          SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
+          PsiElement context = ContextUtil.getContextElement(evaluationContext, position);
           evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
               public ExpressionEvaluator compute() throws EvaluateException {
                 return EvaluatorBuilderImpl
-                  .build(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression),
-                         ContextUtil.getContextElement(evaluationContext),
-                         ContextUtil.getSourcePosition(evaluationContext),
-                         project);
+                  .build(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression), context, position, project);
               }
             });
 

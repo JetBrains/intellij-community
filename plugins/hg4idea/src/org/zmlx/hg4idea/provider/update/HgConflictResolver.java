@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea.provider.update;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -51,7 +50,7 @@ public final class HgConflictResolver {
 
   public void resolve(final VirtualFile repo) {
     final Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(myProject).getListSynchronously(repo);
-    final List<File> conflictFiles = new ArrayList<File>();
+    final List<File> conflictFiles = new ArrayList<>();
 
     for (HgFile hgFile : resolves.keySet()) {
       File file = hgFile.getFile();
@@ -72,7 +71,7 @@ public final class HgConflictResolver {
       public void run() {
         AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
       }
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   private void updateUpdatedFiles(@NotNull File file, boolean unresolved) {

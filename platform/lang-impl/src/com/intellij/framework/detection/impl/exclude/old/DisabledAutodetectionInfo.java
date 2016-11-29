@@ -28,7 +28,7 @@ import java.util.List;
  * @author nik
  */
 public class DisabledAutodetectionInfo {
-  private List<DisabledAutodetectionByTypeElement> myElements = new SortedList<DisabledAutodetectionByTypeElement>(DisabledAutodetectionByTypeElement.COMPARATOR);
+  private List<DisabledAutodetectionByTypeElement> myElements = new SortedList<>(DisabledAutodetectionByTypeElement.COMPARATOR);
 
   @Tag("autodetection-disabled")
   @AbstractCollection(surroundWithTag = false)

@@ -40,7 +40,7 @@ JsonFile: NonStandardPropertyKeys.json
     PsiWhiteSpace('\n  ')
     JsonProperty
       JsonReferenceExpression
-        PsiElement(INDENTIFIER)('identifier')
+        PsiElement(IDENTIFIER)('identifier')
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       JsonNullLiteral

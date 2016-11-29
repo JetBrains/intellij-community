@@ -1,7 +1,8 @@
 '''
 Entry point module to start the interactive console.
 '''
-from _pydev_imps._pydev_thread import start_new_thread
+from _pydev_imps._pydev_saved_modules import thread
+start_new_thread = thread.start_new_thread
 
 try:
     from code import InteractiveConsole
@@ -14,13 +15,14 @@ from code import InteractiveInterpreter
 import os
 import sys
 
-from _pydev_imps import _pydev_threading as threading
+from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle.pydevd_constants import dict_iter_items
 
 import traceback
 from _pydev_bundle import fix_getpass
 fix_getpass.fix_getpass()
 
-from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_vars, pydevd_save_locals
 
 from _pydev_bundle.pydev_imports import Exec, _queue
 
@@ -153,9 +155,8 @@ def set_debug_hook(debug_hook):
     _ProcessExecQueueHelper._debug_hook = debug_hook
 
 
-def process_exec_queue(interpreter):
-
-    from pydev_ipython.inputhook import get_inputhook, set_return_control_callback
+def init_mpl_in_console(interpreter):
+    from pydev_ipython.inputhook import set_return_control_callback
 
     def return_control():
         ''' A function that the inputhooks can call (via inputhook.stdin_ready()) to find
@@ -184,6 +185,11 @@ def process_exec_queue(interpreter):
     # interpreter.enableGui which put it into the interpreter's exec_queue and executes it in the main thread.
     import_hook_manager.add_module_name("pylab", activate_pylab)
     import_hook_manager.add_module_name("pyplot", activate_pyplot)
+
+
+def process_exec_queue(interpreter):
+    init_mpl_in_console(interpreter)
+    from pydev_ipython.inputhook import get_inputhook
 
     while 1:
         # Running the request may have changed the inputhook in use
@@ -245,6 +251,7 @@ except:
     IPYTHON = False
     pass
 
+
 #=======================================================================================================================
 # _DoExit
 #=======================================================================================================================
@@ -286,7 +293,8 @@ def start_console_server(host, port, interpreter):
             server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
-        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, interpreter.client_port))
+        sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
+        sys.stderr.flush()
         raise
 
     # Tell UMD the proper default namespace
@@ -306,6 +314,7 @@ def start_console_server(host, port, interpreter):
     server.register_function(interpreter.hello)
     server.register_function(interpreter.getArray)
     server.register_function(interpreter.evaluate)
+    server.register_function(interpreter.ShowConsole)
 
     # Functions for GUI main loop integration
     server.register_function(interpreter.enableGui)
@@ -335,7 +344,7 @@ def start_console_server(host, port, interpreter):
                 pass
             if not retry:
                 raise
-            # Otherwise, keep on going
+                # Otherwise, keep on going
     return server
 
 
@@ -351,12 +360,20 @@ def start_server(host, port, client_port):
     process_exec_queue(interpreter)
 
 
+def get_ipython_hidden_vars():
+    if IPYTHON and hasattr(__builtin__, 'interpreter'):
+        interpreter = get_interpreter()
+        return interpreter.get_ipython_hidden_vars_dict()
+
+
 def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
+        sys.stderr.write(interpreterInterface.get_greeting_msg())
+        sys.stderr.flush()
 
     return interpreterInterface
 
@@ -372,7 +389,7 @@ def get_completions(text, token, globals, locals):
 # Debugger integration
 #===============================================================================
 
-def exec_code(code, globals, locals):
+def exec_code(code, globals, locals, debugger):
     interpreterInterface = get_interpreter()
     interpreterInterface.interpreter.update(globals, locals)
 
@@ -381,7 +398,7 @@ def exec_code(code, globals, locals):
     if res:
         return True
 
-    interpreterInterface.add_exec(code)
+    interpreterInterface.add_exec(code, debugger)
 
     return False
 
@@ -441,7 +458,7 @@ class ConsoleWriter(InteractiveInterpreter):
             tblist = tb = None
         sys.stderr.write(''.join(lines))
 
-def console_exec(thread_id, frame_id, expression):
+def console_exec(thread_id, frame_id, expression, dbg):
     """returns 'False' in case expression is partially correct
     """
     frame = pydevd_vars.find_frame(thread_id, frame_id)
@@ -456,7 +473,11 @@ def console_exec(thread_id, frame_id, expression):
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
     if IPYTHON:
-        return exec_code(CodeFragment(expression), updated_globals, frame.f_locals)
+        need_more =  exec_code(CodeFragment(expression), updated_globals, frame.f_locals, dbg)
+        if not need_more:
+            pydevd_save_locals.save_locals(frame)
+        return need_more
+
 
     interpreter = ConsoleWriter()
 
@@ -480,7 +501,8 @@ def console_exec(thread_id, frame_id, expression):
         raise
     except:
         interpreter.showtraceback()
-
+    else:
+        pydevd_save_locals.save_locals(frame)
     return False
 
 #=======================================================================================================================
@@ -493,7 +515,7 @@ if __name__ == '__main__':
     #See: https://sw-brainwy.rhcloud.com/tracker/PyDev/446:
     #'Variables' and 'Expressions' views stopped working when debugging interactive console
     import pydevconsole
-    sys.stdin = pydevconsole.BaseStdIn()
+    sys.stdin = pydevconsole.BaseStdIn(sys.stdin)
     port, client_port = sys.argv[1:3]
     from _pydev_bundle import pydev_localhost
 

@@ -51,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -63,7 +62,7 @@ import java.util.regex.Pattern;
  * User: dcheryasov
  * Date: Jul 25, 2010 3:23:50 PM
  */
-public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements PythonPathContributingFacet, LibraryContributingFacet {
+public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");
   @NonNls public static final String BUILDOUT_CFG = "buildout.cfg";
@@ -118,15 +117,18 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
   @NotNull
   public static List<VirtualFile> getExtraPathForAllOpenModules() {
-    final List<VirtualFile> results = new ArrayList<VirtualFile>();
+    final List<VirtualFile> results = new ArrayList<>();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         final BuildoutFacet buildoutFacet = getInstance(module);
         if (buildoutFacet != null) {
-          for (String path : buildoutFacet.getConfiguration().getPaths()) {
-            final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-            if (file != null) {
-              results.add(file);
+          final List<String> paths = buildoutFacet.getConfiguration().getPaths();
+          if (paths != null) {
+            for (String path : paths) {
+              final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+              if (file != null) {
+                results.add(file);
+              }
             }
           }
         }
@@ -225,7 +227,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
         String value = scanner.group(2);
         if (value != null) {
           if (ret == null) {
-            ret = new ArrayList<String>();
+            ret = new ArrayList<>();
           }
           ret.add(value);
           pos = scanner.end();
@@ -245,7 +247,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
    * @return extracted paths
    */
   public static List<String> extractFromSitePy(VirtualFile vFile) throws IOException {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     String text = VfsUtil.loadText(vFile);
     String[] lines = LineTokenizer.tokenize(text, false);
     int index = 0;
@@ -352,15 +354,12 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       }
     }
     if (rootPath != null) {
-      final File[] scripts = new File(rootPath, "bin").listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          if (SystemInfo.isWindows) {
-            return name.endsWith("-script.py");
-          }
-          String ext = FileUtilRt.getExtension(name);
-          return ext.length() == 0 || FileUtil.namesEqual(ext, "py");
+      final File[] scripts = new File(rootPath, "bin").listFiles((dir, name) -> {
+        if (SystemInfo.isWindows) {
+          return name.endsWith("-script.py");
         }
+        String ext = FileUtilRt.getExtension(name);
+        return ext.length() == 0 || FileUtil.namesEqual(ext, "py");
       });
       if (scripts != null) {
         return Arrays.asList(scripts);

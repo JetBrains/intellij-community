@@ -16,7 +16,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
@@ -26,6 +26,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class MessagePool {
   private static final int MAX_POOL_SIZE_FOR_FATALS = 100;
@@ -66,7 +69,7 @@ public class MessagePool {
   }
 
   public List<AbstractMessage> getFatalErrors(boolean aIncludeReadMessages, boolean aIncludeSubmittedMessages) {
-    List<AbstractMessage> result = new ArrayList<AbstractMessage>();
+    List<AbstractMessage> result = new ArrayList<>();
     for (AbstractMessage each : myIdeFatals) {
       if (!each.isRead() && !each.isSubmitted()) {
         result.add(each);
@@ -116,13 +119,12 @@ public class MessagePool {
   private class MessageGrouper implements Runnable {
     private final int myTimeOut;
     private final int myMaxGroupSize;
-    private final List<AbstractMessage> myMessages = new ArrayList<AbstractMessage>();
-    private final Alarm myAlarm;
+    private final List<AbstractMessage> myMessages = new ArrayList<>();
+    private Future<?> myAlarm = CompletableFuture.completedFuture(null);
 
     public MessageGrouper(int timeout, int maxGroupSize) {
       myTimeOut = timeout;
       myMaxGroupSize = maxGroupSize;
-      myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     }
 
     public void run() {
@@ -138,7 +140,7 @@ public class MessagePool {
       if (myMessages.size() == 1) {
         message = myMessages.get(0);
       } else {
-        message = new GroupedLogMessage(new ArrayList<AbstractMessage>(myMessages));
+        message = new GroupedLogMessage(new ArrayList<>(myMessages));
       }
       myMessages.clear();
       myIdeFatals.add(message);
@@ -152,8 +154,8 @@ public class MessagePool {
         if (myMessages.size() >= myMaxGroupSize) {
           post();
         } else {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(this, myTimeOut);
+          myAlarm.cancel(false);
+          myAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(this, myTimeOut, TimeUnit.MILLISECONDS);
         }
       }
       return result;

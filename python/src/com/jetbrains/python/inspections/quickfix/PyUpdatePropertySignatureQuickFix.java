@@ -34,13 +34,8 @@ public class PyUpdatePropertySignatureQuickFix implements LocalQuickFix {
 
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.update.parameters");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.update.parameters");
   }
 
   @Override

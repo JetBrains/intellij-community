@@ -66,7 +66,7 @@ public class DuplicatesImpl {
   public static void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull MatchProvider provider, boolean skipPromptWhenOne) {
     final List<Match> duplicates = provider.getDuplicates();
     int idx = 0;
-    final Ref<Boolean> showAll = new Ref<Boolean>();
+    final Ref<Boolean> showAll = new Ref<>();
     final String confirmDuplicatePrompt = getConfirmationPrompt(provider, duplicates);
     for (final Match match : duplicates) {
       if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
@@ -77,7 +77,7 @@ public class DuplicatesImpl {
   public static void invoke(final Project project, final MatchProvider provider) {
     final List<Match> duplicates = provider.getDuplicates();
     int idx = 0;
-    final Ref<Boolean> showAll = new Ref<Boolean>();
+    final Ref<Boolean> showAll = new Ref<>();
     final String confirmDuplicatePrompt = getConfirmationPrompt(provider, duplicates);
     for (final Match match : duplicates) {
       final PsiFile file = match.getFile();
@@ -140,6 +140,9 @@ public class DuplicatesImpl {
       HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
     }
 
+    // call change signature when needed
+    provider.prepareSignature(match);
+
     new WriteCommandAction(project, MethodDuplicatesHandler.REFACTORING_NAME, MethodDuplicatesHandler.REFACTORING_NAME) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
@@ -156,7 +159,7 @@ public class DuplicatesImpl {
   }
 
   public static ArrayList<RangeHighlighter> previewMatch(Project project, Match match, Editor editor) {
-    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     highlightMatch(project, editor, match, highlighters);
     final TextRange textRange = match.getTextRange();
     final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
@@ -175,12 +178,10 @@ public class DuplicatesImpl {
       }
     }
     if (anyCollapsed) {
-      editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-        public void run() {
-          for (final FoldRegion foldRegion : foldRegions) {
-            if (!foldRegion.isExpanded()) {
-              foldRegion.setExpanded(true);
-            }
+      editor.getFoldingModel().runBatchFoldingOperation(() -> {
+        for (final FoldRegion foldRegion : foldRegions) {
+          if (!foldRegion.isExpanded()) {
+            foldRegion.setExpanded(true);
           }
         }
       });

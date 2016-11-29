@@ -19,10 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.refactoring.MockInlineMethodOptions;
@@ -107,7 +104,15 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   
   public void testChainingConstructor() throws Exception { doTest(); }
 
-  public void testChainingConstructor1() throws Exception { doTest(); }
+  public void testChainingConstructor1() throws Exception {
+    BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
+    try {
+      doTest();
+    }
+    finally {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
+    }
+  }
 
   public void testNestedCall() throws Exception { doTest(); }
 
@@ -304,6 +309,51 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in method reference with side effects in qualifier");
   }
 
+  public void testInaccessibleSuperCallWhenQualifiedInline() throws Exception {
+    doTestConflict("Inlined method calls super.bar() which won't be accessed in class <b><code>B</code></b>");
+  }
+
+  public void testSuperCallWhenUnqualifiedInline() throws Exception {
+    doTestInlineThisOnly();
+  }
+
+  public void testDeleteOverrideAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testNegativeArguments() throws Exception {
+    doTest();
+  }
+
+  public void testInaccessibleFieldInSuperClass() throws Exception {
+    doTestConflict("Field <b><code>A.i</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>B.bar()</code></b>");
+  }
+
+  public void testPrivateFieldInSuperClassInSameFile() throws Exception {
+    doTest();
+  }
+
+  public void testInlineMultipleOccurrencesInFieldInitializer() throws Exception {
+    doTest();
+  }
+
+  public void testAvoidMultipleSubstitutionInParameterTypes() throws Exception {
+    doTest();
+  }
+
+  public void testRespectProjectScopeSrc() throws Exception {
+    doTest();
+  }
+
+  public void testRespectProjectScopeSrcConstructorCall() throws Exception {
+    doTest();
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return getTestName(false).contains("Src") ? IdeaTestUtil.getMockJdk17() : super.getProjectJDK();
+  }
+
   private void doTestInlineThisOnly() {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     configureByFile(fileName);
@@ -336,18 +386,19 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     PsiElement element = TargetElementUtil
       .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
+    if (ref instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement parent = ((PsiJavaCodeReferenceElement)ref).getParent();
+      if (parent instanceof PsiNewExpression) {
+        element = ((PsiNewExpression)parent).resolveConstructor();
+      }
+    }
     PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
     assertTrue(element instanceof PsiMethod);
-    PsiMethod method = (PsiMethod)element;
+    PsiMethod method = (PsiMethod)element.getNavigationElement();
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
     final InlineMethodProcessor processor =
       new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode);
     processor.run();
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

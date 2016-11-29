@@ -60,13 +60,9 @@ import java.util.concurrent.TimeUnit;
 public class CodeStyleManagerImpl extends CodeStyleManager {
   private static final Logger LOG = Logger.getInstance(CodeStyleManagerImpl.class);
   private static final ThreadLocal<ProcessingUnderProgressInfo> SEQUENTIAL_PROCESSING_ALLOWED
-    = new ThreadLocal<ProcessingUnderProgressInfo>()
-  {
-    @Override
-    protected ProcessingUnderProgressInfo initialValue() {
-      return new ProcessingUnderProgressInfo();
-    }
-  };
+    = ThreadLocal.withInitial(() -> new ProcessingUnderProgressInfo());
+
+  private final ThreadLocal<FormattingMode> myCurrentFormattingMode = ThreadLocal.withInitial(() -> FormattingMode.REFORMAT);
 
   private final FormatterTagHandler myTagHandler;
 
@@ -99,8 +95,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       return element;
     }
 
-    ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(getSettings(), element.getLanguage()).processElement(treeElement));
+    ASTNode treeElement = element.getNode();
+    final PsiElement formatted = new CodeFormatterFacade(getSettings(), element.getLanguage()).processElement(treeElement).getPsi();
     if (!canChangeWhiteSpacesOnly) {
       return postProcessElement(formatted);
     }
@@ -159,25 +155,33 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Override
-  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges)
-    throws IncorrectOperationException {
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
     reformatText(file, ranges, null);
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
-    reformatText(file, ranges, null, true);
+  public void reformatTextWithContext(@NotNull PsiFile file, 
+                                      @NotNull ChangedRangesInfo info) throws IncorrectOperationException 
+  {
+    FormatTextRanges formatRanges = new FormatTextRanges(info);
+    reformatText(file, formatRanges, null, true);
   }
 
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
-    reformatText(file, ranges, editor, false);
+    FormatTextRanges formatRanges = new FormatTextRanges();
+    ranges.forEach((range) -> formatRanges.add(range, true));
+    reformatText(file, formatRanges, editor, false);
   }
-
-  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor, boolean reformatContext) throws IncorrectOperationException {
+  
+  private void reformatText(@NotNull PsiFile file, 
+                            @NotNull FormatTextRanges ranges,
+                            @Nullable Editor editor, 
+                            boolean reformatContext) throws IncorrectOperationException 
+  {
     if (ranges.isEmpty()) {
       return;
     }
-    boolean isFullReformat = ranges.size() == 1 && file.getTextRange().equals(ranges.iterator().next());
+    boolean isFullReformat = ranges.isFullReformat(file);
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -203,13 +207,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       caretKeeper = new CaretPositionKeeper(editor, getSettings(), file.getLanguage());
     }
 
-    Collection<TextRange> correctedRanges = FormatterUtil.isFormatterCalledExplicitly()
-                                            ? removeEndingWhiteSpaceFromEachRange(file, ranges)
-                                            : ranges;
+    if (FormatterUtil.isFormatterCalledExplicitly()) {
+      removeEndingWhiteSpaceFromEachRange(file, ranges);
+    }
 
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
-    List<RangeFormatInfo> infos = new ArrayList<RangeFormatInfo>();
-    for (TextRange range : correctedRanges) {
+    List<RangeFormatInfo> infos = new ArrayList<>();
+    for (TextRange range : ranges.getTextRanges()) {
       final PsiElement start = findElementInTreeWithFormatterEnabled(file, range.getStartOffset());
       final PsiElement end = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
       if (start != null && !start.isValid()) {
@@ -228,11 +232,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       ));
     }
 
-    FormatTextRanges formatRanges = new FormatTextRanges();
-    for (TextRange range : correctedRanges) {
-      formatRanges.add(range, true);
-    }
-    codeFormatter.processText(file, formatRanges, true);
+    codeFormatter.processText(file, ranges, true);
+    
     for (RangeFormatInfo info : infos) {
       final PsiElement startElement = info.startPointer == null ? null : info.startPointer.getElement();
       final PsiElement endElement = info.endPointer == null ? null : info.endPointer.getElement();
@@ -253,31 +254,25 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
   }
 
-  @NotNull
-  private Collection<TextRange> removeEndingWhiteSpaceFromEachRange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
-    Collection<TextRange> result = new ArrayList<TextRange>();
+  private static void removeEndingWhiteSpaceFromEachRange(@NotNull PsiFile file, @NotNull FormatTextRanges ranges) {
+    for (FormatTextRange formatRange : ranges.getRanges()) {
+      TextRange range = formatRange.getTextRange();
+      
+      final int rangeStart = range.getStartOffset();
+      final int rangeEnd = range.getEndOffset();
 
-    for (TextRange range : ranges) {
-      int rangeStart = range.getStartOffset();
-      int rangeEnd = range.getEndOffset();
-
-      PsiElement lastElementInRange = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
-      if (lastElementInRange instanceof PsiWhiteSpace
-          && rangeStart < lastElementInRange.getTextRange().getStartOffset())
-      {
+      PsiElement lastElementInRange = findElementInTreeWithFormatterEnabled(file, rangeEnd);
+      if (lastElementInRange instanceof PsiWhiteSpace && rangeStart < lastElementInRange.getTextRange().getStartOffset()) {
         PsiElement prev = lastElementInRange.getPrevSibling();
         if (prev != null) {
-          rangeEnd = prev.getTextRange().getEndOffset();
+          int newEnd = prev.getTextRange().getEndOffset();
+          formatRange.setTextRange(new TextRange(rangeStart, newEnd));
         }
       }
-
-      result.add(new TextRange(rangeStart, rangeEnd));
     }
-
-    return result;
   }
 
-  private PsiElement reformatRangeImpl(final PsiElement element,
+  private PsiElement reformatRangeImpl(final @NotNull PsiElement element,
                                        final int startOffset,
                                        final int endOffset,
                                        boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
@@ -288,9 +283,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       return element;
     }
 
-    ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
+    ASTNode treeElement = element.getNode();
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), element.getLanguage());
-    final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
+    final PsiElement formatted = codeFormatter.processRange(treeElement, startOffset, endOffset).getPsi();
 
     return canChangeWhiteSpacesOnly ? formatted : postProcessElement(formatted);
   }
@@ -319,7 +314,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(containingFile);
     if (builder != null) {
       final FormattingModel model = CoreFormatterUtil.buildModel(builder, containingFile, getSettings(), FormattingMode.REFORMAT);
-      FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(), textRange, containingFile.getFileType());
+      FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(), containingFile, textRange);
     }
 
     adjustLineIndent(containingFile, textRange);
@@ -328,12 +323,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   @Override
   public int adjustLineIndent(@NotNull final PsiFile file, final int offset) throws IncorrectOperationException {
     DetectedIndentOptionsNotificationProvider.updateIndentNotification(file, false);
-    return PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(new Computable<Integer>() {
-      @Override
-      public Integer compute() {
-        return doAdjustLineIndentByOffset(file, offset);
-      }
-    });
+    return PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(
+      () -> doAdjustLineIndentByOffset(file, offset, FormattingMode.ADJUST_INDENT));
   }
 
   @Nullable
@@ -352,23 +343,20 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Override
-  public int adjustLineIndent(@NotNull final Document document, final int offset) {
-    return PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(new Computable<Integer>() {
-      @Override
-      public Integer compute() {
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-        documentManager.commitDocument(document);
+  public int adjustLineIndent(@NotNull final Document document, final int offset, FormattingMode mode) {
+    return PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(() -> {
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+      documentManager.commitDocument(document);
 
-        PsiFile file = documentManager.getPsiFile(document);
-        if (file == null) return offset;
+      PsiFile file = documentManager.getPsiFile(document);
+      if (file == null) return offset;
 
-        return doAdjustLineIndentByOffset(file, offset);
-      }
+      return doAdjustLineIndentByOffset(file, offset, mode);
     });
   }
 
-  private int doAdjustLineIndentByOffset(@NotNull PsiFile file, int offset) {
-    final Integer result = new CodeStyleManagerRunnable<Integer>(this, FormattingMode.ADJUST_INDENT) {
+  private int doAdjustLineIndentByOffset(@NotNull PsiFile file, int offset, FormattingMode mode) {
+    final Integer result = new CodeStyleManagerRunnable<Integer>(this, mode) {
       @Override
       protected Integer doPerform(int offset, TextRange range) {
         return FormatterEx.getInstanceEx().adjustLineIndent(myModel, mySettings, myIndentOptions, offset, mySignificantRange);
@@ -564,7 +552,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   private static Pair<PsiElement, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
     ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(file);
     if (!(astNode instanceof FileElement)) {
-      return new Pair<PsiElement, CharTable>(null, null);
+      return new Pair<>(null, null);
     }
     PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
     final CharTable charTable = ((FileElement)astNode).getCharTable();
@@ -573,11 +561,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     if( elementAt == null) {
-      return new Pair<PsiElement, CharTable>(null, charTable);
+      return new Pair<>(null, charTable);
     }
     ASTNode node = elementAt.getNode();
     if (node == null || node.getElementType() != TokenType.WHITE_SPACE) {
-      return new Pair<PsiElement, CharTable>(null, charTable);
+      return new Pair<>(null, charTable);
     }
     return Pair.create(elementAt, charTable);
   }
@@ -585,9 +573,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   @Override
   public Indent getIndent(String text, FileType fileType) {
     int indent = IndentHelperImpl.getIndent(myProject, fileType, text, true);
-    int indenLevel = indent / IndentHelperImpl.INDENT_FACTOR;
-    int spaceCount = indent - indenLevel * IndentHelperImpl.INDENT_FACTOR;
-    return new IndentImpl(getSettings(), indenLevel, spaceCount, fileType);
+    int indentLevel = indent / IndentHelperImpl.INDENT_FACTOR;
+    int spaceCount = indent - indentLevel * IndentHelperImpl.INDENT_FACTOR;
+    return new IndentImpl(getSettings(), indentLevel, spaceCount, fileType);
   }
 
   @Override
@@ -679,12 +667,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   @Override
   public void performActionWithFormatterDisabled(final Runnable r) {
-    performActionWithFormatterDisabled(new Computable<Object>() {
-      @Override
-      public Object compute() {
-        r.run();
-        return null;
-      }
+    performActionWithFormatterDisabled(() -> {
+      r.run();
+      return null;
     });
   }
 
@@ -692,17 +677,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   public <T extends Throwable> void performActionWithFormatterDisabled(final ThrowableRunnable<T> r) throws T {
     final Throwable[] throwable = new Throwable[1];
 
-    performActionWithFormatterDisabled(new Computable<Object>() {
-      @Override
-      public Object compute() {
-        try {
-          r.run();
-        }
-        catch (Throwable t) {
-          throwable[0] = t;
-        }
-        return null;
+    performActionWithFormatterDisabled(() -> {
+      try {
+        r.run();
       }
+      catch (Throwable t) {
+        throwable[0] = t;
+      }
+      return null;
     });
 
     if (throwable[0] != null) {
@@ -713,12 +695,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   @Override
   public <T> T performActionWithFormatterDisabled(final Computable<T> r) {
-    return ((FormatterImpl)FormatterEx.getInstance()).runWithFormattingDisabled(new Computable<T>() {
-      @Override
-      public T compute() {
-        final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
-        return component.disablePostprocessFormattingInside(r);
-      }
+    return ((FormatterImpl)FormatterEx.getInstance()).runWithFormattingDisabled(() -> {
+      final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
+      return component.disablePostprocessFormattingInside(r);
     });
   }
 
@@ -836,7 +815,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       myDocument.replaceString(lineToInsertStartOffset, caretLineOffset, myCaretIndentToRestore);
     }
 
-    private boolean rangeHasWhiteSpaceSymbolsOnly(CharSequence text, int lineStartOffset, int lineEndOffset) {
+    private static boolean rangeHasWhiteSpaceSymbolsOnly(CharSequence text, int lineStartOffset, int lineEndOffset) {
       for (int i = lineStartOffset; i < lineEndOffset; i++) {
         char c = text.charAt(i);
         if (c != ' ' && c != '\t' && c != '\n') {
@@ -877,9 +856,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
   }
 
-  private TextRange postProcessEnabledRanges(@NotNull final PsiFile file, @NotNull TextRange range, CodeStyleSettings settings) {
-    TextRange result = TextRange.create(range.getStartOffset(), range.getEndOffset());
-    List<TextRange> enabledRanges = myTagHandler.getEnabledRanges(file.getNode(), result);
+  private void postProcessEnabledRanges(@NotNull final PsiFile file, @NotNull TextRange range, CodeStyleSettings settings) {
+    List<TextRange> enabledRanges = myTagHandler.getEnabledRanges(file.getNode(), range);
     int delta = 0;
     for (TextRange enabledRange : enabledRanges) {
       enabledRange = enabledRange.shiftRight(delta);
@@ -888,7 +866,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
         delta += processedRange.getLength() - enabledRange.getLength();
       }
     }
-    result = result.grown(delta);
-    return result;
+  }
+
+  @Override
+  public FormattingMode getCurrentFormattingMode() {
+    return myCurrentFormattingMode.get();
+  }
+  
+  void setCurrentFormattingMode(@NotNull FormattingMode mode) {
+    myCurrentFormattingMode.set(mode);
   }
 }

@@ -99,7 +99,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       return PsiReference.EMPTY_ARRAY; // should not happen
     }
 
-    List<PsiReference> result = new ArrayList<PsiReference>();
+    List<PsiReference> result = new ArrayList<>();
 
     ConvertContext context = ConvertContextFactory.createConvertContext(domValue);
     final List<DomReferenceInjector> injectors = description.getReferenceInjectors();

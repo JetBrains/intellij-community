@@ -17,10 +17,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -46,6 +43,19 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @NotNull
   @Override
   public List<PsiExpression> getExpressionsAt(@NotNull PsiElement elementAt) {
-    return SyntaxTraverser.psiApi().parents(elementAt).filter(PsiExpression.class).toList();
+    return SyntaxTraverser.psiApi().parents(elementAt)
+      .filter(PsiExpression.class)
+      .filter(JavaTypeProvider::isLargestNonTrivialExpression)
+      .toList();
+  }
+
+  private static boolean isLargestNonTrivialExpression(@NotNull PsiExpression e) {
+    PsiElement p = e.getParent();
+    if (p instanceof PsiPostfixExpression) return false;
+    if (p instanceof PsiPrefixExpression) return false;
+    if (p instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)p).getMethodExpression() == e) {
+      return false;
+    }
+    return true;
   }
 }

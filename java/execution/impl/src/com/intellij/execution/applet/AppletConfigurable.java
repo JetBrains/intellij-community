@@ -119,7 +119,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myModuleSelector = new ConfigurationModuleSelector(project, getModuleComponent());
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(getModuleComponent(), true));
     myTablePlace.setLayout(new BorderLayout());
-    myParameters = new ListTableModel<AppletConfiguration.AppletParameter>(PARAMETER_COLUMNS);
+    myParameters = new ListTableModel<>(PARAMETER_COLUMNS);
     myTable = new TableView(myParameters);
     myTable.getEmptyText().setText(ExecutionBundle.message("no.parameters"));
     myTablePlace.add(
@@ -168,7 +168,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
 
   private void addParameter() {
     final ArrayList<AppletConfiguration.AppletParameter> newItems =
-      new ArrayList<AppletConfiguration.AppletParameter>(myParameters.getItems());
+      new ArrayList<>(myParameters.getItems());
     final AppletConfiguration.AppletParameter parameter = new AppletConfiguration.AppletParameter("newParameter", "");
     newItems.add(parameter);
     myParameters.setItems(newItems);
@@ -187,7 +187,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   private static List<AppletConfiguration.AppletParameter> cloneParameters(final List<AppletConfiguration.AppletParameter> items) {
-    final List<AppletConfiguration.AppletParameter> params = new ArrayList<AppletConfiguration.AppletParameter>();
+    final List<AppletConfiguration.AppletParameter> params = new ArrayList<>();
     for (AppletConfiguration.AppletParameter appletParameter : items) {
       params.add(new AppletConfiguration.AppletParameter(appletParameter.getName(), appletParameter.getValue()));
     }

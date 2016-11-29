@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -42,9 +43,7 @@ import java.util.List;
  * @author max
  */
 public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
-  private MakeVoidQuickFix myQuickFix;
-
-  public boolean IGNORE_BUILDER_PATTERN = false;
+  public boolean IGNORE_BUILDER_PATTERN;
 
   @Override
   @Nullable
@@ -66,11 +65,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
 
         final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);
         if (refMethod.isExternalOverride() && !isNative) return null;
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(psiMethod.getNavigationElement(),
-                                                                       InspectionsBundle
-                                                                         .message("inspection.unused.return.value.problem.descriptor"),
-                                                                       !isNative ? getFix(processor) : null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                       false)};
+        return new ProblemDescriptor[]{createProblemDescriptor(psiMethod, manager, processor, isNative)};
       }
     }
 
@@ -131,30 +126,41 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     return "UnusedReturnValue";
   }
 
-  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor) {
-    if (myQuickFix == null) {
-      myQuickFix = new MakeVoidQuickFix(processor);
-    }
-    return myQuickFix;
-  }
-
   @Override
   @Nullable
   public QuickFix getQuickFix(String hint) {
-    return getFix(null);
+    return new MakeVoidQuickFix(null);
+  }
+
+  @Nullable
+  @Override
+  public LocalInspectionTool getSharedLocalInspectionTool() {
+    return new UnusedReturnValueLocalInspection(this);
+  }
+
+
+  static ProblemDescriptor createProblemDescriptor(@NotNull PsiMethod psiMethod,
+                                                   @NotNull InspectionManager manager,
+                                                   @Nullable ProblemDescriptionsProcessor processor,
+                                                   boolean isNative) {
+    return manager.createProblemDescriptor(psiMethod.getNameIdentifier(),
+                                           InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
+                                           isNative ? null : new MakeVoidQuickFix(processor),
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                           false);
   }
 
   private static class MakeVoidQuickFix implements LocalQuickFix {
     private final ProblemDescriptionsProcessor myProcessor;
-    private static final Logger LOG = Logger.getInstance("#" + MakeVoidQuickFix.class.getName());
+    private static final Logger LOG = Logger.getInstance(MakeVoidQuickFix.class);
 
-    public MakeVoidQuickFix(final ProblemDescriptionsProcessor processor) {
+    public MakeVoidQuickFix(@Nullable final ProblemDescriptionsProcessor processor) {
       myProcessor = processor;
     }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix");
     }
 
@@ -163,7 +169,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
       PsiMethod psiMethod = null;
       if (myProcessor != null) {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
-        if (refElement.isValid() && refElement instanceof RefMethod) {
+        if (refElement instanceof RefMethod && refElement.isValid()) {
           RefMethod refMethod = (RefMethod)refElement;
           psiMethod = (PsiMethod) refMethod.getElement();
         }
@@ -175,9 +181,8 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
+    public boolean startInWriteAction() {
+      return false;
     }
 
     private static void makeMethodHierarchyVoid(Project project, @NotNull PsiMethod psiMethod) {
@@ -204,7 +209,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     private static void replaceReturnStatements(@NotNull final PsiMethod method) {
       final PsiCodeBlock body = method.getBody();
       if (body != null) {
-        final List<PsiReturnStatement> returnStatements = new ArrayList<PsiReturnStatement>();
+        final List<PsiReturnStatement> returnStatements = new ArrayList<>();
         body.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitReturnStatement(final PsiReturnStatement statement) {
@@ -224,13 +229,15 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
           try {
             final PsiExpression expression = returnStatement.getReturnValue();
             if (expression instanceof PsiLiteralExpression || expression instanceof PsiThisExpression) {    //avoid side effects
-              if (returnStatement == lastStatement) {
-                returnStatement.delete();
-              }
-              else {
-                returnStatement
-                  .replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createStatementFromText("return;", returnStatement));
-              }
+              WriteAction.run(() -> {
+                if (returnStatement == lastStatement) {
+                  returnStatement.delete();
+                }
+                else {
+                  returnStatement
+                    .replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createStatementFromText("return;", returnStatement));
+                }
+              });
             }
           }
           catch (IncorrectOperationException e) {

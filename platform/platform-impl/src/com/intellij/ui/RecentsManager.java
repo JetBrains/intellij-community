@@ -33,7 +33,7 @@ public class RecentsManager implements PersistentStateComponent<Element> {
   @NonNls private static final String RECENT_ELEMENT_NAME = "recent";
   @NonNls protected static final String NAME_ATTR = "name";
 
-  private final Map<String, LinkedList<String>> myMap = new THashMap<String, LinkedList<String>>();
+  private final Map<String, LinkedList<String>> myMap = new THashMap<>();
   private int myRecentsNumberToKeep = 5;
 
   @NotNull
@@ -49,7 +49,7 @@ public class RecentsManager implements PersistentStateComponent<Element> {
   public void registerRecentEntry(@NotNull String key, String recentEntry) {
     LinkedList<String> recents = myMap.get(key);
     if (recents == null) {
-      recents = new LinkedList<String>();
+      recents = new LinkedList<>();
       myMap.put(key, recents);
     }
 
@@ -72,7 +72,7 @@ public class RecentsManager implements PersistentStateComponent<Element> {
   public void loadState(Element element) {
     myMap.clear();
     for (Element keyElement : element.getChildren(KEY_ELEMENT_NAME)) {
-      LinkedList<String> recents = new LinkedList<String>();
+      LinkedList<String> recents = new LinkedList<>();
       for (Element aChildren : keyElement.getChildren(RECENT_ELEMENT_NAME)) {
         recents.addLast(aChildren.getAttributeValue(NAME_ATTR));
       }

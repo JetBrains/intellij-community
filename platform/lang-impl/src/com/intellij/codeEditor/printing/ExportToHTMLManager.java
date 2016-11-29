@@ -142,29 +142,26 @@ class ExportToHTMLManager {
       return true;
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!psiFile.isValid()) {
-          return;
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (!psiFile.isValid()) {
+        return;
+      }
+      TreeMap<Integer, PsiReference> refMap = null;
+      for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+        final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
+        if (map != null) {
+          refMap = new TreeMap<>();
+          refMap.putAll(map);
         }
-        TreeMap<Integer, PsiReference> refMap = null;
-        for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
-          final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
-          if (map != null) {
-            refMap = new TreeMap<Integer, PsiReference>();
-            refMap.putAll(map);
-          }
-        }
+      }
 
-        String dirName = constructOutputDirectory(psiFile, outputDirectoryName);
-        HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, dirName, exportToHTMLSettings.PRINT_LINE_NUMBERS);
-        try {
-          textPainter.paint(refMap, psiFile.getFileType());
-        }
-        catch (FileNotFoundException e) {
-          myLastException = e;
-        }
+      String dirName = constructOutputDirectory(psiFile, outputDirectoryName);
+      HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, dirName, exportToHTMLSettings.PRINT_LINE_NUMBERS);
+      try {
+        textPainter.paint(refMap, psiFile.getFileType());
+      }
+      catch (FileNotFoundException e) {
+        myLastException = e;
       }
     });
     return myLastException == null;
@@ -251,24 +248,21 @@ class ExportToHTMLManager {
     public void run() {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
-      final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
+      final ArrayList<PsiFile> filesList = new ArrayList<>();
       final boolean isRecursive = myExportToHTMLSettings.isIncludeSubdirectories();
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            addToPsiFileList(myPsiDirectory, filesList, isRecursive, myOutputDirectoryName);
-          }
-          catch (FileNotFoundException e) {
-            myLastException = e;
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        try {
+          addToPsiFileList(myPsiDirectory, filesList, isRecursive, myOutputDirectoryName);
+        }
+        catch (FileNotFoundException e) {
+          myLastException = e;
         }
       });
       if (myLastException != null) {
         return;
       }
-      HashMap<PsiFile, PsiFile> filesMap = new HashMap<PsiFile, PsiFile>();
+      HashMap<PsiFile, PsiFile> filesMap = new HashMap<>();
       for (PsiFile psiFile : filesList) {
         filesMap.put(psiFile, psiFile);
       }

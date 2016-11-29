@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import com.intellij.util.Function;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
 
 public class AsyncResult<T> extends ActionCallback {
   private static final Logger LOG = Logger.getInstance(AsyncResult.class);
@@ -65,23 +62,11 @@ public class AsyncResult<T> extends ActionCallback {
     return subResult;
   }
 
-  @SuppressWarnings("unused")
-  @NotNull
-  @Deprecated
-  /**
-   * @deprecated Don't use AsyncResult - use Promise instead.
-   */
-  public ActionCallback subCallback(@NotNull Consumer<T> doneHandler) {
-    ActionCallback subCallback = new ActionCallback();
-    doWhenDone(new SubCallbackDoneCallback<T>(subCallback, doneHandler)).notifyWhenRejected(subCallback);
-    return subCallback;
-  }
-
-  @NotNull
-  @Deprecated
   /**
    * @deprecated Use {@link #doWhenDone(com.intellij.util.Consumer)} (to remove in IDEA 16)
    */
+  @NotNull
+  @Deprecated
   public AsyncResult<T> doWhenDone(@SuppressWarnings("deprecation") @NotNull final Handler<T> handler) {
     doWhenDone(new Runnable() {
       @Override
@@ -147,28 +132,28 @@ public class AsyncResult<T> extends ActionCallback {
     return this;
   }
 
-  @Deprecated
   /**
    * @deprecated Use {@link com.intellij.util.Consumer} (to remove in IDEA 16)
    */
+  @Deprecated
   public interface Handler<T> {
     void run(T t);
   }
 
-  @Deprecated
   /**
    * @deprecated Don't use AsyncResult - use Promise instead.
    */
+  @Deprecated
   public static class Done<T> extends AsyncResult<T> {
     public Done(T value) {
       setDone(value);
     }
   }
 
-  @Deprecated
   /**
    * @deprecated Don't use AsyncResult - use Promise instead.
    */
+  @Deprecated
   public static class Rejected<T> extends AsyncResult<T> {
     public Rejected() {
       setRejected();
@@ -179,21 +164,21 @@ public class AsyncResult<T> extends ActionCallback {
     }
   }
 
-  @NotNull
-  @Deprecated
   /**
    * @deprecated Don't use AsyncResult - use Promise instead.
    */
+  @NotNull
+  @Deprecated
   public static <R> AsyncResult<R> rejected() {
     //noinspection unchecked,deprecation
     return new Rejected();
   }
 
-  @NotNull
-  @Deprecated
   /**
    * @deprecated Don't use AsyncResult - use Promise instead.
    */
+  @NotNull
+  @Deprecated
   public static <R> AsyncResult<R> rejected(@NotNull String errorMessage) {
     AsyncResult<R> result = new AsyncResult<R>();
     result.reject(errorMessage);
@@ -203,16 +188,6 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   public static <R> AsyncResult<R> done(@Nullable R result) {
     return new AsyncResult<R>().setDone(result);
-  }
-
-  @NotNull
-  @Deprecated
-  /**
-   * @deprecated Don't use AsyncResult - use Promise instead.
-   */
-  public static <R extends List> AsyncResult<R> doneList() {
-    //noinspection unchecked
-    return done((R)Collections.emptyList());
   }
 
   // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing
@@ -237,29 +212,6 @@ public class AsyncResult<T> extends ActionCallback {
         return;
       }
       subResult.setDone(v);
-    }
-  }
-
-  private static class SubCallbackDoneCallback<Result> implements Consumer<Result> {
-    private final ActionCallback subResult;
-    private final Consumer<Result> doneHandler;
-
-    public SubCallbackDoneCallback(ActionCallback subResult, Consumer<Result> doneHandler) {
-      this.subResult = subResult;
-      this.doneHandler = doneHandler;
-    }
-
-    @Override
-    public void consume(Result result) {
-      try {
-        doneHandler.consume(result);
-      }
-      catch (Throwable e) {
-        subResult.reject(e.getMessage());
-        LOG.error(e);
-        return;
-      }
-      subResult.setDone();
     }
   }
 }

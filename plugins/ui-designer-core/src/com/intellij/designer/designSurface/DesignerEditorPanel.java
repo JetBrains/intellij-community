@@ -129,10 +129,10 @@ public abstract class DesignerEditorPanel extends JPanel
 
   private PaletteItem myActivePaletteItem;
   private List<?> myExpandedComponents;
-  private final Map<String, Property> mySelectionPropertyMap = new HashMap<String, Property>();
+  private final Map<String, Property> mySelectionPropertyMap = new HashMap<>();
   private int[][] myExpandedState;
   private int[][] mySelectionState;
-  private final Map<String, int[][]> mySourceSelectionState = new FixedHashMap<String, int[][]>(16);
+  private final Map<String, int[][]> mySourceSelectionState = new FixedHashMap<>(16);
 
   private FixableMessageAction myWarnAction;
 
@@ -170,13 +170,10 @@ public abstract class DesignerEditorPanel extends JPanel
     createErrorCard();
     createProgressPanel();
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        DesignerEditorPanel designer = DesignerEditorPanel.this;
-        getDesignerWindowManager().bind(designer);
-        getPaletteWindowManager().bind(designer);
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      DesignerEditorPanel designer = this;
+      getDesignerWindowManager().bind(designer);
+      getPaletteWindowManager().bind(designer);
     });
   }
 
@@ -644,7 +641,7 @@ public abstract class DesignerEditorPanel extends JPanel
     DesignerToolWindowContent toolManager = getDesignerToolWindow();
 
     if (myExpandedState != null) {
-      List<RadComponent> expanded = new ArrayList<RadComponent>();
+      List<RadComponent> expanded = new ArrayList<>();
       for (int[] path : myExpandedState) {
         pathToComponent(expanded, myRootComponent, path, 0);
       }
@@ -653,7 +650,7 @@ public abstract class DesignerEditorPanel extends JPanel
       myExpandedState = null;
     }
 
-    List<RadComponent> selection = new ArrayList<RadComponent>();
+    List<RadComponent> selection = new ArrayList<>();
 
     int[][] selectionState = mySourceSelectionState.get(getEditorText());
     if (selectionState != null) {
@@ -981,32 +978,21 @@ public abstract class DesignerEditorPanel extends JPanel
     public boolean execute(final ThrowableRunnable<Exception> operation, String command, final boolean updateProperties) {
       myLastExecuteCommand = command;
       final Ref<Boolean> result = Ref.create(Boolean.TRUE);
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-        public void run() {
-          result.set(DesignerEditorPanel.this.execute(operation, updateProperties));
-        }
-      }, command, null);
+      CommandProcessor.getInstance().executeCommand(getProject(),
+                                                    () -> result.set(DesignerEditorPanel.this.execute(operation, updateProperties)), command, null);
       return result.get();
     }
 
     @Override
     public void executeWithReparse(final ThrowableRunnable<Exception> operation, String command) {
       myLastExecuteCommand = command;
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-        public void run() {
-          DesignerEditorPanel.this.executeWithReparse(operation);
-        }
-      }, command, null);
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> DesignerEditorPanel.this.executeWithReparse(operation), command, null);
     }
 
     @Override
     public void execute(final List<EditOperation> operations, String command) {
       myLastExecuteCommand = command;
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-        public void run() {
-          DesignerEditorPanel.this.execute(operations);
-        }
-      }, command, null);
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> DesignerEditorPanel.this.execute(operations), command, null);
     }
 
     @Override
@@ -1230,7 +1216,7 @@ public abstract class DesignerEditorPanel extends JPanel
     public String myMessage;
     public String myDisplayMessage;
 
-    public final List<FixableMessageInfo> myMessages = new ArrayList<FixableMessageInfo>();
+    public final List<FixableMessageInfo> myMessages = new ArrayList<>();
 
     public Throwable myThrowable;
 

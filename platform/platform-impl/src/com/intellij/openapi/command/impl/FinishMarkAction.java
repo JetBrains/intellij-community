@@ -71,12 +71,10 @@ public class FinishMarkAction extends BasicUndoableAction {
 
   public static void finish(final Project project, final Editor editor, @Nullable final StartMarkAction startAction) {
     if (startAction == null) return;
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        DocumentReference reference = DocumentReferenceManager.getInstance().create(editor.getDocument());
-        UndoManager.getInstance(project).undoableActionPerformed(new FinishMarkAction(reference, startAction));
-        StartMarkAction.markFinished(project);
-      }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      DocumentReference reference = DocumentReferenceManager.getInstance().create(editor.getDocument());
+      UndoManager.getInstance(project).undoableActionPerformed(new FinishMarkAction(reference, startAction));
+      StartMarkAction.markFinished(project);
     }, "finish", null);
   }
 }

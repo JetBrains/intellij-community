@@ -17,22 +17,21 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -73,9 +72,9 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     if (SystemInfo.isMac) {
       smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
     } else {
-      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UIUtil.getLabelFont().getSize() - 2, 10f));
+      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UISettings.getInstance().FONT_SIZE - JBUI.scale(3), JBUI.scaleFontSize(10)));
     }
-    myName.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 1.0f));
+    myName.setFont(UIUtil.getLabelFont().deriveFont(UISettings.getInstance().FONT_SIZE));
     myStatus.setFont(smallFont);
     myCategory.setFont(smallFont);
     myDownloads.setFont(smallFont);
@@ -99,11 +98,12 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (myPluginDescriptor != null) {
-      Color fg = UIUtil.getTableForeground(isSelected);
-      Color bg = UIUtil.getTableBackground(isSelected);
+      Couple<Color> colors = UIUtil.getCellColors(table, isSelected, row, column);
+      Color fg = colors.getFirst();
+      final Color background = colors.getSecond();
       Color grayedFg = isSelected ? fg : new JBColor(Gray._130, Gray._120);
 
-      myPanel.setBackground(bg);
+      myPanel.setBackground(background);
 
       myName.setForeground(fg);
       myCategory.setForeground(grayedFg);
@@ -232,12 +232,9 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
           sb.append(IdeBundle.message("plugin.manager.incompatible.ultimate.tooltip"));
         }
         else {
-          String deps = StringUtil.join(required, new Function<PluginId, String>() {
-            @Override
-            public String fun(PluginId id) {
-              IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-              return plugin != null ? plugin.getName() : id.getIdString();
-            }
+          String deps = StringUtil.join(required, id -> {
+            IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+            return plugin != null ? plugin.getName() : id.getIdString();
           }, ", ");
           sb.append(IdeBundle.message("plugin.manager.incompatible.deps.tooltip", required.size(), deps));
         }

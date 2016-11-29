@@ -15,152 +15,96 @@
  */
 package com.jetbrains.edu.coursecreator;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.jetbrains.edu.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.EduDocumentListener;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.edu.learning.StudySerializationUtils.*;
+import static com.jetbrains.edu.learning.StudySerializationUtils.Xml.*;
+
+/**
+ * @deprecated since version 3
+ */
 @State(name = "CCProjectService", storages = @Storage("course_service.xml"))
-public class CCProjectService implements PersistentStateComponent<CCProjectService> {
+public class CCProjectService implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(CCProjectService.class);
   private Course myCourse;
+  @Transient private final Project myProject;
 
-  private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<Document, EduDocumentListener>();
-
-  @Nullable
-  public TaskFile getTaskFile(@NotNull final VirtualFile virtualFile) {
-    VirtualFile taskDir = virtualFile.getParent();
-    if (taskDir == null) {
-      return null;
-    }
-    String taskDirName = taskDir.getName();
-    if (!taskDirName.contains(EduNames.TASK)) {
-      return null;
-    }
-    VirtualFile lessonDir = taskDir.getParent();
-    if (lessonDir == null) {
-      return null;
-    }
-    String lessonDirName = lessonDir.getName();
-    if (!lessonDirName.contains(EduNames.LESSON)) {
-      return null;
-    }
-    Lesson lesson = myCourse.getLesson(lessonDirName);
-    if (lesson == null) {
-      return null;
-    }
-    Task task = lesson.getTask(taskDir.getName());
-    if (task == null) {
-      return null;
-    }
-    return task.getTaskFile(virtualFile.getName());
+  public CCProjectService() {
+    this(null);
   }
 
-  public void drawAnswerPlaceholders(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor) {
-    TaskFile taskFile = getTaskFile(virtualFile);
-    if (taskFile == null) {
-      return;
-    }
-    List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
-    for (AnswerPlaceholder answerPlaceholder : answerPlaceholders) {
-      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, false, JBColor.BLUE);
-    }
-  }
-
-  public static void addDocumentListener(Document document, EduDocumentListener listener) {
-    myDocumentListeners.put(document, listener);
-  }
-
-  public static EduDocumentListener getListener(Document document) {
-    return myDocumentListeners.get(document);
-  }
-
-  public static void removeListener(Document document) {
-    myDocumentListeners.remove(document);
-  }
-
-  @Nullable
-  public Task getTask(VirtualFile file) {
-    if (myCourse == null || file == null) {
-      return null;
-    }
-    VirtualFile taskDir = file.getParent();
-    if (taskDir != null) {
-      String taskDirName = taskDir.getName();
-      if (taskDirName.contains(EduNames.TASK)) {
-        VirtualFile lessonDir = taskDir.getParent();
-        if (lessonDir != null) {
-          String lessonDirName = lessonDir.getName();
-          int lessonIndex = EduUtils.getIndex(lessonDirName, EduNames.LESSON);
-          List<Lesson> lessons = myCourse.getLessons();
-          if (!EduUtils.indexIsValid(lessonIndex, lessons)) {
-            return null;
-          }
-          Lesson lesson = lessons.get(lessonIndex);
-          int taskIndex = EduUtils.getIndex(taskDirName, EduNames.TASK);
-          List<Task> tasks = lesson.getTaskList();
-          if (!EduUtils.indexIsValid(taskIndex, tasks)) {
-            return null;
-          }
-          return tasks.get(taskIndex);
-        }
-      }
-    }
-    return null;
-  }
-
-  public boolean isTaskFile(VirtualFile file) {
-    Task task = getTask(file);
-    return task != null && task.isTaskFile(file.getName());
-  }
-
-  public static boolean setCCActionAvailable(@NotNull AnActionEvent e) {
-    final Project project = e.getProject();
-    if (project == null) {
-      return false;
-    }
-    if (getInstance(project).getCourse() == null) {
-      EduUtils.enableAction(e, false);
-      return false;
-    }
-    EduUtils.enableAction(e, true);
-    return true;
+  public CCProjectService(Project project) {
+    myProject = project;
   }
 
   public Course getCourse() {
     return myCourse;
   }
 
-  public void setCourse(@NotNull final Course course) {
+  public void setCourse(Course course) {
     myCourse = course;
   }
 
   @Override
-  public CCProjectService getState() {
-    return this;
+  public Element getState() {
+    if (myCourse == null) {
+      return null;
+    }
+    return XmlSerializer.serialize(this);
   }
 
   @Override
-  public void loadState(CCProjectService state) {
-    XmlSerializerUtil.copyBean(state, this);
-    myCourse.initCourse(true);
+  public void loadState(Element state) {
+    try {
+      Element courseElement = getChildWithName(state, COURSE).getChild(COURSE_TITLED);
+      for (Element lesson : getChildList(courseElement, LESSONS, true)) {
+        int lessonIndex = getAsInt(lesson, INDEX);
+        for (Element task : getChildList(lesson, TASK_LIST, true)) {
+          int taskIndex = getAsInt(task, INDEX);
+          Map<String, Element> taskFiles = getChildMap(task, TASK_FILES, true);
+          for (Map.Entry<String, Element> entry : taskFiles.entrySet()) {
+            Element taskFileElement = entry.getValue();
+            String name = entry.getKey();
+            String answerName = FileUtil.getNameWithoutExtension(name) + CCUtils.ANSWER_EXTENSION_DOTTED + FileUtilRt.getExtension(name);
+            Document document = StudyUtils.getDocument(myProject.getBasePath(), lessonIndex, taskIndex, answerName);
+            if (document == null) {
+              document = StudyUtils.getDocument(myProject.getBasePath(), lessonIndex, taskIndex, name);
+              if (document == null) {
+                continue;
+              }
+            }
+            for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS, true)) {
+              Element lineElement = getChildWithName(placeholder, LINE, true);
+              int line = lineElement != null ? Integer.valueOf(lineElement.getAttributeValue(VALUE)) : 0;
+              Element startElement = getChildWithName(placeholder, START, true);
+              int start = startElement != null ? Integer.valueOf(startElement.getAttributeValue(VALUE)) : 0;
+              int offset = document.getLineStartOffset(line) + start;
+              addChildWithName(placeholder, OFFSET, offset);
+              addChildWithName(placeholder, "useLength", "false");
+            }
+          }
+        }
+      }
+      XmlSerializer.deserializeInto(this, state);
+    } catch (StudyUnrecognizedFormatException e) {
+      LOG.error(e);
+    }
   }
 
   public static CCProjectService getInstance(@NotNull Project project) {

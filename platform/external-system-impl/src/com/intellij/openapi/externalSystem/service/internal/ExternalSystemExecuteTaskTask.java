@@ -25,10 +25,11 @@ import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,13 +41,6 @@ import java.util.List;
  * @since 3/15/13 10:02 PM
  */
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
-
-  @NotNull private static final Function<ExternalTaskPojo, String> MAPPER = new Function<ExternalTaskPojo, String>() {
-    @Override
-    public String fun(ExternalTaskPojo task) {
-      return task.getName();
-    }
-  };
 
   @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
   @Nullable private final String myVmOptions;
@@ -117,9 +111,14 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(getIdeProject(),
                                                                                           getExternalProjectPath(),
                                                                                           getExternalSystemId());
+    KeyFMap keyFMap = getUserMap();
+    for (Key key : keyFMap.getKeys()) {
+      settings.putUserData(key, keyFMap.get(key));
+    }
+    
     RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
-    List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, MAPPER);
+    List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, ExternalTaskPojo::getName);
 
     final List<String> vmOptions = parseCmdParameters(myVmOptions);
     final List<String> scriptParametersList = parseCmdParameters(myScriptParameters);

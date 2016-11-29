@@ -50,11 +50,11 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
   private static final Logger LOG = Logger.getInstance(DiffMarkup.class);
   private static final int LAYER = HighlighterLayer.SELECTION - 1;
 
-  private final ArrayList<RangeHighlighter> myExtraHighLighters = new ArrayList<RangeHighlighter>();
-  private final ArrayList<RangeHighlighter> myHighLighters = new ArrayList<RangeHighlighter>();
-  private final HashSet<RangeHighlighter> myActionHighlighters = new HashSet<RangeHighlighter>();
+  private final ArrayList<RangeHighlighter> myExtraHighLighters = new ArrayList<>();
+  private final ArrayList<RangeHighlighter> myHighLighters = new ArrayList<>();
+  private final HashSet<RangeHighlighter> myActionHighlighters = new HashSet<>();
   @Nullable private final Project myProject;
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private final List<Disposable> myDisposables = new ArrayList<>();
   private boolean myDisposed = false;
 
   protected DiffMarkup(@Nullable Project project, @NotNull Disposable parentDisposable) {
@@ -129,21 +129,6 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     if (marker != null) {
       saveHighlighter(marker);
     }
-  }
-
-  void setSeparatorMarker(int line, Consumer<Integer> consumer) {
-    EditorEx editor = getEditor();
-    MarkupModel markupModel = getMarkupModel();
-    if (editor == null || markupModel == null) {
-      return;
-    }
-    RangeHighlighter marker = markupModel.addLineHighlighter(line, LAYER, null);
-    marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
-    final FragmentBoundRenderer renderer = new FragmentBoundRenderer(editor.getLineHeight(), editor, consumer);
-    marker.setLineSeparatorColor(renderer.getColor());
-    marker.setLineSeparatorRenderer(renderer);
-    marker.setLineMarkerRenderer(renderer);
-    myExtraHighLighters.add(marker);
   }
 
   @Nullable

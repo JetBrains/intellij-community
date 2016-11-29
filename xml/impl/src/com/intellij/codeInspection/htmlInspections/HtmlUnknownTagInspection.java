@@ -71,23 +71,13 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     final JPanel internalPanel = new JPanel(new BorderLayout());
     result.add(internalPanel, BorderLayout.NORTH);
 
-    final Ref<FieldPanel> panelRef = new Ref<FieldPanel>();
+    final Ref<FieldPanel> panelRef = new Ref<>();
     final FieldPanel additionalAttributesPanel = new FieldPanel(null, null, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        Messages.showTextAreaDialog(panelRef.get().getTextField(), StringUtil.wordsToBeginFromUpperCase(inspection.getPanelTitle()), 
+        Messages.showTextAreaDialog(panelRef.get().getTextField(), StringUtil.wordsToBeginFromUpperCase(inspection.getPanelTitle()),
                                     inspection.getClass().getSimpleName(),
-                                    new Function<String, List<String>>() {
-                                      @Override
-                                      public List<String> fun(String s) {
-                                        return reparseProperties(s);
-                                      }
-                                    }, new Function<List<String>, String>() {
-            @Override
-            public String fun(List<String> strings) {
-              return StringUtil.join(strings, ",");
-            }
-          }
+                                    s -> reparseProperties(s), strings -> StringUtil.join(strings, ",")
         );
       }
     }, null);

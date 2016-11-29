@@ -25,10 +25,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,9 +51,13 @@ public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
     int prevCharOffset = CharArrayUtil.shiftBackward(text, caretOffset - 1, " \t");
     int nextCharOffset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
     
-    if (!isValidOffset(prevCharOffset, text) || !isValidOffset(nextCharOffset, text) || 
-        !isBracePair(text.charAt(prevCharOffset), text.charAt(nextCharOffset)) ||
-        file.findElementAt(prevCharOffset) == file.findElementAt(nextCharOffset)) {
+    if (!isValidOffset(prevCharOffset, text) || !isValidOffset(nextCharOffset, text) ||
+        !isBracePair(text.charAt(prevCharOffset), text.charAt(nextCharOffset))) {
+      return Result.Continue;
+    }
+
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+    if (file.findElementAt(prevCharOffset) == file.findElementAt(nextCharOffset)) {
       return Result.Continue;
     }
 
@@ -61,7 +67,7 @@ public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
       CodeDocumentationUtil.tryParseCommentContext(file, text, caretOffset, start);
 
     // special case: enter inside "()" or "{}"
-    String indentInsideJavadoc = commentContext.docAsterisk
+    String indentInsideJavadoc = isInComment(caretOffset, file) && commentContext.docAsterisk
                                  ? CodeDocumentationUtil.getIndentInsideJavadoc(document, caretOffset)
                                  : null;
 
@@ -80,6 +86,10 @@ public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
       LOG.error(e);
     }
     return indentInsideJavadoc == null ? Result.Continue : Result.DefaultForceIndent;
+  }
+
+  private static boolean isInComment(int offset, PsiFile file) {
+    return PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiComment.class)!=null;
   }
 
   private static boolean isValidOffset(int offset, CharSequence text) {

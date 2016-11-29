@@ -371,21 +371,18 @@ public class GdkMethodUtil {
   private static Trinity<PsiClassType, GrReferenceExpression, PsiClass> getMixinTypes(final GrStatement statement) {
     if (!(statement instanceof GrMethodCall)) return null;
 
-    return CachedValuesManager.getCachedValue(statement, new CachedValueProvider<Trinity<PsiClassType, GrReferenceExpression, PsiClass>>() {
-      @Nullable
-      @Override
-      public Result<Trinity<PsiClassType, GrReferenceExpression, PsiClass>> compute() {
-        GrMethodCall call = (GrMethodCall)statement;
+    return CachedValuesManager.getCachedValue(statement, () -> {
+      GrMethodCall call = (GrMethodCall)statement;
 
-        Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(call);
-        if (original == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+      Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(call);
+      if (original == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
-        PsiClass mix = getTypeToMix(call);
-        if (mix == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+      PsiClass mix = getTypeToMix(call);
+      if (mix == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
-        return Result.create(new Trinity<PsiClassType, GrReferenceExpression, PsiClass>(original.first, original.second, mix),
-                             PsiModificationTracker.MODIFICATION_COUNT);
-      }
+      return CachedValueProvider.Result
+        .create(new Trinity<>(original.first, original.second, mix),
+                PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -529,31 +526,27 @@ public class GdkMethodUtil {
 
       @Nullable
       private PsiClassType inferCategoryType(final PsiClass aClass) {
-        return RecursionManager.doPreventingRecursion(aClass, true, new NullableComputable<PsiClassType>() {
-          @Nullable
-          @Override
-          public PsiClassType compute() {
-            final PsiModifierList modifierList = aClass.getModifierList();
-            if (modifierList == null) return null;
+        return RecursionManager.doPreventingRecursion(aClass, true, (NullableComputable<PsiClassType>)() -> {
+          final PsiModifierList modifierList = aClass.getModifierList();
+          if (modifierList == null) return null;
 
-            final PsiAnnotation annotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY);
-            if (annotation == null) return null;
+          final PsiAnnotation annotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY);
+          if (annotation == null) return null;
 
-            PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
-            if (!(value instanceof GrReferenceExpression)) return null;
+          PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+          if (!(value instanceof GrReferenceExpression)) return null;
 
-            if ("class".equals(((GrReferenceExpression)value).getReferenceName())) value = ((GrReferenceExpression)value).getQualifier();
-            if (!(value instanceof GrReferenceExpression)) return null;
+          if ("class".equals(((GrReferenceExpression)value).getReferenceName())) value = ((GrReferenceExpression)value).getQualifier();
+          if (!(value instanceof GrReferenceExpression)) return null;
 
-            final PsiElement resolved = ((GrReferenceExpression)value).resolve();
-            if (!(resolved instanceof PsiClass)) return null;
+          final PsiElement resolved = ((GrReferenceExpression)value).resolve();
+          if (!(resolved instanceof PsiClass)) return null;
 
-            String className = ((PsiClass)resolved).getQualifiedName();
-            if (className == null) className = ((PsiClass)resolved).getName();
-            if (className == null) return null;
+          String className = ((PsiClass)resolved).getQualifiedName();
+          if (className == null) className = ((PsiClass)resolved).getName();
+          if (className == null) return null;
 
-            return JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeByFQClassName(className, resolved.getResolveScope());
-          }
+          return JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeByFQClassName(className, resolved.getResolveScope());
         });
       }
     });

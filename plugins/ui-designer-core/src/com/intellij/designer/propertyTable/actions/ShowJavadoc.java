@@ -96,28 +96,23 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
       callback = documentationManager.queueFetchDocInfo(javadocElement, component);
     }
 
-    callback.doWhenProcessed(new Runnable() {
-      public void run() {
-        JBPopup hint =
-          JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-            .setProject(project)
-            .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
-            .setResizable(true)
-            .setMovable(true)
-            .setRequestFocus(true)
-            .setTitle(DesignerBundle.message("designer.properties.javadoc.title", property.getName()))
-            .setCancelCallback(new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                Disposer.dispose(component);
-                return Boolean.TRUE;
-              }
-            })
-            .createPopup();
-        component.setHint(hint);
-        Disposer.register(hint, component);
-        hint.show(new RelativePoint(myTable.getParent(), new Point(0, 0)));
-      }
+    callback.doWhenProcessed(() -> {
+      JBPopup hint =
+        JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+          .setProject(project)
+          .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+          .setResizable(true)
+          .setMovable(true)
+          .setRequestFocus(true)
+          .setTitle(DesignerBundle.message("designer.properties.javadoc.title", property.getName()))
+          .setCancelCallback(() -> {
+            Disposer.dispose(component);
+            return Boolean.TRUE;
+          })
+          .createPopup();
+      component.setHint(hint);
+      Disposer.register(hint, component);
+      hint.show(new RelativePoint(myTable.getParent(), new Point(0, 0)));
     });
 
     if (javadocElement == null) {

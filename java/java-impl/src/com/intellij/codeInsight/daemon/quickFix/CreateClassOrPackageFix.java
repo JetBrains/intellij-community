@@ -134,12 +134,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
         protected void run(@NotNull Result result) throws Throwable {
           final PsiDirectory directory = chooseDirectory(project, file);
           if (directory == null) return;
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              doCreate(directory, startElement);
-            }
-          });
+          ApplicationManager.getApplication().runWriteAction(() -> doCreate(directory, startElement));
         }
       }.execute();
     }
@@ -180,7 +175,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
       return DirectoryChooserUtil
           .chooseDirectory(myWritableDirectoryList.toArray(new PsiDirectory[myWritableDirectoryList.size()]),
                            preferredDirectory, project,
-                           new HashMap<PsiDirectory, String>());
+                           new HashMap<>());
     }
     return preferredDirectory;
   }
@@ -240,7 +235,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     if (LOG.isDebugEnabled()) {
       LOG.debug("Getting writable directory list for package '" + (context == null ? null : context.getQualifiedName()) + "', scope=" + scope);
     }
-    final List<PsiDirectory> writableDirectoryList = new ArrayList<PsiDirectory>();
+    final List<PsiDirectory> writableDirectoryList = new ArrayList<>();
     if (context != null) {
       for (PsiDirectory directory : context.getDirectories()) {
         if (LOG.isDebugEnabled()) {

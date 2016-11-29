@@ -15,7 +15,7 @@
  */
 package com.intellij.util.indexing.containers;
 
-import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.indexing.IntPredicate;
 
 /**
 * Created by Maxim.Mossienko on 5/27/2014.
@@ -24,8 +24,8 @@ interface RandomAccessIntContainer {
   Object clone();
   boolean add(int value);
   boolean remove(int value);
-  ValueContainer.IntIterator intIterator();
-  ValueContainer.IntPredicate intPredicate();
+  IntIdsIterator intIterator();
+  IntPredicate intPredicate();
   void compact();
   int size();
 

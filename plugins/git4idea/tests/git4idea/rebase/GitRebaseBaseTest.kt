@@ -16,6 +16,7 @@
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.notification.Notification
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcsHelper
@@ -41,7 +42,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   override fun createRepository(rootDir: String) = GitTestUtil.createRepository(myProject, rootDir, false)
 
-  override fun getDebugLogCategories() = listOf("#git4idea.rebase")
+  override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#git4idea.rebase")
 
   protected fun GitRepository.`diverge feature and master`() {
     build(this) {
@@ -128,6 +129,10 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected fun `do nothing on merge`() {
     myVcsHelper.onMerge{}
+  }
+
+  protected fun assertSuccessfulRebaseNotification(message: String) : Notification {
+    return assertSuccessfulNotification("Rebase Successful", message)
   }
 
   protected fun GitRepository.`assert feature rebased on master`() {

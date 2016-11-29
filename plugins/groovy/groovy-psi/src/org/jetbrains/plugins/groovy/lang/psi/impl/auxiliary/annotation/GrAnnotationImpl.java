@@ -18,13 +18,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,14 +51,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
  * @date: 04.04.2007
  */
 public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implements GrAnnotation, StubBasedPsiElement<GrAnnotationStub> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl");
 
-  private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR = new PairFunction<Project, String, PsiAnnotation>() {
-    @Override
-    public PsiAnnotation fun(Project project, String text) {
-      return GroovyPsiElementFactory.getInstance(project).createAnnotationFromText(text);
-    }
-  };
+  private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR =
+    (project, text) -> GroovyPsiElementFactory.getInstance(project).createAnnotationFromText(text);
 
   public GrAnnotationImpl(@NotNull ASTNode node) {
     super(node);
@@ -68,11 +61,6 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
 
   public GrAnnotationImpl(GrAnnotationStub stub) {
     super(stub, GroovyElementTypes.ANNOTATION);
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
   }
 
   @Override
@@ -87,7 +75,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   @Override
   @NotNull
   public GrAnnotationArgumentList getParameterList() {
-    return findNotNullChildByClass(GrAnnotationArgumentList.class);
+    return getRequiredStubOrPsiChild(GroovyElementTypes.ANNOTATION_ARGUMENTS);
   }
 
   @Override
@@ -108,7 +96,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   @Override
   @Nullable
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
-    final GroovyResolveResult resolveResult = resolveWithStub();
+    final GroovyResolveResult resolveResult = getClassReference().advancedResolve();
 
     final PsiElement resolved = resolveResult.getElement();
     if (!(resolved instanceof PsiClass)) return null;
@@ -116,43 +104,21 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     return new LightClassReference(getManager(), getClassReference().getText(), (PsiClass)resolved, resolveResult.getSubstitutor());
   }
 
-  @NotNull
-  private GroovyResolveResult resolveWithStub() {
-    final GrAnnotationStub stub = getStub();
-    final GrCodeReferenceElement reference = stub != null ? stub.getPsiElement().getClassReference() : getClassReference();
-    return reference.advancedResolve();
-  }
-
   @Override
   @Nullable
   public PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {
-    final GrAnnotationStub stub = getStub();
-    if (stub != null) {
-      final GrAnnotation stubbedPsi = stub.getPsiElement();
-      final PsiAnnotationMemberValue value = PsiImplUtil.findAttributeValue(stubbedPsi, attributeName);
-      if (value == null || !PsiTreeUtil.isAncestor(stubbedPsi, value, true)) {         // if value is a default value we can use it
-        return value;
-      }
-    }
     return PsiImplUtil.findAttributeValue(this, attributeName);
   }
 
   @Override
   @Nullable
   public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
-    final GrAnnotationStub stub = getStub();
-    if (stub != null) {
-      final GrAnnotation stubbedPsi = stub.getPsiElement();
-      final PsiAnnotationMemberValue value = PsiImplUtil.findDeclaredAttributeValue(stubbedPsi, attributeName);
-      if (value == null) {
-        return null;
-      }
-    }
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
   @Override
   public <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@Nullable @NonNls String attributeName, T value) {
+    //noinspection unchecked
     return (T)PsiImplUtil.setDeclaredAttributeValue(this, attributeName, value, ANNOTATION_CREATOR);
   }
 

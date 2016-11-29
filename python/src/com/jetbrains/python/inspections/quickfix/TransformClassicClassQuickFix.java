@@ -36,13 +36,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TransformClassicClassQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.classic.class.transform");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.classic.class.transform");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

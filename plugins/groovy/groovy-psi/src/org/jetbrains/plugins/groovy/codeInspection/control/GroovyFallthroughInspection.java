@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2007-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,13 +44,13 @@ public class GroovyFallthroughInspection extends BaseInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Fall-through in switch statement";
+    return "Fallthrough in switch statement";
   }
 
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Fall-through in switch statement #loc";
+    return "Fallthrough in switch statement #loc";
 
   }
 
@@ -69,7 +69,7 @@ public class GroovyFallthroughInspection extends BaseInspection {
     private static final Pattern commentPattern = Pattern.compile("(?i)falls?\\s*thro?u");
 
     @Override
-    public void visitSwitchStatement(GrSwitchStatement switchStatement) {
+    public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
       final GrCaseSection[] caseSections = switchStatement.getCaseSections();
       for (int i = 1; i < caseSections.length; i++) {

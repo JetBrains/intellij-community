@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
@@ -70,16 +69,16 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   private AnalysisScope myCurrentScope;
   @NotNull
   private final Project myProject;
-  private final List<JobDescriptor> myJobDescriptors = new ArrayList<JobDescriptor>();
+  private final List<JobDescriptor> myJobDescriptors = new ArrayList<>();
 
   private final StdJobDescriptors myStdJobDescriptors = new StdJobDescriptors();
   protected ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
 
-  private InspectionProfile myExternalProfile;
+  private InspectionProfileImpl myExternalProfile;
 
-  protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<Key, GlobalInspectionContextExtension>();
+  protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<>();
 
-  protected final Map<String, Tools> myTools = new THashMap<String, Tools>();
+  protected final Map<String, Tools> myTools = new THashMap<>();
 
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
 
@@ -108,24 +107,28 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return (T)myExtensions.get(key);
   }
 
-  public InspectionProfile getCurrentProfile() {
-    if (myExternalProfile != null) return myExternalProfile;
-    InspectionManagerBase managerEx = (InspectionManagerBase)InspectionManager.getInstance(myProject);
-    String currentProfile = managerEx.getCurrentProfile();
-    final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-    Profile profile = inspectionProfileManager.getProfile(currentProfile, false);
+  public InspectionProfileImpl getCurrentProfile() {
+    if (myExternalProfile != null) {
+      return myExternalProfile;
+    }
+
+    String currentProfile = ((InspectionManagerBase)InspectionManager.getInstance(myProject)).getCurrentProfile();
+    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(myProject);
+    InspectionProfileImpl profile = profileManager.getProfile(currentProfile, false);
     if (profile == null) {
       profile = InspectionProfileManager.getInstance().getProfile(currentProfile);
-      if (profile != null) return (InspectionProfile)profile;
+      if (profile != null) {
+        return profile;
+      }
 
-      final String[] availableProfileNames = inspectionProfileManager.getAvailableProfileNames();
+      final String[] availableProfileNames = profileManager.getAvailableProfileNames();
       if (availableProfileNames.length == 0) {
         //can't be
         return null;
       }
-      profile = inspectionProfileManager.getProfile(availableProfileNames[0]);
+      profile = profileManager.getProfile(availableProfileNames[0], true);
     }
-    return (InspectionProfile)profile;
+    return profile;
   }
 
   @Override
@@ -188,13 +191,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
     cleanup();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myCurrentScope = scope;
-        launchInspections(scope);
-      }
-    }, ApplicationManager.getApplication().getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myCurrentScope = scope;
+      launchInspections(scope);
+    }, myProject.getDisposed());
   }
 
 
@@ -202,18 +202,14 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   @NotNull
   public RefManager getRefManager() {
     if (myRefManager == null) {
-      myRefManager = ApplicationManager.getApplication().runReadAction(new Computable<RefManagerImpl>() {
-        @Override
-        public RefManagerImpl compute() {
-          return new RefManagerImpl(myProject, myCurrentScope, GlobalInspectionContextBase.this);
-        }
-      });
+      myRefManager = ApplicationManager.getApplication().runReadAction(
+        (Computable<RefManagerImpl>)() -> new RefManagerImpl(myProject, myCurrentScope, this));
     }
     return myRefManager;
   }
 
   public boolean isToCheckMember(@NotNull RefElement owner, @NotNull InspectionProfileEntry tool) {
-    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool) && !((RefElementImpl)owner).isSuppressed(tool.getShortName());
+    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool) && !((RefElementImpl)owner).isSuppressed(tool.getShortName(), tool.getAlternativeID());
   }
 
   public boolean isToCheckFile(PsiFile file, @NotNull InspectionProfileEntry tool) {
@@ -281,12 +277,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       getStdJobDescriptors().LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
       getStdJobDescriptors().FIND_EXTERNAL_USAGES.setTotalAmount(0);
       //to override current progress in order to hide useless messages/%
-      ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-        @Override
-        public void run() {
-          runTools(scope, runGlobalToolsOnly, isOfflineInspections);
-        }
-      }, ProgressWrapper.wrap(myProgressIndicator));
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> runTools(scope, runGlobalToolsOnly, isOfflineInspections), ProgressWrapper.wrap(myProgressIndicator));
     }
     catch (ProcessCanceledException e) {
       cleanup();
@@ -336,9 +327,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   protected List<Tools> getUsedTools() {
-    InspectionProfileImpl profile = new InspectionProfileImpl((InspectionProfileImpl)getCurrentProfile());
+    InspectionProfileImpl profile = getCurrentProfile();
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
-    Set<InspectionToolWrapper> dependentTools = new LinkedHashSet<InspectionToolWrapper>();
+    Set<InspectionToolWrapper> dependentTools = new LinkedHashSet<>();
     for (Tools tool : tools) {
       profile.collectDependentInspections(tool.getTool(), dependentTools, getProject());
     }
@@ -346,14 +337,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     if (dependentTools.isEmpty()) {
       return tools;
     }
-    Set<Tools> set = new THashSet<Tools>(tools, TOOLS_HASHING_STRATEGY);
-    set.addAll(ContainerUtil.map(dependentTools, new Function<InspectionToolWrapper, ToolsImpl>() {
-      @Override
-      public ToolsImpl fun(InspectionToolWrapper toolWrapper) {
-        return new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true);
-      }
-    }));
-    return new ArrayList<Tools>(set);
+    Set<Tools> set = new THashSet<>(tools, TOOLS_HASHING_STRATEGY);
+    set.addAll(ContainerUtil.map(dependentTools, toolWrapper -> new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true)));
+    return new ArrayList<>(set);
   }
 
   private static void classifyTool(@NotNull List<Tools> outGlobalTools,
@@ -392,8 +378,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
-  public void codeCleanup(@NotNull Project project,
-                          @NotNull AnalysisScope scope,
+  public void codeCleanup(@NotNull AnalysisScope scope,
                           @NotNull InspectionProfile profile,
                           @Nullable String commandName,
                           @Nullable Runnable postRunnable,
@@ -401,35 +386,38 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   public static void codeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
     GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    globalContext.codeCleanup(project, scope, profile, null, runnable, false);
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    globalContext.codeCleanup(scope, profile, null, runnable, false);
   }
 
   public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, @NotNull PsiElement... scope) {
-    final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<SmartPsiElementPointer<PsiElement>>();
+    final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<>();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     for (PsiElement element : scope) {
       elements.add(manager.createSmartPsiElementPointer(element));
     }
 
-    Runnable cleanupRunnable = new Runnable() {
-      @Override
-      public void run() {
-        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
-        for (SmartPsiElementPointer<PsiElement> element : elements) {
-          PsiElement psiElement = element.getElement();
-          if (psiElement != null && psiElement.isPhysical()) {
-            psiElements.add(psiElement);
-          }
+    cleanupElements(project, runnable, elements);
+  }
+
+  public static void cleanupElements(@NotNull final Project project,
+                                     @Nullable final Runnable runnable,
+                                     final List<SmartPsiElementPointer<PsiElement>> elements) {
+    Runnable cleanupRunnable = () -> {
+      final List<PsiElement> psiElements = new ArrayList<>();
+      for (SmartPsiElementPointer<PsiElement> element : elements) {
+        PsiElement psiElement = element.getElement();
+        if (psiElement != null && psiElement.isPhysical()) {
+          psiElements.add(psiElement);
         }
-        if (psiElements.isEmpty()) {
-          return;
-        }
-        GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
-        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-        AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
-        globalContext.codeCleanup(project, analysisScope, profile, null, runnable, true);
       }
+      if (psiElements.isEmpty()) {
+        return;
+      }
+      GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+      AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
+      globalContext.codeCleanup(analysisScope, profile, null, runnable, true);
     };
 
     Application application = ApplicationManager.getApplication();
@@ -441,7 +429,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
-   public void close(boolean noSuspisiousCodeFound) {
+  public void close(boolean noSuspisiousCodeFound) {
     cleanup();
   }
 
@@ -466,16 +454,16 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   private float getTotalProgress() {
-    float totalDone = 0;
+    int totalDone = 0;
     int totalTotal = 0;
     for (JobDescriptor jobDescriptor : myJobDescriptors) {
       totalDone += jobDescriptor.getDoneAmount();
       totalTotal += jobDescriptor.getTotalAmount();
     }
-    return totalTotal == 0 ? 1 : totalDone / totalTotal;
+    return totalTotal == 0 ? 1 : 1.0f * totalDone / totalTotal;
   }
 
-  public void setExternalProfile(InspectionProfile profile) {
+  public void setExternalProfile(InspectionProfileImpl profile) {
     myExternalProfile = profile;
   }
 

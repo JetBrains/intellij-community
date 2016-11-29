@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -72,7 +73,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @NotNull
   private static PsiClass[] getPossibleTargets(final PsiJavaCodeReferenceElement element) {
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    List<PsiClass> result = new ArrayList<>();
     PsiElement run = element;
     PsiMember contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);
 
@@ -103,36 +104,24 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     final Project project = classes[0].getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
+    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
     renderer.installSpeedSearch(builder);
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        final PsiClass aClass = (PsiClass)list.getSelectedValue();
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  doInvoke(aClass, superClassName);
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-              }
-            });
-
-          }
-        }, getText(), null);
-      }
+    Runnable runnable = () -> {
+      int index = list.getSelectedIndex();
+      if (index < 0) return;
+      final PsiClass aClass = (PsiClass)list.getSelectedValue();
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          doInvoke(aClass, superClassName);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }), getText(), null);
     };
 
     builder.
@@ -145,6 +134,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
   private void doInvoke(final PsiClass aClass, final String superClassName) throws IncorrectOperationException {
     PsiJavaCodeReferenceElement ref = getRefElement();
     assert ref != null;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
@@ -162,11 +152,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     if (superClassName != null) {
-      PsiJavaCodeReferenceElement superClass =
-        elementFactory.createReferenceElementByFQClassName(superClassName, created.getResolveScope());
-      final PsiReferenceList extendsList = created.getExtendsList();
-      LOG.assertTrue(extendsList != null);
-      extendsList.add(superClass);
+      CreateFromUsageUtils.setupSuperClassReference(created, superClassName);
     }
     CreateFromUsageBaseFix.setupGenericParameters(created, ref);
 

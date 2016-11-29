@@ -52,9 +52,9 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
 
   private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
   private final BreakpointItemsTreeController myTreeController;
-  private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<XBreakpointGroupingRule>();
+  private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<>();
 
-  private final Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<XBreakpointGroupingRule>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
+  private final Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
   private final SingleAlarm myRebuildAlarm = new SingleAlarm(this::updateChildren, 100);
   private final FavoritesManager myFavoritesManager;
@@ -91,7 +91,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   private void updateChildren() {
     if (myProject.isDisposed()) return;
     myChildren.clear();
-    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+    List<BreakpointItem> items = new ArrayList<>();
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
       provider.provideBreakpointItems(myProject, items);
     }
@@ -111,7 +111,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   }
 
   private void replicate(DefaultMutableTreeNode source, AbstractTreeNode destination, final List<AbstractTreeNode<Object>> destinationChildren) {
-    final ArrayList<AbstractTreeNode<Object>> copyChildren = new ArrayList<AbstractTreeNode<Object>>();
+    final ArrayList<AbstractTreeNode<Object>> copyChildren = new ArrayList<>();
     AbstractTreeNode<Object> copy = new AbstractTreeNode<Object>(myProject, source.getUserObject()) {
       @NotNull
       @Override
@@ -165,7 +165,15 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
 
   @Override
   public boolean willHandle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects) {
-    return (selectedObjects.size() == 1 && (type == CommonActionsPanel.Buttons.EDIT || type == CommonActionsPanel.Buttons.REMOVE)) &&
+    if (selectedObjects.size() >= 1 && type == CommonActionsPanel.Buttons.REMOVE) {
+      for (Object selectedObject : selectedObjects) {
+        if (!(((AbstractTreeNode)selectedObject).getValue() instanceof BreakpointItem)) {
+          return false; // Not all selected items are breakpoints
+        }
+      }
+      return true;
+    }
+    return selectedObjects.size() == 1 && type == CommonActionsPanel.Buttons.EDIT &&
            ((AbstractTreeNode)selectedObjects.iterator().next()).getValue() instanceof BreakpointItem;
   }
 
@@ -179,15 +187,18 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
       bounds = tree.getVisibleRect().intersection(bounds);
     }
     Point whereToShow = new Point((int)bounds.getCenterX(), (int)bounds.getCenterY());
-    BreakpointItem breakpointItem = (BreakpointItem)((AbstractTreeNode)selectedObjects.iterator().next()).getValue();
     switch (type) {
       case EDIT:
+        BreakpointItem breakpointItem = (BreakpointItem)((AbstractTreeNode)selectedObjects.iterator().next()).getValue();
         DebuggerSupport debuggerSupport = XBreakpointUtil.getDebuggerSupport(myProject, breakpointItem);
-        if (debuggerSupport == null) return;
+        if (debuggerSupport == null || breakpointItem == null) return;
         debuggerSupport.getEditBreakpointAction().editBreakpoint(myProject, component, whereToShow, breakpointItem);
         break;
       case REMOVE:
-        breakpointItem.removed(myProject);
+        for (Object selectedObject : selectedObjects) {
+          BreakpointItem removeBreakpointItem = (BreakpointItem)((AbstractTreeNode)selectedObject).getValue();
+          removeBreakpointItem.removed(myProject);
+        }
         break;
       default: break;
     }

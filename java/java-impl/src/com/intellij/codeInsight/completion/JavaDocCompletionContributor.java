@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspectionBase;
+import com.intellij.codeInspection.javaDoc.JavadocHighlightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
@@ -45,7 +46,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -68,6 +68,20 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaDocCompletionContributor");
   private static final @NonNls String VALUE_TAG = "value";
   private static final @NonNls String LINK_TAG = "link";
+  private static final InsertHandler<LookupElement> PARAM_DESCRIPTION_INSERT_HANDLER = (context, item) -> {
+    if (context.getCompletionChar() != Lookup.REPLACE_SELECT_CHAR) return;
+
+    context.commitDocument();
+    PsiDocTag docTag = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiDocTag.class, false);
+    if (docTag != null) {
+      Document document = context.getDocument();
+      int tagEnd = DocTagSelectioner.getDocTagRange(docTag, document.getCharsSequence(), 0).getEndOffset();
+      int tail = context.getTailOffset();
+      if (tail < tagEnd) {
+        document.deleteString(tail, tagEnd);
+      }
+    }
+  };
 
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
@@ -99,7 +113,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
             result.addElement(item);
           }
 
-          JavaCompletionContributor.addAllClasses(parameters, result, new InheritorsHolder(result));
+          JavaCompletionContributor.addAllClasses(parameters, result, new JavaCompletionSession(result));
         }
 
         if (tag != null && "author".equals(tag.getName())) {
@@ -264,23 +278,8 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
     });
     for (String description : descriptions) {
-      result.addElement(LookupElementBuilder.create(description).withInsertHandler(new InsertHandler<LookupElement>() {
-        @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
-          if (context.getCompletionChar() != Lookup.REPLACE_SELECT_CHAR) return;
-          
-          context.commitDocument();
-          PsiDocTag docTag = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiDocTag.class, false);
-          if (docTag != null) {
-            Document document = context.getDocument();
-            int tagEnd = DocTagSelectioner.getDocTagRange(docTag, document.getCharsSequence(), 0).getEndOffset();
-            int tail = context.getTailOffset();
-            if (tail < tagEnd) {
-              document.deleteString(tail, tagEnd);
-            }
-          }
-        }
-      }));
+      result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create(description).withInsertHandler(PARAM_DESCRIPTION_INSERT_HANDLER), 1));
     }
   }
 
@@ -312,7 +311,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
 
       InspectionProfile inspectionProfile =
-        InspectionProjectProfileManager.getInstance(position.getProject()).getInspectionProfile();
+        InspectionProjectProfileManager.getInstance(position.getProject()).getCurrentProfile();
       JavaDocLocalInspection inspection =
         (JavaDocLocalInspection)inspectionProfile.getUnwrappedTool(JavaDocLocalInspectionBase.SHORT_NAME, position);
       if (inspection != null) {
@@ -342,7 +341,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         if (psiMethod != null) {
           PsiDocTag[] tags = comment.getTags();
           for (PsiParameter param : psiMethod.getParameterList().getParameters()) {
-            if (!JavaDocLocalInspectionBase.isFound(tags, param)) {
+            if (!JavadocHighlightUtil.hasTagForParameter(tags, param)) {
               result.add(tagName + " " + param.getName());
             }
           }
@@ -353,15 +352,12 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       if ("see".equals(tagName)) {
         PsiMember member = PsiTreeUtil.getParentOfType(comment, PsiMember.class);
         if (member instanceof PsiClass) {
-          InheritanceUtil.processSupers((PsiClass)member, false, new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass psiClass) {
-              String name = psiClass.getQualifiedName();
-              if (StringUtil.isNotEmpty(name) && !CommonClassNames.JAVA_LANG_OBJECT.equals(name)) {
-                result.add("see " + name);
-              }
-              return true;
+          InheritanceUtil.processSupers((PsiClass)member, false, psiClass -> {
+            String name = psiClass.getQualifiedName();
+            if (StringUtil.isNotEmpty(name) && !CommonClassNames.JAVA_LANG_OBJECT.equals(name)) {
+              result.add("see " + name);
             }
+            return true;
           });
         }
       }

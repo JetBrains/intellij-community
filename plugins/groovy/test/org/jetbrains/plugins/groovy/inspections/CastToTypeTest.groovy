@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.inspections;
+package org.jetbrains.plugins.groovy.inspections
 
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -24,16 +24,16 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class CastToTypeTest extends LightCodeInsightFixtureTestCase {
+class CastToTypeTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.testDataPath + 'groovy/inspections/castToType';
+    return TestUtils.testDataPath + 'groovy/inspections/castToType'
   }
 
   private void doTest(String name) {
     myFixture.configureByFile(getTestName(true) + '.groovy')
     myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
-    final IntentionAction quickFix = myFixture.findSingleIntention(name);
+    final IntentionAction quickFix = myFixture.findSingleIntention(name)
     assertNotNull(quickFix)
     myFixture.launchAction(quickFix)
     myFixture.checkResultByFile(getTestName(true) + '_after.groovy')

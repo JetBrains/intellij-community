@@ -41,7 +41,7 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
   }
 
   @Override
-  protected void resetEditorFrom(MavenRunConfiguration s) {
+  protected void resetEditorFrom(@NotNull MavenRunConfiguration s) {
     myUseProjectSettings.setSelected(s.getGeneralSettings() == null);
 
     if (s.getGeneralSettings() == null) {
@@ -54,7 +54,7 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
   }
 
   @Override
-  protected void applyEditorTo(MavenRunConfiguration s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull MavenRunConfiguration s) throws ConfigurationException {
     if (myUseProjectSettings.isSelected()) {
       s.setGeneralSettings(null);
     }

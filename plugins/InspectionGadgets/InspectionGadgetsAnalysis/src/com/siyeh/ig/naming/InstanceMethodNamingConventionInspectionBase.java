@@ -93,7 +93,7 @@ public class InstanceMethodNamingConventionInspectionBase extends ConventionInsp
         return;
       }
       if (TestUtils.isRunnable(method)) {
-        if (TestUtils.isJUnit4TestMethod(method) && isInspectionEnabled("JUnit4MethodNamingConvention", method)) {
+        if (TestUtils.isAnnotatedTestMethod(method) && isInspectionEnabled("JUnit4MethodNamingConvention", method)) {
           return;
         }
         if (TestUtils.isJUnit3TestMethod(method) && isInspectionEnabled("JUnit3MethodNamingConvention", method)) {

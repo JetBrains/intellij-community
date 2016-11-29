@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,12 @@ public class MultipleRepositoryUrlsFix extends GroovyFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     List<GrCallExpression> statements = MultipleRepositoryUrlsInspection.findUrlCallExpressions(myClosure);
     if (statements.size() <= 1) return;
     statements.remove(0);
 
-    List<PsiElement> elements = new ArrayList<PsiElement>(statements);
+    List<PsiElement> elements = new ArrayList<>(statements);
     for (GrCallExpression statement : statements) {
       PsiElement newLineCandidate = statement.getNextSibling();
       if (PsiUtil.isNewLine(newLineCandidate)) {

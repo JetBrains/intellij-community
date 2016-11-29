@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="assertJ">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/dev/assertj-core-3.2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/assertj-core-3.4.1.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$PROJECT_DIR$/lib/dev/assertj-core-3.2.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/assertj-core-3.4.1-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/dev/assertj-core-3.2.0-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/assertj-core-3.4.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

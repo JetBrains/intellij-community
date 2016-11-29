@@ -22,11 +22,13 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,11 +64,11 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       try {
         search();
-        onFound();
       }
       catch (Throwable e) {
         LOG.error(e);
       }
+      onFound();
     }
     else {
       myProcessIndicator = new BackgroundableProcessIndicator(this);
@@ -94,15 +96,12 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
     try {
       mySocket = myServerSocket.accept();
       final ExecutionException[] ex = new ExecutionException[1];
-      DumbService.getInstance(getProject()).repeatUntilPassesInSmartMode(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            search();
-          }
-          catch (ExecutionException e) {
-            ex[0] = e;
-          }
+      DumbService.getInstance(getProject()).repeatUntilPassesInSmartMode(() -> {
+        try {
+          search();
+        }
+        catch (ExecutionException e) {
+          ex[0] = e;
         }
       });
       if (ex[0] != null) {
@@ -131,13 +130,9 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
-    DumbService.getInstance(getProject()).runWhenSmart(new Runnable() {
-      @Override
-      public void run() {
-        onFound();
-        finish();
-        startListening();
-      }
+    DumbService.getInstance(getProject()).runWhenSmart(() -> {
+      onFound();
+      finish();
     });
   }
 
@@ -169,6 +164,4 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       }
     }
   }
-
-  protected void startListening() {}
 }

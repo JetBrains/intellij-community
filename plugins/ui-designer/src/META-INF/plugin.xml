@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>UI Designer</name>
   <id>com.intellij.uiDesigner</id>
   <vendor>JetBrains</vendor>

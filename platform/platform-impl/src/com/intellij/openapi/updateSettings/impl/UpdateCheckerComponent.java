@@ -28,12 +28,13 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,27 +50,18 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Runnable myCheckRunnable = new Runnable() {
-    @Override
-    public void run() {
-      UpdateChecker.updateAndShowResult().doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          queueNextCheck(CHECK_INTERVAL);
-        }
-      });
-    }
-  };
+  private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenDone(() -> queueNextCheck(CHECK_INTERVAL));
   private final UpdateSettings mySettings;
 
   public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
     mySettings = settings;
-    updateDefaultChannel(app);
+    updateDefaultChannel();
     checkSecureConnection(app);
     scheduleOnStartCheck(app);
+    cleanupPatch();
   }
 
-  private void updateDefaultChannel(Application app) {
+  private void updateDefaultChannel() {
     ChannelStatus current = mySettings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
     boolean eap = ApplicationInfoEx.getInstanceEx().isEAP();
@@ -80,7 +72,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
       if (!ConfigImportHelper.isFirstSession()) {
         String title = IdeBundle.message("update.notifications.title");
         String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
-        notify(app, UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, null));
+        UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, null).notify(null);
       }
     }
 
@@ -90,25 +82,19 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     }
   }
 
-  private void checkSecureConnection(final Application app) {
+  private void checkSecureConnection(Application app) {
     if (mySettings.isSecureConnection() && !mySettings.canUseSecureConnection()) {
       mySettings.setSecureConnection(false);
 
-      boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
       String title = IdeBundle.message("update.notifications.title");
-      String message = IdeBundle.message(tooOld ? "update.sni.not.available.message" : "update.sni.disabled.message");
-      notify(app, UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, new NotificationListener.Adapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull Notification notification1, @NotNull HyperlinkEvent e) {
-          notification1.expire();
-          app.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class);
-            }
-          }, ModalityState.NON_MODAL);
-        }
-      }));
+      String message = IdeBundle.message("update.sni.disabled.message");
+      UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, new NotificationListener.Adapter() {
+          @Override
+          protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+            notification.expire();
+            app.invokeLater(() -> ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class), ModalityState.NON_MODAL);
+          }
+        }).notify(null);
     }
   }
 
@@ -134,17 +120,17 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     });
   }
 
-  private void queueNextCheck(long interval) {
-    myCheckForUpdatesAlarm.addRequest(myCheckRunnable, interval);
+  private static void cleanupPatch() {
+    new Task.Backgroundable(null, IdeBundle.message("update.cleaning.patch.progress"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        UpdateInstaller.cleanupPatch();
+      }
+    }.queue();
   }
 
-  private static void notify(Application app, final Notification notification) {
-    app.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        notification.notify(null);
-      }
-    }, ModalityState.NON_MODAL);
+  private void queueNextCheck(long interval) {
+    myCheckForUpdatesAlarm.addRequest(myCheckRunnable, interval);
   }
 
   @Override

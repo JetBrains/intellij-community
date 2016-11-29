@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jdom.Verifier;
 import org.junit.Test;
 
 import java.nio.CharBuffer;
@@ -97,8 +98,16 @@ public class StringUtilTest {
 
   @Test
   public void testUnPluralize() {
-    assertEquals("s", StringUtil.unpluralize("s"));
+    assertEquals("plurals", StringUtil.unpluralize("pluralss"));
+    assertEquals("I", StringUtil.unpluralize("Is"));
+    assertEquals(null, StringUtil.unpluralize("s"));
     assertEquals("z", StringUtil.unpluralize("zs"));
+    assertEquals("Index", StringUtil.unpluralize("Indices"));
+    assertEquals("fix", StringUtil.unpluralize("fixes"));
+    assertEquals("man", StringUtil.unpluralize("men"));
+    assertEquals("leaf", StringUtil.unpluralize("leaves"));
+    assertEquals("cookie", StringUtil.unpluralize("cookies"));
+    assertEquals("search", StringUtil.unpluralize("searches"));
   }
 
   @Test
@@ -111,6 +120,14 @@ public class StringUtilTest {
     assertEquals("men", StringUtil.pluralize("man"));
     assertEquals("media", StringUtil.pluralize("medium"));
     assertEquals("stashes", StringUtil.pluralize("stash"));
+    assertEquals("children", StringUtil.pluralize("child"));
+    assertEquals("leaves", StringUtil.pluralize("leaf"));
+    assertEquals("These", StringUtil.pluralize("This"));
+    assertEquals("cookies", StringUtil.pluralize("cookie"));
+    assertEquals("VaLuES", StringUtil.pluralize("VaLuE"));
+    assertEquals("PLANS", StringUtil.pluralize("PLAN"));
+    assertEquals("stackTraceLineExes", StringUtil.pluralize("stackTraceLineEx"));
+    assertEquals("schemas", StringUtil.pluralize("schema")); // anglicized version
   }
 
   @Test
@@ -127,24 +144,19 @@ public class StringUtilTest {
   public void testNaturalCompare() {
     assertEquals(1, StringUtil.naturalCompare("test011", "test10"));
     assertEquals(1, StringUtil.naturalCompare("test10a", "test010"));
-    final List<String> strings = new ArrayList<String>(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
-                                                             "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
-    final Comparator<String> c = new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return StringUtil.naturalCompare(o1, o2);
-      }
-    };
+    final List<String> strings = new ArrayList<>(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
+                                                               "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
+    final Comparator<String> c = (o1, o2) -> StringUtil.naturalCompare(o1, o2);
     Collections.sort(strings, c);
     assertEquals(Arrays.asList("1.2.9.1", "1.2.10.5", "tes0", "test", "test0", "test1", "test2", "test 3", "test10", "test10a",
                                "test011", "Test99", "test99", "testing"), strings);
-    final List<String> strings2 = new ArrayList<String>(Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2"));
+    final List<String> strings2 = new ArrayList<>(Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2"));
     Collections.sort(strings2, c);
     assertEquals(Arrays.asList("T1", "t1", "t001", "T2", "t2", "T002"), strings2);
     assertEquals(1 ,StringUtil.naturalCompare("7403515080361171695", "07403515080361171694"));
     assertEquals(-14, StringUtil.naturalCompare("_firstField", "myField1"));
     //idea-80853
-    final List<String> strings3 = new ArrayList<String>(
+    final List<String> strings3 = new ArrayList<>(
       Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"));
     Collections.sort(strings3, c);
     assertEquals(Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"), strings3);
@@ -291,28 +303,6 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testShortened() {
-    @SuppressWarnings("SpellCheckingInspection") String[] names = {
-      "AVeryVeeryLongClassName.java", "com.test.SomeJAVAClassName.java", "strangelowercaseclassname.java", "PrefixPostfix.java",
-      "SomeJAVAClassName.java", "qwertyuiopasdghjklzxcvbnm1234567890"};
-    for (String name : names) {
-      for (int i = name.length() + 1; i > 15; i--) {
-        String shortened = StringUtil.getShortened(name, i);
-        assertTrue(shortened.length() <= i);
-        assertTrue(!shortened.contains("...."));
-        int pos = shortened.indexOf("...");
-        if (pos != -1) {
-          assertTrue(name.startsWith(shortened.substring(0, pos)));
-          assertTrue(name.endsWith(shortened.substring(pos + 3)));
-        }
-        else {
-          assertEquals(shortened,  name);
-        }
-      }
-    }
-  }
-
-  @Test
   public void testReplaceReturnReplacementIfTextEqualsToReplacedText() {
     String newS = "/tmp";
     assertSame(StringUtil.replace("$PROJECT_FILE$", "$PROJECT_FILE$".toLowerCase().toUpperCase() /* ensure new String instance */, newS), newS);
@@ -397,6 +387,28 @@ public class StringUtilTest {
     assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\n"));
     assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\nads\r"));
     assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\nads\n"));
+  }
+
+  @Test
+  public void testFindStartingLineSeparator() {
+    assertEquals(null, StringUtil.getLineSeparatorAt("", -1));
+    assertEquals(null, StringUtil.getLineSeparatorAt("", 0));
+    assertEquals(null, StringUtil.getLineSeparatorAt("", 1));
+    assertEquals(null, StringUtil.getLineSeparatorAt("\nHello", -1));
+    assertEquals(null, StringUtil.getLineSeparatorAt("\nHello", 1));
+    assertEquals(null, StringUtil.getLineSeparatorAt("\nH\rel\nlo", 6));
+
+    assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("\nHello", 0));
+    assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("\nH\rel\nlo", 5));
+    assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("Hello\n", 5));
+
+    assertEquals(LineSeparator.CR, StringUtil.getLineSeparatorAt("\rH\r\nello", 0));
+    assertEquals(LineSeparator.CR, StringUtil.getLineSeparatorAt("Hello\r", 5));
+    assertEquals(LineSeparator.CR, StringUtil.getLineSeparatorAt("Hello\b\r", 6));
+
+    assertEquals(LineSeparator.CRLF, StringUtil.getLineSeparatorAt("\rH\r\nello", 2));
+    assertEquals(LineSeparator.CRLF, StringUtil.getLineSeparatorAt("\r\nH\r\nello", 0));
+    assertEquals(LineSeparator.CRLF, StringUtil.getLineSeparatorAt("\r\nH\r\nello\r\n", 9));
   }
 
   @Test
@@ -491,5 +503,24 @@ public class StringUtilTest {
     assertEquals(1, StringUtil.lastIndexOf("axaxa", 'x', 0, 3));
     assertEquals(3, StringUtil.lastIndexOf("axaxa", 'x', 0, 5));
     assertEquals(2, StringUtil.lastIndexOf("abcd", 'c', -42, 99));  // #IDEA-144968
+  }
+
+  @Test
+  public void testEscapingIllegalXmlChars() {
+    for (String s : new String[]{"ab\n\0\r\tde", "\\abc\1\2\3\uFFFFdef"}) {
+      String escapedText = XmlStringUtil.escapeIllegalXmlChars(s);
+      assertNull(Verifier.checkCharacterData(escapedText));
+      assertEquals(s, XmlStringUtil.unescapeIllegalXmlChars(escapedText));
+    }
+  }
+
+  @Test
+  public void testCountChars() {
+    assertEquals(0, StringUtil.countChars("abcdefgh", 'x'));
+    assertEquals(1, StringUtil.countChars("abcdefgh", 'd'));
+    assertEquals(5, StringUtil.countChars("abcddddefghd", 'd'));
+    assertEquals(4, StringUtil.countChars("abcddddefghd", 'd', 4, false));
+    assertEquals(3, StringUtil.countChars("abcddddefghd", 'd', 4, true));
+    assertEquals(2, StringUtil.countChars("abcddddefghd", 'd', 4, 6, false));
   }
 }

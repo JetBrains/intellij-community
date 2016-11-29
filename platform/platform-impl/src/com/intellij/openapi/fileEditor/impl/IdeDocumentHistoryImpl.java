@@ -42,10 +42,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-@State(
-    name = "IdeDocumentHistory",
-    storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
-)
+@State(name = "IdeDocumentHistory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl");
 
@@ -61,23 +58,23 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private final CommandProcessor myCmdProcessor;
   private final ToolWindowManager myToolWindowManager;
 
-  private final LinkedList<PlaceInfo> myBackPlaces = new LinkedList<PlaceInfo>(); // LinkedList of PlaceInfo's
-  private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<PlaceInfo>(); // LinkedList of PlaceInfo's
-  protected boolean myBackInProgress = false;
-  protected boolean myForwardInProgress = false;
-  protected Object myLastGroupId = null;
+  private final LinkedList<PlaceInfo> myBackPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
+  private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
+  protected boolean myBackInProgress;
+  protected boolean myForwardInProgress;
+  protected Object myLastGroupId;
 
   // change's navigation
-  private final LinkedList<PlaceInfo> myChangePlaces = new LinkedList<PlaceInfo>(); // LinkedList of PlaceInfo's
-  private int myStartIndex = 0;
-  private int myCurrentIndex = 0;
-  private PlaceInfo myCurrentChangePlace = null;
+  private final LinkedList<PlaceInfo> myChangePlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
+  private int myStartIndex;
+  private int myCurrentIndex;
+  private PlaceInfo myCurrentChangePlace;
 
-  protected PlaceInfo myCommandStartPlace = null;
-  protected boolean myCurrentCommandIsNavigation = false;
-  protected boolean myCurrentCommandHasChanges = false;
-  protected final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<VirtualFile>();
-  protected boolean myCurrentCommandHasMoves = false;
+  protected PlaceInfo myCommandStartPlace;
+  protected boolean myCurrentCommandIsNavigation;
+  protected boolean myCurrentCommandHasChanges;
+  protected final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<>();
+  protected boolean myCurrentCommandHasMoves;
 
   private final CommandListener myCommandListener = new CommandAdapter() {
     @Override
@@ -147,7 +144,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   public static class RecentlyChangedFilesState {
     // don't make it private, see: IDEA-130363 Recently Edited Files list should survive restart
-    public List<String> CHANGED_PATHS = new ArrayList<String>();
+    public List<String> CHANGED_PATHS = new ArrayList<>();
 
     public void register(VirtualFile file) {
       final String path = file.getPath();
@@ -291,7 +288,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   @Override
   public VirtualFile[] getChangedFiles() {
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    List<VirtualFile> files = new ArrayList<>();
 
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final List<String> paths = myRecentlyChangedFiles.CHANGED_PATHS;
@@ -335,12 +332,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     myBackInProgress = true;
     try {
-      executeCommand(new Runnable() {
-        @Override
-        public void run() {
-          gotoPlaceInfo(info);
-        }
-      }, "", null);
+      executeCommand(() -> gotoPlaceInfo(info), "", null);
     }
     finally {
       myBackInProgress = false;
@@ -356,12 +348,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     myForwardInProgress = true;
     try {
-      executeCommand(new Runnable() {
-        @Override
-        public void run() {
-          gotoPlaceInfo(target);
-        }
-      }, "", null);
+      executeCommand(() -> gotoPlaceInfo(target), "", null);
     } finally {
       myForwardInProgress = false;
     }
@@ -401,12 +388,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     int index = myCurrentIndex - 1;
     final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
 
-    executeCommand(new Runnable() {
-      @Override
-      public void run() {
-        gotoPlaceInfo(info);
-      }
-    }, "", null);
+    executeCommand(() -> gotoPlaceInfo(info), "", null);
     myCurrentIndex = index;
   }
 
@@ -431,12 +413,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     int index = myCurrentIndex + 1;
     final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
 
-    executeCommand(new Runnable() {
-      @Override
-      public void run() {
-        gotoPlaceInfo(info);
-      }
-    }, "", null);
+    executeCommand(() -> gotoPlaceInfo(info), "", null);
     myCurrentIndex = index;
   }
 
@@ -533,11 +510,14 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     private final String myEditorTypeId;
     private final WeakReference<EditorWindow> myWindow;
 
-    public PlaceInfo(@NotNull VirtualFile file, @NotNull FileEditorState navigationState, @NotNull String editorTypeId, @Nullable EditorWindow window) {
+    PlaceInfo(@NotNull VirtualFile file,
+              @NotNull FileEditorState navigationState,
+              @NotNull String editorTypeId,
+              @Nullable EditorWindow window) {
       myNavigationState = navigationState;
       myFile = file;
       myEditorTypeId = editorTypeId;
-      myWindow = new WeakReference<EditorWindow>(window);
+      myWindow = new WeakReference<>(window);
     }
 
     public EditorWindow getWindow() {

@@ -23,8 +23,10 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
 import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +35,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Injects fragments for type annotations either in string literals (quoted annotations containing forward references) or
+ * in type comments starting with <tt># type:</tt>.
+ *
  * @author vlan
  */
 public class PyTypingAnnotationInjector extends PyInjectorBase {
@@ -66,19 +71,32 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
     final Matcher m = PyTypingTypeProvider.TYPE_COMMENT_PATTERN.matcher(text);
     if (m.matches()) {
       final String annotationText = m.group(1);
-      if (annotationText != null && isTypingAnnotation(annotationText)) {
+      if (annotationText != null) {
         final int start = m.start(1);
         final int end = m.end(1);
         if (start < end && allowInjectionInComment(host)) {
-          final Language language = PyDocstringLanguageDialect.getInstance();
-          registrar.startInjecting(language);
-          registrar.addPlace("", "", host, TextRange.create(start, end));
-          registrar.doneInjecting();
-          return new PyInjectionUtil.InjectionResult(true, true);
+          Language language = null;
+          if (isFunctionTypeComment(host)) {
+            language = PyFunctionTypeAnnotationDialect.INSTANCE;
+          }
+          else if (isTypingAnnotation(annotationText)) {
+            language = PyDocstringLanguageDialect.getInstance();
+          }
+          if (language != null) {
+            registrar.startInjecting(language);
+            registrar.addPlace("", "", host, TextRange.create(start, end));
+            registrar.doneInjecting();
+            return new PyInjectionUtil.InjectionResult(true, true);
+          }
         }
       }
     }
     return PyInjectionUtil.InjectionResult.EMPTY;
+  }
+
+  private static boolean isFunctionTypeComment(@NotNull PsiElement comment) {
+   final PyFunction function = PsiTreeUtil.getParentOfType(comment, PyFunction.class);
+    return function != null && function.getTypeComment() == comment;
   }
 
   private static boolean isTypingAnnotation(@NotNull String s) {
@@ -88,12 +106,6 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   private static boolean allowInjectionInComment(@NotNull PsiLanguageInjectionHost host) {
     // XXX: Don't inject PyDocstringLanguage during completion inside comments due to an exception related to finding ShredImpl's
     // hostElementPointer
-    if (CompletionUtil.getOriginalOrSelf(host) != host) {
-      return false;
-    }
-    if (PyFunctionTypeCommentReferenceContributor.TYPE_COMMENT_PATTERN.accepts(host)) {
-      return false;
-    }
-    return true;
+    return CompletionUtil.getOriginalOrSelf(host) == host;
   }
 }

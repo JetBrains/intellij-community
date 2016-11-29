@@ -21,14 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ContentsUtil;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class CloseLogTabAction extends CloseTabToolbarAction {
   @Override
@@ -52,24 +51,19 @@ public class CloseLogTabAction extends CloseTabToolbarAction {
 
     ContentManager contentManager = getContentManager(project);
     if (contentManager == null) return;
-    TabbedContent tabbedContent = getTabbedContent(contentManager);
-    if (tabbedContent == null) return;
-
-    if (tabbedContent.getTabs().size() > 1) {
-      JComponent component = tabbedContent.getComponent();
-      tabbedContent.removeContent(component);
-      contentManager.setSelectedContent(tabbedContent, true, true);
-    }
-    else {
-      contentManager.removeContent(tabbedContent, true);
+    Content selectedContent = getTabbedContent(contentManager);
+    if (selectedContent != null) {
+      ContentsUtil.closeContentTab(contentManager, selectedContent);
     }
   }
 
   @Nullable
-  private static TabbedContent getTabbedContent(@NotNull ContentManager contentManager) {
-    TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, VcsLogContentProvider.TAB_NAME);
-    if (tabbedContent != contentManager.getSelectedContent()) return null;
-    return tabbedContent;
+  private static Content getTabbedContent(@NotNull ContentManager contentManager) {
+    Content content = contentManager.getSelectedContent();
+    if (content != null) {
+      if (ContentUtilEx.isContentTab(content, VcsLogContentProvider.TAB_NAME)) return content;
+    }
+    return null;
   }
 
   @Nullable

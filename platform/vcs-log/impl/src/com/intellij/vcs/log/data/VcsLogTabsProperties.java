@@ -28,11 +28,9 @@ import java.util.Map;
 @State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabsProperties.State> {
   public static final String MAIN_LOG_ID = "MAIN";
-  private final VcsLogUiPropertiesDeprecated myDeprecatedProperties;
   private State myState = new State();
 
-  public VcsLogTabsProperties(@NotNull VcsLogUiProperties deprecatedProperties) {
-    myDeprecatedProperties = (VcsLogUiPropertiesDeprecated)deprecatedProperties;
+  public VcsLogTabsProperties() {
   }
 
   @Nullable
@@ -44,20 +42,20 @@ public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabs
   @Override
   public void loadState(State state) {
     myState = state;
-    if (myState.TAB_STATES.get(MAIN_LOG_ID) == null) {
-      myState.TAB_STATES.put(MAIN_LOG_ID, myDeprecatedProperties.getState());
-    }
   }
 
   public VcsLogUiProperties createProperties(@NotNull final String id) {
-    if (myState.TAB_STATES.get(id) == null) {
-      myState.TAB_STATES.put(id, new VcsLogUiPropertiesImpl.State());
-    }
+    myState.TAB_STATES.putIfAbsent(id, new VcsLogUiPropertiesImpl.State());
     return new VcsLogUiPropertiesImpl() {
       @NotNull
       @Override
       public State getState() {
-        return myState.TAB_STATES.get(id);
+        State state = myState.TAB_STATES.get(id);
+        if (state == null) {
+          state = new VcsLogUiPropertiesImpl.State();
+          myState.TAB_STATES.put(id, state);
+        }
+        return state;
       }
 
       @Override

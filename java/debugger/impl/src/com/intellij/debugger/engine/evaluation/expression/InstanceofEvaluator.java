@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,6 @@ class InstanceofEvaluator implements Evaluator {
     myTypeEvaluator = typeEvaluator;
   }
 
-  public Modifier getModifier() {
-    return null;
-  }
-
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value value = (Value)myOperandEvaluator.evaluate(context);
     if (value == null) {
@@ -63,9 +59,7 @@ class InstanceofEvaluator implements Evaluator {
                                                     Collections.singletonList(((ObjectReference)value).referenceType().classObject()));
     }
     catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+      LOG.debug(e);
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
   }

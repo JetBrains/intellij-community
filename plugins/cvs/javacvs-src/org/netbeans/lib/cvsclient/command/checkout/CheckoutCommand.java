@@ -47,7 +47,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
 
   // Fields =================================================================
 
-  private final List<String> modules = new ArrayList<String>();
+  private final List<String> modules = new ArrayList<>();
   private boolean pruneDirectories;
   private boolean resetStickyOnes;
   private boolean useHeadIfNotFound;

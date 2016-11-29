@@ -15,32 +15,35 @@
  */
 package com.intellij.diff.contents;
 
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineCol;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FileDocumentContentImpl extends DocumentContentImpl implements FileContent {
-  @Nullable private final Project myProject;
   @NotNull private final VirtualFile myFile;
 
   public FileDocumentContentImpl(@Nullable Project project,
                                  @NotNull Document document,
                                  @NotNull VirtualFile file) {
-    super(document, file.getFileType(), file, getSeparator(file), file.getCharset());
-    myProject = project;
+    super(project, document, file.getFileType(), file, getSeparator(file), file.getCharset(), file.getBOM() != null);
     myFile = file;
   }
 
   @Nullable
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    if (myProject == null || myProject.isDefault() || !myFile.isValid()) return null;
-    return new OpenFileDescriptor(myProject, myFile, offset);
+  public Navigatable getNavigatable(@NotNull LineCol position) {
+    Project project = getProject();
+    if (project == null || project.isDefault() || !myFile.isValid()) return null;
+    return new OpenFileDescriptor(project, myFile, position.line, position.column);
   }
 
   @Nullable
@@ -54,5 +57,10 @@ public class FileDocumentContentImpl extends DocumentContentImpl implements File
   @Override
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  @Override
+  public void onAssigned(boolean isAssigned) {
+    if (isAssigned && GeneralSettings.getInstance().isSyncOnFrameActivation()) DiffUtil.markDirtyAndRefresh(true, false, false, myFile);
   }
 }

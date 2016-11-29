@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,14 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author gregsh
@@ -46,9 +48,9 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
     LanguageExtensionPoint[] extensions = Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
     System.out.println("ParserDefinitions: " + extensions.length);
 
-    THashMap<Language, String> languageMap = new THashMap<Language, String>();
+    THashMap<Language, String> languageMap = new THashMap<>();
     languageMap.put(Language.ANY, "platform");
-    final TObjectIntHashMap<String> map = new TObjectIntHashMap<String>();
+    final TObjectIntHashMap<String> map = new TObjectIntHashMap<>();
     for (LanguageExtensionPoint e : extensions) {
       String key = e.getPluginDescriptor().getPluginId().getIdString();
       int curCount = IElementType.getAllocatedTypesCount();
@@ -88,12 +90,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
 
     // Show per-plugin statistics
     Object[] keys = map.keys();
-    Arrays.sort(keys, new Comparator<Object>() {
-      @Override
-      public int compare(Object o1, Object o2) {
-        return map.get((String)o2) - map.get((String)o1);
-      }
-    });
+    Arrays.sort(keys, (o1, o2) -> map.get((String)o2) - map.get((String)o1));
     int sum = 0;
     for (Object key : keys) {
       int value = map.get((String)key);
@@ -116,13 +113,17 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
     // ParserDefinitions: 128
     // Total: 8864 element types
 
+    // 19.04.2016:
+    // Preloaded: 4397 element types
+    // ParserDefinitions: 135
+    // Total: 9231 element types
   }
 
   public void testManipulatorRegistered() {
     LanguageExtensionPoint[] extensions =
       Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
-    Set<String> classes = new HashSet<String>();
-    List<String> failures = new ArrayList<String>();
+    Set<String> classes = new HashSet<>();
+    List<String> failures = new ArrayList<>();
     int total = 0;
     for (LanguageExtensionPoint e : extensions) {
       ParserDefinition definition = (ParserDefinition)e.getInstance();
@@ -148,20 +149,17 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testInitialRegisterPerformance() {
-    PlatformTestUtil.startPerformanceTest("IElementType add", 100, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        Language language = Language.ANY;
-        IElementType[] old = IElementType.push(new IElementType[0]);
-        try {
-          for (short i = 0; i < 15000; i++) {
-            IElementType type = new IElementType("i " + i, language);
-            assertEquals(i, type.getIndex());
-          }
+    PlatformTestUtil.startPerformanceTest("IElementType add", 100, () -> {
+      Language language = Language.ANY;
+      IElementType[] old = IElementType.push(IElementType.EMPTY_ARRAY);
+      try {
+        for (short i = 0; i < 15000; i++) {
+          IElementType type = new IElementType("i " + i, language);
+          assertEquals(i, type.getIndex());
         }
-        finally {
-          IElementType.push(old);
-        }
+      }
+      finally {
+        IElementType.push(old);
       }
     }).useLegacyScaling().assertTiming();
   }

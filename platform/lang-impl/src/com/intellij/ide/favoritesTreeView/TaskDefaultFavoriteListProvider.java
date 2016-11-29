@@ -159,7 +159,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
 
   // ! containing self
   public static List<AbstractTreeNode> getPathToUsualNode(final AbstractTreeNode treeNode) {
-    final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> result = new ArrayList<>();
     AbstractTreeNode current = treeNode;
     while (current != null && (!(current instanceof FavoritesRootNode))) {
       result.add(current);
@@ -207,12 +207,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
       }
     };
     action.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, content);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        popup.showInCenterOf(tree);
-      }
-    }, ModalityState.NON_MODAL, project.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> popup.showInCenterOf(tree), ModalityState.NON_MODAL, project.getDisposed());
   }
 
   //private Operation getCustomEditOperation() {

@@ -60,12 +60,12 @@ public class XInspectDialog extends DialogWrapper {
     if (instanceEvaluator != null && myRebuildOnSessionEvents && session != null) {
       Pair<XInstanceEvaluator, String> initialItem = Pair.create(instanceEvaluator, name);
       XDebuggerInstanceTreeCreator creator = new XDebuggerInstanceTreeCreator(project, editorsProvider, sourcePosition, markers, session);
-      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XInstanceEvaluator, String>>(initialItem, creator, project, myDisposable);
+      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<>(initialItem, creator, project, myDisposable);
     }
     else {
       Pair<XValue, String> initialItem = Pair.create(value, name);
       XDebuggerTreeCreator creator = new XDebuggerTreeCreator(project, editorsProvider, sourcePosition, markers);
-      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project, myDisposable);
+      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<>(initialItem, creator, project, myDisposable);
     }
 
     if (session != null) {

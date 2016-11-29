@@ -53,7 +53,7 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
   @Override
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      mySubBlocks = new ArrayList<Block>();
+      mySubBlocks = new ArrayList<>();
       final Indent indent = Indent.getContinuationWithoutFirstIndent();
       mySubBlocks.add(new GroovyBlock(myNameElement.getNode(), indent, Wrap.createWrap(WrapType.NONE, false), myContext));
       new GroovyBlockGenerator(this).addNestedChildrenSuffix(mySubBlocks, null, myTopLevel, myChildren, myChildren.size());

@@ -26,7 +26,7 @@ import java.util.Map;
  * @author nik
  */
 public class JpsModuleManagerImpl implements JpsModuleManager {
-  private final Map<JpsModule, Module> myModules = new HashMap<JpsModule, Module>();
+  private final Map<JpsModule, Module> myModules = new HashMap<>();
 
   @Override
   public Module getModule(JpsModule jpsModule) {

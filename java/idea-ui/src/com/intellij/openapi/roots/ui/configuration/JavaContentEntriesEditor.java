@@ -59,19 +59,14 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     List<ContentEntry> contentEntries = super.addContentEntries(files);
     if (!contentEntries.isEmpty()) {
       final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[contentEntries.size()]);
-      addSourceRoots(myProject, contentEntriesArray, new Runnable() {
-        @Override
-        public void run() {
-          addContentEntryPanels(contentEntriesArray);
-        }
-      });
+      addSourceRoots(myProject, contentEntriesArray, () -> addContentEntryPanels(contentEntriesArray));
     }
     return contentEntries;
   }
 
   private static void addSourceRoots(@NotNull Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
-    final HashMap<ContentEntry, Collection<JavaModuleSourceRoot>> entryToRootMap = new HashMap<ContentEntry, Collection<JavaModuleSourceRoot>>();
-    final Map<File, ContentEntry> fileToEntryMap = new HashMap<File, ContentEntry>();
+    final HashMap<ContentEntry, Collection<JavaModuleSourceRoot>> entryToRootMap = new HashMap<>();
+    final Map<File, ContentEntry> fileToEntryMap = new HashMap<>();
     for (final ContentEntry contentEntry : contentEntries) {
       final VirtualFile file = contentEntry.getFile();
       if (file != null) {
@@ -83,42 +78,33 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     final ProgressWindow progressWindow = new ProgressWindow(true, project);
     final ProgressIndicator progressIndicator = new SmoothProgressAdapter(progressWindow, project);
 
-    final Runnable searchRunnable = new Runnable() {
-      @Override
-      public void run() {
-        final Runnable process = new Runnable() {
-          @Override
-          public void run() {
-            for (final File file : fileToEntryMap.keySet()) {
-              progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
-              final Collection<JavaModuleSourceRoot> roots = JavaSourceRootDetectionUtil.suggestRoots(file);
-              entryToRootMap.put(fileToEntryMap.get(file), roots);
-            }
-          }
-        };
-        progressWindow.setTitle(ProjectBundle.message("module.paths.searching.source.roots.title"));
-        ProgressManager.getInstance().runProcess(process, progressIndicator);
-      }
+    final Runnable searchRunnable = () -> {
+      final Runnable process = () -> {
+        for (final File file : fileToEntryMap.keySet()) {
+          progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
+          final Collection<JavaModuleSourceRoot> roots = JavaSourceRootDetectionUtil.suggestRoots(file);
+          entryToRootMap.put(fileToEntryMap.get(file), roots);
+        }
+      };
+      progressWindow.setTitle(ProjectBundle.message("module.paths.searching.source.roots.title"));
+      ProgressManager.getInstance().runProcess(process, progressIndicator);
     };
 
-    final Runnable addSourcesRunnable = new Runnable() {
-      @Override
-      public void run() {
-        for (final ContentEntry contentEntry : contentEntries) {
-          final Collection<JavaModuleSourceRoot> suggestedRoots = entryToRootMap.get(contentEntry);
-          if (suggestedRoots != null) {
-            for (final JavaModuleSourceRoot suggestedRoot : suggestedRoots) {
-              final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.getDirectory());
-              final VirtualFile fileContent = contentEntry.getFile();
-              if (sourceRoot != null && fileContent != null && VfsUtilCore.isAncestor(fileContent, sourceRoot, false)) {
-                contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getPackagePrefix());
-              }
+    final Runnable addSourcesRunnable = () -> {
+      for (final ContentEntry contentEntry : contentEntries) {
+        final Collection<JavaModuleSourceRoot> suggestedRoots = entryToRootMap.get(contentEntry);
+        if (suggestedRoots != null) {
+          for (final JavaModuleSourceRoot suggestedRoot : suggestedRoots) {
+            final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.getDirectory());
+            final VirtualFile fileContent = contentEntry.getFile();
+            if (sourceRoot != null && fileContent != null && VfsUtilCore.isAncestor(fileContent, sourceRoot, false)) {
+              contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getPackagePrefix());
             }
           }
         }
-        if (finishRunnable != null) {
-          finishRunnable.run();
-        }
+      }
+      if (finishRunnable != null) {
+        finishRunnable.run();
       }
     };
 

@@ -56,7 +56,7 @@ public class RedundantThrowsDeclaration extends BaseJavaBatchLocalInspectionTool
   @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
-    final Set<ProblemDescriptor> problems = new HashSet<ProblemDescriptor>();
+    final Set<ProblemDescriptor> problems = new HashSet<>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         final ProblemDescriptor descriptor = checkExceptionsNeverThrown(reference, manager, isOnTheFly);
@@ -97,8 +97,8 @@ public class RedundantThrowsDeclaration extends BaseJavaBatchLocalInspectionTool
       return null;
     }
 
-    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method);
-    Collection<PsiClassType> unhandled = new HashSet<PsiClassType>(types);
+    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method, false);
+    Collection<PsiClassType> unhandled = new HashSet<>(types);
     if (method.isConstructor()) {
       // there may be field initializer throwing exception
       // that exception must be caught in the constructor

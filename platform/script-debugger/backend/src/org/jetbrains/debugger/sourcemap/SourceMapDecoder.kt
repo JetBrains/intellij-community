@@ -16,6 +16,7 @@
 package org.jetbrains.debugger.sourcemap
 
 import com.google.gson.stream.JsonToken
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtil
@@ -142,6 +143,10 @@ private fun parseMap(reader: JsonReaderEx,
   if (encodedMappings.isNullOrEmpty()) {
     // empty map
     return null
+  }
+
+  if (Registry.`is`("js.debugger.fix.jspm.source.maps", false) && encodedMappings!!.startsWith(";") && file != null && file.endsWith(".ts!transpiled")) {
+    encodedMappings = encodedMappings.substring(1)
   }
 
   if (version != 3) {
@@ -284,32 +289,26 @@ private fun isSeparator(charIterator: CharSequenceIterator): Boolean {
 /**
  * Not mapped to a section in the original source.
  */
-private open class UnmappedEntry internal constructor(private val line: Int, private val column: Int) : MappingEntry() {
-  override fun getGeneratedColumn() = column
+private open class UnmappedEntry(line: Int, column: Int) : MappingEntry {
+  override val generatedColumn = column
 
-  override fun getGeneratedLine() = line
+  override val generatedLine = line
 
-  override fun getSourceLine() = UNMAPPED
+  override val sourceLine = UNMAPPED
 
-  override fun getSourceColumn() = UNMAPPED
+  override val sourceColumn = UNMAPPED
 }
 
 /**
  * Mapped to a section in the original source.
  */
-private open class UnnamedEntry internal constructor(line: Int, column: Int, private val source: Int, private val sourceLine: Int, private val sourceColumn: Int) : UnmappedEntry(line, column) {
-  override fun getSource() = source
-
-  override fun getSourceLine() = sourceLine
-
-  override fun getSourceColumn() = sourceColumn
+private open class UnnamedEntry(line: Int, column: Int, override val source: Int, override val sourceLine: Int, override val sourceColumn: Int) : UnmappedEntry(line, column) {
 }
 
 /**
  * Mapped to a section in the original source, and is associated with a name.
  */
-private class NamedEntry(private val name: String, line: Int, column: Int, source: Int, sourceLine: Int, sourceColumn: Int) : UnnamedEntry(line, column, source, sourceLine, sourceColumn) {
-  override fun getName() = name
+private class NamedEntry(override val name: String, line: Int, column: Int, source: Int, sourceLine: Int, sourceColumn: Int) : UnnamedEntry(line, column, source, sourceLine, sourceColumn) {
 }
 
 // java CharacterIterator is ugly, next() impl, so, we reinvent

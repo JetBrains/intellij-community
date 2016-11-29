@@ -24,14 +24,12 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.VerticalLayout;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,12 +101,17 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     myConflictsPanel.setVisible(0 < myConflictsContainer.getComponentCount());
   }
 
-  T showAndGet(Shortcut shortcut, String id, Keymap keymap, QuickList... lists) {
+  T showAndGet(String id, Keymap keymap, QuickList... lists) {
     myActionId = id;
     myKeymap = keymap;
     myGroup = ActionsTreeUtil.createMainGroup(myProject, keymap, lists, null, false, null);
     fill(myAction, id, getActionPath(id));
-    setShortcut(toShortcut(shortcut));
+    T firstShortcut = null;
+    for (Shortcut shortcut : keymap.getShortcuts(id)) {
+      firstShortcut = toShortcut(shortcut);
+      if (firstShortcut != null) break;
+    }
+    setShortcut(firstShortcut);
     return showAndGet() ? myShortcutPanel.getShortcut() : null;
   }
 
@@ -155,10 +158,6 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
     scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.setViewport(new GradientViewport(myConflictsContainer, JBUI.insets(5), false));
-    if (!Registry.is("ide.scroll.new.layout")) {
-      scroll.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    }
-    scroll.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
     scroll.getVerticalScrollBar().setOpaque(false);
     scroll.getViewport().setOpaque(false);
     scroll.setOpaque(false);

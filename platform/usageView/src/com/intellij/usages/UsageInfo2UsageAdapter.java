@@ -55,19 +55,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
                                                RenameableUsage, TypeSafeDataProvider, UsagePresentation {
-  public static final NotNullFunction<UsageInfo, Usage> CONVERTER = new NotNullFunction<UsageInfo, Usage>() {
-    @Override
-    @NotNull
-    public Usage fun(UsageInfo usageInfo) {
-      return new UsageInfo2UsageAdapter(usageInfo);
-    }
-  };
-  private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = new Comparator<UsageInfo>() {
-    @Override
-    public int compare(UsageInfo o1, UsageInfo o2) {
-      return o1.getNavigationOffset() - o2.getNavigationOffset();
-    }
-  };
+  public static final NotNullFunction<UsageInfo, Usage> CONVERTER = usageInfo -> new UsageInfo2UsageAdapter(usageInfo);
+  private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = (o1, o2) -> o1.getNavigationOffset() - o2.getNavigationOffset();
 
   private final UsageInfo myUsageInfo;
   @NotNull
@@ -141,7 +130,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       chunks = ChunkExtractor.extractChunks(psiFile, this);
     }
 
-    myTextChunks = new SoftReference<TextChunk[]>(chunks);
+    myTextChunks = new SoftReference<>(chunks);
     return chunks;
   }
 
@@ -187,7 +176,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (!isValid()) return;
     Editor editor = openTextEditor(true);
     Segment marker = getFirstSegment();
-    editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
+    if (marker != null) {
+      editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
+    }
   }
 
   @Override
@@ -195,7 +186,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (!isValid()) return;
 
     Segment marker = getFirstSegment();
-    SelectInEditorManager.getInstance(getProject()).selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
+    if (marker != null) {
+      SelectInEditorManager.getInstance(getProject()).selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
+    }
   }
 
   private Segment getFirstSegment() {
@@ -526,7 +519,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
           Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
           if (document != null) {
             ChunkExtractor extractor = ChunkExtractor.getExtractor(file);
-            SmartList<TextChunk> chunks = new SmartList<TextChunk>();
+            SmartList<TextChunk> chunks = new SmartList<>();
             extractor.createTextChunks(
               this,
               document.getCharsSequence(),

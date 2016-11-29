@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,11 +64,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
   @NonNls private static final String SDK_TAB = "sdkTab";
 
   private Sdk mySdk;
-  private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<OrderRootType, SdkPathEditor>();
+  private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<>();
 
   private TextFieldWithBrowseButton myHomeComponent;
-  private final Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<SdkType, AdditionalDataConfigurable>();
-  private final Map<AdditionalDataConfigurable, JComponent> myAdditionalDataComponents = new HashMap<AdditionalDataConfigurable, JComponent>();
+  private final Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<>();
+  private final Map<AdditionalDataConfigurable, JComponent> myAdditionalDataComponents = new HashMap<>();
   private JPanel myAdditionalDataPanel;
   private final SdkModificator myEditedSdkModificator = new EditedSdkModificator();
 
@@ -153,13 +154,17 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myHomeFieldLabel = new JLabel(getHomeFieldLabelValue());
     final int leftInset = 10;
     final int rightInset = 10;
-    myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2, leftInset, 2, 2), 0, 0));
-    myMainPanel.add(myHomeComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 2, rightInset), 0, 0));
+    myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                             JBUI.insets(2, leftInset, 2, 2), 0, 0));
+    myMainPanel.add(myHomeComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                                                            JBUI.insets(2, 2, 2, rightInset), 0, 0));
 
     myAdditionalDataPanel = new JPanel(new BorderLayout());
-    myMainPanel.add(myAdditionalDataPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, leftInset, 0, rightInset), 0, 0));
+    myMainPanel.add(myAdditionalDataPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                                                  JBUI.insets(2, leftInset, 0, rightInset), 0, 0));
 
-    myMainPanel.add(myTabbedPane.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
+    myMainPanel.add(myTabbedPane.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                                                        JBUI.insetsTop(2), 0, 0));
   }
 
   protected TextFieldWithBrowseButton createHomeComponent() {
@@ -211,12 +216,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       for (SdkPathEditor pathEditor : myPathEditors.values()) {
         pathEditor.apply(sdkModificator);
       }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() { // fix SCR #29193
-        @Override
-        public void run() {
-          sdkModificator.commitChanges();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
       final AdditionalDataConfigurable configurable = getAdditionalDataConfigurable();
       if (configurable != null) {
         configurable.apply();
@@ -295,12 +295,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private void doSelectHomePath(){
     final SdkType sdkType = (SdkType)mySdk.getSdkType();
-    SdkConfigurationUtil.selectSdkHome(sdkType, new Consumer<String>() {
-      @Override
-      public void consume(final String path) {
-        doSetHomePath(path, sdkType);
-      }
-    });
+    SdkConfigurationUtil.selectSdkHome(sdkType, path -> doSetHomePath(path, sdkType));
 
   }
 
@@ -346,7 +341,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     final String suggestedName = ((SdkType) mySdk.getSdkType()).suggestSdkName(currentName , homePath);
     if (Comparing.equal(currentName, suggestedName)) return currentName;
     String newSdkName = suggestedName;
-    final Set<String> allNames = new HashSet<String>();
+    final Set<String> allNames = new HashSet<>();
     Sdk[] sdks = mySdkModel.getSdks();
     for (Sdk sdk : sdks) {
       allNames.add(sdk.getName());

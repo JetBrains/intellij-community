@@ -55,13 +55,7 @@ public abstract class ElementPresentationManager {
     }
   };
 
-  private final static Function<Object, String> DEFAULT_NAMER = new Function<Object, String>() {
-    @Override
-    @Nullable
-    public String fun(final Object element) {
-      return getElementName(element);
-    }
-  };
+  private final static Function<Object, String> DEFAULT_NAMER = element -> getElementName(element);
 
   public static ElementPresentationManager getInstance() {
     return ServiceManager.getService(ElementPresentationManager.class);
@@ -92,17 +86,13 @@ public abstract class ElementPresentationManager {
   public abstract <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags);
 
 
-  private static final List<Function<Object, String>> ourNameProviders = new ArrayList<Function<Object, String>>();
-  private static final List<Function<Object, String>> ourDocumentationProviders = new ArrayList<Function<Object, String>>();
-  private static final List<Function<Object, Icon>> ourIconProviders = new ArrayList<Function<Object, Icon>>();
+  private static final List<Function<Object, String>> ourNameProviders = new ArrayList<>();
+  private static final List<Function<Object, String>> ourDocumentationProviders = new ArrayList<>();
+  private static final List<Function<Object, Icon>> ourIconProviders = new ArrayList<>();
 
   static {
-    ourIconProviders.add(new NullableFunction<Object, Icon>() {
-      @Override
-      public Icon fun(final Object o) {
-        return o instanceof Iconable ? ((Iconable)o).getIcon(Iconable.ICON_FLAG_READ_STATUS) : null;
-      }
-    });
+    ourIconProviders.add(
+      (NullableFunction<Object, Icon>)o -> o instanceof Iconable ? ((Iconable)o).getIcon(Iconable.ICON_FLAG_READ_STATUS) : null);
   }
 
   /**
@@ -119,20 +109,10 @@ public abstract class ElementPresentationManager {
 
 
   public static <T>NullableFunction<T, String> NAMER() {
-    return new NullableFunction<T, String>() {
-      @Override
-      public String fun(final T o) {
-        return getElementName(o);
-      }
-    };
+    return o -> getElementName(o);
   }
 
-  public static final NullableFunction<Object, String> NAMER = new NullableFunction<Object, String>() {
-    @Override
-    public String fun(final Object o) {
-      return getElementName(o);
-    }
-  };
+  public static final NullableFunction<Object, String> NAMER = o -> getElementName(o);
   public static <T> NullableFunction<T, String> namer() {
     //noinspection unchecked
     return (NullableFunction<T, String>)NAMER;
@@ -272,12 +252,7 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   public static <T> T findByName(Collection<T> collection, final String name) {
-    return ContainerUtil.find(collection, new Condition<T>() {
-      @Override
-      public boolean value(final T object) {
-        return Comparing.equal(name, getElementName(object), true);
-      }
-    });
+    return ContainerUtil.find(collection, object -> Comparing.equal(name, getElementName(object), true));
   }
 
 }

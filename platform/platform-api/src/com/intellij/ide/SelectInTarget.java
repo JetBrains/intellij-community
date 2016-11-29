@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nullable;
 
 public interface SelectInTarget {
-  ExtensionPointName<SelectInTarget> EP_NAME = new ExtensionPointName<SelectInTarget>("com.intellij.selectInTarget");
+  ExtensionPointName<SelectInTarget> EP_NAME = new ExtensionPointName<>("com.intellij.selectInTarget");
 
   @Override
   String toString();
@@ -33,15 +33,21 @@ public interface SelectInTarget {
 
   /** Tool window this target is supposed to select in */
   @Nullable
-  String getToolWindowId();
+  default String getToolWindowId() {
+    return null;
+  }
 
   /** aux view id specific for tool window, e.g. Project/Packages/J2EE tab inside project View */
   @Nullable
-  String getMinorViewId();
+  default String getMinorViewId() {
+    return null;
+  }
 
   /**
    * Weight is used to provide an order in SelectIn popup. Lesser weights come first.
    * @return weight of this particular target.
    */
-  float getWeight();
+  default float getWeight() {
+    return 0;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyTypeCheckerInspection/";
 
   private void doTest() {
+    myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyTypeCheckerInspection.class);
     myFixture.checkHighlighting(true, false, true);
@@ -148,6 +149,11 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
 
   // PY-6606
   public void testBuiltinBaseClass() {
+    doTest();
+  }
+
+  // PY-18096
+  public void testNamedTupleBaseClass() {
     doTest();
   }
 
@@ -278,6 +284,85 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
 
   // PY-18275
   public void testStrFormat() {
+    doTest();
+  }
+
+  // PY-9924
+  public void testTupleGetItemWithSlice() {
+    doTest();
+  }
+
+  // PY-9924
+  public void testListGetItemWithSlice() {
+    doTest();
+  }
+
+  // PY-20460
+  public void testStringGetItemWithSlice() {
+    doTest();
+  }
+
+  // PY-20460
+  public void testUnicodeGetItemWithSlice() {
+    doTest();
+  }
+
+  // PY-19884
+  public void testAbsSetAndMutableSet() {
+    doTest();
+  }
+
+  // PY-19884
+  public void testSetMethods() {
+    doTest();
+  }
+
+  // PY-11943
+  public void testMutableMapping() {
+    doTest();
+  }
+
+  // PY-16055
+  public void testFunctionReturnType() {
+    doTest();
+  }
+
+  // PY-19522
+  public void testCsvRegisterDialect() {
+    doMultiFileTest();
+  }
+
+  // PY-20364
+  public void testActualBasestringExpectedUnionStrUnicode() {
+    doTest();
+  }
+
+  // PY-21083
+  public void testFloatFromhex() {
+    doTest();
+  }
+
+  // PY-20073
+  public void testMapArgumentsInOppositeOrder() {
+    doTest();
+  }
+
+  public void testPositionalArguments() {
+    doTest();
+  }
+
+  // PY-19723
+  public void testKeywordArguments() {
+    doTest();
+  }
+
+  // PY-21350
+  public void testBuiltinInputPy2() {
+    doTest();
+  }
+
+  // PY-21350
+  public void testBuiltinRawInput() {
     doTest();
   }
 }

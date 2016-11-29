@@ -16,15 +16,18 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.application.options.PathMacrosCollector;
+import com.intellij.configurationStore.StateStorageBase;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.StateStorageBase;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageManagerListener;
+import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -33,6 +36,7 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl.ModuleRootManagerState;
 import com.intellij.openapi.roots.impl.RootModelImpl;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,11 +53,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 // Boolean - false as not loaded, true as loaded
 public final class ClasspathStorage extends StateStorageBase<Boolean> {
+  private static final Key<Boolean> ERROR_NOTIFIED_KEY =Key.create("ClasspathStorage.ERROR_NOTIFIED_KEY"); 
   private static final Logger LOG = Logger.getInstance(ClasspathStorage.class);
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
@@ -68,9 +74,18 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
     ClasspathStorageProvider provider = getProvider(storageType);
     if (provider == null) {
-      throw new IllegalStateException("Classpath storage provider not found, please ensure that Eclipse plugin is installed");
+      if (module.getUserData(ERROR_NOTIFIED_KEY) == null) {
+        Notification n = new Notification(StorageUtil.NOTIFICATION_GROUP_ID, "Cannot load module '" + module.getName() + "'",
+                                          "Support for " + storageType + " format is not installed.", NotificationType.ERROR);
+        n.notify(module.getProject());
+        module.putUserData(ERROR_NOTIFIED_KEY, Boolean.TRUE);
+        LOG.info("Classpath storage provider " + storageType + " not found");
+      }
+      
+      myConverter = new MissingClasspathConverter();
+    } else {
+      myConverter = provider.createConverter(module);
     }
-    myConverter = provider.createConverter(module);
 
     myPathMacroSubstitutor = storageManager.getMacroSubstitutor();
 
@@ -252,7 +267,13 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
     else {
       module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, storageId);
-      module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, provider.getContentRoot(model));
+      String root = provider.getContentRoot(model);
+      if (root == null) {
+        module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
+      }
+      else {
+        module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, root);
+      }
     }
   }
 
@@ -260,6 +281,34 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
     if (provider != null) {
       provider.modulePathChanged(module, newPath);
+    }
+  }
+
+  private static class MissingClasspathConverter implements ClasspathStorageProvider.ClasspathConverter {
+    @NotNull
+    @Override
+    public List<String> getFilePaths() {
+      return Collections.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public ExternalizationSession startExternalization() {
+      return new ExternalizationSession() {
+        @Override
+        public void setState(@Nullable Object component, @NotNull String componentName, @NotNull Object state) {
+        }
+
+        @Nullable
+        @Override
+        public SaveSession createSaveSession() {
+          return null;
+        }
+      };
+    }
+
+    @Override
+    public void readClasspath(@NotNull ModifiableRootModel model) throws IOException {
     }
   }
 }

@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class TestDataRelatedItem extends GotoRelatedItem{
   
-  private final List<String> myTestDataFiles = new ArrayList<String>();
+  private final List<String> myTestDataFiles = new ArrayList<>();
   private final Editor myEditor;
   private final PsiMethod myMethod;
 

@@ -60,15 +60,12 @@ public class NonThreadSafeLazyInitializationInspection extends NonThreadSafeLazy
       return false;
     }
     final int[] writeCount = new int[1];
-    return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        final PsiElement element = reference.getElement();
-        if (!(element instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
-          return true;
-        }
-        return ++writeCount[0] != 2;
+    return ReferencesSearch.search(field).forEach(reference -> {
+      final PsiElement element = reference.getElement();
+      if (!(element instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+        return true;
       }
+      return ++writeCount[0] != 2;
     });
   }
 
@@ -185,7 +182,7 @@ public class NonThreadSafeLazyInitializationInspection extends NonThreadSafeLazy
         @Override
         public void pass(PsiElement substitutedElement) {
           final MemberInplaceRenamer renamer = new MemberInplaceRenamer(elementToRename, substitutedElement, editor);
-          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>(Arrays.asList(suggestedNames));
+          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(Arrays.asList(suggestedNames));
           renamer.performInplaceRefactoring(nameSuggestions);
         }
       });
@@ -203,14 +200,8 @@ public class NonThreadSafeLazyInitializationInspection extends NonThreadSafeLazy
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("introduce.holder.class.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("introduce.holder.class.quickfix");
     }
   }
 }

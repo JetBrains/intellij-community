@@ -43,6 +43,9 @@ public class ScalaCompileOptionsData implements Serializable {
   private ScalaForkOptions forkOptions;
   private boolean useAnt;
 
+  /**
+   * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
+   */
   public boolean isUseCompileDaemon() {
     return useCompileDaemon;
   }
@@ -51,6 +54,9 @@ public class ScalaCompileOptionsData implements Serializable {
     this.useCompileDaemon = useCompileDaemon;
   }
 
+  /**
+   * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
+   */
   public String getDaemonServer() {
     return daemonServer;
   }
@@ -155,6 +161,9 @@ public class ScalaCompileOptionsData implements Serializable {
     this.loggingPhases = loggingPhases;
   }
 
+  /**
+   * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
+   */
   public boolean isFork() {
     return fork;
   }
@@ -163,6 +172,9 @@ public class ScalaCompileOptionsData implements Serializable {
     this.fork = fork;
   }
 
+  /**
+   * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
+   */
   public boolean isUseAnt() {
     return useAnt;
   }

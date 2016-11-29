@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.RangeMarker;
@@ -44,11 +41,11 @@ public class HighlightInfoComposite extends HighlightInfo {
     List<Pair<IntentionActionDescriptor, TextRange>> ranges = EMPTY;
     for (HighlightInfo info : infos) {
       if (info.quickFixActionMarkers != null) {
-        if (markers == EMPTY) markers = new ArrayList<Pair<IntentionActionDescriptor,RangeMarker>>();
+        if (markers == EMPTY) markers = new ArrayList<>();
         markers.addAll(info.quickFixActionMarkers);
       }
       if (info.quickFixActionRanges != null) {
-        if (ranges == EMPTY) ranges = new ArrayList<Pair<IntentionActionDescriptor, TextRange>>();
+        if (ranges == EMPTY) ranges = new ArrayList<>();
         ranges.addAll(info.quickFixActionRanges);
       }
     }
@@ -77,7 +74,7 @@ public class HighlightInfoComposite extends HighlightInfo {
   }
 
   @Nullable
-  private static String createCompositeTooltip(List<HighlightInfo> infos) {
+  private static String createCompositeTooltip(@NotNull List<HighlightInfo> infos) {
     StringBuilder result = new StringBuilder();
     for (HighlightInfo info : infos) {
       String toolTip = info.getToolTip();

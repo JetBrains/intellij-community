@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -54,14 +53,14 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   private static Set<Module> buildDependents(Module module) {
-    Set<Module> result = new THashSet<Module>();
+    Set<Module> result = new THashSet<>();
     result.add(module);
     
-    Set<Module> processedExporting = new THashSet<Module>();
+    Set<Module> processedExporting = new THashSet<>();
 
     ModuleIndex index = getModuleIndex(module.getProject());
 
-    Queue<Module> walkingQueue = new Queue<Module>(10);
+    Queue<Module> walkingQueue = new Queue<>(10);
     walkingQueue.addLast(module);
 
     while (!walkingQueue.isEmpty()) {
@@ -84,25 +83,21 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   private static ModuleIndex getModuleIndex(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<ModuleIndex>() {
-        @Nullable
-        @Override
-        public Result<ModuleIndex> compute() {
-          ModuleIndex index = new ModuleIndex();
-          for (Module module : ModuleManager.getInstance(project).getModules()) {
-            for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-              if (orderEntry instanceof ModuleOrderEntry) {
-                Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
-                if (referenced != null) {
-                  MultiMap<Module, Module> map = ((ModuleOrderEntry)orderEntry).isExported() ? index.exportingUsages : index.plainUsages;
-                  map.putValue(referenced, module);
-                }
-              }
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      ModuleIndex index = new ModuleIndex();
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+          if (orderEntry instanceof ModuleOrderEntry) {
+            Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
+            if (referenced != null) {
+              MultiMap<Module, Module> map = ((ModuleOrderEntry)orderEntry).isExported() ? index.exportingUsages : index.plainUsages;
+              map.putValue(referenced, module);
             }
           }
-          return Result.create(index, ProjectRootManager.getInstance(project));
         }
-      });
+      }
+      return CachedValueProvider.Result.create(index, ProjectRootManager.getInstance(project));
+    });
   }
 
   @Override
@@ -113,7 +108,7 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   boolean contains(@NotNull VirtualFile file, boolean myOnlyTests) {
     Module moduleOfFile = myProjectFileIndex.getModuleForFile(file);
     if (moduleOfFile == null || !myModules.contains(moduleOfFile)) return false;
-    if (myOnlyTests && !myProjectFileIndex.isInTestSourceContent(file)) return false;
+    if (myOnlyTests && !TestSourcesFilter.isTestSources(file, moduleOfFile.getProject())) return false;
     return myProjectScope.contains(file);
   }
 

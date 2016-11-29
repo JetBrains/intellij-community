@@ -97,6 +97,13 @@ public class CodeDocumentationUtil {
   @NotNull
   public static CommentContext tryParseCommentContext(@NotNull PsiFile file, @NotNull CharSequence chars, int offset, int lineStartOffset) {
     Commenter langCommenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilCore.getLanguageAtOffset(file, offset));
+    return tryParseCommentContext(langCommenter, chars, offset, lineStartOffset);
+  }
+
+  static CommentContext tryParseCommentContext(@Nullable Commenter langCommenter,
+                                               @NotNull CharSequence chars,
+                                               int offset,
+                                               int lineStartOffset) {
     final boolean isInsideCommentLikeCode = langCommenter instanceof CodeDocumentationAwareCommenter;
     if (!isInsideCommentLikeCode) {
       return new CommentContext();

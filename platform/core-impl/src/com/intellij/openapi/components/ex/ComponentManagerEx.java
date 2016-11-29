@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,9 @@ package com.intellij.openapi.components.ex;
 import com.intellij.openapi.components.ComponentManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * @author max
  */
 public interface ComponentManagerEx extends ComponentManager {
   void initializeComponent(@NotNull Object component, boolean service);
-
-  /**
-   * Gets all components whose implementation class is derived from <code>baseClass</code>.
-   *
-   * @return array of components
-   * @deprecated use extension points instead
-   */
-  @NotNull
-  <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass);
 }

@@ -16,9 +16,7 @@
 package com.jetbrains.python.pyi;
 
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.inspections.PyStatementEffectInspection;
-import com.jetbrains.python.inspections.PyUnusedLocalInspection;
-import com.jetbrains.python.inspections.PythonVisitorFilter;
+import com.jetbrains.python.inspections.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
 public class PyiVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {
-    if (visitorClass == PyUnusedLocalInspection.class || visitorClass == PyStatementEffectInspection.class) {
+    if (visitorClass == PyUnusedLocalInspection.class || visitorClass == PyStatementEffectInspection.class ||
+        visitorClass == PyCompatibilityInspection.class || visitorClass == PyMissingOrEmptyDocstringInspection.class ||
+        visitorClass == PyTypeCheckerInspection.class) {
       return false;
     }
     return true;

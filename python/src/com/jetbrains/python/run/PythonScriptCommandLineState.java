@@ -23,6 +23,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,14 +32,18 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PyConsoleType;
-import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.PydevConsoleRunnerImpl;
+import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
 
 /**
  * @author yole
@@ -51,7 +56,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     myConfig = runConfiguration;
   }
 
-  @NotNull
   @Override
   public ExecutionResult execute(Executor executor, final CommandLinePatcher... patchers) throws ExecutionException {
     if (myConfig.showCommandLineAfterwards()) {
@@ -64,13 +68,20 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         }));
       }
 
-      PydevConsoleRunner runner =
+      PythonScriptWithConsoleRunner runner =
         new PythonScriptWithConsoleRunner(myConfig.getProject(), myConfig.getSdk(), PyConsoleType.PYTHON, myConfig.getWorkingDirectory(),
-                                          myConfig.getEnvs(), patchers);
+                                          myConfig.getEnvs(), patchers,
+                                          PyConsoleOptions.getInstance(myConfig.getProject()).getPythonConsoleSettings());
 
+      runner.setEnableAfterConnection(false);
       runner.runSync();
-
+      // runner.getProcessHandler() would be null if execution error occurred
+      if (runner.getProcessHandler() == null) {
+        return null;
+      }
+      runner.getPydevConsoleCommunication().setConsoleView(runner.getConsoleView());
       List<AnAction> actions = Lists.newArrayList(createActions(runner.getConsoleView(), runner.getProcessHandler()));
+      actions.add(new ShowVarsAction(runner.getConsoleView(), runner.getPydevConsoleCommunication()));
 
       return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler(), actions.toArray(new AnAction[actions.size()]));
     }
@@ -103,9 +114,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   /**
    * @author traff
    */
-  public class PythonScriptWithConsoleRunner extends PydevConsoleRunner {
+  public class PythonScriptWithConsoleRunner extends PydevConsoleRunnerImpl {
 
     private CommandLinePatcher[] myPatchers;
+    private String PYDEV_RUN_IN_CONSOLE_PY = "pydev/pydev_run_in_console.py";
 
     public PythonScriptWithConsoleRunner(@NotNull Project project,
                                          @NotNull Sdk sdk,
@@ -113,15 +125,21 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                          @Nullable String workingDir,
                                          Map<String, String> environmentVariables,
                                          CommandLinePatcher[] patchers,
+                                         PyConsoleOptions.PyConsoleSettings consoleSettings,
                                          String... statementsToExecute) {
-      super(project, sdk, consoleType, workingDir, environmentVariables, statementsToExecute);
+      super(project, sdk, consoleType, workingDir, environmentVariables, consoleSettings, (s) -> {}, statementsToExecute);
       myPatchers = patchers;
     }
 
     @Override
     protected void createContentDescriptorAndActions() {
-      AnAction a = createConsoleExecAction(myConsoleExecuteActionHandler);
+      AnAction a = new ConsoleExecuteAction(super.getConsoleView(), myConsoleExecuteActionHandler,
+                                            myConsoleExecuteActionHandler.getEmptyExecuteAction(), myConsoleExecuteActionHandler);
       registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsoleEditor().getComponent());
+    }
+
+    protected String getRunnerFileFromHelpers() {
+      return PYDEV_RUN_IN_CONSOLE_PY;
     }
 
     @Override

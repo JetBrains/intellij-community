@@ -15,9 +15,9 @@
  */
 package com.intellij.usageView;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.lang.LangBundle;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +31,14 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
       if (element instanceof PsiThrowStatement) {
         return UsageViewBundle.message("usage.target.exception");
       }
+      else if (element instanceof PsiAnonymousClass) {
+        String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();
+        return "anonymous " + StringUtil.notNullize(name, "class");
+      }
+      else if (element instanceof PsiClassInitializer) {
+        boolean isStatic = ((PsiClassInitializer)element).hasModifierProperty(PsiModifier.STATIC);
+        return isStatic ? "<clinit>" : "<init>";
+      }
     }
 
     if (location instanceof UsageViewLongNameLocation) {
@@ -39,7 +47,8 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
       }
       else if (element instanceof PsiClass) {
         if (element instanceof PsiAnonymousClass) {
-          return LangBundle.message("java.terms.anonymous.class");
+          String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();
+          return "anonymous " + StringUtil.notNullize(name, "class");
         }
         else {
           String ret = ((PsiClass)element).getQualifiedName(); // It happens for local classes

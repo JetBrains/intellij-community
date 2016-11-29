@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     editorApp("Appearance: " + messageApp("checkbox.use.block.caret"), "IS_BLOCK_CURSOR"),
     editorApp("Appearance: Show right margin", "IS_RIGHT_MARGIN_SHOWN"),
     editorCode("Appearance: " + messageApp("checkbox.show.method.separators"), "SHOW_METHOD_SEPARATORS"),
+    editorApp("Appearance: " + messageApp("checkbox.show.parameter.name.hints"), "SHOW_PARAMETER_NAME_HINTS"),
     editorApp("Appearance: " + messageApp("checkbox.show.whitespaces"), "IS_WHITESPACES_SHOWN"),
     editorApp("Appearance: Show leading whitespaces", "IS_LEADING_WHITESPACES_SHOWN"),
     editorApp("Appearance: Show inner whitespaces", "IS_INNER_WHITESPACES_SHOWN"),
@@ -83,7 +84,8 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
 
   public static class Ex extends OptionsTopHitProvider implements CoveredByToggleActions {
     private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
-      editorApp("Appearance: " + messageApp("checkbox.show.line.numbers"), "ARE_LINE_NUMBERS_SHOWN")
+      editorApp("Appearance: " + messageApp("checkbox.show.line.numbers"), "ARE_LINE_NUMBERS_SHOWN"),
+      editorApp("Appearance: " + messageApp("checkbox.show.gutter.icons"), "ARE_GUTTER_ICONS_SHOWN")
     );
 
     @NotNull

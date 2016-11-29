@@ -24,9 +24,11 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.inline.JavaInlineActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
@@ -49,21 +51,9 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
 
   public void inlineElement(final Project project, final Editor editor, final PsiElement element) {
     PsiClass superClass = (PsiClass) element;
-    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search((PsiClass)element).findAll();
     if (!superClass.getManager().isInProject(superClass)) {
       CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline non-project class", REFACTORING_NAME, null);
       return;
-    }
-
-    for (PsiClass inheritor : inheritors) {
-      if (PsiTreeUtil.isAncestor(superClass, inheritor, false)) {
-        CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline into the inner class. Move \'" + inheritor.getName() + "\' to upper level", REFACTORING_NAME, null);
-        return;
-      }
-      if (inheritor instanceof PsiAnonymousClass) {
-        CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline into anonymous class.", REFACTORING_NAME, null);
-        return;
-      }
     }
 
     PsiClass chosen = null;
@@ -76,13 +66,13 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
           final PsiElement parent = referenceElement.getParent();
           if (parent instanceof PsiReferenceList) {
             final PsiElement gParent = parent.getParent();
-            if (gParent instanceof PsiClass && inheritors.contains(gParent)) {
+            if (gParent instanceof PsiClass) {
               chosen = (PsiClass)gParent;
             }
           }
         }
       }
     }
-    new InlineSuperClassRefactoringDialog(project, superClass, chosen, inheritors.toArray(new PsiClass[inheritors.size()])).show();
+    new InlineSuperClassRefactoringDialog(project, superClass, chosen).show();
   }
 }

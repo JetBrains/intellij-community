@@ -35,7 +35,7 @@ public abstract class DependenciesBuilder {
   private final Project myProject;
   private final AnalysisScope myScope;
   private final AnalysisScope myScopeOfInterest;
-  private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
+  private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<>();
   protected int myTotalFileCount;
   protected int myFileCount = 0;
   protected int myTransitive = 0;
@@ -92,7 +92,7 @@ public abstract class DependenciesBuilder {
   public abstract void analyze();
 
   public Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> getIllegalDependencies(){
-    Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> result = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
+    Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> result = new HashMap<>();
     DependencyValidationManager validator = DependencyValidationManager.getInstance(myProject);
     for (PsiFile file : getDirectDependencies().keySet()) {
       Set<PsiFile> deps = getDirectDependencies().get(file);
@@ -103,12 +103,12 @@ public abstract class DependenciesBuilder {
                                     validator.getViolatorDependencyRule(file, dependency);
         if (rule != null) {
           if (illegal == null) {
-            illegal = new HashMap<DependencyRule, Set<PsiFile>>();
+            illegal = new HashMap<>();
             result.put(file, illegal);
           }
           Set<PsiFile> illegalFilesByRule = illegal.get(rule);
           if (illegalFilesByRule == null) {
-            illegalFilesByRule = new HashSet<PsiFile>();
+            illegalFilesByRule = new HashSet<>();
           }
           illegalFilesByRule.add(dependency);
           illegal.put(rule, illegalFilesByRule);
@@ -119,15 +119,15 @@ public abstract class DependenciesBuilder {
   }
 
   public List<List<PsiFile>> findPaths(PsiFile from, PsiFile to) {
-    return findPaths(from, to, new HashSet<PsiFile>());
+    return findPaths(from, to, new HashSet<>());
   }
 
   private List<List<PsiFile>> findPaths(PsiFile from, PsiFile to, Set<PsiFile> processed) {
-    final List<List<PsiFile>> result = new ArrayList<List<PsiFile>>();
+    final List<List<PsiFile>> result = new ArrayList<>();
     final Set<PsiFile> reachable = getDirectDependencies().get(from);
     if (reachable != null) {
       if (reachable.contains(to)) {
-        result.add(new ArrayList<PsiFile>());
+        result.add(new ArrayList<>());
         return result;
       }
       if (processed.add(from)) {

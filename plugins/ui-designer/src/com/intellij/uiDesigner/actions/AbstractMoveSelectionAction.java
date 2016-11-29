@@ -67,8 +67,8 @@ abstract class AbstractMoveSelectionAction extends AnAction implements DumbAware
     // 1. We need to get coordinates of all editor's component in the same
     // coordinate system. For example, in the RadRootContainer rootContainerDelegee's coordinate system.
 
-    final ArrayList<RadComponent> components = new ArrayList<RadComponent>();
-    final ArrayList<Point> points = new ArrayList<Point>();
+    final ArrayList<RadComponent> components = new ArrayList<>();
+    final ArrayList<Point> points = new ArrayList<>();
     final RadComponent selectedComponent1 = selectedComponent;
     FormEditingUtil.iterate(
       myEditor.getRootContainer(),
@@ -138,7 +138,7 @@ abstract class AbstractMoveSelectionAction extends AnAction implements DumbAware
   private void moveToFirstComponent(final JComponent rootContainerDelegee) {
     final int[] minX = new int[]{Integer.MAX_VALUE};
     final int[] minY = new int[]{Integer.MAX_VALUE};
-    final Ref<RadComponent> componentToBeSelected = new Ref<RadComponent>();
+    final Ref<RadComponent> componentToBeSelected = new Ref<>();
     FormEditingUtil.iterate(
       myEditor.getRootContainer(),
       new FormEditingUtil.ComponentVisitor<RadComponent>() {

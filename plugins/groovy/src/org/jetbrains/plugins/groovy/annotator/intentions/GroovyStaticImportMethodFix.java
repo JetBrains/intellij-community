@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.MethodCellRenderer;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,11 +108,11 @@ public class GroovyStaticImportMethodFix extends Intention {
     GrArgumentList argumentList = element.getArgumentList();
     String name = reference.getReferenceName();
 
-    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    ArrayList<PsiMethod> list = new ArrayList<>();
     if (name == null) return list;
     GlobalSearchScope scope = element.getResolveScope();
     PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 20);
-    List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
+    List<PsiMethod> applicableList = new ArrayList<>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       if (JavaCompletionUtil.isInExcludedPackage(method, false)) continue;
@@ -135,9 +133,7 @@ public class GroovyStaticImportMethodFix extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    final PsiFile file = element.getContainingFile();
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     if (getCandidates().size() == 1) {
       final PsiMethod toImport = getCandidates().get(0);
       doImport(toImport);
@@ -159,27 +155,17 @@ public class GroovyStaticImportMethodFix extends Intention {
   }
 
   private void doImport(final PsiMethod toImport) {
-    CommandProcessor.getInstance().executeCommand(toImport.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        AccessToken accessToken = WriteAction.start();
-
-        try {
-          try {
-            GrMethodCall element = myMethodCall.getElement();
-            if (element != null) {
-              getMethodExpression(element).bindToElementViaStaticImport(toImport);
-            }
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-        finally {
-          accessToken.finish();
+    CommandProcessor.getInstance().executeCommand(toImport.getProject(), () -> WriteAction.run(() -> {
+      try {
+        GrMethodCall element = myMethodCall.getElement();
+        if (element != null) {
+          getMethodExpression(element).bindToElementViaStaticImport(toImport);
         }
       }
-    }, getText(), this);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), getText(), this);
 
   }
 
@@ -189,14 +175,11 @@ public class GroovyStaticImportMethodFix extends Intention {
     new PopupChooserBuilder(list).
       setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).
       setMovable(true).
-      setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          PsiMethod selectedValue = (PsiMethod)list.getSelectedValue();
-          if (selectedValue == null) return;
-          LOG.assertTrue(selectedValue.isValid());
-          doImport(selectedValue);
-        }
+      setItemChoosenCallback(() -> {
+        PsiMethod selectedValue = (PsiMethod)list.getSelectedValue();
+        if (selectedValue == null) return;
+        LOG.assertTrue(selectedValue.isValid());
+        doImport(selectedValue);
       }).createPopup().
       showInBestPositionFor(editor);
   }

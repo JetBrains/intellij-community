@@ -35,13 +35,8 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceNotEqOperatorQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("INTN.replace.noteq.operator");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("INTN.replace.noteq.operator");
   }
 
   @Override

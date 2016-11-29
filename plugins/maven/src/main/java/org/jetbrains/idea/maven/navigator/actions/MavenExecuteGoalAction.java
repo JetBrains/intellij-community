@@ -113,7 +113,7 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
     generalSettings.setMavenHome(mavenHome.getPath());
 
     MavenRunnerSettings runnerSettings = MavenRunner.getInstance(project).getSettings().clone();
-    runnerSettings.setMavenProperties(new LinkedHashMap<String, String>());
+    runnerSettings.setMavenProperties(new LinkedHashMap<>());
     runnerSettings.setSkipTests(false);
 
     MavenRunConfigurationType.runConfiguration(project, parameters, generalSettings, runnerSettings, null);

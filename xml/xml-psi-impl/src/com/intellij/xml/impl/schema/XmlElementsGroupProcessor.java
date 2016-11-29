@@ -25,7 +25,7 @@ import java.util.Stack;
  */
 public class XmlElementsGroupProcessor extends XmlSchemaTagsProcessor {
 
-  final Stack<XmlElementsGroup> myGroups = new Stack<XmlElementsGroup>();
+  final Stack<XmlElementsGroup> myGroups = new Stack<>();
 
   public static XmlElementsGroup computeGroups(XmlNSDescriptorImpl descriptor, XmlTag tag) {
     XmlElementsGroupProcessor processor = new XmlElementsGroupProcessor(descriptor);

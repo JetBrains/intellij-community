@@ -169,18 +169,14 @@ public class JdkChooserPanel extends JPanel {
       final Collection<Sdk> collection = projectJdksModel.getProjectSdks().values();
       jdks = getCompatibleJdks(type, collection);
     }
-    Arrays.sort(jdks, new Comparator<Sdk>() {
-      public int compare(final Sdk o1, final Sdk o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    Arrays.sort(jdks, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     for (Sdk jdk : jdks) {
       myListModel.addElement(jdk);
     }
   }
 
   private Sdk[] getCompatibleJdks(final @Nullable SdkType type, final Collection<Sdk> collection) {
-    final Set<Sdk> compatibleJdks = new HashSet<Sdk>();
+    final Set<Sdk> compatibleJdks = new HashSet<>();
     for (Sdk projectJdk : collection) {
       if (isCompatibleJdk(projectJdk, type)) {
         compatibleJdks.add(projectJdk);
@@ -243,11 +239,7 @@ public class JdkChooserPanel extends JPanel {
     if (jdk == null) {
       return null;
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ProjectRootManager.getInstance(project).setProjectSdk(jdk);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(project).setProjectSdk(jdk));
     return jdk;
   }
 

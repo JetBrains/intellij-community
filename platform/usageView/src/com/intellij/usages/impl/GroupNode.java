@@ -41,10 +41,10 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private final Object lock = new Object();
   private final UsageGroup myGroup;
   private final int myRuleIndex;
-  private final Map<UsageGroup, GroupNode> mySubgroupNodes = new THashMap<UsageGroup, GroupNode>();
-  private final List<UsageNode> myUsageNodes = new SmartList<UsageNode>();
+  private final Map<UsageGroup, GroupNode> mySubgroupNodes = new THashMap<>();
+  private final List<UsageNode> myUsageNodes = new SmartList<>();
   @NotNull private final UsageViewTreeModelBuilder myUsageTreeModel;
-  private volatile int myRecursiveUsageCount = 0;
+  private volatile int myRecursiveUsageCount;
 
   public GroupNode(@Nullable UsageGroup group, int ruleIndex, @NotNull UsageViewTreeModelBuilder treeModel) {
     super(treeModel);
@@ -67,7 +67,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     if (children == null) {
       return result;
     }
-    return result + children.subList(0, Math.min(10, children.size())).toString();
+    return result + children.subList(0, Math.min(10, children.size()));
   }
 
   public GroupNode addGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<Runnable> edtQueue) {
@@ -85,12 +85,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   void addNode(@NotNull final DefaultMutableTreeNode node, @NotNull Consumer<Runnable> edtQueue) {
     if (!getBuilder().isDetachedMode()) {
-      edtQueue.consume(new Runnable() {
-        @Override
-        public void run() {
-          myTreeModel.insertNodeInto(node, GroupNode.this, getNodeInsertionIndex(node));
-        }
-      });
+      edtQueue.consume(() -> myTreeModel.insertNodeInto(node, this, getNodeInsertionIndex(node)));
     }
   }
 
@@ -110,7 +105,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     myTreeModel.reload(this);
   }
 
-  @Nullable UsageNode tryMerge(@NotNull Usage usage) {
+  @Nullable
+  private UsageNode tryMerge(@NotNull Usage usage) {
     if (!(usage instanceof MergeableUsage)) return null;
     MergeableUsage mergeableUsage = (MergeableUsage)usage;
     for (UsageNode node : myUsageNodes) {
@@ -127,7 +123,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return null;
   }
 
-  public boolean removeUsage(@NotNull UsageNode usage) {
+  boolean removeUsage(@NotNull UsageNode usage) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Collection<GroupNode> groupNodes = mySubgroupNodes.values();
     for(Iterator<GroupNode> iterator = groupNodes.iterator();iterator.hasNext();) {
@@ -156,7 +152,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return false;
   }
 
-  public boolean removeUsagesBulk(@NotNull Set<UsageNode> usages) {
+  boolean removeUsagesBulk(@NotNull Set<UsageNode> usages) {
     boolean removed;
     synchronized (lock) {
       removed = myUsageNodes.removeAll(usages);
@@ -205,12 +201,9 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
 
     if (!getBuilder().isDetachedMode()) {
-      edtQueue.consume(new Runnable() {
-        @Override
-        public void run() {
-          myTreeModel.insertNodeInto(node, GroupNode.this, getNodeIndex(node));
-          incrementUsageCount();
-        }
+      edtQueue.consume(() -> {
+        myTreeModel.insertNodeInto(node, this, getNodeIndex(node));
+        incrementUsageCount();
       });
     }
     return node;
@@ -255,7 +248,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     StringBuffer result = new StringBuffer();
     StringUtil.repeatSymbol(result, ' ', indent);
 
-    if (myGroup != null) result.append(myGroup.toString());
+    if (myGroup != null) result.append(myGroup);
     result.append("[");
     result.append(lineSeparator);
 
@@ -331,7 +324,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return myGroup;
   }
 
-  public int getRecursiveUsageCount() {
+  int getRecursiveUsageCount() {
     return myRecursiveUsageCount;
   }
 

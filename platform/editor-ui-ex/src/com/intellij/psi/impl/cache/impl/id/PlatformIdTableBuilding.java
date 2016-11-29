@@ -50,27 +50,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Author: dmitrylomov
  */
 public abstract class PlatformIdTableBuilding {
-  public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
-  private static final Map<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>> ourTodoIndexers = new HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>>();
+  public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<>("Editor");
   private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
 
   private PlatformIdTableBuilding() {}
 
   @Nullable
   public static DataIndexer<TodoIndexEntry, Integer, FileContent> getTodoIndexer(FileType fileType, final VirtualFile virtualFile) {
-    final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = ourTodoIndexers.get(fileType);
-
-    if (indexer != null) {
-      return indexer;
-    }
-
     final DataIndexer<TodoIndexEntry, Integer, FileContent> extIndexer;
     if (fileType instanceof SubstitutedFileType && !((SubstitutedFileType)fileType).isSameFileType()) {
       SubstitutedFileType sft = (SubstitutedFileType)fileType;
@@ -110,18 +101,14 @@ public abstract class PlatformIdTableBuilding {
     return b;
   }
 
-  @Deprecated
-  public static void registerTodoIndexer(@NotNull FileType fileType, DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
-    ourTodoIndexers.put(fileType, indexer);
-  }
-
   public static boolean isTodoIndexerRegistered(@NotNull FileType fileType) {
-    return ourTodoIndexers.containsKey(fileType) || TodoIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
+    return TodoIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
   }
 
   private static class CompositeTodoIndexer extends VersionedTodoIndexer {
     private final DataIndexer<TodoIndexEntry, Integer, FileContent>[] indexers;
 
+    @SafeVarargs
     public CompositeTodoIndexer(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
       this.indexers = indexers;
     }
@@ -200,7 +187,7 @@ public abstract class PlatformIdTableBuilding {
           }
           iterator.advance();
         }
-        final Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
+        final Map<TodoIndexEntry, Integer> map = new HashMap<>();
         for (IndexPattern pattern : IndexPatternUtil.getIndexPatterns()) {
           final int count = occurrenceConsumer.getOccurrenceCount(pattern);
           if (count > 0) {

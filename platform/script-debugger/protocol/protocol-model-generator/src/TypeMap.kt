@@ -12,37 +12,35 @@ internal class TypeMap {
 
   var domainGeneratorMap: Map<String, DomainGenerator>? = null
 
-  private val typesToGenerate = ArrayList<StandaloneTypeBinding>()
+  private val typesToGenerate = ArrayDeque<StandaloneTypeBinding>()
 
   fun resolve(domainName: String, typeName: String, direction: TypeData.Direction): BoxableType? {
     val domainGenerator = domainGeneratorMap!!.get(domainName)
     if (domainGenerator == null) {
       val qName = "$domainName.$typeName";
-      if (qName == "IO.StreamHandle" || qName == "Security.SecurityState") return BoxableType.ANY_STRING // ignore
+      if (qName == "IO.StreamHandle" ||
+          qName == "Security.SecurityState" ||
+          qName == "Security.CertificateId" ||
+          qName == "Emulation.ScreenOrientation"
+      ) {
+        return BoxableType.ANY_STRING // ignore
+      }
       throw RuntimeException("Failed to find domain generator: $domainName for type $typeName")
     }
     return direction.get(getTypeData(domainName, typeName)).resolve(this, domainGenerator)
   }
 
   fun addTypeToGenerate(binding: StandaloneTypeBinding) {
-    typesToGenerate.add(binding)
+    typesToGenerate.offer(binding)
   }
 
   fun generateRequestedTypes() {
     // size may grow during iteration
-    var list = typesToGenerate.toTypedArray()
-    typesToGenerate.clear()
-    while (true) {
-      for (binding in list) {
+    val createdTypes = HashSet<CharSequence>()
+    while (typesToGenerate.isNotEmpty()) {
+      val binding = typesToGenerate.poll()
+      if (createdTypes.add(binding.getJavaType().fullText)) {
         binding.generate()
-      }
-
-      if (typesToGenerate.isEmpty()) {
-        break
-      }
-      else {
-        list = typesToGenerate.toTypedArray()
-        typesToGenerate.clear()
       }
     }
   }

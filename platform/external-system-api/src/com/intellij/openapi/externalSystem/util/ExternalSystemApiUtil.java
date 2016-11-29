@@ -19,7 +19,6 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
@@ -43,7 +42,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -92,7 +94,7 @@ public class ExternalSystemApiUtil {
     }
 
     private int getOrder(@NotNull Object o) {
-      Queue<Class<?>> toCheck = new ArrayDeque<Class<?>>();
+      Queue<Class<?>> toCheck = new ArrayDeque<>();
       toCheck.add(o.getClass());
       while (!toCheck.isEmpty()) {
         Class<?> clazz = toCheck.poll();
@@ -111,20 +113,12 @@ public class ExternalSystemApiUtil {
     }
   };
 
-  @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = new NullableFunction<DataNode<?>, Key<?>>() {
-    @Override
-    public Key<?> fun(DataNode<?> node) {
-      return node.getKey();
-    }
-  };
+  @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = node -> node.getKey();
 
   @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
-    new TransferToEDTQueue<Runnable>("External System queue", new Processor<Runnable>() {
-      @Override
-      public boolean process(Runnable runnable) {
-        runnable.run();
-        return true;
-      }
+    new TransferToEDTQueue<>("External System queue", runnable -> {
+      runnable.run();
+      return true;
     }, Conditions.alwaysFalse(), 300);
 
   private ExternalSystemApiUtil() {
@@ -238,7 +232,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
-    MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<Key<?>, DataNode<?>>();
+    MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<>();
     Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
     queue.add(nodes);
     while (!queue.isEmpty()) {
@@ -258,24 +252,12 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, final Class<K> moduleDataClass) {
-    return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
-      @Nullable
-      @Override
-      public DataNode<K> fun(DataNode<V> node) {
-        return node.getParent(moduleDataClass);
-      }
-    });
+    return ContainerUtil.groupBy(nodes, node -> node.getParent(moduleDataClass));
   }
 
   @NotNull
   public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
-    return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
-      @Nullable
-      @Override
-      public DataNode<K> fun(DataNode<V> node) {
-        return node.getDataNode(key);
-      }
-    });
+    return ContainerUtil.groupBy(nodes, node -> node.getDataNode(key));
   }
 
   @SuppressWarnings("unchecked")
@@ -358,12 +340,7 @@ public class ExternalSystemApiUtil {
                                                                @NotNull final Key<T> key) {
     if (node == null) return Collections.emptyList();
 
-    final Collection<DataNode<?>> nodes = findAllRecursively(node.getChildren(), new BooleanFunction<DataNode<?>>() {
-      @Override
-      public boolean fun(DataNode<?> node) {
-        return node.getKey().equals(key);
-      }
-    });
+    final Collection<DataNode<?>> nodes = findAllRecursively(node.getChildren(), node1 -> node1.getKey().equals(key));
     //noinspection unchecked
     return new SmartList(nodes);
   }
@@ -383,7 +360,7 @@ public class ExternalSystemApiUtil {
   @NotNull
   public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes,
                                                            @Nullable BooleanFunction<DataNode<?>> predicate) {
-    SmartList<DataNode<?>> result = new SmartList<DataNode<?>>();
+    SmartList<DataNode<?>> result = new SmartList<>();
     for (DataNode<?> node : nodes) {
       if (predicate == null || predicate.fun(node)) {
         result.add(node);
@@ -398,7 +375,7 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
                                                  @NotNull BooleanFunction<DataNode<?>> predicate) {
-    Queue<DataNode<?>> queue = new LinkedList<DataNode<?>>();
+    Queue<DataNode<?>> queue = new LinkedList<>();
     queue.add(parentNode);
     return findInQueue(queue, predicate);
   }
@@ -406,7 +383,7 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull Collection<DataNode<?>> nodes,
                                                  @NotNull BooleanFunction<DataNode<?>> predicate) {
-    return findInQueue(new LinkedList<DataNode<?>>(nodes), predicate);
+    return findInQueue(new LinkedList<>(nodes), predicate);
   }
 
   @Nullable
@@ -424,12 +401,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static void commitChangedModels(boolean synchronous, Project project, List<Library.ModifiableModel> models) {
-    final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, new Condition<Library.ModifiableModel>() {
-      @Override
-      public boolean value(Library.ModifiableModel model) {
-        return model.isChanged();
-      }
-    });
+    final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, model -> model.isChanged());
     if (!changedModels.isEmpty()) {
       executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
         @Override
@@ -483,16 +455,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
-    executeOnEdt(synchronous, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            task.run();
-          }
-        });
-      }
-    });
+    executeOnEdt(synchronous, () -> ApplicationManager.getApplication().runWriteAction(() -> task.run()));
   }
 
   public static void executeOnEdt(boolean synchronous, @NotNull Runnable task) {
@@ -503,40 +466,26 @@ public class ExternalSystemApiUtil {
     }
     
     if (synchronous) {
-      app.invokeAndWait(task, ModalityState.defaultModalityState());
+      app.invokeAndWait(task);
     }
     else {
-      app.invokeLater(task, ModalityState.defaultModalityState());
+      app.invokeLater(task);
     }
   }
 
   public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
     final Application app = ApplicationManager.getApplication();
     final Ref<T> result = Ref.create();
-    app.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        result.set(task.compute());
-      }
-    }, ModalityState.defaultModalityState());
+    app.invokeAndWait(() -> result.set(task.compute()));
     return result.get();
   }
 
   public static <T> T doWriteAction(@NotNull final Computable<T> task) {
-    return executeOnEdt(new Computable<T>() {
-      public T compute() {
-        return ApplicationManager.getApplication().runWriteAction(task);
-      }
-    });
+    return executeOnEdt(() -> ApplicationManager.getApplication().runWriteAction(task));
   }
 
   public static void doWriteAction(@NotNull final Runnable task) {
-    executeOnEdt(true, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(task);
-      }
-    });
+    executeOnEdt(true, () -> ApplicationManager.getApplication().runWriteAction(task));
   }
 
   /**

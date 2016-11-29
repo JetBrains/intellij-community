@@ -27,17 +27,18 @@ import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProbl
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Batkovich
@@ -85,7 +86,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
 
     final Project project = e.getProject();
     LOG.assertTrue(project != null);
-    PopupFactoryImpl
+    JBPopupFactory
       .getInstance()
       .createListPopup(new IntentionListStep(null, intentions, null, file, project))
       .showInBestPositionFor(e.getDataContext());
@@ -98,7 +99,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
                                              editor.getSelectedElementIfOnlyOne() instanceof ResourceBundlePropertyStructureViewElement);
   }
 
-  private ResourceBundleEditor getEditor(AnActionEvent e) {
+  private static ResourceBundleEditor getEditor(AnActionEvent e) {
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
     return editor instanceof ResourceBundleEditor ? (ResourceBundleEditor)editor : null;
   }
@@ -133,7 +134,13 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      getQuickFix().applyFix(project, myDescriptor);
+      final QuickFix<ResourceBundleEditorProblemDescriptor> fix = getQuickFix();
+      ThrowableRunnable<RuntimeException> fixAction = () -> fix.applyFix(project, myDescriptor);
+      if (fix.startInWriteAction()) {
+        WriteAction.run(fixAction);
+      } else {
+        fixAction.run();
+      }
     }
 
     @Override

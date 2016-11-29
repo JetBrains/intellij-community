@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -26,27 +27,41 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
  */
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
+
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    final LafManager manager = LafManager.getInstance();
-    final UIManager.LookAndFeelInfo[] lfs = manager.getInstalledLookAndFeels();
-    final UIManager.LookAndFeelInfo current = manager.getCurrentLookAndFeel();
+    final LafManager lafMan = LafManager.getInstance();
+    final UIManager.LookAndFeelInfo[] lfs = lafMan.getInstalledLookAndFeels();
+    final UIManager.LookAndFeelInfo current = lafMan.getCurrentLookAndFeel();
     for (final UIManager.LookAndFeelInfo lf : lfs) {
       group.add(new DumbAwareAction(lf.getName(), "", lf == current ? ourCurrentAction : ourNotCurrentAction) {
         public void actionPerformed(AnActionEvent e) {
-          final UIManager.LookAndFeelInfo cur = manager.getCurrentLookAndFeel();
+          UIManager.LookAndFeelInfo cur = lafMan.getCurrentLookAndFeel();
           if (cur == lf) return;
-          boolean needUninstall = UIUtil.isUnderDarcula();
-          manager.setCurrentLookAndFeel(lf);
-          manager.updateUI();
-          if (UIUtil.isUnderDarcula()) {
-            DarculaInstaller.install();
-          } else if (needUninstall) {
-            DarculaInstaller.uninstall();
+          boolean wasDarcula = UIUtil.isUnderDarcula();
+          lafMan.setCurrentLookAndFeel(lf);
+          // hack not to updateUI twice: here and in DarculaInstaller
+          final AtomicBoolean updated = new AtomicBoolean(false);
+          LafManagerListener listener = (s) -> updated.set(true);
+          lafMan.addLafManagerListener(listener);
+          try {
+            if (UIUtil.isUnderDarcula()) {
+              DarculaInstaller.install();
+            }
+            else if (wasDarcula) {
+              DarculaInstaller.uninstall();
+            }
+          }
+          finally {
+            lafMan.removeLafManagerListener(listener);
+            if (!updated.get()) {
+              lafMan.updateUI();
+            }
           }
         }
       });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,61 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Properties;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 /**
  * @author Roman Chernyatchik
-*/
+ */
 public class AttributesDefaults {
   private final String myDefaultName;
   private final TextRange myDefaultRange;
-  private final Map<String, Pair<String, TextRange>> myNamesToValueAndRangeMap = new HashMap<String, Pair<String, TextRange>>();
+  private final Map<String, Pair<String, TextRange>> myNamesToValueAndRangeMap = new HashMap<>();
   private Properties myDefaultProperties = null;
   private boolean myFixedName;
 
-  public AttributesDefaults(@NonNls @Nullable final String defaultName,
-                            @Nullable final TextRange defaultRange) {
-    myDefaultName = defaultName;
-    myDefaultRange = defaultRange;
+  public AttributesDefaults() {
+    this(null, null);
   }
 
-  public AttributesDefaults(@NonNls @Nullable final String defaultName) {
+  public AttributesDefaults(@Nullable String defaultName) {
     this(defaultName, null);
   }
 
-  public AttributesDefaults() {
-    this(null, null);
+  public AttributesDefaults(@Nullable String defaultName, @Nullable TextRange defaultRange) {
+    myDefaultName = defaultName;
+    myDefaultRange = defaultRange;
   }
 
   @Nullable
   public String getDefaultFileName() {
     return myDefaultName;
   }
+
   @Nullable
   public TextRange getDefaultFileNameSelection() {
     return myDefaultRange;
   }
 
-  public void add(@NonNls @NotNull final String attributeKey,
-                  @NonNls @NotNull final String value,
-                  @Nullable final TextRange selectionRange) {
-    myNamesToValueAndRangeMap.put(attributeKey, Pair.create(value, selectionRange));
+  public void add(@NotNull String attributeKey, @NotNull String value) {
+    add(attributeKey, value, null);
   }
 
-  public void add(@NonNls @NotNull final String attributeKey,
-                  @NonNls @NotNull final String value) {
-    add(attributeKey, value, null);
+  public void add(@NotNull String attributeKey, @NotNull String value, @Nullable TextRange selectionRange) {
+    myNamesToValueAndRangeMap.put(attributeKey, pair(value, selectionRange));
   }
 
   public void addPredefined(@NotNull String key, @NotNull String value) {
@@ -82,13 +79,13 @@ public class AttributesDefaults {
   }
 
   @Nullable
-  public TextRange getRangeFor(@NonNls @NotNull final String attributeKey) {
+  public TextRange getRangeFor(@NotNull String attributeKey) {
     final Pair<String, TextRange> valueAndRange = myNamesToValueAndRangeMap.get(attributeKey);
     return valueAndRange == null ? null : valueAndRange.second;
   }
 
   @Nullable
-  public String getDefaultValueFor(@NonNls @NotNull final String attributeKey) {
+  public String getDefaultValueFor(@NotNull String attributeKey) {
     final Pair<String, TextRange> valueAndRange = myNamesToValueAndRangeMap.get(attributeKey);
     return valueAndRange == null ? null : valueAndRange.first;
   }

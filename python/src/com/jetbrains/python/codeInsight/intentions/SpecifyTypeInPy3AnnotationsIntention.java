@@ -64,7 +64,8 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     return super.isAvailable(project, editor, file);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     final PyExpression problemElement = getProblemElement(elementAt);
     final PsiReference reference = problemElement == null ? null : problemElement.getReference();
@@ -137,8 +138,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   static String returnType(@NotNull PyFunction function) {
     String returnType = PyNames.OBJECT;
-    final PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(
-      function);
+    final PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
     if (signature != null) {
       returnType = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), returnType);
     }
@@ -148,22 +148,28 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   public static PyExpression annotateReturnType(Project project, PyFunction function, boolean createTemplate) {
     String returnType = returnType(function);
 
-    final String annotationText = " -> " + returnType;
-
-    final PsiElement prevElem = PyPsiUtils.getPrevNonCommentSibling(function.getStatementList(), true);
-    assert prevElem != null;
+    final String annotationText = "-> " + returnType;
 
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     Document documentWithCallable = manager.getDocument(function.getContainingFile());
     if (documentWithCallable != null) {
       try {
-        final TextRange range = prevElem.getTextRange();
         manager.doPostponedOperationsAndUnblockDocument(documentWithCallable);
-        if (prevElem.getNode().getElementType() == PyTokenTypes.COLON) {
-          documentWithCallable.insertString(range.getStartOffset(), annotationText);
+        final PyAnnotation oldAnnotation = function.getAnnotation();
+        if (oldAnnotation != null) {
+          final TextRange oldRange = oldAnnotation.getTextRange();
+          documentWithCallable.replaceString(oldRange.getStartOffset(), oldRange.getEndOffset(), annotationText);
         }
         else {
-          documentWithCallable.insertString(range.getEndOffset(), annotationText + ":");
+          final PsiElement prevElem = PyPsiUtils.getPrevNonCommentSibling(function.getStatementList(), true);
+          assert prevElem != null;
+          final TextRange range = prevElem.getTextRange();
+          if (prevElem.getNode().getElementType() == PyTokenTypes.COLON) {
+            documentWithCallable.insertString(range.getStartOffset(), " " + annotationText);
+          }
+          else {
+            documentWithCallable.insertString(range.getEndOffset(), " " + annotationText + ":");
+          }
         }
       }
       finally {

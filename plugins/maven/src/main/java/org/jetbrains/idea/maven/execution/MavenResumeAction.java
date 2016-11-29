@@ -68,7 +68,7 @@ public class MavenResumeAction extends AnAction {
 
   private int myBuildingProjectIndex = 0;
 
-  private final List<String> myMavenProjectNames = new ArrayList<String>();
+  private final List<String> myMavenProjectNames = new ArrayList<>();
 
   private String myResumeFromModuleName;
 

@@ -174,19 +174,9 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected void restartAutoUpdate(final boolean state) {
     if (state && myToolWindow != null) {
       if (myAutoUpdateRequest == null) {
-        myAutoUpdateRequest = new Runnable() {
-          @Override
-          public void run() {
-            updateComponent();
-          }
-        };
+        myAutoUpdateRequest = () -> updateComponent();
 
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            IdeEventQueue.getInstance().addIdleListener(myAutoUpdateRequest, 500);
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(() -> IdeEventQueue.getInstance().addIdleListener(myAutoUpdateRequest, 500));
       }
     }
     else {
@@ -223,21 +213,19 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
       return;
     }
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
+    PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+      if (editor.isDisposed()) return;
 
-    final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
-    if (injectedEditor != null) {
-      final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
-      if (psiFile != null) {
-        doUpdateComponent(injectedEditor, psiFile);
-        return;
+      PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
+      Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
+      PsiFile injectedFile = injectedEditor != null ? PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject) : null;
+      if (injectedFile != null) {
+        doUpdateComponent(injectedEditor, injectedFile);
       }
-    }
-
-    if (file != null) {
-      doUpdateComponent(editor, file);
-    }
+      else if (file != null) {
+        doUpdateComponent(editor, file);
+      }
+    });
   }
 
 

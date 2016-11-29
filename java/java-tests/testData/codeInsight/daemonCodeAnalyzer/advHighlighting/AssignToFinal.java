@@ -1,6 +1,6 @@
 // assign to final
 import java.io.*;
-import java.net.*;
+
 public class a21  {
   final int fi;
   {

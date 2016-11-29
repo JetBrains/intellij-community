@@ -16,6 +16,7 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -25,17 +26,22 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.HelperPackage;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.CommandLinePatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   protected PyRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
@@ -72,7 +78,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       // If configuration wants to take care about rerun itself
       if (configuration instanceof TestRunConfigurationReRunResponsible) {
         // TODO: Extract method
-        final Set<PsiElement> failedTestElements = new HashSet<PsiElement>();
+        final Set<PsiElement> failedTestElements = new HashSet<>();
         for (final AbstractTestProxy proxy : getFailedTests(getProject())) {
           final Location<?> location = proxy.getLocation(getProject(), GlobalSearchScope.allScope(getProject()));
           if (location != null) {
@@ -104,10 +110,19 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       return myState.getRunner();
     }
 
+    @Override
+    public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
+      // Insane rerun tests with out of spec.
+      if (getTestSpecs().isEmpty()) {
+        throw new ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"));
+      }
+      return super.execute(executor, patchers);
+    }
+
     @NotNull
     @Override
     protected List<String> getTestSpecs() {
-      List<String> specs = new ArrayList<String>();
+      List<String> specs = new ArrayList<>();
       List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {
@@ -119,6 +134,11 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
             }
           }
         }
+      }
+      if (specs.isEmpty()) {
+        final List<String> locations = failedTests.stream().map(AbstractTestProxy::getLocationUrl).collect(Collectors.toList());
+        Logger.getInstance(FailedPythonTestCommandLineStateBase.class).warn(
+          String.format("Can't resolve specs for the following tests: %s", StringUtil.join(locations, ", ")));
       }
       return specs;
     }

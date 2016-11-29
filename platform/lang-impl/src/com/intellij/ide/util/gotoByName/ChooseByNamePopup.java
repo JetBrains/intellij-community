@@ -25,8 +25,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -44,12 +44,11 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent {
-  public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
+  public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
   private final boolean myMayRequestCurrentWindow;
@@ -137,9 +136,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     bounds.y += layeredPane.getHeight();
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
-    if (myList.getModel().getSize() == 0) {
-      preferredScrollPaneSize.height = UIManager.getFont("Label.font").getSize();
-    }
+    int lastVisibleRow = Math.min(myList.getVisibleRowCount(), myList.getModel().getSize()) - 1;
+    Rectangle visibleBounds = lastVisibleRow < 0 ? null : myList.getCellBounds(0, lastVisibleRow);
+    preferredScrollPaneSize.height = visibleBounds != null ? visibleBounds.height : UIManager.getFont("Label.font").getSize();
 
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
 
@@ -147,9 +146,16 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     Rectangle original = new Rectangle(preferredBounds);
 
     ScreenUtil.fitToScreen(preferredBounds);
-    if (original.width > preferredBounds.width) {
-      int height = myListScrollPane.getHorizontalScrollBar().getPreferredSize().height;
+    JScrollBar hsb = myListScrollPane.getHorizontalScrollBar();
+    if (original.width > preferredBounds.width && (!SystemInfo.isMac || hsb.isOpaque())) {
+      int height = hsb.getPreferredSize().height;
+      preferredBounds.y -= height;
       preferredBounds.height += height;
+    }
+    if (original.y > preferredBounds.y) {
+      int height = original.y - preferredBounds.y;
+      preferredBounds.y += height;
+      preferredBounds.height -= height;
     }
 
     myListScrollPane.setVisible(true);
@@ -166,12 +172,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         .setModalContext(false)
         .setAdText(adText)
         .setMayBeParent(true);
-      builder.setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return Boolean.TRUE;
-        }
-      });
+      builder.setCancelCallback(() -> Boolean.TRUE);
       myDropdownPopup = builder.createPopup();
       myDropdownPopup.setLocation(preferredBounds.getLocation());
       myDropdownPopup.setSize(preferredBounds.getSize());
@@ -321,13 +322,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (oldPopup != null) {
       oldPopup.close(false);
     }
-    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow, initialIndex) {
-      @NotNull
-      @Override
-      protected Set<Object> filter(@NotNull Set<Object> elements) {
-        return model instanceof EdtSortingModel ? super.filter(((EdtSortingModel)model).sort(elements)) : super.filter(elements);
-      }
-    };
+    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow, initialIndex);
 
     if (project != null) {
       project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
@@ -343,7 +338,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
     Pattern regex = null;
-    if (StringUtil.containsAnyChar(pattern, ":,;@[(") || pattern.contains(" line ")) { // quick test if reg exp should be used
+    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ")) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
     }
 

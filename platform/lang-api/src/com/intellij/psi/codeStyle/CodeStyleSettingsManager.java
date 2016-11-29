@@ -33,11 +33,11 @@ import org.jetbrains.annotations.Nullable;
 public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettingsManager.class.getName());
 
-  public volatile CodeStyleSettings PER_PROJECT_SETTINGS = null;
-  public volatile boolean USE_PER_PROJECT_SETTINGS = false;
-  public volatile String PREFERRED_PROJECT_CODE_STYLE = null;
+  public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
+  public volatile boolean USE_PER_PROJECT_SETTINGS;
+  public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
-  private volatile boolean myIsLoaded = false;
+  private volatile boolean myIsLoaded;
 
   public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
     if (project == null || project.isDefault()) return getInstance();
@@ -83,7 +83,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public Element getState() {
     Element result = new Element("state");
     try {
-      DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()));
+      DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<>(this, new CodeStyleSettingsManager()));
     }
     catch (WriteExternalException e) {
       LOG.error(e);

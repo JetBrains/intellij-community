@@ -22,12 +22,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,7 @@ public class ContainingBranchesGetter {
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
   @NotNull private final SequentialLimitedLifoExecutor<Task> myTaskExecutor;
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogData myLogData;
 
   // other fields accessed only from EDT
   @NotNull private final List<Runnable> myLoadingFinishedListeners = ContainerUtil.newArrayList();
@@ -51,33 +51,24 @@ public class ContainingBranchesGetter {
   @NotNull private Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
   private int myCurrentBranchesChecksum;
 
-  ContainingBranchesGetter(@NotNull VcsLogDataManager dataManager, @NotNull Disposable parentDisposable) {
-    myDataManager = dataManager;
-    myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, new ThrowableConsumer<Task, Throwable>() {
-      @Override
-      public void consume(final Task task) throws Throwable {
-        final List<String> branches = task.getContainingBranches(myDataManager);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            // if cache is cleared (because of log refresh) during this task execution,
-            // this will put obsolete value into the old instance we don't care anymore
-            task.cache.put(new CommitId(task.hash, task.root), branches);
-            notifyListeners();
-          }
-        });
-      }
+  ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
+    myLogData = logData;
+    myTaskExecutor = new SequentialLimitedLifoExecutor<>(parentDisposable, 10, task -> {
+      final List<String> branches = task.getContainingBranches(myLogData);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        // if cache is cleared (because of log refresh) during this task execution,
+        // this will put obsolete value into the old instance we don't care anymore
+        task.cache.put(new CommitId(task.hash, task.root), branches);
+        notifyListeners();
+      });
     });
-    myDataManager.addDataPackChangeListener(new DataPackChangeListener() {
-      @Override
-      public void onDataPackChange(@NotNull DataPack dataPack) {
-        Collection<VcsRef> currentBranches = dataPack.getRefsModel().getBranches();
-        int checksum = currentBranches.hashCode();
-        if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
-          clearCache();
-        }
-        myCurrentBranchesChecksum = checksum;
+    myLogData.addDataPackChangeListener(dataPack -> {
+      Collection<VcsRef> currentBranches = dataPack.getRefsModel().getBranches();
+      int checksum = currentBranches.hashCode();
+      if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
+        clearCache();
       }
+      myCurrentBranchesChecksum = checksum;
     });
   }
 
@@ -90,12 +81,7 @@ public class ContainingBranchesGetter {
       c.dispose();
     }
     // re-request containing branches information for the commit user (possibly) currently stays on
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        notifyListeners();
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> notifyListeners());
   }
 
   /**
@@ -127,12 +113,13 @@ public class ContainingBranchesGetter {
     LOG.assertTrue(EventQueue.isDispatchThread());
     List<String> refs = myCache.get(new CommitId(hash, root));
     if (refs == null) {
-      DataPack dataPack = myDataManager.getDataPack();
+      DataPack dataPack = myLogData.getDataPack();
       myTaskExecutor.queue(new Task(root, hash, myCache, dataPack.getPermanentGraph(), dataPack.getRefsModel()));
     }
     return refs;
   }
 
+  @Nullable
   public List<String> getContainingBranchesFromCache(@NotNull VirtualFile root, @NotNull Hash hash) {
     LOG.assertTrue(EventQueue.isDispatchThread());
     return myCache.get(new CommitId(hash, root));
@@ -142,23 +129,19 @@ public class ContainingBranchesGetter {
   public Condition<CommitId> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
 
-    DataPack dataPack = myDataManager.getDataPack();
+    DataPack dataPack = myLogData.getDataPack();
     if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
 
     PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
     VcsLogRefs refs = dataPack.getRefsModel();
 
-    VcsRef branchRef = ContainerUtil.find(refs.getBranches(), new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef vcsRef) {
-        return vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName);
-      }
-    });
-    if (branchRef == null) return Conditions.alwaysFalse();
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {
+      VcsRef branchRef = ContainerUtil.find(refs.getBranches(),
+                                            vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
+      if (branchRef == null) return Conditions.alwaysFalse();
       condition = new ContainedInBranchCondition(graph.getContainedInBranchCondition(
-        Collections.singleton(myDataManager.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
+        Collections.singleton(myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
       myConditions.put(root, condition);
     }
     return condition;
@@ -166,7 +149,18 @@ public class ContainingBranchesGetter {
 
   @NotNull
   private static SLRUMap<CommitId, List<String>> createCache() {
-    return new SLRUMap<CommitId, List<String>>(1000, 1000);
+    return new SLRUMap<>(1000, 1000);
+  }
+
+  @CalledInAny
+  @NotNull
+  public List<String> getContainingBranchesSynchronously(@NotNull VirtualFile root, @NotNull Hash hash) {
+    return doGetContainingBranches(myLogData.getDataPack(), root, hash);
+  }
+
+  @NotNull
+  private List<String> doGetContainingBranches(@NotNull DataPack dataPack, @NotNull VirtualFile root, @NotNull Hash hash) {
+    return new Task(root, hash, myCache, dataPack.getPermanentGraph(), dataPack.getRefsModel()).getContainingBranches(myLogData);
   }
 
   private static class Task {
@@ -189,26 +183,26 @@ public class ContainingBranchesGetter {
     }
 
     @NotNull
-    public List<String> getContainingBranches(VcsLogDataManager dataManager) {
+    public List<String> getContainingBranches(@NotNull VcsLogData logData) {
       try {
-        VcsLogProvider provider = dataManager.getLogProvider(root);
+        VcsLogProvider provider = logData.getLogProvider(root);
         if (graph != null && refs != null && VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
-          Set<Integer> branchesIndexes = graph.getContainingBranches(dataManager.getCommitIndex(hash, root));
+          Set<Integer> branchesIndexes = graph.getContainingBranches(logData.getCommitIndex(hash, root));
 
-          Collection<VcsRef> branchesRefs = new HashSet<VcsRef>();
+          Collection<VcsRef> branchesRefs = new HashSet<>();
           for (Integer index : branchesIndexes) {
-            branchesRefs.addAll(refs.branchesToCommit(index));
+            refs.refsToCommit(index).stream().filter(ref -> ref.getType().isBranch()).forEach(branchesRefs::add);
           }
           branchesRefs = ContainerUtil.sorted(branchesRefs, provider.getReferenceManager().getLabelsOrderComparator());
 
-          ArrayList<String> branchesList = new ArrayList<String>();
+          ArrayList<String> branchesList = new ArrayList<>();
           for (VcsRef ref : branchesRefs) {
             branchesList.add(ref.getName());
           }
           return branchesList;
         }
         else {
-          List<String> branches = new ArrayList<String>(provider.getContainingBranches(root, hash));
+          List<String> branches = new ArrayList<>(provider.getContainingBranches(root, hash));
           Collections.sort(branches);
           return branches;
         }
@@ -238,7 +232,7 @@ public class ContainingBranchesGetter {
     @Override
     public boolean value(CommitId commitId) {
       if (isDisposed) return false;
-      return myCondition.value(myDataManager.getCommitIndex(commitId.getHash(), commitId.getRoot()));
+      return myCondition.value(myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot()));
     }
 
     public void dispose() {

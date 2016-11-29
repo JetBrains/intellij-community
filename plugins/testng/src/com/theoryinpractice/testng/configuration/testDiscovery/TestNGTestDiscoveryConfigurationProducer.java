@@ -15,11 +15,33 @@
  */
 package com.theoryinpractice.testng.configuration.testDiscovery;
 
+import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiMethod;
+import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
+import com.theoryinpractice.testng.model.TestData;
+import com.theoryinpractice.testng.model.TestType;
 
 public class TestNGTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
   protected TestNGTestDiscoveryConfigurationProducer() {
-    super(ConfigurationTypeUtil.findConfigurationType(TestNGTestDiscoveryConfigurationType.class));
+    super(TestNGConfigurationType.getInstance());
+  }
+
+  @Override
+  protected void setPosition(JavaTestConfigurationBase configuration, PsiLocation<PsiMethod> position) {
+    ((TestNGConfiguration)configuration).beFromSourcePosition(position);
+  }
+
+  @Override
+  protected Pair<String, String> getPosition(JavaTestConfigurationBase configuration) {
+    final TestData data = ((TestNGConfiguration)configuration).getPersistantData();
+    if (data.TEST_OBJECT.equals(TestType.SOURCE.getType())) {
+      return Pair.create(data.getMainClassName(), data.getMethodName());
+    }
+    return null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,36 +20,26 @@ import com.intellij.ide.fileTemplates.actions.CreateFromTemplateAction;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.util.Condition;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 public class JavaFileTemplatesTest extends LightCodeInsightFixtureTestCase {
-
-  public void testCreateFromTemplateGroup() throws Exception {
-
+  public void testCreateFromTemplateGroup() {
     myFixture.configureByText("foo.java", "");
     AnAction[] children = new CreateFromTemplateGroup().getChildren(new TestActionEvent(new TestDataProvider(getProject())));
-    assertNull(ContainerUtil.find(children, new Condition<AnAction>() {
-      @Override
-      public boolean value(AnAction action) {
-        return action instanceof CreateFromTemplateAction && ((CreateFromTemplateAction)action).getTemplate().getName().equals("Class");
-      }
-    }));
-    assertNotNull(ContainerUtil.find(children, new Condition<AnAction>() {
-      @Override
-      public boolean value(AnAction action) {
-        return action instanceof CreateFromTemplateAction && ((CreateFromTemplateAction)action).getTemplate().getName().equals("Singleton");
-      }
-    }));
+    assertTrue(Stream.of(children).noneMatch(action -> isTemplateAction(action, "Class")));
+    assertTrue(Stream.of(children).anyMatch(action -> isTemplateAction(action, "Singleton")));
   }
 
-  @SuppressWarnings("ConstantConditions")
-  public void testManyTemplates() throws Exception {
+  private static boolean isTemplateAction(AnAction action, String name) {
+    return action instanceof CreateFromTemplateAction && name.equals(((CreateFromTemplateAction)action).getTemplate().getName());
+  }
+
+  public void testManyTemplates() {
     FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(getProject());
     templateManager.getState().RECENT_TEMPLATES.clear();
     FileTemplate[] before = templateManager.getAllTemplates();

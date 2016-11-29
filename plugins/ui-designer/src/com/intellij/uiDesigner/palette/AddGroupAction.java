@@ -59,7 +59,7 @@ public class AddGroupAction extends AnAction {
     }
 
     final GroupItem groupToBeAdded = new GroupItem(groupName);
-    ArrayList<GroupItem> newGroups = new ArrayList<GroupItem>(groups);
+    ArrayList<GroupItem> newGroups = new ArrayList<>(groups);
     newGroups.add(groupToBeAdded);
     palette.setGroups(newGroups);
   }

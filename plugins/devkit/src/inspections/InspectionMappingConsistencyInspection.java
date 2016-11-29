@@ -27,7 +27,6 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -83,24 +82,20 @@ public class InspectionMappingConsistencyInspection extends DevKitInspectionBase
 
   private static void checkDefaultBundle(DomElement element, ProblemsHolder holder) {
     IdeaPlugin plugin = DomUtil.getParentOfType(element, IdeaPlugin.class, true);
-    if (plugin != null && plugin.getResourceBundles().isEmpty()) {
+    if (plugin != null && !DomUtil.hasXml(plugin.getResourceBundle())) {
       registerProblem(element, holder, "Bundle should be specified");
     }
   }
 
   private static void registerProblem(DomElement element, ProblemsHolder holder, String message, String... createAttrs) {
     final Pair<TextRange, PsiElement> range = DomUtil.getProblemRange(element.getXmlTag());
-    holder.registerProblem(range.second, range.first, message, ContainerUtil.map(createAttrs, new Function<String, LocalQuickFix>() {
-      @Override
-      public LocalQuickFix fun(final String s) {
-        return new InsertRequiredAttributeFix(PsiTreeUtil.getParentOfType(range.second, XmlTag.class, false), s) {
-          @NotNull
-          @Override
-          public String getText() {
-            return MessageFormat.format("Insert ''{0}'' attribute", s);
-          }
-        };
-      }
-    }, new LocalQuickFix[createAttrs.length]));
+    holder.registerProblem(range.second, range.first, message, ContainerUtil.map(createAttrs,
+                                                                                 s -> new InsertRequiredAttributeFix(PsiTreeUtil.getParentOfType(range.second, XmlTag.class, false), s) {
+                                                                                   @NotNull
+                                                                                   @Override
+                                                                                   public String getText() {
+                                                                                     return MessageFormat.format("Insert ''{0}'' attribute", s);
+                                                                                   }
+                                                                                 }, new LocalQuickFix[createAttrs.length]));
   }
 }

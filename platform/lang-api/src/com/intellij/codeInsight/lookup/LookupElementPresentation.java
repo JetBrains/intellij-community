@@ -72,7 +72,7 @@ public class LookupElementPresentation {
 
   private void appendTailText(@NotNull TextFragment fragment) {
     if (myTail == null) {
-      myTail = new SmartList<TextFragment>();
+      myTail = new SmartList<>();
     }
     myTail.add(fragment);
   }
@@ -133,12 +133,7 @@ public class LookupElementPresentation {
   @Nullable
   public String getTailText() {
     if (myTail == null) return null;
-    return StringUtil.join(myTail, new Function<TextFragment, String>() {
-      @Override
-      public String fun(TextFragment fragment) {
-        return fragment.text;
-      }
-    }, "");
+    return StringUtil.join(myTail, fragment -> fragment.text, "");
   }
 
   @Nullable
@@ -187,7 +182,7 @@ public class LookupElementPresentation {
     myItemText = presentation.myItemText;
 
     List<TextFragment> thatTail = presentation.myTail;
-    myTail = thatTail == null ? null : new SmartList<TextFragment>(thatTail);
+    myTail = thatTail == null ? null : new SmartList<>(thatTail);
 
     myTypeText = presentation.myTypeText;
     myStrikeout = presentation.myStrikeout;

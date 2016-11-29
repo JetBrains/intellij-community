@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -27,11 +27,18 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 1:12 PM
  */
 public interface VcsBaseContentProvider {
-  /*
-   * return pair of base revision number and content
-   *
-   * null is returned if an error occurred
-   */
+  ExtensionPointName<VcsBaseContentProvider> EP_NAME = ExtensionPointName.create("com.intellij.vcs.baseContentProvider");
+
   @Nullable
-  Pair<VcsRevisionNumber, String> getBaseRevision(@NotNull VirtualFile file);
+  BaseContent getBaseRevision(@NotNull VirtualFile file);
+
+  boolean isSupported(@NotNull VirtualFile file);
+
+  interface BaseContent {
+    @NotNull
+    VcsRevisionNumber getRevisionNumber();
+
+    @Nullable
+    String loadContent();
+  }
 }

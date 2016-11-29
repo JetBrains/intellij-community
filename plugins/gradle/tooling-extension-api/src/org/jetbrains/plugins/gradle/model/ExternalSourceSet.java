@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceTy
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
@@ -28,6 +29,8 @@ import java.util.Map;
  * @since 7/14/2014
  */
 public interface ExternalSourceSet extends Serializable {
+  Collection<File> getArtifacts();
+
   @NotNull
   String getName();
 

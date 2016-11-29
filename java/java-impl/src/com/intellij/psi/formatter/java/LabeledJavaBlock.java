@@ -40,7 +40,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
 
   @Override
   protected List<Block> buildChildren() {
-    final ArrayList<Block> result = new ArrayList<Block>();
+    final ArrayList<Block> result = new ArrayList<>();
     ASTNode child = myNode.getFirstChildNode();
     Indent currentIndent = getLabelIndent();
     Wrap currentWrap = null;

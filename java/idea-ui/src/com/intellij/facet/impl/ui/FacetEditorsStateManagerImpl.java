@@ -36,7 +36,7 @@ import java.util.Map;
  */
 @State(name = "FacetEditorsStateManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager implements PersistentStateComponent<FacetEditorsStateManagerImpl.FacetEditorsStateBean>{
-  private final Map<String, Object> myFacetTypeStates = new HashMap<String, Object>();
+  private final Map<String, Object> myFacetTypeStates = new HashMap<>();
   private FacetEditorsStateBean myBean = new FacetEditorsStateBean();
 
   public <T> void saveState(@NotNull final FacetType<?, ?> type, final T state) {
@@ -81,7 +81,7 @@ public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager imple
   }
 
   public static class FacetEditorsStateBean {
-    private Map<String, FacetTypeStateBean> myFacetTypeElements = new HashMap<String, FacetTypeStateBean>();
+    private Map<String, FacetTypeStateBean> myFacetTypeElements = new HashMap<>();
 
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundKeyWithTag = false, surroundWithTag = false, surroundValueWithTag = false, entryTagName = "facet-type-state", keyAttributeName = "type")

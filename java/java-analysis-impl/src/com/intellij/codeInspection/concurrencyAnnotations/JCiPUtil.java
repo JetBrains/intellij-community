@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class JCiPUtil {
+import java.util.List;
+
+public class JCiPUtil {
   static boolean isJCiPAnnotation(String ref) {
     return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals(ref) || "NotThreadSafe".equals(ref);
   }
@@ -37,12 +39,12 @@ class JCiPUtil {
     if (annotation != null) {
       return true;
     }
-    PsiDocComment comment = aClass.getDocComment();
+    final PsiDocComment comment = aClass.getDocComment();
     return comment != null && comment.findTagByName("@Immutable") != null;
   }
 
   @Nullable
-  static String findGuardForMember(@NotNull PsiMember member) {
+  public static String findGuardForMember(@NotNull PsiMember member) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations());
     if (annotation != null) {
       return getGuardValue(annotation);
@@ -58,24 +60,10 @@ class JCiPUtil {
     return visitor.getGuardString();
   }
 
-  static boolean isGuardedBy(@NotNull PsiMember member, String guard) {
-
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations());
-    if (annotation != null) {
-      final PsiAnnotationParameterList parameters = annotation.getParameterList();
-      final PsiNameValuePair[] pairs = parameters.getAttributes();
-      final String fieldName = '"' + guard + '"';
-      for (PsiNameValuePair pair : pairs) {
-        final String name = pair.getName();
-        if ("value".equals(name) || name == null) {
-          final PsiAnnotationMemberValue value = pair.getValue();
-          if (value != null && value.getText().equals(fieldName)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+  static boolean isGuardedBy(@NotNull PsiMember member, @NotNull String guard) {
+    final List<String> annotations = ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations();
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, annotations);
+    return annotation != null && guard.equals(getGuardValue(annotation));
   }
 
   public static boolean isGuardedBy(PsiMember member, PsiField field) {
@@ -94,22 +82,15 @@ class JCiPUtil {
 
   @Nullable
   static String getGuardValue(PsiAnnotation annotation) {
-    final PsiAnnotationParameterList parameters = annotation.getParameterList();
-    final PsiNameValuePair[] pairs = parameters.getAttributes();
-    for (PsiNameValuePair pair : pairs) {
-      final String name = pair.getName();
-      if ("value".equals(name) || name == null) {
-        final PsiAnnotationMemberValue psiAnnotationMemberValue = pair.getValue();
-        if (psiAnnotationMemberValue != null) {
-          final String value = psiAnnotationMemberValue.getText();
-          final String trim = value.substring(1, value.length() - 1).trim();
-          if (trim.equals("itself")) {
-            final PsiMember member = PsiTreeUtil.getParentOfType(annotation, PsiMember.class);
-            if (member != null) return member.getName();
-          }
-          return trim;
-        }
+    final PsiAnnotationMemberValue psiAnnotationMemberValue = annotation.findAttributeValue("value");
+    if (psiAnnotationMemberValue != null) {
+      final String value = psiAnnotationMemberValue.getText();
+      final String trim = value.substring(1, value.length() - 1).trim();
+      if (trim.equals("itself")) {
+        final PsiMember member = PsiTreeUtil.getParentOfType(annotation, PsiMember.class);
+        if (member != null) return member.getName();
       }
+      return trim;
     }
     return null;
   }

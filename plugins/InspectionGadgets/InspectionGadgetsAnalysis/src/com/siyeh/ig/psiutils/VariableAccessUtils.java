@@ -88,7 +88,7 @@ public class VariableAccessUtils {
         final PsiClass aClass = PsiUtil.getTopLevelClass(variable);
         return variableIsAssigned(variable, aClass);
       }
-      return !ReferencesSearch.search(variable, variable.getUseScope()).forEach(reference -> {
+      return !ReferencesSearch.search(variable).forEach(reference -> {
         final PsiElement element = reference.getElement();
         if (!(element instanceof PsiExpression)) {
           return true;
@@ -148,17 +148,6 @@ public class VariableAccessUtils {
       new VariableValueUsedVisitor(variable);
     context.accept(visitor);
     return visitor.isVariableValueUsed();
-  }
-
-  public static boolean arrayContentsAreAccessed(
-    @NotNull PsiVariable variable, @Nullable PsiElement context) {
-    if (context == null) {
-      return false;
-    }
-    final ArrayContentsAccessedVisitor visitor =
-      new ArrayContentsAccessedVisitor(variable);
-    context.accept(visitor);
-    return visitor.isAccessed();
   }
 
   public static boolean arrayContentsAreAssigned(

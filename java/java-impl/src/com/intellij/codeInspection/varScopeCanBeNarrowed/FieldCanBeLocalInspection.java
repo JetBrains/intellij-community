@@ -62,7 +62,7 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
     @Nullable
     @Override
     protected PsiElement moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
-      final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<PsiCodeBlock, Collection<PsiReference>>();
+      final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<>();
       if (!groupByCodeBlocks(ReferencesSearch.search(variable).findAll(), refs)) return null;
       PsiElement element = null;
       for (Collection<PsiReference> psiReferences : refs.values()) {
@@ -70,12 +70,10 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
       }
       if (element != null) {
         final PsiElement finalElement = element;
-        Runnable runnable = new Runnable() {
-          public void run() {
-            beforeDelete(project, variable, finalElement);
-            variable.normalizeDeclaration();
-            variable.delete();
-          }
+        Runnable runnable = () -> {
+          beforeDelete(project, variable, finalElement);
+          variable.normalizeDeclaration();
+          variable.delete();
         };
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
@@ -92,7 +90,7 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
         
         Collection<PsiReference> references = refs.get(block);
         if (references == null) {
-          references = new ArrayList<PsiReference>();
+          references = new ArrayList<>();
           if (findExistentBlock(refs, psiReference, block, references)) continue;
           refs.put(block, references);
         }

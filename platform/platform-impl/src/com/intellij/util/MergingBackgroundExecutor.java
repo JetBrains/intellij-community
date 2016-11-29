@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * Executes tasks on pooled threads. At any point, at most {@code maxThreads} threads will be active processing tasks.
@@ -30,30 +31,20 @@ import org.jetbrains.ide.PooledThreadExecutor;
  */
 public class MergingBackgroundExecutor<T> {
   private final Consumer<T> myConsumer;
-  private final BoundedTaskExecutor myExecutorService;
+  private final ExecutorService myExecutorService;
 
-  public MergingBackgroundExecutor(int maxThreads, @NotNull Consumer<T> consumer) {
+  public MergingBackgroundExecutor(@NotNull String name, int maxThreads, @NotNull Consumer<T> consumer) {
     myConsumer = consumer;
-    myExecutorService = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, maxThreads);
+    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor(name, maxThreads);
   }
 
 
   public void queue(@NotNull final T t) {
-    myExecutorService.execute(new Runnable() {
-      @Override
-      public void run() {
-        myConsumer.consume(t);
-      }
-    });
+    myExecutorService.execute(() -> myConsumer.consume(t));
   }
 
   @NotNull
-  public static MergingBackgroundExecutor<Runnable> newRunnableExecutor(int maxThreads) {
-    return new MergingBackgroundExecutor<Runnable>(maxThreads, new Consumer<Runnable>() {
-      @Override
-      public void consume(Runnable runnable) {
-        runnable.run();
-      }
-    });
+  public static MergingBackgroundExecutor<Runnable> newRunnableExecutor(@NotNull String name, int maxThreads) {
+    return new MergingBackgroundExecutor<>(name,maxThreads, runnable -> runnable.run());
   }
 }

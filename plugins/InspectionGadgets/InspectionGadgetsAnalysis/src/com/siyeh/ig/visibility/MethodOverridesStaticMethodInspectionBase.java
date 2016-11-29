@@ -75,7 +75,7 @@ public class MethodOverridesStaticMethodInspectionBase extends BaseInspection {
       final String methodName = method.getName();
       final MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
       PsiClass ancestorClass = aClass.getSuperClass();
-      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
+      final Set<PsiClass> visitedClasses = new HashSet<>();
       while (ancestorClass != null) {
         if (!visitedClasses.add(ancestorClass)) {
           return;

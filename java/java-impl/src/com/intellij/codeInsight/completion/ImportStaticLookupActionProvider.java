@@ -22,7 +22,7 @@ public class ImportStaticLookupActionProvider implements LookupActionProvider {
     }
 
     final Icon checkIcon = PlatformIcons.CHECK_ICON;
-    final Icon icon = item.willBeImported() ? checkIcon : new EmptyIcon(checkIcon.getIconWidth(), checkIcon.getIconHeight());
+    final Icon icon = item.willBeImported() ? checkIcon : EmptyIcon.create(checkIcon);
     consumer.consume(new LookupElementAction(icon, "Import statically") {
       @Override
       public Result performLookupAction() {

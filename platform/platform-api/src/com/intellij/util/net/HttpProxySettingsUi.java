@@ -87,7 +87,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
            settings.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected() ||
            settings.KEEP_PROXY_PASSWORD != myRememberProxyPasswordCheckBox.isSelected() ||
            settings.PROXY_TYPE_IS_SOCKS != mySocks.isSelected() ||
-           !Comparing.strEqual(settings.PROXY_LOGIN, myProxyLoginTextField.getText()) ||
+           !Comparing.strEqual(settings.getProxyLogin(), myProxyLoginTextField.getText()) ||
            !Comparing.strEqual(settings.getPlainProxyPassword(), new String(myProxyPasswordTextField.getPassword())) ||
            settings.PROXY_PORT != myProxyPortTextField.getNumber() ||
            !Comparing.strEqual(settings.PROXY_HOST, myProxyHostTextField.getText());
@@ -165,58 +165,52 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
         final HttpConfigurable settings = HttpConfigurable.getInstance();
         apply(settings);
-        final AtomicReference<IOException> exceptionReference = new AtomicReference<IOException>();
+        final AtomicReference<IOException> exceptionReference = new AtomicReference<>();
         myCheckButton.setEnabled(false);
         myCheckButton.setText("Check connection (in progress...)");
         myConnectionCheckInProgress = true;
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              //already checked for null above
-              //noinspection ConstantConditions
-              HttpRequests.request(answer)
-                .readTimeout(3 * 1000)
-                .tryConnect();
-            }
-            catch (IOException e) {
-              exceptionReference.set(e);
-            }
-
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                myConnectionCheckInProgress = false;
-                reset(settings);  // since password might have been set
-                Component parent;
-                if (myMainPanel.isShowing()) {
-                  parent = myMainPanel;
-                  myCheckButton.setText("Check connection");
-                  myCheckButton.setEnabled(canEnableConnectionCheck());
-                }
-                else {
-                  IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
-                  if (frame == null) {
-                    return;
-                  }
-                  parent = frame.getComponent();
-                }
-                //noinspection ThrowableResultOfMethodCallIgnored
-                final IOException exception = exceptionReference.get();
-                if (exception == null) {
-                  Messages.showMessageDialog(parent, "Connection successful", title, Messages.getInformationIcon());
-                }
-                else {
-                  final String message = exception.getMessage();
-                  if (settings.USE_HTTP_PROXY) {
-                    settings.LAST_ERROR = message;
-                  }
-                  Messages.showErrorDialog(parent, errorText(message));
-                }
-              }
-            });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            //already checked for null above
+            //noinspection ConstantConditions
+            HttpRequests.request(answer)
+              .readTimeout(3 * 1000)
+              .tryConnect();
           }
+          catch (IOException e1) {
+            exceptionReference.set(e1);
+          }
+
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(() -> {
+            myConnectionCheckInProgress = false;
+            reset(settings);  // since password might have been set
+            Component parent;
+            if (myMainPanel.isShowing()) {
+              parent = myMainPanel;
+              myCheckButton.setText("Check connection");
+              myCheckButton.setEnabled(canEnableConnectionCheck());
+            }
+            else {
+              IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
+              if (frame == null) {
+                return;
+              }
+              parent = frame.getComponent();
+            }
+            //noinspection ThrowableResultOfMethodCallIgnored
+            final IOException exception = exceptionReference.get();
+            if (exception == null) {
+              Messages.showMessageDialog(parent, "Connection successful", title, Messages.getInformationIcon());
+            }
+            else {
+              final String message = exception.getMessage();
+              if (settings.USE_HTTP_PROXY) {
+                settings.LAST_ERROR = message;
+              }
+              Messages.showErrorDialog(parent, errorText(message));
+            }
+          });
         });
       }
     });
@@ -237,7 +231,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
     enableProxy(settings.USE_HTTP_PROXY);
 
-    myProxyLoginTextField.setText(settings.PROXY_LOGIN);
+    myProxyLoginTextField.setText(settings.getProxyLogin());
     myProxyPasswordTextField.setText(settings.getPlainProxyPassword());
 
     myProxyPortTextField.setNumber(settings.PROXY_PORT);
@@ -318,7 +312,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     settings.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
     settings.KEEP_PROXY_PASSWORD = myRememberProxyPasswordCheckBox.isSelected();
 
-    settings.PROXY_LOGIN = getText(myProxyLoginTextField);
+    settings.setProxyLogin(getText(myProxyLoginTextField));
     settings.setPlainProxyPassword(new String(myProxyPasswordTextField.getPassword()));
     settings.PROXY_EXCEPTIONS = StringUtil.nullize(myProxyExceptions.getText(), true);
 

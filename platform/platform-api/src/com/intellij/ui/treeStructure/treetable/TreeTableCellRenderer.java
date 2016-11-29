@@ -15,9 +15,15 @@
  */
 package com.intellij.ui.treeStructure.treetable;
 
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.ClientPropertyHolder;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
@@ -31,6 +37,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
   private final TreeTable myTreeTable;
   private final TreeTableTree myTree;
   private TreeCellRenderer myTreeCellRenderer;
+  private TableCellRendererComponent myCellRendererComponent = new TableCellRendererComponent();
   private Border myDefaultBorder = UIUtil.getTableFocusCellHighlightBorder();
 
 
@@ -68,7 +75,8 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
 
     //myTree.setCellFocused(false);
 
-    return myTree;
+    myCellRendererComponent.setComponent(component, expanded, leaf);
+    return myCellRendererComponent;
   }
 
   public void setCellRenderer(TreeCellRenderer treeCellRenderer) {
@@ -94,4 +102,80 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
     myTree.setShowsRootHandles(b);
   }
 
+  /**
+   * This component has two purposes:
+   * <ul>
+   * <li>from a UI perspective, it is a {@link JPanel} that contains a single {@link myTree} element,
+   * so that it renders the active row in the table tree, including indentation, icons, etc. when painted.</li>
+   * <li>from an accessibility perspective, it exposes the accessibility context of the {@link myComponent} it wraps, so
+   * that screen readers see the accessible components corresponding to each tree node in the tree.</li>
+   * </ul>
+   * See the {@link TreeTableCellRenderer#getTableCellRendererComponent(JTable, Object, boolean, boolean, int, int)} method:
+   * <ul>
+   * <li>returning {@link myTree} would allow for the painting behavior of cells to be correct, but would be incorrect from an
+   * accessibility point of view, as each cell would be exposed as a "tree" component.</li>
+   * <li>returning {@link myComponent} would be correct from an accessibility point of view, as each cell would expose
+   * the tree node they contain, but would not work from a rendering perspective, because we would miss the
+   * indentation markers, styles, etc. that is handled by {@link TreeTableTree} when rendering tree nodes.</li>
+   * </ul>
+   */
+  private class TableCellRendererComponent extends OpaquePanel {
+    /** The component resulting from rendering a cell of the TreeTableTree column */
+    private Component myComponent;
+    private boolean myExpanded;
+    private boolean myLeaf;
+
+    public TableCellRendererComponent() {
+      super(new BorderLayout());
+    }
+
+    public void setComponent(Component component, boolean expanded, boolean leaf) {
+      myComponent = component;
+      myExpanded = expanded;
+      myLeaf = leaf;
+
+      // Since we wrap a new component, we need to reset our accessible context
+      accessibleContext = null;
+
+      // By adding the tree as our only child, we ensure the row corresponding
+      // to the cell will be painted inside our bounds.
+      if (getComponentCount() == 0) {
+        add(myTree, BorderLayout.CENTER);
+      }
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      // Return the accessible context of the component we wrap (if it is accessible)
+      if (accessibleContext == null) {
+        if ((myComponent instanceof Accessible) && (myComponent.getAccessibleContext() != null)) {
+          accessibleContext = new AccessibleTableCellRendererComponent(myComponent.getAccessibleContext());
+        } else {
+          // If myComponent is not accessible -- which should be rare for a fully accessible application,
+          // returning the default JPanel accessibility context is a reasonable default.
+          accessibleContext = super.getAccessibleContext();
+        }
+      }
+      return accessibleContext;
+    }
+
+    protected class AccessibleTableCellRendererComponent extends AccessibleContextDelegate {
+
+      public AccessibleTableCellRendererComponent(AccessibleContext context) {
+        super(context);
+      }
+
+      @Override
+      public AccessibleStateSet getAccessibleStateSet() {
+        AccessibleStateSet set = super.getAccessibleStateSet();
+        if (!myLeaf) {
+          // Add expandable+expanded/collapsed states so that screen readers announce
+          // that this is an item that can be expanded (or collapsed).
+          set.add(AccessibleState.EXPANDABLE);
+          set.add(myExpanded ? AccessibleState.EXPANDED : AccessibleState.COLLAPSED);
+        }
+        return set;
+      }
+    }
+  }
 }

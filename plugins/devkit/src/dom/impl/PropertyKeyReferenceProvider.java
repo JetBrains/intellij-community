@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.PropertyReference;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -29,12 +31,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -124,40 +123,41 @@ public class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
     @Override
     protected List<PropertiesFile> retrievePropertyFilesByBundleName(String bundleName, PsiElement element) {
-      final List<String> allBundleNames;
-      if (bundleName == null) {
-        allBundleNames = getPluginResourceBundles(element);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      if (module == null) {
+        return Collections.emptyList();
       }
-      else {
-        allBundleNames = Collections.singletonList(bundleName);
+
+      final String bundleNameToUse = bundleName == null ? getPluginResourceBundle(element) : bundleName;
+      if (bundleNameToUse == null) {
+        return Collections.emptyList();
       }
 
       final Project project = element.getProject();
       final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
-      final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
 
-      final List<PropertiesFile> allPropertiesFiles = new ArrayList<PropertiesFile>();
-      for (String name : allBundleNames) {
-        final List<PropertiesFile> propertiesFiles = propertiesReferenceManager
-          .findPropertiesFiles(searchScope, name, BundleNameEvaluator.DEFAULT);
-        allPropertiesFiles.addAll(propertiesFiles);
+      final List<PropertiesFile> allPropertiesFiles = new ArrayList<>();
+
+      final List<PropertiesFile> propertiesFiles = propertiesReferenceManager.findPropertiesFiles(module, bundleNameToUse);
+      allPropertiesFiles.addAll(propertiesFiles);
+
+      if (propertiesFiles.isEmpty()) {
+      final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        allPropertiesFiles
+          .addAll(propertiesReferenceManager.findPropertiesFiles(projectScope, bundleNameToUse, BundleNameEvaluator.DEFAULT));
       }
       return allPropertiesFiles;
     }
 
-    private static List<String> getPluginResourceBundles(PsiElement element) {
+    @Nullable
+    private static String getPluginResourceBundle(PsiElement element) {
       final DomElement domElement = DomUtil.getDomElement(element);
-      if (domElement == null) return Collections.emptyList();
+      if (domElement == null) return null;
       final DomElement rootElement = DomUtil.getFileElement(domElement).getRootElement();
-      if (!(rootElement instanceof IdeaPlugin)) return Collections.emptyList();
+      if (!(rootElement instanceof IdeaPlugin)) return null;
 
       IdeaPlugin plugin = (IdeaPlugin)rootElement;
-      return ContainerUtil.map(plugin.getResourceBundles(), new Function<GenericDomValue<String>, String>() {
-        @Override
-        public String fun(GenericDomValue<String> value) {
-          return value.getStringValue();
-        }
-      });
+      return plugin.getResourceBundle().getStringValue();
     }
   }
 }

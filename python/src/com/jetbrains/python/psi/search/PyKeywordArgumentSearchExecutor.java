@@ -47,22 +47,19 @@ public class PyKeywordArgumentSearchExecutor extends QueryExecutorBase<PsiRefere
     if (!(owner instanceof PyFunction)) {
       return;
     }
-    ReferencesSearch.search(owner, queryParameters.getScopeDeterminedByUser()).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        final PsiElement refElement = reference.getElement();
-        final PyCallExpression call = PsiTreeUtil.getParentOfType(refElement, PyCallExpression.class);
-        if (call != null && PsiTreeUtil.isAncestor(call.getCallee(), refElement, false)) {
-          final PyArgumentList argumentList = call.getArgumentList();
-          if (argumentList != null) {
-            final PyKeywordArgument keywordArgument = argumentList.getKeywordArgument(((PyNamedParameter)element).getName());
-            if (keywordArgument != null) {
-              return consumer.process(keywordArgument.getReference());
-            }
+    ReferencesSearch.search(owner, queryParameters.getScopeDeterminedByUser()).forEach(reference -> {
+      final PsiElement refElement = reference.getElement();
+      final PyCallExpression call = PsiTreeUtil.getParentOfType(refElement, PyCallExpression.class);
+      if (call != null && PsiTreeUtil.isAncestor(call.getCallee(), refElement, false)) {
+        final PyArgumentList argumentList = call.getArgumentList();
+        if (argumentList != null) {
+          final PyKeywordArgument keywordArgument = argumentList.getKeywordArgument(((PyNamedParameter)element).getName());
+          if (keywordArgument != null) {
+            return consumer.process(keywordArgument.getReference());
           }
         }
-        return true;
       }
+      return true;
     });
   }
 }

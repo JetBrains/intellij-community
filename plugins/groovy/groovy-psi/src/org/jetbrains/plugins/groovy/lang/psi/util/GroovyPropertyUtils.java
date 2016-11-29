@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,7 +136,7 @@ public class GroovyPropertyUtils {
       methods = aClass.getMethods();
     }
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    List<PsiMethod> result = new ArrayList<>();
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
@@ -160,7 +161,7 @@ public class GroovyPropertyUtils {
       methods = aClass.getMethods();
     }
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    List<PsiMethod> result = new ArrayList<>();
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
@@ -214,7 +215,8 @@ public class GroovyPropertyUtils {
     if (method == null || method.isConstructor()) return false;
     if (method.getParameterList().getParametersCount() != 0) return false;
     if (!isGetterName(method.getName())) return false;
-    if (method.getName().startsWith(IS_PREFIX) && !PsiType.BOOLEAN.equals(method.getReturnType())) {
+    boolean booleanReturnType = isBooleanOrBoxed(method.getReturnType());
+    if (method.getName().startsWith(IS_PREFIX) && !booleanReturnType) {
       return false;
     }
     if (PsiType.VOID.equals(method.getReturnType())) return false;
@@ -222,7 +224,7 @@ public class GroovyPropertyUtils {
 
     final String byGetter = getPropertyNameByGetter(method);
     return propertyName.equals(byGetter) || (!isPropertyName(byGetter) && propertyName.equals(
-      getPropertyNameByGetterName(method.getName(), PsiType.BOOLEAN.equals(method.getReturnType()))));
+      getPropertyNameByGetterName(method.getName(), booleanReturnType)));
   }
 
   public static boolean isSimplePropertySetter(PsiMethod method) {
@@ -239,6 +241,12 @@ public class GroovyPropertyUtils {
     return propertyName.equals(bySetter) || (!isPropertyName(bySetter) && propertyName.equals(getPropertyNameBySetterName(method.getName())));
   }
 
+  public static boolean isSetterLike(@NotNull PsiMethod method, @NotNull String prefix) {
+    if (method.isConstructor()) return false;
+    if (method.getParameterList().getParametersCount() != 1) return false;
+    return isPropertyName(method.getName(), prefix);
+  }
+
   @Nullable
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     if (getterMethod instanceof GrAccessorMethod) {
@@ -246,7 +254,7 @@ public class GroovyPropertyUtils {
     }
 
     @NonNls String methodName = getterMethod.getName();
-    final boolean isPropertyBoolean = PsiType.BOOLEAN.equals(getterMethod.getReturnType());
+    final boolean isPropertyBoolean = isBooleanOrBoxed(getterMethod.getReturnType());
     return getPropertyNameByGetterName(methodName, isPropertyBoolean);
   }
 
@@ -355,8 +363,8 @@ public class GroovyPropertyUtils {
     return new String[]{getGetterNameBoolean(name), getGetterNameNonBoolean(name)};
   }
 
-  public static boolean isPropertyName(String name) {
-    if (name.isEmpty()) return false;
+  public static boolean isPropertyName(@Nullable String name) {
+    if (name == null || name.isEmpty()) return false;
     if (Character.isUpperCase(name.charAt(0)) && (name.length() == 1 || !Character.isUpperCase(name.charAt(1)))) return false;
     return true;
   }
@@ -365,11 +373,14 @@ public class GroovyPropertyUtils {
     return new String[]{getSetterName(name)};
   }
 
-  public static boolean isSetterName(String name) {
-    return name != null
-           && name.startsWith(SET_PREFIX)
-           && name.length() > 3
-           && (isUpperCase(name.charAt(3)) || (name.length() > 4 && isUpperCase(name.charAt(3))));
+  @Contract("null -> false")
+  public static boolean isSetterName(@Nullable String name) {
+    return isPropertyName(name, SET_PREFIX);
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isPropertyName(@Nullable String name, @NotNull String prefix) {
+    return name != null && name.startsWith(prefix) && name.length() > prefix.length() && isUpperCase(name.charAt(prefix.length()));
   }
 
   public static boolean isProperty(@Nullable PsiClass aClass, @Nullable String propertyName, boolean isStatic) {
@@ -473,7 +484,7 @@ public class GroovyPropertyUtils {
   }
 
   public static List<GrAccessorMethod> getFieldAccessors(GrField field) {
-    List<GrAccessorMethod> accessors = new ArrayList<GrAccessorMethod>();
+    List<GrAccessorMethod> accessors = new ArrayList<>();
     final GrAccessorMethod[] getters = field.getGetters();
     Collections.addAll(accessors, getters);
     final GrAccessorMethod setter = field.getSetter();
@@ -566,5 +577,9 @@ public class GroovyPropertyUtils {
         modifierList.setModifierProperty(GrModifier.DEF, false);
       }
     }
+  }
+
+  private static boolean isBooleanOrBoxed(PsiType type) {
+    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 }

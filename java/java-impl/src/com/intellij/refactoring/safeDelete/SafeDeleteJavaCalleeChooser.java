@@ -38,17 +38,9 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
   private final Project myProject;
 
   public SafeDeleteJavaCalleeChooser(final PsiMethod method, Project project, final ArrayList<UsageInfo> result) {
-    super(method, project, "Select Methods To Cascade Safe Delete", null, new Consumer<Set<PsiMethod>>() {
-      @Override
-      public void consume(Set<PsiMethod> methods) {
-        result.addAll(ContainerUtil.map(methods, new Function<PsiMethod, SafeDeleteReferenceJavaDeleteUsageInfo>() {
-          @Override
-          public SafeDeleteReferenceJavaDeleteUsageInfo fun(PsiMethod m) {
-            return new SafeDeleteReferenceJavaDeleteUsageInfo(m, m, true);
-          }
-        }));
-      }
-    });
+    super(method, project, "Select Methods To Cascade Safe Delete", null, methods -> result.addAll(ContainerUtil.map(methods, m -> {
+      return new SafeDeleteReferenceJavaDeleteUsageInfo(m, m, true);
+    })));
     myProject = project;
   }
 
@@ -58,7 +50,7 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
     if (body != null) {
       final PsiClass containingClass = psiMethod.getContainingClass();
       if (containingClass != null) {
-        final Set<PsiMethod> methodsToCheck = new HashSet<PsiMethod>();
+        final Set<PsiMethod> methodsToCheck = new HashSet<>();
         body.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -67,22 +59,17 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
           }
         });
 
-        return ContainerUtil.filter(methodsToCheck, new Condition<PsiMethod>() {
-          @Override
-          public boolean value(final PsiMethod m) {
-            return containingClass.equals(m.getContainingClass()) &&
-                   !psiMethod.equals(m) &&
-                   m.findDeepestSuperMethods().length == 0 &&
-                   ReferencesSearch.search(m).forEach(new CommonProcessors.CollectProcessor<PsiReference>() {
-                     @Override
-                     public boolean process(PsiReference reference) {
-                       final PsiElement element = reference.getElement();
-                       return PsiTreeUtil.isAncestor(psiMethod, element, true) ||
-                              PsiTreeUtil.isAncestor(m, element, true);
-                     }
-                   });
-          }
-        });
+        return ContainerUtil.filter(methodsToCheck, m -> containingClass.equals(m.getContainingClass()) &&
+                                                     !psiMethod.equals(m) &&
+               m.findDeepestSuperMethods().length == 0 &&
+                                                     ReferencesSearch.search(m).forEach(new CommonProcessors.CollectProcessor<PsiReference>() {
+                 @Override
+                 public boolean process(PsiReference reference) {
+                   final PsiElement element = reference.getElement();
+                   return PsiTreeUtil.isAncestor(psiMethod, element, true) ||
+                          PsiTreeUtil.isAncestor(m, element, true);
+                 }
+               }));
       }
     }
     return null;
@@ -130,12 +117,7 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
     @Override
     protected List<PsiMethod> computeCallers() {
       if (getTopMethod().equals(getMethod())) {
-        return ContainerUtil.map(getTopLevelItems(), new Function<SafeDeleteMethodCalleeUsageInfo, PsiMethod>() {
-          @Override
-          public PsiMethod fun(SafeDeleteMethodCalleeUsageInfo info) {
-            return info.getCalledMethod();
-          }
-        });
+        return ContainerUtil.map(getTopLevelItems(), info -> info.getCalledMethod());
       }
 
       final List<PsiMethod> callees = computeCalleesSafeToDelete(getMethod());
@@ -150,12 +132,7 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
 
     @Override
     protected Condition<PsiMethod> getFilter() {
-      return new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return !myMethod.equals(method);
-        }
-      };
+      return method -> !myMethod.equals(method);
     }
   }
 }

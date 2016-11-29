@@ -59,10 +59,10 @@ public abstract class InjectedLanguageBlockBuilder {
 
   public boolean addInjectedBlocks(List<Block> result, final ASTNode injectionHost, Wrap wrap, Alignment alignment, Indent indent) {
     final PsiFile[] injectedFile = new PsiFile[1];
-    final Ref<TextRange> injectedRangeInsideHost = new Ref<TextRange>();
-    final Ref<Integer> prefixLength = new Ref<Integer>();
-    final Ref<Integer> suffixLength = new Ref<Integer>();
-    final Ref<ASTNode> injectionHostToUse = new Ref<ASTNode>(injectionHost);
+    final Ref<TextRange> injectedRangeInsideHost = new Ref<>();
+    final Ref<Integer> prefixLength = new Ref<>();
+    final Ref<Integer> suffixLength = new Ref<>();
+    final Ref<ASTNode> injectionHostToUse = new Ref<>(injectionHost);
 
     final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override

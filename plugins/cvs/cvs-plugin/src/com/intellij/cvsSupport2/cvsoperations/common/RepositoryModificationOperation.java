@@ -80,7 +80,7 @@ public class RepositoryModificationOperation extends CompositeOperation {
   }
 
   protected List<CvsOperation> getSubOperations() {
-    ArrayList<CvsOperation> result = new ArrayList<CvsOperation>(super.getSubOperations());
+    ArrayList<CvsOperation> result = new ArrayList<>(super.getSubOperations());
     result.add(myCommitRequests);
     return result;
   }

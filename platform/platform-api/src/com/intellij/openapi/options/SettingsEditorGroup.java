@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SettingsEditorGroup<T> extends SettingsEditor<T> {
-  private final List<Pair<String, SettingsEditor<T>>> myEditors = new ArrayList<Pair<String, SettingsEditor<T>>>();
+  private final List<Pair<String, SettingsEditor<T>>> myEditors = new ArrayList<>();
 
   public void addEditor(String name, SettingsEditor<T> editor) {
     Disposer.register(this, editor);

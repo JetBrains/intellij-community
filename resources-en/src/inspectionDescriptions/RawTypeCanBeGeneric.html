@@ -1,0 +1,9 @@
+<html>
+<body>
+This inspection reports variable declarations with initializer where the variable type is declared with
+<b>raw</b> type whereas initializer has fully parameterized <b>generic</b> type, e.g.
+<code>List&nbsp;list&nbsp;=&nbsp;new ArrayList&lt;String&gt;()</code>
+<p> The quick fix adds generic parameters to the variable type. The result would be like the following:
+<pre><code>List&lt;String&gt; list = new ArrayList&lt;String&gt;()</code></pre>
+</body>
+</html>

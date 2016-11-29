@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class VfsData {
   static {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
-      public void writeActionFinished(Object action) {
+      public void writeActionFinished(@NotNull Object action) {
         // after top-level write action is finished, all the deletion listeners should have processed the deleted files
         // and their data is considered safe to remove. From this point on accessing a removed file will result in an exception.
         if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -200,7 +200,7 @@ public class VfsData {
 
   public static class Segment {
     // user data for files, DirectoryData for folders
-    private final AtomicReferenceArray<Object> myObjectArray = new AtomicReferenceArray<Object>(SEGMENT_SIZE);
+    private final AtomicReferenceArray<Object> myObjectArray = new AtomicReferenceArray<>(SEGMENT_SIZE);
 
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray = new AtomicIntegerArray(SEGMENT_SIZE * 2);
@@ -235,8 +235,8 @@ public class VfsData {
     }
 
     void setFlag(int id, int mask, boolean value) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
       }
       assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       int offset = getOffset(id) * 2 + 1;
@@ -301,7 +301,7 @@ public class VfsData {
     void addAdoptedName(String name, boolean caseSensitive) {
       if (myAdoptedNames == null) {
         //noinspection unchecked
-        myAdoptedNames = new THashSet<String>(0, caseSensitive ? TObjectHashingStrategy.CANONICAL : CaseInsensitiveStringHashingStrategy.INSTANCE);
+        myAdoptedNames = new THashSet<>(0, caseSensitive ? TObjectHashingStrategy.CANONICAL : CaseInsensitiveStringHashingStrategy.INSTANCE);
       }
       myAdoptedNames.add(name);
     }

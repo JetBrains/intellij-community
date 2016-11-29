@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,59 +24,62 @@ import java.awt.*;
 /**
  * @author peter
  */
-public class SizedIcon implements Icon, ScalableIcon {
+public class SizedIcon extends JBUI.CachingScalableJBIcon {
   private final int myWidth;
   private final int myHeight;
   private final Icon myDelegate;
   private Icon myScaledDelegate;
-  private float myScale = 1f;
 
   public SizedIcon(Icon delegate, int width, int height) {
-    myDelegate = delegate;
+    myScaledDelegate = myDelegate = delegate;
     myWidth = width;
     myHeight = height;
   }
 
-  public void paintIcon(Component c, Graphics g, int x, int y) {
-    x = scale(x);
-    y = scale(y);
-    int dx = scale(myWidth) - scale(myDelegate.getIconWidth());
-    int dy = scale(myHeight) - scale(myDelegate.getIconHeight());
-    if (dx > 0 || dy > 0) {
-      myDelegate.paintIcon(c, g, x + dx/2, y + dy/2);
-    }
-    else {
-      myDelegate.paintIcon(c, g, x, y);
-    }
-  }
-
-  private int scale(int n) {
-    return myScale == 1f ? n : (int) (n * myScale);
-  }
-
-  public int getIconWidth() {
-    if (myDelegate instanceof ScalableIcon) {
-      return myDelegate.getIconWidth();
-    }
-
-    return myWidth;
-  }
-
-  public int getIconHeight() {
-    if (myDelegate instanceof ScalableIcon) {
-      return myDelegate.getIconHeight();
-    }
-
-    return myHeight;
+  protected SizedIcon(SizedIcon icon) {
+    super(icon);
+    myWidth = icon.myWidth;
+    myHeight = icon.myHeight;
+    myDelegate = icon.myDelegate;
+    myScaledDelegate = null;
   }
 
   @Override
-  public Icon scale(float scaleFactor) {
-    if (scaleFactor == 1f) {
-      myScaledDelegate = null;
-    } else if (myDelegate instanceof ScalableIcon) {
-      myScaledDelegate = ((ScalableIcon)myDelegate).scale(scaleFactor);
+  protected SizedIcon copy() {
+    return new SizedIcon(this);
+  }
+
+  private Icon myScaledIcon() {
+    if (myScaledDelegate != null) {
+      return myScaledDelegate;
     }
-    return this;
+    if (getScale() == 1f) {
+      return myScaledDelegate = myDelegate;
+    }
+    if (!(myDelegate instanceof ScalableIcon)) {
+      return myScaledDelegate = myDelegate;
+    }
+    return myScaledDelegate = ((ScalableIcon)myDelegate).scale(getScale());
+  }
+
+  @Override
+  public void paintIcon(Component c, Graphics g, int x, int y) {
+    Icon icon = myScaledIcon();
+    int dx = scaleVal(myWidth) - icon.getIconWidth();
+    int dy = scaleVal(myHeight) - icon.getIconHeight();
+    if (dx > 0 || dy > 0) {
+      icon.paintIcon(c, g, x + dx / 2, y + dy / 2);
+    }
+    else {
+      icon.paintIcon(c, g, x, y);
+    }
+  }
+
+  public int getIconWidth() {
+    return scaleVal(myWidth);
+  }
+
+  public int getIconHeight() {
+    return scaleVal(myHeight);
   }
 }

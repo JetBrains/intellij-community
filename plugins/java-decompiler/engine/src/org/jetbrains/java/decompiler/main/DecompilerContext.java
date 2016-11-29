@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,10 @@ public class DecompilerContext {
   public static final String CURRENT_CLASS = "CURRENT_CLASS";
   public static final String CURRENT_CLASS_WRAPPER = "CURRENT_CLASS_WRAPPER";
   public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
-  public static final String CURRENT_METHOD = "CURRENT_METHOD";
-  public static final String CURRENT_METHOD_DESCRIPTOR = "CURRENT_METHOD_DESCRIPTOR";
   public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
   public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
 
-  private static final ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<DecompilerContext>();
+  private static final ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<>();
 
   private final Map<String, Object> properties;
   private StructContext structContext;
@@ -54,7 +52,7 @@ public class DecompilerContext {
   }
 
   public static void initContext(Map<String, Object> propertiesCustom) {
-    Map<String, Object> properties = new HashMap<String, Object>(IFernflowerPreferences.DEFAULTS);
+    Map<String, Object> properties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
     if (propertiesCustom != null) {
       properties.putAll(propertiesCustom);
     }

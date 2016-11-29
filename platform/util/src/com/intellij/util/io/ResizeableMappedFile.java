@@ -125,13 +125,18 @@ public class ResizeableMappedFile implements Forceable {
     final File lengthFile = getLengthFile();
     DataOutputStream stream = null;
     try {
-      stream = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
+      File parentFile = lengthFile.getParentFile();
+      if (!parentFile.exists()) parentFile.mkdirs();
+      stream = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, IOException>() {
         @Nullable
         @Override
-        public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
+        public DataOutputStream execute(boolean lastAttempt) throws IOException {
           try {
             return new DataOutputStream(new FileOutputStream(lengthFile));
           } catch (FileNotFoundException ex) {
+            if (!lengthFile.getParentFile().exists()) {
+              throw new IOException("Parent file still doesn't exist:" + lengthFile);
+            }
             if (!lastAttempt) return null;
             throw ex;
           }

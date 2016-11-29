@@ -21,6 +21,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -40,7 +41,7 @@ import java.util.Map;
  */
 public abstract class AbstractNavBarUI implements NavBarUI {
 
-  private final static Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new THashMap<NavBarItem, Map<ImageType, BufferedImage>>();
+  private final static Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new THashMap<>();
 
   private enum ImageType {
     INACTIVE, NEXT_ACTIVE, ACTIVE, INACTIVE_FLOATING, NEXT_ACTIVE_FLOATING, ACTIVE_FLOATING,
@@ -91,7 +92,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     final boolean selected = item.isSelected() && item.isFocused();
     boolean nextSelected = item.isNextSelected() && navbar.hasFocus();
 
-    Map<ImageType, BufferedImage> cached = myCache.get(item);
 
     ImageType type;
     if (floating) {
@@ -104,16 +104,9 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       }
     }
 
-    if (cached == null) {
-      cached = new HashMap<ImageType, BufferedImage>();
-      myCache.put(item, cached);
-    }
+    Map<ImageType, BufferedImage> cached = myCache.computeIfAbsent(item, k -> new HashMap<>());
 
-    BufferedImage image = cached.get(type);
-    if (image == null) {
-      image = drawToBuffer(item, floating, toolbarVisible, selected, navbar);
-      cached.put(type, image);
-    }
+    BufferedImage image = cached.computeIfAbsent(type, k -> drawToBuffer(item, floating, toolbarVisible, selected, navbar));
 
     UIUtil.drawImage(g, image, 0, 0, null);
 
@@ -133,8 +126,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
     BufferedImage result = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
-    Color defaultBg = UIUtil.isUnderDarcula() ? Gray._100 : Color.WHITE;
-    final Paint bg = floating ? defaultBg : null;/*UIUtil.getGradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));*/
+    Color defaultBg = UIUtil.isUnderDarcula() ? Gray._100 : JBColor.WHITE;
+    final Paint bg = floating ? defaultBg : null;
     final Color selection = UIUtil.getListSelectionBackground();
 
     Graphics2D g2 = result.createGraphics();
@@ -162,9 +155,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (bg != null && toolbarVisible) {
       g2.setPaint(bg);
       g2.fill(shape);
-      if (!item.isLastElement() || floating) {
-        g2.fill(endShape);
-      }
+      g2.fill(endShape);
     }
 
     if (selected) {
@@ -188,7 +179,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       } else {
         g2.fill(shape);
 
-        g2.setColor(new Color(0, 0, 0, 70));
+        g2.setColor(Gray.x00.withAlpha(70));
         g2.draw(focusShape);
       }
     }
@@ -212,7 +203,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
         endFocusShape.lineTo(w, h - 1);
       }
 
-      g2.setColor(new Color(0, 0, 0, 70));
+      g2.setColor(Gray.x00.withAlpha(70));
       g2.draw(endFocusShape);
     }
 
@@ -223,13 +214,13 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (!floating || !item.isLastElement()) {
       if (toolbarVisible || floating) {
         if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
-          Color hl = UIUtil.isUnderDarcula()? Gray._128.withAlpha(100) : UIUtil.isUnderAlloyLookAndFeel() ? new Color(255, 255, 255, 200) : Gray._205;
-          drawArrow(g2, new Color(0, 0, 0, 70), hl, off, h, !selected && !floating, false);
+          Color hl = UIUtil.isUnderDarcula()? Gray._128.withAlpha(100) : UIUtil.isUnderAlloyLookAndFeel() ? Gray.xFF.withAlpha(200) : Gray._205;
+          drawArrow(g2, Gray.x00.withAlpha(70), hl, off, h, !selected && !floating, false);
         }
       } else {
         if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
           Color hl = UIUtil.isUnderDarcula() ? Gray._128.withAlpha(100) : Gray._255.withAlpha(200);
-          drawArrow(g2, new Color(0, 0, 0, 150), hl, off, h, !selected && !floating, true);
+          drawArrow(g2, Gray.x00.withAlpha(150), hl, off, h, !selected && !floating, true);
         }
       }
     }
@@ -307,7 +298,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
     g.setColor(getBackgroundColor());
-    if (!UIUtil.isUnderAquaLookAndFeel() && mainToolbarVisible) {
+    if (mainToolbarVisible) {
       g.fillRect(0, 0, r.width, r.height);
     }
   }

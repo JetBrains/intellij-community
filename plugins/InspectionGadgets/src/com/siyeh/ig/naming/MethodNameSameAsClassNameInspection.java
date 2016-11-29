@@ -48,14 +48,8 @@ public class MethodNameSameAsClassNameInspection extends MethodNameSameAsClassNa
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
     }
 
     @Override

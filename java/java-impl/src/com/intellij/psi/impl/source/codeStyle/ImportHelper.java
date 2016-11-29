@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,15 +45,21 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toSet;
 
 public class ImportHelper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportHelper");
@@ -65,34 +71,49 @@ public class ImportHelper{
     mySettings = settings;
   }
 
-  public PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
+  @Nullable("null means no need to replace the import list because they are the same")
+  PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
+    PsiImportList oldList = file.getImportList();
+    if (oldList == null) return null;
+
     // Java parser works in a way that comments may be included to the import list, e.g.:
     //     import a;
     //     /* comment */
     //     import b;
     // We want to preserve those comments then.
-    List<PsiElement> nonImports = new ArrayList<PsiElement>();
+    List<PsiElement> nonImports = new ArrayList<>();
     // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
-    List<Pair<String, Boolean>> names = new ArrayList<Pair<String, Boolean>>(collectNamesToImport(file, nonImports));
-    Collections.sort(names, new Comparator<Pair<String, Boolean>>() {
-      @Override
-      public int compare(Pair<String, Boolean> o1, Pair<String, Boolean> o2) {
-        return o1.getFirst().compareTo(o2.getFirst());
-      }
-    });
+    List<Pair<String, Boolean>> names = new ArrayList<>(collectNamesToImport(file, nonImports));
+    Collections.sort(names, Comparator.comparing(o -> o.getFirst()));
 
     List<Pair<String, Boolean>> resultList = sortItemsAccordingToSettings(names, mySettings);
 
-    final Set<String> classesOrPackagesToImportOnDemand = new THashSet<String>();
-    collectOnDemandImports(resultList, classesOrPackagesToImportOnDemand, this.mySettings);
+    final Map<String, Boolean> classesOrPackagesToImportOnDemand = new THashMap<>();
+    collectOnDemandImports(resultList, mySettings, classesOrPackagesToImportOnDemand);
 
-    Set<String> classesToUseSingle = findSingleImports(file, resultList, classesOrPackagesToImportOnDemand);
-    Set<String> toReimport = new THashSet<String>();
+    MultiMap<String, String> conflictingMemberNames = new MultiMap<>();
+    for (Pair<String, Boolean> pair : resultList) {
+      if (pair.second) {
+        conflictingMemberNames.putValue(StringUtil.getShortName(pair.first), StringUtil.getPackageName(pair.first));
+      }
+    }
+
+    for (String methodName : conflictingMemberNames.keySet()) {
+      Collection<String> collection = conflictingMemberNames.get(methodName);
+      if (!classesOrPackagesToImportOnDemand.keySet().containsAll(collection)) {
+        for (String name : collection) {
+          classesOrPackagesToImportOnDemand.remove(name);
+        }
+      }
+    }
+
+    Set<String> classesToUseSingle = findSingleImports(file, resultList, classesOrPackagesToImportOnDemand.keySet());
+    Set<String> toReimport = new THashSet<>();
     calcClassesConflictingViaOnDemandImports(file, classesOrPackagesToImportOnDemand, file.getResolveScope(), toReimport);
     classesToUseSingle.addAll(toReimport);
 
     try {
-      StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand, classesToUseSingle);
+      StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand.keySet(), classesToUseSingle);
       for (PsiElement nonImport : nonImports) {
         text.append("\n").append(nonImport.getText());
       }
@@ -103,8 +124,8 @@ public class ImportHelper{
       codeStyleManager.reformat(dummyFile);
 
       PsiImportList newImportList = dummyFile.getImportList();
+      assert newImportList != null : dummyFile.getText();
       PsiImportList result = (PsiImportList)newImportList.copy();
-      PsiImportList oldList = file.getImportList();
       if (oldList.isReplaceEquivalent(result)) return null;
       if (!nonImports.isEmpty()) {
         PsiElement firstPrevious = newImportList.getPrevSibling();
@@ -126,11 +147,11 @@ public class ImportHelper{
     }
   }
 
-  public static void collectOnDemandImports(List<Pair<String, Boolean>> resultList,
-                                            final Set<String> classesOrPackagesToImportOnDemand,
-                                            final CodeStyleSettings settings) {
-    TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<String>();
-    TObjectIntHashMap<String> classToCountMap = new TObjectIntHashMap<String>();
+  public static void collectOnDemandImports(@NotNull List<Pair<String, Boolean>> resultList,
+                                            @NotNull CodeStyleSettings settings,
+                                            @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand) {
+    TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<>();
+    TObjectIntHashMap<String> classToCountMap = new TObjectIntHashMap<>();
     for (Pair<String, Boolean> pair : resultList) {
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
@@ -150,14 +171,15 @@ public class ImportHelper{
     class MyVisitorProcedure implements TObjectIntProcedure<String> {
       private final boolean myIsVisitingPackages;
 
-      MyVisitorProcedure(boolean isVisitingPackages) {
+      private MyVisitorProcedure(boolean isVisitingPackages) {
         myIsVisitingPackages = isVisitingPackages;
       }
 
       @Override
       public boolean execute(final String packageOrClassName, final int count) {
         if (isToUseImportOnDemand(packageOrClassName, count, !myIsVisitingPackages, settings)){
-          classesOrPackagesToImportOnDemand.add(packageOrClassName);
+          boolean isStatic = !myIsVisitingPackages;
+          outClassesOrPackagesToImportOnDemand.put(packageOrClassName, isStatic);
         }
         return true;
       }
@@ -176,7 +198,7 @@ public class ImportHelper{
       entryForName[i] = findEntryIndex(packageName, isStatic, entries);
     }
 
-    List<Pair<String, Boolean>> resultList = new ArrayList<Pair<String, Boolean>>(names.size());
+    List<Pair<String, Boolean>> resultList = new ArrayList<>(names.size());
     for(int i = 0; i < entries.length; i++){
       for(int j = 0; j < names.size(); j++){
         if (entryForName[j] == i){
@@ -193,21 +215,17 @@ public class ImportHelper{
 
   @NotNull
   private static Set<String> findSingleImports(@NotNull final PsiJavaFile file,
-                                               @NotNull List<Pair<String,Boolean>> names,
-                                               @NotNull final Set<String> onDemandImports
-                                               ) {
+                                               @NotNull Collection<Pair<String,Boolean>> names,
+                                               @NotNull final Set<String> onDemandImports) {
     final GlobalSearchScope resolveScope = file.getResolveScope();
-    Set<String> namesToUseSingle = new THashSet<String>();
     final String thisPackageName = file.getPackageName();
-    final Set<String> implicitlyImportedPackages = new THashSet<String>(Arrays.asList(file.getImplicitlyImportedPackages()));
+    final Set<String> implicitlyImportedPackages = new THashSet<>(Arrays.asList(file.getImplicitlyImportedPackages()));
     final PsiManager manager = file.getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    List<PsiElement> onDemandElements = new ArrayList<PsiElement>(onDemandImports.size());
-    List<String> onDemandImportsList = new ArrayList<String>(onDemandImports);
-    for (String onDemandName : onDemandImportsList) {
-      PsiElement aClass = facade.findClass(onDemandName, resolveScope);
-      onDemandElements.add(aClass);
-    }
+
+    List<String> onDemandImportsList = new ArrayList<>(onDemandImports);
+    List<PsiClass> onDemandElements = onDemandImportsList.stream().map(onDemandName -> facade.findClass(onDemandName, resolveScope)).collect(Collectors.toList());
+    Set<String> namesToUseSingle = new THashSet<>();
     for (Pair<String, Boolean> pair : names) {
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
@@ -229,26 +247,27 @@ public class ImportHelper{
           continue;
         }
       }
+      PsiResolveHelper resolveHelper = facade.getResolveHelper();
+
       for (int i = 0; i < onDemandImportsList.size(); i++) {
         String onDemandName = onDemandImportsList.get(i);
         if (prefix.equals(onDemandName)) continue;
         if (isStatic) {
-          PsiElement element = onDemandElements.get(i);
-          PsiClass aClass = (PsiClass)element;
+          PsiClass aClass = onDemandElements.get(i);
           if (aClass != null) {
             PsiField field = aClass.findFieldByName(shortName, true);
-            if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
+            if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(field, file, null)) {
               namesToUseSingle.add(name);
             }
             else {
               PsiClass inner = aClass.findInnerClassByName(shortName, true);
-              if (inner != null && inner.hasModifierProperty(PsiModifier.STATIC)) {
+              if (inner != null && inner.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(inner, file, null)) {
                 namesToUseSingle.add(name);
               }
               else {
                 PsiMethod[] methods = aClass.findMethodsByName(shortName, true);
                 for (PsiMethod method : methods) {
-                  if (method.hasModifierProperty(PsiModifier.STATIC)) {
+                  if (method.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(method, file, null)) {
                     namesToUseSingle.add(name);
                   }
                 }
@@ -268,42 +287,54 @@ public class ImportHelper{
     return namesToUseSingle;
   }
 
-  private static void calcClassesConflictingViaOnDemandImports(PsiJavaFile file, Collection<String> onDemandImportsList,
-                                                               GlobalSearchScope resolveScope, final Set<String> namesToUseSingle) {
-    List<String> onDemands = new ArrayList<String>(Arrays.asList(file.getImplicitlyImportedPackages()));
-    for (String onDemand : onDemandImportsList) {
+  private static void calcClassesConflictingViaOnDemandImports(@NotNull PsiJavaFile file,
+                                                               @NotNull Map<String, Boolean> onDemandImports,
+                                                               @NotNull GlobalSearchScope resolveScope,
+                                                               @NotNull Set<String> outNamesToUseSingle) {
+    List<String> onDemands = new ArrayList<>(Arrays.asList(file.getImplicitlyImportedPackages()));
+    for (String onDemand : onDemandImports.keySet()) {
       if (!onDemands.contains(onDemand)) {
         onDemands.add(onDemand);
       }
     }
     if (onDemands.size() < 2) return;
 
-    Map<String, Set<String>> classNames = new THashMap<String, Set<String>>();
+    // if we have classes x.A, x.B and there is an "import x.*" then classNames = {"x" -> ("A", "B")}
+    Map<String, Set<String>> classNames = new THashMap<>();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
     for (int i = onDemands.size()-1; i>=0; i--) {
       String onDemand = onDemands.get(i);
       PsiPackage aPackage = facade.findPackage(onDemand);
-      if (aPackage == null) {
+      boolean isStatic = ObjectUtils.notNull(onDemandImports.get(onDemand), Boolean.FALSE);
+      PsiClass aClass;
+      if (aPackage != null) { // import foo.package1.*;
+        Set<String> set = Arrays.stream(aPackage.getClasses(resolveScope)).map(PsiClass::getName).collect(toSet());
+        classNames.put(onDemand, set);
+      }
+      else if ((aClass = facade.findClass(onDemand, resolveScope)) != null) {  // import static foo.package1.Class1.*;
+        if (isStatic) {
+          PsiMember[][] membersArray = {aClass.getInnerClasses(), aClass.getMethods(), aClass.getFields()};
+          Set<String> set = Arrays.stream(membersArray).flatMap(Arrays::stream).map(PsiMember::getName).collect(toSet());
+          classNames.put(onDemand, set);
+        }
+        else {
+          classNames.put(onDemand, Arrays.stream(aClass.getInnerClasses()).map(PsiClass::getName).collect(toSet()));
+        }
+      }
+      else {
         onDemands.remove(i);
-        continue;
       }
-      PsiClass[] psiClasses = aPackage.getClasses(resolveScope);
-      Set<String> set = new THashSet<String>(psiClasses.length);
-      for (PsiClass psiClass : psiClasses) {
-        set.add(psiClass.getName());
-      }
-      classNames.put(onDemand, set);
     }
 
-    final Set<String> conflicts = new THashSet<String>();
+    final Set<String> conflicts = new THashSet<>();
     for (int i = 0; i < onDemands.size(); i++) {
       String on1 = onDemands.get(i);
       for (int j = i+1; j < onDemands.size(); j++) {
         String on2 = onDemands.get(j);
-        Set<String> inter = new THashSet<String>(classNames.get(on1));
-        inter.retainAll(classNames.get(on2));
+        Set<String> intersection = new THashSet<>(classNames.get(on1));
+        intersection.retainAll(classNames.get(on2));
 
-        conflicts.addAll(inter);
+        conflicts.addAll(intersection);
       }
     }
     if (!conflicts.isEmpty() && !(file instanceof PsiCompiledElement)) {
@@ -314,7 +345,7 @@ public class ImportHelper{
           PsiElement element = reference.resolve();
           if (element instanceof PsiClass && conflicts.contains(((PsiClass)element).getName())) {
             String fqn = ((PsiClass)element).getQualifiedName();
-            namesToUseSingle.add(fqn);
+            outNamesToUseSingle.add(fqn);
           }
         }
       });
@@ -325,7 +356,7 @@ public class ImportHelper{
   private static StringBuilder buildImportListText(@NotNull List<Pair<String, Boolean>> names,
                                                    @NotNull final Set<String> packagesOrClassesToImportOnDemand,
                                                    @NotNull final Set<String> namesToUseSingle) {
-    final Set<Pair<String, Boolean>> importedPackagesOrClasses = new THashSet<Pair<String, Boolean>>();
+    final Set<Pair<String, Boolean>> importedPackagesOrClasses = new THashSet<>();
     @NonNls final StringBuilder buffer = new StringBuilder();
     for (Pair<String, Boolean> pair : names) {
       String name = pair.getFirst();
@@ -402,7 +433,7 @@ public class ImportHelper{
       useOnDemand = false;
     }
 
-    List<PsiClass> classesToReimport = new ArrayList<PsiClass>();
+    List<PsiClass> classesToReimport = new ArrayList<>();
 
     List<PsiJavaCodeReferenceElement> importRefs = getImportsFromPackage(file, packageName);
     if (useOnDemand){
@@ -418,12 +449,12 @@ public class ImportHelper{
       // check conflicts
       if (useOnDemand){
         PsiElement[] onDemandRefs = file.getOnDemandImports(false, true);
-        List<String> refTexts = new ArrayList<String>(onDemandRefs.length);
+        List<String> refTexts = new ArrayList<>(onDemandRefs.length);
         for (PsiElement ref : onDemandRefs) {
           String refName = ref instanceof PsiClass ? ((PsiClass)ref).getQualifiedName() : ((PsiPackage)ref).getQualifiedName();
           refTexts.add(refName);
         }
-        calcClassesToReimport(file, facade, helper, packageName, classesToReimport, refTexts);
+        calcClassesToReimport(file, facade, helper, packageName, refTexts, classesToReimport);
       }
     }
 
@@ -436,6 +467,7 @@ public class ImportHelper{
 
     try {
       PsiImportList importList = file.getImportList();
+      assert importList != null : file;
       PsiImportStatement statement = useOnDemand ? factory.createImportStatementOnDemand(packageName) : factory.createImportStatement(refClass);
       importList.add(statement);
       if (useOnDemand) {
@@ -475,31 +507,36 @@ public class ImportHelper{
     return false;
   }
 
-  private static void calcClassesToReimport(PsiJavaFile file, JavaPsiFacade facade, PsiResolveHelper helper, String packageName, List<PsiClass> classesToReimport,
-                                     Collection<String> onDemandRefs) {
+  private static void calcClassesToReimport(@NotNull PsiJavaFile file,
+                                            @NotNull JavaPsiFacade facade,
+                                            @NotNull PsiResolveHelper helper,
+                                            @NotNull String packageName,
+                                            @NotNull Collection<String> onDemandRefs,
+                                            @NotNull List<PsiClass> outClassesToReimport) {
     if (onDemandRefs.isEmpty()) {
       return;
     }
     PsiPackage aPackage = facade.findPackage(packageName);
-    if (aPackage != null) {
-      PsiDirectory[] dirs = aPackage.getDirectories();
-      GlobalSearchScope resolveScope = file.getResolveScope();
-      for (PsiDirectory dir : dirs) {
-        PsiFile[] files = dir.getFiles(); // do not iterate classes - too slow when not loaded
-        for (PsiFile aFile : files) {
-          if (!(aFile instanceof PsiJavaFile)) continue;
-          String name = aFile.getVirtualFile().getNameWithoutExtension();
-          for (String refName : onDemandRefs) {
-            String conflictClassName = refName + "." + name;
-            PsiClass conflictClass = facade.findClass(conflictClassName, resolveScope);
-            if (conflictClass == null || !helper.isAccessible(conflictClass, file, null)) continue;
-            String conflictClassName2 = packageName + "." + name;
-            PsiClass conflictClass2 = facade.findClass(conflictClassName2, resolveScope);
-            if (conflictClass2 != null &&
-                helper.isAccessible(conflictClass2, file, null) &&
-                ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).findFirst() != null) {
-              classesToReimport.add(conflictClass);
-            }
+    if (aPackage == null) {
+      return;
+    }
+    PsiDirectory[] dirs = aPackage.getDirectories();
+    GlobalSearchScope resolveScope = file.getResolveScope();
+    for (PsiDirectory dir : dirs) {
+      PsiFile[] files = dir.getFiles(); // do not iterate classes - too slow when not loaded
+      for (PsiFile aFile : files) {
+        if (!(aFile instanceof PsiJavaFile)) continue;
+        String name = aFile.getVirtualFile().getNameWithoutExtension();
+        for (String refName : onDemandRefs) {
+          String conflictClassName = refName + "." + name;
+          PsiClass conflictClass = facade.findClass(conflictClassName, resolveScope);
+          if (conflictClass == null || !helper.isAccessible(conflictClass, file, null)) continue;
+          String conflictClassName2 = packageName + "." + name;
+          PsiClass conflictClass2 = facade.findClass(conflictClassName2, resolveScope);
+          if (conflictClass2 != null &&
+              helper.isAccessible(conflictClass2, file, null) &&
+              ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).findFirst() != null) {
+            outClassesToReimport.add(conflictClass);
           }
         }
       }
@@ -509,7 +546,7 @@ public class ImportHelper{
   @NotNull
   private static List<PsiJavaCodeReferenceElement> getImportsFromPackage(@NotNull PsiJavaFile file, @NotNull String packageName){
     PsiClass[] refs = file.getSingleClassImports(true);
-    List<PsiJavaCodeReferenceElement> array = new ArrayList<PsiJavaCodeReferenceElement>();
+    List<PsiJavaCodeReferenceElement> array = new ArrayList<>();
     for (PsiClass ref1 : refs) {
       String className = ref1.getQualifiedName();
       if (getPackageOrClassName(className).equals(packageName)) {
@@ -605,7 +642,7 @@ public class ImportHelper{
     int entryIndex = findEntryIndex(statement);
     PsiImportStatementBase[] allStatements = list.getAllImportStatements();
     int[] entries = ArrayUtil.newIntArray(allStatements.length);
-    List<PsiImportStatementBase> statements = new ArrayList<PsiImportStatementBase>();
+    List<PsiImportStatementBase> statements = new ArrayList<>();
     for(int i = 0; i < allStatements.length; i++){
       PsiImportStatementBase statement1 = allStatements[i];
       int entryIndex1 = findEntryIndex(statement1);
@@ -682,14 +719,14 @@ public class ImportHelper{
   private static boolean isToUseImportOnDemand(@NotNull String packageName,
                                                int classCount,
                                                boolean isStaticImportNeeded,
-                                               final CodeStyleSettings settings){
+                                               @NotNull CodeStyleSettings settings){
     if (!settings.USE_SINGLE_CLASS_IMPORTS) return true;
     int limitCount = isStaticImportNeeded ? settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND :
                      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
     if (classCount >= limitCount) return true;
     if (packageName.isEmpty()) return false;
     PackageEntryTable table = settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
-    return table != null && table.contains(packageName);
+    return table.contains(packageName);
   }
 
   private static int findEntryIndex(@NotNull String packageName, boolean isStatic, @NotNull PackageEntry[] entries) {
@@ -717,7 +754,7 @@ public class ImportHelper{
     return bestEntryIndex;
   }
 
-  public int findEntryIndex(@NotNull PsiImportStatementBase statement){
+  int findEntryIndex(@NotNull PsiImportStatementBase statement){
     PsiJavaCodeReferenceElement ref = statement.getImportReference();
     if (ref == null) return -1;
     String packageName;
@@ -731,10 +768,34 @@ public class ImportHelper{
     return findEntryIndex(packageName, statement instanceof PsiImportStaticStatement, mySettings.IMPORT_LAYOUT_TABLE.getEntries());
   }
 
+  public static boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
+    Collection<Pair<String, Boolean>> resultList = collectNamesToImport(file, new ArrayList<>());
+    String qualifiedName = psiClass.getQualifiedName();
+    for (Pair<String, Boolean> pair : resultList) {
+      if (pair.second &&
+          referenceName.equals(StringUtil.getShortName(pair.first)) &&
+          !StringUtil.getPackageName(pair.first).equals(qualifiedName)) {
+        return true;
+      }
+    }
+
+    PsiImportList importList = file.getImportList();
+    if (importList == null) return false;
+    Set<String> onDemandImportedClasses = Arrays.stream(importList.getImportStaticStatements())
+      .filter(statement -> statement.isOnDemand())
+      .map(statement -> statement.resolveTargetClass())
+      .filter(aClass -> aClass != null)
+      .map(aClass -> aClass.getQualifiedName()).collect(toSet());
+    String newImport = StringUtil.getQualifiedName(qualifiedName, referenceName);
+    Set<String> singleImports = findSingleImports(file, Collections.singletonList(Pair.create(newImport, true)), onDemandImportedClasses);
+
+    return singleImports.contains(newImport);
+  }
+
   @NotNull
   // returns list of (name, isImportStatic) pairs
   private static Collection<Pair<String,Boolean>> collectNamesToImport(@NotNull PsiJavaFile file, List<PsiElement> comments){
-    Set<Pair<String,Boolean>> names = new THashSet<Pair<String,Boolean>>();
+    Set<Pair<String,Boolean>> names = new THashSet<>();
 
     final JspFile jspFile = JspPsiUtil.getJspFile(file);
     collectNamesToImport(names, comments, file, jspFile);
@@ -772,7 +833,7 @@ public class ImportHelper{
                                        PsiFile context){
     if (scope instanceof PsiImportList) return;
 
-    final LinkedList<PsiElement> stack = new LinkedList<PsiElement>();
+    final LinkedList<PsiElement> stack = new LinkedList<>();
     stack.add(scope);
     while (!stack.isEmpty()) {
       final PsiElement child = stack.removeFirst();
@@ -786,8 +847,8 @@ public class ImportHelper{
             continue;
           }
           IElementType elementType = node.getElementType();
-          if (elementType != null &&!ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(elementType)
-            && !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(elementType))
+          if (!ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(elementType) &&
+              !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(elementType))
           {
             comments.add(element);
           }
@@ -854,8 +915,8 @@ public class ImportHelper{
   private static void addUnresolvedImportNames(@NotNull final Set<Pair<String, Boolean>> namesToImport, @NotNull PsiJavaFile file) {
     final PsiImportList importList = file.getImportList();
     PsiImportStatementBase[] imports = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
-    final Map<String, Pair<String, Boolean>> unresolvedNames = new THashMap<String, Pair<String, Boolean>>();
-    @NotNull Set<Pair<String, Boolean>> unresolvedOnDemand = new THashSet<Pair<String, Boolean>>();
+    final Map<String, Pair<String, Boolean>> unresolvedNames = new THashMap<>();
+    @NotNull Set<Pair<String, Boolean>> unresolvedOnDemand = new THashSet<>();
     for (PsiImportStatementBase anImport : imports) {
       PsiJavaCodeReferenceElement ref = anImport.getImportReference();
       if (ref == null) continue;
@@ -910,7 +971,7 @@ public class ImportHelper{
     // otherwise, optimize out all red on demand imports for green file
   }
 
-  public static boolean isImplicitlyImported(@NotNull String className, @NotNull PsiJavaFile file) {
+  static boolean isImplicitlyImported(@NotNull String className, @NotNull PsiJavaFile file) {
     String[] packageNames = file.getImplicitlyImportedPackages();
     for (String packageName : packageNames) {
       if (hasPackage(className, packageName)) return true;
@@ -918,7 +979,7 @@ public class ImportHelper{
     return false;
   }
 
-  public static boolean hasPackage(@NotNull String className, @NotNull String packageName){
+  static boolean hasPackage(@NotNull String className, @NotNull String packageName){
     if (!className.startsWith(packageName)) return false;
     if (className.length() == packageName.length()) return false;
     if (!packageName.isEmpty() && className.charAt(packageName.length()) != '.') return false;
@@ -930,5 +991,4 @@ public class ImportHelper{
     int dotIndex = className.lastIndexOf('.');
     return dotIndex < 0 ? "" : className.substring(0, dotIndex);
   }
-
 }

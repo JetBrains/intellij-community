@@ -16,36 +16,46 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.*;
+
 public class Intersection {
-  private final Map<String, String> myLists;
-  private final MultiMap<String, Change> myChangesSubset;
 
-  public Intersection() {
-    myLists = new HashMap<String, String>();
-    myChangesSubset = new MultiMap<String, Change>();
+  @NotNull private final Map<String, String> myListComments = newHashMap();
+  @NotNull private final Map<String, List<Change>> myChangesByLists = newHashMap();
+
+  public void add(@NotNull LocalChangeList list, @NotNull Change change) {
+    myChangesByLists.computeIfAbsent(list.getName(), key -> newArrayList()).add(change);
+    myListComments.put(list.getName(), notNull(list.getComment(), list.getName()));
   }
 
-  public void add(@NotNull final String listName, @Nullable final String comment, final Change change) {
-    myChangesSubset.putValue(listName, change);
-    final String commentToPut = comment == null ? listName : comment;
-    myLists.put(listName, commentToPut);
+  @NotNull
+  public String getComment(@NotNull String listName) {
+    return myListComments.get(listName);
   }
 
-  public String getComment(final String listName) {
-    return myLists.get(listName);
+  @NotNull
+  public Map<String, List<Change>> getChangesByLists() {
+    return myChangesByLists;
   }
 
-  public MultiMap<String, Change> getChangesSubset() {
-    return myChangesSubset;
+  public boolean isEmpty() {
+    return myChangesByLists.isEmpty();
+  }
+
+  @NotNull
+  public List<Change> getAllChanges() {
+    return concat(myChangesByLists.values());
+  }
+
+  public static boolean isEmpty(@Nullable Intersection intersection) {
+    return intersection == null || intersection.isEmpty();
   }
 }

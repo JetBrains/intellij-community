@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,17 @@
  */
 package com.intellij.openapi;
 
-import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.Component;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.Method;
 
 /**
  * @author Sergey.Malenkov
@@ -64,6 +62,7 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
   private int myIndex;
   private boolean myFocusable;
   private boolean myEvent;
+  private boolean myTextChanged;
   private Runnable myRunnable;
 
   private MnemonicWrapper(T component, String text, String code, String index) {
@@ -86,6 +85,7 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     boolean disabled = isDisabled();
     try {
       myEvent = true;
+      if (myTextChanged) updateText();
       setMnemonicCode(disabled ? KeyEvent.VK_UNDEFINED : myCode);
       setMnemonicIndex(disabled ? -1 : myIndex);
       Component component = getFocusableComponent();
@@ -95,6 +95,7 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     }
     finally {
       myEvent = false;
+      myTextChanged = false;
       myRunnable = null;
     }
   }
@@ -104,9 +105,10 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     if (!myEvent) {
       String property = event.getPropertyName();
       if (myTextProperty.equals(property)) {
-        if (updateText()) {
-          updateRequest();
-        }
+        // it is needed to update text later because
+        // this listener is notified before Swing updates mnemonics
+        myTextChanged = true;
+        updateRequest();
       }
       else if (myCodeProperty.equals(property)) {
         myCode = getMnemonicCode();
@@ -136,7 +138,7 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
           sb.append(ch);
         }
         else if (i + 1 < length) {
-          code = getExtendedKeyCodeForChar(text.charAt(i + 1));
+          code = KeyEvent.getExtendedKeyCodeForChar((int)text.charAt(i + 1));
           index = sb.length();
         }
       }
@@ -159,6 +161,7 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
   private void updateRequest() {
     if (myRunnable == null) {
       myRunnable = this; // run once
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(this);
     }
   }
@@ -198,26 +201,6 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
       map.put(stroke, action);
     }
     return stroke;
-  }
-
-  // TODO: HACK because of Java7 required:
-  // replace later with KeyEvent.getExtendedKeyCodeForChar(ch)
-  private static int getExtendedKeyCodeForChar(int ch) {
-    //noinspection ConstantConditions
-    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
-    try {
-      Method method = KeyEvent.class.getMethod("getExtendedKeyCodeForChar", int.class);
-      if (!method.isAccessible()) {
-        method.setAccessible(true);
-      }
-      return (Integer)method.invoke(KeyEvent.class, ch);
-    }
-    catch (Exception exception) {
-      if (ch >= 'a' && ch <= 'z') {
-        ch -= ('a' - 'A');
-      }
-      return ch;
-    }
   }
 
   private static class MenuWrapper extends ButtonWrapper {

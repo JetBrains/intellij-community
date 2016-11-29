@@ -33,7 +33,7 @@ public class DefaultExecutionResult implements ExecutionResult {
   private AnAction[] myActions;
   @NotNull
   private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
-  private final List<AnAction> myStopActions = new ArrayList<AnAction>();
+  private final List<AnAction> myStopActions = new ArrayList<>();
 
   public DefaultExecutionResult() {
     myConsole = null;

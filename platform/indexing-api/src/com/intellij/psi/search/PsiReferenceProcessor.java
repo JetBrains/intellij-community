@@ -32,7 +32,7 @@ public interface PsiReferenceProcessor{
     }
 
     public CollectElements() {
-      this(new ArrayList<PsiReference>());
+      this(new ArrayList<>());
     }
 
     public PsiReference[] toArray(){
@@ -51,7 +51,7 @@ public interface PsiReferenceProcessor{
   }
 
   class FindElement implements PsiReferenceProcessor{
-    private volatile PsiReference myFoundElement = null;
+    private volatile PsiReference myFoundElement;
 
     public boolean isFound() {
       return myFoundElement != null;

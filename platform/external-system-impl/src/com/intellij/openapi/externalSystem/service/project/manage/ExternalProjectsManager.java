@@ -32,7 +32,6 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
@@ -64,7 +64,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   private final ExternalSystemRunManagerListener myRunManagerListener;
   private final ExternalSystemTaskActivator myTaskActivator;
   private final ExternalSystemShortcutsManager myShortcutsManager;
-  private final List<ExternalProjectsView> myProjectsViews = new SmartList<ExternalProjectsView>();
+  private final List<ExternalProjectsView> myProjectsViews = new SmartList<>();
 
 
   public static ExternalProjectsManager getInstance(@NotNull Project project) {
@@ -73,7 +73,6 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
 
   public ExternalProjectsManager(@NotNull Project project) {
     myProject = project;
-    Disposer.register(project, this);
     myShortcutsManager = new ExternalSystemShortcutsManager(project);
     Disposer.register(this, myShortcutsManager);
     myTaskActivator = new ExternalSystemTaskActivator(project);
@@ -184,9 +183,13 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
     return new ExternalProjectsStateProvider() {
       @Override
       public List<TasksActivation> getAllTasksActivation() {
-        List<TasksActivation> result = new SmartList<TasksActivation>();
+        List<TasksActivation> result = new SmartList<>();
+        Map<String, ProjectSystemId> systemIds = ExternalSystemApiUtil.getAllManagers().stream()
+          .collect(Collectors.toMap(o -> o.getSystemId().getId(), o -> o.getSystemId()));
         for (Map.Entry<String, ExternalProjectsState.State> systemState : myState.getExternalSystemsState().entrySet()) {
-          ProjectSystemId systemId = new ProjectSystemId(systemState.getKey());
+          ProjectSystemId systemId = systemIds.get(systemState.getKey());
+          if(systemId == null) continue;
+
           for (Map.Entry<String, TaskActivationState> activationStateEntry : systemState.getValue().getExternalSystemsTaskActivation()
             .entrySet()) {
             result.add(new TasksActivation(systemId, activationStateEntry.getKey(), activationStateEntry.getValue()));
@@ -200,12 +203,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
       public List<TasksActivation> getTasksActivation(@NotNull final ProjectSystemId systemId) {
         final Set<Map.Entry<String, TaskActivationState>> entries =
           myState.getExternalSystemsState().get(systemId.getId()).getExternalSystemsTaskActivation().entrySet();
-        return ContainerUtil.map(entries, new Function<Map.Entry<String, TaskActivationState>, TasksActivation>() {
-          @Override
-          public TasksActivation fun(Map.Entry<String, TaskActivationState> entry) {
-            return new TasksActivation(systemId, entry.getKey(), entry.getValue());
-          }
-        });
+        return ContainerUtil.map(entries, entry -> new TasksActivation(systemId, entry.getKey(), entry.getValue()));
       }
 
       @Override

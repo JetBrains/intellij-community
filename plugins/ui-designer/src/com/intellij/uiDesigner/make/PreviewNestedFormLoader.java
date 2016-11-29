@@ -43,7 +43,7 @@ import java.util.Set;
 public class PreviewNestedFormLoader extends PsiNestedFormLoader {
   private final String myTempPath;
   private final InstrumentationClassFinder myFinder;
-  private final Set<String> myGeneratedClasses = new HashSet<String>();
+  private final Set<String> myGeneratedClasses = new HashSet<>();
 
   public PreviewNestedFormLoader(final Module module, final String tempPath, final InstrumentationClassFinder finder) {
     super(module);

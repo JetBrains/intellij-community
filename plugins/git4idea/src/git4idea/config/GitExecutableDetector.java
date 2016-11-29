@@ -129,7 +129,7 @@ public class GitExecutableDetector {
     final String[] PROGRAM_FILES = { "Program Files", "Program Files (x86)" };
 
     // collecting all potential msys distributives
-    List<File> distrs = new ArrayList<File>();
+    List<File> distrs = new ArrayList<>();
     for (String programFiles : PROGRAM_FILES) {
       File pf = new File(WIN_ROOT, programFiles);
       File[] children = pf.listFiles(new FileFilter() {

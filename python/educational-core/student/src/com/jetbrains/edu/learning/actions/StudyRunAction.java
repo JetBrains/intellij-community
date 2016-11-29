@@ -16,9 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.UserTest;
@@ -32,7 +32,7 @@ public class StudyRunAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(StudyRunAction.class.getName());
   public static final String ACTION_ID = "StudyRunAction";
   private ProcessHandler myHandler;
-  private List<ProcessListener> myProcessListeners = new LinkedList<ProcessListener>();
+  private List<ProcessListener> myProcessListeners = new LinkedList<>();
 
   public StudyRunAction() {
     super("Run File With Tests", "Run your code with tests", AllIcons.General.Run);

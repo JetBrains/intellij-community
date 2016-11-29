@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   private Timer myRepaintTimer;
   private ActionListener myTimerListener;
   private final Project myProject;
-  private final CollectionListModel<String> myModel = new CollectionListModel<String>();
+  private final CollectionListModel<String> myModel = new CollectionListModel<>();
 
   public MavenRepositoriesConfigurable(Project project) {
     myProject = project;
@@ -160,24 +160,21 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
 
   private void testServiceConnection(String url) {
     myTestButton.setEnabled(false);
-    RepositoryAttachHandler.searchRepositories(myProject, Collections.singletonList(url), new Processor<Collection<MavenRepositoryInfo>>() {
-      @Override
-      public boolean process(Collection<MavenRepositoryInfo> infos) {
-        myTestButton.setEnabled(true);
-        if (infos.isEmpty()) {
-          Messages.showMessageDialog("No repositories found", "Service Connection Failed", Messages.getWarningIcon());
-        }
-        else {
-          final StringBuilder sb = new StringBuilder();
-          sb.append(infos.size()).append(infos.size() == 1 ? "repository" : " repositories").append(" found");
-          //for (MavenRepositoryInfo info : infos) {
-          //  sb.append("\n  ");
-          //  sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
-          //}
-          Messages.showMessageDialog(sb.toString(), "Service Connection Successful", Messages.getInformationIcon());
-        }
-        return true;
+    RepositoryAttachHandler.searchRepositories(myProject, Collections.singletonList(url), infos -> {
+      myTestButton.setEnabled(true);
+      if (infos.isEmpty()) {
+        Messages.showMessageDialog("No repositories found", "Service Connection Failed", Messages.getWarningIcon());
       }
+      else {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(infos.size()).append(infos.size() == 1 ? "repository" : " repositories").append(" found");
+        //for (MavenRepositoryInfo info : infos) {
+        //  sb.append("\n  ");
+        //  sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
+        //}
+        Messages.showMessageDialog(sb.toString(), "Service Connection Successful", Messages.getInformationIcon());
+      }
+      return true;
     });
   }
 
@@ -202,7 +199,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   }
 
   private List<MavenIndex> getSelectedIndices() {
-    List<MavenIndex> result = new ArrayList<MavenIndex>();
+    List<MavenIndex> result = new ArrayList<>();
     for (int i : myIndicesTable.getSelectedRows()) {
       result.add(getIndexAt(i));
     }
@@ -225,10 +222,6 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   public JComponent createComponent() {

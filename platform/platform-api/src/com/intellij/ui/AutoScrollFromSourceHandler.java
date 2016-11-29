@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,7 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
   }
 
   protected long getAlarmDelay() {
-    return 500;
+    return Registry.intValue("ide.autoscroll.from.source.delay", 100);
   }
 
   public void install() {
@@ -80,12 +81,7 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
         final FileEditor editor = event.getNewEditor();
         if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              selectElementFromEditor(editor);
-            }
-          }, getAlarmDelay(), getModalityState());
+          myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
         }
       }
     });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -27,28 +28,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportResolver;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.turnDirIntoInit;
 
 /**
  * Resolves the specified qualified name in the specified context (module, all modules or a file) to a file or directory.
@@ -87,6 +88,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   @Override
   public QualifiedNameResolver fromElement(@NotNull PsiElement foothold) {
+    checkAccess();
     myContext.setFromElement(foothold);
     if (PydevConsoleRunner.isInPydevConsole(foothold) || PyUtil.isInScratchFile(foothold)) {
       withAllModules();
@@ -100,6 +102,8 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   @Override
   public QualifiedNameResolver fromModule(@NotNull Module module) {
+    PyPsiUtils.assertValid(module);
+    checkAccess();
     myContext.setFromModule(module);
     return this;
   }
@@ -189,6 +193,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   }
 
   public boolean visitRoot(final VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
+    checkAccess();
     if (!root.isValid()) {
       return true;
     }
@@ -211,39 +216,71 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   }
 
   private void addRoot(PsiElement resolveResult, boolean isModuleSource) {
-    if (isModuleSource) {
-      mySourceResults.add(resolveResult);
+    final Set<PsiElement> results = isModuleSource ? mySourceResults : myLibResults;
+    final boolean allNamespacePackages = allNamespacePackages(results);
+    if (allNamespacePackages) {
+      if (!isNamespacePackage(resolveResult)) {
+        results.clear();
+      }
     }
-    else {
-      myLibResults.add(resolveResult);
+    if (allNamespacePackages || results.isEmpty() || myQualifiedName.getComponentCount() == 0) {
+      results.add(resolveResult);
     }
+  }
+
+  private static boolean isNamespacePackage(@NotNull PsiElement element) {
+    final PsiDirectory dir = as(element, PsiDirectory.class);
+    if (dir != null) {
+      final LanguageLevel level = PyUtil.getLanguageLevelForVirtualFile(dir.getProject(), dir.getVirtualFile());
+      if (level.isAtLeast(LanguageLevel.PYTHON33)) {
+        return turnDirIntoInit(dir) == null;
+      }
+    }
+    return false;
+  }
+
+  private static boolean allNamespacePackages(@NotNull Collection<PsiElement> elements) {
+    for (PsiElement element : elements) {
+      if (!isNamespacePackage(element)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
   @NotNull
   public List<PsiElement> resultsAsList() {
+    checkAccess();
     if (!myContext.isValid()) {
       return Collections.emptyList();
     }
 
     final PsiFile footholdFile = myContext.getFootholdFile();
+    checkValidForTests(footholdFile);
+    boolean foundRelativeImport = false;
     if (myRelativeLevel >= 0 && footholdFile != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(footholdFile)) {
       PsiDirectory dir = footholdFile.getContainingDirectory();
+      checkValidForTests(dir);
       if (myRelativeLevel > 0) {
         dir = ResolveImportUtil.stepBackFrom(footholdFile, myRelativeLevel);
+        checkValidForTests(dir);
       }
 
       PsiElement module = resolveModuleAt(dir);
+      checkValidForTests(module);
       if (module != null) {
+        foundRelativeImport = isRelativeImportResult(dir, module);
         addRoot(module, true);
       }
     }
 
     final PythonPathCache cache = findMyCache();
-    final boolean mayCache = cache != null && !myWithoutRoots && !myWithoutForeign;
+    final boolean mayCache = cache != null && !myWithoutRoots && !myWithoutForeign && !foundRelativeImport;
     if (mayCache) {
       final List<PsiElement> cachedResults = cache.get(myQualifiedName);
       if (cachedResults != null) {
+        cachedResults.stream().forEach(QualifiedNameResolverImpl::checkValidForTests);
         mySourceResults.addAll(cachedResults);
         return Lists.newArrayList(mySourceResults);
       }
@@ -262,13 +299,13 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     }
 
     if (!myWithoutForeign) {
-      for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
-        PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext, !myWithoutRoots);
-        if (foreign != null) {
-          myForeignResults.add(foreign);
-        }
-      }
       if (mySourceResults.isEmpty() || myQualifiedName.getComponentCount() == 0) {
+        for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
+          PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext, !myWithoutRoots);
+          if (foreign != null) {
+            myForeignResults.add(foreign);
+          }
+        }
         mySourceResults.addAll(myForeignResults);
         myForeignResults.clear();
       }
@@ -281,12 +318,30 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     return results;
   }
 
+  
+  private boolean isRelativeImportResult(@NotNull PsiDirectory rootDirectory, @NotNull PsiElement result) {
+    if (myRelativeLevel > 0) {
+      return true;
+    }
+    final boolean isPython2 = LanguageLevel.forElement(rootDirectory).isOlderThan(LanguageLevel.PYTHON30);
+    if (myRelativeLevel == 0 && isPython2 && PyUtil.isPackage(rootDirectory, false, null)) {
+      // Candidate for implicit relative import doesn't necessarily means that the same module cannot be imported absolutely 
+      final PsiFileSystemItem moduleOrPackage = as(result, PsiFileSystemItem.class);
+      if (moduleOrPackage != null && !myQualifiedName.equals(QualifiedNameFinder.findShortestImportableQName(moduleOrPackage))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Resolve relative imports from sdk root to the skeleton dir
    */
   private void addRelativeImportResultsFromSkeletons(@NotNull final PsiFile foothold) {
-    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(foothold.getVirtualFile());
-    if (inSource) return;
+    final VirtualFile vFile = foothold.getVirtualFile();
+    if (vFile == null || FileIndexFacade.getInstance(foothold.getProject()).isInContent(vFile)) {
+      return;
+    }
     PsiDirectory containingDirectory = foothold.getContainingDirectory();
     if (myRelativeLevel > 0) {
       containingDirectory = ResolveImportUtil.stepBackFrom(foothold, myRelativeLevel);
@@ -304,8 +359,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
         if (skeletonsDir == null) return;
         final PsiDirectory directory = myContext.getPsiManager().findDirectory(skeletonsDir);
         final PsiElement psiElement = absoluteVisitor.resolveModuleAt(directory);
-        if (psiElement != null)
-          myLibResults.add(psiElement);
+        if (psiElement != null) {
+          addRoot(psiElement, false);
+        }
       }
     }
   }
@@ -344,6 +400,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Override
   @Nullable
   public PsiElement firstResult() {
+    checkAccess();
     final List<PsiElement> results = resultsAsList();
     return results.size() > 0 ? results.get(0) : null;
   }
@@ -351,7 +408,8 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Override
   @NotNull
   public <T extends PsiElement> List<T> resultsOfType(Class<T> clazz) {
-    List<T> result = new ArrayList<T>();
+    checkAccess();
+    List<T> result = new ArrayList<>();
     for (PsiElement element : resultsAsList()) {
       if (clazz.isInstance(element)) {
         //noinspection unchecked
@@ -364,6 +422,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Override
   @Nullable
   public <T extends PsiElement> T firstResultOfType(Class<T> clazz) {
+    checkAccess();
     final List<T> list = resultsOfType(clazz);
     return list.size() > 0 ? list.get(0) : null;
   }
@@ -403,9 +462,12 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
    *
    * @param directory where to start from; top qualifier will be searched for here.
    */
+  @Contract("null -> null")
   @Nullable
   public PsiElement resolveModuleAt(@Nullable PsiDirectory directory) {
     // prerequisites
+    checkAccess();
+    PyPsiUtils.assertValid(directory);
     if (directory == null || !directory.isValid()) return null;
 
     PsiElement seeker = directory;
@@ -426,6 +488,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @Nullable
   @Override
   public <T extends PsiNamedElement> T resolveTopLevelMember(@NotNull final Class<T> aClass) {
+    checkAccess();
     Preconditions.checkState(getModule() != null, "Module is not set");
     final String memberName = myQualifiedName.getLastComponent();
     if (memberName == null) {
@@ -436,11 +499,23 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     if (file == null) {
       return null;
     }
+    checkValidForTests(file);
     for (final T element : PsiTreeUtil.getChildrenOfTypeAsList(file, aClass)) {
+      checkValidForTests(element);
       if (memberName.equals(element.getName())) {
         return element;
       }
     }
     return null;
+  }
+
+  private static void checkValidForTests(@Nullable final PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      PyPsiUtils.assertValid(element);
+    }
+  }
+
+  private static void checkAccess() {
+    Preconditions.checkState(ApplicationManager.getApplication().isReadAccessAllowed(), "This method requires read access");
   }
 }

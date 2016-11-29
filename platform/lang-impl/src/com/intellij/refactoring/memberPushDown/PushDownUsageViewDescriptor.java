@@ -21,25 +21,23 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PushDownUsageViewDescriptor implements UsageViewDescriptor {
+import java.util.List;
+
+public class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Member>,
+                                        Member extends PsiElement,
+                                        Klass extends PsiElement> implements UsageViewDescriptor {
   private final PsiElement[] myMembers;
   private final String myProcessedElementsHeader;
 
-  public PushDownUsageViewDescriptor(PsiElement aClass) {
+  public PushDownUsageViewDescriptor(Klass aClass) {
     this(aClass, null);
   }
 
-  public PushDownUsageViewDescriptor(PsiElement aClass, MemberInfoBase<? extends PsiElement>[] memberInfos) {
-    myMembers = memberInfos != null ? ContainerUtil.map(memberInfos, new Function<MemberInfoBase<? extends PsiElement>, PsiElement>() {
-      @Override
-      public PsiElement fun(MemberInfoBase<? extends PsiElement> info) {
-        return info.getMember();
-      }
-    }, PsiElement.EMPTY_ARRAY) : new PsiElement[] {aClass};
+  public PushDownUsageViewDescriptor(Klass aClass, List<MemberInfo> memberInfos) {
+    myMembers = memberInfos != null ? ContainerUtil.map2Array(memberInfos, PsiElement.class, MemberInfoBase::getMember) : new PsiElement[]{aClass};
     myProcessedElementsHeader = RefactoringBundle.message("push.down.members.elements.header", 
                                                           memberInfos != null ? DescriptiveNameUtil.getDescriptiveName(aClass) : "");
   }

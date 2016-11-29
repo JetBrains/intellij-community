@@ -259,15 +259,12 @@ public class XmlParsingTest extends ParsingTestCase {
     new WriteCommandAction(getProject(), file) {
       @Override
       protected void run(@NotNull final Result result) throws Throwable {
-        PlatformTestUtil.startPerformanceTest("XML reparse using PsiBuilder", 2500, new ThrowableRunnable() {
-          @Override
-          public void run() throws Exception {
-            for (int i = 0; i < 10; i++) {
-              final long tm = System.currentTimeMillis();
-              doc.insertString(0, "<additional root=\"tag\"/>");
-              PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-              System.out.println("Reparsed for: " + (System.currentTimeMillis() - tm));
-            }
+        PlatformTestUtil.startPerformanceTest("XML reparse using PsiBuilder", 2500, () -> {
+          for (int i = 0; i < 10; i++) {
+            final long tm = System.currentTimeMillis();
+            doc.insertString(0, "<additional root=\"tag\"/>");
+            PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+            System.out.println("Reparsed for: " + (System.currentTimeMillis() - tm));
           }
         }).cpuBound().useLegacyScaling().assertTiming();
       }

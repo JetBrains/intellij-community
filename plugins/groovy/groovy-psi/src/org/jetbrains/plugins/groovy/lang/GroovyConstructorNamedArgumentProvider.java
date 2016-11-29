@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.extensions.impl.TypeCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -119,8 +120,9 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
       ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
 
       for (Map.Entry<String, Trinity<PsiType, PsiElement, PsiSubstitutor>> entry : map.entrySet()) {
-        result.put(entry.getKey(), new NamedArgumentDescriptor.TypeCondition(entry.getValue().first, entry.getValue().getSecond(), entry.getValue().getThird()).setPriority(
-          NamedArgumentDescriptor.Priority.AS_LOCAL_VARIABLE));
+        result.put(entry.getKey(), new TypeCondition(
+          entry.getValue().first, entry.getValue().getSecond(), entry.getValue().getThird(), NamedArgumentDescriptor.Priority.AS_LOCAL_VARIABLE
+        ));
       }
     }
     else {
@@ -128,8 +130,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
         @Override
         protected void addNamedArgument(String propertyName, PsiType type, PsiElement element, PsiSubstitutor substitutor) {
           if (result.containsKey(propertyName)) return;
-          result.put(propertyName, new NamedArgumentDescriptor.TypeCondition(type, element, substitutor).setPriority(
-            NamedArgumentDescriptor.Priority.AS_LOCAL_VARIABLE));
+          result.put(propertyName, new TypeCondition(type, element, substitutor, NamedArgumentDescriptor.Priority.AS_LOCAL_VARIABLE));
         }
       };
 

@@ -93,7 +93,7 @@ public final class Generator {
       throw new MyException(UIDesignerBundle.message("error.bound.class.does.not.exist", classToBind));
     }
 
-    final ArrayList<FormProperty> result = new ArrayList<FormProperty>();
+    final ArrayList<FormProperty> result = new ArrayList<>();
     final MyException[] exception = new MyException[1];
 
     FormEditingUtil.iterate(
@@ -173,8 +173,8 @@ public final class Generator {
       }
     }
 
-    final HashMap<String, String> binding2beanGetter = new HashMap<String, String>();
-    final HashMap<String, String> binding2beanSetter = new HashMap<String, String>();
+    final HashMap<String, String> binding2beanGetter = new HashMap<>();
+    final HashMap<String, String> binding2beanSetter = new HashMap<>();
 
     final FormProperty2BeanProperty[] bindings = data.myBindings;
     for (final FormProperty2BeanProperty form2bean : bindings) {
@@ -457,8 +457,8 @@ public final class Generator {
 
       final PsiClass beanClass = ((PsiJavaFile)sourceFile).getClasses()[0];
 
-      final ArrayList<String> properties = new ArrayList<String>();
-      final HashMap<String, String> property2fqClassName = new HashMap<String, String>();
+      final ArrayList<String> properties = new ArrayList<>();
+      final HashMap<String, String> property2fqClassName = new HashMap<>();
 
       final FormProperty2BeanProperty[] bindings = wizardData.myBindings;
       for (final FormProperty2BeanProperty binding : bindings) {

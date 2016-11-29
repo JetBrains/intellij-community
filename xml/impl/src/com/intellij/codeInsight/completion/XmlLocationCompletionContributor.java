@@ -45,12 +45,8 @@ import java.util.Set;
  */
 public class XmlLocationCompletionContributor extends CompletionContributor {
 
-  public static final Function<Object, LookupElement> MAPPING = new Function<Object, LookupElement>() {
-    @Override
-    public LookupElement fun(Object o) {
-      return o instanceof LookupElement ? (LookupElement)o : LookupElementBuilder.create(o);
-    }
-  };
+  public static final Function<Object, LookupElement> MAPPING =
+    o -> o instanceof LookupElement ? (LookupElement)o : LookupElementBuilder.create(o);
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -82,12 +78,12 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
   private static Object[] completeNamespace(PsiElement myElement) {
     final XmlFile file = (XmlFile)myElement.getContainingFile();
     PsiElement parent = myElement.getParent();
-    final Set<Object> preferred = new HashSet<Object>();
+    final Set<Object> preferred = new HashSet<>();
     if (parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName())) {
       XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
       preferred.addAll(helper.guessUnboundNamespaces(parent.getParent(), file));
     }
-    Set<String> list = new HashSet<String>();
+    Set<String> list = new HashSet<>();
     for (XmlSchemaProvider provider : Extensions.getExtensions(XmlSchemaProvider.EP_NAME)) {
       if (provider.isAvailable(file)) {
         list.addAll(provider.getAvailableNamespaces(file, null));
@@ -100,23 +96,17 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
     final XmlDocument document = file.getDocument();
     assert document != null;
     XmlTag rootTag = document.getRootTag();
-    final ArrayList<String> additionalNs = new ArrayList<String>();
-    if (rootTag != null) URLReference.processWsdlSchemas(rootTag, new Processor<XmlTag>() {
-      @Override
-      public boolean process(final XmlTag xmlTag) {
-        final String s = xmlTag.getAttributeValue(URLReference.TARGET_NAMESPACE_ATTR_NAME);
-        if (s != null) { additionalNs.add(s); }
-        return true;
-      }
+    final ArrayList<String> additionalNs = new ArrayList<>();
+    if (rootTag != null) URLReference.processWsdlSchemas(rootTag, xmlTag -> {
+      final String s = xmlTag.getAttributeValue(URLReference.TARGET_NAMESPACE_ATTR_NAME);
+      if (s != null) { additionalNs.add(s); }
+      return true;
     });
     resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtil.toStringArray(additionalNs));
 
-    return ContainerUtil.map2Array(resourceUrls, new Function<Object, Object>() {
-      @Override
-      public Object fun(Object o) {
-        LookupElementBuilder builder = LookupElementBuilder.create(o);
-        return preferred.contains(o) ? PrioritizedLookupElement.withPriority(builder, 100) : builder;
-      }
+    return ContainerUtil.map2Array(resourceUrls, o -> {
+      LookupElementBuilder builder = LookupElementBuilder.create(o);
+      return preferred.contains(o) ? PrioritizedLookupElement.withPriority(builder, 100) : builder;
     });
   }
 
@@ -124,19 +114,11 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
     XmlTag tag = (XmlTag)element.getParent().getParent();
     XmlAttribute[] attributes = tag.getAttributes();
     final PsiReference[] refs = element.getReferences();
-    return ContainerUtil.mapNotNull(attributes, new Function<XmlAttribute, Object>() {
-      @Override
-      public Object fun(final XmlAttribute attribute) {
-        final String attributeValue = attribute.getValue();
-        return attributeValue != null &&
-               attribute.isNamespaceDeclaration() &&
-               ContainerUtil.find(refs, new Condition<PsiReference>() {
-                 @Override
-                 public boolean value(PsiReference ref) {
-                   return ref.getCanonicalText().equals(attributeValue);
-                 }
-               }) == null ? attributeValue + " " : null;
-      }
+    return ContainerUtil.mapNotNull(attributes, attribute -> {
+      final String attributeValue = attribute.getValue();
+      return attributeValue != null &&
+             attribute.isNamespaceDeclaration() &&
+             ContainerUtil.find(refs, ref -> ref.getCanonicalText().equals(attributeValue)) == null ? attributeValue + " " : null;
     }, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 }

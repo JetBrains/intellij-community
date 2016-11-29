@@ -58,25 +58,19 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
   }
 
   private static Collection<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<Library> predicate) {
-    final HashSet<Library> result = new HashSet<Library>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        for (final Module module : ModuleManager.getInstance(project).getModules()) {
-          OrderEnumerator.orderEntries(module).withoutSdk().forEachLibrary(new Processor<Library>() {
-            @Override
-            public boolean process(Library library) {
-              if (predicate.apply(library)) {
-                result.add(library);
-              }
-              return true;
-            }
-          });
-        }
-        for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
+    final HashSet<Library> result = new HashSet<>();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      for (final Module module : ModuleManager.getInstance(project).getModules()) {
+        OrderEnumerator.orderEntries(module).withoutSdk().forEachLibrary(library -> {
           if (predicate.apply(library)) {
             result.add(library);
           }
+          return true;
+        });
+      }
+      for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
+        if (predicate.apply(library)) {
+          result.add(library);
         }
       }
     });

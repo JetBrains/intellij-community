@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ public class DuplicateMap {
       return o1.getUsageInfo().equals(o2.getUsageInfo());
     }
   };
-  private final Map<SliceUsage, SliceNode> myDuplicates = new THashMap<SliceUsage, SliceNode>(USAGE_INFO_EQUALITY);
+  private final Map<SliceUsage, SliceNode> myDuplicates = new THashMap<>(USAGE_INFO_EQUALITY);
 
-  public SliceNode putNodeCheckDupe(@NotNull final SliceNode node) {
+  SliceNode putNodeCheckDupe(@NotNull final SliceNode node) {
     return ApplicationManager.getApplication().runReadAction(new Computable<SliceNode>() {
       @Override
       public SliceNode compute() {

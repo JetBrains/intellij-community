@@ -29,6 +29,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelIm
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
+import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
 
 import java.io.File;
 import java.util.*;
@@ -42,6 +43,7 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
 
   private static final String CLASSPATH_CONFIGURATION_NAME = "classpath";
   private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<String, BuildScriptClasspathModelImpl>();
+  private SourceSetCachedFinder mySourceSetFinder = null;
 
   @Override
   public boolean canBuild(String modelName) {
@@ -53,6 +55,8 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
   public Object buildAll(final String modelName, final Project project) {
     BuildScriptClasspathModelImpl buildScriptClasspath = cache.get(project.getPath());
     if (buildScriptClasspath != null) return buildScriptClasspath;
+
+    if(mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(project);
 
     buildScriptClasspath = new BuildScriptClasspathModelImpl();
     final File gradleHomeDir = project.getGradle().getGradleHomeDir();
@@ -82,7 +86,7 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
     if (classpathConfiguration == null) return null;
 
     Collection<ExternalDependency> dependencies =
-      new DependencyResolverImpl(project, false, downloadJavadoc, downloadSources).resolveDependencies(classpathConfiguration);
+      new DependencyResolverImpl(project, false, downloadJavadoc, downloadSources, mySourceSetFinder).resolveDependencies(classpathConfiguration);
 
     for (ExternalDependency dependency : new DependencyTraverser(dependencies)) {
       if (dependency instanceof ExternalLibraryDependency) {

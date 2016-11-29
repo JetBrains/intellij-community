@@ -17,7 +17,7 @@ package com.intellij.util.diff;
 
 import gnu.trove.TIntIntHashMap;
 
-public class UniqueLCS {
+class UniqueLCS {
   private final int[] myFirst;
   private final int[] mySecond;
 

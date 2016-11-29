@@ -232,7 +232,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
   }
 
   private static class CardNameProperty extends Property<RadComponent, String> {
-    private final LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>();
+    private final LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>();
 
     private final AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<String>() {
       protected void setValueFromComponent(RadComponent component, String value) {

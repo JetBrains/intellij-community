@@ -26,7 +26,7 @@ import java.util.Set;
  * @author db
  */
 public class VictimCollector extends Visitor {
-  final Set<PsiElement> myVictims = new LinkedHashSet<PsiElement>();
+  final Set<PsiElement> myVictims = new LinkedHashSet<>();
   final PsiElement[] myElements;
   final Settings mySettings;
 

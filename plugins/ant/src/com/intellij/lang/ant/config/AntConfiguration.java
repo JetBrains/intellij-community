@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class AntConfiguration extends SimpleModificationTracker {
+import java.util.List;
 
+public abstract class AntConfiguration extends SimpleModificationTracker {
   private final Project myProject;
   @NonNls public static final String ACTION_ID_PREFIX = "Ant_";
 
@@ -38,7 +40,7 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
     return ServiceManager.getService(project, AntConfiguration.class);
   }
 
-  private static final Key<Boolean> ANT_SUPPORT_INITIALIZED_KEY = new Key<Boolean>("AntSupportInitialized");
+  private static final Key<Boolean> ANT_SUPPORT_INITIALIZED_KEY = new Key<>("AntSupportInitialized");
   public static void initAntSupport(final Project project) {
     if (!Boolean.TRUE.equals(project.getUserData(ANT_SUPPORT_INITIALIZED_KEY))) {
       ServiceManager.getService(project, AntConfiguration.class);
@@ -62,6 +64,8 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
   
   public abstract AntBuildFile[] getBuildFiles();
 
+  public abstract List<AntBuildFileBase> getBuildFileList();
+
   public abstract AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException;
 
   public abstract void removeBuildFile(final AntBuildFile file);
@@ -75,9 +79,9 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
   public abstract void updateBuildFile(final AntBuildFile buildFile);
 
   @Nullable
-  public abstract AntBuildModel getModelIfRegistered(final AntBuildFile buildFile);
+  public abstract AntBuildModelBase getModelIfRegistered(@NotNull AntBuildFileBase buildFile);
 
-  public abstract AntBuildModel getModel(final AntBuildFile buildFile);
+  public abstract AntBuildModel getModel(@NotNull AntBuildFile buildFile);
 
   @Nullable
   public abstract AntBuildFile findBuildFileByActionId(final String id);

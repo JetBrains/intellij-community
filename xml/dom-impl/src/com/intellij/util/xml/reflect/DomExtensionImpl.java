@@ -45,7 +45,7 @@ public class DomExtensionImpl implements DomExtension {
   private final XmlName myXmlName;
   private final Type myType;
   private Converter myConverter;
-  private final List<Annotation> myCustomAnnos = new SmartList<Annotation>();
+  private final List<Annotation> myCustomAnnos = new SmartList<>();
   private boolean mySoft;
   private int myCount = 1;
   private Map myUserMap;
@@ -123,7 +123,7 @@ public class DomExtensionImpl implements DomExtension {
   @Override
   public DomExtension addExtender(final DomExtender extender) {
     if (myUserMap == null || !myUserMap.containsKey(DOM_EXTENDER_KEY)) {
-      putUserData(DOM_EXTENDER_KEY, new SmartList<DomExtender>());
+      putUserData(DOM_EXTENDER_KEY, new SmartList<>());
     }
     ((List<DomExtender>)myUserMap.get(DOM_EXTENDER_KEY)).add(extender);
     return this;

@@ -21,9 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -54,7 +52,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
    * </ul>
    */
   public static final Key<Pair<PsiElement, TextRange>> SELECTION_BREAKS_AST_NODE =
-    new Key<Pair<PsiElement, TextRange>>("python.selection.breaks.ast.node");
+    new Key<>("python.selection.breaks.ast.node");
 
   private PyReplaceExpressionUtil() {}
 
@@ -125,7 +123,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
                                                             @NotNull PsiElement newExpression,
                                                             @NotNull TextRange textRange) {
     final String fullText = oldExpression.getText();
-    final Pair<String, String> detectedQuotes = PythonStringUtil.getQuotes(fullText);
+    final Pair<String, String> detectedQuotes = PyStringLiteralUtil.getQuotes(fullText);
     final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
     final String prefix = fullText.substring(0, textRange.getStartOffset());
     final String suffix = fullText.substring(textRange.getEndOffset(), oldExpression.getTextLength());
@@ -236,12 +234,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     final StringBuilder builder = new StringBuilder();
     builder.append("{");
     final PyKeyValueExpression[] elements = dict.getElements();
-    builder.append(StringUtil.join(elements, new Function<PyKeyValueExpression, String>() {
-      @Override
-      public String fun(PyKeyValueExpression expression) {
-        return expression.getText();
-      }
-    }, ","));
+    builder.append(StringUtil.join(elements, expression -> expression.getText(), ","));
     if (elements.length > 0) {
       builder.append(",");
     }

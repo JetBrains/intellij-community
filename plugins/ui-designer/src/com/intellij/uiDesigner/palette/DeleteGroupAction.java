@@ -46,7 +46,7 @@ public class DeleteGroupAction extends AnAction {
     }
 
     Palette palette = Palette.getInstance(project);
-    ArrayList<GroupItem> groups = new ArrayList<GroupItem>(palette.getGroups());
+    ArrayList<GroupItem> groups = new ArrayList<>(palette.getGroups());
     groups.remove(groupToBeRemoved);
     palette.setGroups(groups);
   }

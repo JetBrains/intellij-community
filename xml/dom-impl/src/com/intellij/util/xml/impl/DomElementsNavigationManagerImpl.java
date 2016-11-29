@@ -33,7 +33,7 @@ import java.util.Set;
  * User: Sergey.Vasiliev
  */
 public class DomElementsNavigationManagerImpl extends DomElementsNavigationManager {
-  private final Map<String, DomElementNavigationProvider> myProviders = new HashMap<String, DomElementNavigationProvider>();
+  private final Map<String, DomElementNavigationProvider> myProviders = new HashMap<>();
   private final Project myProject;
 
   private final DomElementNavigationProvider myTextEditorProvider = new MyDomElementNavigateProvider();
@@ -45,7 +45,7 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
 
   @Override
   public Set<DomElementNavigationProvider> getDomElementsNavigateProviders(DomElement domElement) {
-    Set<DomElementNavigationProvider> result = new HashSet<DomElementNavigationProvider>();
+    Set<DomElementNavigationProvider> result = new HashSet<>();
 
     for (DomElementNavigationProvider navigateProvider : myProviders.values()) {
       if (navigateProvider.canNavigate(domElement)) result.add(navigateProvider) ;

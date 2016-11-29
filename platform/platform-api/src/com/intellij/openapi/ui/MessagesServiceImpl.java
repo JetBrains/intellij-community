@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -34,8 +33,6 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -337,12 +334,9 @@ public class MessagesServiceImpl implements MessagesService {
     builder.setTitle(rawText);
     builder.addOkAction();
     builder.addCancelAction();
-    builder.setOkOperation(new Runnable() {
-      @Override
-      public void run() {
-        textField.setText(lineJoiner.fun(Arrays.asList(StringUtil.splitByLines(textArea.getText()))));
-        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-      }
+    builder.setOkOperation(() -> {
+      textField.setText(lineJoiner.fun(Arrays.asList(StringUtil.splitByLines(textArea.getText()))));
+      builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
     });
     builder.show();
   }
@@ -595,18 +589,15 @@ public class MessagesServiceImpl implements MessagesService {
     @Override
     public void show() {
       if (Messages.isMacSheetEmulation()) {
-        setInitialLocationCallback(new Computable<Point>() {
-          @Override
-          public Point compute() {
-            JRootPane rootPane = SwingUtilities.getRootPane(getWindow().getParent());
-            if (rootPane == null) {
-              rootPane = SwingUtilities.getRootPane(getWindow().getOwner());
-            }
-
-            Point p = rootPane.getLocationOnScreen();
-            p.x += (rootPane.getWidth() - getWindow().getWidth()) / 2;
-            return p;
+        setInitialLocationCallback(() -> {
+          JRootPane rootPane = SwingUtilities.getRootPane(getWindow().getParent());
+          if (rootPane == null) {
+            rootPane = SwingUtilities.getRootPane(getWindow().getOwner());
           }
+
+          Point p = rootPane.getLocationOnScreen();
+          p.x += (rootPane.getWidth() - getWindow().getWidth()) / 2;
+          return p;
         });
         animate();
         if (SystemInfo.isJavaVersionAtLeast("1.7")) {
@@ -1106,12 +1097,7 @@ public class MessagesServiceImpl implements MessagesService {
             }
           };
           actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
-          myComboBox.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-              actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(myComboBox.getSelectedItem().toString().trim()));
-            }
-          });
+          myComboBox.addItemListener(e -> actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(myComboBox.getSelectedItem().toString().trim())));
           final JTextField textField = (JTextField)myComboBox.getEditor().getEditorComponent();
           textField.getDocument().addDocumentListener(new DocumentAdapter() {
             @Override

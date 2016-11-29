@@ -51,7 +51,7 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
         }
       });
     }
-    return new PermanentCommitsInfoImpl<CommitId>(timestampGetter, commitIdIndex, notLoadedCommits);
+    return new PermanentCommitsInfoImpl<>(timestampGetter, commitIdIndex, notLoadedCommits);
   }
 
   @NotNull

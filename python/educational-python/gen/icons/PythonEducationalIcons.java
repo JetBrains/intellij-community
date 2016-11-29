@@ -14,5 +14,4 @@ public class PythonEducationalIcons {
   }
 
   public static final Icon Field = load("/icons/com/jetbrains/edu/Field.png"); // 16x16
-  public static final Icon SpecialVar = load("/icons/com/jetbrains/edu/specialVar.png"); // 16x16
 }

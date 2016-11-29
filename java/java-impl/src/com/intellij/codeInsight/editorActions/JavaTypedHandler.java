@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -49,34 +48,31 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   private boolean myJavaLTTyped;
 
   private static void autoPopupMemberLookup(Project project, final Editor editor) {
-    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, new Condition<PsiFile>() {
-      @Override
-      public boolean value(final PsiFile file) {
-        int offset = editor.getCaretModel().getOffset();
+    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
+      int offset = editor.getCaretModel().getOffset();
 
-        PsiElement lastElement = file.findElementAt(offset - 1);
-        if (lastElement == null) {
-          return false;
-        }
+      PsiElement lastElement = file.findElementAt(offset - 1);
+      if (lastElement == null) {
+        return false;
+      }
 
-        //do not show lookup when typing varargs ellipsis
-        final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
-        if (prevSibling == null || ".".equals(prevSibling.getText())) return false;
-        PsiElement parent = prevSibling;
-        do {
-          parent = parent.getParent();
-        } while(parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
-        if (parent instanceof PsiParameterList || parent instanceof PsiParameter) return false;
+      //do not show lookup when typing varargs ellipsis
+      final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
+      if (prevSibling == null || ".".equals(prevSibling.getText())) return false;
+      PsiElement parent = prevSibling;
+      do {
+        parent = parent.getParent();
+      } while(parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
+      if (parent instanceof PsiParameterList || parent instanceof PsiParameter) return false;
 
-        if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText())) {
-          return JavaClassReferenceCompletionContributor.findJavaClassReference(file, offset - 1) != null;
-        }
-        else{
-          final PsiElement element = file.findElementAt(offset);
-          return element == null ||
-                 !"#".equals(lastElement.getText()) ||
-                 PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null;
-        }
+      if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText())) {
+        return JavaClassReferenceCompletionContributor.findJavaClassReference(file, offset - 1) != null;
+      }
+      else{
+        final PsiElement element = file.findElementAt(offset);
+        return element == null ||
+               !"#".equals(lastElement.getText()) ||
+               PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null;
       }
     });
   }
@@ -133,12 +129,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       PsiElement prev = offset > 1 ? file.findElementAt(offset - 1) : null;
       if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && isRparenth(leaf) &&
           (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) && shouldInsertStatementBody(st, doc, prev)) {
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            new JavaSmartEnterProcessor().process(project, editor, file);
-          }
-        }, "Insert block statement", null);
+        CommandProcessor.getInstance().executeCommand(project, () -> new JavaSmartEnterProcessor().process(project, editor, file), "Insert block statement", null);
         return Result.STOP;
       }
 
@@ -200,6 +191,9 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     char charAt = editor.getDocument().getCharsSequence().charAt(offset);
     if (charAt != ';') return false;
+
+    HighlighterIterator hi = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    if (hi.atEnd() || hi.getTokenType() != JavaTokenType.SEMICOLON) return false;
 
     EditorModificationUtil.moveCaretRelatively(editor, 1);
     return true;
@@ -285,14 +279,11 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   }
 
   private static void autoPopupJavadocLookup(final Project project, final Editor editor) {
-    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, new Condition<PsiFile>() {
-      @Override
-      public boolean value(PsiFile file) {
-        int offset = editor.getCaretModel().getOffset();
+    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
+      int offset = editor.getCaretModel().getOffset();
 
-        PsiElement lastElement = file.findElementAt(offset - 1);
-        return lastElement != null && StringUtil.endsWithChar(lastElement.getText(), '@');
-      }
+      PsiElement lastElement = file.findElementAt(offset - 1);
+      return lastElement != null && StringUtil.endsWithChar(lastElement.getText(), '@');
     });
   }
 

@@ -76,7 +76,7 @@ public class CreateBranchOrTagAction extends BasicAction {
       final String dstURL = dialog.getToURL();
       final SVNRevision revision = dialog.getRevision();
       final String comment = dialog.getComment();
-      final Ref<Exception> exception = new Ref<Exception>();
+      final Ref<Exception> exception = new Ref<>();
       final boolean isSrcFile = dialog.isCopyFromWorkingCopy();
       final File srcFile = new File(dialog.getCopyFromPath());
       final SVNURL srcUrl;
@@ -145,8 +145,8 @@ public class CreateBranchOrTagAction extends BasicAction {
   }
 
   private static boolean dirExists(@NotNull final SvnVcs vcs, @NotNull final SVNURL url) throws SvnBindException {
-    final Ref<SvnBindException> excRef = new Ref<SvnBindException>();
-    final Ref<Boolean> resultRef = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<SvnBindException> excRef = new Ref<>();
+    final Ref<Boolean> resultRef = new Ref<>(Boolean.TRUE);
 
     final Runnable taskImpl = new Runnable() {
       public void run() {

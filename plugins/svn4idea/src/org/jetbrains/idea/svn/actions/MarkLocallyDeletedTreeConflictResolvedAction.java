@@ -61,7 +61,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
                                                 SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.text"), markText,
                                                 Messages.getQuestionIcon());
     if (result == Messages.YES) {
-      final Ref<VcsException> exception = new Ref<VcsException>();
+      final Ref<VcsException> exception = new Ref<>();
       ProgressManager.getInstance().run(new Task.Backgroundable(project, markText, true) {
         public void run(@NotNull ProgressIndicator indicator) {
           resolveLocallyDeletedTextConflict(locallyDeletedChecker, exception);

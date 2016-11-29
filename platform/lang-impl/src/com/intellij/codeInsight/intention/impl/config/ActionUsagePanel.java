@@ -79,17 +79,9 @@ public class ActionUsagePanel extends JPanel implements Disposable {
 
   public void reset(final String usageText, final FileType fileType) {
     reinitViews();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myEditor.isDisposed()) return;
-        DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-          @Override
-          public void run() {
-            configureByText(usageText, fileType);
-          }
-        });
-      }
+    SwingUtilities.invokeLater(() -> {
+      if (myEditor.isDisposed()) return;
+      DocumentUtil.writeInRunUndoTransparentAction(() -> configureByText(usageText, fileType));
     });
   }
 
@@ -103,7 +95,7 @@ public class ActionUsagePanel extends JPanel implements Disposable {
   }
 
   private void setupSpots(Document document) {
-    List<Segment> markers = new ArrayList<Segment>();
+    List<Segment> markers = new ArrayList<>();
     while (true) {
       String text = document.getText();
       final int spotStart = text.indexOf("<" + SPOT_MARKER + ">");

@@ -15,6 +15,8 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -36,37 +38,76 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
 
   @Override
   protected ByteBuffer create() throws IOException {
-    final RandomAccessFile file = createFile();
+    final FileContext fileContext = new FileContext(myFile);
     try {
-      final FileChannel channel = file.getChannel();
-      try {
-        channel.position(myPosition);
-        final ByteBuffer buffer = ByteBuffer.allocateDirect((int)myLength);
-        channel.read(buffer);
-        return buffer;
-      }
-      finally {
-        channel.close();
-      }
+      final FileChannel channel = fileContext.myFile.getChannel();
+
+      channel.position(myPosition);
+      final ByteBuffer buffer = ByteBuffer.allocateDirect((int)myLength);
+      channel.read(buffer);
+      return buffer;
     }
     finally {
-      file.close();
+      //noinspection SSBasedInspection
+      fileContext.dispose();
     }
   }
 
-  private RandomAccessFile createFile() throws FileNotFoundException {
-    return FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<RandomAccessFile, FileNotFoundException>() {
-      @Nullable
-      @Override
-      public RandomAccessFile execute(boolean finalAttempt) throws FileNotFoundException {
-        try {
-          return new RandomAccessFile(myFile, RW);
-        } catch (FileNotFoundException ex) {
-          if (!finalAttempt) return null;
-          throw ex;
+  static class FileContext implements Disposable {
+    final RandomAccessFile myFile;
+
+    FileContext(final File file) throws IOException {
+      final File parentFile = file.getParentFile();
+      if (!parentFile.exists()) parentFile.mkdirs();
+      myFile = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<RandomAccessFile, IOException>() {
+        @Nullable
+        @Override
+        public RandomAccessFile execute(boolean finalAttempt) throws IOException {
+          try {
+            return new RandomAccessFile(file, RW);
+          } catch (FileNotFoundException ex) {
+            if (!parentFile.exists()) {
+              throw new IOException("Parent file still doesn't exist:" + file);
+            }
+            if (!finalAttempt) return null;
+            throw ex;
+          }
         }
+      });
+    }
+
+    @Override
+    public void dispose() {
+      try {
+        if (myFile != null) myFile.close();
+      } catch (IOException ex) {
+        LOG.error(ex);
       }
-    });
+    }
+  }
+
+  public <T extends Disposable> T flushWithContext(@Nullable T context) {
+    final ByteBuffer buffer = getCachedBuffer();
+    if (buffer == null || !isDirty()) return context;
+
+    return doFlush((FileContext)context, buffer);
+  }
+
+  private <T extends Disposable> T doFlush(@Nullable FileContext fileContext, ByteBuffer buffer) {
+    try {
+      if (fileContext == null) fileContext = new FileContext(myFile);
+
+      final FileChannel channel = fileContext.myFile.getChannel();
+
+      channel.position(myPosition);
+      buffer.rewind();
+      channel.write(buffer);
+      myDirty = false;
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return (T)fileContext;
   }
 
   @Override
@@ -74,26 +115,9 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     final ByteBuffer buffer = getCachedBuffer();
     if (buffer == null || !isDirty()) return;
 
-    try {
-      final RandomAccessFile file = createFile();
-      try {
-        final FileChannel channel = file.getChannel();
-        try {
-          channel.position(myPosition);
-          buffer.rewind();
-          channel.write(buffer);
-          myDirty = false;
-        }
-        finally {
-          channel.close();
-        }
-      }
-      finally {
-        file.close();
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
+    Disposable disposable = doFlush(null, buffer);
+    if (disposable != null) {
+      Disposer.dispose(disposable);
     }
   }
 }

@@ -97,7 +97,7 @@ public class ProjectDictionary implements EditableDictionary {
     if (result == null) {
       result = new UserDictionary(activeName);
       if (dictionaries == null) {
-        dictionaries = new THashSet<EditableDictionary>();
+        dictionaries = new THashSet<>();
       }
       dictionaries.add(result);
     }
@@ -136,7 +136,7 @@ public class ProjectDictionary implements EditableDictionary {
     if (dictionaries == null) {
       return null;
     }
-    Set<String> words = new HashSet<String>();
+    Set<String> words = new HashSet<>();
     for (Dictionary dictionary : dictionaries) {
       Set<String> otherWords = dictionary.getWords();
       if (otherWords != null) {

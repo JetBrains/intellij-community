@@ -75,12 +75,7 @@ public class FoldingAnchorsOverlayStrategyTest extends LightPlatformCodeInsightF
   public void testWithEmptyLastLine() {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, "some text\n");
     final FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        foldingModel.addFoldRegion(0, 10, "...");
-      }
-    });
+    foldingModel.runBatchFoldingOperation(() -> foldingModel.addFoldRegion(0, 10, "..."));
     verifyAnchors(null,
                   0, Type.EXPANDED_TOP,
                   1, Type.EXPANDED_BOTTOM);
@@ -94,24 +89,14 @@ public class FoldingAnchorsOverlayStrategyTest extends LightPlatformCodeInsightF
   private void collapseFoldingRegion(int n) {
     FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
     final FoldRegion foldRegion = foldingModel.getAllFoldRegions()[n];
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        foldRegion.setExpanded(false);
-      }
-    });
+    foldingModel.runBatchFoldingOperation(() -> foldRegion.setExpanded(false));
   }
 
   private void verifyAnchors(FoldRegion activeFoldRegion, Object... expectedAnchorParameters) {
     Collection<DisplayedFoldingAnchor> actualAnchors = new FoldingAnchorsOverlayStrategy((EditorImpl)myFixture.getEditor())
       .getAnchorsToDisplay(0, myFixture.getEditor().getDocument().getTextLength(), activeFoldRegion);
-    List<DisplayedFoldingAnchor> sortedActualAnchors = new ArrayList<DisplayedFoldingAnchor>(actualAnchors);
-    Collections.sort(sortedActualAnchors, new Comparator<DisplayedFoldingAnchor>() {
-      @Override
-      public int compare(DisplayedFoldingAnchor o1, DisplayedFoldingAnchor o2) {
-        return o1.visualLine - o2.visualLine;
-      }
-    });
+    List<DisplayedFoldingAnchor> sortedActualAnchors = new ArrayList<>(actualAnchors);
+    Collections.sort(sortedActualAnchors, (o1, o2) -> o1.visualLine - o2.visualLine);
 
     assertEquals("Wrong number of anchors", expectedAnchorParameters.length / 2, sortedActualAnchors.size());
     int i = 0;

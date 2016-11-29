@@ -63,18 +63,8 @@ import java.util.List;
  */
 public abstract class PropertyTable extends JBTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.propertyTable.PropertyTable");
-  private static final Comparator<String> GROUP_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      return StringUtil.compare(o1, o2, true);
-    }
-  };
-  private static final Comparator<Property> PROPERTY_COMPARATOR = new Comparator<Property>() {
-    @Override
-    public int compare(Property o1, Property o2) {
-      return StringUtil.compare(o1.getName(), o2.getName(), true);
-    }
-  };
+  private static final Comparator<String> GROUP_COMPARATOR = (o1, o2) -> StringUtil.compare(o1, o2, true);
+  private static final Comparator<Property> PROPERTY_COMPARATOR = (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true);
 
   private boolean mySorted;
   private boolean myShowGroups;
@@ -87,7 +77,7 @@ public abstract class PropertyTable extends JBTable {
   private final AbstractTableModel myModel = new PropertyTableModel();
   protected List<PropertiesContainer> myContainers = Collections.emptyList();
   protected List<Property> myProperties = Collections.emptyList();
-  protected final Set<String> myExpandedProperties = new HashSet<String>();
+  protected final Set<String> myExpandedProperties = new HashSet<>();
 
   private boolean mySkipUpdate;
   private boolean myStoppingEditing;
@@ -114,13 +104,10 @@ public abstract class PropertyTable extends JBTable {
 
     addMouseListener(new MouseTableListener());
 
-    mySpeedSearch = new TableSpeedSearch(this, new PairFunction<Object, Cell, String>() {
-      @Override
-      public String fun(Object object, Cell cell) {
-        if (cell.column != 0) return null;
-        if (object instanceof GroupProperty) return null;
-        return ((Property)object).getName();
-      }
+    mySpeedSearch = new TableSpeedSearch(this, (object, cell) -> {
+      if (cell.column != 0) return null;
+      if (object instanceof GroupProperty) return null;
+      return ((Property)object).getName();
     }) {
       @Override
       protected void selectElement(Object element, String selectedText) {
@@ -238,13 +225,10 @@ public abstract class PropertyTable extends JBTable {
         cellEditor.stopCellEditing();
       }
 
-      doRestoreDefault(new ThrowableRunnable<Exception>() {
-        @Override
-        public void run() throws Exception {
-          for (PropertiesContainer component : myContainers) {
-            if (!property.isDefaultRecursively(component)) {
-              property.setDefaultValue(component);
-            }
+      doRestoreDefault(() -> {
+        for (PropertiesContainer component : myContainers) {
+          if (!property.isDefaultRecursively(component)) {
+            property.setDefaultValue(component);
           }
         }
       });
@@ -329,7 +313,7 @@ public abstract class PropertyTable extends JBTable {
       }
 
       Property selection = initialSelection != null ? initialSelection : getSelectionProperty();
-      myContainers = new ArrayList<PropertiesContainer>(containers);
+      myContainers = new ArrayList<>(containers);
       fillProperties();
       myModel.fireTableDataChanged();
 
@@ -343,21 +327,18 @@ public abstract class PropertyTable extends JBTable {
   private void sortPropertiesAndCreateGroups(List<Property> rootProperties) {
     if (!mySorted && !myShowGroups) return;
 
-    Collections.sort(rootProperties, new Comparator<Property>() {
-      @Override
-      public int compare(Property o1, Property o2) {
-        if (o1.getParent() != null || o2.getParent() != null) {
-          if (o1.getParent() == o2) return -1;
-          if (o2.getParent() == o1) return 1;
-          return 0;
-        }
-
-        if (myShowGroups) {
-          int result = getGroupComparator().compare(o1.getGroup(), o2.getGroup());
-          if (result != 0) return result;
-        }
-        return mySorted ? getPropertyComparator().compare(o1, o2) : 0;
+    Collections.sort(rootProperties, (o1, o2) -> {
+      if (o1.getParent() != null || o2.getParent() != null) {
+        if (o1.getParent() == o2) return -1;
+        if (o2.getParent() == o1) return 1;
+        return 0;
       }
+
+      if (myShowGroups) {
+        int result = getGroupComparator().compare(o1.getGroup(), o2.getGroup());
+        if (result != 0) return result;
+      }
+      return mySorted ? getPropertyComparator().compare(o1, o2) : 0;
     });
 
     if (myShowGroups) {
@@ -393,7 +374,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private void restoreSelection(Property selection) {
-    List<Property> propertyPath = new ArrayList<Property>(2);
+    List<Property> propertyPath = new ArrayList<>(2);
     while (selection != null) {
       propertyPath.add(0, selection);
       selection = selection.getParent();
@@ -431,11 +412,11 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private void fillProperties() {
-    myProperties = new ArrayList<Property>();
+    myProperties = new ArrayList<>();
     int size = myContainers.size();
 
     if (size > 0) {
-      List<Property> rootProperties = new ArrayList<Property>();
+      List<Property> rootProperties = new ArrayList<>();
       for (Property each : (Iterable<? extends Property>)getProperties(myContainers.get(0))) {
         addIfNeeded(getCurrentComponent(), each, rootProperties);
       }
@@ -454,7 +435,7 @@ public abstract class PropertyTable extends JBTable {
         }
 
         for (int i = 1; i < size; i++) {
-          List<Property> otherProperties = new ArrayList<Property>();
+          List<Property> otherProperties = new ArrayList<>();
           fillProperties(myContainers.get(i), otherProperties);
 
           for (Iterator<Property> I = myProperties.iterator(); I.hasNext(); ) {
@@ -617,7 +598,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private List<Property> getFilterChildren(Property property) {
-    List<Property> properties = new ArrayList<Property>(getChildren(property));
+    List<Property> properties = new ArrayList<>(getChildren(property));
     for (Iterator<Property> I = properties.iterator(); I.hasNext(); ) {
       Property child = I.next();
       if (child.isExpert() && !myShowExpertProperties) {
@@ -777,12 +758,7 @@ public abstract class PropertyTable extends JBTable {
     if (startedWithKeyboard) {
       // waiting for focus is necessary in case, if 'activate' opens dialog. If we don't wait for focus, after the dialog is shown we'll
       // end up with the table focused instead of the dialog
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          editor.activate();
-        }
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> editor.activate());
     }
   }
 
@@ -845,13 +821,10 @@ public abstract class PropertyTable extends JBTable {
     final boolean[] needRefresh = new boolean[1];
 
     if (isNewValue) {
-      isSetValue = doSetValue(new ThrowableRunnable<Exception>() {
-        @Override
-        public void run() throws Exception {
-          for (PropertiesContainer component : myContainers) {
-            property.setValue(component, newValue);
-            needRefresh[0] |= property.needRefreshPropertyList(component, oldValue[0], newValue);
-          }
+      isSetValue = doSetValue(() -> {
+        for (PropertiesContainer component : myContainers) {
+          property.setValue(component, newValue);
+          needRefresh[0] |= property.needRefreshPropertyList(component, oldValue[0], newValue);
         }
       });
     }
@@ -1176,11 +1149,7 @@ public abstract class PropertyTable extends JBTable {
         return errComponent;
       }
       finally {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            updateEditActions();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> updateEditActions());
       }
     }
 

@@ -15,10 +15,8 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.CreatePropertyFix;
 import com.intellij.psi.PsiElement;
 
@@ -28,11 +26,6 @@ public class PropertiesQuickFixFactoryImpl extends PropertiesQuickFixFactory {
   @Override
   public LocalQuickFix createCreatePropertyFix(PsiElement element, String key, List<PropertiesFile> files) {
     return new CreatePropertyFix(element, key, files);
-  }
-
-  @Override
-  public IntentionAction createRemovePropertyFix(Property property) {
-    return new RemovePropertyFix(property);
   }
 
   @Override

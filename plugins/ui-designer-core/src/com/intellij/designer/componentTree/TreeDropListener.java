@@ -158,7 +158,7 @@ public class TreeDropListener extends DropTargetAdapter {
       return;
     }
 
-    final List<RadComponent> excludeComponents = new ArrayList<RadComponent>(myContext.getComponents());
+    final List<RadComponent> excludeComponents = new ArrayList<>(myContext.getComponents());
     if (!myContext.isCreate()) {
       for (RadComponent component : myContext.getComponents()) {
         component.accept(new RadComponentVisitor() {

@@ -154,62 +154,59 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   @Override
   public void navigate(boolean requestFocus) {
 
-    DynamicToolWindowWrapper.getInstance(getProject()).getToolWindow().activate(new Runnable() {
-      @Override
-      public void run() {
-        DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(getProject());
-        final TreeTable treeTable = toolWindowWrapper.getTreeTable();
-        final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel();
+    DynamicToolWindowWrapper.getInstance(getProject()).getToolWindow().activate(() -> {
+      DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(getProject());
+      final TreeTable treeTable = toolWindowWrapper.getTreeTable();
+      final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel();
 
-        Object root = model.getRoot();
+      Object root = model.getRoot();
 
-        if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
+      if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
 
-        DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
-        DefaultMutableTreeNode desiredNode;
+      DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
+      DefaultMutableTreeNode desiredNode;
 
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-        final PsiClassType fqClassName = facade.getElementFactory().createTypeByFQClassName(myContainingClassName, ProjectScope.getAllScope(getProject()));
-        final PsiClass psiClass = fqClassName.resolve();
-        if (psiClass == null) return;
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiClassType fqClassName = facade.getElementFactory().createTypeByFQClassName(myContainingClassName, ProjectScope.getAllScope(getProject()));
+      final PsiClass psiClass = fqClassName.resolve();
+      if (psiClass == null) return;
 
-        PsiClass trueClass = null;
-        DMethodElement methodElement = null;
+      PsiClass trueClass = null;
+      DMethodElement methodElement = null;
 
-        final GrParameter[] parameters = getParameters();
+      final GrParameter[] parameters = getParameters();
 
-        List<String> parameterTypes = new ArrayList<String>();
-        for (GrParameter parameter : parameters) {
-          final String type = parameter.getType().getCanonicalText();
-          parameterTypes.add(type);
+      List<String> parameterTypes = new ArrayList<>();
+      for (GrParameter parameter : parameters) {
+        final String type = parameter.getType().getCanonicalText();
+        parameterTypes.add(type);
+      }
+
+      for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
+        methodElement = DynamicManager.getInstance(getProject()).findConcreteDynamicMethod(aSuper.getQualifiedName(), getName(), ArrayUtil.toStringArray(parameterTypes));
+
+        if (methodElement != null) {
+          trueClass = aSuper;
+          break;
         }
+      }
 
-        for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
-          methodElement = DynamicManager.getInstance(getProject()).findConcreteDynamicMethod(aSuper.getQualifiedName(), getName(), ArrayUtil.toStringArray(parameterTypes));
+      if (trueClass == null) return;
+      final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(getProject(), trueClass.getQualifiedName()));
 
-          if (methodElement != null) {
-            trueClass = aSuper;
-            break;
-          }
-        }
+      if (classNode == null) return;
+      desiredNode = TreeUtil.findNodeWithObject(classNode, methodElement);
 
-        if (trueClass == null) return;
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(getProject(), trueClass.getQualifiedName()));
+      if (desiredNode == null) return;
+      final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
 
-        if (classNode == null) return;
-        desiredNode = TreeUtil.findNodeWithObject(classNode, methodElement);
-
-        if (desiredNode == null) return;
-        final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
-
-        treeTable.getTree().expandPath(path);
-        treeTable.getTree().setSelectionPath(path);
-        treeTable.getTree().fireTreeExpanded(path);
+      treeTable.getTree().expandPath(path);
+      treeTable.getTree().setSelectionPath(path);
+      treeTable.getTree().fireTreeExpanded(path);
 
 //        ToolWindowManager.getInstance(myProject).getFocusManager().requestFocus(treeTable, true);
-        treeTable.revalidate();
-        treeTable.repaint();
-      }
+      treeTable.revalidate();
+      treeTable.repaint();
     }, true);
   }
 

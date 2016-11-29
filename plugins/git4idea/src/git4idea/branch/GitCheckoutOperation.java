@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
@@ -40,7 +39,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static git4idea.util.GitUIUtil.code;
+import static java.util.Arrays.stream;
 
 /**
  * Represents {@code git checkout} operation.
@@ -53,15 +54,12 @@ import static git4idea.util.GitUIUtil.code;
  */
 class GitCheckoutOperation extends GitBranchOperation {
 
-  public static final String ROLLBACK_PROPOSAL_FORMAT = "You may rollback (checkout back to previous branch) not to let branches diverge.";
-
   @NotNull private final String myStartPointReference;
   private final boolean myDetach;
   private final boolean myRefShouldBeValid;
   @Nullable private final String myNewBranch;
 
   GitCheckoutOperation(@NotNull Project project,
-                       GitPlatformFacade facade,
                        @NotNull Git git,
                        @NotNull GitBranchUiHandler uiHandler,
                        @NotNull Collection<GitRepository> repositories,
@@ -69,7 +67,7 @@ class GitCheckoutOperation extends GitBranchOperation {
                        boolean detach,
                        boolean refShouldBeValid,
                        @Nullable String newBranch) {
-    super(project, facade, git, uiHandler, repositories);
+    super(project, git, uiHandler, repositories);
     myStartPointReference = startPointReference;
     myDetach = detach;
     myRefShouldBeValid = refShouldBeValid;
@@ -193,8 +191,12 @@ class GitCheckoutOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
+    String previousBranch = getIfSingle(getSuccessfulRepositories().stream().map(myCurrentHeads::get).distinct());
+    if (previousBranch == null) previousBranch = "previous branch";
+    String rollBackProposal = "You may rollback (checkout back to " + previousBranch + ") not to let branches diverge.";
     return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
-           successfulRepositoriesJoined() + "<br/>" + ROLLBACK_PROPOSAL_FORMAT;
+           successfulRepositoriesJoined() + "<br/>" +
+           rollBackProposal;
   }
 
   @NotNull
@@ -253,7 +255,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   private boolean smartCheckout(@NotNull final List<GitRepository> repositories, @NotNull final String reference,
                                 @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
     final AtomicBoolean result = new AtomicBoolean();
-    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myFacade, myGit,
+    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myGit,
                                                                       GitUtil.getRootsFromRepositories(repositories), "checkout", reference,
                                                                       GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
                                                                       new Runnable() {
@@ -283,11 +285,11 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   private void refresh(GitRepository... repositories) {
+    // repositories state will be auto-updated with the following VFS refresh => there is no need to call GitRepository#update()
+    // but we want repository state to be updated as soon as possible, without waiting for the whole VFS refresh to complete.
+    stream(repositories).forEach(GitRepository::update);
     for (GitRepository repository : repositories) {
       refreshRoot(repository);
-      // repository state will be auto-updated with this VFS refresh => in general there is no need to call GitRepository#update()
-      // but to avoid problems of the asynchronous refresh, let's force update the repository info.
-      repository.update();
     }
   }
 

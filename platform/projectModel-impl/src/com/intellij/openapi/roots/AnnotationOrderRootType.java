@@ -46,7 +46,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
 
   @NotNull
   public static VirtualFile[] getFiles(@NotNull OrderEntry entry) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     RootPolicy<List<VirtualFile>> policy = new RootPolicy<List<VirtualFile>>() {
       @Override
       public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<VirtualFile> value) {
@@ -73,7 +73,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
 
   @NotNull
   public static String[] getUrls(@NotNull OrderEntry entry) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
       @Override
       public List<String> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<String> value) {

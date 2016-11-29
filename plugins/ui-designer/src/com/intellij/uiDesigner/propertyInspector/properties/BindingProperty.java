@@ -236,43 +236,35 @@ public final class BindingProperty extends Property<RadComponent, String> {
         return;
       }
       ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(
-              project,
-              new Runnable() {
-                public void run() {
-                  try {
-                    oldBindingField.delete();
-                  }
-                  catch (IncorrectOperationException e) {
-                    Messages.showErrorDialog(project, UIDesignerBundle.message("error.cannot.delete.unused.field", e.getMessage()),
-                                             CommonBundle.getErrorTitle());
-                  }
-                }
-              },
-              UIDesignerBundle.message("command.delete.unused.field"), undoGroupId
-            );
-          }
-        }
+        () -> CommandProcessor.getInstance().executeCommand(
+          project,
+          () -> {
+            try {
+              oldBindingField.delete();
+            }
+            catch (IncorrectOperationException e) {
+              Messages.showErrorDialog(project, UIDesignerBundle.message("error.cannot.delete.unused.field", e.getMessage()),
+                                       CommonBundle.getErrorTitle());
+            }
+          },
+          UIDesignerBundle.message("command.delete.unused.field"), undoGroupId
+        )
       );
     }
   }
 
   private static boolean isFieldUnreferenced(final PsiField field) {
     try {
-      return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference t) {
-          PsiFile f = t.getElement().getContainingFile();
-          if (f != null && f.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
-            return true;
-          }
-          PsiMethod method = PsiTreeUtil.getParentOfType(t.getElement(), PsiMethod.class);
-          if (method != null && method.getName().equals(AsmCodeGenerator.SETUP_METHOD_NAME)) {
-            return true;
-          }
-          return false;
+      return ReferencesSearch.search(field).forEach(t -> {
+        PsiFile f = t.getElement().getContainingFile();
+        if (f != null && f.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+          return true;
         }
+        PsiMethod method = PsiTreeUtil.getParentOfType(t.getElement(), PsiMethod.class);
+        if (method != null && method.getName().equals(AsmCodeGenerator.SETUP_METHOD_NAME)) {
+          return true;
+        }
+        return false;
       });
     }
     catch (IndexNotReadyException e) {
@@ -303,7 +295,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     if (StringUtil.startsWithIgnoreCase(text, PREFIX_HTML)) {
       text = Pattern.compile("<.+?>").matcher(text).replaceAll("");
     }
-    ArrayList<String> words = new ArrayList<String>(StringUtil.getWordsIn(text));
+    ArrayList<String> words = new ArrayList<>(StringUtil.getWordsIn(text));
     if (words.size() > 0) {
       StringBuilder nameBuilder = new StringBuilder(StringUtil.decapitalize(words.get(0)));
       for(int i=1; i<words.size() && i < 4; i++) {

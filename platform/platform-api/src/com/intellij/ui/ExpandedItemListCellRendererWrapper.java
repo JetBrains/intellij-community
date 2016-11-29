@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
@@ -42,14 +41,17 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
     ExpandedItemRendererComponentWrapper wrapper = ExpandedItemRendererComponentWrapper.wrap(result);
     if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
       if (UIUtil.isClientPropertyTrue(result, ExpandableItemsHandler.USE_RENDERER_BOUNDS)) {
-        Insets insets = wrapper.getInsets();
-        bounds.translate(-insets.left, -insets.top);
-        bounds.grow(insets.left + insets.right, insets.top + insets.bottom);
         wrapper.setBounds(bounds);
         UIUtil.putClientProperty(wrapper, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
       }
     }
+    wrapper.owner = list;
     return wrapper;
+  }
+
+  @Override
+  public String toString() {
+    return "ExpandedItemListCellRendererWrapper[" + getWrappee().getClass().getName() + "]";
   }
 
   @NotNull

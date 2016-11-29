@@ -143,33 +143,29 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   public static void reportFailure(@NotNull Exception e, @Nullable final Project project) {
     LOG.warn(e);
     final String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Notifications.Bus.notify(
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher Script Creation Failed", message, NotificationType.ERROR),
-          project);
-      }
-    }, ModalityState.NON_MODAL);
+    Notifications.Bus.notify(
+      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher Script Creation Failed", message, NotificationType.ERROR),
+      project);
   }
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
-    String runPath = PathManager.getHomePath();
-    String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    if (!SystemInfo.isMac) runPath += "/bin/" + productName + ".sh";
-    else runPath = StringUtil.trimEnd(runPath, CONTENTS);
+    String runPath = SystemInfo.isMac ? StringUtil.trimEnd(PathManager.getHomePath(), CONTENTS) : CreateDesktopEntryAction.getLauncherScript();
+    if (runPath == null) throw new IOException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()));
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;
-    Map<String, String> variables = newHashMap(pair("$CONFIG_PATH$", PathManager.getConfigPath()), pair("$RUN_PATH$", runPath));
+    Map<String, String> variables = newHashMap(
+      pair("$CONFIG_PATH$", PathManager.getConfigPath()),
+      pair("$SYSTEM_PATH$", PathManager.getSystemPath()),
+      pair("$RUN_PATH$", runPath));
     String launcherContents = StringUtil.convertLineSeparators(ExecUtil.loadTemplate(loader, "launcher.py", variables));
 
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);
   }
 
   public static String defaultScriptPath() {
-    String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
-    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = "idea";
+    String scriptName = ApplicationNamesInfo.getInstance().getDefaultLauncherName();
+    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     return "/usr/local/bin/" + scriptName;
   }
 }

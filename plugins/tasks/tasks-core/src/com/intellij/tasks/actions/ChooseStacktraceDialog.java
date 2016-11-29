@@ -25,6 +25,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -48,17 +49,17 @@ public class ChooseStacktraceDialog extends DialogWrapper {
 
     setTitle("Choose Stacktrace to Analyze");
     Comment[] comments = issue.getComments();
-    ArrayList<Comment> list = new ArrayList<Comment>(comments.length + 1);
+    ArrayList<Comment> list = new ArrayList<>(comments.length + 1);
     final String description = issue.getDescription();
     if (description != null) {
       list.add(new Description(description));
     }
     ContainerUtil.addAll(list, comments);
 
-    myList.setModel(new CollectionListModel<Comment>(list));
+    myList.setModel(new CollectionListModel<>(list));
     myList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Description) {
           append("Description");
         }

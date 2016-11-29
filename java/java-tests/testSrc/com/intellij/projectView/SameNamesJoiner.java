@@ -37,9 +37,9 @@ class SameNamesJoiner implements TreeStructureProvider {
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
     if (parent instanceof JoinedNode) return children;
 
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
-    MultiValuesMap<Object, AbstractTreeNode> executed = new MultiValuesMap<Object, AbstractTreeNode>();
+    MultiValuesMap<Object, AbstractTreeNode> executed = new MultiValuesMap<>();
     for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
       ProjectViewNode treeNode = (ProjectViewNode)iterator.next();
       Object o = treeNode.getValue();

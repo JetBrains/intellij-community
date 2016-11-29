@@ -41,9 +41,9 @@ import java.util.Set;
  */
 public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType implements IGroovyDocElementType {
 
-  private static final Set<String> TAGS_WITH_REFERENCES = new HashSet<String>();
-  private static final Set<String> INLINED_TAGS_WITH_REFERENCES = new HashSet<String>();
-  private static final Set<String> BUILT_IN_TYPES = new HashSet<String>();
+  private static final Set<String> TAGS_WITH_REFERENCES = new HashSet<>();
+  private static final Set<String> INLINED_TAGS_WITH_REFERENCES = new HashSet<>();
+  private static final Set<String> BUILT_IN_TYPES = new HashSet<>();
 
   static {
     BUILT_IN_TYPES.addAll(Arrays.asList("double", "long", "float", "short", "any", "char", "int", "byte", "boolean"));

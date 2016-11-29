@@ -48,7 +48,7 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
    * List of real arguments.
    */
   @NotNull
-  private final List<Argument> myArguments = new ArrayList<Argument>();
+  private final List<Argument> myArguments = new ArrayList<>();
   /**
    * Minimum number of arguments this command requires (actually, number of required arguments)
    */

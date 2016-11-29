@@ -36,11 +36,11 @@ import java.util.HashSet;
  */
 class DeleteHandler {
 
-  private final Collection<String> myDeletedFiles = new HashSet<String>();
-  private final Collection<VirtualFile> myDeletedFilesParents = new HashSet<VirtualFile>();
+  private final Collection<String> myDeletedFiles = new HashSet<>();
+  private final Collection<VirtualFile> myDeletedFilesParents = new HashSet<>();
   private final Project myProject;
   private final CvsStorageComponent myCvsStorageComponent;
-  private final Collection<File> myFilesToDeleteEntry = new ArrayList<File>();
+  private final Collection<File> myFilesToDeleteEntry = new ArrayList<>();
 
   public DeleteHandler(Project project, CvsStorageComponent cvsStorageComponent) {
     myProject = project;

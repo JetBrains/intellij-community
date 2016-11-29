@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiFormatUtil;
  * User: anna
  * Date: 30-Jan-2006
  */
-public class FieldNode extends BasePsiNode<PsiField> {
+public class FieldNode extends MemberNode<PsiField> {
 
   public FieldNode(final PsiField field) {
     super(field);
@@ -46,11 +46,5 @@ public class FieldNode extends BasePsiNode<PsiField> {
 
   public int getWeight() {
     return 5;
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    final PsiField psiField = (PsiField)getPsiElement();
-    return psiField != null && psiField.isDeprecated();
   }
 }

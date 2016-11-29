@@ -39,7 +39,7 @@ import java.util.Map;
 public class StructureConfigurableContext implements Disposable, LibraryEditorListener {
   private final ProjectStructureDaemonAnalyzer myDaemonAnalyzer;
   public final ModulesConfigurator myModulesConfigurator;
-  public final Map<String, LibrariesModifiableModel> myLevel2Providers = new THashMap<String, LibrariesModifiableModel>();
+  public final Map<String, LibrariesModifiableModel> myLevel2Providers = new THashMap<>();
   private final EventDispatcher<LibraryEditorListener> myLibraryEditorListeners = EventDispatcher.create(LibraryEditorListener.class);
   private final Project myProject;
 

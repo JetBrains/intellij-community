@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -30,8 +31,9 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -44,48 +46,52 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createInfoMessage;
-
 /**
  * @author nik
  */
-public class XVariablesView extends XVariablesViewBase {
+public class XVariablesView extends XVariablesViewBase implements DataProvider {
   public static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
   public static final Key<ObjectLongHashMap<VirtualFile>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
-  private final JComponent myComponent;
+  private final JPanel myComponent;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
-    myComponent = new MyPanel();
+    myComponent = new BorderLayoutPanel();
     myComponent.add(super.getPanel());
+    DataManager.registerDataProvider(myComponent, this);
   }
 
   @Override
-  public JComponent getPanel() {
+  public JPanel getPanel() {
     return myComponent;
   }
 
   @Override
-  public void processSessionEvent(@NotNull final SessionEvent event) {
-    XDebugSession session = getSession(getPanel());
-    XStackFrame stackFrame = session == null ? null : session.getCurrentStackFrame();
-    XDebuggerTree tree = getTree();
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
+    if (ApplicationManager.getApplication().isDispatchThread()) { // mark nodes obsolete asap
+      getTree().markNodesObsolete();
+    }
 
-    if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
-      saveCurrentTreeState(stackFrame);
-      if (event == SessionEvent.BEFORE_RESUME) {
-        return;
+    XStackFrame stackFrame = session.getCurrentStackFrame();
+    DebuggerUIUtil.invokeLater(() -> {
+      XDebuggerTree tree = getTree();
+
+      if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
+        saveCurrentTreeState(stackFrame);
+        if (event == SessionEvent.BEFORE_RESUME) {
+          return;
+        }
       }
-    }
 
-    tree.markNodesObsolete();
-    if (stackFrame != null) {
-      cancelClear();
-      buildTreeAndRestoreState(stackFrame);
-    }
-    else {
-      requestClear();
-    }
+      tree.markNodesObsolete();
+      if (stackFrame != null) {
+        cancelClear();
+        buildTreeAndRestoreState(stackFrame);
+      }
+      else {
+        requestClear();
+      }
+    });
   }
 
   @Override
@@ -98,6 +104,20 @@ public class XVariablesView extends XVariablesViewBase {
     tree.getProject().putUserData(DEBUG_VARIABLES, null);
     tree.getProject().putUserData(DEBUG_VARIABLES_TIMESTAMPS, null);
     tree.updateEditor();
+    clearInlays(tree);
+  }
+
+  protected void addEmptyMessage(XValueContainerNode root) {
+    XDebugSession session = getSession(getPanel());
+    if (session != null) {
+      if (!session.isStopped() && session.isPaused()) {
+        root.setInfoMessage("Frame is not available", null);
+      }
+      else {
+        XDebugProcess debugProcess = session.getDebugProcess();
+        root.setInfoMessage(debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
+      }
+    }
   }
 
   @Override
@@ -106,46 +126,37 @@ public class XVariablesView extends XVariablesViewBase {
     tree.setSourcePosition(null);
     clearInlineData(tree);
 
-    XDebuggerTreeNode node;
-    XDebugSession session = getSession(getPanel());
-    if (session == null || (!session.isStopped() && session.isPaused())) {
-      node = createInfoMessage(tree, "Frame is not available");
-    }
-    else {
-      XDebugProcess debugProcess = session.getDebugProcess();
-      node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
-    }
-    tree.setRoot(node, true);
+    XValueContainerNode root = createNewRootNode(null);
+    addEmptyMessage(root);
     super.clear();
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return getCurrentFile(getTree());
+    }
+    return null;
   }
 
   public static class InlineVariablesInfo {
     private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData
-      = new THashMap<Pair<VirtualFile, Integer>, Set<Entry>>();
+      = new THashMap<>();
 
     @Nullable
     public List<XValueNodeImpl> get(@NotNull VirtualFile file, int line) {
       synchronized (myData) {
         Set<Entry> entries = myData.get(Pair.create(file, line));
         if (entries == null) return null;
-        return ContainerUtil.map(entries, new Function<Entry, XValueNodeImpl>() {
-          @Override
-          public XValueNodeImpl fun(Entry entry) {
-            return entry.myNode;
-          }
-        });
+        return ContainerUtil.map(entries, entry -> entry.myNode);
       }
     }
 
     public void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node) {
       synchronized (myData) {
         Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
-        Set<Entry> entries = myData.get(key);
-        if (entries == null) {
-          entries = new TreeSet<Entry>();
-          myData.put(key, entries);
-        }
-        entries.add(new Entry(position.getOffset(), node));
+        myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
       }
     }
 
@@ -184,17 +195,6 @@ public class XVariablesView extends XVariablesViewBase {
       public int hashCode() {
         return myNode.hashCode();
       }
-    }
-  }
-
-  private class MyPanel extends BorderLayoutPanel implements DataProvider {
-    @Nullable
-    @Override
-    public Object getData(@NonNls String dataId) {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return getCurrentFile(getTree());
-      }
-      return null;
     }
   }
 }

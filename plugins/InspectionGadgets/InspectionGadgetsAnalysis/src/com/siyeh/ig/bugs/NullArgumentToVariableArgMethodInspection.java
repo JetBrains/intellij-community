@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,12 +121,16 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
       }
       final PsiEllipsisType ellipsisType = (PsiEllipsisType)type1;
       final PsiType arrayType = ellipsisType.toArrayType();
+      final PsiType componentType = ellipsisType.getComponentType();
       if (checkArray) {
+        if (!componentType.equals(TypeUtils.getObjectType(call))) {
+          return;
+        }
         if (type.isAssignableFrom(arrayType) || !arrayType.isAssignableFrom(type)) {
           return;
         }
       }
-      registerError(lastArgument, lastArgument, ellipsisType.getComponentType(), arrayType);
+      registerError(lastArgument, lastArgument, componentType, arrayType);
     }
   }
 }

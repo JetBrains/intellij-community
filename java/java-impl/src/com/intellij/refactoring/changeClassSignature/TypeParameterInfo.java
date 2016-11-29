@@ -90,12 +90,7 @@ public interface TypeParameterInfo {
 
     private static String getCanonicalText(PsiType boundType) {
       if (boundType instanceof PsiIntersectionType) {
-        return StringUtil.join(ContainerUtil.map(((PsiIntersectionType)boundType).getConjuncts(), new Function<PsiType, String>() {
-          @Override
-          public String fun(PsiType type) {
-            return type.getCanonicalText();
-          }
-        }), " & ");
+        return StringUtil.join(ContainerUtil.map(((PsiIntersectionType)boundType).getConjuncts(), type -> type.getCanonicalText()), " & ");
       }
       return boundType.getCanonicalText();
     }

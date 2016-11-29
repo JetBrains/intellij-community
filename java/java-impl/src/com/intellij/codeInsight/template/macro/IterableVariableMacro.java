@@ -52,7 +52,7 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
   protected PsiElement[] getVariables(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
 
 
     Project project = context.getProject();

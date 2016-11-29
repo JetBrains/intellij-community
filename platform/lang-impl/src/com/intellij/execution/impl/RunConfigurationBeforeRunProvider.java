@@ -18,8 +18,6 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -33,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -41,6 +40,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -144,7 +144,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       return Collections.emptyList();
     }
 
-    List<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(RunManagerImpl.getInstanceImpl(project).getSortedConfigurations());
+    List<RunnerAndConfigurationSettings> configurations = new ArrayList<>(RunManagerImpl.getInstanceImpl(project).getSortedConfigurations());
     String executorId = DefaultRunExecutor.getRunExecutorInstance().getId();
     for (Iterator<RunnerAndConfigurationSettings> iterator = configurations.iterator(); iterator.hasNext();) {
       RunnerAndConfigurationSettings settings = iterator.next();
@@ -175,90 +175,109 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
                              RunConfigurableBeforeRunTask task) {
     RunnerAndConfigurationSettings settings = task.getSettings();
     if (settings == null) {
-      return false;
+      return true; // ignore missing configurations: IDEA-155476 Run/debug silently fails when 'Run another configuration' step is broken
     }
+    return doExecuteTask(env, settings);
+  }
+
+  public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env, @NotNull final RunnerAndConfigurationSettings settings) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final String executorId = executor.getId();
     ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
     if (builder == null) {
       return false;
     }
-    final ExecutionEnvironment environment = builder.target(env.getExecutionTarget()).build();
-    environment.setExecutionId(env.getExecutionId());
-    if (!ExecutionTargetManager.canRun(settings, environment.getExecutionTarget())) {
+
+    ExecutionTarget compatibleTarget = getCompatibleTarget(env, settings);
+    if (compatibleTarget == null) {
       return false;
     }
+
+    final ExecutionEnvironment environment = builder.target(compatibleTarget).build();
+    environment.setExecutionId(env.getExecutionId());
 
     if (!environment.getRunner().canRun(executorId, environment.getRunProfile())) {
       return false;
     }
     else {
       beforeRun(environment);
-
-      final Semaphore targetDone = new Semaphore();
-      final Ref<Boolean> result = new Ref<Boolean>(false);
-      final Disposable disposable = Disposer.newDisposable();
-
-      myProject.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
-        @Override
-        public void processStartScheduled(final String executorIdLocal, final ExecutionEnvironment environmentLocal) {
-          if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-            targetDone.down();
-          }
-        }
-
-        @Override
-        public void processNotStarted(final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
-          if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-            Boolean skipRun = environment.getUserData(ExecutionManagerImpl.EXECUTION_SKIP_RUN);
-            if (skipRun != null && skipRun) {
-              result.set(true);
-            }
-            targetDone.up();
-          }
-        }
-
-        @Override
-        public void processStarted(final String executorIdLocal,
-                                   @NotNull final ExecutionEnvironment environmentLocal,
-                                   @NotNull final ProcessHandler handler) {
-          if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-            handler.addProcessListener(new ProcessAdapter() {
-              @Override
-              public void processTerminated(ProcessEvent event) {
-                result.set(event.getExitCode() == 0);
-                targetDone.up();
-              }
-            });
-          }
-        }
-      });
-
-      try {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              environment.getRunner().execute(environment);
-            }
-            catch (ExecutionException e) {
-              targetDone.up();
-              LOG.error(e);
-            }
-          }
-        }, ModalityState.NON_MODAL);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        Disposer.dispose(disposable);
-        return false;
-      }
-
-      targetDone.waitFor();
-      Disposer.dispose(disposable);
-
-      return result.get();
+      return doRunTask(executorId, environment, environment.getRunner());
     }
+  }
+
+  @Nullable
+  private static ExecutionTarget getCompatibleTarget(@NotNull ExecutionEnvironment env, @NotNull RunnerAndConfigurationSettings settings) {
+    if (ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
+      return env.getExecutionTarget();
+    }
+
+    List<ExecutionTarget> targets = ApplicationManager.getApplication().runReadAction(new Computable<List<ExecutionTarget>>() {
+      @Override
+      public List<ExecutionTarget> compute() {
+        return ExecutionTargetManager.getTargetsFor(env.getProject(), settings);
+      }
+    });
+
+    return ContainerUtil.getFirstItem(targets);
+  }
+
+  public static boolean doRunTask(final String executorId, final ExecutionEnvironment environment, ProgramRunner<?> runner) {
+    final Semaphore targetDone = new Semaphore();
+    final Ref<Boolean> result = new Ref<>(false);
+    final Disposable disposable = Disposer.newDisposable();
+
+    environment.getProject().getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+      @Override
+      public void processStartScheduled(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
+        if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+          targetDone.down();
+        }
+      }
+
+      @Override
+      public void processNotStarted(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
+        if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+          Boolean skipRun = environment.getUserData(ExecutionManagerImpl.EXECUTION_SKIP_RUN);
+          if (skipRun != null && skipRun) {
+            result.set(true);
+          }
+          targetDone.up();
+        }
+      }
+
+      @Override
+      public void processTerminated(@NotNull String executorIdLocal,
+                                    @NotNull ExecutionEnvironment environmentLocal,
+                                    @NotNull ProcessHandler handler,
+                                    int exitCode) {
+        if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+          result.set(exitCode == 0);
+          targetDone.up();
+        }
+      }
+    });
+
+    try {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        try {
+          runner.execute(environment);
+        }
+        catch (ExecutionException e) {
+          targetDone.up();
+          LOG.error(e);
+        }
+      }, ModalityState.NON_MODAL);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      Disposer.dispose(disposable);
+      return false;
+    }
+
+    targetDone.waitFor();
+    Disposer.dispose(disposable);
+
+    return result.get();
   }
 
   private static void beforeRun(@NotNull ExecutionEnvironment environment) {
@@ -396,7 +415,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       });
       myJBList.setCellRenderer(new ColoredListCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof RunnerAndConfigurationSettings) {
             RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)value;
             RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);

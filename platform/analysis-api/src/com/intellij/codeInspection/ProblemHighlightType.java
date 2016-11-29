@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ public enum ProblemHighlightType {
   /** The same as {@link #GENERIC_ERROR_OR_WARNING} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level */
   GENERIC_ERROR,
 
-  @Deprecated
   /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#INFO} severity level
    * use #WEAK_WARNING instead*/
+  @Deprecated
   INFO,
 
   /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#WEAK_WARNING} severity level */

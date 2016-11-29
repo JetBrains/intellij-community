@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,14 +73,19 @@ public final class Urls {
   }
 
   @NotNull
+  public static Url newHttpUrl(@NotNull String authority, @Nullable String path, @Nullable String parameters) {
+    return new UrlImpl("http", authority, path, parameters);
+  }
+
+  @NotNull
   public static Url newUrl(@NotNull String scheme, @NotNull String authority, @Nullable String path) {
     return new UrlImpl(scheme, authority, path);
   }
 
-  @NotNull
   /**
    * Url will not be normalized (see {@link VfsUtilCore#toIdeaUrl(String)}), parsed as is
    */
+  @NotNull
   public static Url newFromIdea(@NotNull CharSequence url) {
     Url result = parseFromIdea(url);
     LOG.assertTrue(result != null, url);

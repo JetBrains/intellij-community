@@ -33,7 +33,7 @@ public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String
   private Map<String, String> myAvailableProperties;
 
   public MavenPropertiesPanel(Map<String, String> availableProperties) {
-    super(new MyPropertiesTableModel(), new ArrayList<Pair<String, String>>(), null);
+    super(new MyPropertiesTableModel(), new ArrayList<>(), null);
     setPreferredSize(new Dimension(100, 100));
     myAvailableProperties = availableProperties;
   }
@@ -60,7 +60,7 @@ public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String
   }
 
   public Map<String, String> getDataAsMap() {
-    Map<String, String> result = new LinkedHashMap<String, String>();
+    Map<String, String> result = new LinkedHashMap<>();
     for (Pair<String, String> p : getData()) {
       result.put(p.getFirst(), p.getSecond());
     }
@@ -68,7 +68,7 @@ public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String
   }
 
   public void setDataFromMap(Map<String, String> map) {
-    List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
+    List<Pair<String, String>> result = new ArrayList<>();
     for (Map.Entry<String, String> e : map.entrySet()) {
       result.add(Pair.create(e.getKey(), e.getValue()));
     }

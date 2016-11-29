@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,67 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   private boolean myShowDividerControls;
   private int myDividerZone;
 
+  private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
+
+    @Override
+    public Component getComponentAfter(Container aContainer, Component aComponent) {
+      if (aComponent == myFirstComponent) {
+        return findChildToFocus(myInnerComponent);
+      }
+      if (aComponent == myInnerComponent) {
+        return findChildToFocus(myLastComponent);
+      }
+      return findChildToFocus(myFirstComponent);
+    }
+
+    @Override
+    public Component getComponentBefore(Container aContainer, Component aComponent) {
+      if (aComponent == myInnerComponent) {
+        return findChildToFocus(myFirstComponent);
+      }
+      if (aComponent == myLastComponent) {
+        return findChildToFocus(myInnerComponent);
+      }
+      return findChildToFocus(myFirstComponent);
+    }
+
+    @Override
+    public Component getFirstComponent(Container aContainer) {
+      return findChildToFocus(myFirstComponent);
+    }
+
+    @Override
+    public Component getLastComponent(Container aContainer) {
+      return findChildToFocus(myLastComponent);
+    }
+
+    @Override
+    public Component getDefaultComponent(Container aContainer) {
+      return findChildToFocus(myInnerComponent);
+    }
+
+    Component findChildToFocus (Component component) {
+
+      if (component instanceof JPanel) {
+        JPanel container = (JPanel)component;
+        final FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
+
+        if (policy == null) {
+          return container;
+        }
+
+        final Component defaultComponent = policy.getDefaultComponent(container);
+        if (defaultComponent == null) {
+          return container;
+        }
+        return policy.getDefaultComponent(container);
+      }
+
+      return component;
+
+    }
+
+  }
 
   /**
    * Creates horizontal split with proportion equals to .5f
@@ -97,6 +158,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myFirstDivider.setBackground(bg);
       myLastDivider.setBackground(bg);
     }
+    setFocusCycleRoot(true);
+    setFocusTraversalPolicy(new MyFocusTraversalPolicy());
+    setFocusable(false);
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);
@@ -108,7 +172,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   public void setDividerMouseZoneSize(int size) {
-    myDividerZone = size;
+    myDividerZone = JBUI.scale(size);
   }
 
   public boolean isHonorMinimumSize() {
@@ -548,7 +612,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     private boolean isInside(Point p) {
       if (!isVisible()) return false;
 
-      int dndOff = myIsOnePixel ? Registry.intValue("ide.splitter.mouseZone") / 2 : 0;
+      int dndOff = myIsOnePixel ? JBUI.scale(Registry.intValue("ide.splitter.mouseZone")) / 2 : 0;
       if (myVerticalSplit) {
         if (p.x >= 0 && p.x < getWidth()) {
           if (getHeight() > 0) {

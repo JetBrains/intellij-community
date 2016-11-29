@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
  */
 package org.jetbrains.git4idea.util;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,16 +35,7 @@ public class ScriptGenerator {
   /**
    * The extension of the ssh script name
    */
-  @NonNls public static final String SCRIPT_EXT;
-
-  static {
-    if (SystemInfo.isWindows) {
-      SCRIPT_EXT = ".bat";
-    }
-    else {
-      SCRIPT_EXT = ".sh";
-    }
-  }
+  public static final String SCRIPT_EXT = SystemInfo.isWindows ? ".bat" : ".sh";
 
   /**
    * The script prefix
@@ -58,11 +48,11 @@ public class ScriptGenerator {
   /**
    * The class paths for the script
    */
-  private final ArrayList<String> myPaths = new ArrayList<String>();
+  private final ArrayList<String> myPaths = new ArrayList<>();
   /**
    * The internal parameters for the script
    */
-  private final ArrayList<String> myInternalParameters = new ArrayList<String>();
+  private final ArrayList<String> myInternalParameters = new ArrayList<>();
 
   /**
    * A constructor
@@ -135,12 +125,13 @@ public class ScriptGenerator {
     String title = SystemInfo.isWindows ? "@echo off" : "#!/bin/sh";
     String parametersPassthrough = SystemInfo.isWindows ? " %*" : " \"$@\"";
     String content = title + "\n" + commandLine() + parametersPassthrough + "\n";
-    try {
-      return ExecUtil.createTempExecutableScript(myPrefix, SCRIPT_EXT, content);
+    File file = new File(PathManager.getTempPath(), myPrefix + SCRIPT_EXT);
+    if (SystemInfo.isWindows && file.getPath().contains(" ")) {
+      file = new File(FileUtil.getTempDirectory(), myPrefix + SCRIPT_EXT);
     }
-    catch (ExecutionException e) {
-      throw new IOException("The script providing interactive execution of Git commands couldn't be made executable", e);
-    }
+    FileUtil.writeToFile(file, content);
+    FileUtil.setExecutableAttribute(file.getPath(), true);
+    return file;
   }
 
   /**

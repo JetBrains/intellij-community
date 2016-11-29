@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,11 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 public class PyResolveTest extends PyResolveTestCase {
   @Override
@@ -67,6 +69,22 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PyFunction);
     assertEquals(PyNames.INIT, ((PyFunction)target).getName());
+  }
+
+  public void testInitOrNewReturnsInitWhenNewIsFirst() {
+    doTestInitOrNewReturnsInit();
+  }
+  
+  public void testInitOrNewReturnsInitWhenNewIsLast() {
+    doTestInitOrNewReturnsInit();
+  }
+
+  private void doTestInitOrNewReturnsInit() {
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    final PyClass pyClass = PsiTreeUtil.findChildOfType(myFixture.getFile(), PyClass.class);
+    assertNotNull(pyClass);
+    final PyFunction init = pyClass.findInitOrNew(false, TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile()));
+    assertEquals(PyNames.INIT, init.getName());
   }
 
   public void testToConstructorInherited() {
@@ -406,7 +424,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testBuiltinVsClassMember() {  // PY-1654
     final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "eval");
-    assertEquals("__builtin__.py", pyFunction.getContainingFile().getName());
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, pyFunction.getContainingFile().getName());
   }
 
   public void testLambdaToClass() {  // PY-2182
@@ -512,30 +530,17 @@ public class PyResolveTest extends PyResolveTestCase {
   
   // PY-9795
   public void testGoogleDocstringParamType() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      public void run() {
-        assertResolvesTo(PyClass.class, "datetime");
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyClass.class, "datetime"));
   }
   
   // PY-9795
   public void testGoogleDocstringReturnType() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      public void run() {
-        assertResolvesTo(PyClass.class, "MyClass");
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyClass.class, "MyClass"));
   }
 
   // PY-16906
   public void testGoogleDocstringModuleAttribute() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        assertResolvesTo(PyTargetExpression.class, "module_level_variable1");
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "module_level_variable1"));
   }
 
   // PY-7541
@@ -611,52 +616,618 @@ public class PyResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "__rmatmul__");
   }
 
-  //PY-2478
+  //PY-2748
   public void testFormatStringKWArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyKeywordArgument);
     assertEquals("fst", ((PyKeywordArgument)target).getKeyword());
   }
 
-  //PY-2478
+  //PY-2748
   public void testFormatPositionalArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyReferenceExpression);
     assertEquals("string", target.getText());
   }
 
-  //PY-2478
+  //PY-2748
   public void testFormatArgsAndKWargs() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyStringLiteralExpression);
   }
 
-  //PY-2478
+  //PY-2748
   public void testFormatArgsAndKWargs1() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyKeywordArgument);
     assertEquals("kwd", ((PyKeywordArgument)target).getKeyword());
   }
 
-  //PY-2478
+  //PY-2748
+  public void testFormatStringWithPackedDictAsArgument() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertEquals("\"fst\"", target.getText());    
+  }
+
+  //PY-2748
+  public void testFormatStringWithPackedListAsArgument() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyNumericLiteralExpression);
+    assertEquals("1", target.getText());
+  }
+
+  //PY-2748
+  public void testFormatStringWithPackedTupleAsArgument() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertEquals("\"snd\"", target.getText());
+  }
+
+  //PY-2748
+  public void testFormatStringWithRefAsArgument() {
+    PsiElement target = resolve();
+    assertInstanceOf(target, PyStarArgument.class);
+  }
+  
+
+  //PY-2748
   public void testPercentPositionalArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
   }
 
-  //PY-2478
+  //PY-2748
   public void testPercentKeyWordArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
     assertEquals("kwg", ((PyStringLiteralExpression)target).getStringValue());
   }
 
-  // PY-18254
-  public void testFunctionTypeComment() {
-    assertResolvesTo(PyClass.class, "MyClass");
+  public void testPercentStringKeyWordArgWithParentheses() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyStringLiteralExpression);
+    assertEquals("snd", ((PyStringLiteralExpression)target).getStringValue());    
   }
+
+  //PY-2748
+  public void testPercentStringBinaryStatementArg() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyStringLiteralExpression);
+    assertEquals("1", ((PyStringLiteralExpression)target).getStringValue());
+  }
+
+  //PY-2748
+  public void testPercentStringArgWithRedundantParentheses() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyStringLiteralExpression);
+    assertEquals("1", ((PyStringLiteralExpression)target).getStringValue());
+  }
+
+  //PY-2748
+  public void testPercentStringWithRefAsArgument() {
+    PsiElement target = resolve();
+    assertEquals("tuple", target.getText());    
+  }
+
+  //PY-2748
+  public void testPercentStringWithOneStringArgument() {
+    PsiElement target = resolve();
+    assertEquals("hello", ((PyStringLiteralExpression)target).getStringValue());
+  }
+
+  //PY-2748
+  public void testFormatStringPackedDictCall() {
+    PsiElement target = resolve();
+    assertInstanceOf(target, PyStarArgument.class);
+  }
+
+  //PY-2748
+  public void testPercentStringDictCall() {
+    PsiElement target = resolve();
+    assertEquals("hello", ((PyStringLiteralExpression)((PyKeywordArgument)target).getValueExpression()).getStringValue());
+  }
+
+  // PY-2748
+  public void testPercentStringParenDictCall() {
+    PsiElement target = resolve();
+    assertEquals("hello", ((PyStringLiteralExpression)((PyKeywordArgument)target).getValueExpression()).getStringValue());
+  }
+  
+  // PY-2748
+  public void testPercentStringPosParenDictCall() {
+    PsiElement target = resolve();
+    assertInstanceOf(target, PyCallExpression.class);
+    assertEquals("dict()", target.getText());
+  }
+
+  // PY-2748
+  public void testFormatStringWithPackedAndNonPackedArgs() {
+    PsiElement target = resolve();
+    assertInstanceOf(target, PyNumericLiteralExpression.class);
+    assertEquals("2", target.getText());
+  }
+
 
   public void testGlobalNotDefinedAtTopLevel() {
     assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-13734
+  public void testImplicitDunderClass() {
+    assertUnresolved();
+  }
+
+  public void testImplicitDunderDoc() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testImplicitDunderSizeOf() {
+    assertUnresolved();
+  }
+
+  public void testImplicitUndeclaredClassAttr() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testImplicitDunderClassNewStyleClass() {
+    assertUnresolved();
+  }
+
+  public void testImplicitDunderDocNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testImplicitDunderSizeOfNewStyleClass() {
+    assertUnresolved();
+  }
+
+  public void testImplicitUndeclaredClassAttrNewStyleClass() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testImplicitDunderClassWithClassAttr() {
+    assertUnresolved();
+  }
+
+  public void testImplicitDunderDocWithClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testImplicitDunderSizeOfWithClassAttr() {
+    assertUnresolved();
+  }
+
+  public void testImplicitClassAttr() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testImplicitDunderClassWithClassAttrNewStyleClass() {
+    assertUnresolved();
+  }
+
+  public void testImplicitDunderDocWithClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testImplicitDunderSizeOfWithClassAttrNewStyleClass() {
+    assertUnresolved();
+  }
+
+  public void testImplicitClassAttrNewStyleClass() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testImplicitDunderClassWithInheritedClassAttr() {
+    assertUnresolved();
+  }
+
+  public void testImplicitDunderDocWithInheritedClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testImplicitDunderSizeOfWithInheritedClassAttr() {
+    assertUnresolved();
+  }
+
+  public void testImplicitInheritedClassAttr() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testInstanceDunderClass() {
+    assertResolvesTo(PyClass.class, "A");
+  }
+
+  public void testInstanceDunderDoc() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testInstanceDunderSizeOf() {
+    assertUnresolved();
+  }
+
+  public void testInstanceUndeclaredClassAttr() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testInstanceDunderClassNewStyleClass() {
+    assertResolvesTo(PyClass.class, "A");
+  }
+
+  public void testInstanceDunderDocNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testInstanceDunderSizeOfNewStyleClass() {
+    final PyFunction expression = assertResolvesTo(PyFunction.class, PyNames.SIZEOF);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testInstanceUndeclaredClassAttrNewStyleClass() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testInstanceDunderClassWithClassAttr() {
+    assertResolvesTo(PyClass.class, "A");
+  }
+
+  public void testInstanceDunderDocWithClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testInstanceDunderSizeOfWithClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.SIZEOF);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testInstanceClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, "my_attr");
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  // PY-13734
+  public void testInstanceDunderClassWithClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testInstanceDunderDocWithClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testInstanceDunderSizeOfWithClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.SIZEOF);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testInstanceClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, "my_attr");
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  // PY-13734
+  public void testInstanceDunderClassWithInheritedClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testInstanceDunderDocWithInheritedClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testInstanceDunderSizeOfWithInheritedClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.SIZEOF);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testInstanceInheritedClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, "my_attr");
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  // PY-13734
+  public void testLocalDunderClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
+
+    final PyFunction function = PsiTreeUtil.getParentOfType(expression, PyFunction.class);
+    assertNotNull(function);
+    assertEquals("foo", function.getName());
+  }
+
+  // PY-13734
+  public void testTypeDunderClass() {
+    assertUnresolved();
+  }
+
+  public void testTypeDunderDoc() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testTypeDunderSizeOf() {
+    assertUnresolved();
+  }
+
+  public void testTypeUndeclaredClassAttr() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testTypeDunderClassNewStyleClass() {
+    assertResolvesTo(PyClass.class, "type");
+  }
+
+  public void testTypeDunderDocNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testTypeDunderSizeOfNewStyleClass() {
+    final PyFunction expression = assertResolvesTo(PyFunction.class, PyNames.SIZEOF);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testTypeUndeclaredClassAttrNewStyleClass() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testTypeDunderClassWithClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testTypeDunderDocWithClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testTypeDunderSizeOfWithClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.SIZEOF);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testTypeClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, "my_attr");
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  // PY-13734
+  public void testTypeDunderClassWithClassAttrNewStyleClass() {
+    assertResolvesTo(PyClass.class, "type");
+  }
+
+  public void testTypeDunderDocWithClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testTypeDunderSizeOfWithClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.SIZEOF);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testTypeClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, "my_attr");
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  // PY-13734
+  public void testTypeDunderClassWithInheritedClassAttr() {
+    assertResolvesTo(PyClass.class, "type");
+  }
+
+  public void testTypeDunderDocWithInheritedClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testTypeDunderSizeOfWithInheritedClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.SIZEOF);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testTypeInheritedClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, "my_attr");
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  // PY-13734
+  public void testDunderClassInDeclaration() {
+    assertUnresolved();
+  }
+
+  public void testDunderDocInDeclaration() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testDunderSizeOfInDeclaration() {
+    assertUnresolved();
+  }
+
+  public void testUndeclaredClassAttrInDeclaration() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testDunderClassInDeclarationNewStyleClass() {
+    assertUnresolved();
+  }
+
+  public void testDunderDocInDeclarationNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testDunderSizeOfInDeclarationNewStyleClass() {
+    assertUnresolved();
+  }
+
+  public void testUndeclaredClassAttrInDeclarationNewStyleClass() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testDunderClassInDeclarationWithClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testDunderDocInDeclarationWithClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testDunderSizeOfInDeclarationWithClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.SIZEOF);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testClassAttrInDeclaration() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, "my_attr");
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  // PY-13734
+  public void testDunderClassInDeclarationWithClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testDunderDocInDeclarationWithClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testDunderSizeOfInDeclarationWithClassAttrNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.SIZEOF);
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  public void testClassAttrInDeclarationNewStyleClass() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, "my_attr");
+
+    final PyClass cls = expression.getContainingClass();
+    assertNotNull(cls);
+    assertEquals("A", cls.getName());
+  }
+
+  // PY-13734
+  public void testDunderClassInDeclarationWithInheritedClassAttr() {
+    assertUnresolved();
+  }
+
+  public void testDunderDocInDeclarationWithInheritedClassAttr() {
+    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
+    assertEquals(PyBuiltinCache.BUILTIN_FILE, expression.getContainingFile().getName());
+  }
+
+  public void testDunderSizeOfInDeclarationWithInheritedClassAttr() {
+    assertUnresolved();
+  }
+
+  public void testInheritedClassAttrInDeclaration() {
+    assertUnresolved();
+  }
+
+  // PY-13734
+  public void testDunderClassInDeclarationInsideFunction() {
+    assertUnresolved();
   }
 }

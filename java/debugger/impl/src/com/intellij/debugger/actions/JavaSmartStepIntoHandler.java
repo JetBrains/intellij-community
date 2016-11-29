@@ -16,29 +16,53 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.MethodBytecodeUtil;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.OrderedSet;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * User: Alexander Podkhalyuzin
  * Date: 22.11.11
  */
 public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
+  private static final Logger LOG = Logger.getInstance(JavaSmartStepIntoHandler.class);
+
   @Override
   public boolean isAvailable(final SourcePosition position) {
     final PsiFile file = position.getFile();
@@ -46,8 +70,39 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   @Override
+  public boolean doSmartStep(SourcePosition position, DebuggerSession session, TextEditor fileEditor) {
+    session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
+      @Override
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+        List<SmartStepTarget> targets = ApplicationManager.getApplication().runReadAction(
+          (Computable<List<SmartStepTarget>>)() -> findSmartStepTargets(position, suspendContext, getDebuggerContext()));
+        DebuggerUIUtil.invokeLater(() -> {
+          if (targets.isEmpty()) {
+            doStepInto(session, Registry.is("debugger.single.smart.step.force"), null);
+          }
+          else {
+            handleTargets(position, session, fileEditor, targets);
+          }
+        });
+      }
+
+      @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
+    });
+    return true;
+  }
+
   @NotNull
-  public List<SmartStepTarget> findSmartStepTargets(final SourcePosition position) {
+  @Override
+  public List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
+    throw new IllegalStateException("Should not be used");
+  }
+
+  protected List<SmartStepTarget> findSmartStepTargets(final SourcePosition position,
+                                                       @Nullable SuspendContextImpl suspendContext,
+                                                       @NotNull DebuggerContextImpl debuggerContext) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -82,7 +137,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
         element = parent;
       }
-      while(true);
+      while (true);
 
       //noinspection unchecked
       final List<SmartStepTarget> targets = new OrderedSet<>();
@@ -90,14 +145,14 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       final Ref<TextRange> textRange = new Ref<>(lineRange);
 
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
-        final Stack<PsiMethod> myContextStack = new Stack<>();
-        final Stack<String> myParamNameStack = new Stack<>();
+        final Deque<PsiMethod> myContextStack = new LinkedList<>();
+        final Deque<String> myParamNameStack =  new LinkedList<>();
         private int myNextLambdaExpressionOrdinal = 0;
         private boolean myInsideLambda = false;
 
         @Nullable
         private String getCurrentParamName() {
-          return myParamNameStack.isEmpty() ? null : myParamNameStack.peek();
+          return myParamNameStack.peekFirst();
         }
 
         @Override
@@ -128,42 +183,82 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Override
         public void visitField(PsiField field) {
-          TextRange range = field.getTextRange();
-          if (lineRange.intersects(range)) {
-            //textRange.set(textRange.get().union(range));
+          if (checkTextRange(field, false)) {
             super.visitField(field);
           }
         }
 
         @Override
         public void visitMethod(PsiMethod method) {
-          TextRange range = method.getTextRange();
-          if (lineRange.intersects(range)) {
-            //textRange.set(textRange.get().union(range));
+          if (checkTextRange(method, false)) {
             super.visitMethod(method);
           }
         }
 
         @Override
         public void visitStatement(PsiStatement statement) {
-          TextRange range = statement.getTextRange();
-          if (lineRange.intersects(range)) {
-            textRange.set(textRange.get().union(range));
+          if (checkTextRange(statement, true)) {
             super.visitStatement(statement);
           }
         }
 
         @Override
-        public void visitExpression(PsiExpression expression) {
-          TextRange range = expression.getTextRange();
-          if (lineRange.intersects(range)) {
-            textRange.set(textRange.get().union(range));
+        public void visitIfStatement(PsiIfStatement statement) {
+          visitConditional(statement.getCondition(), statement.getThenBranch(), statement.getElseBranch());
+        }
+
+        @Override
+        public void visitConditionalExpression(PsiConditionalExpression expression) {
+          visitConditional(expression.getCondition(), expression.getThenExpression(), expression.getElseExpression());
+        }
+
+        private void visitConditional(@Nullable PsiElement condition,
+                                      @Nullable PsiElement thenBranch,
+                                      @Nullable PsiElement elseBranch) {
+          if (condition != null && checkTextRange(condition, true)) {
+            condition.accept(this);
           }
+          ThreeState conditionRes = evaluateCondition(condition);
+          if (conditionRes != ThreeState.NO && thenBranch != null && checkTextRange(thenBranch, true)) {
+            thenBranch.accept(this);
+          }
+          if (conditionRes != ThreeState.YES && elseBranch != null && checkTextRange(elseBranch, true)) {
+            elseBranch.accept(this);
+          }
+        }
+
+        private ThreeState evaluateCondition(@Nullable PsiElement condition) {
+          if (condition != null && !DebuggerUtils.hasSideEffects(condition)) {
+            try {
+              ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(condition, position);
+              return ThreeState.fromBoolean(DebuggerUtilsEx.evaluateBoolean(evaluator, debuggerContext.createEvaluationContext()));
+            }
+            catch (EvaluateException e) {
+              LOG.info(e);
+            }
+          }
+          return ThreeState.UNSURE;
+        }
+
+        @Override
+        public void visitExpression(PsiExpression expression) {
+          checkTextRange(expression, true);
           super.visitExpression(expression);
         }
 
+        boolean checkTextRange(@NotNull PsiElement expression, boolean expand) {
+          TextRange range = expression.getTextRange();
+          if (lineRange.intersects(range)) {
+            if (expand) {
+              textRange.set(textRange.get().union(range));
+            }
+            return true;
+          }
+          return false;
+        }
+
         public void visitExpressionList(PsiExpressionList expressionList) {
-          final PsiMethod psiMethod = myContextStack.isEmpty()? null : myContextStack.peek();
+          PsiMethod psiMethod = myContextStack.peekFirst();
           if (psiMethod != null) {
             final String methodName = psiMethod.getName();
             final PsiExpression[] expressions = expressionList.getExpressions();
@@ -222,10 +317,42 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       Range<Integer> lines =
         new Range<>(doc.getLineNumber(textRange.get().getStartOffset()), doc.getLineNumber(textRange.get().getEndOffset()));
-      for (SmartStepTarget target : targets) {
-        target.setCallingExpressionLines(lines);
+      targets.forEach(t -> t.setCallingExpressionLines(lines));
+
+      if (!targets.isEmpty()) {
+        StackFrameProxyImpl frameProxy = suspendContext != null ? suspendContext.getFrameProxy() : null;
+        if (frameProxy != null) {
+          try {
+            Location location = frameProxy.location();
+            MethodBytecodeUtil.visit(location.method(), location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
+              boolean myLineMatch = false;
+
+              @Override
+              public void visitLineNumber(int line, Label start) {
+                myLineMatch = lines.isWithin(line - 1);
+              }
+
+              @Override
+              public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                if (myLineMatch) {
+                  targets.removeIf(t -> {
+                    if (t instanceof MethodSmartStepTarget) {
+                      return DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)t).getMethod(),
+                                                           owner.replace("/", "."), name, desc, suspendContext.getDebugProcess());
+                    }
+                    return false;
+                  });
+                }
+              }
+            }, true);
+          }
+          catch (Exception e) {
+            LOG.info(e);
+          }
+        }
+
+        return targets;
       }
-      return targets;
     }
     return Collections.emptyList();
   }

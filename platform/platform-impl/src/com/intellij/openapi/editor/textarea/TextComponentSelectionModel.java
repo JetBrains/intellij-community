@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.textarea;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.VisualPosition;
@@ -145,7 +146,7 @@ public class TextComponentSelectionModel implements SelectionModel {
 
   @Override
   public void selectLineAtCaret() {
-    SelectionModelImpl.doSelectLineAtCaret(myEditor);
+    SelectionModelImpl.doSelectLineAtCaret(myEditor.getCaretModel().getPrimaryCaret());
   }
 
   @Override
@@ -154,12 +155,12 @@ public class TextComponentSelectionModel implements SelectionModel {
 
     EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
       IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-    handler.execute(myEditor, DataManager.getInstance().getDataContext(myEditor.getComponent()));
+    handler.execute(myEditor, null, DataManager.getInstance().getDataContext(myEditor.getComponent()));
   }
 
   @Override
   public void copySelectionToClipboard() {
-    throw new UnsupportedOperationException("Not implemented");
+    EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
   }
 
   @Override

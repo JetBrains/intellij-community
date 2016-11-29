@@ -120,4 +120,9 @@ public class ImportedTestConsoleProperties extends SMTRunnerConsoleProperties im
       myProperties.appendAdditionalActions(actionGroup, parent, this);
     }
   }
+
+  @Override
+  public int getSelectionMode() {
+    return myProperties != null ? myProperties.getSelectionMode() : super.getSelectionMode();
+  }
 }

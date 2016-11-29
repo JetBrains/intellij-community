@@ -126,13 +126,10 @@ public class GroovyConsole {
     final GroovyConsole existingConsole = contentFile.getUserData(GROOVY_CONSOLE);
     if (existingConsole != null) return;
 
-    final Consumer<Module> initializer = new Consumer<Module>() {
-      @Override
-      public void consume(Module module) {
-        final GroovyConsole console = createConsole(project, contentFile, module);
-        if (console != null) {
-          callback.consume(console);
-        }
+    final Consumer<Module> initializer = module -> {
+      final GroovyConsole console = createConsole(project, contentFile, module);
+      if (console != null) {
+        callback.consume(console);
       }
     };
 
@@ -247,11 +244,6 @@ public class GroovyConsole {
   }
 
   private static Consumer<Module> restarter(final Project project, final VirtualFile file) {
-    return new Consumer<Module>() {
-      @Override
-      public void consume(Module module) {
-        createConsole(project, file, module);
-      }
-    };
+    return module -> createConsole(project, file, module);
   }
 }

@@ -35,7 +35,7 @@ import java.util.List;
  * @author yole
  */
 public class PyPep8Inspection extends PyInspection {
-  public List<String> ignoredErrors = new ArrayList<String>();
+  public List<String> ignoredErrors = new ArrayList<>();
   public static final String INSPECTION_SHORT_NAME = "PyPep8Inspection";
   public static final Key<PyPep8Inspection> KEY = Key.create(INSPECTION_SHORT_NAME);
 

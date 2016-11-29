@@ -173,7 +173,7 @@ public class SpacingBuilder {
   }
 
   private final CommonCodeStyleSettings myCodeStyleSettings;
-  private final List<SpacingRule> myRules = new ArrayList<SpacingRule>();
+  private final List<SpacingRule> myRules = new ArrayList<>();
 
   /**
    * @param codeStyleSettings
@@ -225,7 +225,11 @@ public class SpacingBuilder {
   }
 
   public RuleBuilder before(IElementType elementType) {
-    return new RuleBuilder(new RuleCondition(null, null, TokenSet.create(elementType)));
+    return before(TokenSet.create(elementType));
+  }
+
+  public RuleBuilder before(TokenSet tokenSet) {
+    return new RuleBuilder(new RuleCondition(null, null, tokenSet));
   }
 
   public RuleBuilder beforeInside(TokenSet tokenSet, IElementType parentType) {

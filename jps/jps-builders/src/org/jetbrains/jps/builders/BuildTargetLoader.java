@@ -22,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class BuildTargetLoader<T extends BuildTarget<?>> {
+  /**
+   * Deserialize build target by its id (returned by {@link BuildTarget#getId()} method)
+   */
   @Nullable
   public abstract T createTarget(@NotNull String targetId);
 }

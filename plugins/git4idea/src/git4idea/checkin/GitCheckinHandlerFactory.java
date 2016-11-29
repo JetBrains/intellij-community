@@ -42,7 +42,6 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -118,17 +117,16 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.COMMIT;
       }
 
-      final GitPlatformFacade platformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
       final Git git = ServiceManager.getService(Git.class);
 
       final Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
-      final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<GitCrlfProblemsDetector>();
+      final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<>();
       ProgressManager.getInstance().run(
         new Task.Modal(myProject, "Checking for line separator issues...", true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             crlfHelper.set(GitCrlfProblemsDetector.detect(GitCheckinHandlerFactory.MyCheckinHandler.this.myProject,
-                                                          platformFacade, git, files));
+                                                          git, files));
           }
         });
 
@@ -185,8 +183,8 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       Collection<VirtualFile> affectedRoots = getSelectedRoots();
       Map<VirtualFile, Couple<String>> defined = getDefinedUserNames(project, affectedRoots, false);
 
-      Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
-      Collection<VirtualFile> notDefined = new ArrayList<VirtualFile>(affectedRoots);
+      Collection<VirtualFile> allRoots = new ArrayList<>(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
+      Collection<VirtualFile> notDefined = new ArrayList<>(affectedRoots);
       notDefined.removeAll(defined.keySet());
 
       if (notDefined.isEmpty()) {
@@ -323,27 +321,10 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                   readMore("http://gitolite.com/detached-head.html", "Read more about detached HEAD");
       }
 
-      DialogWrapper.DoNotAskOption dontAskAgain = new DialogWrapper.DoNotAskOption() {
+      DialogWrapper.DoNotAskOption dontAskAgain = new DialogWrapper.DoNotAskOption.Adapter() {
         @Override
-        public boolean isToBeShown() {
-          return true;
-        }
-
-        @Override
-        public void setToBeShown(boolean toBeShown, int exitCode) {
-          if (exitCode == Messages.OK) {
-            GitVcsSettings.getInstance(myProject).setWarnAboutDetachedHead(toBeShown);
-          }
-        }
-
-        @Override
-        public boolean canBeHidden() {
-          return true;
-        }
-
-        @Override
-        public boolean shouldSaveOptionsOnCancel() {
-          return false;
+        public void rememberChoice(boolean isSelected, int exitCode) {
+          GitVcsSettings.getInstance(myProject).setWarnAboutDetachedHead(!isSelected);
         }
 
         @NotNull
@@ -366,12 +347,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     private String readMore(String link, String message) {
-      if (Messages.canShowMacSheetPanel()) {
-        return message + ":\n" + link;
-      }
-      else {
-        return String.format("<a href='%s'>%s</a>.", link, message);
-      }
+      return String.format("<a href='%s'>%s</a>.", link, message);
     }
 
     /**
@@ -398,7 +374,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @NotNull
     private Collection<VirtualFile> getSelectedRoots() {
       ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      Collection<VirtualFile> result = new HashSet<VirtualFile>();
+      Collection<VirtualFile> result = new HashSet<>();
       for (FilePath path : ChangesUtil.getPaths(myPanel.getSelectedChanges())) {
         VirtualFile root = vcsManager.getVcsRootFor(path);
         if (root != null) {

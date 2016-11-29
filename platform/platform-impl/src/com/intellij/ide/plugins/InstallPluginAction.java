@@ -35,7 +35,7 @@ import java.util.*;
  */
 public class InstallPluginAction extends AnAction implements DumbAware {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
-  private static final Set<IdeaPluginDescriptor> ourInstallingNodes = new HashSet<IdeaPluginDescriptor>();
+  private static final Set<IdeaPluginDescriptor> ourInstallingNodes = new HashSet<>();
 
   private final PluginManagerMain myHost;
   private final PluginManagerMain myInstalled;
@@ -94,7 +94,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
 
     if (confirmed || userConfirm(selection)) {
-      final List<PluginNode> list = new ArrayList<PluginNode>();
+      final List<PluginNode> list = new ArrayList<>();
       for (IdeaPluginDescriptor descr : selection) {
         PluginNode pluginNode = null;
         if (descr instanceof PluginNode) {
@@ -123,57 +123,46 @@ public class InstallPluginAction extends AnAction implements DumbAware {
       }
 
       try {
-        Runnable onInstallRunnable = new Runnable() {
-          @Override
-          public void run() {
+        Runnable onInstallRunnable = () -> {
+          for (PluginNode node : list) {
+            installedModel.appendOrUpdateDescriptor(node);
+          }
+          if (!myInstalled.isDisposed()) {
+            getPluginTable().updateUI();
+            myInstalled.setRequireShutdown(true);
+          }
+          else {
+            boolean needToRestart = false;
             for (PluginNode node : list) {
-              installedModel.appendOrUpdateDescriptor(node);
-            }
-            if (!myInstalled.isDisposed()) {
-              getPluginTable().updateUI();
-              myInstalled.setRequireShutdown(true);
-            }
-            else {
-              boolean needToRestart = false;
-              for (PluginNode node : list) {
-                final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
-                if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
-                  needToRestart = true;
-                  break;
-                }
+              final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
+              if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
+                needToRestart = true;
+                break;
               }
+            }
 
-              if (needToRestart) {
-                PluginManagerMain.notifyPluginsUpdated(null);
-              }
-            }
-            if (onSuccess != null) {
-              onSuccess.run();
+            if (needToRestart) {
+              PluginManagerMain.notifyPluginsUpdated(null);
             }
           }
+          if (onSuccess != null) {
+            onSuccess.run();
+          }
         };
-        Runnable cleanupRunnable = new Runnable() {
-          @Override
-          public void run() {
-            ourInstallingNodes.removeAll(list);
-            if (cleanup != null) {
-              cleanup.run();
-            }
+        Runnable cleanupRunnable = () -> {
+          ourInstallingNodes.removeAll(list);
+          if (cleanup != null) {
+            cleanup.run();
           }
         };
         final List<IdeaPluginDescriptor> plugins = myHost.getPluginsModel().getAllPlugins();
-        PluginManagerMain.downloadPlugins(list, PluginManagerMain.mapToPluginIds(plugins), onInstallRunnable, cleanupRunnable);
+        PluginManagerMain.downloadPlugins(list, PluginManagerMain.mapToPluginIds(plugins), onInstallRunnable, pluginEnabler, cleanupRunnable);
       }
       catch (final IOException e1) {
         ourInstallingNodes.removeAll(list);
         PluginManagerMain.LOG.error(e1);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            IOExceptionDialog.showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
-          }
-        });
+        SwingUtilities.invokeLater(() -> IOExceptionDialog.showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed")));
       }
     }
   }

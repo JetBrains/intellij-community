@@ -21,29 +21,34 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class OpenInEditorAction extends EditSourceAction implements DumbAware {
-  public static DataKey<OpenInEditorAction> KEY = DataKey.create("DiffOpenInEditorAction");
+  public static final DataKey<OpenInEditorAction> KEY = DataKey.create("DiffOpenInEditorAction");
 
   @Nullable private final Runnable myAfterRunnable;
 
   public OpenInEditorAction(@Nullable Runnable afterRunnable) {
-    EmptyAction.setupAction(this, "EditSource", null);
+    ActionUtil.copyFrom(this, "EditSource");
     myAfterRunnable = afterRunnable;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (!ActionPlaces.isToolbarPlace(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(true);
+      return;
+    }
+
     DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
     DiffContext context = e.getData(DiffDataKeys.DIFF_CONTEXT);
 
@@ -58,7 +63,8 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
       return;
     }
 
-    if (getDescriptor(e.getDataContext()) == null) {
+    Navigatable[] navigatables = e.getData(DiffDataKeys.NAVIGATABLE_ARRAY);
+    if (navigatables == null || !ContainerUtil.exists(navigatables, (it) -> it.canNavigate())) {
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(false);
       return;
@@ -70,21 +76,26 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    assert project != null;
+    if (project == null) return;
 
-    OpenFileDescriptor descriptor = getDescriptor(e.getDataContext());
-    assert descriptor != null;
+    Navigatable[] navigatables = e.getData(DiffDataKeys.NAVIGATABLE_ARRAY);
+    if (navigatables == null) return;
 
-    openEditor(project, descriptor);
+    openEditor(project, navigatables);
   }
 
-  public void openEditor(@NotNull Project project, @NotNull OpenFileDescriptor descriptor) {
-    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    if (myAfterRunnable != null) myAfterRunnable.run();
+  public void openEditor(@NotNull Project project, @NotNull Navigatable navigatable) {
+    openEditor(project, new Navigatable[]{navigatable});
   }
 
-  @Nullable
-  public static OpenFileDescriptor getDescriptor(@NotNull DataContext context) {
-    return DiffDataKeys.OPEN_FILE_DESCRIPTOR.getData(context);
+  public void openEditor(@NotNull Project project, @NotNull Navigatable[] navigatables) {
+    boolean success = false;
+    for (Navigatable navigatable : navigatables) {
+      if (navigatable.canNavigate()) {
+        navigatable.navigate(true);
+        success = true;
+      }
+    }
+    if (success && myAfterRunnable != null) myAfterRunnable.run();
   }
 }

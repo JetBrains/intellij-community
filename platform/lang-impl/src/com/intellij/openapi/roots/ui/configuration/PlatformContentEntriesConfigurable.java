@@ -94,12 +94,7 @@ public class PlatformContentEntriesConfigurable implements Configurable {
   public void apply() throws ConfigurationException {
     myEditor.apply();
     if (myModifiableModel.isChanged()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myModifiableModel.commit();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> myModifiableModel.commit());
       myEditor.disposeUIResources();
       myTopPanel.remove(myEditor.getComponent());
       createEditor();

@@ -44,12 +44,17 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return SpellCheckerBundle.message("spelling");
+    return SpellCheckerBundle.message("add.to.dictionary");
   }
 
   @NotNull
   public Anchor getPopupActionAnchor() {
     return Anchor.LAST;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

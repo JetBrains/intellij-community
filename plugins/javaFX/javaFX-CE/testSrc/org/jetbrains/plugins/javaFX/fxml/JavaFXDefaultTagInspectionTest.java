@@ -39,8 +39,25 @@ public class JavaFXDefaultTagInspectionTest extends AbstractJavaFXQuickFixTest {
     doLaunchQuickfixTest("children");
   }
 
+  public void testFxCollectionsHighlighting() throws Exception {
+    doHighlightingTest();
+  }
+
+  public void testEmptyListHighlighting() throws Exception {
+    doHighlightingTest();
+  }
+
+  public void testEmptyCollapsedListHighlighting() throws Exception {
+    doHighlightingTest();
+  }
+
   public void testStylesheets() throws Exception {
     checkQuickFixNotAvailable("stylesheets");
+  }
+
+  private void doHighlightingTest() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    myFixture.checkHighlighting();
   }
 
   @Override

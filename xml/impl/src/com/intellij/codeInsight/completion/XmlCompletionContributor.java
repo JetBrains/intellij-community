@@ -35,7 +35,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
@@ -98,17 +97,14 @@ public class XmlCompletionContributor extends CompletionContributor {
                  return;
                }
 
-               final Set<String> usedWords = new THashSet<String>();
+               final Set<String> usedWords = new THashSet<>();
                final Ref<Boolean> addWordVariants = Ref.create(true);
-               result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-                 @Override
-                 public void consume(CompletionResult r) {
-                   if (r.getLookupElement().getUserData(WORD_COMPLETION_COMPATIBLE) == null) {
-                     addWordVariants.set(false);
-                   }
-                   usedWords.add(r.getLookupElement().getLookupString());
-                   result.passResult(r.withLookupElement(LookupElementDecorator.withInsertHandler(r.getLookupElement(), QUOTE_EATER)));
+               result.runRemainingContributors(parameters, r -> {
+                 if (r.getLookupElement().getUserData(WORD_COMPLETION_COMPATIBLE) == null) {
+                   addWordVariants.set(false);
                  }
+                 usedWords.add(r.getLookupElement().getLookupString());
+                 result.passResult(r.withLookupElement(LookupElementDecorator.withInsertHandler(r.getLookupElement(), QUOTE_EATER)));
                });
                if (addWordVariants.get().booleanValue()) {
                  addWordVariants.set(attributeValue.getReferences().length == 0);
@@ -212,6 +208,14 @@ public class XmlCompletionContributor extends CompletionContributor {
     final PsiElement at = file.findElementAt(offset);
     if (at != null && at.getNode().getElementType() == XmlTokenType.XML_NAME && at.getParent() instanceof XmlAttribute) {
       context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, at.getTextRange().getEndOffset());
+    }
+    if (at != null && at.getParent() instanceof XmlAttributeValue) {
+      final int end = at.getParent().getTextRange().getEndOffset();
+      final Document document = context.getEditor().getDocument();
+      final int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
+      if (lineEnd < end) {
+        context.setReplacementOffset(lineEnd);
+      }
     }
   }
 }

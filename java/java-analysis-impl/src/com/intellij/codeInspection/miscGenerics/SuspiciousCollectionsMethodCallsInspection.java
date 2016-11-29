@@ -50,7 +50,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseJavaBatchLoc
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    final List<PsiMethod> patternMethods = new ArrayList<PsiMethod>();
+    final List<PsiMethod> patternMethods = new ArrayList<>();
     final IntArrayList indices = new IntArrayList();
     return new JavaElementVisitor() {
       @Override
@@ -97,11 +97,11 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseJavaBatchLoc
 
     PsiType argType = args[0].getType();
     final String plainMessage = SuspiciousMethodCallUtil
-      .getSuspiciousMethodCallMessage(methodCall, argType, reportConvertibleMethodCalls, patternMethods, indices);
+      .getSuspiciousMethodCallMessage(methodCall, args[0], argType, reportConvertibleMethodCalls, patternMethods, indices);
     if (plainMessage != null) {
       final PsiType dfaType = GuessManager.getInstance(methodCall.getProject()).getControlFlowExpressionType(args[0]);
       if (dfaType != null && SuspiciousMethodCallUtil
-                               .getSuspiciousMethodCallMessage(methodCall, dfaType, reportConvertibleMethodCalls, patternMethods, indices) == null) {
+                               .getSuspiciousMethodCallMessage(methodCall, args[0], dfaType, reportConvertibleMethodCalls, patternMethods, indices) == null) {
         return null;
       }
     }

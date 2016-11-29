@@ -73,31 +73,25 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
   protected abstract CvsHandler getCvsHandler(CvsContext context);
 
   public void actionPerformed(final CvsContext context) {
-    Runnable beforeAction = new Runnable() {
-      public void run() {
-        beforeActionPerformed(context);
-      }
-    };
+    Runnable beforeAction = () -> beforeActionPerformed(context);
 
-    Runnable afterAction = new Runnable() {
-      public void run() {
-        CvsHandler handler;
+    Runnable afterAction = () -> {
+      CvsHandler handler;
 
-        synchronized (AbstractAction.class) {
-          try {
-            handler = getCvsHandler(context);
-          }
-          catch (Exception ex) {
-            LOG.error(ex);
-            handler = CvsHandler.NULL;
-          }
+      synchronized (AbstractAction.class) {
+        try {
+          handler = getCvsHandler(context);
         }
-
-        LOG.assertTrue(handler != null);
-
-        actionPerformed(context, handler);
-
+        catch (Exception ex) {
+          LOG.error(ex);
+          handler = CvsHandler.NULL;
+        }
       }
+
+      LOG.assertTrue(handler != null);
+
+      actionPerformed(context, handler);
+
     };
 
     if (ProgressManager.getInstance().getProgressIndicator() != null) {
@@ -200,11 +194,7 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
       startAction(myContext);
       FileSetToBeUpdated files = myHandler.getFiles();
 
-      files.refreshFilesAsync(new Runnable() {
-        public void run() {
-          endAction();
-        }
-      });
+      files.refreshFilesAsync(() -> endAction());
     }
 
     public void executionFinished(boolean successfully) {

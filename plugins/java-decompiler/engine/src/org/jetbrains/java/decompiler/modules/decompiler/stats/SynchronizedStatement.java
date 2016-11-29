@@ -32,7 +32,7 @@ public class SynchronizedStatement extends Statement {
 
   private Statement body;
 
-  private final List<Exprent> headexprent = new ArrayList<Exprent>();
+  private final List<Exprent> headexprent = new ArrayList<>();
 
   // *****************************************************************************
   // constructors
@@ -106,7 +106,7 @@ public class SynchronizedStatement extends Statement {
 
   public List<Object> getSequentialObjects() {
 
-    List<Object> lst = new ArrayList<Object>(stats);
+    List<Object> lst = new ArrayList<>(stats);
     lst.add(1, headexprent.get(0));
 
     return lst;

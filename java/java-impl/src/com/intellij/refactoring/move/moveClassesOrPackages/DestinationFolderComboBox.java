@@ -203,14 +203,14 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                 final Project project,
                                 final boolean forceIncludeAll,
                                 final Pass<String> updateErrorMessage) {
-    final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
-    final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<PsiDirectory, String>();
+    final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
+    final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<>();
     MoveClassesOrPackagesUtil
       .buildDirectoryList(new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()), sourceRoots, targetDirectories, pathsToCreate);
     if (!forceIncludeAll && targetDirectories.size() > pathsToCreate.size()) {
       targetDirectories.removeAll(pathsToCreate.keySet());
     }
-    final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<DirectoryChooser.ItemWrapper>();
+    final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<>();
     DirectoryChooser.ItemWrapper initial = null;
     DirectoryChooser.ItemWrapper oldOne = null;
     for (PsiDirectory targetDirectory : targetDirectories) {
@@ -248,13 +248,10 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     }
     updateErrorMessage(updateErrorMessage, fileIndex, selection);
-    Collections.sort(items, new Comparator<DirectoryChooser.ItemWrapper>() {
-      @Override
-      public int compare(DirectoryChooser.ItemWrapper o1, DirectoryChooser.ItemWrapper o2) {
-        if (o1 == NULL_WRAPPER) return -1;
-        if (o2 == NULL_WRAPPER) return 1;
-        return o1.getRelativeToProjectPath().compareToIgnoreCase(o2.getRelativeToProjectPath());
-      }
+    Collections.sort(items, (o1, o2) -> {
+      if (o1 == NULL_WRAPPER) return -1;
+      if (o2 == NULL_WRAPPER) return 1;
+      return o1.getRelativeToProjectPath().compareToIgnoreCase(o2.getRelativeToProjectPath());
     });
     comboBox.setModel(new CollectionComboBoxModel(items, selection));
 

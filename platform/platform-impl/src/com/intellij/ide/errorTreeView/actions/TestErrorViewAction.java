@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide.errorTreeView.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -43,7 +42,7 @@ public abstract class TestErrorViewAction extends AnAction{
   private int myMessageCount = 0;
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project == null) {
       return;
     }
@@ -90,14 +89,12 @@ public abstract class TestErrorViewAction extends AnAction{
   }
 
   private void addMessage(final ErrorTreeView view, final String[] message, final int type) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        final long start = System.currentTimeMillis();
-        view.addMessage(type, message, null, -1, -1, null);
-        final long duration = System.currentTimeMillis() - start;
-        myMillis += duration;
-        incMessageCount();
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final long start = System.currentTimeMillis();
+      view.addMessage(type, message, null, -1, -1, null);
+      final long duration = System.currentTimeMillis() - start;
+      myMillis += duration;
+      incMessageCount();
     }, ModalityState.NON_MODAL);
   }
 

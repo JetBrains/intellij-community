@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.io;
 
+import com.intellij.util.io.CharSequenceBackedByChars;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 
 public abstract class MessageDecoder extends Decoder {
   protected int contentLength;
@@ -48,18 +50,26 @@ public abstract class MessageDecoder extends Decoder {
         chunkedContent = CharBuffer.allocate(contentLength);
       }
 
-      ChannelBufferToString.readIntoCharBuffer(input, readableBytes, chunkedContent);
+      BufferToCharsKt.readIntoCharBuffer(input, readableBytes, chunkedContent);
       consumedContentByteCount += readableBytes;
       input.release();
       return null;
     }
     else {
       CharBuffer charBuffer = chunkedContent;
+      CharSequence result;
       if (charBuffer != null) {
         chunkedContent = null;
         consumedContentByteCount = 0;
+        BufferToCharsKt.readIntoCharBuffer(input, required, charBuffer);
+        result = new CharSequenceBackedByChars(charBuffer);
       }
-      return new CharSequenceBackedByChars(ChannelBufferToString.readIntoCharBuffer(input, required, charBuffer));
+      else {
+        result = input.toString(input.readerIndex(), required, StandardCharsets.UTF_8);
+      }
+
+      input.readerIndex(input.readerIndex() + required);
+      return result;
     }
   }
 

@@ -38,7 +38,7 @@ public class CvsFileAnnotation extends FileAnnotation{
   private final String myContent;
   private final Annotation[] myAnnotations;
   private final CvsEntriesListener myCvsEntriesListener;
-  private final Map<String, String> myRevisionComments = new HashMap<String, String>();
+  private final Map<String, String> myRevisionComments = new HashMap<>();
   @Nullable private final List<VcsFileRevision> myRevisions;
   private final VirtualFile myFile;
   private final String myCurrentRevision;
@@ -89,11 +89,7 @@ public class CvsFileAnnotation extends FileAnnotation{
       for(VcsFileRevision revision: revisions) {
         myRevisionComments.put(revision.getRevisionNumber().toString(), revision.getCommitMessage());
       }
-      Collections.sort(myRevisions, new Comparator<VcsFileRevision>() {
-        public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
-          return -1 * o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
-        }
-      });
+      Collections.sort(myRevisions, (o1, o2) -> -1 * o1.getRevisionNumber().compareTo(o2.getRevisionNumber()));
     }
 
     myCvsEntriesListener = new CvsEntriesListener() {
@@ -159,21 +155,9 @@ public class CvsFileAnnotation extends FileAnnotation{
     return myAnnotations[lineNumber].getDate();
   }
 
-  public VcsRevisionNumber originalRevision(int lineNumber) {
-    return getLineRevisionNumber(lineNumber);
-  }
-
   @Nullable
   public List<VcsFileRevision> getRevisions() {
     return myRevisions;
-  }
-
-  public boolean revisionsNotEmpty() {
-    return ! myRevisions.isEmpty();
-  }
-
-  public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
-    return null;
   }
 
   @Override

@@ -49,7 +49,7 @@ public class GantUtils {
   }
 
   public static GrArgumentLabel[] getScriptTargets(GroovyFile file) {
-    ArrayList<GrArgumentLabel> labels = new ArrayList<GrArgumentLabel>();
+    ArrayList<GrArgumentLabel> labels = new ArrayList<>();
     for (PsiElement child : file.getChildren()) {
       if (child instanceof GrMethodCallExpression) {
         GrMethodCallExpression call = (GrMethodCallExpression)child;
@@ -149,12 +149,7 @@ public class GantUtils {
 
   @Nullable
   public static String getSdkHomeFromClasspath(@NotNull Module module) {
-    Library[] libraries = LibrariesUtil.getLibrariesByCondition(module, new Condition<Library>() {
-      @Override
-      public boolean value(Library library1) {
-        return isSDKLibrary(library1);
-      }
-    });
+    Library[] libraries = LibrariesUtil.getLibrariesByCondition(module, library1 -> isSDKLibrary(library1));
     if (libraries.length != 0) {
       final String home = getGantLibraryHome(libraries[0]);
       if (StringUtil.isNotEmpty(home)) {

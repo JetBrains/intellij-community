@@ -149,7 +149,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
 
     protected FilesList(String[] files) {
       super(String.class, true);
-      mySelectedFiles = new TreeMap<String, Boolean>();
+      mySelectedFiles = new TreeMap<>();
       for (String file : files) {
         mySelectedFiles.put(file, Boolean.TRUE);
       }
@@ -175,7 +175,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     }
 
     public String[] getSelectedPaths() {
-      Collection<String> selected = new TreeSet<String>();
+      Collection<String> selected = new TreeSet<>();
       for (String path : mySelectedFiles.keySet()) {
         if (isChecked(path)) {
           selected.add(path);

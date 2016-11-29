@@ -35,7 +35,7 @@ import javax.swing.*;
  * @author peter
  */
 public class PsiTypeCanonicalLookupElement extends LookupElement {
-  private static final Icon EMPTY_ICON = new EmptyIcon(PlatformIcons.CLASS_ICON.getIconWidth() * 2, PlatformIcons.CLASS_ICON.getIconHeight());
+  private static final Icon EMPTY_ICON = EmptyIcon.create(PlatformIcons.CLASS_ICON.getIconWidth() * 2, PlatformIcons.CLASS_ICON.getIconHeight());
 
   private final PsiType myType;
   private final String myPresentableText;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.diagnostic.ImplementationConflictException;
+import com.intellij.diagnostic.PluginConflictReporter;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
@@ -38,7 +40,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,9 +56,9 @@ import java.util.List;
  * @author mike
  */
 public class PluginManager extends PluginManagerCore {
-  @NonNls public static final String INSTALLED_TXT = "installed.txt";
+  public static final String INSTALLED_TXT = "installed.txt";
 
-  public static long startupStart;
+  @SuppressWarnings("StaticNonFinalField") public static long startupStart;
 
   /**
    * Called via reflection
@@ -79,21 +80,18 @@ public class PluginManager extends PluginManagerCore {
       }
     };
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ClassUtilCore.clearJarURLCache();
+    Runnable runnable = () -> {
+      try {
+        ClassUtilCore.clearJarURLCache();
 
-          Class<?> aClass = Class.forName(mainClass);
-          Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
-          method.setAccessible(true);
-          Object[] argsArray = {args};
-          method.invoke(null, argsArray);
-        }
-        catch (Throwable t) {
-          throw new StartupAbortedException(t);
-        }
+        Class<?> aClass = Class.forName(mainClass);
+        Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
+        method.setAccessible(true);
+        Object[] argsArray = {args};
+        method.invoke(null, argsArray);
+      }
+      catch (Throwable t) {
+        throw new StartupAbortedException(t);
       }
     };
 
@@ -121,6 +119,11 @@ public class PluginManager extends PluginManagerCore {
           getLogger().error(t);
         }
         catch (Throwable ignore) { }
+      }
+
+      final ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
+      if (conflictException != null) {
+        PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
       }
 
       if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
@@ -155,12 +158,7 @@ public class PluginManager extends PluginManagerCore {
     return null;
   }
 
-  private static Thread.UncaughtExceptionHandler HANDLER = new Thread.UncaughtExceptionHandler() {
-    @Override
-    public void uncaughtException(Thread t, Throwable e) {
-      processException(e);
-    }
-  };
+  private static Thread.UncaughtExceptionHandler HANDLER = (t, e) -> processException(e);
 
   public static void installExceptionHandler() {
     Thread.currentThread().setUncaughtExceptionHandler(HANDLER);

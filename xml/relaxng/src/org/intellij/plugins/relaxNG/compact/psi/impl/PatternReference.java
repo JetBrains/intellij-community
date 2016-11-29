@@ -146,12 +146,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     final Map<String, Set<Define>> map = DefinitionResolver.getAllVariants(scope);
     if (map == null || map.size() == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-    return ContainerUtil.mapNotNull(map.values(), new Function<Set<Define>, Object>() {
-      @Override
-      public Object fun(Set<Define> defines) {
-        return defines.size() == 0 ? null : defines.iterator().next().getPsiElement();
-      }
-    }).toArray();
+    return ContainerUtil.mapNotNull(map.values(), (Function<Set<Define>, Object>)defines -> defines.size() == 0 ? null : defines.iterator().next().getPsiElement()).toArray();
   }
 
   @Override

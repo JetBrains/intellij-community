@@ -66,7 +66,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
     if (parent instanceof XmlAttribute &&
         XmlUtil.SCHEMA_LOCATION_ATT.equals(((XmlAttribute)parent).getLocalName()) &&
         XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(((XmlAttribute)parent).getNamespace())) {
-      final List<PsiReference> refs = new ArrayList<PsiReference>(2);
+      final List<PsiReference> refs = new ArrayList<>(2);
       final StringTokenizer tokenizer = new StringTokenizer(s);
 
       while(tokenizer.hasMoreElements()) {

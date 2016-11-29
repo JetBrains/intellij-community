@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractBlock implements ASTBlock {
+public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
   public static final List<Block> EMPTY = Collections.emptyList();
   @NotNull protected final  ASTNode     myNode;
   @Nullable protected final Wrap        myWrap;
@@ -58,7 +58,6 @@ public abstract class AbstractBlock implements ASTBlock {
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-
       List<Block> list = buildChildren();
       if (list.isEmpty()) {
         list = buildInjectedBlocks();
@@ -179,4 +178,18 @@ public abstract class AbstractBlock implements ASTBlock {
   public String toString() {
     return myNode.getText() + " " + getTextRange();
   }
+
+  /**
+   * @return additional range to reformat, when this block if formatted
+   */
+  @Override
+  @Nullable
+  public List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
+    int startOffset = getTextRange().getStartOffset();
+    if (info.isOnInsertedLine(startOffset) && myNode.textContains('\n')) {
+      return new NodeIndentRangesCalculator(myNode).calculateExtraRanges();
+    }
+    return null;
+  }
+  
 }

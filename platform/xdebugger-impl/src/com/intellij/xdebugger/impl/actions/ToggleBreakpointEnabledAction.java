@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,13 +58,13 @@ public class ToggleBreakpointEnabledAction extends DumbAwareAction {
     XBreakpointManagerImpl breakpointManager = (XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointManager lineBreakpointManager = breakpointManager.getLineBreakpointManager();
     Document document = editor.getDocument();
-    Collection<Range<Integer>> lineRanges = new ArrayList<Range<Integer>>();
+    Collection<Range<Integer>> lineRanges = new ArrayList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      lineRanges.add(new Range<Integer>(document.getLineNumber(caret.getSelectionStart()), document.getLineNumber(caret.getSelectionEnd())));
+      lineRanges.add(new Range<>(document.getLineNumber(caret.getSelectionStart()), document.getLineNumber(caret.getSelectionEnd())));
     }
 
     Collection<XLineBreakpointImpl> breakpoints = lineBreakpointManager.getDocumentBreakpoints(document);
-    HashSet<XLineBreakpoint> res = new HashSet<XLineBreakpoint>();
+    HashSet<XLineBreakpoint> res = new HashSet<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       int line = breakpoint.getLine();
       for (Range<Integer> range : lineRanges) {

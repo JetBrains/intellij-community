@@ -50,16 +50,16 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
   private Stage myStage = Stage.RESOLVE_MAP_BUILDING_STAGE;
 
-  private final Stack<String> myCurrentTargetEffectiveName = new Stack<String>();
+  private final Stack<String> myCurrentTargetEffectiveName = new Stack<>();
 
   private final AntDomElement myContextElement;
   private boolean myStopped;
   private final TargetsNameContext myNameContext = new TargetsNameContext();
-  private final Map<String, AntDomTarget> myTargetsResolveMap = new HashMap<String, AntDomTarget>(); // target effective name -> ant target
-  private final Map<String, List<String>> myDependenciesMap = new HashMap<String, List<String>>();   // target effective name -> dependencies effective names
+  private final Map<String, AntDomTarget> myTargetsResolveMap = new HashMap<>(); // target effective name -> ant target
+  private final Map<String, List<String>> myDependenciesMap = new HashMap<>();   // target effective name -> dependencies effective names
 
-  private final Set<String> myProcessedTargets = new HashSet<String>();
-  private final Set<AntDomProject> myVisitedProjects = new HashSet<AntDomProject>();
+  private final Set<String> myProcessedTargets = new HashSet<>();
+  private final Set<AntDomProject> myVisitedProjects = new HashSet<>();
 
   protected PropertyProviderFinder(DomElement contextElement) {
     myContextElement = contextElement != null? contextElement.getParentOfType(AntDomElement.class, false) : null;
@@ -79,7 +79,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       for (String s : myTargetsResolveMap.keySet()) {
         if (!myProcessedTargets.contains(s)) {
           if (unprocessed == null) {
-            unprocessed = new ArrayList<String>();
+            unprocessed = new ArrayList<>();
           }
           unprocessed.add(s);
         }
@@ -152,7 +152,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           final String dependsStr = target.getDependsList().getRawText();
           Map<String, Pair<AntDomTarget, String>> depsMap = Collections.emptyMap();
           if (dependsStr != null) {
-            depsMap = new HashMap<String, Pair<AntDomTarget, String>>();
+            depsMap = new HashMap<>();
             final StringTokenizer tokenizer = new StringTokenizer(dependsStr, ",", false);
             while (tokenizer.hasMoreTokens()) {
               final String token = tokenizer.nextToken().trim();
@@ -266,7 +266,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   private void addDependency(String effectiveTargetName, String dependentTargetEffectiveName) {
     List<String> list = myDependenciesMap.get(effectiveTargetName);
     if (list == null) {
-      myDependenciesMap.put(effectiveTargetName, list = new ArrayList<String>());
+      myDependenciesMap.put(effectiveTargetName, list = new ArrayList<>());
     }
     list.add(dependentTargetEffectiveName);
   }
@@ -306,7 +306,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
 
   private static class TargetsNameContext {
     private int myDefaultPrefixCounter = 0;
-    private final LinkedList<Pair<String, InclusionKind>> myPrefixes = new LinkedList<Pair<String, InclusionKind>>();
+    private final LinkedList<Pair<String, InclusionKind>> myPrefixes = new LinkedList<>();
     private String myCurrentPrefix = null;
 
     public String calcTargetReferenceText(String targetReferenceText) {

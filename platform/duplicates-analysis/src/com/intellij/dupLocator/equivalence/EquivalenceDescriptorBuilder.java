@@ -11,10 +11,10 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public class EquivalenceDescriptorBuilder implements EquivalenceDescriptor {
-  private final List<SingleChildDescriptor> mySingleChildDescriptors = new ArrayList<SingleChildDescriptor>();
-  private final List<MultiChildDescriptor> myMultiChildDescriptors = new ArrayList<MultiChildDescriptor>();
-  private final List<Object> myConstants = new ArrayList<Object>();
-  private final List<PsiElement[]> myCodeBlocks = new ArrayList<PsiElement[]>();
+  private final List<SingleChildDescriptor> mySingleChildDescriptors = new ArrayList<>();
+  private final List<MultiChildDescriptor> myMultiChildDescriptors = new ArrayList<>();
+  private final List<Object> myConstants = new ArrayList<>();
+  private final List<PsiElement[]> myCodeBlocks = new ArrayList<>();
 
   public EquivalenceDescriptorBuilder() {
   }

@@ -66,7 +66,7 @@ public class AsmCodeGeneratorTest extends TestCase {
 
     final String swingPath = PathUtil.getJarPathForClass(AbstractButton.class);
 
-    java.util.List<URL> cp = new ArrayList<URL>();
+    java.util.List<URL> cp = new ArrayList<>();
     appendPath(cp, JBTabbedPane.class);
     appendPath(cp, TIntObjectHashMap.class);
     appendPath(cp, UIUtil.class);
@@ -129,12 +129,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     finally {
       classStream.close();
       FileUtil.delete(classFile);
-      final File[] inners = new File(tmpPath).listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.startsWith(className + "$") && name.endsWith(".class");
-        }
-      });
+      final File[] inners = new File(tmpPath).listFiles((dir, name) -> name.startsWith(className + "$") && name.endsWith(".class"));
       if (inners != null) {
         for (File file : inners) FileUtil.delete(file);
       }
@@ -447,7 +442,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   private static class MyClassFinder extends InstrumentationClassFinder {
     private static final String TEST_PROPERTY_CONTENT = "test=Test Value\nmnemonic=Mne&monic";
     private final byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
-    private final Map<String, byte[]> myClassData = new HashMap<String, byte[]>();
+    private final Map<String, byte[]> myClassData = new HashMap<>();
 
     private MyClassFinder(URL[] platformUrls, URL[] classpathUrls) {
       super(platformUrls, classpathUrls);
@@ -474,7 +469,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   private class MyNestedFormLoader implements NestedFormLoader {
-    private final Map<String, String> myFormMap = new HashMap<String, String>();
+    private final Map<String, String> myFormMap = new HashMap<>();
 
     public void registerNestedForm(String formName, String fileName) {
       myFormMap.put(formName, fileName);

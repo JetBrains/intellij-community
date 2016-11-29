@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,19 @@ public class Ref<T> {
     myValue = value;
   }
 
-  public boolean isNull() {
+  public final boolean isNull() {
     return myValue == null;
   }
 
-  public T get() {
+  public final T get() {
     return myValue;
   }
 
-  public void set(@Nullable T value) {
+  public final void set(@Nullable T value) {
     myValue = value;
   }
 
-  public boolean setIfNull(@Nullable T value) {
+  public final boolean setIfNull(@Nullable T value) {
     if (myValue == null) {
       myValue = value;
       return true;

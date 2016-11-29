@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,58 +21,58 @@ import com.intellij.JavaTestUtil
 class SmartTypeCompletionDfaTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/smartType/";
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/smartType/"
   }
 
   @Override
   protected void complete() {
-    myItems = myFixture.complete(CompletionType.SMART);
+    myItems = myFixture.complete(CompletionType.SMART)
   }
 
   private void doTest() {
-    configureByTestName();
-    checkResultByTestName();
+    configureByTestName()
+    checkResultByTestName()
   }
 
   private void checkResultByTestName() {
-    checkResultByFile("/" + getTestName(false) + "-out.java");
+    checkResultByFile("/" + getTestName(false) + "-out.java")
   }
 
   void testCastGenericQualifier() { doTest() }
 
   void testDontAutoCastWhenAlreadyCasted() {
-    configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "s", "toString");
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems(0, "s", "toString")
     myFixture.type('\n')
-    checkResultByTestName();
+    checkResultByTestName()
   }
 
   void testAutoCastWhenAlreadyCasted() {
-    configureByTestName();
+    configureByTestName()
     myFixture.type('\n')
-    checkResultByTestName();
+    checkResultByTestName()
   }
 
-  void testSuggestCastedValueAfterCast() { doTest(); }
+  void testSuggestCastedValueAfterCast() { doTest() }
 
   void testSuggestInstanceofedValue() { doTest() }
 
   void testSuggestInstanceofedValueInTernary() { doTest() }
 
-  void testSuggestInstanceofedValueInComplexIf() { doTest(); }
+  void testSuggestInstanceofedValueInComplexIf() { doTest() }
 
-  void testSuggestInstanceofedValueInElseNegated() { doTest(); }
+  void testSuggestInstanceofedValueInElseNegated() { doTest() }
 
-  void testSuggestInstanceofedValueAfterReturn() { doTest(); }
+  void testSuggestInstanceofedValueAfterReturn() { doTest() }
 
-  void testNoInstanceofedValueWhenBasicSuits() { doTest(); }
+  void testNoInstanceofedValueWhenBasicSuits() { doTest() }
 
-  void testNoInstanceofedValueInElse() { doAntiTest(); }
+  void testNoInstanceofedValueInElse() { doAntiTest() }
 
-  void testNoInstanceofedValueInThenNegated() { doAntiTest(); }
+  void testNoInstanceofedValueInThenNegated() { doAntiTest() }
 
-  void testNoInstanceofedValueInElseWithComplexIf() { doAntiTest(); }
+  void testNoInstanceofedValueInElseWithComplexIf() { doAntiTest() }
 
-  void testInstanceofedInsideAnonymous() { doTest(); }
+  void testInstanceofedInsideAnonymous() { doTest() }
 
 }

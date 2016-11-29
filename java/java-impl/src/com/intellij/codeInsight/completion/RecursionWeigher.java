@@ -210,7 +210,7 @@ class RecursionWeigher extends LookupElementWeigher {
 
   @NotNull
   public static PsiMethod findDeepestSuper(@NotNull final PsiMethod method) {
-    CommonProcessors.FindFirstProcessor<PsiMethod> processor = new CommonProcessors.FindFirstProcessor<PsiMethod>();
+    CommonProcessors.FindFirstProcessor<PsiMethod> processor = new CommonProcessors.FindFirstProcessor<>();
     MethodDeepestSuperSearcher.processDeepestSuperMethods(method, processor);
     final PsiMethod first = processor.getFoundValue();
     return first == null ? method : first;

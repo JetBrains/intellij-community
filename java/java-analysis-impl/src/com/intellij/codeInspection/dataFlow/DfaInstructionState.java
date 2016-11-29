@@ -65,7 +65,7 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
 }
 
 class StateQueue {
-  private final PriorityQueue<DfaInstructionState> myQueue = new PriorityQueue<DfaInstructionState>();
+  private final PriorityQueue<DfaInstructionState> myQueue = new PriorityQueue<>();
   private final Set<Pair<Instruction, DfaMemoryState>> mySet = ContainerUtil.newHashSet();
   
   void offer(DfaInstructionState state) {
@@ -115,12 +115,7 @@ class StateQueue {
       
     }
 
-    return ContainerUtil.map(memoryStates, new Function<DfaMemoryStateImpl, DfaInstructionState>() {
-      @Override
-      public DfaInstructionState fun(DfaMemoryStateImpl state) {
-        return new DfaInstructionState(instruction, state);
-      }
-    });
+    return ContainerUtil.map(memoryStates, state1 -> new DfaInstructionState(instruction, state1));
   }                                                                      
 
   private static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {

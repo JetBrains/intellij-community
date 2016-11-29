@@ -5,7 +5,7 @@ Index: org/objectweb/asm/ClassReader.java
 @@ -167,7 +167,7 @@
          this.b = b;
          // checks the class version
-         if (readShort(off + 6) > Opcodes.V1_8) {
+         if (readShort(off + 6) > Opcodes.V1_9) {
 -            throw new IllegalArgumentException();
 +            //[JB: accept any version] throw new IllegalArgumentException();
          }

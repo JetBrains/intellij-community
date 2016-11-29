@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class MavenTestCase extends UsefulTestCase {
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   // should not be static
-  protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS = new MavenProgressIndicator(new EmptyProgressIndicator());
+  protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS = new MavenProgressIndicator(new EmptyProgressIndicator(ModalityState.NON_MODAL));
 
   private File ourTempDir;
 
@@ -67,7 +68,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected VirtualFile myProjectRoot;
 
   protected VirtualFile myProjectPom;
-  protected List<VirtualFile> myAllPoms = new ArrayList<VirtualFile>();
+  protected List<VirtualFile> myAllPoms = new ArrayList<>();
 
   @Override
   protected void setUp() throws Exception {
@@ -99,21 +100,18 @@ public abstract class MavenTestCase extends UsefulTestCase {
           throw new RuntimeException(e);
         }
 
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            setUpInWriteAction();
+          }
+          catch (Throwable e) {
             try {
-              setUpInWriteAction();
+              tearDown();
             }
-            catch (Throwable e) {
-              try {
-                tearDown();
-              }
-              catch (Exception e1) {
-                e1.printStackTrace();
-              }
-              throw new RuntimeException(e);
+            catch (Exception e1) {
+              e1.printStackTrace();
             }
+            throw new RuntimeException(e);
           }
         });
       }
@@ -227,7 +225,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         }.executeSilently().throwException();
       }
       else {
-        MavenTestCase.super.runTest();
+        super.runTest();
       }
     }
     catch (Exception throwable) {
@@ -515,11 +513,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, Collection<T> expected) {
-    assertEquals(new HashSet<T>(expected), new HashSet<T>(actual));
+    assertEquals(new HashSet<>(expected), new HashSet<>(actual));
   }
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
-    assertEquals(new SetWithToString<String>(new THashSet<String>(expected, FileUtil.PATH_HASHING_STRATEGY)),
-                 new SetWithToString<String>(new THashSet<String>(actual, FileUtil.PATH_HASHING_STRATEGY)));
+    assertEquals(new SetWithToString<>(new THashSet<>(expected, FileUtil.PATH_HASHING_STRATEGY)),
+                 new SetWithToString<>(new THashSet<>(actual, FileUtil.PATH_HASHING_STRATEGY)));
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
@@ -531,10 +529,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
-    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<U>(actual);
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<>(actual);
     assertEquals(s, expected.length, actual.size());
 
-    List<U> actualList = new ArrayList<U>(actual);
+    List<U> actualList = new ArrayList<>(actual);
     for (int i = 0; i < expected.length; i++) {
       T expectedElement = expected[i];
       U actualElement = actualList.get(i);
@@ -548,7 +546,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static <T> void assertDoNotContain(List<T> actual, T... expected) {
-    List<T> actualCopy = new ArrayList<T>(actual);
+    List<T> actualCopy = new ArrayList<>(actual);
     actualCopy.removeAll(Arrays.asList(expected));
     assertEquals(actual.toString(), actualCopy.size(), actual.size());
   }

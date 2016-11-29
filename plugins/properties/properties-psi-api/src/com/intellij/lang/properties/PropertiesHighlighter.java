@@ -70,8 +70,8 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
   );
 
   static {
-    keys1 = new THashMap<IElementType, TextAttributesKey>();
-    keys2 = new THashMap<IElementType, TextAttributesKey>();
+    keys1 = new THashMap<>();
+    keys2 = new THashMap<>();
 
     keys1.put(PropertiesTokenTypes.VALUE_CHARACTERS, PROPERTY_VALUE);
     keys1.put(PropertiesTokenTypes.END_OF_LINE_COMMENT, PROPERTY_COMMENT);
@@ -89,13 +89,15 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
     return SyntaxHighlighterBase.pack(keys1.get(tokenType), keys2.get(tokenType));
   }
 
-  public static final Map<TextAttributesKey, Pair<String, HighlightSeverity>> DISPLAY_NAMES = new THashMap<TextAttributesKey, Pair<String, HighlightSeverity>>(6);
+  public static final Map<TextAttributesKey, Pair<String, HighlightSeverity>> DISPLAY_NAMES = new THashMap<>(6);
   static {
-    DISPLAY_NAMES.put(PROPERTY_KEY, new Pair<String, HighlightSeverity>(PropertiesBundle.message("options.properties.attribute.descriptor.property.key"),null));
-    DISPLAY_NAMES.put(PROPERTY_VALUE, new Pair<String, HighlightSeverity>(PropertiesBundle.message("options.properties.attribute.descriptor.property.value"), null));
-    DISPLAY_NAMES.put(PROPERTY_KEY_VALUE_SEPARATOR, new Pair<String, HighlightSeverity>(PropertiesBundle.message("options.properties.attribute.descriptor.key.value.separator"), null));
-    DISPLAY_NAMES.put(PROPERTY_COMMENT, new Pair<String, HighlightSeverity>(PropertiesBundle.message("options.properties.attribute.descriptor.comment"), null));
-    DISPLAY_NAMES.put(PROPERTIES_VALID_STRING_ESCAPE, new Pair<String, HighlightSeverity>(PropertiesBundle.message("options.properties.attribute.descriptor.valid.string.escape"), null));
+    DISPLAY_NAMES.put(PROPERTY_KEY, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.key"), null));
+    DISPLAY_NAMES.put(PROPERTY_VALUE, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.value"), null));
+    DISPLAY_NAMES.put(PROPERTY_KEY_VALUE_SEPARATOR,
+                      new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.key.value.separator"), null));
+    DISPLAY_NAMES.put(PROPERTY_COMMENT, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.comment"), null));
+    DISPLAY_NAMES.put(PROPERTIES_VALID_STRING_ESCAPE,
+                      new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.valid.string.escape"), null));
     DISPLAY_NAMES.put(PROPERTIES_INVALID_STRING_ESCAPE, Pair
       .create(PropertiesBundle.message("options.properties.attribute.descriptor.invalid.string.escape"), HighlightSeverity.WARNING));
   }

@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -26,6 +27,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -88,13 +90,10 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       if (elseReturnValue == null) {
         return;
       }
-      final PsiElement method = PsiTreeUtil.getParentOfType(thenReturn, PsiMethod.class, PsiLambdaExpression.class);
-      if (method == null) {
+      final String conditional = getConditional(condition, thenReturn, thenReturnValue, elseReturnValue);
+      if (conditional == null) {
         return;
       }
-      final PsiType returnType = method instanceof PsiMethod ? ((PsiMethod)method).getReturnType() 
-                                                             : LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)method);
-      final String conditional = getConditionalText(condition, thenReturnValue, elseReturnValue, returnType);
       replaceIfStatement(ifStatement, "return " + conditional + ';');
     }
     else if (ReplaceIfWithConditionalPredicate.isReplaceableMethodCall(ifStatement)) {
@@ -120,7 +119,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         }
         final PsiExpression thenArgument = thenArguments[i];
         final PsiExpression elseArgument = elseArguments[i];
-        if (EquivalenceChecker.expressionsAreEquivalent(thenArgument, elseArgument)) {
+        if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenArgument, elseArgument)) {
           replacementText.append(thenArgument.getText());
         }
         else {
@@ -159,18 +158,20 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       if (elseReturnValue == null) {
         return;
       }
-      final PsiMethod method = PsiTreeUtil.getParentOfType(thenBranch, PsiMethod.class);
-      if (method == null) {
-        return;
-      }
-      final PsiType methodType = method.getReturnType();
-      final String conditional = getConditionalText(condition, thenReturnValue, elseReturnValue, methodType);
-      if (conditional == null) {
-        return;
-      }
+      final String conditional = getConditional(condition, thenBranch, thenReturnValue, elseReturnValue);
+      if (conditional == null) return;
       replaceIfStatement(ifStatement, "return " + conditional + ';');
       elseBranch.delete();
     }
+  }
+
+  @Nullable
+  private static String getConditional(PsiExpression condition,
+                                       PsiElement thenBranch,
+                                       PsiExpression thenReturnValue,
+                                       PsiExpression elseReturnValue) {
+    final PsiType methodType = PsiTypesUtil.getMethodReturnType(thenBranch);
+    return methodType == null ? null : getConditionalText(condition, thenReturnValue, elseReturnValue, methodType);
   }
 
   private static void replaceIfStatement(PsiIfStatement ifStatement, String text) {

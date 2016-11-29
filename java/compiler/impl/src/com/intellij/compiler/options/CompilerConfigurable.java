@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -53,20 +52,11 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     return getHelpTopic();
   }
 
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   public JComponent createComponent() {
     return myCompilerUIConfigurable.createComponent();
   }
 
   public boolean hasOwnContent() {
-    return true;
-  }
-
-  public boolean isVisible() {
     return true;
   }
 
@@ -89,13 +79,8 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
   public Configurable[] getConfigurables() {
     if (myKids == null) {
       final CompilerSettingsFactory[] factories = Extensions.getExtensions(CompilerSettingsFactory.EP_NAME, myProject);
-      myKids = ContainerUtil.mapNotNull(factories, new NullableFunction<CompilerSettingsFactory, Configurable>() {
-        @Nullable
-        @Override
-        public Configurable fun(CompilerSettingsFactory factory) {
-            return factory.create(myProject);
-        }
-      }, new Configurable[0]);
+      myKids = ContainerUtil.mapNotNull(factories,
+                                        (NullableFunction<CompilerSettingsFactory, Configurable>)factory -> factory.create(myProject), new Configurable[0]);
     }
 
     return myKids;

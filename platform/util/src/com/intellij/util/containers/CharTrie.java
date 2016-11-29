@@ -15,36 +15,53 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.StringFactory;
-
-import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
 
 public class CharTrie {
-  private ArrayList<Node> myAllNodes;
-
-  private static class Node {
-    private final char myChar;
-    private final int myParent;
-    private IntArrayList myChildren;
-
-    Node(int parent, char c) {
-      myChar = c;
-      myParent = parent;
-    }
-  }
+  private int myAllNodesSize;
+  private char[] myAllNodesChars;
+  private char[] myAllNodesParents; // unsigned short
+  private char[][] myAllNodesChildren; // unsigned short
 
   public CharTrie() {
     init();
   }
 
   private void init() {
-    myAllNodes = new ArrayList<Node>();
-    final Node root = new Node(-1, (char)0);
-    myAllNodes.add(root);
+    myAllNodesChars = null;
+    myAllNodesParents = null;
+    myAllNodesChildren = null;
+    myAllNodesSize = 0;
+    addNode(-1, (char)0);
+  }
+
+  private void addNode(int parentIndex, char ch) {
+    if (myAllNodesSize == 0) {
+      int initialCapacity = 10;
+      myAllNodesChars = new char[initialCapacity];
+      myAllNodesParents = new char[initialCapacity];
+      myAllNodesChildren = new char[initialCapacity][];
+    } else if (myAllNodesSize >= myAllNodesChars.length) {
+      int increment = Math.max(myAllNodesSize >> 2, 10);
+
+      int newSize = myAllNodesSize + increment;
+      myAllNodesChars = ArrayUtil.realloc(myAllNodesChars, newSize);
+      myAllNodesParents = ArrayUtil.realloc(myAllNodesParents, newSize);
+      myAllNodesChildren = ArrayUtil.realloc(myAllNodesChildren, newSize, FACTORY);
+    }
+
+    myAllNodesChars[myAllNodesSize] = ch;
+    myAllNodesParents[myAllNodesSize] = (char)parentIndex;
+    myAllNodesChildren[myAllNodesSize] = null;
+    ++myAllNodesSize;
+    assert myAllNodesSize < Character.MAX_VALUE;
   }
 
   public int size() {
-    return myAllNodes.size();
+    return myAllNodesSize;
   }
 
   /**
@@ -98,18 +115,16 @@ public class CharTrie {
     int length = 0;
     int run = hashCode;
     while (run > 0) {
-      final CharTrie.Node node = myAllNodes.get(run);
       length++;
-      run = node.myParent;
+      run = myAllNodesParents[run];
     }
 
     char[] result = new char[length];
     run = hashCode;
     for (int i = 0; i < length; i++) {
       assert run > 0;
-      final CharTrie.Node node = myAllNodes.get(run);
-      result[length - i - 1] = node.myChar;
-      run = node.myParent;
+      result[length - i - 1] = myAllNodesChars[run];
+      run = myAllNodesParents[run];
     }
 
     return result;
@@ -131,18 +146,16 @@ public class CharTrie {
     int length = 0;
     int run = hashCode;
     while (run > 0) {
-      final CharTrie.Node node = myAllNodes.get(run);
       length++;
-      run = node.myParent;
+      run = myAllNodesParents[run];
     }
 
     char[] result = new char[length];
     run = hashCode;
     for (int i = 0; i < length; i++) {
       assert run > 0;
-      final CharTrie.Node node = myAllNodes.get(run);
-      result[i] = node.myChar;
-      run = node.myParent;
+      result[i] = myAllNodesChars[run];
+      run = myAllNodesParents[run];
     }
 
     return result;
@@ -151,23 +164,26 @@ public class CharTrie {
   public int findSubNode(int parentIndex, char c) {
     return getSubNode(parentIndex, c, false);
   }
-  
+
+  private static final int LENGTH_SLOT_LENGTH = 1;
+
   private int getSubNode(int parentIndex, char c, boolean createIfNotExists) {
-    CharTrie.Node parentNode = myAllNodes.get(parentIndex);
-    if (parentNode.myChildren == null) {
+    if (myAllNodesChildren[parentIndex] == null) {
       if (!createIfNotExists) {
         return 0;
       }
-      parentNode.myChildren = new IntArrayList(1);
+      char[] chars = new char[1 + LENGTH_SLOT_LENGTH];
+      myAllNodesChildren[parentIndex] = chars;
     }
-    IntArrayList children = parentNode.myChildren;
+
+    char[] children = myAllNodesChildren[parentIndex];
+    char childrenCount = children[children.length - LENGTH_SLOT_LENGTH];
     int left = 0;
-    int right = children.size() - 1;
+    int right = childrenCount - 1;
     while (left <= right) {
       int middle = (left + right) >> 1;
-      int index = children.get(middle);
-      CharTrie.Node node = myAllNodes.get(index);
-      int comp = node.myChar - c;
+      int index = children[middle];
+      int comp = myAllNodesChars[index] - c;
       if (comp == 0) {
         return index;
       }
@@ -181,14 +197,33 @@ public class CharTrie {
     if (!createIfNotExists) {
       return 0;
     }
-    
-    int index = myAllNodes.size();
-    children.add(left, index);
-    myAllNodes.add(new CharTrie.Node(parentIndex, c));
+
+    if (childrenCount == children.length - LENGTH_SLOT_LENGTH) {
+      children = myAllNodesChildren[parentIndex] = ArrayUtil.realloc(children, (children.length * 3 / 2 + 1) + LENGTH_SLOT_LENGTH);
+    }
+
+    if (left != childrenCount) {
+      System.arraycopy(children, left, children, left + 1, childrenCount - left);
+    }
+
+    int index = myAllNodesSize;
+    children[left] = (char)index;
+    assert childrenCount + 1 < Character.MAX_VALUE;
+    children[children.length - LENGTH_SLOT_LENGTH] = (char)(childrenCount + 1);
+
+    addNode(parentIndex, c);
     return index;
   }
 
   public void clear() {
     init();
   }
+
+  private static final ArrayFactory<char[]> FACTORY = new ArrayFactory<char[]>() {
+    @NotNull
+    @Override
+    public char[][] create(int count) {
+      return new char[count][];
+    }
+  };
 }

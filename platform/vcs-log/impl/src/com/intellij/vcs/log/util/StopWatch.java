@@ -18,7 +18,6 @@ package com.intellij.vcs.log.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +27,10 @@ import java.util.Map;
 public class StopWatch {
 
   private static final Logger LOG = Logger.getInstance(StopWatch.class);
+
+  private static final String[] UNIT_NAMES = new String[]{"s", "m", "h"};
+  private static final long[] UNITS = new long[]{1, 60, 60 * 60};
+  private static final String MSEC_FORMAT = "%03d";
 
   private final long myStartTime;
   @NotNull private final String myOperation;
@@ -59,15 +62,42 @@ public class StopWatch {
   }
 
   public void report() {
-    String message = myOperation + " took " + (System.currentTimeMillis() - myStartTime) + " ms";
+    String message = myOperation + " took " + formatTime(System.currentTimeMillis() - myStartTime);
     if (myDurationPerRoot.size() > 1) {
-      message += "\n" + StringUtil.join(myDurationPerRoot.entrySet(), new Function<Map.Entry<VirtualFile, Long>, String>() {
-        @Override
-        public String fun(Map.Entry<VirtualFile, Long> entry) {
-          return "    " + entry.getKey().getName() + ": " + entry.getValue() + " ms";
-        }
-      }, "\n");
+      message += "\n" + StringUtil.join(myDurationPerRoot.entrySet(),
+                                        entry -> "    " + entry.getKey().getName() + ": " + formatTime(entry.getValue()), "\n");
     }
     LOG.debug(message);
+  }
+
+  /**
+   * 1h 1m 1.001s
+   */
+  @NotNull
+  public static String formatTime(long time) {
+    if (time < 1000 * UNITS[0]) {
+      return time + "ms";
+    }
+    String result = "";
+    long remainder = time / 1000;
+    long msec = time % 1000;
+    for (int i = UNITS.length - 1; i >= 0; i--) {
+      if (remainder < UNITS[i]) continue;
+
+      long quotient = remainder / UNITS[i];
+      remainder = remainder % UNITS[i];
+
+      if (i == 0) {
+        result += quotient + (msec == 0 ? "" : "." + String.format(MSEC_FORMAT, msec)) + UNIT_NAMES[i];
+      }
+      else {
+        result += quotient + UNIT_NAMES[i] + " ";
+        if (remainder == 0 && msec != 0) {
+          result += "0." + String.format(MSEC_FORMAT, msec) + UNIT_NAMES[0];
+        }
+      }
+    }
+
+    return result;
   }
 }

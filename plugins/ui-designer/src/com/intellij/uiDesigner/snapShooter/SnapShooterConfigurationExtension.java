@@ -74,7 +74,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       params.getProgramParametersList().prepend(Integer.toString(settings.getLastPort()));
       // add +1 because idea_rt.jar will be added as the last entry to the classpath
       params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size() + 1));
-      Set<String> paths = new TreeSet<String>();
+      Set<String> paths = new TreeSet<>();
       paths.add(PathUtil.getJarPathForClass(SnapShooter.class));               // ui-designer-impl
       paths.add(PathUtil.getJarPathForClass(BaseComponent.class));             // appcore-api
       paths.add(PathUtil.getJarPathForClass(ProjectComponent.class));          // openapi

@@ -117,12 +117,7 @@ public abstract class AbstractMvcPsiNodeDescriptor extends BasePsiNode<PsiElemen
 
   @Override
   protected boolean hasProblemFileBeneath() {
-    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      @Override
-      public boolean value(final VirtualFile virtualFile) {
-        return contains(virtualFile);
-      }
-    });
+    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(virtualFile -> contains(virtualFile));
   }
 
   @Override

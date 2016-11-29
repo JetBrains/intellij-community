@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -48,7 +48,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   public Collection<AbstractTreeNode> getChildren() {
     List<VirtualFile> topLevelContentRoots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelRoots();
 
-    Set<Module> modules = new LinkedHashSet<Module>(topLevelContentRoots.size());
+    Set<Module> modules = new LinkedHashSet<>(topLevelContentRoots.size());
 
     for (VirtualFile root : topLevelContentRoots) {
       final Module module = ModuleUtil.findModuleForFile(root, myProject);
@@ -57,7 +57,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
       }
     }
 
-    ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> nodes = new ArrayList<>();
     final PsiManager psiManager = PsiManager.getInstance(getProject());
 
     /*
@@ -73,8 +73,8 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
 
     final VirtualFile[] files = baseDir.getChildren();
     for (VirtualFile file : files) {
-      if (ModuleUtil.findModuleForFile(file, getProject()) == null) {
-        if (!file.isDirectory()) {
+      if (!file.isDirectory()) {
+        if (ProjectFileIndex.SERVICE.getInstance(getProject()).getModuleForFile(file, false) == null) {
           nodes.add(new PsiFileNode(getProject(), psiManager.findFile(file), getSettings()));
         }
       }
@@ -98,17 +98,12 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
       userHome = null;
     }
 
-    Collections.sort(roots, new java.util.Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        return o1.getPath().compareTo(o2.getPath());
-      }
-    });
+    Collections.sort(roots, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
 
     Iterator<VirtualFile> it = roots.iterator();
     VirtualFile current = it.next();
 
-    List<VirtualFile> reducedRoots = new ArrayList<VirtualFile>();
+    List<VirtualFile> reducedRoots = new ArrayList<>();
     while (it.hasNext()) {
       VirtualFile next = it.next();
       VirtualFile common = VfsUtilCore.getCommonAncestor(current, next);
@@ -129,9 +124,9 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   @Override
   protected AbstractTreeNode createModuleGroup(final Module module)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-    if (roots.length == 1) {
-      final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots[0]);
+    List<VirtualFile> roots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelModuleRoots(module, getSettings());
+    if (roots.size() == 1) {
+      final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots.get(0));
       if (psi != null) {
         return new PsiDirectoryNode(myProject, psi, getSettings());
       }

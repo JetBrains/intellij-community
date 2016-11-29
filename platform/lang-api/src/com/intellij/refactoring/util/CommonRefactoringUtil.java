@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 
 /**
  * @author ven
@@ -58,14 +57,12 @@ public class CommonRefactoringUtil {
 
   // order of usages across different files is irrelevant
   public static void sortDepthFirstRightLeftOrder(final UsageInfo[] usages) {
-    Arrays.sort(usages, new Comparator<UsageInfo>() {
-      public int compare(final UsageInfo usage1, final UsageInfo usage2) {
-        PsiElement element1 = usage1.getElement(), element2 = usage2.getElement();
-        if (element1 == element2) return 0;
-        if (element1 == null) return 1;
-        if (element2 == null) return -1;
-        return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
-      }
+    Arrays.sort(usages, (usage1, usage2) -> {
+      PsiElement element1 = usage1.getElement(), element2 = usage2.getElement();
+      if (element1 == element2) return 0;
+      if (element1 == null) return 1;
+      if (element2 == null) return -1;
+      return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
     });
   }
 
@@ -78,27 +75,24 @@ public class CommonRefactoringUtil {
     }
   }
 
-  public static void showErrorHint(final Project project,
-                                   @Nullable final Editor editor,
-                                   @Nls final String message,
-                                   @Nls final String title,
-                                   @Nullable final String helpId) {
+  public static void showErrorHint(@NotNull Project project,
+                                   @Nullable Editor editor,
+                                   @NotNull @Nls String message,
+                                   @NotNull @Nls String title,
+                                   @Nullable String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (editor == null || editor.getComponent().getRootPane() == null) {
-          showErrorMessage(title, message, helpId, project);
-        }
-        else {
-          HintManager.getInstance().showErrorHint(editor, message);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (editor == null || editor.getComponent().getRootPane() == null) {
+        showErrorMessage(title, message, helpId, project);
+      }
+      else {
+        HintManager.getInstance().showErrorHint(editor, message);
       }
     });
   }
 
-  public static String htmlEmphasize(String text) {
+  public static String htmlEmphasize(@NotNull String text) {
     return StringUtil.htmlEmphasize(text);
   }
 
@@ -119,7 +113,7 @@ public class CommonRefactoringUtil {
     return checkReadOnlyStatus(project, Collections.<PsiElement>emptySet(), elements, RefactoringBundle.message("refactoring.cannot.be.performed"), notifyOnFail);
   }
 
-  public static boolean checkReadOnlyStatus(@NotNull PsiElement element, @NotNull Project project, String messagePrefix) {
+  public static boolean checkReadOnlyStatus(@NotNull PsiElement element, @NotNull Project project, @NotNull String messagePrefix) {
     return element.isWritable() || checkReadOnlyStatus(project, Collections.<PsiElement>emptySet(), Collections.singleton(element), messagePrefix, true);
   }
 
@@ -143,8 +137,8 @@ public class CommonRefactoringUtil {
                                              @NotNull Collection<? extends PsiElement> flat,
                                              @NotNull String messagePrefix,
                                              boolean notifyOnFail) {
-    Collection<VirtualFile> readonly = new THashSet<VirtualFile>();  // not writable, but could be checked out
-    Collection<VirtualFile> failed = new THashSet<VirtualFile>();  // those located in read-only filesystem
+    Collection<VirtualFile> readonly = new THashSet<>();  // not writable, but could be checked out
+    Collection<VirtualFile> failed = new THashSet<>();  // those located in read-only filesystem
 
     boolean seenNonWritablePsiFilesWithoutVirtualFile =
       checkReadOnlyStatus(flat, false, readonly, failed) || checkReadOnlyStatus(recursive, true, readonly, failed);
@@ -252,11 +246,11 @@ public class CommonRefactoringUtil {
     });
   }
 
-  public static String capitalize(String text) {
+  public static String capitalize(@NotNull String text) {
     return StringUtil.capitalize(text);
   }
 
-  public static boolean isAncestor(final PsiElement resolved, final Collection<? extends PsiElement> scopes) {
+  public static boolean isAncestor(@NotNull PsiElement resolved, @NotNull Collection<? extends PsiElement> scopes) {
     for (final PsiElement scope : scopes) {
       if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;
     }

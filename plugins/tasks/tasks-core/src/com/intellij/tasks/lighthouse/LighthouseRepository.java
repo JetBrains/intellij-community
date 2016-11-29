@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.tasks.lighthouse;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,7 +99,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     if (!StringUtil.isEmpty(query)) {
       url += encodeUrl(query);
     }
-    final List<Task> tasks = new ArrayList<Task>();
+    final List<Task> tasks = new ArrayList<>();
     int page = 1;
     final HttpClient client = login();
     while (tasks.size() < max) {
@@ -100,11 +115,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
 
       List<Element> children = element.getChildren("ticket");
 
-      List<Task> taskList = ContainerUtil.mapNotNull(children, new NullableFunction<Element, Task>() {
-        public Task fun(Element o) {
-          return createIssue(o);
-        }
-      });
+      List<Task> taskList = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
       tasks.addAll(taskList);
       page++;
     }
@@ -123,8 +134,8 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     }
     final String description = element.getChildText("original-body");
     final boolean isClosed = "true".equals(element.getChildText("closed"));
-    final Ref<Date> updated = new Ref<Date>();
-    final Ref<Date> created = new Ref<Date>();
+    final Ref<Date> updated = new Ref<>();
+    final Ref<Date> created = new Ref<>();
     try {
       updated.set(parseDate(element, "updated-at"));
       created.set(parseDate(element, "created-at"));
@@ -162,7 +173,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Comment[] getComments() {
-        return new Comment[0];
+        return Comment.EMPTY_ARRAY;
       }
 
       @NotNull

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.actions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -93,8 +92,6 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
-
     final PsiReference psiReference = TargetElementUtil.findReference(editor);
     if (psiReference == null) return;
 
@@ -114,7 +111,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     PsiClass targetClass = (PsiClass)target;
 
-    final Map<PsiMethod, PsiMethod> implementations = new HashMap<PsiMethod, PsiMethod>();
+    final Map<PsiMethod, PsiMethod> implementations = new HashMap<>();
     for (PsiMethod psiMethod : targetClass.getAllMethods()) {
       final PsiMethod implementingMethod = MethodSignatureUtil.findMethodBySuperMethod(psiClass, psiMethod, false);
       if (implementingMethod != null) {
@@ -125,7 +122,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     if (target == psiClass) return;
 
-    final Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
+    final Set<PsiMethod> superMethods = new HashSet<>();
     for (PsiClass aClass : psiClass.getSupers()) {
       Collections.addAll(superMethods, aClass.getAllMethods());
     }

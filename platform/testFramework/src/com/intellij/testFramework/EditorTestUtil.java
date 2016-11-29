@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class EditorTestUtil {
   }
 
   public static List<IElementType> getAllTokens(EditorHighlighter highlighter) {
-    List<IElementType> tokens = new ArrayList<IElementType>();
+    List<IElementType> tokens = new ArrayList<>();
     HighlighterIterator iterator = highlighter.createIterator(0);
     while (!iterator.atEnd()) {
       tokens.add(iterator.getTokenType());
@@ -251,7 +251,8 @@ public class EditorTestUtil {
    *
    * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(Document document) {
+  @NotNull
+  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document) {
     return extractCaretAndSelectionMarkers(document, true);
   }
 
@@ -261,7 +262,8 @@ public class EditorTestUtil {
    *
    * @param processBlockSelection if <code>true</code>, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
    */
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(final Document document, final boolean processBlockSelection) {
+  @NotNull
+  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
     return new WriteCommandAction<CaretAndSelectionState>(null) {
       @Override
       public void run(@NotNull Result<CaretAndSelectionState> actionResult) {
@@ -271,9 +273,8 @@ public class EditorTestUtil {
   }
 
   @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkersImpl(Document document, boolean processBlockSelection) {
+  public static CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
     List<CaretInfo> carets = ContainerUtil.newArrayList();
-    TextRange blockSelection = null;
     String fileText = document.getText();
 
     RangeMarker blockSelectionStartMarker = null;
@@ -354,6 +355,7 @@ public class EditorTestUtil {
     if (carets.isEmpty()) {
       carets.add(new CaretInfo(null, null));
     }
+    TextRange blockSelection = null;
     if (blockSelectionStartMarker != null) {
       blockSelection = new TextRange(blockSelectionStartMarker.getStartOffset(), blockSelectionEndMarker.getStartOffset());
     }
@@ -366,7 +368,7 @@ public class EditorTestUtil {
   public static void setCaretsAndSelection(Editor editor, CaretAndSelectionState caretsState) {
     CaretModel caretModel = editor.getCaretModel();
     if (caretModel.supportsMultipleCarets()) {
-      List<CaretState> states = new ArrayList<CaretState>(caretsState.carets.size());
+      List<CaretState> states = new ArrayList<>(caretsState.carets.size());
       for (CaretInfo caret : caretsState.carets) {
         states.add(new CaretState(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())),
                                   caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
@@ -411,7 +413,7 @@ public class EditorTestUtil {
     }
     String messageSuffix = message == null ? "" : (message + ": ");
     CaretModel caretModel = editor.getCaretModel();
-    List<Caret> allCarets = new ArrayList<Caret>(caretModel.getAllCarets());
+    List<Caret> allCarets = new ArrayList<>(caretModel.getAllCarets());
     assertEquals(messageSuffix + " Unexpected number of carets", caretState.carets.size(), allCarets.size());
     for (int i = 0; i < caretState.carets.size(); i++) {
       String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets.size() + " ";
@@ -443,17 +445,25 @@ public class EditorTestUtil {
 
   public static FoldRegion addFoldRegion(@NotNull Editor editor, final int startOffset, final int endOffset, final String placeholder, final boolean collapse) {
     final FoldingModel foldingModel = editor.getFoldingModel();
-    final Ref<FoldRegion> ref = new Ref<FoldRegion>();
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        FoldRegion region = foldingModel.addFoldRegion(startOffset, endOffset, placeholder);
-        assertNotNull(region);
-        region.setExpanded(!collapse);
-        ref.set(region);
-      }
+    final Ref<FoldRegion> ref = new Ref<>();
+    foldingModel.runBatchFoldingOperation(() -> {
+      FoldRegion region = foldingModel.addFoldRegion(startOffset, endOffset, placeholder);
+      assertNotNull(region);
+      region.setExpanded(!collapse);
+      ref.set(region);
     });
     return ref.get();
+  }
+
+
+  public static Inlay addInlay(@NotNull Editor editor, int offset) {
+    return editor.getInlayModel().addInlineElement(offset, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
+
+      @Override
+      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {}
+    });
   }
 
   public static class CaretAndSelectionState {
@@ -463,6 +473,18 @@ public class EditorTestUtil {
     public CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
       this.carets = carets;
       this.blockSelection = blockSelection;
+    }
+
+    /**
+     * Returns true if current CaretAndSelectionState contains at least one caret or selection explicitly specified
+     */
+    public boolean hasExplicitCaret() {
+      if(carets.isEmpty()) return false;
+      if(blockSelection == null && carets.size() == 1) {
+        CaretInfo caret = carets.get(0);
+        return caret.position != null || caret.selection != null;
+      }
+      return true;
     }
   }
 

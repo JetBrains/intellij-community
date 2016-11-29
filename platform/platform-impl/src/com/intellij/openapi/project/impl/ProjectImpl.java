@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.project.impl;
 
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,6 +31,11 @@ import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,10 +52,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.TimedReference;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +81,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   private String myName;
   private final boolean myLight;
+  private static boolean ourClassesAreLoaded;
 
   /**
    * @param filePath System-independent path
@@ -126,16 +134,15 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
       myName = projectName;
-      StartupManager.getInstance(this).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          if (isDisposed()) return;
+      RecentProjectsManager.getInstance().clearNameCache();
+      
+      StartupManager.getInstance(this).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+        if (isDisposed()) return;
 
-          JFrame frame = WindowManager.getInstance().getFrame(ProjectImpl.this);
-          String title = FrameTitleBuilder.getInstance().getProjectTitle(ProjectImpl.this);
-          if (frame != null && title != null) {
-            frame.setTitle(title);
-          }
+        JFrame frame = WindowManager.getInstance().getFrame(this);
+        String title = FrameTitleBuilder.getInstance().getProjectTitle(this);
+        if (frame != null && title != null) {
+          frame.setTitle(title);
         }
       });
     }
@@ -158,7 +165,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       private ComponentAdapter getDelegate() {
         if (myDelegate == null) {
           Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
-          myDelegate = new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
+          myDelegate = new CachingConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
         }
         return myDelegate;
       }
@@ -193,7 +200,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @NotNull
   IProjectStore getStateStore() {
-    return (IProjectStore)ServiceKt.getStateStore(this);
+    return ProjectKt.getStateStore(this);
   }
 
   @Override
@@ -276,28 +283,53 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void init() {
     long start = System.currentTimeMillis();
 
-    final ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if (progressIndicator != null) {
-      progressIndicator.pushState();
-    }
-    try {
-      init(progressIndicator);
-    }
-    finally {
-      if (progressIndicator != null) {
-        progressIndicator.popState();
-      }
-    }
+    ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    init(progressIndicator);
 
     long time = System.currentTimeMillis() - start;
-    LOG.info(getComponentConfigCount() + " project components initialized in " + time + " ms");
+    String message = getComponentConfigCount() + " project components initialized in " + time + " ms";
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.debug(message);
+    } else {
+      LOG.info(message);
+    }
 
+    if (!isDefault() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      distributeProgress();
+    }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
       myProjectManagerListener = new MyProjectManagerListener();
       myProjectManager.addProjectManagerListener(this, myProjectManagerListener);
+    }
+  }
+
+  @Override
+  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+    indicator.setFraction(getPercentageOfComponentsLoaded() / (ourClassesAreLoaded ? 10 : 2));
+  }
+
+  private void distributeProgress() {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator == null) return;
+
+    double toDistribute = 1 - indicator.getFraction();
+    ModuleManagerImpl moduleManager = (ModuleManagerImpl)ModuleManager.getInstance(this);
+    int modulesCount = moduleManager.getModulePathsCount();
+    EditorsSplitters splitters = ((FileEditorManagerImpl)FileEditorManager.getInstance(this)).getMainSplitters();
+    int editors = splitters.getEditorsCount();
+
+    double modulesPart = ourClassesAreLoaded || editors == 0 ? toDistribute : toDistribute * 0.5;
+    if (modulesCount != 0) {
+
+      double step = modulesPart / modulesCount;
+      moduleManager.setProgressStep(step);
+    }
+
+    if (editors != 0) {
+      splitters.setProgressStep(toDistribute - modulesPart / editors);
     }
   }
 
@@ -326,13 +358,15 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public synchronized void dispose() {
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    assert application.isWriteAccessAllowed();  // dispose must be under write action
+    application.assertWriteAccessAllowed();  // dispose must be under write action
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
-    LOG.assertTrue(application.isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
+    if (ProjectManagerEx.getInstanceEx().isProjectOpened(this)) {
+      throw new IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().");
+    }
 
     // we use super here, because temporarilyDisposed will be true if project closed
-    LOG.assertTrue(!super.isDisposed());
+    LOG.assertTrue(!super.isDisposed(), this + " is disposed already");
     if (myProjectManagerListener != null) {
       myProjectManager.removeProjectManagerListener(this, myProjectManagerListener);
     }
@@ -359,6 +393,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
         LOG.error(component.toString(), e);
       }
     }
+    ourClassesAreLoaded = true;
   }
 
   private void projectClosed() {

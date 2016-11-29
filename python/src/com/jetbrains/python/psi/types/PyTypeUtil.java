@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Processor;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Tools and wrappers around {@link PyType} inheritors
@@ -43,17 +45,14 @@ public final class PyTypeUtil {
                                                                 boolean inherited,
                                                                 @NotNull final TypeEvalContext context) {
 
-    final List<T> result = new ArrayList<T>();
-    type.visitMembers(new Processor<PsiElement>() {
-      @Override
-      public boolean process(final PsiElement t) {
-        if (expectedMemberType.isInstance(t)) {
-          @SuppressWarnings("unchecked") // Already checked
-          final T castedElement = (T)t;
-          result.add(castedElement);
-        }
-        return true;
+    final List<T> result = new ArrayList<>();
+    type.visitMembers(t -> {
+      if (expectedMemberType.isInstance(t)) {
+        @SuppressWarnings("unchecked") // Already checked
+        final T castedElement = (T)t;
+        result.add(castedElement);
       }
+      return true;
     }, inherited, context);
     return result;
   }
@@ -83,5 +82,21 @@ public final class PyTypeUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static PyTupleType toPositionalContainerType(@NotNull PsiElement anchor, @Nullable PyType elementType) {
+    return PyTupleType.createHomogeneous(anchor, elementType);
+  }
+
+  @Nullable
+  public static PyCollectionType toKeywordContainerType(@NotNull PsiElement anchor, @Nullable PyType valueType) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
+
+    return Optional
+      .ofNullable(builtinCache.getDictType())
+      .map(PyClassType::getPyClass)
+      .map(dictClass -> new PyCollectionTypeImpl(dictClass, false, Arrays.asList(builtinCache.getStrType(), valueType)))
+      .orElse(null);
   }
 }

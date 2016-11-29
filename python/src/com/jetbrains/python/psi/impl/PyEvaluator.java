@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
@@ -33,7 +34,7 @@ import java.util.*;
  * @author yole
  */
 public class PyEvaluator {
-  private Set<PyExpression> myVisited = new HashSet<PyExpression>();
+  private Set<PyExpression> myVisited = new HashSet<>();
   private Map<String, Object> myNamespace;
   private boolean myEvaluateCollectionItems = true;
   private boolean myEvaluateKeys = true;
@@ -58,6 +59,7 @@ public class PyEvaluator {
     if (expr == null || myVisited.contains(expr)) {
       return null;
     }
+    PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(expr));
     myVisited.add(expr);
     if (expr instanceof PyParenthesizedExpression) {
       return evaluate(((PyParenthesizedExpression)expr).getContainedExpression());
@@ -127,14 +129,14 @@ public class PyEvaluator {
   protected Object evaluateSequenceExpression(PySequenceExpression expr) {
     PyExpression[] elements = expr.getElements();
     if (expr instanceof PyDictLiteralExpression) {
-      Map<Object, Object> result = new HashMap<Object, Object>();
+      Map<Object, Object> result = new HashMap<>();
       for (final PyKeyValueExpression keyValueExpression : ((PyDictLiteralExpression)expr).getElements()) {
         addRecordFromDict(result, keyValueExpression.getKey(), keyValueExpression.getValue());
       }
       return result;
     }
     else {
-      List<Object> result = new ArrayList<Object>();
+      List<Object> result = new ArrayList<>();
       for (PyExpression element : elements) {
         result.add(myEvaluateCollectionItems ? evaluate(element) : element);
       }
@@ -147,7 +149,7 @@ public class PyEvaluator {
       return (String)lhs + (String)rhs;
     }
     if (lhs instanceof List && rhs instanceof List) {
-      List<Object> result = new ArrayList<Object>();
+      List<Object> result = new ArrayList<>();
       result.addAll((List)lhs);
       result.addAll((List)rhs);
       return result;
@@ -192,7 +194,7 @@ public class PyEvaluator {
     if (call.isCallee(PythonFQDNNames.DICT_CLASS)) {
       final Collection<PyTupleExpression> tuples = PsiTreeUtil.findChildrenOfType(call, PyTupleExpression.class);
       if (!tuples.isEmpty()) {
-        final Map<Object, Object> result = new HashMap<Object, Object>();
+        final Map<Object, Object> result = new HashMap<>();
         for (final PyTupleExpression tuple : tuples) {
           final PsiElement[] tupleElements = tuple.getChildren();
           if (tupleElements.length != 2) {

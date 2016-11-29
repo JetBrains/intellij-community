@@ -71,16 +71,6 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
 
   public static List<String> getLookupElementWeights(LookupImpl lookup, boolean hideSingleValued) {
     final Map<LookupElement, List<Pair<String, Object>>> weights = lookup.getRelevanceObjects(lookup.getItems(), hideSingleValued);
-    return ContainerUtil.map(weights.entrySet(), new Function<Map.Entry<LookupElement, List<Pair<String, Object>>>, String>() {
-      @Override
-      public String fun(Map.Entry<LookupElement, List<Pair<String, Object>>> entry) {
-        return entry.getKey().getLookupString() + "\t" + StringUtil.join(entry.getValue(), new Function<Pair<String, Object>, String>() {
-          @Override
-          public String fun(Pair<String, Object> pair) {
-            return pair.first + "=" + pair.second;
-          }
-        }, ", ");
-      }
-    });
+    return ContainerUtil.map(weights.entrySet(), entry -> entry.getKey().getLookupString() + "\t" + StringUtil.join(entry.getValue(), pair -> pair.first + "=" + pair.second, ", "));
   }
 }

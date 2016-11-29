@@ -41,7 +41,7 @@ public class ClassChooserTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("class Bar {}");
     PsiClass aClass =
       JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_LANG_EXCEPTION, GlobalSearchScope.allScope(getProject()));
-    final Ref<ChooseByNameModel> ref = new Ref<ChooseByNameModel>();
+    final Ref<ChooseByNameModel> ref = new Ref<>();
     TreeJavaClassChooserDialog dialog =
       new TreeJavaClassChooserDialog("hey", getProject(), GlobalSearchScope.projectScope(getProject()), null, aClass, null, false) {
         @Override
@@ -59,7 +59,7 @@ public class ClassChooserTest extends LightCodeInsightFixtureTestCase {
     Disposer.register(getTestRootDisposable(), dialog.getDisposable());
 
     ChooseByNameModelEx model = (ChooseByNameModelEx)ref.get();
-    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<String>();
+    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
     model.processNames(processor, false);
     List<String> results = (List<String>)processor.getResults();
     assertEquals(1, results.size());

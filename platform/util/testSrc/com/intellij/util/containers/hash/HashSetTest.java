@@ -37,7 +37,7 @@ public class HashSetTest {
 
   public void testAddContains() {
 
-    final HashSet<Integer> tested = new HashSet<Integer>();
+    final HashSet<Integer> tested = new HashSet<>();
 
     for (int i = 0; i < 1000; ++i) {
 
@@ -60,7 +60,7 @@ public class HashSetTest {
 
   public void testAddContainsRemove() {
 
-    final HashSet<Integer> tested = new HashSet<Integer>();
+    final HashSet<Integer> tested = new HashSet<>();
 
     for (int i = 0; i < 1000; ++i) {
 
@@ -100,9 +100,9 @@ public class HashSetTest {
 
   public void iterator() {
 
-    final HashSet<Integer> tested = new HashSet<Integer>();
+    final HashSet<Integer> tested = new HashSet<>();
 
-    final Set<Integer> set = new java.util.HashSet<Integer>();
+    final Set<Integer> set = new java.util.HashSet<>();
 
 
     for (int i = 0; i < 10000; ++i) {
@@ -128,9 +128,9 @@ public class HashSetTest {
 
   public void iterator2() {
 
-    final HashSet<Integer> tested = new HashSet<Integer>();
+    final HashSet<Integer> tested = new HashSet<>();
 
-    final Set<Integer> set = new HashSet<Integer>();
+    final Set<Integer> set = new HashSet<>();
 
 
     for (int i = 0; i < 10000; ++i) {
@@ -186,7 +186,7 @@ public class HashSetTest {
     long started;
 
 
-    final Set<Integer> map = new java.util.HashSet<Integer>();
+    final Set<Integer> map = new java.util.HashSet<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -209,7 +209,7 @@ public class HashSetTest {
     System.out.println("100 000 000 lookups in java.util.HashSet took " + (System.currentTimeMillis() - started));
 
 
-    final Set<Integer> troveSet = new THashSet<Integer>();
+    final Set<Integer> troveSet = new THashSet<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -232,7 +232,7 @@ public class HashSetTest {
     System.out.println("100 000 000 lookups in THashSet took " + (System.currentTimeMillis() - started));
 
 
-    final HashSet<Integer> tested = new HashSet<Integer>();
+    final HashSet<Integer> tested = new HashSet<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -265,7 +265,7 @@ public class HashSetTest {
     long started;
 
 
-    final Set<Integer> map = new java.util.HashSet<Integer>();
+    final Set<Integer> map = new java.util.HashSet<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -288,7 +288,7 @@ public class HashSetTest {
     System.out.println("100 000 000 lookups in java.util.HashSet took " + (System.currentTimeMillis() - started));
 
 
-    final Set<Integer> troveSet = new THashSet<Integer>();
+    final Set<Integer> troveSet = new THashSet<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -311,7 +311,7 @@ public class HashSetTest {
     System.out.println("100 000 000 lookups in THashSet took " + (System.currentTimeMillis() - started));
 
 
-    final HashSet<Integer> tested = new HashSet<Integer>();
+    final HashSet<Integer> tested = new HashSet<>();
 
     for (int i = 0; i < 100000; ++i) {
 

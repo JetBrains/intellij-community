@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
   public PsiReference getReference() {
     final PsiDocComment comment = PsiTreeUtil.getParentOfType(this, PsiDocComment.class);
     if (comment == null) return null;
-    final PsiDocCommentOwner owner = comment.getOwner();
+    final PsiJavaDocumentedElement owner = comment.getOwner();
     if (!(owner instanceof PsiMethod) &&
         !(owner instanceof PsiClass)) return null;
     final ASTNode valueToken = findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);

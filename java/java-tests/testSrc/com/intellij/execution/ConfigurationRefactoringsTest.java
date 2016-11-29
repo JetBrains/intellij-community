@@ -23,8 +23,6 @@ import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfigurationType;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
@@ -46,7 +44,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
                                                  "}";
   private static final String TEST_CODE = "import junit.framework.TestCase;" +
                                           "public class ATest extends TestCase {" +
-                                          "public static void test() {}" +
+                                          "public void test() {}" +
                                           "private void otherMethod() {}" +
                                           "}";
   private TestSources mySource;
@@ -130,7 +128,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     psiClass = configuration.getConfigurationModule().findClass(configuration.getPersistentData().getMainClassName());
 
     PsiClass otherTest = mySource.createClass("ATest", TEST_CODE);
-    HashSet<PsiMember> members = new HashSet<PsiMember>();
+    HashSet<PsiMember> members = new HashSet<>();
     assertNotNull(psiClass);
     members.add(psiClass.findMethodsByName("test1", false)[0]);
     moveMembers(otherTest, members);
@@ -198,13 +196,8 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   }
 
   private void moveMembers(final PsiClass otherTest, final HashSet<PsiMember> members) {
-    new WriteCommandAction(myProject) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        MockMoveMembersOptions options = new MockMoveMembersOptions(otherTest.getQualifiedName(), members);
-        new MoveMembersProcessor(myProject, null, options).run();
-      }
-    }.executeSilently();
+    MockMoveMembersOptions options = new MockMoveMembersOptions(otherTest.getQualifiedName(), members);
+    new MoveMembersProcessor(myProject, null, options).run();
   }
 
   private void initModule() throws IOException {
@@ -217,24 +210,14 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     VirtualFile pkgFile = mySource.createPackageDir(packageName);
     final PsiDirectory toDir = PsiManager.getInstance(myProject).findDirectory(pkgFile);
     assertNotNull(toDir);
-    new WriteCommandAction(myProject, psiElement.getContainingFile()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        PackageWrapper wrapper = PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(toDir));
-        new MoveClassesOrPackagesProcessor(myProject, new PsiElement[]{psiElement},
-                                           new SingleSourceRootMoveDestination(wrapper, toDir),
-                                           false, false, null).run();
-      }
-    }.executeSilently();
+    PackageWrapper wrapper = PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(toDir));
+    new MoveClassesOrPackagesProcessor(myProject, new PsiElement[]{psiElement},
+                                       new SingleSourceRootMoveDestination(wrapper, toDir),
+                                       false, false, null).run();
   }
 
   private void rename(final PsiElement psiElement, final String newName) {
-    new WriteCommandAction(myProject, psiElement.getContainingFile()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        new RenameProcessor(myProject, psiElement, newName, false, false).run();
-      }
-    }.executeSilently();
+    new RenameProcessor(myProject, psiElement, newName, false, false).run();
   }
 
   @Override

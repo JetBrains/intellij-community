@@ -37,6 +37,8 @@ except AttributeError:
 #the communication slower -- as the variables are being gathered lazily in the latest version of eclipse,
 #this value was raised from 200 to 1000.
 MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
+# Prefix for saving functions return values in locals
+RETURN_VALUES_DICT = '__pydevd_ret_val_dict'
 
 import os
 
@@ -95,11 +97,47 @@ except:
     # Jython 2.1 doesn't accept that construct
     SUPPORT_GEVENT = False
 
-USE_LIB_COPY = SUPPORT_GEVENT and not IS_PY3K and sys.version_info[1] >= 6
-from _pydev_imps import _pydev_threading as threading
+# At the moment gevent supports Python >= 2.6 and Python >= 3.3
+USE_LIB_COPY = SUPPORT_GEVENT and \
+               ((not IS_PY3K and sys.version_info[1] >= 6) or
+                (IS_PY3K and sys.version_info[1] >= 3))
 
-from _pydev_imps import _pydev_thread
-_nextThreadIdLock = _pydev_thread.allocate_lock()
+
+def protect_libraries_from_patching():
+    """
+    In this function we delete some modules from `sys.modules` dictionary and import them again inside
+      `_pydev_saved_modules` in order to save their original copies there. After that we can use these
+      saved modules within the debugger to protect them from patching by external libraries (e.g. gevent).
+    """
+    patched = ['threading', 'thread', '_thread', 'time', 'socket', 'Queue', 'queue', 'select',
+               'xmlrpclib', 'SimpleXMLRPCServer', 'BaseHTTPServer', 'SocketServer',
+               'xmlrpc.client', 'xmlrpc.server', 'http.server', 'socketserver']
+
+    for name in patched:
+        try:
+            __import__(name)
+        except:
+            pass
+
+    patched_modules = dict([(k, v) for k, v in sys.modules.items()
+                            if k in patched])
+
+    for name in patched_modules:
+        del sys.modules[name]
+
+    # import for side effects
+    import _pydev_imps._pydev_saved_modules
+
+    for name in patched_modules:
+        sys.modules[name] = patched_modules[name]
+
+
+if USE_LIB_COPY:
+    protect_libraries_from_patching()
+
+
+from _pydev_imps._pydev_saved_modules import thread
+_nextThreadIdLock = thread.allocate_lock()
 
 #=======================================================================================================================
 # Jython?
@@ -147,9 +185,13 @@ if IS_PY3K:
         return list(d.items())
 
 else:
+    dict_keys = None
     try:
         dict_keys = dict.keys
     except:
+        pass
+
+    if IS_JYTHON or not dict_keys:
         def dict_keys(d):
             return d.keys()
 

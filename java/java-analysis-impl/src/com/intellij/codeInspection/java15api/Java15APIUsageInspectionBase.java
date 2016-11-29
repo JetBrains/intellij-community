@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   private static final String EFFECTIVE_LL = "effectiveLL";
 
   private static final Map<LanguageLevel, Reference<Set<String>>> ourForbiddenAPI = ContainerUtil.newEnumMap(LanguageLevel.class);
-  private static final Set<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
+  private static final Set<String> ourIgnored16ClassesAPI = new THashSet<>(10);
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = ContainerUtil.newEnumMap(LanguageLevel.class);
 
   private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_1_9;
@@ -86,19 +86,19 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
-  private static final Set<String> ourGenerifiedClasses = new HashSet<String>();
+  private static final Set<String> ourGenerifiedClasses = new HashSet<>();
   static {
     ourGenerifiedClasses.add("javax.swing.JComboBox");
     ourGenerifiedClasses.add("javax.swing.ListModel");
     ourGenerifiedClasses.add("javax.swing.JList");
   }
   
-  private static final Set<String> ourDefaultMethods = new HashSet<String>();
+  private static final Set<String> ourDefaultMethods = new HashSet<>();
   static {
     ourDefaultMethods.add("java.util.Iterator#remove()");
   }
 
-  protected LanguageLevel myEffectiveLanguageLevel = null;
+  protected LanguageLevel myEffectiveLanguageLevel;
 
   @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
@@ -106,9 +106,9 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
     Set<String> result = SoftReference.dereference(ref);
     if (result == null) {
-      result = new THashSet<String>(1000);
+      result = new THashSet<>(1000);
       loadForbiddenApi("api" + getShortName(languageLevel) + ".txt", result);
-      ourForbiddenAPI.put(languageLevel, new SoftReference<Set<String>>(result));
+      ourForbiddenAPI.put(languageLevel, new SoftReference<>(result));
     }
     return result;
   }
@@ -211,7 +211,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
         if (effectiveLanguageLevel != null && !effectiveLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
           final JavaSdkVersion version = JavaVersionService.getInstance().getJavaSdkVersion(aClass);
           if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
-            final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+            final List<PsiMethod> methods = new ArrayList<>();
             for (HierarchicalMethodSignature methodSignature : aClass.getVisibleSignatures()) {
               final PsiMethod method = methodSignature.getMethod();
               if (ourDefaultMethods.contains(getSignature(method))) {
@@ -269,7 +269,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
             if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
               for (String generifiedClass : ourGenerifiedClasses) {
                 if (InheritanceUtil.isInheritor((PsiClass)resolved, generifiedClass) && 
-                    !isRawInheritance(generifiedClass, (PsiClass)resolved, new HashSet<PsiClass>())) {
+                    !isRawInheritance(generifiedClass, (PsiClass)resolved, new HashSet<>())) {
                   String message = InspectionsBundle.message("inspection.1.7.problem.descriptor", getJdkName(languageLevel));
                   myHolder.registerProblem(reference, message);
                   break;
@@ -319,7 +319,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE);
+      PsiAnnotation annotation = !method.isConstructor() ? AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE) : null;
       if (annotation != null) {
         final Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
         if (module != null) {

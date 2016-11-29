@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.JBUI;
 import icons.SvnIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +80,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private final WcInfoLoader myDataLoader;
 
-  public static final Topic<Runnable> REFRESH_REQUEST = new Topic<Runnable>("REFRESH_REQUEST", Runnable.class);
+  public static final Topic<Runnable> REFRESH_REQUEST = new Topic<>("REFRESH_REQUEST", Runnable.class);
 
   private MergeInfoHolder getHolder(final String key) {
     final MergeInfoHolder holder = myHolders.get(key);
@@ -105,8 +106,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     myDataLoader = new WcInfoLoader(myVcs, myLocation);
 
-    myMergePanels = new HashMap<String, SvnMergeInfoRootPanelManual>();
-    myHolders = new HashMap<String, MergeInfoHolder>();
+    myMergePanels = new HashMap<>();
+    myHolders = new HashMap<>();
 
     myFilterMerged = new FilterOutMerged();
     myFilterNotMerged = new FilterOutNotMerged();
@@ -117,11 +118,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     myPanel = new JPanel(new GridBagLayout());
     createToolbar();
     final GridBagConstraints gb =
-      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0);
-    gb.insets = new Insets(20, 1, 1, 1);
+      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.NONE, JBUI.insets(1), 0, 0);
+    gb.insets = JBUI.insets(20, 1, 1, 1);
     myPanel.add(new JLabel("Loading..."), gb);
     
-    myPanel.setPreferredSize(new Dimension(200, 60));
+    myPanel.setPreferredSize(JBUI.size(200, 60));
 
     myManager.install(this);
 
@@ -141,7 +142,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   public void reloadPanels() {
-    final Map<Couple<String>, SvnMergeInfoRootPanelManual.InfoHolder> states = new HashMap<Couple<String>, SvnMergeInfoRootPanelManual.InfoHolder>();
+    final Map<Couple<String>, SvnMergeInfoRootPanelManual.InfoHolder> states = new HashMap<>();
     for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
       final String localPath = entry.getKey();
       final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
@@ -189,8 +190,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     final Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Subversion: loading working copies data..", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        final Map<String, SvnMergeInfoRootPanelManual> panels = new HashMap<String, SvnMergeInfoRootPanelManual>();
-        final Map<String, MergeInfoHolder> holders = new HashMap<String, MergeInfoHolder>();
+        final Map<String, SvnMergeInfoRootPanelManual> panels = new HashMap<>();
+        final Map<String, MergeInfoHolder> holders = new HashMap<>();
         final List<WCInfoWithBranches> roots = myDataLoader.loadRoots();
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -345,7 +346,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   public void refresh() {
-    final Map<String, CommittedChangeListsListener> refreshers = new HashMap<String, CommittedChangeListsListener>();
+    final Map<String, CommittedChangeListsListener> refreshers = new HashMap<>();
 
     for (Map.Entry<String, MergeInfoHolder> entry : myHolders.entrySet()) {
       final CommittedChangeListsListener refresher = entry.getValue().createRefresher(false);
@@ -713,7 +714,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
         return changeLists;
       }
 
-      final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+      final List<CommittedChangeList> result = new ArrayList<>();
       for (CommittedChangeList list : changeLists) {
         final ListMergeStatus status = getStatus(list, true);
         if (ListMergeStatus.REFRESHING.equals(status)) {

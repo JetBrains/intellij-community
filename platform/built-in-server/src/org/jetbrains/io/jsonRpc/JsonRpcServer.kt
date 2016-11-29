@@ -15,13 +15,14 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.Consumer
 import com.intellij.util.SmartList
+import com.intellij.util.io.releaseIfError
+import com.intellij.util.io.writeUtf8
 import gnu.trove.THashMap
 import gnu.trove.TIntArrayList
 import io.netty.buffer.*
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
-import org.jetbrains.io.releaseIfError
 import java.io.IOException
 import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicInteger
@@ -39,7 +40,7 @@ private val INT_LIST_TYPE_ADAPTER_FACTORY = object : TypeAdapterFactory {
     if (typeAdapter == null) {
       typeAdapter = IntArrayListTypeAdapter<TIntArrayList>()
     }
-    @Suppress("CAST_NEVER_SUCCEEDS")
+    @Suppress("UNCHECKED_CAST")
     return typeAdapter as TypeAdapter<T>?
   }
 }
@@ -295,7 +296,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
         }
         @Suppress("UNCHECKED_CAST")
         (param as Consumer<StringBuilder>).consume(sb)
-        ByteBufUtilEx.writeUtf8(buffer, sb)
+        buffer.writeUtf8(sb)
         sb.setLength(0)
       }
       else {

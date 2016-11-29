@@ -42,7 +42,7 @@ public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBas
 
   @NotNull
   protected List<String> getTestSpecs() {
-    List<String> specs = new ArrayList<String>();
+    List<String> specs = new ArrayList<>();
 
     switch (myConfig.getTestType()) {
       case TEST_SCRIPT:

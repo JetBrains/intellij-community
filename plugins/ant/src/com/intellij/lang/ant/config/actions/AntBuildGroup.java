@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ import java.util.Set;
 
 public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
-  public void update(AnActionEvent event) {
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
-    Presentation presentation = event.getPresentation();
+  public void update(AnActionEvent e) {
+    Project project = e.getProject();
+    Presentation presentation = e.getPresentation();
     presentation.setEnabled(project != null);
     presentation.setVisible(project != null);
   }
@@ -40,12 +40,12 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project == null) return AnAction.EMPTY_ARRAY;
 
-    final List<AnAction> children = new ArrayList<AnAction>();
+    final List<AnAction> children = new ArrayList<>();
     final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(project);
-    for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+    for (final AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       final String name = buildFile.getPresentableName();
       DefaultActionGroup subgroup = new DefaultActionGroup();
       subgroup.getTemplatePresentation().setText(name, false);

@@ -56,16 +56,16 @@ public class FileDirPathFromParentMacro extends Macro {
     String surroundedSubDir = surroundWithSlashes(FileUtil.toSystemIndependentName(args[0]));
     String surroundedDirPath = surroundWithSlashes(dirPath);
     if (surroundedSubDir.length() == 1) {
-      return surroundedDirPath.substring(1);
+      return FileUtil.toSystemDependentName(surroundedDirPath.substring(1));
     }
     int ind = lastIndexOf(surroundedDirPath,
                           surroundedSubDir,
                           surroundedDirPath.length(),
                           !SystemInfo.isFileSystemCaseSensitive);
     if (ind >= 0) {
-      return surroundedDirPath.substring(ind + surroundedSubDir.length());
+      return FileUtil.toSystemDependentName(surroundedDirPath.substring(ind + surroundedSubDir.length()));
     }
-    return dirPath.endsWith(PATH_DELIMITER) ? dirPath : dirPath + PATH_DELIMITER;
+    return FileUtil.toSystemDependentName(dirPath.endsWith(PATH_DELIMITER) ? dirPath : dirPath + PATH_DELIMITER);
   }
 
   private static int lastIndexOf(@NotNull CharSequence buffer, @NotNull String pattern, int maxIndex, boolean ignoreCase) {

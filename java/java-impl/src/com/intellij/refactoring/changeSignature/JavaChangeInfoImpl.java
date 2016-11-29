@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,14 +49,14 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   final ParameterInfoImpl[] newParms;
   ThrownExceptionInfo[] newExceptions;
   final boolean[] toRemoveParm;
-  boolean isVisibilityChanged = false;
-  boolean isNameChanged = false;
-  boolean isReturnTypeChanged = false;
-  boolean isParameterSetOrOrderChanged = false;
-  boolean isExceptionSetChanged = false;
-  boolean isExceptionSetOrOrderChanged = false;
-  boolean isParameterNamesChanged = false;
-  boolean isParameterTypesChanged = false;
+  boolean isVisibilityChanged;
+  boolean isNameChanged;
+  boolean isReturnTypeChanged;
+  boolean isParameterSetOrOrderChanged;
+  boolean isExceptionSetChanged;
+  boolean isExceptionSetOrOrderChanged;
+  boolean isParameterNamesChanged;
+  boolean isParameterTypesChanged;
   boolean isPropagationEnabled = true;
   final boolean wasVararg;
   final boolean retainsVarargs;
@@ -68,6 +68,8 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   final boolean isGenerateDelegate;
   final Set<PsiMethod> propagateParametersMethods;
   final Set<PsiMethod> propagateExceptionsMethods;
+
+  private boolean myCheckUnusedParameter = false;
 
   /**
    * @param newExceptions null if not changed
@@ -201,6 +203,15 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
   }
 
+  @Override
+  public boolean checkUnusedParameter() {
+    return myCheckUnusedParameter;
+  }
+
+  public void setCheckUnusedParameter() {
+    myCheckUnusedParameter = true;
+  }
+
   protected void fillOldParams(PsiMethod method) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     oldParameterNames = new String[parameters.length];
@@ -214,7 +225,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
     if (!method.isConstructor()){
       try {
-        isReturnTypeChanged = !deepTypeEqual(newReturnType.getType(this.method, method.getManager()), this.method.getReturnType());
+        isReturnTypeChanged = !deepTypeEqual(newReturnType.getType(this.method), this.method.getReturnType());
       }
       catch (IncorrectOperationException e) {
         isReturnTypeChanged = true;
@@ -297,7 +308,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   public ParameterInfoImpl[] getCreatedParmsInfoWithoutVarargs() {
-    List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
+    List<ParameterInfoImpl> result = new ArrayList<>();
     for (ParameterInfoImpl newParm : newParms) {
       if (newParm.oldParameterIndex < 0 && !newParm.isVarargType()) {
         result.add(newParm);
@@ -309,7 +320,8 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   @Nullable
   public PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
     if (defaultValues[i] != null) return defaultValues[i];
-    return newParms[i].getValue(expr);
+    final PsiElement valueAtCallSite = newParms[i].getActualValue(expr, PsiSubstitutor.EMPTY);
+    return valueAtCallSite instanceof PsiExpression ? (PsiExpression)valueAtCallSite : null;
   }
 
   public boolean isVisibilityChanged() {

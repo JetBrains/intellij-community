@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 public class OverlyComplexBooleanExpressionInspectionBase extends BaseInspection {
-  protected static final Set<IElementType> s_booleanOperators = new HashSet<IElementType>(5);
+  protected static final Set<IElementType> s_booleanOperators = new HashSet<>(5);
 
   static {
     s_booleanOperators.add(JavaTokenType.ANDAND);
@@ -147,11 +148,7 @@ public class OverlyComplexBooleanExpressionInspectionBase extends BaseInspection
       if (expression instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         final PsiExpression[] operands = polyadicExpression.getOperands();
-        int count = 0;
-        for (PsiExpression operand : operands) {
-          count += countTerms(operand);
-        }
-        return count;
+        return Arrays.stream(operands).mapToInt(this::countTerms).sum();
       }
       else if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;

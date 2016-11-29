@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,8 +122,7 @@ public class TargetChooserDialog extends DialogWrapper {
 
     DefaultMutableTreeNode selectedNode = null;
     final AntConfiguration antConfiguration = AntConfigurationImpl.getInstance(myProject);
-    final AntBuildFile[] antBuildFiles = antConfiguration.getBuildFiles();
-    for (AntBuildFile buildFile : antBuildFiles) {
+    for (AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       final DefaultMutableTreeNode buildFileNode = new DefaultMutableTreeNode(buildFile);
       DefaultMutableTreeNode selection = processFileTargets(antConfiguration.getMetaTargets(buildFile), buildFile, buildFileNode);
       if (selection != null){

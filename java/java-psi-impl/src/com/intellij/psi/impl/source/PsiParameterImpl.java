@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import java.util.Arrays;
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
 
-  private volatile Reference<PsiType> myCachedType = null;
+  private volatile Reference<PsiType> myCachedType;
 
   public PsiParameterImpl(@NotNull PsiParameterStub stub) {
     this(stub, JavaStubElementTypes.PARAMETER);
@@ -113,7 +113,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   @Override
   @NotNull
   public final String getName() {
-    PsiParameterStub stub = getStub();
+    PsiParameterStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }
@@ -141,23 +141,19 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   @NotNull
+  @SuppressWarnings("Duplicates")
   public PsiType getType() {
     PsiParameterStub stub = getStub();
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
-      if (type != null) return type;
-
-      String typeText = TypeInfo.createTypeText(stub.getType(true));
-      assert typeText != null : stub;
-      try {
+      if (type == null) {
+        String typeText = TypeInfo.createTypeText(stub.getType(false));
+        assert typeText != null : stub;
         type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
+        type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
         myCachedType = new SoftReference<PsiType>(type);
-        return type;
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
+      return type;
     }
 
     myCachedType = null;
@@ -232,6 +228,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
   }
 
+  @Override
   public String toString() {
     return "PsiParameter:" + getName();
   }
@@ -272,7 +269,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public boolean isVarArgs() {
-    final PsiParameterStub stub = getStub();
+    final PsiParameterStub stub = getGreenStub();
     if (stub != null) {
       return stub.isParameterTypeEllipsis();
     }
@@ -322,5 +319,4 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
     return this;
   }
-
 }

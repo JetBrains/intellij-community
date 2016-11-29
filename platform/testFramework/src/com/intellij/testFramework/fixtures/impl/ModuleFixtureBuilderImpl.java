@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -45,16 +46,21 @@ import java.util.List;
 public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements ModuleFixtureBuilder<T> {
   private static int ourIndex;
 
-  private final ModuleType myModuleType;
-  protected final List<String> myContentRoots = new ArrayList<String>();
-  protected final List<String> mySourceRoots = new ArrayList<String>();
+  private final NotNullProducer<? extends ModuleType> myModuleTypeProducer;
+  protected final List<String> myContentRoots = new ArrayList<>();
+  protected final List<String> mySourceRoots = new ArrayList<>();
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
   private T myModuleFixture;
   protected String myOutputPath;
   protected String myTestOutputPath;
 
   public ModuleFixtureBuilderImpl(@NotNull final ModuleType moduleType, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
-    myModuleType = moduleType;
+    myModuleTypeProducer = () -> moduleType;
+    myFixtureBuilder = fixtureBuilder;
+  }
+
+  public ModuleFixtureBuilderImpl(@NotNull final NotNullProducer<? extends ModuleType> moduleTypeProducer, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
+    myModuleTypeProducer = moduleTypeProducer;
     myFixtureBuilder = fixtureBuilder;
   }
 
@@ -85,7 +91,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     final Project project = myFixtureBuilder.getFixture().getProject();
     Assert.assertNotNull(project);
     final String moduleFilePath = PathUtil.getParentPath(project.getBasePath()) + "/" + getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION;
-    return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleType.getId());
+    return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleTypeProducer.produce().getId());
   }
 
   private static int getNextIndex() {
@@ -111,12 +117,9 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   Module buildModule() {
     final Module[] module = {null};
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        module[0] = createModule();
-        initModule(module[0]);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      module[0] = createModule();
+      initModule(module[0]);
     });
 
     return module[0];

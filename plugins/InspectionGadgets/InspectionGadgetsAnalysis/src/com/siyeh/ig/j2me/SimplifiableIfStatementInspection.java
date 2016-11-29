@@ -210,15 +210,10 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
   }
 
   private static class SimplifiableIfStatementFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
@@ -226,8 +221,8 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
-      List<PsiComment> before = new ArrayList<PsiComment>();
-      List<PsiComment> after = new ArrayList<PsiComment>();
+      List<PsiComment> before = new ArrayList<>();
+      List<PsiComment> after = new ArrayList<>();
       collectComments(ifStatement, true, before, after);
       final String newStatementText = calculateReplacementStatement(ifStatement);
       if (newStatementText == null) {
@@ -385,7 +380,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
       }
       final PsiExpression thenLhs = thenExpression.getLExpression();
       final PsiExpression elseLhs = elseExpression.getLExpression();
-      return EquivalenceChecker.expressionsAreEquivalent(thenLhs, elseLhs);
+      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenLhs, elseLhs);
     }
 
     public static boolean isAssignment(@Nullable PsiStatement statement) {

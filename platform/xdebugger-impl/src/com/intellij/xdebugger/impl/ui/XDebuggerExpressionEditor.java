@@ -15,15 +15,18 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -35,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 
 /**
  * @author nik
@@ -50,7 +54,8 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
                                    @Nullable XSourcePosition sourcePosition,
                                    @NotNull XExpression text,
                                    final boolean multiline,
-                                   boolean editorFont) {
+                                   boolean editorFont,
+                                   boolean showEditor) {
     super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition);
     myExpression = XExpressionImpl.changeMode(text, getMode());
     myEditorTextField =
@@ -58,9 +63,14 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
+        editor.setHorizontalScrollbarVisible(multiline);
         editor.setVerticalScrollbarVisible(multiline);
+        editor.getSettings().setUseSoftWraps(isUseSoftWraps());
         editor.getColorsScheme().setEditorFontName(getFont().getFontName());
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
+        if (multiline) {
+          editor.getContentComponent().setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2)));
+        }
         return editor;
       }
 
@@ -78,7 +88,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
       myEditorTextField.setFontInheritedFromLAF(false);
       myEditorTextField.setFont(EditorUtil.getEditorFont());
     }
-    myComponent = addChooseFactoryLabel(myEditorTextField, multiline);
+    myComponent = decorate(myEditorTextField, multiline, showEditor);
   }
 
   @Override
@@ -99,7 +109,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    return getEditorsProvider().createExpression(getProject(), myEditorTextField.getDocument(), myExpression.getLanguage(), getMode());
+    return getEditorsProvider().createExpression(getProject(), myEditorTextField.getDocument(), myExpression.getLanguage(), myExpression.getMode());
   }
 
   @Override
@@ -123,5 +133,19 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   @Override
   public void selectAll() {
     myEditorTextField.selectAll();
+  }
+
+  private static final String SOFT_WRAPS_KEY = "XDebuggerExpressionEditor_Use_Soft_Wraps";
+
+  public boolean isUseSoftWraps() {
+    return PropertiesComponent.getInstance().getBoolean(SOFT_WRAPS_KEY);
+  }
+
+  public void setUseSoftWraps(boolean use) {
+    PropertiesComponent.getInstance().setValue(SOFT_WRAPS_KEY, use);
+    Editor editor = getEditor();
+    if (editor != null) {
+      AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, null, use);
+    }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -15,6 +16,12 @@ public class RedundantCast15Test extends InspectionTestCase {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     ModuleRootModificationUtil.setModuleSdk(getModule(), getTestProjectSdk());
+  }
+
+  @Override
+  protected Sdk getTestProjectSdk() {
+    // in jdk 8 some casts are unnecessary
+    return IdeaTestUtil.getMockJdk17();
   }
 
   private void doTest() throws Exception {

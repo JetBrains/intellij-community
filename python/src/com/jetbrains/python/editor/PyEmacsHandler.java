@@ -243,7 +243,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
    *                      stored by their indent size in ascending order
    */
   private static List<LineInfo> collectIndentsGreaterOrEqualToCurrent(@NotNull ChangeIndentContext context, int targetLine) {
-    List<LineInfo> result = new ArrayList<LineInfo>();
+    List<LineInfo> result = new ArrayList<>();
     int targetLineIndent = getLineIndent(context, targetLine);
     int indentUsedLastTime = Integer.MAX_VALUE;
     for (int i = targetLine - 1; i >= 0 && indentUsedLastTime > targetLineIndent; i--) {

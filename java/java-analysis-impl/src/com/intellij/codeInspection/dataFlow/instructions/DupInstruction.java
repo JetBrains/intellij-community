@@ -45,7 +45,7 @@ public class DupInstruction extends Instruction {
     if (myDuplicationCount == 1 && myValueCount == 1) {
       memState.push(memState.peek());
     } else {
-      List<DfaValue> values = new ArrayList<DfaValue>(myValueCount);
+      List<DfaValue> values = new ArrayList<>(myValueCount);
       for (int i = 0; i < myValueCount; i++) {
         values.add(memState.pop());
       }

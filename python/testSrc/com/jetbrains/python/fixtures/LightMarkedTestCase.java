@@ -93,7 +93,7 @@ public abstract class LightMarkedTestCase extends PyTestCase {
     Pattern pat = Pattern.compile(markerRegexp);
     Matcher mat = pat.matcher(fileText);
     int rest_index = 0; // from here on fileText is not yet looked at
-    Map<String, Integer> offsets = new HashMap<String, Integer>();
+    Map<String, Integer> offsets = new HashMap<>();
     final StringBuffer text = new StringBuffer();
     while (mat.find(rest_index)) {
       String mark = mat.group();
@@ -105,7 +105,7 @@ public abstract class LightMarkedTestCase extends PyTestCase {
     if (rest_index < fileText.length()) text.append(fileText.substring(rest_index));
 
     // create a file and map marks to PSI elements
-    Map<String, PsiElement> result = new HashMap<String, PsiElement>();
+    Map<String, PsiElement> result = new HashMap<>();
     myFile = myFixture.addFileToProject(fileName, text.toString());
     myFixture.configureFromExistingVirtualFile(myFile.getVirtualFile());
     for (Map.Entry<String, Integer> entry : offsets.entrySet()) {

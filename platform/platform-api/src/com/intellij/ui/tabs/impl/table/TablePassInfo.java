@@ -27,9 +27,9 @@ import java.util.List;
 import java.util.Map;
 
 public class TablePassInfo extends LayoutPassInfo {
-  final List<TableRow> table = new ArrayList<TableRow>();
+  final List<TableRow> table = new ArrayList<>();
   public Rectangle toFitRec;
-  final Map<TabInfo, TableRow> myInfo2Row = new HashMap<TabInfo, TableRow>();
+  final Map<TabInfo, TableRow> myInfo2Row = new HashMap<>();
 
   int requiredWidth;
   int requiredRows;

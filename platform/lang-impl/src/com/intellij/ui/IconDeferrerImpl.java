@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,7 @@ public class IconDeferrerImpl extends IconDeferrer {
   };
   private long myLastClearTimestamp;
   @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      clear();
-    }
-  });
+  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(this::clear);
 
   public IconDeferrerImpl(MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
@@ -57,7 +52,7 @@ public class IconDeferrerImpl extends IconDeferrer {
         clear();
       }
     });
-    connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+    connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void afterProjectClosed(@NotNull Project project) {
         clear();
@@ -91,13 +86,13 @@ public class IconDeferrerImpl extends IconDeferrer {
       Icon result = myIconsCache.get(param);
       if (result == null) {
         final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<T>(base, param, evaluator, new DeferredIconImpl.IconListener<T>() {
+        result = new DeferredIconImpl<>(base, param, evaluator, new DeferredIconImpl.IconListener<T>() {
           @Override
           public void evalDone(DeferredIconImpl<T> source, T key, @NotNull Icon r) {
             synchronized (LOCK) {
               // check if our results is not outdated yet
               if (started == myLastClearTimestamp) {
-                myIconsCache.put(key, autoUpdatable ? source: r);
+                myIconsCache.put(key, autoUpdatable ? source : r);
               }
             }
           }

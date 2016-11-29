@@ -15,10 +15,12 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.Patches;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -29,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +42,6 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Handy class for reading data from HTTP connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.
@@ -52,6 +54,8 @@ import java.util.zip.GZIPInputStream;
  * }</pre>
  */
 public final class HttpRequests {
+  private static final Logger LOG = Logger.getInstance(HttpRequests.class);
+
   private static final int BLOCK_SIZE = 16 * 1024;
   private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
 
@@ -59,6 +63,9 @@ public final class HttpRequests {
 
 
   public interface Request {
+    @NotNull
+    String getURL();
+
     @NotNull
     URLConnection getConnection() throws IOException;
 
@@ -112,6 +119,11 @@ public final class HttpRequests {
     }
 
     @Override
+    public String getMessage() {
+      return "Status: " + myStatusCode;
+    }
+
+    @Override
     public String toString() {
       return super.toString() + ". Status=" + myStatusCode + ", Url=" + myUrl;
     }
@@ -124,17 +136,23 @@ public final class HttpRequests {
   }
 
   @NotNull
-  public static String createErrorMessage(@NotNull IOException e, @NotNull Request request, boolean includeHeaders) throws IOException {
-    URLConnection connection = request.getConnection();
+  public static String createErrorMessage(@NotNull IOException e, @NotNull Request request, boolean includeHeaders) {
     StringBuilder builder = new StringBuilder();
-    builder.append("Cannot download '").append(connection.getURL().toExternalForm()).append("': ").append(e.getMessage());
-    if (includeHeaders) {
-      builder.append("\n, headers: ").append(connection.getHeaderFields());
+
+    builder.append("Cannot download '").append(request.getURL()).append("': ").append(e.getMessage());
+
+    try {
+      URLConnection connection = request.getConnection();
+      if (includeHeaders) {
+        builder.append("\n, headers: ").append(connection.getHeaderFields());
+      }
+      if (connection instanceof HttpURLConnection) {
+        HttpURLConnection httpConnection = (HttpURLConnection)connection;
+        builder.append("\n, response: ").append(httpConnection.getResponseCode()).append(' ').append(httpConnection.getResponseMessage());
+      }
     }
-    if (connection instanceof HttpURLConnection) {
-      HttpURLConnection httpConnection = (HttpURLConnection)connection;
-      builder.append("\n, response: ").append(httpConnection.getResponseCode()).append(' ').append(httpConnection.getResponseMessage());
-    }
+    catch (Throwable ignored) { }
+
     return builder.toString();
   }
 
@@ -236,19 +254,27 @@ public final class HttpRequests {
 
   private static class RequestImpl implements Request, AutoCloseable {
     private final RequestBuilderImpl myBuilder;
+    private String myUrl;
     private URLConnection myConnection;
     private InputStream myInputStream;
     private BufferedReader myReader;
 
     private RequestImpl(RequestBuilderImpl builder) {
       myBuilder = builder;
+      myUrl = myBuilder.myUrl;
+    }
+
+    @NotNull
+    @Override
+    public String getURL() {
+      return myUrl;
     }
 
     @NotNull
     @Override
     public URLConnection getConnection() throws IOException {
       if (myConnection == null) {
-        myConnection = openConnection(myBuilder);
+        myConnection = openConnection(myBuilder, this);
       }
       return myConnection;
     }
@@ -259,8 +285,7 @@ public final class HttpRequests {
       if (myInputStream == null) {
         myInputStream = getConnection().getInputStream();
         if (myBuilder.myGzip && "gzip".equalsIgnoreCase(getConnection().getContentEncoding())) {
-          //noinspection IOResourceOpenedButNotSafelyClosed
-          myInputStream = new GZIPInputStream(myInputStream);
+          myInputStream = CountingGZIPInputStream.create(myInputStream);
         }
       }
       return myInputStream;
@@ -351,15 +376,20 @@ public final class HttpRequests {
   }
 
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
-    if (!UrlClassLoader.PARALLEL_CAPABLE) {
+    LOG.assertTrue(ApplicationManager.getApplication() == null ||
+                   ApplicationManager.getApplication().isUnitTestMode() ||
+                   !ApplicationManager.getApplication().isReadAccessAllowed(),
+                   "Network shouldn't be accessed in EDT or inside read action");
+
+    ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
+    if (Patches.JDK_BUG_ID_8032832 && !UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
       // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
-      ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-      try (URLClassLoader cl = new URLClassLoader(new URL[0], oldClassLoader)) {
+      try (URLClassLoader cl = new URLClassLoader(new URL[0], contextLoader)) {
         Thread.currentThread().setContextClassLoader(cl);
         return doProcess(builder, processor);
       }
       finally {
-        Thread.currentThread().setContextClassLoader(oldClassLoader);
+        Thread.currentThread().setContextClassLoader(contextLoader);
       }
     }
     else {
@@ -390,12 +420,16 @@ public final class HttpRequests {
     return CharsetToolkit.UTF8_CHARSET;
   }
 
-  private static URLConnection openConnection(RequestBuilderImpl builder) throws IOException {
-    String url = builder.myUrl;
+  private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
+    String url = request.myUrl;
 
     for (int i = 0; i < builder.myRedirectLimit; i++) {
       if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
-        url = "https:" + url.substring(5);
+        request.myUrl = url = "https:" + url.substring(5);
+      }
+
+      if (url.startsWith("https:") && ApplicationManager.getApplication() != null) {
+        CertificateManager.getInstance();
       }
 
       URLConnection connection;
@@ -435,13 +469,15 @@ public final class HttpRequests {
       }
 
       if (connection instanceof HttpURLConnection) {
+        if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
         int responseCode = ((HttpURLConnection)connection).getResponseCode();
+        if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
 
         if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
           ((HttpURLConnection)connection).disconnect();
 
           if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
-            url = connection.getHeaderField("Location");
+            request.myUrl = url = connection.getHeaderField("Location");
             if (url != null) {
               continue;
             }

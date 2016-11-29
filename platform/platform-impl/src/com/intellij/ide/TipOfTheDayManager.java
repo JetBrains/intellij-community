@@ -33,16 +33,12 @@ public class TipOfTheDayManager implements StartupActivity, DumbAware {
 
     myVeryFirstProjectOpening = false;
 
-    ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
-      public void run() {
+    ToolWindowManager.getInstance(project).invokeLater(() -> {
+      if (project.isDisposed()) return;
+      ToolWindowManager.getInstance(project).invokeLater(() -> {
         if (project.isDisposed()) return;
-        ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
-          public void run() {
-            if (project.isDisposed()) return;
-            TipDialog.createForProject(project).show();
-          }
-        });
-      }
+        TipDialog.createForProject(project).show();
+      });
     });
   }
 }

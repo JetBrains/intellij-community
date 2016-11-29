@@ -27,8 +27,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -59,13 +57,11 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Runnable action = new Runnable() {
       public void run() {
-        final List<VcsException> allExceptions = new ArrayList<VcsException>();
-        ChangesUtil.processFilePathsByVcs(project, files, new ChangesUtil.PerVcsProcessor<FilePath>() {
-          public void process(final AbstractVcs vcs, final List<FilePath> items) {
-            final List<VcsException> exceptions = processFiles(vcs, files);
-            if (exceptions != null) {
-              allExceptions.addAll(exceptions);
-            }
+        final List<VcsException> allExceptions = new ArrayList<>();
+        ChangesUtil.processFilePathsByVcs(project, files, (vcs, items) -> {
+          final List<VcsException> exceptions = processFiles(vcs, files);
+          if (exceptions != null) {
+            allExceptions.addAll(exceptions);
           }
         });
 
@@ -81,12 +77,7 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
     if (synchronously()) {
       action.run();
     } else {
-      progressManager.runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, action);
-        }
-      }, getName(), true, project);
+      progressManager.runProcessWithProgressSynchronously(action, getName(), true, project);
     }
   }
 

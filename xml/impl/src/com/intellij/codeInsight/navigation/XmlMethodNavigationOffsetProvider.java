@@ -35,7 +35,7 @@ public class XmlMethodNavigationOffsetProvider implements MethodNavigationOffset
       elementAt = PsiTreeUtil.getParentOfType(elementAt, XmlTag.class);
       if (elementAt != null) element = elementAt;
 
-      ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> array = new ArrayList<>();
       addNavigationElements(array, element);
       return MethodUpDownUtil.offsetsFromElements(array);
     }

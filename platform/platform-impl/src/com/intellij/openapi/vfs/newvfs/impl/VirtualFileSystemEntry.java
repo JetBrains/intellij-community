@@ -16,9 +16,9 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -48,7 +48,7 @@ import java.nio.charset.Charset;
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
-  protected static final PersistentFS ourPersistence = PersistentFS.getInstance();
+  static final PersistentFS ourPersistence = PersistentFS.getInstance();
 
   private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
 
@@ -56,16 +56,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
           static final int IS_HIDDEN_FLAG =   0x02000000;
   private static final int INDEXED_FLAG =     0x04000000;
           static final int CHILDREN_CACHED =  0x08000000; // makes sense for directory only
+  static final int SYSTEM_LINE_SEPARATOR_DETECTED = CHILDREN_CACHED; // makes sense for non-directory file only
   private static final int DIRTY_FLAG =       0x10000000;
           static final int IS_SYMLINK_FLAG =  0x20000000;
   private static final int HAS_SYMLINK_FLAG = 0x40000000;
           static final int IS_SPECIAL_FLAG =  0x80000000;
-          static final int SYSTEM_LINE_SEPARATOR_DETECTED = CHILDREN_CACHED; // makes sense only for non-directory file
 
   static final int ALL_FLAGS_MASK =
     DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
 
-  protected final VfsData.Segment mySegment;
+  final VfsData.Segment mySegment;
   private final VirtualDirectoryImpl myParent;
   protected final int myId;
 
@@ -74,7 +74,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     assert (~ALL_FLAGS_MASK) == LocalTimeCounter.TIME_MASK;
   }
 
-  public VirtualFileSystemEntry(int id, VfsData.Segment segment, VirtualDirectoryImpl parent) {
+  public VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
     mySegment = segment;
     myId = id;
     myParent = parent;
@@ -98,7 +98,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @NotNull
   @Override
   public CharSequence getNameSequence() {
-    return FileNameCache.getVFileName(mySegment.getNameId(myId));
+    return FileNameCache.getVFileName(getNameId());
+  }
+
+  public final int getNameId() {
+    return mySegment.getNameId(myId);
   }
 
   @Override
@@ -151,7 +155,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  protected void markDirtyInternal() {
+  void markDirtyInternal() {
     setFlagInt(DIRTY_FLAG, true);
   }
 
@@ -198,11 +202,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public void delete(final Object requestor) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     ourPersistence.deleteFile(requestor, this);
   }
 
   @Override
   public void rename(final Object requestor, @NotNull @NonNls final String newName) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
     validateName(newName);
     ourPersistence.renameFile(requestor, this, newName);
@@ -250,26 +256,20 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
-      @Override
-      public VirtualFile compute() throws IOException {
-        return ourPersistence.copyFile(requestor, VirtualFileSystemEntry.this, newParent, copyName);
-      }
-    });
+    return EncodingRegistry.doActionAndRestoreEncoding(this, () -> ourPersistence.copyFile(requestor, this, newParent, copyName));
   }
 
   @Override
   public void move(final Object requestor, @NotNull final VirtualFile newParent) throws IOException {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
-    EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
-      @Override
-      public VirtualFile compute() throws IOException {
-        ourPersistence.moveFile(requestor, VirtualFileSystemEntry.this, newParent);
-        return VirtualFileSystemEntry.this;
-      }
+    EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
+      ourPersistence.moveFile(requestor, this, newParent);
+      return this;
     });
   }
 
@@ -328,6 +328,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void setParent(@NotNull VirtualFile newParent) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
 
@@ -379,7 +381,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
         return super.getCharset();
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(getPath(), e);
       }
     }
     return charset;
@@ -402,7 +404,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return super.is(property);
   }
 
-  public void updateProperty(String property, boolean value) {
+  public void updateProperty(@NotNull String property, boolean value) {
     if (property == PROP_WRITABLE) setFlagInt(IS_WRITABLE_FLAG, value);
     if (property == PROP_HIDDEN) setFlagInt(IS_HIDDEN_FLAG, value);
   }

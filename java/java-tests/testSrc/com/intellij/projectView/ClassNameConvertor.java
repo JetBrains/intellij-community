@@ -41,7 +41,7 @@ class ClassNameConvertor implements TreeStructureProvider {
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
     for (final AbstractTreeNode aChildren : children) {
       ProjectViewNode treeNode = (ProjectViewNode)aChildren;

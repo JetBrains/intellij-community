@@ -89,40 +89,37 @@ public class ExecutionHelper {
     if (ApplicationManager.getApplication().isUnitTestMode() && !errors.isEmpty()) {
       throw new RuntimeException(errors.get(0));
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        if (errors.isEmpty() && warnings.isEmpty()) {
-          removeContents(null, myProject, tabDisplayName);
-          return;
-        }
-
-        final ErrorViewPanel errorTreeView = new ErrorViewPanel(myProject);
-        try {
-          openMessagesView(errorTreeView, myProject, tabDisplayName);
-        }
-        catch (NullPointerException e) {
-          final StringBuilder builder = new StringBuilder();
-          builder.append("Exceptions occurred:");
-          for (final Exception exception : errors) {
-            builder.append("\n");
-            builder.append(exception.getMessage());
-          }
-          builder.append("Warnings occurred:");
-          for (final Exception exception : warnings) {
-            builder.append("\n");
-            builder.append(exception.getMessage());
-          }
-          Messages.showErrorDialog(builder.toString(), "Execution Error");
-          return;
-        }
-
-        addMessages(MessageCategory.ERROR, errors, errorTreeView, file, "Unknown Error");
-        addMessages(MessageCategory.WARNING, warnings, errorTreeView, file, "Unknown Warning");
-
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
+      if (errors.isEmpty() && warnings.isEmpty()) {
+        removeContents(null, myProject, tabDisplayName);
+        return;
       }
+
+      final ErrorViewPanel errorTreeView = new ErrorViewPanel(myProject);
+      try {
+        openMessagesView(errorTreeView, myProject, tabDisplayName);
+      }
+      catch (NullPointerException e) {
+        final StringBuilder builder = new StringBuilder();
+        builder.append("Exceptions occurred:");
+        for (final Exception exception : errors) {
+          builder.append("\n");
+          builder.append(exception.getMessage());
+        }
+        builder.append("Warnings occurred:");
+        for (final Exception exception : warnings) {
+          builder.append("\n");
+          builder.append(exception.getMessage());
+        }
+        Messages.showErrorDialog(builder.toString(), "Execution Error");
+        return;
+      }
+
+      addMessages(MessageCategory.ERROR, errors, errorTreeView, file, "Unknown Error");
+      addMessages(MessageCategory.WARNING, warnings, errorTreeView, file, "Unknown Warning");
+
+      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
     });
   }
 
@@ -154,62 +151,59 @@ public class ExecutionHelper {
       throw new RuntimeException("STDOUT:\n" + stdout + "\nSTDERR:\n" + stderr);
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
 
-        final String stdOutTitle = "[Stdout]:";
-        final String stderrTitle = "[Stderr]:";
-        final ErrorViewPanel errorTreeView = new ErrorViewPanel(myProject);
-        try {
-          openMessagesView(errorTreeView, myProject, tabDisplayName);
-        }
-        catch (NullPointerException e) {
-          Messages.showErrorDialog(stdOutTitle + "\n" + (stdout != null ? stdout : "<empty>") + "\n" + stderrTitle + "\n"
-                                   + (stderr != null ? stderr : "<empty>"), "Process Output");
-          return;
-        }
+      final String stdOutTitle = "[Stdout]:";
+      final String stderrTitle = "[Stderr]:";
+      final ErrorViewPanel errorTreeView = new ErrorViewPanel(myProject);
+      try {
+        openMessagesView(errorTreeView, myProject, tabDisplayName);
+      }
+      catch (NullPointerException e) {
+        Messages.showErrorDialog(stdOutTitle + "\n" + (stdout != null ? stdout : "<empty>") + "\n" + stderrTitle + "\n"
+                                 + (stderr != null ? stderr : "<empty>"), "Process Output");
+        return;
+      }
 
-        if (!StringUtil.isEmpty(stdout)) {
-          final String[] stdoutLines = StringUtil.splitByLines(stdout);
-          if (stdoutLines.length > 0) {
-            if (StringUtil.isEmpty(stderr)) {
-              // Only stdout available
+      if (!StringUtil.isEmpty(stdout)) {
+        final String[] stdoutLines = StringUtil.splitByLines(stdout);
+        if (stdoutLines.length > 0) {
+          if (StringUtil.isEmpty(stderr)) {
+            // Only stdout available
+            errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, file, -1, -1, null);
+          }
+          else {
+            // both stdout and stderr available, show as groups
+            if (file == null) {
+              errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, stdOutTitle, NonNavigatable.INSTANCE, null, null, null);
+            }
+            else {
+              errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stdOutTitle}, file, -1, -1, null);
+              errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{""}, file, -1, -1, null);
               errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, file, -1, -1, null);
             }
-            else {
-              // both stdout and stderr available, show as groups
-              if (file == null) {
-                errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, stdOutTitle, NonNavigatable.INSTANCE, null, null, null);
-              }
-              else {
-                errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stdOutTitle}, file, -1, -1, null);
-                errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{""}, file, -1, -1, null);
-                errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, file, -1, -1, null);
-              }
-            }
           }
         }
-        if (!StringUtil.isEmpty(stderr)) {
-          final String[] stderrLines = StringUtil.splitByLines(stderr);
-          if (stderrLines.length > 0) {
-            if (file == null) {
-              errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, stderrTitle, NonNavigatable.INSTANCE, null, null, null);
-            }
-            else {
-              errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stderrTitle}, file, -1, -1, null);
-              errorTreeView.addMessage(MessageCategory.SIMPLE, ArrayUtil.EMPTY_STRING_ARRAY, file, -1, -1, null);
-              errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, file, -1, -1, null);
-            }
+      }
+      if (!StringUtil.isEmpty(stderr)) {
+        final String[] stderrLines = StringUtil.splitByLines(stderr);
+        if (stderrLines.length > 0) {
+          if (file == null) {
+            errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, stderrTitle, NonNavigatable.INSTANCE, null, null, null);
+          }
+          else {
+            errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stderrTitle}, file, -1, -1, null);
+            errorTreeView.addMessage(MessageCategory.SIMPLE, ArrayUtil.EMPTY_STRING_ARRAY, file, -1, -1, null);
+            errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, file, -1, -1, null);
           }
         }
-        errorTreeView
-          .addMessage(MessageCategory.SIMPLE, new String[]{"Process finished with exit code " + output.getExitCode()}, null, -1, -1, null);
+      }
+      errorTreeView
+        .addMessage(MessageCategory.SIMPLE, new String[]{"Process finished with exit code " + output.getExitCode()}, null, -1, -1, null);
 
-        if (activateWindow) {
-          ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
-        }
+      if (activateWindow) {
+        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
       }
     });
   }
@@ -218,16 +212,13 @@ public class ExecutionHelper {
                                        @NotNull final Project myProject,
                                        @NotNull final String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    commandProcessor.executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
-        final Content content = ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
-        messageView.getContentManager().addContent(content);
-        Disposer.register(content, errorTreeView);
-        messageView.getContentManager().setSelectedContent(content);
-        removeContents(content, myProject, tabDisplayName);
-      }
+    commandProcessor.executeCommand(myProject, () -> {
+      final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
+      final Content content = ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
+      messageView.getContentManager().addContent(content);
+      Disposer.register(content, errorTreeView);
+      messageView.getContentManager().setSelectedContent(content);
+      removeContents(content, myProject, tabDisplayName);
     }, "Open message view", null);
   }
 
@@ -252,13 +243,7 @@ public class ExecutionHelper {
 
   public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,
                                                                            @NotNull final NotNullFunction<String, Boolean> titleMatcher) {
-    return findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
-      @NotNull
-      @Override
-      public Boolean fun(RunContentDescriptor selectedContent) {
-        return titleMatcher.fun(selectedContent.getDisplayName());
-      }
-    });
+    return findRunningConsole(project, selectedContent -> titleMatcher.fun(selectedContent.getDisplayName()));
   }
 
   public static Collection<RunContentDescriptor> findRunningConsole(@NotNull Project project,
@@ -285,7 +270,7 @@ public class ExecutionHelper {
 
   public static List<RunContentDescriptor> collectConsolesByDisplayName(@NotNull Project project,
                                                                         @NotNull NotNullFunction<String, Boolean> titleMatcher) {
-    List<RunContentDescriptor> result = new SmartList<RunContentDescriptor>();
+    List<RunContentDescriptor> result = new SmartList<>();
     for (RunContentDescriptor runContentDescriptor : ExecutionManager.getInstance(project).getContentManager().getAllDescriptors()) {
       if (titleMatcher.fun(runContentDescriptor.getDisplayName())) {
         result.add(runContentDescriptor);
@@ -321,30 +306,24 @@ public class ExecutionHelper {
       final PopupChooserBuilder builder = new PopupChooserBuilder(list);
       builder.setTitle(selectDialogTitle);
 
-      builder.setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          final Object selectedValue = list.getSelectedValue();
-          if (selectedValue instanceof RunContentDescriptor) {
-            RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
-            descriptorConsumer.consume(descriptor);
-            descriptorToFront(project, descriptor);
-          }
+      builder.setItemChoosenCallback(() -> {
+        final Object selectedValue = list.getSelectedValue();
+        if (selectedValue instanceof RunContentDescriptor) {
+          RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
+          descriptorConsumer.consume(descriptor);
+          descriptorToFront(project, descriptor);
         }
       }).createPopup().showInBestPositionFor(dataContext);
     }
   }
 
   private static void descriptorToFront(@NotNull final Project project, @NotNull final RunContentDescriptor descriptor) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);
-        if (toolWindow != null) {
-          toolWindow.show(null);
-          //noinspection ConstantConditions
-          toolWindow.getContentManager().setSelectedContent(descriptor.getAttachedContent());
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);
+      if (toolWindow != null) {
+        toolWindow.show(null);
+        //noinspection ConstantConditions
+        toolWindow.getContentManager().setSelectedContent(descriptor.getAttachedContent());
       }
     }, project.getDisposed());
   }
@@ -379,12 +358,7 @@ public class ExecutionHelper {
     }
     else {
       if (mode.getTimeout() <= 0) {
-        process = new Runnable() {
-          @Override
-          public void run() {
-            processHandler.waitFor();
-          }
-        };
+        process = () -> processHandler.waitFor();
       }
       else {
         process = createTimeLimitedExecutionProcess(processHandler, mode, presentableCmdline);
@@ -419,15 +393,12 @@ public class ExecutionHelper {
       private ProgressIndicator myProgressIndicator;
       private final Semaphore mySemaphore = new Semaphore();
 
-      private final Runnable myWaitThread = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            processHandler.waitFor();
-          }
-          finally {
-            mySemaphore.up();
-          }
+      private final Runnable myWaitThread = () -> {
+        try {
+          processHandler.waitFor();
+        }
+        finally {
+          mySemaphore.up();
         }
       };
 
@@ -486,19 +457,16 @@ public class ExecutionHelper {
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
 
-      private final Runnable myProcessThread = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            final boolean finished = processHandler.waitFor(1000 * mode.getTimeout());
-            if (!finished) {
-              mode.getTimeoutCallback().consume(mode, presentableCmdline);
-              processHandler.destroyProcess();
-            }
+      private final Runnable myProcessThread = () -> {
+        try {
+          final boolean finished = processHandler.waitFor(1000 * mode.getTimeout());
+          if (!finished) {
+            mode.getTimeoutCallback().consume(mode, presentableCmdline);
+            processHandler.destroyProcess();
           }
-          finally {
-            mySemaphore.up();
-          }
+        }
+        finally {
+          mySemaphore.up();
         }
       };
 

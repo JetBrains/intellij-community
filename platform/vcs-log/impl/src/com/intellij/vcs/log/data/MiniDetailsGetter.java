@@ -3,8 +3,6 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
@@ -15,13 +13,13 @@ import java.util.Map;
 
 public class MiniDetailsGetter extends AbstractDataGetter<VcsShortCommitDetails> {
 
-  @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
+  @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
 
-  MiniDetailsGetter(@NotNull VcsLogHashMap hashMap,
+  MiniDetailsGetter(@NotNull VcsLogStorage hashMap,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                    @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
+                    @NotNull TopCommitsCache topCommitsDetailsCache,
                     @NotNull Disposable parentDisposable) {
-    super(hashMap, logProviders, new VcsCommitCache<Integer, VcsShortCommitDetails>(), parentDisposable);
+    super(hashMap, logProviders, new VcsCommitCache<>(), parentDisposable);
     myTopCommitsDetailsCache = topCommitsDetailsCache;
   }
 

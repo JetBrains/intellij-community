@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.ui;
 
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalSystemToolWindowCondition;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**

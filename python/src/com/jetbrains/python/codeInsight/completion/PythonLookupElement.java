@@ -61,7 +61,7 @@ public class PythonLookupElement extends LookupElement implements Comparable<Loo
                            @Nullable final String typeText, final boolean bold,
                            @Nullable final Icon icon,
                            @Nullable final Icon typeIcon) {
-    this(lookupString, tailText, typeText, bold, icon, typeIcon, new BasicInsertHandler<PythonLookupElement>());
+    this(lookupString, tailText, typeText, bold, icon, typeIcon, new BasicInsertHandler<>());
   }
 
   public PythonLookupElement(
@@ -69,7 +69,7 @@ public class PythonLookupElement extends LookupElement implements Comparable<Loo
     final boolean bold,
     @Nullable final Icon icon
   ) {
-    this(lookupString, null, null, bold, icon, null, new BasicInsertHandler<PythonLookupElement>());
+    this(lookupString, null, null, bold, icon, null, new BasicInsertHandler<>());
   }
 
   @NotNull

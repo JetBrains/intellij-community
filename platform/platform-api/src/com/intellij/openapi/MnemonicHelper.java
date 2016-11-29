@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
@@ -47,25 +46,20 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   private Map<Integer, String> myMnemonics = null;
 
   public static final PropertyChangeListener TEXT_LISTENER = new PropertyChangeListener() {
-   public void propertyChange(PropertyChangeEvent evt) {
-     final Object source = evt.getSource();
-     //noinspection SSBasedInspection
-     SwingUtilities.invokeLater(new Runnable() {
-       // It is needed to process this event later,
-       // because the method is invoked from the setText method
-       // before Swing updates mnemonics
-       @Override
-       public void run() {
-         if (source instanceof AbstractButton) {
-           // see javax.swing.AbstractButton.setText
-           DialogUtil.registerMnemonic(((AbstractButton)source));
-         } else if (source instanceof JLabel) {
-           // javax.swing.JLabel.setText
-           DialogUtil.registerMnemonic(((JLabel)source), null);
-         }
-       }
-     });
-   }
+    public void propertyChange(PropertyChangeEvent event) {
+      Object source = event.getSource();
+      // SwingUtilities.invokeLater is needed to process this event,
+      // because the method is invoked from the setText method
+      // before Swing updates mnemonics
+      if (source instanceof AbstractButton) {
+        //noinspection SSBasedInspection //see javax.swing.AbstractButton.setText
+        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((AbstractButton)source)));
+      }
+      else if (source instanceof JLabel) {
+        //noinspection SSBasedInspection //see javax.swing.JLabel.setText
+        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((JLabel)source), null));
+      }
+    }
   };
   @NonNls public static final String TEXT_CHANGED_PROPERTY = "text";
 
@@ -85,7 +79,8 @@ public class MnemonicHelper extends ComponentTreeWatcher {
       DialogUtil.registerMnemonic(abstractButton);
       checkForDuplicateMnemonics(abstractButton);
       fixMacMnemonicKeyStroke(abstractButton, null);
-    } else if (parentComponent instanceof JLabel) {
+    }
+    else if (parentComponent instanceof JLabel) {
       final JLabel jLabel = ((JLabel)parentComponent);
       jLabel.addPropertyChangeListener(TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
       DialogUtil.registerMnemonic(jLabel, null);
@@ -102,7 +97,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
       if (inputMap != null) {
         KeyStroke[] strokes = inputMap.allKeys();
         if (strokes != null) {
-          int mask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK;
+          int mask = InputEvent.ALT_MASK | InputEvent.CTRL_MASK;
           for (KeyStroke stroke : strokes) {
             if (mask == (mask & stroke.getModifiers())) {
               inputMap.put(getKeyStrokeWithoutCtrlModifier(stroke), type != null ? type : inputMap.get(stroke));
@@ -140,7 +135,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
 
   public void checkForDuplicateMnemonics(int mnemonic, String text) {
     if (mnemonic == 0) return;
-    if (myMnemonics == null) myMnemonics = new HashMap();
+    if (myMnemonics == null) myMnemonics = new HashMap<>();
     final String other = myMnemonics.get(Integer.valueOf(mnemonic));
     if (other != null && !other.equals(text)) {
       LOG.error("conflict: multiple components with mnemonic '" + (char)mnemonic + "' seen on '" + text + "' and '" + other + "'");
@@ -150,15 +145,13 @@ public class MnemonicHelper extends ComponentTreeWatcher {
 
   /**
    * Creates shortcut for mnemonic replacing standard Alt+Letter to Ctrl+Alt+Letter on Mac with jdk version newer than 6
+   *
    * @param ch mnemonic letter
    * @return shortcut for mnemonic
    */
   public static CustomShortcutSet createShortcut(char ch) {
     Character mnemonic = Character.valueOf(ch);
-    String shortcut = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7") ?
-                      "control alt pressed " + mnemonic :
-                      "alt pressed " + mnemonic;
-    return CustomShortcutSet.fromString(shortcut);
+    return CustomShortcutSet.fromString("alt " + (SystemInfo.isMac ? "released" : "pressed") + " " + mnemonic);
   }
 
   /**

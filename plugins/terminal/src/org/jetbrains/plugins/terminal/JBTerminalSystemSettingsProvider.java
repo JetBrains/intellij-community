@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -29,6 +30,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
@@ -55,31 +57,36 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
   public JBTerminalSystemSettingsProvider() {
     myColorScheme = createBoundColorSchemeDelegate(null);
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
-        int size;
-        if (UISettings.getInstance().PRESENTATION_MODE) {
-          size = UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE;
-        }
-        else {
-          size = myColorScheme.getGlobal().getConsoleFontSize();
-        }
+      public void uiSettingsChanged(UISettings uiSettings) {
+        int size = consoleFontSize(JBTerminalSystemSettingsProvider.this.myColorScheme);
 
         if (myColorScheme.getConsoleFontSize() != size) {
           myColorScheme.setConsoleFontSize(size);
           fireFontChanged();
         }
       }
-    }, this);
-
-    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsAdapter() {
+    });
+    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         myColorScheme.updateGlobalScheme(scheme);
         fireFontChanged();
       }
-    }, this);
+    });
+  }
+
+  private static int consoleFontSize(MyColorSchemeDelegate colorScheme) {
+    int size;
+    if (UISettings.getInstance().PRESENTATION_MODE) {
+      size = UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE;
+    }
+    else {
+      size = colorScheme.getGlobal().getConsoleFontSize();
+    }
+    return size;
   }
 
   @Override
@@ -113,7 +120,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
   }
 
   private KeyStroke[] getKeyStrokesByActionId(String actionId) {
-    List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
+    List<KeyStroke> keyStrokes = new ArrayList<>();
     Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
     for (Shortcut sc : shortcuts) {
       if (sc instanceof KeyboardShortcut) {
@@ -127,13 +134,13 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
 
   @Override
   public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
-    return TerminalOptionsProvider.getInstance().closeSessionOnLogout();
+    return TerminalOptionsProvider.Companion.getInstance().closeSessionOnLogout();
   }
 
   @Override
   public String tabName(TtyConnector ttyConnector, String sessionName) { //for local terminal use name from settings
     if (ttyConnector instanceof PtyProcessTtyConnector) {
-      return TerminalOptionsProvider.getInstance().getTabName();
+      return TerminalOptionsProvider.Companion.getInstance().getTabName();
     }
     else {
       return sessionName;
@@ -227,22 +234,22 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
 
   @Override
   public boolean audibleBell() {
-    return TerminalOptionsProvider.getInstance().audibleBell();
+    return TerminalOptionsProvider.Companion.getInstance().audibleBell();
   }
 
   @Override
   public boolean enableMouseReporting() {
-    return TerminalOptionsProvider.getInstance().enableMouseReporting();
+    return TerminalOptionsProvider.Companion.getInstance().enableMouseReporting();
   }
 
   @Override
   public boolean copyOnSelect() {
-    return TerminalOptionsProvider.getInstance().copyOnSelection();
+    return TerminalOptionsProvider.Companion.getInstance().copyOnSelection();
   }
 
   @Override
   public boolean pasteOnMiddleMouseClick() {
-    return TerminalOptionsProvider.getInstance().pasteOnMiddleMouseButton();
+    return TerminalOptionsProvider.Companion.getInstance().pasteOnMiddleMouseButton();
   }
 
   @NotNull
@@ -263,16 +270,17 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
   private static class MyColorSchemeDelegate implements EditorColorsScheme {
 
     private final FontPreferences myFontPreferences = new FontPreferences();
-    private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
-    private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
+    private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<>();
+    private final HashMap<ColorKey, Color> myOwnColors = new HashMap<>();
     private Map<EditorFontType, Font> myFontsMap = null;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
 
-    private int myConsoleFontSize = -1;
+    private int myConsoleFontSize;
 
     private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
       updateGlobalScheme(globalScheme);
+      myConsoleFontSize = consoleFontSize(this);
       initFonts();
     }
 
@@ -293,7 +301,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
       myFontPreferences.clear();
       myFontPreferences.register(consoleFontName, consoleFontSize);
 
-      myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
+      myFontsMap = new EnumMap<>(EditorFontType.class);
 
       Font plainFont = new Font(consoleFontName, Font.PLAIN, consoleFontSize);
       Font boldFont = new Font(consoleFontName, Font.BOLD, consoleFontSize);
@@ -318,7 +326,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     }
 
     @Override
-    public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
+    public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
       myOwnAttributes.put(key, attributes);
     }
 
@@ -482,6 +490,12 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     @Override
     public void setConsoleLineSpacing(float lineSpacing) {
       getGlobal().setConsoleLineSpacing(lineSpacing);
+    }
+
+    @NotNull
+    @Override
+    public Properties getMetaProperties() {
+      return myGlobalScheme.getMetaProperties();
     }
   }
 

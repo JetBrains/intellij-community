@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,4 +139,12 @@ public interface JavaTokenType extends TokenType {
 
   IElementType DOUBLE_COLON = new IJavaElementType("DOUBLE_COLON");
   IElementType ARROW = new IJavaElementType("ARROW");
+
+  IElementType MODULE_KEYWORD = new IJavaElementType("MODULE");
+  IElementType REQUIRES_KEYWORD = new IJavaElementType("REQUIRES");
+  IElementType EXPORTS_KEYWORD = new IJavaElementType("EXPORTS");
+  IElementType USES_KEYWORD = new IJavaElementType("USES");
+  IElementType PROVIDES_KEYWORD = new IJavaElementType("PROVIDES");
+  IElementType TO_KEYWORD = new IJavaElementType("TO");
+  IElementType WITH_KEYWORD = new IJavaElementType("WITH");
 }

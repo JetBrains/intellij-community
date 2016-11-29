@@ -32,11 +32,6 @@ import static hg4idea.test.HgExecutor.hg;
 
 public class HgLogHistoryTest extends HgPlatformTest {
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-  }
-
   public void testContainedInBranchesInLogInfos() throws VcsException {
     createBookmarksAndBranches(myRepository);
     Hash testHashForFirstCommit = HashImpl.build("0");

@@ -41,7 +41,7 @@ import java.util.List;
  * This will significantly simplify code, since we will not need to take the list of possible variants of children and grandchildren;
  * we will be able to iterate variants, not collections of variants
  */
-class JsonSchemaWalker {
+public class JsonSchemaWalker {
   public interface CompletionSchemesConsumer {
     void consume(boolean isName, @NotNull JsonSchemaObject schema);
   }
@@ -60,32 +60,31 @@ class JsonSchemaWalker {
     if (checkable == null) return;
     final boolean isName = isName(checkable);
     final List<Step> position = findPosition(checkable, isName);
-    if (position == null || position.isEmpty()) return;
+    if (position == null || position.isEmpty()) {
+      if (isName) consumer.consume(true, rootSchema);
+      return;
+    }
 
     extractSchemaVariants(consumer, rootSchema, isName, position);
   }
 
-  private static void extractSchemaVariants(@NotNull CompletionSchemesConsumer consumer,
+  public static void extractSchemaVariants(@NotNull CompletionSchemesConsumer consumer,
                                             @NotNull JsonSchemaObject rootSchema, boolean isName, List<Step> position) {
-    final ArrayDeque<Pair<JsonSchemaObject, Integer>> queue = new ArrayDeque<Pair<JsonSchemaObject, Integer>>();
+    final ArrayDeque<Pair<JsonSchemaObject, Integer>> queue = new ArrayDeque<>();
     queue.add(Pair.create(rootSchema, 0));
     while (!queue.isEmpty()) {
       final Pair<JsonSchemaObject, Integer> pair = queue.removeFirst();
 
       final JsonSchemaObject schema = pair.getFirst();
+      if (position.size() <= pair.getSecond()) return;
       final Step step = position.get(pair.getSecond());
-      if (step.getTransition() == null || (pair.getSecond() == (position.size() - 1))) {
+      if (step.getTransition() == null) {
         consumer.consume(isName, schema);
         continue;
       }
       if (step.getTransition() != null && !step.getTransition().possibleFromState(step.getType())) continue;
 
-      final Condition<JsonSchemaObject> byTypeFilter = new Condition<JsonSchemaObject>() {
-        @Override
-        public boolean value(JsonSchemaObject object) {
-          return byStateType(step.getType(), object);
-        }
-      };
+      final Condition<JsonSchemaObject> byTypeFilter = object -> byStateType(step.getType(), object);
       // not??
 
       if (schema.getAllOf() != null) {
@@ -100,10 +99,11 @@ class JsonSchemaWalker {
           }
         }
         if (selectedSchema != null) {
-          queue.add(Pair.create(selectedSchema, pair.getSecond() + 1));
+          if ((pair.getSecond() + 1) >= position.size()) consumer.consume(isName, selectedSchema);
+          else queue.add(Pair.create(selectedSchema, pair.getSecond() + 1));
         }
       } else {
-        List<JsonSchemaObject> list = new ArrayList<JsonSchemaObject>();
+        List<JsonSchemaObject> list = new ArrayList<>();
         list.add(schema);
         if (schema.getAnyOf() != null) list.addAll(schema.getAnyOf());
         if (schema.getOneOf() != null) list.addAll(schema.getOneOf());
@@ -114,7 +114,8 @@ class JsonSchemaWalker {
           step.getTransition().step(object, transitionResultConsumer);
           // nothing or anything does not contribute to competion
           if (transitionResultConsumer.getSchema() != null) {
-            queue.add(Pair.create(transitionResultConsumer.getSchema(), pair.getSecond() + 1));
+            if ((pair.getSecond() + 1) >= position.size()) consumer.consume(isName, transitionResultConsumer.getSchema());
+            else queue.add(Pair.create(transitionResultConsumer.getSchema(), pair.getSecond() + 1));
           }
         }
       }
@@ -159,11 +160,12 @@ class JsonSchemaWalker {
   }
 
   public static List<Step> findPosition(@NotNull final PsiElement element, boolean isName) {
-    final List<Step> steps = new ArrayList<Step>();
+    final List<Step> steps = new ArrayList<>();
     if (!(element.getParent() instanceof JsonObject) && !isName) {
       steps.add(new Step(StateType._value, null));
     }
     PsiElement current = element;
+    //PsiElement current = element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element;
     while (! (current instanceof PsiFile)) {
       final PsiElement position = current;
       current = current.getParent();
@@ -183,7 +185,16 @@ class JsonSchemaWalker {
         final String propertyName = ((JsonProperty)current).getName();
         current = current.getParent();
         if (!(current instanceof JsonObject)) return null;//incorrect syntax?
-        steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
+        // if either value or not first in the chain - needed for completion variant
+        if (position != element || !isName) {
+          steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
+        }
+      } else if (current instanceof JsonObject && position instanceof JsonProperty) {
+        // if either value or not first in the chain - needed for completion variant
+        if (position != element || !isName) {
+          final String propertyName = ((JsonProperty)position).getName();
+          steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
+        }
       } else if (current instanceof PsiFile) {
         break;
       } else {
@@ -194,12 +205,12 @@ class JsonSchemaWalker {
     return steps;
   }
 
-  private static class Step {
+  public static class Step {
     private final StateType myType;
     @Nullable
     private final Transition myTransition;
 
-    public Step(StateType type, Transition transition) {
+    public Step(StateType type, @Nullable Transition transition) {
       myType = type;
       myTransition = transition;
     }
@@ -232,6 +243,11 @@ class JsonSchemaWalker {
       if (child != null) {
         resultConsumer.setSchema(child);
       } else {
+        final JsonSchemaObject schema = parent.getMatchingPatternPropertySchema(myName);
+        if (schema != null) {
+          resultConsumer.setSchema(schema);
+          return;
+        }
         if (parent.getAdditionalPropertiesSchema() != null) {
           resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
         } else {
@@ -287,7 +303,7 @@ class JsonSchemaWalker {
     @Nullable
     private final JsonSchemaType myCorrespondingJsonType;
 
-    StateType(JsonSchemaType correspondingJsonType) {
+    StateType(@Nullable JsonSchemaType correspondingJsonType) {
       myCorrespondingJsonType = correspondingJsonType;
     }
 

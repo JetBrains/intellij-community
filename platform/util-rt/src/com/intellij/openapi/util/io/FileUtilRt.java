@@ -371,6 +371,7 @@ public class FileUtilRt {
     return file;
   }
 
+  private static final Random RANDOM = new Random();
   @NotNull
   private static File doCreateTempFile(@NotNull File dir,
                                        @NotNull @NonNls String prefix,
@@ -390,13 +391,16 @@ public class FileUtilRt {
 
     int exceptionsCount = 0;
     int i = 0;
+    int maxFileNumber = 10;
     while (true) {
       try {
         File f = calcName(dir, prefix, suffix, i);
 
         boolean success = isDirectory ? f.mkdir() : f.createNewFile();
         if (!success) {
-          List<String> list = Arrays.asList(f.getParentFile().list());
+          String[] children = f.getParentFile().list();
+          List<String> list = children == null ? Collections.<String>emptyList() : Arrays.asList(children);
+          maxFileNumber = Math.max(10, list.size() * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
           throw new IOException("Unable to create temporary file " + f + "\nDirectory '" + f.getParentFile() +
                                 "' list ("+list.size()+" children): " + list);
         }
@@ -410,7 +414,7 @@ public class FileUtilRt {
       }
       i++; // for some reason the file1 can't be created (previous file1 was deleted but got locked by anti-virus?). try file2.
       if (i > 2) {
-        i = 2 + (int)(System.nanoTime() % 998); // generate random suffix if too many failures
+        i = 2 + RANDOM.nextInt(maxFileNumber); // generate random suffix if too many failures
       }
     }
   }

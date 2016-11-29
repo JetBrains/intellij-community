@@ -1,0 +1,74 @@
+<root>
+  <item name='gnu.trove.Equality'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TByteByteProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TByteDoubleProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TByteFloatProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TByteFunction'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TByteHashingStrategy'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TByteIntProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TByteLongProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TByteObjectProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TByteProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TDoubleFunction'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TDoubleHashingStrategy'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TDoubleProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TFloatFunction'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TFloatHashingStrategy'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TFloatProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TIntFunction'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TIntHashingStrategy'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TIntProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TLongFunction'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TLongHashingStrategy'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TLongProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TObjectFunction'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+  <item name='gnu.trove.TObjectProcedure'>
+    <annotation name='java.lang.FunctionalInterface'/>
+  </item>
+</root>

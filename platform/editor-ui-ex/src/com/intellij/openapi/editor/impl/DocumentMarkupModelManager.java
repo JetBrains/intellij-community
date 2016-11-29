@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class DocumentMarkupModelManager extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentMarkupModelManager");
 
-  private final WeakList<Document> myDocumentSet = new WeakList<Document>();
+  private final WeakList<Document> myDocumentSet = new WeakList<>();
   private volatile boolean myDisposed;
 
   public static DocumentMarkupModelManager getInstance(Project project) {

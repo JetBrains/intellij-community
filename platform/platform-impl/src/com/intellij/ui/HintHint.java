@@ -19,7 +19,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,6 +50,7 @@ public class HintHint {
   private int myPositionChangeY;
   private boolean myShowImmediately = false;
   private boolean myAnimationEnabled;
+  private boolean myRequestFocus;
 
   public HintHint() {
   }
@@ -170,14 +171,11 @@ public class HintHint {
 
   public void initStyle(Component c, boolean includeChildren) {
     if (includeChildren) {
-      new AwtVisitor(c) {
-        @Override
-        public boolean visit(Component component) {
-          doInit(component);
-          return false;
-        }
-      };
-    } else {
+      for (Component component : UIUtil.uiTraverser(c)) {
+        doInit(component);
+      }
+    }
+    else {
       doInit(c);
     }
   }
@@ -280,6 +278,15 @@ public class HintHint {
    */
   public HintHint setAnimationEnabled(boolean enabled){
     myAnimationEnabled = enabled;
+    return this;
+  }
+
+  public boolean isRequestFocus() {
+    return myRequestFocus;
+  }
+
+  public HintHint setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
     return this;
   }
 }

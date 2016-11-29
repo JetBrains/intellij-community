@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -29,20 +28,18 @@ import com.intellij.openapi.wm.ToolWindowManager;
 
 public class NextSplitAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
-      project, new Runnable(){
-        public void run() {
-          final FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(project);
-          manager.setCurrentWindow(manager.getNextWindow(manager.getCurrentWindow()));
-        }
+      project, () -> {
+        final FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(project);
+        manager.setCurrentWindow(manager.getNextWindow(manager.getCurrentWindow()));
       }, IdeBundle.message("command.go.to.next.split"), null
     );
   }
 
   public void update(final AnActionEvent event){
-    final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    final Project project = event.getProject();
     final Presentation presentation = event.getPresentation();
     if (project == null) {
       presentation.setEnabled(false);

@@ -70,7 +70,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
     if (myMaxConcurrent < myMaxCached) {
       myMaxConcurrent = myMaxCached;
     }
-    myGroups = new HashMap<String, RepoGroup>();
+    myGroups = new HashMap<>();
     myDisposed = false;
   }
 
@@ -177,15 +177,15 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       myGuard = guard;
       myConnectionTimeout = connectionTimeout;
 
-      myInactive = new TreeMap<Long, SVNRepository>();
-      myUsed = new HashSet<SVNRepository>();
+      myInactive = new TreeMap<>();
+      myUsed = new HashSet<>();
 
       myDisposed = false;
       myWait = waitObj;
     }
 
     public void dispose() {
-      final List<SVNRepository> listForClose = new ArrayList<SVNRepository>();
+      final List<SVNRepository> listForClose = new ArrayList<>();
       listForClose.addAll(myInactive.values());
       myInactive.clear();
       myUsed.clear();   // todo use counter instead of list??

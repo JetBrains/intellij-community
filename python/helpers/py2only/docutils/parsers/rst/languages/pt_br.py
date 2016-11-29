@@ -1,4 +1,4 @@
-# $Id: pt_br.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: pt_br.py 7119 2011-09-02 13:00:23Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -19,6 +19,7 @@ directives = {
       # language-dependent: fixed
       u'aten\u00E7\u00E3o': 'attention',
       'cuidado': 'caution',
+      u'code (translation required)': 'code',
       'perigo': 'danger',
       'erro': 'error',
       u'sugest\u00E3o': 'hint',
@@ -44,6 +45,7 @@ directives = {
       u'csv-table (translation required)': 'csv-table',
       u'list-table (translation required)': 'list-table',
       'meta': 'meta',
+      'math (translation required)': 'math',
       #'imagemap': 'imagemap',
       'imagem': 'image',
       'figura': 'figure',
@@ -74,6 +76,7 @@ roles = {
     'ab': 'abbreviation',
     u'acr\u00F4nimo': 'acronym',
     'ac': 'acronym',
+    u'code (translation required)': 'code',
     u'\u00EDndice-remissivo': 'index',
     'i': 'index',
     'subscrito': 'subscript',
@@ -89,7 +92,8 @@ roles = {
     'rfc': 'rfc-reference',
     u'\u00EAnfase': 'emphasis',
     'forte': 'strong',
-    'literal': 'literal',               # translation required?
+    'literal': 'literal',
+    'math (translation required)': 'math',               # translation required?
     u'refer\u00EAncia-por-nome': 'named-reference',
     u'refer\u00EAncia-an\u00F4nima': 'anonymous-reference',
     u'refer\u00EAncia-a-nota-de-rodap\u00E9': 'footnote-reference',

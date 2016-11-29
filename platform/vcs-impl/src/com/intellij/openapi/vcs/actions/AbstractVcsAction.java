@@ -16,57 +16,58 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AsyncUpdateAction;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 
-public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> implements DumbAware {
-  public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
-    Collection<AbstractVcs> result = new HashSet<AbstractVcs>();
-    final Project project = dataContext.getProject();
-    if (project != null) {
-      Collections.addAll(result, ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());
-    }
-    return result;
-  }
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static java.util.Collections.emptySet;
 
-  @NotNull
-  protected static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project) {
-    return DescindingFilesFilter.filterDescindingFiles(roots, project);
+public abstract class AbstractVcsAction extends DumbAwareAction {
+
+  @SuppressWarnings("unused") // Required for compatibility with external plugins.
+  public static Collection<AbstractVcs> getActiveVcses(@NotNull VcsContext dataContext) {
+    Project project = dataContext.getProject();
+
+    return project != null ? newHashSet(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) : emptySet();
   }
 
   @Override
-  protected VcsContext prepareDataFromContext(final AnActionEvent e) {
-    return forceSyncUpdate(e) ? VcsContextWrapper.createInstanceOn(e) : VcsContextWrapper.createCachedInstanceOn(e);
+  public void update(@NotNull AnActionEvent e) {
+    //noinspection deprecation - required for compatibility with external plugins.
+    performUpdate(e.getPresentation(), VcsContextWrapper.createInstanceOn(e));
   }
 
   @Override
-  protected void performUpdate(final Presentation presentation, final VcsContext data) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        update(data, presentation);
-      }
-    });
-  }
-
-  @Override
-  public final void actionPerformed(@NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     actionPerformed(VcsContextWrapper.createCachedInstanceOn(e));
   }
 
+  protected abstract void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation);
+
   protected abstract void actionPerformed(@NotNull VcsContext e);
 
-  protected abstract void update(VcsContext vcsContext, Presentation presentation);
+  /**
+   * @deprecated Only sync update is currently supported by {@link AbstractVcsAction}. Use
+   * {@link com.intellij.openapi.actionSystem.AsyncUpdateAction} directly if async update is necessary.
+   */
+  @SuppressWarnings("unused") // Required for compatibility with external plugins.
+  @Deprecated
+  protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
+    return true;
+  }
 
+
+  /**
+   * @deprecated Use {@link AbstractVcsAction#update(VcsContext, Presentation)}.
+   */
+  @Deprecated
+  protected void performUpdate(@NotNull Presentation presentation, @NotNull VcsContext vcsContext) {
+    update(vcsContext, presentation);
+  }
 }

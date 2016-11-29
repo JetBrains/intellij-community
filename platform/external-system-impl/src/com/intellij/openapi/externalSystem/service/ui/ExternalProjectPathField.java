@@ -107,29 +107,26 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     selectRegisteredProjectButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final Ref<JBPopup> popupRef = new Ref<JBPopup>();
+        final Ref<JBPopup> popupRef = new Ref<>();
         final Tree tree = buildRegisteredProjectsTree(project, externalSystemId);
         tree.setBorder(IdeBorderFactory.createEmptyBorder(8));
-        Runnable treeSelectionCallback = new Runnable() {
-          @Override
-          public void run() {
-            TreePath path = tree.getSelectionPath();
-            if (path != null) {
-              Object lastPathComponent = path.getLastPathComponent();
-              if (lastPathComponent instanceof ExternalSystemNode) {
-                Object e = ((ExternalSystemNode)lastPathComponent).getDescriptor().getElement();
-                if (e instanceof ExternalProjectPojo) {
-                  ExternalProjectPojo pojo = (ExternalProjectPojo)e;
-                  textField.setText(pojo.getPath());
-                  Editor editor = textField.getEditor();
-                  if (editor != null) {
-                    collapseIfPossible(editor, externalSystemId, project);
-                  }
+        Runnable treeSelectionCallback = () -> {
+          TreePath path = tree.getSelectionPath();
+          if (path != null) {
+            Object lastPathComponent = path.getLastPathComponent();
+            if (lastPathComponent instanceof ExternalSystemNode) {
+              Object e1 = ((ExternalSystemNode)lastPathComponent).getDescriptor().getElement();
+              if (e1 instanceof ExternalProjectPojo) {
+                ExternalProjectPojo pojo = (ExternalProjectPojo)e1;
+                textField.setText(pojo.getPath());
+                Editor editor = textField.getEditor();
+                if (editor != null) {
+                  collapseIfPossible(editor, externalSystemId, project);
                 }
               }
             }
-            popupRef.get().closeOk(null); 
           }
+          popupRef.get().closeOk(null);
         };
         JBPopup popup = new PopupChooserBuilder(tree)
           .setTitle(ExternalSystemBundle.message("run.configuration.title.choose.registered.project", externalSystemId.getReadableName()))
@@ -189,12 +186,9 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
         result.stopHere();
       }
     };
-    EditorTextField result = provider.createEditor(project, false, new Consumer<Editor>() {
-      @Override
-      public void consume(Editor editor) {
-        collapseIfPossible(editor, externalSystemId, project);
-        editor.getSettings().setShowIntentionBulb(false);
-      }
+    EditorTextField result = provider.createEditor(project, false, editor -> {
+      collapseIfPossible(editor, externalSystemId, project);
+      editor.getSettings().setShowIntentionBulb(false);
     });
     result.setBorder(UIUtil.getTextFieldBorder());
     result.setOneLineMode(true);
@@ -239,16 +233,13 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
 
   public static void collapse(@NotNull final Editor editor, @NotNull final String placeholder) {
     final FoldingModel foldingModel = editor.getFoldingModel();
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-          foldingModel.removeFoldRegion(region);
-        }
-        FoldRegion region = foldingModel.addFoldRegion(0, editor.getDocument().getTextLength(), placeholder);
-        if (region != null) {
-          region.setExpanded(false);
-        }
+    foldingModel.runBatchFoldingOperation(() -> {
+      for (FoldRegion region : foldingModel.getAllFoldRegions()) {
+        foldingModel.removeFoldRegion(region);
+      }
+      FoldRegion region = foldingModel.addFoldRegion(0, editor.getDocument().getTextLength(), placeholder);
+      if (region != null) {
+        region.setExpanded(false);
       }
     });
   }

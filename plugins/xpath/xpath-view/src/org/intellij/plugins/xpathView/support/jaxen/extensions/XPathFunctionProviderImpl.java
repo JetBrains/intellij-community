@@ -36,7 +36,7 @@ import java.util.Map;
  * Simple implementation that adds extension functions for file-type, file-name and file-extension
  */
 class XPathFunctionProviderImpl extends XPathFunctionProvider {
-    private final Map<QName, FunctionImplementation> myFunctions = new HashMap<QName, FunctionImplementation>();
+    private final Map<QName, FunctionImplementation> myFunctions = new HashMap<>();
 
     public XPathFunctionProviderImpl() {
         // XPathView extensions

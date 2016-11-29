@@ -19,6 +19,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
   @NotNull
   @Override
@@ -35,11 +37,36 @@ public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
     else if (element instanceof PsiArrayInitializerExpression) {
       return  ((PsiArrayInitializerExpression)element).getInitializers();
     }
+    else if (element instanceof PsiArrayInitializerMemberValue) {
+      return  ((PsiArrayInitializerMemberValue)element).getInitializers();
+    }
     else if (element instanceof PsiClass && ((PsiClass)element).isEnum()) {
       PsiEnumConstant[] enumConstants = PsiTreeUtil.getChildrenOfType(element, PsiEnumConstant.class);
-      if (enumConstants != null) {
-        return enumConstants;
-      }
+      if (enumConstants != null) return enumConstants;
+    }
+    else if (element instanceof PsiReferenceList) {
+      return ((PsiReferenceList)element).getReferenceElements();
+    }
+    else if (element instanceof PsiTypeElement) {
+      PsiTypeElement[] result = PsiTreeUtil.getChildrenOfType(element, PsiTypeElement.class);
+      if (result != null) return result;
+    }
+    else if (element instanceof PsiResourceList) {
+      PsiElement[] result = PsiTreeUtil.getChildrenOfType(element, PsiResourceListElement.class);
+      if (result != null) return result;
+    }
+    else if (element instanceof PsiPolyadicExpression) {
+      return ((PsiPolyadicExpression)element).getOperands();
+    }
+    else if (element instanceof PsiReferenceParameterList) {
+      return ((PsiReferenceParameterList)element).getTypeParameterElements();
+    }
+    else if (element instanceof PsiTypeParameterList) {
+      return ((PsiTypeParameterList)element).getTypeParameters();
+    }
+    else if (element instanceof PsiModifierList) {
+      final List<PsiElement> elements = PsiTreeUtil.getChildrenOfAnyType(element, PsiKeyword.class, PsiAnnotation.class);
+      return elements.toArray(PsiElement.EMPTY_ARRAY);
     }
     return PsiElement.EMPTY_ARRAY;
   }

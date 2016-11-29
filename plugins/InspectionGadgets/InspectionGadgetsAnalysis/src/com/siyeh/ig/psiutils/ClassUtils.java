@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -31,17 +32,17 @@ public class ClassUtils {
   /**
    * @noinspection StaticCollection
    */
-  private static final Set<String> immutableTypes = new HashSet<String>(19);
+  private static final Set<String> immutableTypes = new HashSet<>(19);
 
   /**
    * @noinspection StaticCollection
    */
-  private static final Set<PsiType> primitiveNumericTypes = new HashSet<PsiType>(7);
+  private static final Set<PsiType> primitiveNumericTypes = new HashSet<>(7);
 
   /**
    * @noinspection StaticCollection
    */
-  private static final Set<PsiType> integralTypes = new HashSet<PsiType>(5);
+  private static final Set<PsiType> integralTypes = new HashSet<>(5);
 
   static {
     integralTypes.add(PsiType.LONG);
@@ -68,14 +69,22 @@ public class ClassUtils {
     immutableTypes.add(CommonClassNames.JAVA_LANG_BYTE);
     immutableTypes.add(CommonClassNames.JAVA_LANG_STRING);
     immutableTypes.add("java.awt.Font");
+    immutableTypes.add("java.awt.BasicStroke");
     immutableTypes.add("java.awt.Color");
+    immutableTypes.add("java.awt.Cursor");
     immutableTypes.add("java.math.BigDecimal");
     immutableTypes.add("java.math.BigInteger");
     immutableTypes.add("java.math.MathContext");
     immutableTypes.add("java.nio.channels.FileLock");
     immutableTypes.add("java.nio.charset.Charset");
     immutableTypes.add("java.io.File");
+    immutableTypes.add("java.net.Inet4Address");
+    immutableTypes.add("java.net.Inet6Address");
+    immutableTypes.add("java.net.InetSocketAddress");
     immutableTypes.add("java.net.URI");
+    immutableTypes.add("java.net.URL");
+    immutableTypes.add("java.util.Locale");
+    immutableTypes.add("java.util.UUID");
     immutableTypes.add("java.util.regex.Pattern");
   }
 
@@ -107,8 +116,14 @@ public class ClassUtils {
       return false;
     }
     final PsiClassType classType = (PsiClassType)type;
-    final String className = classType.getCanonicalText();
-    return immutableTypes.contains(className);
+    final PsiClass aClass = classType.resolve();
+    if (aClass == null) {
+      return false;
+    }
+    if (immutableTypes.contains(aClass.getQualifiedName())) {
+      return true;
+    }
+    return JCiPUtil.isImmutable(aClass);
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1,

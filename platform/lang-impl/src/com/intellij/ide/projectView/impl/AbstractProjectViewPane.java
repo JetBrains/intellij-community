@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
@@ -88,7 +85,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected AbstractTreeStructure myTreeStructure;
   private AbstractTreeBuilder myTreeBuilder;
   // subId->Tree state; key may be null
-  private final Map<String,TreeState> myReadTreeState = new HashMap<String, TreeState>();
+  private final Map<String,TreeState> myReadTreeState = new HashMap<>();
   private String mySubId;
   @NonNls private static final String ELEMENT_SUBPANE = "subPane";
   @NonNls private static final String ATTRIBUTE_SUBID = "subId";
@@ -220,20 +217,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   private void doSelectModuleOrGroup(final Object toSelect, final boolean requestFocus) {
     ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        ProjectView projectView = ProjectView.getInstance(myProject);
-        if (requestFocus) {
-          projectView.changeView(getId(), getSubId());
-        }
-        ((BaseProjectTreeBuilder)getTreeBuilder()).selectInWidth(toSelect, requestFocus, new Condition<AbstractTreeNode>(){
-          @Override
-          public boolean value(final AbstractTreeNode node) {
-            return node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode;
-          }
-        });
+    final Runnable runnable = () -> {
+      ProjectView projectView = ProjectView.getInstance(myProject);
+      if (requestFocus) {
+        projectView.changeView(getId(), getSubId());
       }
+      ((BaseProjectTreeBuilder)getTreeBuilder()).selectInWidth(toSelect, requestFocus, node -> node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode);
     };
     if (requestFocus) {
       windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);
@@ -258,7 +247,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected <T extends NodeDescriptor> List<T> getSelectedNodes(final Class<T> nodeClass){
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return Collections.emptyList();
-    final ArrayList<T> result = new ArrayList<T>();
+    final ArrayList<T> result = new ArrayList<>();
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
@@ -277,7 +266,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
-      final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
+      final ArrayList<Navigatable> navigatables = new ArrayList<>();
       for (TreePath path : paths) {
         Object lastPathComponent = path.getLastPathComponent();
         if (lastPathComponent instanceof DefaultMutableTreeNode) {
@@ -344,7 +333,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @NotNull
   public final PsiElement[] getSelectedPSIElements() {
-    List<PsiElement> psiElements = new ArrayList<PsiElement>();
+    List<PsiElement> psiElements = new ArrayList<>();
     for (Object element : getSelectedElements()) {
       final PsiElement psiElement = getPSIElement(element);
       if (psiElement != null) {
@@ -378,7 +367,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public final Object[] getSelectedElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
-    ArrayList<Object> list = new ArrayList<Object>(paths.length);
+    ArrayList<Object> list = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
       Object element = getElementFromTreeNode(lastPathComponent);
@@ -404,7 +393,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private TreeNode[] getSelectedTreeNodes(){
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return null;
-    final List<TreeNode> result = new ArrayList<TreeNode>();
+    final List<TreeNode> result = new ArrayList<>();
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
@@ -449,7 +438,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       String subId = subPane.getAttributeValue(ATTRIBUTE_SUBID);
       TreeState treeState = new TreeState();
       treeState.readExternal(subPane);
-      myReadTreeState.put(subId, treeState);
+      if (!treeState.isEmpty()) myReadTreeState.put(subId, treeState);
     }
   }
 
@@ -469,15 +458,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected void saveExpandedPaths() {
     if (myTree != null) {
       TreeState treeState = TreeState.createOn(myTree);
-      myReadTreeState.put(getSubId(), treeState);
+      if (!treeState.isEmpty()) myReadTreeState.put(getSubId(), treeState);
     }
   }
 
   public final void restoreExpandedPaths(){
     TreeState treeState = myReadTreeState.get(getSubId());
-    if (treeState != null) {
-      treeState.applyTo(myTree);
-    }
+    if (treeState != null && !treeState.isEmpty()) treeState.applyTo(myTree);
   }
 
   public void installComparator() {
@@ -557,7 +544,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       if (module != null) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
-        List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
+        List<PsiDirectory> dirs = new ArrayList<>(sourceRoots.length);
         final PsiManager psiManager = PsiManager.getInstance(myProject);
         for (final VirtualFile sourceRoot : sourceRoots) {
           final PsiDirectory directory = psiManager.findDirectory(sourceRoot);
@@ -699,7 +686,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       label.paint(g2);
       g2.dispose();
 
-      return new Pair<Image, Point>(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+      return new Pair<>(image, new Point(-image.getWidth(null), -image.getHeight(null)));
     }
 
     @Override

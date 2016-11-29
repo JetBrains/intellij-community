@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -63,58 +62,51 @@ public class HighlightUtils {
     if (elementCollection.isEmpty()) {
       return;
     }
+    if (elementCollection.contains(null)) {
+      throw new IllegalArgumentException("Nulls passed in collection: " + elementCollection);
+    }
     final Application application = ApplicationManager.getApplication();
-    application.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final PsiElement[] elements =
-          PsiUtilCore.toPsiElementArray(elementCollection);
-        final PsiElement firstElement = elements[0];
-        if (ContainerUtil.exists(elements, new Condition<PsiElement>() {
-          @Override
-          public boolean value(PsiElement element) {
-            return !element.isValid();
-          }
-        })) {
-          return;
-        }
-        final Project project = firstElement.getProject();
-        if (project.isDisposed()) return;
-        final FileEditorManager editorManager =
-          FileEditorManager.getInstance(project);
-        final EditorColorsManager editorColorsManager =
-          EditorColorsManager.getInstance();
-        final Editor editor = editorManager.getSelectedTextEditor();
-        if (editor == null) {
-          return;
-        }
-        final EditorColorsScheme globalScheme =
-          editorColorsManager.getGlobalScheme();
-        final TextAttributes textattributes =
-          globalScheme.getAttributes(
-            EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        final HighlightManager highlightManager =
-          HighlightManager.getInstance(project);
-        highlightManager.addOccurrenceHighlights(
-          editor, elements, textattributes, true, null);
-        final WindowManager windowManager =
-          WindowManager.getInstance();
-        final StatusBar statusBar =
-          windowManager.getStatusBar(project);
-        if (statusBar != null) {
-          statusBar.setInfo(InspectionGadgetsBundle.message(
-            "press.escape.to.remove.highlighting.message"));
-        }
-        final FindManager findmanager =
-          FindManager.getInstance(project);
-        FindModel findmodel = findmanager.getFindNextModel();
-        if (findmodel == null) {
-          findmodel = findmanager.getFindInFileModel();
-        }
-        findmodel.setSearchHighlighters(true);
-        findmanager.setFindWasPerformed();
-        findmanager.setFindNextModel(findmodel);
+    application.invokeLater(() -> {
+      final PsiElement[] elements =
+        PsiUtilCore.toPsiElementArray(elementCollection);
+      final PsiElement firstElement = elements[0];
+      if (ContainerUtil.exists(elements, element -> !element.isValid())) {
+        return;
       }
+      final Project project = firstElement.getProject();
+      if (project.isDisposed()) return;
+      final FileEditorManager editorManager =
+        FileEditorManager.getInstance(project);
+      final EditorColorsManager editorColorsManager =
+        EditorColorsManager.getInstance();
+      final Editor editor = editorManager.getSelectedTextEditor();
+      if (editor == null) {
+        return;
+      }
+      final EditorColorsScheme globalScheme =
+        editorColorsManager.getGlobalScheme();
+      final TextAttributes textattributes =
+        globalScheme.getAttributes(
+          EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      final HighlightManager highlightManager =
+        HighlightManager.getInstance(project);
+      highlightManager.addOccurrenceHighlights(
+        editor, elements, textattributes, true, null);
+      final WindowManager windowManager =
+        WindowManager.getInstance();
+      final StatusBar statusBar =
+        windowManager.getStatusBar(project);
+      statusBar.setInfo(InspectionGadgetsBundle.message(
+        "press.escape.to.remove.highlighting.message"));
+      final FindManager findmanager =
+        FindManager.getInstance(project);
+      FindModel findmodel = findmanager.getFindNextModel();
+      if (findmodel == null) {
+        findmodel = findmanager.getFindInFileModel();
+      }
+      findmodel.setSearchHighlighters(true);
+      findmanager.setFindWasPerformed();
+      findmanager.setFindNextModel(findmodel);
     });
   }
 

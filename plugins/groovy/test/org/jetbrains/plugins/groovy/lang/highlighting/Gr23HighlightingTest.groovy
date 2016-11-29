@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
@@ -25,6 +28,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
  * Created by Max Medvedev on 27/02/14
  */
 class Gr23HighlightingTest extends GrHighlightingTestBase {
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyLightProjectDescriptor.GROOVY_2_3
@@ -75,7 +79,7 @@ void foo(@ClosureParams(value=FromString,options="java.lang.String") Closure cl)
 
 @CompileStatic
 def test() {
-    foo { <error descr="Expected String">Date</error> str -> println str}
+    foo { <error descr="Expected 'java.lang.String', found 'java.util.Date'">Date</error> str -> println str}
 }
 '''
   }
@@ -99,7 +103,7 @@ void foo(@ClosureParams(value=FromString,options="java.util.List<java.lang.Strin
 
 @CompileStatic
 def test() {
-    foo { <error descr="Expected List<String>">List<Date></error> d -> d.each { println it } }
+    foo { <error descr="Expected 'java.util.List<java.lang.String>', found 'java.util.List<java.util.Date>'">List<Date></error> d -> d.each { println it } }
 }
 '''
   }
@@ -410,5 +414,65 @@ trait GenericTrait<X> {
 class GenericClassGenericTrait<Y> implements GenericTrait<Y> {}
 class ConcreteClassGenericTrait implements GenericTrait<String> {}
 ''')
+  }
+
+  void 'test abstract method with default parameters in abstract class'() {
+    testHighlighting '''\
+abstract class A { abstract foo(x, y = 3) }
+<error descr="Method 'foo' is not implemented">class B extends A</error> {}
+'''
+    testHighlighting '''\
+abstract class A { abstract foo(x, y = 3) }
+class B extends A { def foo(x,y) {} }
+'''
+  }
+
+  void 'test abstract method with default parameters in trait'() {
+    testHighlighting '''\
+trait A { abstract foo(x, y = 3) }
+<error descr="Method 'foo' is not implemented">class B implements A</error> {}
+'''
+    testHighlighting '''\
+trait A { abstract foo(x, y = 3) }
+class B implements A { def foo(x,y) {} }
+'''
+  }
+
+  void 'test abstract method with default parameters in trait from Java'() {
+    myFixture.addFileToProject 'test.groovy', 'trait T { abstract foo(x, y = 4) }'
+
+    myFixture.configureByText JavaFileType.INSTANCE, '''\
+<error descr="Class 'C' must either be declared abstract or implement abstract method 'foo(Object)' in 'T'">class C implements T</error> {}
+'''
+    myFixture.testHighlighting false, false, false
+
+    myFixture.configureByText JavaFileType.INSTANCE, '''\
+<error descr="Class 'C' must either be declared abstract or implement abstract method 'foo(Object, Object)' in 'T'">class C implements T</error> {
+  public Object foo() { return null; }
+  public Object foo(Object x) { return null; }
+}
+'''
+    myFixture.testHighlighting false, false, false
+
+    myFixture.configureByText JavaFileType.INSTANCE, '''\
+class C implements T {
+  public Object foo() { return null; }
+  public Object foo(Object x) { return null; }
+  public Object foo(Object x, Object y) { return null; }
+}
+'''
+    myFixture.testHighlighting false, false, false
+  }
+
+  void 'test trait method usages'() {
+    testHighlighting '''\
+trait T {
+    def getFoo() {}
+}
+
+class A implements T {}
+
+new A().foo
+''', GroovyUnusedDeclarationInspection
   }
 }

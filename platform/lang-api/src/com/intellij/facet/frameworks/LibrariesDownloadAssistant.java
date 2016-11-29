@@ -73,7 +73,7 @@ public class LibrariesDownloadAssistant {
 
   @NotNull
   public static Artifact[] getVersions(@NotNull URL... urls) {
-    Set<Artifact> versions = new HashSet<Artifact>();
+    Set<Artifact> versions = new HashSet<>();
     for (URL url : urls) {
       final Artifacts allArtifacts = deserialize(url);
       if (allArtifacts != null) {
@@ -111,12 +111,7 @@ public class LibrariesDownloadAssistant {
 
   @Nullable
   private static Artifact findVersion(@Nullable Artifact[] versions, @NotNull final String versionId) {
-    return versions == null ? null : ContainerUtil.find(versions, new Condition<Artifact>() {
-      @Override
-      public boolean value(final Artifact springVersion) {
-        return versionId.equals(springVersion.getVersion());
-      }
-    });
+    return versions == null ? null : ContainerUtil.find(versions, springVersion -> versionId.equals(springVersion.getVersion()));
   }
 
   @NotNull
@@ -136,20 +131,17 @@ public class LibrariesDownloadAssistant {
 
   @NotNull
   private static List<LibraryInfo> convert(final String urlPrefix, @NotNull ArtifactItem[] jars) {
-    return ContainerUtil.mapNotNull(jars, new Function<ArtifactItem, LibraryInfo>() {
-      @Override
-      public LibraryInfo fun(ArtifactItem artifactItem) {
-        String downloadUrl = artifactItem.getUrl();
-        if (urlPrefix != null) {
-          if (downloadUrl == null) {
-            downloadUrl = artifactItem.getName();
-          }
-          if (!downloadUrl.startsWith("http://")) {
-            downloadUrl = urlPrefix + downloadUrl;
-          }
+    return ContainerUtil.mapNotNull(jars, artifactItem -> {
+      String downloadUrl = artifactItem.getUrl();
+      if (urlPrefix != null) {
+        if (downloadUrl == null) {
+          downloadUrl = artifactItem.getName();
         }
-        return new LibraryInfo(artifactItem.getName(), downloadUrl, downloadUrl, artifactItem.getMD5(), artifactItem.getRequiredClasses());
+        if (!downloadUrl.startsWith("http://")) {
+          downloadUrl = urlPrefix + downloadUrl;
+        }
       }
+      return new LibraryInfo(artifactItem.getName(), downloadUrl, downloadUrl, artifactItem.getMD5(), artifactItem.getRequiredClasses());
     });
   }
 }

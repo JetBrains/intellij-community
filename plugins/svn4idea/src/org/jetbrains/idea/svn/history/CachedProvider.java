@@ -42,7 +42,7 @@ public abstract class CachedProvider implements BunchProvider {
   public abstract void doCacheUpdate(final List<List<Fragment>> fragments);
 
   protected static List<CommittedChangeList> getAllBeforeVisuallyCached(final List<List<Fragment>> fragmentsListList) {
-    final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> lists = new ArrayList<>();
     // take those _after_ committed
     for (List<Fragment> fragmentList : fragmentsListList) {
       for (Fragment fragment : fragmentList) {
@@ -146,7 +146,7 @@ public abstract class CachedProvider implements BunchProvider {
 
     final List<CommittedChangeList> list = loadedBunch.getList();
 
-    final List<CommittedChangeList> sublist = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> sublist = new ArrayList<>();
     for (int i = 0; i < list.size(); i++) {
       final CommittedChangeList changeList = list.get(i);
       if ((! includeOldest) && (changeList.getNumber() == oldestRevision)) {

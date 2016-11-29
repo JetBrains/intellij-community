@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -26,12 +26,16 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
+import com.intellij.refactoring.changeSignature.JavaChangeInfo;
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +56,9 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   private final boolean mySameClass;
   private final PsiCodeBlock myCallingBlock;
   private final boolean myCreateLocal;
+
+  private JavaChangeInfo myChangeInfo;
+  private UsageInfo[] myChangeSignatureUsages;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
                                             final PsiMethod method,
@@ -87,7 +94,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   protected UsageInfo[] findUsages() {
 
     int parameterIndex = myMethod.getParameterList().getParameterIndex(myParameter);
-    final Map<PsiVariable, PsiElement> localToParamRef = new HashMap<PsiVariable, PsiElement>();
+    final Map<PsiVariable, PsiElement> localToParamRef = new HashMap<>();
     final PsiExpression[] arguments = myMethodCall.getArgumentList().getExpressions();
     for (int i = 0; i < arguments.length; i++) {
       if (i != parameterIndex && arguments[i] instanceof PsiReferenceExpression) {
@@ -102,7 +109,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
     }
 
-    final List<UsageInfo> result = new ArrayList<UsageInfo>();
+    final List<UsageInfo> result = new ArrayList<>();
     myInitializer.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
@@ -147,12 +154,34 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
     }
 
+
+    final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
+    final List<ParameterInfoImpl> psiParameters = new ArrayList<>();
+    int paramIdx = 0;
+    final String paramName = myParameter.getName();
+    for (PsiParameter param : parameters) {
+      if (!Comparing.strEqual(paramName, param.getName())) {
+        psiParameters.add(new ParameterInfoImpl(paramIdx, param.getName(), param.getType()));
+      }
+      paramIdx++;
+    }
+
+    PsiType returnType = myMethod.getReturnType();
+    myChangeInfo = new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(myMethod.getModifierList()), myMethod, myMethod.getName(),
+                                          returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
+                                          psiParameters.toArray(new ParameterInfoImpl[psiParameters.size()]),
+                                          null,
+                                          false,
+                                          Collections.emptySet(),
+                                          Collections.emptySet() );
+    myChangeSignatureUsages = ChangeSignatureProcessorBase.findUsages(myChangeInfo);
+
     final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
   private static PsiElement replaceArgs(final Map<PsiVariable, PsiElement> elementsToReplace, PsiElement expression) {
-    final Map<PsiElement, PsiElement> replacements = new HashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> replacements = new HashMap<>();
     expression.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
@@ -172,7 +201,8 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, myMethod, myParameter);
     final UsageInfo[] usages = refUsages.get();
     final InaccessibleExpressionsDetector detector = new InaccessibleExpressionsDetector(conflicts);
     myInitializer.accept(detector);
@@ -185,7 +215,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
     }
 
-    final Set<PsiVariable> vars = new HashSet<PsiVariable>();
+    final Set<PsiVariable> vars = new HashSet<>();
     for (UsageInfo usageInfo : usages) {
       if (usageInfo instanceof LocalReplacementUsageInfo) {
         final PsiVariable var = ((LocalReplacementUsageInfo)usageInfo).getVariable();
@@ -215,10 +245,10 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
-    final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{myInitializer});
-    final Set<PsiVariable> varsUsedInInitializer = new HashSet<PsiVariable>();
-    final Set<PsiJavaCodeReferenceElement> paramRefsToInline = new HashSet<PsiJavaCodeReferenceElement>();
-    final Map<PsiElement, PsiElement> replacements = new HashMap<PsiElement, PsiElement>();
+    final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownCheckedExceptions(myInitializer);
+    final Set<PsiVariable> varsUsedInInitializer = new HashSet<>();
+    final Set<PsiJavaCodeReferenceElement> paramRefsToInline = new HashSet<>();
+    final Map<PsiElement, PsiElement> replacements = new HashMap<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof LocalReplacementUsageInfo) {
         final LocalReplacementUsageInfo replacementUsageInfo = (LocalReplacementUsageInfo)usage;
@@ -267,7 +297,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
     }
 
-    SameParameterValueInspection.InlineParameterValueFix.removeParameter(myMethod, myParameter);
+    ChangeSignatureProcessorBase.doChangeSignature(myChangeInfo, myChangeSignatureUsages);
 
     if (!thrownExceptions.isEmpty()) {
       for (PsiClassType exception : thrownExceptions) {

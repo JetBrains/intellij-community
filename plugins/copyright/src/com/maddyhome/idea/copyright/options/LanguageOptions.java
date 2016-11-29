@@ -88,7 +88,7 @@ public class LanguageOptions implements Cloneable {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<LanguageOptions>(this, DEFAULT_SETTINGS_HOLDER));
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, DEFAULT_SETTINGS_HOLDER));
   }
 
   public boolean equals(Object o) {

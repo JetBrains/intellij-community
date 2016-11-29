@@ -71,7 +71,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
 
     if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return null;
 
-    Set<Character> usedMnemonicsSet = new HashSet<Character>();
+    Set<Character> usedMnemonicsSet = new HashSet<>();
     DefaultActionGroup group = new DefaultActionGroup();
 
     for (TemplateImpl template : templates) {

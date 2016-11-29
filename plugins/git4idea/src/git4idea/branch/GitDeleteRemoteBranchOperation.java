@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -42,10 +41,10 @@ import java.util.concurrent.atomic.AtomicReference;
 class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private final String myBranchName;
 
-  public GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git,
+  public GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull Git git,
                                         @NotNull GitBranchUiHandler handler, @NotNull List<GitRepository> repositories,
                                         @NotNull String name) {
-    super(project, facade, git, handler, repositories);
+    super(project, git, handler, repositories);
     myBranchName = name;
   }
 
@@ -60,7 +59,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       trackingBranches.remove(currentBranch);
     }
 
-    final AtomicReference<DeleteRemoteBranchDecision> decision = new AtomicReference<DeleteRemoteBranchDecision>();
+    final AtomicReference<DeleteRemoteBranchDecision> decision = new AtomicReference<>();
     final boolean finalCurrentBranchTracksBranchToDelete = currentBranchTracksBranchToDelete;
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -73,11 +72,11 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     if (decision.get().delete()) {
       boolean deletedSuccessfully = doDeleteRemote(myBranchName, repositories);
       if (deletedSuccessfully) {
-        final Collection<String> successfullyDeletedLocalBranches = new ArrayList<String>(1);
+        final Collection<String> successfullyDeletedLocalBranches = new ArrayList<>(1);
         if (decision.get().deleteTracking()) {
           for (final String branch : trackingBranches) {
             getIndicator().setText("Deleting " + branch);
-            new GitDeleteBranchOperation(myProject, myFacade, myGit, myUiHandler, repositories, branch) {
+            new GitDeleteBranchOperation(myProject, myGit, myUiHandler, repositories, branch) {
               @Override
               protected void notifySuccess(@NotNull String message) {
                 // do nothing - will display a combo notification for all deleted branches below
@@ -214,33 +213,19 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       }
 
       final AtomicBoolean deleteChoice = new AtomicBoolean();
-      delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(new DialogWrapper.DoNotAskOption() {
-        @Override
-        public boolean isToBeShown() {
-          return true;
-        }
+      delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(
+        new DialogWrapper.DoNotAskOption.Adapter() {
+          @Override
+          public void rememberChoice(boolean isSelected, int exitCode) {
+            deleteChoice.set(isSelected);
+          }
 
-        @Override
-        public void setToBeShown(boolean value, int exitCode) {
-          deleteChoice.set(!value);
-        }
-
-        @Override
-        public boolean canBeHidden() {
-          return true;
-        }
-
-        @Override
-        public boolean shouldSaveOptionsOnCancel() {
-          return false;
-        }
-
-        @NotNull
-        @Override
-        public String getDoNotShowMessage() {
-          return checkboxMessage;
-        }
-      }).show() == Messages.YES;
+          @NotNull
+          @Override
+          public String getDoNotShowMessage() {
+            return checkboxMessage;
+          }
+        }).show() == Messages.YES;
       deleteTracking = deleteChoice.get();
     }
     return new DeleteRemoteBranchDecision(delete, deleteTracking);

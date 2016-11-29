@@ -29,7 +29,7 @@ import java.util.Map;
  */
 
 public class IgnoreFileFilter implements IIgnoreFileFilter{
-  private final Map<File, IgnoredFilesInfo> myParentToFilterMap = new HashMap<File,IgnoredFilesInfo>();
+  private final Map<File, IgnoredFilesInfo> myParentToFilterMap = new HashMap<>();
 
   public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
     File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);

@@ -75,7 +75,7 @@ public class GlobalAnalyzer {
   public static <T extends MarkedNode>boolean doOneEnd(final LinkedList<T> init, final OneEndFunctor functor) {
     boolean result = false;
 
-    final LinkedList<T> worklist = new LinkedList<T>();
+    final LinkedList<T> worklist = new LinkedList<>();
 
     for (Iterator<T> i = init.iterator(); i.hasNext();) {
       result = stepOneEnd(i.next(), worklist, functor) || result;
@@ -91,7 +91,7 @@ public class GlobalAnalyzer {
   public static <T extends MarkedNode>boolean doTwoEnds(final LinkedList<T> init, final TwoEndsFunctor functor) {
     boolean result = false;
 
-    final LinkedList<T> worklist = new LinkedList<T>();
+    final LinkedList<T> worklist = new LinkedList<>();
 
     for (Iterator<T> i = init.iterator(); i.hasNext();) {
       result = stepTwoEnds(i.next(), worklist, functor) || result;

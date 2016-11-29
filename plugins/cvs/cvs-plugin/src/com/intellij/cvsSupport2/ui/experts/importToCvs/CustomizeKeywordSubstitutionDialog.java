@@ -54,13 +54,10 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
 
     @Override
     public Comparator<FileExtension> getComparator() {
-      return new Comparator<FileExtension>() {
-        @Override
-        public int compare(FileExtension extension1, FileExtension extension2) {
-          final KeywordSubstitutionWrapper firstSubstitution = extension1.getKeywordSubstitutionsWithSelection().getSelection();
-          final KeywordSubstitutionWrapper secondSubstitution = extension2.getKeywordSubstitutionsWithSelection().getSelection();
-          return firstSubstitution.toString().compareTo(secondSubstitution.toString());
-        }
+      return (extension1, extension2) -> {
+        final KeywordSubstitutionWrapper firstSubstitution = extension1.getKeywordSubstitutionsWithSelection().getSelection();
+        final KeywordSubstitutionWrapper secondSubstitution = extension2.getKeywordSubstitutionsWithSelection().getSelection();
+        return firstSubstitution.toString().compareTo(secondSubstitution.toString());
       };
     }
 
@@ -104,12 +101,7 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
 
     @Override
     public Comparator<FileExtension> getComparator() {
-      return new Comparator<FileExtension>(){
-        @Override
-        public int compare(FileExtension extension1, FileExtension extension2) {
-          return extension1.getExtension().compareTo(extension2.getExtension());
-        }
-      };
+      return (extension1, extension2) -> extension1.getExtension().compareTo(extension2.getExtension());
     }
 
     @Override
@@ -134,7 +126,7 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
     super(project);
     setTitle(description);
     myImportConfiguration = importConfiguration;
-    myModel = new ListTableModel<FileExtension>(COLUMNS);
+    myModel = new ListTableModel<>(COLUMNS);
     myModel.setItems(collectFileTypes());
     init();
     pack();
@@ -143,7 +135,7 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
   private List<FileExtension> collectFileTypes() {
     final Collection<FileExtension> storedExtensions = myImportConfiguration.getExtensions();
 
-    final ArrayList<FileExtension> result = new ArrayList<FileExtension>();
+    final ArrayList<FileExtension> result = new ArrayList<>();
     result.addAll(storedExtensions);
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
@@ -164,7 +156,7 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final TableView<FileExtension> table = new TableView<FileExtension>(myModel);
+    final TableView<FileExtension> table = new TableView<>(myModel);
     final Dimension preferredSize = table.getPreferredSize();
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
     final Dimension scrollPaneSize = scrollPane.getPreferredSize();

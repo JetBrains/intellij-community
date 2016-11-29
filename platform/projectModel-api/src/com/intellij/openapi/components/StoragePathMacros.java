@@ -31,19 +31,26 @@ import org.jetbrains.annotations.NotNull;
  * @since 5/2/12 12:57 PM
  */
 public class StoragePathMacros {
-  @Deprecated @NotNull public static final String ROOT_CONFIG = "$ROOT_CONFIG$";
+  @Deprecated
+  @NotNull
+  public static final String ROOT_CONFIG = "$ROOT_CONFIG$";
 
   /**
    * Points to the application-level options root directory.
+   * @deprecated Not required anymore. See {@link State#storages()}. In short: specify relative path instead (without macro).
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public static final String APP_CONFIG = "$APP_CONFIG$";
 
+  /**
+   * @deprecated Not required anymore. See {@link State#storages()}.
+   */
   @Deprecated
   public static final String PROJECT_FILE = "$PROJECT_FILE$";
 
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated Not required anymore. See {@link State#storages()}.
+   */
   @Deprecated
   public static final String PROJECT_CONFIG_DIR = "$PROJECT_CONFIG_DIR$";
 

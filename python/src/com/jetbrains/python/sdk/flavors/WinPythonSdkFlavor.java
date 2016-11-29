@@ -17,45 +17,57 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
 
 /**
+ * This class knows how to find python in Windows Registry according to
+ * <a href="https://www.python.org/dev/peps/pep-0514/">PEP 514</a>
+ *
  * @author yole
  */
-public class WinPythonSdkFlavor extends CPythonSdkFlavor {
-  public static WinPythonSdkFlavor INSTANCE = new WinPythonSdkFlavor();
-  private static Map<String, String> ourRegistryMap =
-    ImmutableMap.of("HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore", "python.exe",
-                    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Python\\PythonCore", "python.exe",
-                    "HKEY_LOCAL_MACHINE\\SOFTWARE\\IronPython", "ipy.exe");
+public final class WinPythonSdkFlavor extends CPythonSdkFlavor {
+  private static final String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
+  private static final Map<String, String> REGISTRY_MAP =
+    ImmutableMap.of("Python", "python.exe",
+                    "IronPython", "ipy.exe");
 
-  private static Set<String> ourRegistryCache;
+  private static volatile Set<String> ourRegistryCache;
+  @NotNull
+  private final WinRegistryService myWinRegService;
 
-  private WinPythonSdkFlavor() {
+  WinPythonSdkFlavor(@NotNull final WinRegistryService winRegistryService) {
+    myWinRegService = winRegistryService;
   }
 
   @Override
   public Collection<String> suggestHomePaths() {
-    Set<String> candidates = new TreeSet<String>();
+    Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
     return candidates;
   }
 
-  private static void findInCandidatePaths(Set<String> candidates, String... exe_names) {
+  private void findInCandidatePaths(Set<String> candidates, String... exe_names) {
     for (String name : exe_names) {
       findInstallations(candidates, name, "C:\\", "C:\\Program Files\\");
       findInPath(candidates, name);
+
+
       findInRegistry(candidates);
     }
+  }
+
+  void findInRegistry(@NotNull final Collection<String> candidates) {
+    fillRegistryCache(myWinRegService);
+    candidates.addAll(ourRegistryCache);
   }
 
   private static void findInstallations(Set<String> candidates, String exe_name, String... roots) {
@@ -79,25 +91,36 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     }
   }
 
-  public static void findInRegistry(Collection<String> candidates) {
-    fillRegistryCache();
-    candidates.addAll(ourRegistryCache);
-  }
+  private static void fillRegistryCache(@NotNull final WinRegistryService registryService) {
+    if (ourRegistryCache != null) {
+      return;
+    }
+    ourRegistryCache = new HashSet<>();
 
-  private static void fillRegistryCache() {
-    if (ourRegistryCache == null) {
-      ourRegistryCache = new HashSet<String>();
-      for (Map.Entry<String, String> entry : ourRegistryMap.entrySet()) {
-        final String prefix = entry.getKey();
+    /*
+     Check https://www.python.org/dev/peps/pep-0514/ for windows registry layout to understand
+     this method
+     */
+    for (final String regRoot : REG_ROOTS) {
+      for (final Map.Entry<String, String> entry : REGISTRY_MAP.entrySet()) {
+        final String productId = entry.getKey();
         final String exePath = entry.getValue();
-        List<String> strings = WindowsRegistryUtil.readRegistryBranch(prefix);
-        for (String string : strings) {
-          final String path = WindowsRegistryUtil.readRegistryDefault(prefix + "\\" + string +
-                                                                      "\\InstallPath");
-          if (path != null) {
-            File f = new File(path, exePath);
-            if (f.exists()) {
-              ourRegistryCache.add(FileUtil.toSystemDependentName(f.getPath()));
+        final String companiesPath = String.format("%s\\SOFTWARE\\%s", regRoot, productId);
+        final String companiesPathWow = String.format("%s\\SOFTWARE\\Wow6432Node\\%s", regRoot, productId);
+
+        for (final String path : new String[]{companiesPath, companiesPathWow}) {
+          final List<String> companies = registryService.listBranches(path);
+          for (final String company : companies) {
+            final String pathToCompany = path + '\\' + company;
+            final List<String> versions = registryService.listBranches(pathToCompany);
+            for (final String version : versions) {
+              final String folder = registryService.getDefaultKey(pathToCompany + '\\' + version + "\\InstallPath");
+              if (folder != null) {
+                final File interpreter = new File(folder, exePath);
+                if (interpreter.exists()) {
+                  ourRegistryCache.add(FileUtil.toSystemDependentName(interpreter.getPath()));
+                }
+              }
             }
           }
         }

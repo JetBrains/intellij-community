@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.PlaybackCommand;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
@@ -24,7 +25,8 @@ import javax.swing.*;
 import java.io.File;
 
 public abstract class AbstractCommand implements PlaybackCommand {
-
+  private static final Logger LOG = Logger.getInstance("#" + AbstractCommand.class.getPackage().getName());
+  
   public static final String CMD_PREFIX = "%";
 
   private final String myText;
@@ -61,16 +63,14 @@ public abstract class AbstractCommand implements PlaybackCommand {
         dumpCommand(context);
       }
       final ActionCallback result = new ActionCallback();
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            _execute(context).notify(result);
-          }
-          catch (Throwable e) {
-            context.error(e.getMessage(), getLine());
-            result.setRejected();
-          }
+      Runnable runnable = () -> {
+        try {
+          _execute(context).notify(result);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+          context.error(e.getMessage(), getLine());
+          result.setRejected();
         }
       };
       

@@ -31,6 +31,7 @@ public class WarModelImpl implements WebConfiguration.WarModel {
   private final String warName;
   private final String myWebAppDirName;
   private final File myWebAppDir;
+  private File myArchivePath;
   private File myWebXml;
   private List<WebConfiguration.WebResource> myWebResources;
   private Set<File> myClasspath;
@@ -46,6 +47,15 @@ public class WarModelImpl implements WebConfiguration.WarModel {
   @Override
   public String getWarName() {
     return warName;
+  }
+
+  @Override
+  public File getArchivePath() {
+    return myArchivePath;
+  }
+
+  public void setArchivePath(File artifactFile) {
+    myArchivePath = artifactFile;
   }
 
   @Override

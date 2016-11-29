@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -48,7 +47,7 @@ import java.io.IOException;
 public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, PsiField> {
   private static final int INITIALIZER_LENGTH_LIMIT = 1000;
 
-  public JavaFieldStubElementType(@NotNull @NonNls final String id) {
+  public JavaFieldStubElementType(@NotNull String id) {
     super(id);
   }
 
@@ -119,7 +118,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
   }
 
   @Override
-  public void serialize(@NotNull final PsiFieldStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PsiFieldStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
     dataStream.writeName(stub.getInitializerText());
@@ -128,17 +127,18 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
 
   @NotNull
   @Override
-  public PsiFieldStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    final StringRef name = dataStream.readName();
-    final TypeInfo type = TypeInfo.readTYPE(dataStream);
-    final StringRef initializerText = dataStream.readName();
-    final byte flags = dataStream.readByte();
-    return new PsiFieldStubImpl(parentStub, name, type, initializerText, flags);
+  public PsiFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+    StringRef name = dataStream.readName();
+    TypeInfo type = TypeInfo.readTYPE(dataStream);
+    StringRef initializerText = dataStream.readName();
+    byte flags = dataStream.readByte();
+    return new PsiFieldStubImpl(parentStub, StringRef.toString(name), type, StringRef.toString(initializerText), flags);
   }
 
   @Override
-  public void indexStub(@NotNull final PsiFieldStub stub, @NotNull final IndexSink sink) {
-    final String name = stub.getName();
+  public void indexStub(@NotNull PsiFieldStub stub, @NotNull IndexSink sink) {
+    String name = stub.getName();
+    //noinspection Duplicates
     if (name != null) {
       sink.occurrence(JavaStubIndexKeys.FIELDS, name);
       if (RecordUtil.isStaticNonPrivateMember(stub)) {
@@ -149,10 +149,8 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
   }
 
   @Override
-  public String getId(final PsiFieldStub stub) {
-    final String name = stub.getName();
-    if (name != null) return name;
-
-    return super.getId(stub);
+  public String getId(@NotNull PsiFieldStub stub) {
+    String name = stub.getName();
+    return name != null ? name : super.getId(stub);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +28,26 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Set;
 
+import static com.intellij.psi.PsiKeyword.*;
+
 public class JavaLexer extends LexerBase {
   private static final Set<String> KEYWORDS = ContainerUtil.newTroveSet(
-    "abstract", "default", "if", "private", "this", "boolean", "do", "implements", "protected", "throw", "break", "double", "import",
-    "public", "throws", "byte", "else", "instanceof", "return", "transient", "case", "extends", "int", "short", "try", "catch", "final",
-    "interface", "static", "void", "char", "finally", "long", "strictfp", "volatile", "class", "float", "native", "super", "while",
-    "const", "for", "new", "switch", "continue", "goto", "package", "synchronized", "true", "false", "null");
+    ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS, FINAL, FINALLY,
+    FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC,
+    RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
+    TRUE, FALSE, NULL);
+
+  private static final Set<String> JAVA9_KEYWORDS = ContainerUtil.newTroveSet(
+    MODULE, REQUIRES, EXPORTS, USES, PROVIDES, TO, WITH);
 
   public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||
-           level.isAtLeast(LanguageLevel.JDK_1_4) && "assert".equals(id) ||
-           level.isAtLeast(LanguageLevel.JDK_1_5) && "enum".equals(id);
+           level.isAtLeast(LanguageLevel.JDK_1_4) && ASSERT.equals(id) ||
+           level.isAtLeast(LanguageLevel.JDK_1_5) && ENUM.equals(id);
+  }
+
+  public static boolean isSoftKeyword(String id, @NotNull LanguageLevel level) {
+    return level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id);
   }
 
   private final _JavaLexer myFlexLexer;
@@ -181,9 +190,6 @@ public class JavaLexer extends LexerBase {
       myTokenEndOffset = myFlexLexer.getTokenEnd();
     }
     catch (IOException e) { /* impossible */ }
-    catch (Error e) {
-      throw new IllegalArgumentException("Non-parsable text `" + myBuffer + "`", e);
-    }
   }
 
   private int getClosingParenthesis(int offset, char c) {

@@ -52,7 +52,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
   private ModifiableRootModel myRootModel;
   private JpsModule myDummyJpsModule;
   private JpsRootModel myDummyJpsRootModel;
-  private final Set<JpsSourceFolder> myJpsSourceFolders = new TreeSet<JpsSourceFolder>(ContentFolderComparator.INSTANCE);
+  private final Set<JpsSourceFolder> myJpsSourceFolders = new TreeSet<>(ContentFolderComparator.INSTANCE);
   private boolean isJpsSourceFoldersChanged;
 
   public void init(@NotNull Module module, @NotNull ModifiableRootModel modifiableRootModel) {
@@ -200,7 +200,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
 
   @NotNull
   public String[] getSourceRootUrls(boolean includingTests) {
-    List<String> result = new SmartList<String>();
+    List<String> result = new SmartList<>();
     for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
       if (includingTests || !eachFolder.isTestSource()) {
         result.add(eachFolder.getUrl());

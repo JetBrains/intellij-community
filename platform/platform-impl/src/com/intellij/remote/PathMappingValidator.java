@@ -28,7 +28,7 @@ import java.util.List;
 public class PathMappingValidator {
   public static String validatePathMappings(@NotNull Project project, @NotNull RemoteSdkAdditionalData data) {
     boolean found = false;
-    final List<String> locations = new SmartList<String>();
+    final List<String> locations = new SmartList<>();
     for (PathMappingProvider mappingProvider : PathMappingProvider.getSuitableMappingProviders(data)) {
       found = found || !mappingProvider.getPathMappingSettings(project, data).isEmpty();
       locations.add(mappingProvider.getProviderPresentableName(data));

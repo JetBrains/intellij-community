@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter
 
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.refactoring.IntroduceParameterRefactoring
 import gnu.trove.TIntArrayList
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
@@ -27,14 +26,13 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceP
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author Max Medvedev
  */
-public abstract class ExtractClosureTest extends LightGroovyTestCase {
+abstract class ExtractClosureTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}groovy/refactoring/extractMethod/";
+    return "${TestUtils.testDataPath}groovy/refactoring/extractMethod/"
   }
 
   protected void doTest(String before, String after, List<Integer> toRemove = [], List<Integer> notToUseAsParams = [], boolean forceReturn = true) {
@@ -59,11 +57,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
         }
       }
     }
+    handler.invoke myFixture.project, myFixture.editor, myFixture.file, null
+    doPostponedFormatting(myFixture.project)
 
-    WriteCommandAction.runWriteCommandAction project, {
-      handler.invoke myFixture.project, myFixture.editor, myFixture.file, null
-      doPostponedFormatting(myFixture.project)
-    }
     myFixture.checkResult after
   }
 

@@ -73,15 +73,10 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
   }
 
   private static class RedundantImplementsFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "redundant.implements.remove.quickfix");
     }

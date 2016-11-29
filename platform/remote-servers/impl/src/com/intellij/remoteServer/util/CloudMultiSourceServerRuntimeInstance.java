@@ -70,26 +70,22 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   }
 
   public void connect(final ServerConnector.ConnectionCallback<DC> callback) {
-    getAgentTaskExecutor().execute(new Computable() {
+    getAgentTaskExecutor().execute(() -> {
+      doConnect(getConfiguration(),
+                new CloudAgentLogger() {
 
-                                     @Override
-                                     public Object compute() {
-                                       doConnect(getConfiguration(),
-                                                 new CloudAgentLogger() {
+                  @Override
+                  public void debugEx(Exception e) {
+                    LOG.debug(e);
+                  }
 
-                                                   @Override
-                                                   public void debugEx(Exception e) {
-                                                     LOG.debug(e);
-                                                   }
-
-                                                   @Override
-                                                   public void debug(String message) {
-                                                     LOG.debug(message);
-                                                   }
-                                                 });
-                                       return null;
-                                     }
-                                   }, new CallbackWrapper() {
+                  @Override
+                  public void debug(String message) {
+                    LOG.debug(message);
+                  }
+                });
+      return null;
+    }, new CallbackWrapper() {
 
                                      @Override
                                      public void onSuccess(Object result) {
@@ -108,24 +104,12 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   public void deploy(@NotNull final DeploymentTask<DC> task,
                      @NotNull final DeploymentLogManager logManager,
                      @NotNull final ServerRuntimeInstance.DeploymentOperationCallback callback) {
-    getTaskExecutor().submit(new ThrowableRunnable<Exception>() {
-
-      @Override
-      public void run() throws Exception {
-        createDeploymentRuntime(task, logManager).deploy(callback);
-      }
-    }, callback);
+    getTaskExecutor().submit(() -> createDeploymentRuntime(task, logManager).deploy(callback), callback);
   }
 
   @Override
   public void disconnect() {
-    getTaskExecutor().submit(new Runnable() {
-
-      @Override
-      public void run() {
-        getAgent().disconnect();
-      }
-    });
+    getTaskExecutor().submit(() -> getAgent().disconnect());
   }
 
   public CloudDeploymentRuntime createDeploymentRuntime(final DeployToServerRunConfiguration<?, DC> runConfiguration)

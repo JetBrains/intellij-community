@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractMethodObject;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -26,13 +25,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -168,22 +167,13 @@ public class ExtractLightMethodObjectHandler {
                                                                    controlFlow.getStartOffset(elementsCopy[0]),
                                                                    controlFlow.getEndOffset(elementsCopy[elementsCopy.length - 1]));
 
-    variables = ContainerUtil.filter(variables, new Condition<PsiVariable>() {
-      @Override
-      public boolean value(PsiVariable variable) {
-        final PsiElement variableScope = variable instanceof PsiParameter ? ((PsiParameter)variable).getDeclarationScope()
-                                                                          : PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
-        return variableScope != null && PsiTreeUtil.isAncestor(variableScope, elementsCopy[elementsCopy.length - 1], false);
-      }
+    variables = ContainerUtil.filter(variables, variable -> {
+      PsiElement variableScope = PsiUtil.getVariableCodeBlock(variable, null);
+      return variableScope != null && PsiTreeUtil.isAncestor(variableScope, elementsCopy[elementsCopy.length - 1], true);
     });
 
 
-    final String outputVariables = StringUtil.join(variables, new Function<PsiVariable, String>() {
-                                          @Override
-                                          public String fun(PsiVariable variable) {
-                                            return "\"variable: \" + " + variable.getName();
-                                          }
-                                        }, " +");
+    final String outputVariables = StringUtil.join(variables, variable -> "\"variable: \" + " + variable.getName(), " +");
     PsiStatement outStatement = elementFactory.createStatementFromText("System.out.println(" + outputVariables + ");", anchor);
     outStatement = (PsiStatement)container.addAfter(outStatement, elementsCopy[elementsCopy.length - 1]);
 
@@ -303,6 +293,7 @@ public class ExtractLightMethodObjectHandler {
       return inputVariables.getInputVariables().toArray(new VariableData[inputVariables.getInputVariables().size()]);
     }
 
+    @NotNull
     @Override
     public String getVisibility() {
       return PsiModifier.PUBLIC;

@@ -47,6 +47,10 @@ import java.util.List;
  */
 public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode> {
 
+  public static final int BUILTIN_TASKS_DATA_NODE_ORDER = 10;
+  public static final int BUILTIN_DEPENDENCIES_DATA_NODE_ORDER = BUILTIN_TASKS_DATA_NODE_ORDER + 10;
+  public static final int BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER = BUILTIN_DEPENDENCIES_DATA_NODE_ORDER + 10;
+  public static final int BUILTIN_MODULE_DATA_NODE_ORDER = BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER + 10;
 
   @NotNull public static final Comparator<ExternalSystemNode> ORDER_AWARE_COMPARATOR = new Comparator<ExternalSystemNode>() {
 
@@ -204,7 +208,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
 
     addAll(newChildrenCandidates, true);
     sort(myChildrenList);
-    List<ExternalSystemNode> visibleNodes = new ArrayList<ExternalSystemNode>();
+    List<ExternalSystemNode> visibleNodes = new ArrayList<>();
     for (ExternalSystemNode each : myChildrenList) {
       if (each.isVisible()) visibleNodes.add(each);
     }
@@ -278,12 +282,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     }
 
     sort(myChildrenList);
-    final List<ExternalSystemNode<?>> visibleNodes = ContainerUtil.filter(myChildrenList, new Condition<ExternalSystemNode<?>>() {
-      @Override
-      public boolean value(ExternalSystemNode<?> node) {
-        return node.isVisible();
-      }
-    });
+    final List<ExternalSystemNode<?>> visibleNodes = ContainerUtil.filter(myChildrenList, node -> node.isVisible());
     myChildren = visibleNodes.toArray(new ExternalSystemNode[visibleNodes.size()]);
     myExternalProjectsView.updateUpTo(this);
   }

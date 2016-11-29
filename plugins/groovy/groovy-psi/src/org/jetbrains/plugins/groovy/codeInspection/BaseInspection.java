@@ -15,15 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   private final String m_shortName = InspectionProfileEntry.getShortName(getClass().getSimpleName());
@@ -51,16 +50,6 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
     return m_shortName;
   }
 
-  @NotNull
-  protected BaseInspectionVisitor buildGroovyVisitor(@NotNull ProblemsHolder problemsHolder, boolean onTheFly) {
-    final BaseInspectionVisitor visitor = buildVisitor();
-    visitor.setProblemsHolder(problemsHolder);
-    visitor.setOnTheFly(onTheFly);
-    visitor.setInspection(this);
-    return visitor;
-  }
-
-
   @Nullable
   protected String buildErrorString(Object... args) {
     return null;
@@ -75,24 +64,14 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
     return null;
   }
 
-  @Nullable
-  protected GroovyFix[] buildFixes(@NotNull PsiElement location) {
-    return null;
-  }
-
+  @NotNull
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile psiFile, @NotNull InspectionManager inspectionManager, boolean isOnTheFly) {
-    if (!(psiFile instanceof GroovyFileBase)) {
-      return super.checkFile(psiFile, inspectionManager, isOnTheFly);
-    }
-    final GroovyFileBase groovyFile = (GroovyFileBase) psiFile;
-
-    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, psiFile, isOnTheFly);
-    final BaseInspectionVisitor visitor = buildGroovyVisitor(problemsHolder, isOnTheFly);
-    groovyFile.accept(visitor);
-    return problemsHolder.getResultsArray();
-
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
+    BaseInspectionVisitor visitor = buildVisitor();
+    visitor.initialize(this, holder, isOnTheFly);
+    return new GroovyPsiElementVisitor(visitor);
   }
 
   @NotNull

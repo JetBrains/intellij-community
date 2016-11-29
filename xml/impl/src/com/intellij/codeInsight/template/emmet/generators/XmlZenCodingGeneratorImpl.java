@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -58,7 +59,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
                          @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
     if (isTrueXml(fileType)) {
-      closeUnclosingTags(tag);
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> closeUnclosingTags(tag));
     }
     return tag.getContainingFile().getText();
   }
@@ -109,7 +110,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
 
   @SuppressWarnings({"ConstantConditions"})
   private static void closeUnclosingTags(@NotNull XmlTag root) {
-    final List<SmartPsiElementPointer<XmlTag>> tagToClose = new ArrayList<SmartPsiElementPointer<XmlTag>>();
+    final List<SmartPsiElementPointer<XmlTag>> tagToClose = new ArrayList<>();
     Project project = root.getProject();
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     root.accept(new XmlRecursiveElementVisitor() {
@@ -131,12 +132,9 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
           if (file != null) {
             final Document document = FileDocumentManager.getInstance().getDocument(file);
             documentManager.doPostponedOperationsAndUnblockDocument(document);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-                documentManager.commitDocument(document);
-              }
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+              documentManager.commitDocument(document);
             });
           }
         }

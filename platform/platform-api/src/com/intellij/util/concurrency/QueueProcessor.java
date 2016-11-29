@@ -28,8 +28,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.util.containers.ContainerUtil.newIdentityTroveMap;
 
 /**
  * <p>QueueProcessor processes elements which are being added to a queue via {@link #add(Object)} and {@link #addFirst(Object)} methods.</p>
@@ -69,7 +70,7 @@ public class QueueProcessor<T> {
 
   private final ThreadToUse myThreadToUse;
   private final Condition<?> myDeathCondition;
-  private final Map<MyOverrideEquals, ModalityState> myModalityState = new HashMap<>();
+  private final Map<Object, ModalityState> myModalityState = newIdentityTroveMap();
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
@@ -145,7 +146,7 @@ public class QueueProcessor<T> {
 
   public void add(@NotNull T t, ModalityState state) {
     synchronized (myQueue) {
-      myModalityState.put(new MyOverrideEquals(t), state);
+      myModalityState.put(t, state);
     }
     doAdd(t, false);
   }
@@ -203,7 +204,7 @@ public class QueueProcessor<T> {
     };
     final Application application = ApplicationManager.getApplication();
     if (myThreadToUse == ThreadToUse.AWT) {
-      final ModalityState state = myModalityState.remove(new MyOverrideEquals(item));
+      final ModalityState state = myModalityState.remove(item);
       if (state != null) {
         application.invokeLater(runnable, state);
       }
@@ -255,24 +256,6 @@ public class QueueProcessor<T> {
   public boolean hasPendingItemsToProcess() {
     synchronized (myQueue) {
       return !myQueue.isEmpty();
-    }
-  }
-
-  private static class MyOverrideEquals {
-    private final Object myDelegate;
-
-    private MyOverrideEquals(@NotNull Object delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public int hashCode() {
-      return myDelegate.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return ((MyOverrideEquals)obj).myDelegate == myDelegate;
     }
   }
 

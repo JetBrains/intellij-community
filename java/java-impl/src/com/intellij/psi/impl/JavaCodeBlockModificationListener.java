@@ -51,7 +51,7 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
       case CHILDREN_CHANGED:
         // general childrenChanged() event after each change
         if (!event.isGenericChange()) {
-          processChange(event.getParent(), event.getParent(), null);
+          processChange(event.getParent(), null, null);
         }
         break;
 
@@ -113,24 +113,18 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
     return false;
   }
 
-  private static boolean isInsideCodeBlock(PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      return false;
-    }
-
+  private static boolean isInsideCodeBlock(final PsiElement element) {
     if (element == null || element.getParent() == null) return true;
 
     PsiElement parent = element;
     while (true) {
-      if (parent instanceof PsiFile || parent instanceof PsiDirectory || parent == null) {
-        return false;
-      }
-      if (parent instanceof PsiClass) return false; // anonymous or local class
       if (parent instanceof PsiModifiableCodeBlock) {
         if (!((PsiModifiableCodeBlock)parent).shouldChangeModificationCount(element)) {
           return true;
         }
       }
+      if (parent == null || parent instanceof PsiFileSystemItem) return false;
+      if (parent instanceof PsiClass) return false; // anonymous or local class
       parent = parent.getParent();
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -32,7 +31,7 @@ import java.util.List;
 public class EditGroupAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     GroupItem groupToBeEdited = GroupItem.DATA_KEY.getData(e.getDataContext());
     if (groupToBeEdited == null || project == null) return;
 
@@ -65,7 +64,7 @@ public class EditGroupAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     GroupItem groupItem = GroupItem.DATA_KEY.getData(e.getDataContext());
     e.getPresentation().setEnabled(project != null && groupItem != null && !groupItem.isReadOnly());
   }

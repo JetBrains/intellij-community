@@ -38,7 +38,7 @@ public class BadPluginTest extends PlatformTestCase {
   public void testBadPlugin() throws Exception {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId(COM_YOUR_COMPANY_UNIQUE_PLUGIN_ID));
     if (plugin == null) return;
-    List<String> disabledPlugins = new ArrayList<String>();
+    List<String> disabledPlugins = new ArrayList<>();
     PluginManagerCore.loadDisabledPlugins(PathManager.getConfigPath(), disabledPlugins);
     assertEquals(1, disabledPlugins.size());
     assertEquals(COM_YOUR_COMPANY_UNIQUE_PLUGIN_ID, disabledPlugins.get(0));

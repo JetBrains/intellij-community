@@ -78,7 +78,7 @@ public class XDebuggerWatchesManager implements PersistentStateComponent<XDebugg
   public static class WatchesManagerState {
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false)
-    public List<ConfigurationState> expressions = new ArrayList<ConfigurationState>();
+    public List<ConfigurationState> expressions = new ArrayList<>();
   }
 
   @Tag("configuration")

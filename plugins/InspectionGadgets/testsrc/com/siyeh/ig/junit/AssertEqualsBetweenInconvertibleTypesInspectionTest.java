@@ -1,12 +1,17 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightInspectionTestCase {
 
   public void testAssertEqualsBetweenInconvertibleTypes() {
+    doTest();
+  }
+  public void testAssertEqualsBetweenInconvertibleTypesJUnit5() {
     doTest();
   }
 
@@ -25,8 +30,25 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightIn
       "public class Assert {" +
       "  static public void assertEquals(double expected, double actual, double delta) {}" +
       "  static public void assertEquals(Object expected, Object actual){}" +
+      "}",
+
+      "package org.junit.jupiter.api;\n" +
+      "import java.util.function.Supplier;\n" +
+      "public final class Assertions {\n" +
+      "    public static void assertEquals(double expected, double actual) {}\n" +
+      "    public static void assertEquals(double expected, double actual, String message) {}\n" +
+      "    public static void assertEquals(double expected, double actual, Supplier<String> messageSupplier) {}\n" +
+      "    public static void assertEquals(Object expected, Object actual) {}\n" +
+      "    public static void assertEquals(Object expected, Object actual, String message) {}\n" +
+      "    public static void assertEquals(Object expected, Object actual, Supplier<String> messageSupplier) {}\n" +
       "}"
     };
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   @Nullable

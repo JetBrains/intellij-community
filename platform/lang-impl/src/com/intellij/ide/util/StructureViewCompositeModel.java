@@ -74,7 +74,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
       @NotNull
       @Override
       public TreeElement[] getChildren() {
-        ArrayList<TreeElement> elements = new ArrayList<TreeElement>();
+        ArrayList<TreeElement> elements = new ArrayList<>();
         for (StructureViewComposite.StructureViewDescriptor view : views) {
           elements.add(createTreeElementFromView(file, view));
         }
@@ -86,7 +86,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
   @NotNull
   @Override
   public Collection<NodeProvider> getNodeProviders() {
-    final Set<NodeProvider> providers = new HashSet<NodeProvider>();
+    final Set<NodeProvider> providers = new HashSet<>();
     for (StructureViewComposite.StructureViewDescriptor view : myViews) {
       final StructureViewModel model = view.structureView.getTreeModel();
       if (model instanceof ProvidingTreeModel) {
@@ -99,7 +99,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
   @NotNull
   @Override
   public Filter[] getFilters() {
-    final HashSet<Filter> filters = new HashSet<Filter>();
+    final HashSet<Filter> filters = new HashSet<>();
     for (StructureViewComposite.StructureViewDescriptor view : myViews) {
       final StructureViewModel model = view.structureView.getTreeModel();
       filters.addAll(Arrays.asList(model.getFilters()));

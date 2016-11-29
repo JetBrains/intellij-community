@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -27,6 +28,8 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -394,11 +397,11 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg");
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
-    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nignored msg");
+    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nignored msg\n");
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
@@ -406,10 +409,10 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stderr1 ", false));
     myEventsProcessor.onTestIgnored(new TestIgnoredEvent("my_test2", "ignored msg", null));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg");
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
     mockPrinter2.onNewAvailable(myTest2);
-    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nignored msg");
+    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nignored msg\n");
   }
 
   public void testProcessor_OnIgnored_WithStacktrace() {
@@ -421,14 +424,14 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ",
                      "\nmethod1:1\nmethod2:2\nstderr1 ",
-                     "\nignored2 msg");
+                     "\nignored2 msg\n");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1,
                      "stdout1 ",
                      "stderr1 \nmethod1:1\nmethod2:2\n",
-                     "\nignored2 msg");
+                     "\nignored2 msg\n");
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
@@ -439,13 +442,13 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     assertAllOutputs(myMockResettablePrinter,
                      "stdout1 ",
                      "stderr1 \nmethod1:1\nmethod2:2\n",
-                     "\nignored msg");
+                     "\nignored msg\n");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
     mockPrinter2.onNewAvailable(myTest2);
     assertAllOutputs(mockPrinter2,
                      "stdout1 ",
                      "stderr1 \nmethod1:1\nmethod2:2\n",
-                     "\nignored msg");
+                     "\nignored msg\n");
   }
 
   public void testOnUncapturedOutput_BeforeProcessStarted() {
@@ -534,6 +537,22 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
 
     assertAllOutputs(myMockResettablePrinter, "preved", "","Empty test suite.\n");
+  }
+
+  public void testEnsureOrderedClearFlush() throws Exception {
+    StringBuffer buf = new StringBuffer();
+    String expected = "";
+    for(int i = 0; i < 100; i++) {
+      expected += "1" ;
+      expected += "2" ;
+      CompositePrintable.invokeInAlarm(() -> buf.append("1"), false);
+      CompositePrintable.invokeInAlarm(() -> buf.append("2"), false);
+    }
+    Semaphore s = new Semaphore();
+    s.down();
+    CompositePrintable.invokeInAlarm(s::up, false);
+    assertTrue(s.waitFor(1000));
+    assertEquals(expected, buf.toString());
   }
 
   @NotNull

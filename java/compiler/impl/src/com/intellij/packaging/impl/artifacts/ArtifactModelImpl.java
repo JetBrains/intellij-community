@@ -32,13 +32,13 @@ import java.util.Map;
 public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableArtifactModel {
   private final List<ArtifactImpl> myOriginalArtifacts;
   private final ArtifactManagerImpl myArtifactManager;
-  private final Map<ArtifactImpl, ArtifactImpl> myArtifact2ModifiableCopy = new HashMap<ArtifactImpl, ArtifactImpl>();
-  private final Map<ArtifactImpl, ArtifactImpl> myModifiable2Original = new HashMap<ArtifactImpl, ArtifactImpl>();
+  private final Map<ArtifactImpl, ArtifactImpl> myArtifact2ModifiableCopy = new HashMap<>();
+  private final Map<ArtifactImpl, ArtifactImpl> myModifiable2Original = new HashMap<>();
   private final EventDispatcher<ArtifactListener> myDispatcher = EventDispatcher.create(ArtifactListener.class);
 
   public ArtifactModelImpl(ArtifactManagerImpl artifactManager, List<ArtifactImpl> originalArtifacts) {
     myArtifactManager = artifactManager;
-    myOriginalArtifacts = new ArrayList<ArtifactImpl>(originalArtifacts);
+    myOriginalArtifacts = new ArrayList<>(originalArtifacts);
     addListener(new ArtifactAdapter() {
       @Override
       public void artifactChanged(@NotNull Artifact artifact, @NotNull String oldName) {
@@ -48,7 +48,7 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
   }
 
   protected List<? extends Artifact> getArtifactsList() {
-    final List<ArtifactImpl> list = new ArrayList<ArtifactImpl>();
+    final List<ArtifactImpl> list = new ArrayList<>();
     for (ArtifactImpl artifact : myOriginalArtifacts) {
       final ArtifactImpl copy = myArtifact2ModifiableCopy.get(artifact);
       if (copy != null) {
@@ -154,7 +154,7 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
   }
 
   public void dispose() {
-    List<Artifact> artifacts = new ArrayList<Artifact>();
+    List<Artifact> artifacts = new ArrayList<>();
     for (ArtifactImpl artifact : myModifiable2Original.keySet()) {
       if (myModifiable2Original.get(artifact).equals(artifact)) {
         artifacts.add(artifact);

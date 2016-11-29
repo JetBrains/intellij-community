@@ -130,7 +130,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return false;
   }
 
-  private final Map<String, String[]> myCachedSplits = new HashMap<String, String[]>();
+  private final Map<String, String[]> myCachedSplits = new HashMap<>();
 
   private String[] getTagNames(final String option) {
     String[] splits = myCachedSplits.get(option);

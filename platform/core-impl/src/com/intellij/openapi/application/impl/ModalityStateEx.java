@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,44 +17,31 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ModalityStateEx extends ModalityState {
-  private static final WeakReference[] EMPTY_REFS_ARRAY = new WeakReference[0];
+  private final WeakList myModalEntities = new WeakList();
 
-  private final WeakReference[] myModalEntities;
-
-  public ModalityStateEx() {
-    this(EMPTY_REFS_ARRAY);
-  }
+  @SuppressWarnings("unused")
+  public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
   public ModalityStateEx(@NotNull Object[] modalEntities) {
-    if (modalEntities.length > 0) {
-      myModalEntities = new WeakReference[modalEntities.length];
-      for (int i = 0; i < modalEntities.length; i++) {
-        Object entity = modalEntities[i];
-        myModalEntities[i] = new WeakReference<Object>(entity);
-      }
-    }
-    else{
-      myModalEntities = EMPTY_REFS_ARRAY;
-    }
+    Collections.addAll(myModalEntities, modalEntities);
   }
 
   private List<Object> getModalEntities() {
-    return ContainerUtil.mapNotNull(myModalEntities, new Function<WeakReference, Object>() {
-      @Override
-      public Object fun(WeakReference reference) {
-        return reference.get();
-      }
-    });
+    ArrayList<Object> result = new ArrayList<Object>();
+    for (Object entity : myModalEntities) {
+      result.add(entity);
+    }
+    return result;
   }
 
   @NotNull
@@ -64,8 +51,9 @@ public class ModalityStateEx extends ModalityState {
 
   @NotNull
   ModalityStateEx appendEntity(@NotNull Object anEntity){
-    List<Object> list = new ArrayList<Object>(myModalEntities.length+1);
-    list.addAll(getModalEntities());
+    List<Object> modalEntities = getModalEntities();
+    List<Object> list = new ArrayList<Object>(modalEntities.size() + 1);
+    list.addAll(modalEntities);
     list.add(anEntity);
     return new ModalityStateEx(list.toArray());
   }
@@ -81,21 +69,10 @@ public class ModalityStateEx extends ModalityState {
     return false;
   }
 
-  boolean contains(@NotNull Object modalEntity) {
-    return getModalEntities().contains(modalEntity);
-  }
-
   @NonNls
   public String toString() {
-    if (myModalEntities.length == 0) return "ModalityState.NON_MODAL";
-    @NonNls StringBuilder buffer = new StringBuilder();
-    buffer.append("ModalityState:");
-    for (int i = 0; i < myModalEntities.length; i++) {
-      Object entity = myModalEntities[i].get();
-      if (i > 0) buffer.append(", ");
-      buffer.append(entity);
-    }
-    return buffer.toString();
+    List<Object> modalEntities = getModalEntities();
+    return modalEntities.isEmpty() ? "ModalityState.NON_MODAL" : "ModalityState:" + StringUtil.join(modalEntities, ", ");
   }
 
   @Override
@@ -112,5 +89,9 @@ public class ModalityStateEx extends ModalityState {
   @Override
   public int hashCode() {
     return getModalEntities().hashCode();
+  }
+
+  void removeModality(Object modalEntity) {
+    myModalEntities.remove(modalEntity);
   }
 }

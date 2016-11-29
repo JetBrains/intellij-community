@@ -81,7 +81,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private final JComboBox myCombobox;
 
   private final Map<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>> myCoordinates = ContainerUtil.newTroveMap();
-  private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<String, MavenRepositoryInfo>();
+  private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<>();
   private final List<String> myShownItems = ContainerUtil.newArrayList();
   private final String myDefaultDownloadFolder;
 
@@ -117,11 +117,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myProgressIcon.isDisposed()) return;
-            updateComboboxSelection(false);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myProgressIcon.isDisposed()) return;
+          updateComboboxSelection(false);
         });
       }
     });
@@ -219,7 +217,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     }
 
     // use maven version sorter
-    ArrayList<Comparable> comparables = new ArrayList<Comparable>(myShownItems.size());
+    ArrayList<Comparable> comparables = new ArrayList<>(myShownItems.size());
     for (String item : myShownItems) {
       comparables.add(new MavenVersionComparable(item));
     }
@@ -250,36 +248,34 @@ public class RepositoryAttachDialog extends DialogWrapper {
     if (myCoordinates.containsKey(text)) return false;
     if (myProgressIcon.isRunning()) return false;
     myProgressIcon.resume();
-    RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean>() {
-        public boolean process(Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>> artifacts, Boolean tooMany) {
-          if (myProgressIcon.isDisposed()) return false;
-          if (tooMany != null) myProgressIcon.suspend(); // finished
-          final int prevSize = myCoordinates.size();
-          for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
-            myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
-            String url = each.second != null? each.second.getUrl() : null;
-            if (StringUtil.isNotEmpty(url) && !myRepositories.containsKey(url)) {
-              myRepositories.put(url, each.second);
-            }
-          }
-          String title = getTitle();
-          String tooManyMessage = ": too many results found";
-          if (tooMany != null) {
-            boolean alreadyThere = title.endsWith(tooManyMessage);
-            if (tooMany.booleanValue() && !alreadyThere) {
-              setTitle(title + tooManyMessage);
-            }
-            else if (!tooMany.booleanValue() && alreadyThere) {
-              setTitle(title.substring(0, title.length() - tooManyMessage.length()));
-            }
-          }
-          updateComboboxSelection(prevSize != myCoordinates.size());
-          // tooMany != null on last call, so enable OK action to let
-          // local maven repo a chance even if all remote services failed
-          setOKActionEnabled(!myRepositories.isEmpty() || tooMany != null);
-          return true;
+    RepositoryAttachHandler.searchArtifacts(myProject, text, (artifacts, tooMany) -> {
+      if (myProgressIcon.isDisposed()) return false;
+      if (tooMany != null) myProgressIcon.suspend(); // finished
+      final int prevSize = myCoordinates.size();
+      for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
+        myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
+        String url = each.second != null? each.second.getUrl() : null;
+        if (StringUtil.isNotEmpty(url) && !myRepositories.containsKey(url)) {
+          myRepositories.put(url, each.second);
         }
-      });
+      }
+      String title = getTitle();
+      String tooManyMessage = ": too many results found";
+      if (tooMany != null) {
+        boolean alreadyThere = title.endsWith(tooManyMessage);
+        if (tooMany.booleanValue() && !alreadyThere) {
+          setTitle(title + tooManyMessage);
+        }
+        else if (!tooMany.booleanValue() && alreadyThere) {
+          setTitle(title.substring(0, title.length() - tooManyMessage.length()));
+        }
+      }
+      updateComboboxSelection(prevSize != myCoordinates.size());
+      // tooMany != null on last call, so enable OK action to let
+      // local maven repo a chance even if all remote services failed
+      setOKActionEnabled(!myRepositories.isEmpty() || tooMany != null);
+      return true;
+    });
     return true;
   }
 

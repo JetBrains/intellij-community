@@ -22,12 +22,14 @@ import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -38,6 +40,7 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +77,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
       return newChildren;
     }
     if (settings.isShowMembers()) {
-      List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
+      List<AbstractTreeNode> newChildren = new ArrayList<>();
       for (AbstractTreeNode child : children) {
         if (child instanceof PsiFileNode && ((PsiFileNode)child).getValue() instanceof PyFile) {
           newChildren.add(new PyFileNode(project, ((PsiFileNode)child).getValue(), settings));
@@ -108,7 +111,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
 
   @NotNull
   private static Collection<AbstractTreeNode> hideSkeletons(@NotNull Collection<AbstractTreeNode> children) {
-    List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
+    List<AbstractTreeNode> newChildren = new ArrayList<>();
     for (AbstractTreeNode child : children) {
       if (child instanceof PsiDirectoryNode) {
         PsiDirectory directory = ((PsiDirectoryNode)child).getValue();
@@ -151,11 +154,14 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
 
   @Override
   public PsiElement getTopLevelElement(PsiElement element) {
-    final PsiFile containingFile = element.getContainingFile();
+    PyPsiUtils.assertValid(element);
+    final Ref<PsiFile> containingFileRef = Ref.create();
+    ApplicationManager.getApplication().runReadAction(() -> containingFileRef.set(element.getContainingFile()));
+    final PsiFile containingFile = containingFileRef.get();
     if (!(containingFile instanceof PyFile)) {
       return null;
     }
-    List<PsiElement> parents = new ArrayList<PsiElement>();
+    List<PsiElement> parents = new ArrayList<>();
     PyDocStringOwner container = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
     while (container != null) {
       if (container instanceof PyFile) {

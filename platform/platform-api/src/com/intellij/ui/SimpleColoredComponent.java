@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -45,6 +46,7 @@ import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -64,6 +66,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   public static final int FRAGMENT_ICON = -2;
 
   private final List<String> myFragments;
+  private final List<TextLayout> myLayouts;
+  private Font myLayoutFont;
   private final List<SimpleTextAttributes> myAttributes;
   private List<Object> myFragmentTags = null;
   private TIntIntHashMap myFragmentAlignment;
@@ -97,11 +101,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    */
   private Border myBorder;
 
-  /**
-   * If true, then for character that the current font can not draw we try to look for a fallback font that can
-   */
-  private boolean mySupportFontFallback = false;
-
   private int myMainTextLastIndex = -1;
 
   private final TIntIntHashMap myFragmentPadding;
@@ -116,14 +115,21 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private boolean myTransparentIconBackground;
 
   public SimpleColoredComponent() {
-    myFragments = new ArrayList<String>(3);
-    myAttributes = new ArrayList<SimpleTextAttributes>(3);
+    myFragments = new ArrayList<>(3);
+    myLayouts = new ArrayList<>(3);
+    myAttributes = new ArrayList<>(3);
     myIpad = new JBInsets(1, 2, 1, 2);
     myIconTextGap = JBUI.scale(2);
     myBorder = new MyBorder();
     myFragmentPadding = new TIntIntHashMap(10);
     myFragmentAlignment = new TIntIntHashMap(10);
     setOpaque(true);
+    updateUI();
+  }
+
+  @Override
+  public void updateUI() {
+    UISettings.setupComponentAntialiasing(this);
   }
 
   @NotNull
@@ -208,7 +214,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private synchronized void _append(String fragment, SimpleTextAttributes attributes, Object tag) {
     append(fragment, attributes);
     if (myFragmentTags == null) {
-      myFragmentTags = new ArrayList<Object>();
+      myFragmentTags = new ArrayList<>();
     }
     while (myFragmentTags.size() < myFragments.size() - 1) {
       myFragmentTags.add(null);
@@ -216,11 +222,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myFragmentTags.add(tag);
   }
 
-  @Deprecated
   /**
    * fragment width isn't a right name, it is actually a padding
    * @deprecated remove in IDEA 16
    */
+  @Deprecated
   public synchronized void appendFixedTextFragmentWidth(int width) {
     appendTextPadding(width);
   }
@@ -258,6 +264,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myIcon = null;
     myPaintFocusBorder = false;
     myFragments.clear();
+    myLayouts.clear();
     myAttributes.clear();
     myFragmentTags = null;
     myMainTextLastIndex = -1;
@@ -395,14 +402,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       width += myIcon.getIconWidth() + myIconTextGap;
     }
 
-    final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : new Insets(0, 0, 0, 0);
+    final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
     width += borderInsets.left;
 
-    Font font = getFont();
-    if (font == null) {
-      font = UIUtil.getLabelFont();
-    }
-
+    Font font = getBaseFont();
     LOG.assertTrue(font != null);
 
     width += computeTextWidth(font, mainTextOnly);
@@ -412,7 +415,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     int height = myIpad.top + myIpad.bottom;
 
     final FontMetrics metrics = getFontMetrics(font);
-    int textHeight = metrics.getHeight();
+    int textHeight = Math.max(JBUI.scale(16), metrics.getHeight()); //avoid too narrow rows
     textHeight += borderInsets.top + borderInsets.bottom;
 
     if (myIcon != null) {
@@ -432,6 +435,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return new Dimension(width, height);
   }
 
+  private Rectangle computePaintArea() {
+    Rectangle area = new Rectangle(getWidth(), getHeight());
+    JBInsets.removeFrom(area, getInsets());
+    JBInsets.removeFrom(area, myIpad);
+    return area;
+  }
+
   private int computeTextWidth(@NotNull Font font, final boolean mainTextOnly) {
     int result = 0;
     int baseSize = font.getSize();
@@ -444,7 +454,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       wasSmaller = isSmaller;
 
-      result += computeStringWidth(myFragments.get(i), font);
+      result += computeStringWidth(i, font);
 
       final int fixedWidth = myFragmentPadding.get(i);
       if (fixedWidth > 0 && result < fixedWidth) {
@@ -455,32 +465,48 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return result;
   }
 
-  private void doDrawString(Graphics2D g, String text, int x, int y) {
-    Font font = g.getFont();
-    if (needFontFallback(font, text)) {
-      TextLayout layout = createTextLayout(text, font, g.getFontRenderContext());
-      if (layout != null) {
-        layout.draw(g, x, y);
-      }
+  @NotNull
+  private Font getBaseFont() {
+    Font font = getFont();
+    if (font == null) font = UIUtil.getLabelFont();
+    return font;
+  }
+
+  private TextLayout getTextLayout(int fragmentIndex, Font font, FontRenderContext frc) {
+    if (getBaseFont() != myLayoutFont) myLayouts.clear();
+    TextLayout layout = fragmentIndex < myLayouts.size() ? myLayouts.get(fragmentIndex) : null;
+    if (layout == null && needFontFallback(font, myFragments.get(fragmentIndex))) {
+      layout = createAndCacheTextLayout(fragmentIndex, font, frc);
+    }
+    return layout;
+  }
+
+  private void doDrawString(Graphics2D g, int fragmentIndex, int x, int y) {
+    String text = myFragments.get(fragmentIndex);
+    if (StringUtil.isEmpty(text)) return;
+    TextLayout layout = getTextLayout(fragmentIndex, g.getFont(), g.getFontRenderContext());
+    if (layout != null) {
+      layout.draw(g, x, y);
     }
     else {
       g.drawString(text, x, y);
     }
   }
 
-  private int computeStringWidth(String text, Font font) {
-    if (needFontFallback(font, text)) {
-      TextLayout layout = createTextLayout(text, font, getFontMetrics(font).getFontRenderContext());
-      return layout != null ? (int)layout.getAdvance() : 0;
+  private int computeStringWidth(int fragmentIndex, Font font) {
+    String text = myFragments.get(fragmentIndex);
+    if (StringUtil.isEmpty(text)) return 0;
+    TextLayout layout = getTextLayout(fragmentIndex, font, getFontMetrics(font).getFontRenderContext());
+    if (layout != null) {
+      return (int)layout.getAdvance();
     }
     else {
       return getFontMetrics(font).stringWidth(text);
     }
   }
 
-  @Nullable
-  private static TextLayout createTextLayout(String text, Font basefont, FontRenderContext fontRenderContext) {
-    if (StringUtil.isEmpty(text)) return null;
+  private TextLayout createAndCacheTextLayout(int fragmentIndex, Font basefont, FontRenderContext fontRenderContext) {
+    String text = myFragments.get(fragmentIndex);
     AttributedString string = new AttributedString(text);
     int start = 0;
     int end = text.length();
@@ -507,19 +533,18 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     if (currentIndex < end) {
       string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, end);
     }
-    return new TextLayout(string.getIterator(), fontRenderContext);
+    TextLayout layout = new TextLayout(string.getIterator(), fontRenderContext);
+    if (fragmentIndex >= myLayouts.size()) {
+      myLayouts.addAll(Collections.nCopies(fragmentIndex - myLayouts.size() + 1, null));
+    }
+    myLayouts.set(fragmentIndex, layout);
+    myLayoutFont = getBaseFont();
+    return layout;
   }
 
-  private boolean needFontFallback(Font font, String text) {
-    return mySupportFontFallback && font.canDisplayUpTo(text) != -1
+  private static boolean needFontFallback(Font font, String text) {
+    return font.canDisplayUpTo(text) != -1
            && text.indexOf(CharacterIterator.DONE) == -1; // see IDEA-137517, TextLayout does not support this character
-  }
-
-  /**
-   * If true, then for character that the current font can not draw we try to look for a fallback font that can
-   */
-  public void setSupportFontFallback(boolean supportFontFallback) {
-    mySupportFontFallback = supportFontFallback;
   }
 
   /**
@@ -538,10 +563,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       curX += iconRight;
     }
 
-    Font font = getFont();
-    if (font == null) {
-      font = UIUtil.getLabelFont();
-    }
+    Font font = getBaseFont();
 
     int baseSize = font.getSize();
     boolean wasSmaller = false;
@@ -553,7 +575,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       wasSmaller = isSmaller;
 
-      final int curWidth = computeStringWidth(myFragments.get(i), font);
+      final int curWidth = computeStringWidth(i, font);
       if (x >= curX && x < curX + curWidth) {
         return i;
       }
@@ -732,16 +754,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       offset += myBorder.getBorderInsets(this).left;
     }
 
-    final List<Object[]> searchMatches = new ArrayList<Object[]>();
+    final List<Object[]> searchMatches = new ArrayList<>();
 
     applyAdditionalHints(g);
-    final Font ownFont = getFont();
-    if (ownFont != null) {
-      offset += computeTextAlignShift(ownFont);
-    }
-    int baseSize = ownFont != null ? ownFont.getSize() : g.getFont().getSize();
-    FontMetrics baseMetrics = g.getFontMetrics(ownFont != null ? ownFont : g.getFont());
-    final int textBaseline = getTextBaseLine(baseMetrics, getHeight());
+    final Font baseFont = getBaseFont();
+    g.setFont(baseFont);
+    offset += computeTextAlignShift(baseFont);
+    int baseSize = baseFont.getSize();
+    FontMetrics baseMetrics = g.getFontMetrics();
+    Rectangle area = computePaintArea();
+    final int textBaseline = area.y + getTextBaseLine(baseMetrics, area.height);
     boolean wasSmaller = false;
     for (int i = 0; i < myFragments.size(); i++) {
       final SimpleTextAttributes attributes = myAttributes.get(i);
@@ -756,8 +778,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.setFont(font);
       final FontMetrics metrics = g.getFontMetrics(font);
 
-      final String fragment = myFragments.get(i);
-      final int fragmentWidth = computeStringWidth(fragment, font);
+      final int fragmentWidth = computeStringWidth(i, font);
 
       final int fragmentPadding = myFragmentPadding.get(i);
 
@@ -793,7 +814,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       if (!attributes.isSearchMatch()) {
         if (shouldDrawMacShadow()) {
           g.setColor(SHADOW_COLOR);
-          doDrawString(g, fragment, offset, textBaseline + 1);
+          doDrawString(g, i, offset, textBaseline + 1);
         }
 
         if (shouldDrawDimmed()) {
@@ -801,7 +822,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         }
 
         g.setColor(color);
-        doDrawString(g, fragment, offset, textBaseline);
+        doDrawString(g, i, offset, textBaseline);
       }
 
       // for some reason strokeState here may be incorrect, resetting the stroke helps
@@ -809,19 +830,18 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       // 1. Strikeout effect
       if (attributes.isStrikeout() && !attributes.isSearchMatch()) {
-        drawStrikeout(g, offset, offset + fragmentWidth, textBaseline);
+        EffectPainter.STRIKE_THROUGH.paint(g, offset, textBaseline, fragmentWidth, getCharHeight(g), font);
       }
       // 2. Waved effect
       if (attributes.isWaved()) {
         if (attributes.getWaveColor() != null) {
           g.setColor(attributes.getWaveColor());
         }
-        UIUtil.drawWave(g, new Rectangle(offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent())));
+        EffectPainter.WAVE_UNDERSCORE.paint(g, offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent()), font);
       }
       // 3. Underline
       if (attributes.isUnderline()) {
-        final int underlineAt = textBaseline + 1;
-        UIUtil.drawLine(g, offset, underlineAt, offset + fragmentWidth, underlineAt);
+        EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), font);
       }
       // 4. Bold Dotted Line
       if (attributes.isBoldDottedLine()) {
@@ -831,7 +851,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
 
       if (attributes.isSearchMatch()) {
-        searchMatches.add(new Object[]{offset, offset + fragmentWidth, textBaseline, fragment, g.getFont(), attributes});
+        searchMatches.add(new Object[]{offset, offset + fragmentWidth, textBaseline, myFragments.get(i), g.getFont(), attributes});
       }
 
       offset = endOffset;
@@ -865,16 +885,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.drawString(text, x1, baseline);
 
       if (((SimpleTextAttributes)info[5]).isStrikeout()) {
-        drawStrikeout(g, x1, x2, baseline);
+        EffectPainter.STRIKE_THROUGH.paint(g, x1, baseline, x2 - x1, getCharHeight(g), g.getFont());
       }
     }
     return offset;
   }
 
-  private static void drawStrikeout(Graphics g, int x1, int x2, int y) {
+  private static int getCharHeight(Graphics g) {
     // magic of determining character height
-    int strikeOutAt = y - g.getFontMetrics().charWidth('a') / 2;
-    UIUtil.drawLine(g, x1, strikeOutAt, x2, strikeOutAt);
+    return g.getFontMetrics().charWidth('a');
   }
 
   private int computeTextAlignShift(@NotNull Font font) {
@@ -911,7 +930,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon, int offset) {
-    icon.paintIcon(this, g, offset, (getHeight() - icon.getIconHeight()) / 2);
+    Rectangle area = computePaintArea();
+    icon.paintIcon(this, g, offset, area.y + (area.height - icon.getIconHeight() + 1) / 2);
   }
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
@@ -976,7 +996,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     private Insets myInsets;
 
     public MyBorder() {
-      myInsets = new JBInsets(1, 1, 1, 1);
+      myInsets = JBUI.insets(1);
     }
 
     public void setInsets(final Insets insets) {
@@ -985,8 +1005,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      g.setColor(Color.BLACK);
-      UIUtil.drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
     }
 
     @Override
@@ -996,7 +1014,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public boolean isBorderOpaque() {
-      return true;
+      return false;
     }
   }
 
@@ -1026,12 +1044,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
-      accessibleContext = new MyAccessibleContext();
+      accessibleContext = new AccessibleSimpleColoredComponent();
     }
     return accessibleContext;
   }
 
-  private class MyAccessibleContext extends JComponent.AccessibleJComponent {
+  protected class AccessibleSimpleColoredComponent extends JComponent.AccessibleJComponent {
     @Override
     public String getAccessibleName() {
       return getCharSequence(false).toString();
@@ -1112,6 +1130,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         if (myFragmentTags != null && myFragmentTags.size() > myIndex) {
           myFragmentTags.add(myIndex, myFragments.get(myIndex));
         }
+        if (myIndex < myLayouts.size()) myLayouts.set(myIndex, null);
+        if ((myIndex + 1) < myLayouts.size()) myLayouts.add(myIndex + 1, null);
         myIndex++;
       }
       myOffset += offset;

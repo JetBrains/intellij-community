@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,32 +25,22 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.List;
 
-final class TodoPatternTableCellRenderer extends DefaultTableCellRenderer{
+final class TodoPatternTableCellRenderer extends DefaultTableCellRenderer {
   private final List<TodoPattern> myPatterns;
 
-  public TodoPatternTableCellRenderer(List<TodoPattern> patterns){
-    myPatterns=patterns;
+  public TodoPatternTableCellRenderer(List<TodoPattern> patterns) {
+    myPatterns = patterns;
   }
 
   @Override
-  public Component getTableCellRendererComponent(
-    JTable table,
-    Object value,
-    boolean isSelected,
-    boolean hasFocus,
-    int row,
-    int column
-  ){
-    super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
-    TodoPattern pattern=myPatterns.get(row);
-    if(isSelected){
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    TodoPattern pattern = myPatterns.get(row);
+    if (isSelected) {
       setForeground(UIUtil.getTableSelectionForeground());
-    }else{
-      if(pattern.getPattern()==null){
-        setForeground(JBColor.RED);
-      }else{
-        setForeground(UIUtil.getTableForeground());
-      }
+    }
+    else {
+      setForeground(pattern.getPattern() != null ? UIUtil.getTableForeground() : JBColor.RED);
     }
     return this;
   }

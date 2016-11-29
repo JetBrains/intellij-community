@@ -175,6 +175,7 @@ class LineNumberConvertorCorrectorTest : UsefulTestCase() {
       assertEquals(minimumMatched2, counter2)
     }
 
+    @Suppress("unused")
     fun printMatchings() {
       for (i in 0..length * 2 - 1) {
         val value = convertor.convert1(i)

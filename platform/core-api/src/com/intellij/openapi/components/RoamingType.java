@@ -31,15 +31,15 @@ public enum RoamingType {
    */
   DEFAULT,
 
-  @Deprecated
   /**
    * Use {@link #DEFAULT} instead
    */
+  @Deprecated
   PER_USER,
 
-  @Deprecated
   /**
    * Use {@link #PER_OS} instead
    */
+  @Deprecated
   PER_PLATFORM,
 }

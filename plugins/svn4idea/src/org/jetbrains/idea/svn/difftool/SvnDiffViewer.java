@@ -11,7 +11,11 @@ import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -185,7 +189,7 @@ public class SvnDiffViewer implements DiffViewer {
 
     List<PropertyData> properties = ((SvnPropertiesDiffRequest.PropertyContent)content).getProperties();
 
-    Map<String, PropertyValue> map = new HashMap<String, PropertyValue>();
+    Map<String, PropertyValue> map = new HashMap<>();
 
     for (PropertyData data : properties) {
       if (map.containsKey(data.getName())) LOG.warn("Duplicated property: " + data.getName());
@@ -219,7 +223,7 @@ public class SvnDiffViewer implements DiffViewer {
 
   @NotNull
   private List<AnAction> createToolbar(@Nullable List<AnAction> propertiesActions) {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
 
     if (propertiesActions != null) result.addAll(propertiesActions);
 
@@ -295,7 +299,7 @@ public class SvnDiffViewer implements DiffViewer {
 
   private class ToggleHidePropertiesAction extends ToggleAction implements DumbAware {
     public ToggleHidePropertiesAction() {
-      EmptyAction.setupAction(this, "Subversion.TogglePropertiesDiff", null);
+      ActionUtil.copyFrom(this, "Subversion.TogglePropertiesDiff");
     }
 
     @Override

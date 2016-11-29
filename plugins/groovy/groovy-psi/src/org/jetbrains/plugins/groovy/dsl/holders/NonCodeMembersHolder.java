@@ -22,6 +22,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
@@ -29,6 +30,8 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,23 +44,23 @@ import java.util.Map;
 public class NonCodeMembersHolder implements CustomMembersHolder {
   public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
   public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
-  private final List<PsiElement> myDeclarations = new ArrayList<PsiElement>();
+  private final List<PsiElement> myDeclarations = new ArrayList<>();
 
   public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
     Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(
-      place, new CachedValueProvider<Map<List<Map>, NonCodeMembersHolder>>() {
-      @Override
-      public Result<Map<List<Map>, NonCodeMembersHolder>> compute() {
-        final Map<List<Map>, NonCodeMembersHolder> map = ContainerUtil.createConcurrentSoftMap();
-        return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+      place, () -> {
+        final Map<List<Map>, NonCodeMembersHolder> map1 = ContainerUtil.createConcurrentSoftMap();
+        return CachedValueProvider.Result.create(map1, PsiModificationTracker.MODIFICATION_COUNT);
+      });
 
     NonCodeMembersHolder result = map.get(methods);
     if (result == null) {
       map.put(methods, result = new NonCodeMembersHolder(methods, place));
     }
     return result;
+  }
+
+  public NonCodeMembersHolder() {
   }
 
   private NonCodeMembersHolder(List<Map> data, PsiElement place) {
@@ -67,18 +70,22 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
       if (decltype == DeclarationType.CLOSURE) {
         PsiElement closureDescriptor = createClosureDescriptor(prop, place, manager);
         if (closureDescriptor != null) {
-          myDeclarations.add(closureDescriptor);
+          addDeclaration(closureDescriptor);
         }
       }
       else if (decltype == DeclarationType.VARIABLE) {
-        myDeclarations.add(createVariable(prop, place, manager));
+        addDeclaration(createVariable(prop, place, manager));
       }
       else {
         //declarationType == DeclarationType.METHOD
         final PsiElement method = createMethod(prop, place, manager);
-        myDeclarations.add(method);
+        addDeclaration(method);
       }
     }
+  }
+
+  public void addDeclaration(@NotNull PsiElement element) {
+    myDeclarations.add(element);
   }
 
   private static PsiElement createVariable(Map prop, PsiElement place, PsiManager manager) {
@@ -201,12 +208,24 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   }
 
   @Override
-  public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
-    for (PsiElement method : myDeclarations) {
-      if (!processor.execute(method, state)) {
-        return false;
+  public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor _processor, ResolveState state) {
+    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(_processor)) {
+      String hint = ResolveUtil.getNameHint(each);
+      for (PsiElement declaration : myDeclarations) {
+        if (checkName(hint, declaration) && !each.execute(declaration, state)) return false;
       }
     }
     return true;
+  }
+
+  private static boolean checkName(String hint, PsiElement declaration) {
+    if (hint != null && declaration instanceof PsiNamedElement && !isConstructor(declaration)) {
+      return hint.equals(((PsiNamedElement)declaration).getName());
+    }
+    return true;
+  }
+
+  private static boolean isConstructor(PsiElement declaration) {
+    return declaration instanceof PsiMethod && ((PsiMethod)declaration).isConstructor();
   }
 }

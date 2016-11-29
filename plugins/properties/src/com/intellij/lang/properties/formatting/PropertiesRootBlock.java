@@ -33,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.io.File.separator;
-
 /**
  * @author Dmitry Batkovich
  */
@@ -44,15 +42,15 @@ public class PropertiesRootBlock extends AbstractBlock {
   private Alignment mySeparatorAlignment;
 
   protected PropertiesRootBlock(@NotNull ASTNode node,
-                                @Nullable Wrap wrap, CodeStyleSettings settings) {
-    super(node, wrap, Alignment.createAlignment());
+                                CodeStyleSettings settings) {
+    super(node, null, Alignment.createAlignment());
     mySettings = settings;
     mySeparatorAlignment = Alignment.createAlignment(true, Alignment.Anchor.LEFT);
   }
 
   @Override
   protected List<Block> buildChildren() {
-    final List<Block> result = new ArrayList<Block>();
+    final List<Block> result = new ArrayList<>();
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
       if (!(child instanceof PsiWhiteSpace)) {
@@ -62,11 +60,15 @@ public class PropertiesRootBlock extends AbstractBlock {
             if (propertyNode.getElementType() instanceof PropertyStubElementType) {
               collectPropertyBlock(propertyNode, result);
             }
-            else if (PropertiesTokenTypes.END_OF_LINE_COMMENT.equals(propertyNode.getElementType())) {
+            else if (PropertiesTokenTypes.END_OF_LINE_COMMENT.equals(propertyNode.getElementType()) ||
+                     PropertiesTokenTypes.BAD_CHARACTER.equals(propertyNode.getElementType())) {
               result.add(new PropertyBlock(propertyNode, null));
             }
             propertyNode = propertyNode.getTreeNext();
           }
+        }
+        else if (PropertiesTokenTypes.BAD_CHARACTER.equals(child.getElementType())) {
+          result.add(new PropertyBlock(child, null));
         }
       }
       if (PropertiesTokenTypes.END_OF_LINE_COMMENT.equals(child.getElementType())) {
@@ -103,7 +105,8 @@ public class PropertiesRootBlock extends AbstractBlock {
     return (mySettings.getCustomSettings(PropertiesCodeStyleSettings.class).SPACES_AROUND_KEY_VALUE_DELIMITER &&
             (isSeparator(child1) || isSeparator(child2))) || isKeyValue(child1, child2)
            ? Spacing.createSpacing(1, 1, 0, true, 0)
-           : Spacing.createSpacing(0, 0, 0, true, 0);
+           : Spacing.createSpacing(0, 0, 0, true,
+                                   mySettings.getCustomSettings(PropertiesCodeStyleSettings.class).KEEP_BLANK_LINES ? 999 : 0);
   }
 
   private static boolean isKeyValue(Block maybeKey, Block maybeValue) {

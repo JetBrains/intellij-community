@@ -20,9 +20,12 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -63,7 +66,8 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       }
     }.execute();
-
+    PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject()));
+    assertNotNull(aClass);
     doSingleTest();
   }
 

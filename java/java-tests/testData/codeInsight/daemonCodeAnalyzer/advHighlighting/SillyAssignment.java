@@ -1,27 +1,30 @@
 // silly asignment
-import javax.swing.*;
 
+class JPanel {
+  JPanel getSize() { return this; }
+  int height;
+}
 class a {
   int f;
   JPanel fpanel;
 
   void f(int i) {
 
-   <warning descr="Variable 'i' is assigned to itself">i = i</warning>;
+   i = <warning descr="Variable 'i' is assigned to itself">i</warning>;
   }
 
   void f2() {
-    <warning descr="Variable 'f' is assigned to itself">this.f = f</warning>;
-    <warning descr="Variable 'f' is assigned to itself">a.this.f = f</warning>;
-    <warning descr="Variable 'f' is assigned to itself">f = this.f</warning>;
+    this.f = <warning descr="Variable 'f' is assigned to itself">f</warning>;
+    a.this.f = <warning descr="Variable 'f' is assigned to itself">f</warning>;
+    f = <warning descr="Variable 'f' is assigned to itself">this.f</warning>;
   }
 
   void f3(Object o) {
     int i = 0;
-    <warning descr="Variable 'i' is assigned to itself">i = i</warning>;
-    <warning descr="Variable 'i' is assigned to itself">i = (int)i</warning>;
-    <warning descr="Variable 'o' is assigned to itself">o = ((Object)(o))</warning>;
-    Object o1 = <warning descr="Variable 'o' is assigned to itself">o = ((Object)(o))</warning>;
+    i = <warning descr="Variable 'i' is assigned to itself">i</warning>;
+    i = (int)<warning descr="Variable 'i' is assigned to itself">i</warning>;
+    o = ((Object)(<warning descr="Variable 'o' is assigned to itself">o</warning>));
+    Object o1 = o = ((Object)(<warning descr="Variable 'o' is assigned to itself">o</warning>));
     System.out.println(o1);
     o = (double)o;
   }

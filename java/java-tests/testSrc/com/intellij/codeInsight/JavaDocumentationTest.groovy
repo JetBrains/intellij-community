@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,14 @@
 package com.intellij.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.javadoc.DocumentationDelegateProvider
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -36,9 +39,9 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     "        p {" +
     "            margin: 5px 0;" +
     "        }" +
-    "    </style>";
+    "    </style>"
 
-  public void testConstructorDoc() {
+  void testConstructorDoc() {
     configure """\
       class Foo { Foo() {} Foo(int param) {} }
 
@@ -60,7 +63,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
-  public void testConstructorDoc2() {
+  void testConstructorDoc2() {
     configure """\
       class Foo { Foo() {} Foo(int param) {} }
 
@@ -82,7 +85,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
-  public void testMethodDocWhenInArgList() {
+  void testMethodDocWhenInArgList() {
     configure """\
       class Foo { void doFoo() {} }
 
@@ -102,7 +105,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
-  public void testGenericMethod() {
+  void testGenericMethod() {
     configure """\
       class Bar<T> { java.util.List<T> foo(T param); }
 
@@ -116,7 +119,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == "Bar\n java.util.List&lt;java.lang.String&gt; foo (java.lang.String param)"
   }
 
-  public void testGenericField() {
+  void testGenericField() {
     configure """\
       class Bar<T> { T field; }
 
@@ -129,8 +132,8 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
 
     assert doc == "Bar\n java.lang.Integer field"
   }
-  
-  public void testMethodInAnonymousClass() {
+
+  void testMethodInAnonymousClass() {
     configure """\
       class Foo {{
         new Runnable() {
@@ -148,7 +151,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == "private void m ()"
   }
 
-  public void testAsterisksFiltering() {
+  void testAsterisksFiltering() {
     configure """\
       class C {
         /**
@@ -173,7 +176,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
-  public void testInlineTagSpacing() {
+  void testInlineTagSpacing() {
     configure """\
       class C {
         /** Visit the "{@code /login}" URL. */
@@ -189,6 +192,41 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
       "<PRE>public&nbsp;void&nbsp;<b>m</b>()</PRE>" +
       " Visit the \"<code>/login</code>\" URL." +
       "</body></html>"
+
+    assert doc == expected
+  }
+
+  void testMethodToMethodDelegate() {
+    DocumentationDelegateProvider provider = {
+      if (it instanceof PsiMethod && it.name == 'foo') {
+        JavaPsiFacade.getInstance(project).findClass('Foo', it.resolveScope)?.findMethodBySignature(it, false)
+      }
+    }
+    PlatformTestUtil.registerExtension DocumentationDelegateProvider.EP_NAME, provider, testRootDisposable
+
+    configure '''\
+class Foo {
+  /**
+  * Some doc
+  */
+  void foo() {}
+}
+
+class Bar {
+  void fo<caret>o() {}
+}
+'''
+    def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
+    def doc = new JavaDocumentationProvider().generateDoc(method, null)
+
+    String expected = "<html><head>$STYLE_BLOCK</head><body>" +
+                      "<small><b><a href=\"psi_element://Bar\"><code>Bar</code></a></b></small>" +
+                      "<PRE>void&nbsp;<b>foo</b>()</PRE>" +
+                      "<DD><DL><DT>" +
+                      "<b>Description copied from class:</b>&nbsp;<a href=\"psi_element://Foo\"><code>Foo</code></a><br>" +
+                      "\n    Some doc\n  " +
+                      "</DD></DL></DD>" +
+                      "</body></html>"
 
     assert doc == expected
   }

@@ -37,7 +37,7 @@ class HighlightedSelectorsTable extends TableView<Selector> {
   public HighlightedSelectorsTable(@NotNull final FileType valueFileType,
                                    @NotNull final Project project,
                                    @NotNull final List<Selector> selectors) {
-    super(new ListTableModel<Selector>(new ColumnInfo[]{
+    super(new ListTableModel<>(new ColumnInfo[]{
       new ColumnInfo<Selector, String>("Name") {
         @Nullable
         @Override

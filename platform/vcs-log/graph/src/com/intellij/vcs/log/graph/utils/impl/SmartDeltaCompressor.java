@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,11 @@ public class SmartDeltaCompressor implements IntList {
         writeDelta(offset, deltaList.get(index), sizeOf, deltas);
 
         long mask = 1L << rem;
-        /**
-         * 4 -> 11
-         * 3 -> 10
-         * 2 -> 01
-         * 1 -> 00
+        /*
+          4 -> 11
+          3 -> 10
+          2 -> 01
+          1 -> 00
          */
         if (sizeOf == 3 || sizeOf == 4) majorBits[main] |= mask;
         if (sizeOf == 2 || sizeOf == 4) minorBits[main] |= mask;

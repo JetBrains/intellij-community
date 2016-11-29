@@ -56,7 +56,7 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
     return super.findReferences(element);
   }
 
-  protected static class PsiFileRenameDialog extends RenameWithOptionalReferencesDialog {
+  public static class PsiFileRenameDialog extends RenameWithOptionalReferencesDialog {
     public PsiFileRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
       super(project, element, nameSuggestionContext, editor);
     }

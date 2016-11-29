@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.python.sdkTools;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,24 +26,19 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
-import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
-import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Engine to create SDK for tests.
@@ -58,7 +68,7 @@ public final class PyTestSdkTools {
   )
     throws InvalidSdkException, IOException {
     final Ref<Sdk> ref = Ref.create();
-    UsefulTestCase.edt(() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, null);
       Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
       ref.set(sdk);
@@ -67,13 +77,13 @@ public final class PyTestSdkTools {
     if (sdkCreationType != SdkCreationType.EMPTY_SDK) {
       generateTempSkeletonsOrPackages(sdk, sdkCreationType == SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module);
     }
-    UsefulTestCase.edt(() -> SdkConfigurationUtil.addSdk(sdk));
+    EdtTestUtil.runInEdtAndWait(() -> SdkConfigurationUtil.addSdk(sdk));
     return sdk;
   }
 
 
   /**
-   * Adds installed eggs to SDK, generates skeletons (optionally) and associates it with modle.
+   * Adds installed eggs to SDK, generates skeletons (optionally) and associates it with module.
    *
    * @param sdk          sdk to process
    * @param addSkeletons add skeletons or only packages
@@ -93,17 +103,8 @@ public final class PyTestSdkTools {
       // Associate with module
       ModuleRootModificationUtil.setModuleSdk(module, sdk);
 
-      UsefulTestCase.edt(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              ProjectRootManager.getInstance(finalProject).setProjectSdk(sdk);
-            }
-          });
-        }
-      });
+      EdtTestUtil.runInEdtAndWait(() -> ApplicationManager.getApplication()
+          .runWriteAction(() -> ProjectRootManager.getInstance(finalProject).setProjectSdk(sdk)));
     }
 
 
@@ -116,14 +117,14 @@ public final class PyTestSdkTools {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {
-      UsefulTestCase.edt(() -> modificator.commitChanges());
+      EdtTestUtil.runInEdtAndWait(modificator::commitChanges);
       return;
     }
 
     final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     addTestSdkRoot(modificator, skeletonsPath);
 
-    UsefulTestCase.edt(() -> modificator.commitChanges());
+    EdtTestUtil.runInEdtAndWait(modificator::commitChanges);
 
     PySkeletonRefresher
       .refreshSkeletonsOfSdk(project, null, skeletonsPath, sdk);

@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,7 +28,7 @@ import java.awt.event.KeyEvent;
 public class AlphaNumericTypeCommand extends TypeCommand {
 
   public AlphaNumericTypeCommand(String text, int line) {
-    super(text, line);
+    super(text, line, true);
   }
 
   public ActionCallback _execute(PlaybackContext context) {
@@ -39,19 +38,12 @@ public class AlphaNumericTypeCommand extends TypeCommand {
   protected ActionCallback type(final PlaybackContext context, final String text) {
     final ActionCallback result = new ActionCallback();
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        TypingTarget typingTarget = findTarget(context);
-        if (typingTarget != null) {
-          typingTarget.type(text).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(new Runnable() {
-            public void run() {
-              typeByRobot(context.getRobot(), text).notify(result);
-            }
-          });
-        } else {
-          typeByRobot(context.getRobot(), text).notify(result);
-        }
+    inWriteSafeContext(() -> {
+      TypingTarget typingTarget = findTarget(context);
+      if (typingTarget != null) {
+        typingTarget.type(text).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> typeByRobot(context.getRobot(), text).notify(result));
+      } else {
+        typeByRobot(context.getRobot(), text).notify(result);
       }
     });
 
@@ -61,37 +53,35 @@ public class AlphaNumericTypeCommand extends TypeCommand {
   private ActionCallback typeByRobot(final Robot robot, final String text) {
     final ActionCallback result = new ActionCallback();
 
-    Runnable typeRunnable = new Runnable() {
-      public void run() {
-        for (int i = 0; i < text.length(); i++) {
-          final char each = text.charAt(i);
-          if ('\\' == each && i + 1 < text.length()) {
-            final char next = text.charAt(i + 1);
-            boolean processed = true;
-            switch (next) {
-              case 'n':
-                type(robot, KeyEvent.VK_ENTER, 0);
-                break;
-              case 't':
-                type(robot, KeyEvent.VK_TAB, 0);
-                break;
-              case 'r':
-                type(robot, KeyEvent.VK_ENTER, 0);
-                break;
-              default:
-                processed = false;
-            }
-
-            if (processed) {
-              i++;
-              continue;
-            }
+    Runnable typeRunnable = () -> {
+      for (int i = 0; i < text.length(); i++) {
+        final char each = text.charAt(i);
+        if ('\\' == each && i + 1 < text.length()) {
+          final char next = text.charAt(i + 1);
+          boolean processed = true;
+          switch (next) {
+            case 'n':
+              type(robot, KeyEvent.VK_ENTER, 0);
+              break;
+            case 't':
+              type(robot, KeyEvent.VK_TAB, 0);
+              break;
+            case 'r':
+              type(robot, KeyEvent.VK_ENTER, 0);
+              break;
+            default:
+              processed = false;
           }
-          type(robot, get(each));
-        }
 
-        result.setDone();
+          if (processed) {
+            i++;
+            continue;
+          }
+        }
+        type(robot, get(each));
       }
+
+      result.setDone();
     };
 
     if (SwingUtilities.isEventDispatchThread()) {

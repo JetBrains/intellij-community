@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -59,14 +59,14 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
                                                     Ref<PsiElement> sourceElement) {
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
-    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
-    if (location == null) return false;
 
     if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
-    PsiClass testClass = JUnitUtil.getTestClass(location);
-    if (testClass == null) return false;
+    PsiClass testClass = getPsiClassForLocation(contextLocation);
+    if (testClass == null) {
+      return false;
+    }
     sourceElement.set(testClass);
 
     final Module module = context.getModule();
@@ -90,22 +90,31 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     return true;
   }
 
+  @Nullable
+  protected PsiMethod getPsiMethodForLocation(Location contextLocation) {
+    Location<PsiMethod> location = getMethodLocation(contextLocation);
+    return location != null ? location.getPsiElement() : null;
+  }
+
+  @Nullable
+  protected PsiClass getPsiClassForLocation(Location contextLocation) {
+    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    if (location == null) return null;
+    return JUnitUtil.getTestClass(location);
+  }
+
   @Override
   protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
-    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
-    if (location == null) return false;
 
     if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
 
-    Location<PsiMethod> methodLocation = getMethodLocation(contextLocation);
-    if (methodLocation != null) return false;
-
-    PsiClass testClass = JUnitUtil.getTestClass(location);
-    if (testClass == null) return false;
+    if (getPsiMethodForLocation(contextLocation) != null) return false;
+    PsiClass testClass = getPsiClassForLocation(contextLocation);
+    if (testClass == null || testClass.getQualifiedName() == null) return false;
 
     if (context.getModule() == null) return false;
 
@@ -117,7 +126,11 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    return scriptParameters.contains(String.format("--tests %s ", testClass.getQualifiedName()));
+    int i = scriptParameters.indexOf("--tests ");
+    if(i == -1) return false;
+
+    String str = scriptParameters.substring(i + "--tests ".length()).trim() + ' ';
+    return str.startsWith(testClass.getQualifiedName() + ' ') && !str.contains("--tests");
   }
 
   @Override
@@ -177,12 +190,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     }
 
     configuration.getSettings().setScriptParameters(buf.toString());
-    configuration.setName(StringUtil.join(containingClasses, new Function<PsiClass, String>() {
-      @Override
-      public String fun(PsiClass aClass) {
-        return aClass.getName();
-      }
-    },"|"));
+    configuration.setName(StringUtil.join(containingClasses, aClass -> aClass.getName(), "|"));
     return true;
   }
 }

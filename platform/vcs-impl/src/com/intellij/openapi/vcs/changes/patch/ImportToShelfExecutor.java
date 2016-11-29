@@ -62,7 +62,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
   }
 
   @Override
-  public void apply(@NotNull final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+  public void apply(@NotNull List<FilePatch> remaining, @NotNull final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable final String fileName,
                     @Nullable final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
@@ -75,10 +75,10 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
       public void runImpl() throws VcsException {
         final VirtualFile baseDir = myProject.getBaseDir();
         final File ioBase = new File(baseDir.getPath());
-        final List<FilePatch> allPatches = new ArrayList<FilePatch>();
-        for (VirtualFile virtualFile : patchGroups.keySet()) {
+        final List<FilePatch> allPatches = new ArrayList<>();
+        for (VirtualFile virtualFile : patchGroupsToApply.keySet()) {
           final File ioCurrentBase = new File(virtualFile.getPath());
-          allPatches.addAll(ContainerUtil.map(patchGroups.get(virtualFile), new Function<TextFilePatchInProgress, TextFilePatch>() {
+          allPatches.addAll(ContainerUtil.map(patchGroupsToApply.get(virtualFile), new Function<TextFilePatchInProgress, TextFilePatch>() {
             public TextFilePatch fun(TextFilePatchInProgress patchInProgress) {
               final TextFilePatch was = patchInProgress.getPatch();
               was.setBeforeName(
@@ -93,7 +93,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
           PatchEP[] patchTransitExtensions = null;
           if (additionalInfo != null) {
             try {
-              final Map<String, PatchEP> extensions = new HashMap<String, PatchEP>();
+              final Map<String, PatchEP> extensions = new HashMap<>();
               for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfo.get().entrySet()) {
                 final String filePath = entry.getKey();
                 Map<String, CharSequence> extToValue = entry.getValue();
@@ -137,7 +137,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
 
     private TransitExtension(String name) {
       myName = name;
-      myMap = new HashMap<String, CharSequence>();
+      myMap = new HashMap<>();
     }
 
     @NotNull

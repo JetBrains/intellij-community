@@ -48,8 +48,8 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
   private static class StringBufferReplaceableByStringFix extends InspectionGadgetsFix {
 
     private final boolean isStringBuilder;
-    private final List<PsiComment> leadingComments = new ArrayList<PsiComment>();
-    private final List<PsiElement> commentsAndWhitespace = new ArrayList<PsiElement>();
+    private final List<PsiComment> leadingComments = new ArrayList<>();
+    private final List<PsiElement> commentsAndWhitespace = new ArrayList<>();
 
     private StringBufferReplaceableByStringFix(boolean isStringBuilder) {
       this.isStringBuilder = isStringBuilder;

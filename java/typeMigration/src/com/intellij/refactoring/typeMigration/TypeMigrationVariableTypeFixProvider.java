@@ -8,6 +8,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -74,7 +75,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
       final TypeMigrationRules rules = new TypeMigrationRules();
       rules.setBoundScope(GlobalSearchScope.projectScope(project));
       TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, variable, targetType, optimizeImports);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(variable);
+      WriteAction.run(() -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(variable));
       UndoUtil.markPsiFileForUndo(variable.getContainingFile());
     }
     catch (IncorrectOperationException e) {

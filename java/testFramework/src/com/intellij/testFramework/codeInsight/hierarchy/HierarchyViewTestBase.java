@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.testFramework.codeInsight.hierarchy;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
@@ -6,7 +21,6 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +50,7 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     final String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_verification.xml";
     HierarchyTreeStructure structure = treeStructureComputable.compute();
     try {
-      checkHierarchyTreeStructure(structure, JDOMUtil.loadDocument(new File(verificationFilePath)));
+      checkHierarchyTreeStructure(structure, JDOMUtil.load(new File(verificationFilePath)));
     } catch (Throwable e)  {
       assertEquals("XML structure comparison for your convenience, actual failure details BELOW",
                    FileUtil.loadFile(new File(verificationFilePath)), dump(structure, null, 0));
@@ -80,10 +94,9 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     }
   }
 
-  private static void checkHierarchyTreeStructure(final HierarchyTreeStructure treeStructure, final Document document) {
+  private static void checkHierarchyTreeStructure(final HierarchyTreeStructure treeStructure, final Element rootElement) {
     final HierarchyNodeDescriptor rootNodeDescriptor = (HierarchyNodeDescriptor)treeStructure.getRootElement();
     rootNodeDescriptor.update();
-    final Element rootElement = document.getRootElement();
     if (rootElement == null || !NODE_ELEMENT_NAME.equals(rootElement.getName())) {
       throw new IllegalArgumentException("Incorrect root element in verification resource");
     }
@@ -120,7 +133,7 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
 
     final Object[] children = treeStructure.getChildElements(descriptor);
     //noinspection unchecked
-    final List<Element> expectedChildren = new ArrayList<Element>(element.getChildren(NODE_ELEMENT_NAME));
+    final List<Element> expectedChildren = new ArrayList<>(element.getChildren(NODE_ELEMENT_NAME));
 
     final StringBuilder messageBuilder = new StringBuilder("Actual children of [" + descriptor.getHighlightedText().getText() + "]:\n");
     for (Object child : children) {
@@ -130,20 +143,11 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     }
     assertEquals(messageBuilder.toString(), expectedChildren.size(), children.length);
 
-    Arrays.sort(children, new Comparator<Object>() {
-      @Override
-      public int compare(final Object first, final Object second) {
-        return ((HierarchyNodeDescriptor)first).getHighlightedText().getText()
-          .compareTo(((HierarchyNodeDescriptor)second).getHighlightedText().getText());
-      }
-    });
+    Arrays.sort(children, (first, second) -> ((HierarchyNodeDescriptor)first).getHighlightedText().getText()
+      .compareTo(((HierarchyNodeDescriptor)second).getHighlightedText().getText()));
 
-    Collections.sort(expectedChildren, new Comparator<Element>() {
-      @Override
-      public int compare(final Element first, final Element second) {
-        return first.getAttributeValue(TEXT_ATTR_NAME).compareTo(second.getAttributeValue(TEXT_ATTR_NAME));
-      }
-    });
+    Collections.sort(expectedChildren,
+                     (first, second) -> first.getAttributeValue(TEXT_ATTR_NAME).compareTo(second.getAttributeValue(TEXT_ATTR_NAME)));
 
     //noinspection unchecked
     final Iterator<Element> iterator = expectedChildren.iterator();

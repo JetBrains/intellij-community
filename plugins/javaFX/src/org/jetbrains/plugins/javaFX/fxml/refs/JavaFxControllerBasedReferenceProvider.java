@@ -36,7 +36,7 @@ public abstract class JavaFxControllerBasedReferenceProvider extends PsiReferenc
 
     final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(containingFile);
     return controllerClass != null ? getReferencesByElement(controllerClass, xmlAttrVal, context) 
-                                   : new PsiReference[] {new PsiReferenceBase.Immediate<XmlAttributeValue>(xmlAttrVal, xmlAttrVal)};
+                                   : new PsiReference[] {new PsiReferenceBase.Immediate<>(xmlAttrVal, xmlAttrVal)};
   }
 
   protected abstract PsiReference[] getReferencesByElement(@NotNull PsiClass controllerClass, XmlAttributeValue element, ProcessingContext context);

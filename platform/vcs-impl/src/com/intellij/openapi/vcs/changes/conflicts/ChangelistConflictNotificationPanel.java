@@ -53,29 +53,20 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
     final ChangeListManager manager = tracker.getChangeListManager();
     myChangeList = changeList;
     myLabel.setText("File from non-active changelist is modified");
-    createActionLabel("Move changes", new Runnable() {
-      public void run() {
-        ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), myChangeList.getChanges());
-      }
-    }).setToolTipText("Move changes to active changelist (" + manager.getDefaultChangeList().getName() + ")");
+    createActionLabel("Move changes", () -> ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), myChangeList.getChanges(), myFile)).
+      setToolTipText("Move changes to active changelist (" + manager.getDefaultChangeList().getName() + ")");
 
-    createActionLabel("Switch changelist", new Runnable() {
-      public void run() {
-        Change change = myTracker.getChangeListManager().getChange(myFile);
-        if (change == null) {
-          Messages.showInfoMessage("No changes for this file", "Message");
-        }
-        else {
-          ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), Collections.singletonList(change));
-        }
+    createActionLabel("Switch changelist", () -> {
+      Change change = myTracker.getChangeListManager().getChange(myFile);
+      if (change == null) {
+        Messages.showInfoMessage("No changes for this file", "Message");
+      }
+      else {
+        ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), Collections.singletonList(change), null);
       }
     }).setToolTipText("Set active changelist to '" + myChangeList.getName() + "'");
 
-    createActionLabel("Ignore", new Runnable() {
-      public void run() {
-        myTracker.ignoreConflict(myFile, true);
-      }
-    }).setToolTipText("Hide this notification");
+    createActionLabel("Ignore", () -> myTracker.ignoreConflict(myFile, true)).setToolTipText("Hide this notification");
 
     myLinksPanel.add(new InplaceButton("Show options dialog", AllIcons.General.Settings, new ActionListener() {
       public void actionPerformed(ActionEvent e) {

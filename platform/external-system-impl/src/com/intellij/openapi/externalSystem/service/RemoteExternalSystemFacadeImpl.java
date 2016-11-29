@@ -20,7 +20,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,6 +31,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -44,7 +46,7 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
   private static final long DEFAULT_REMOTE_PROCESS_TTL_IN_MS = TimeUnit.MILLISECONDS.convert(3, TimeUnit.MINUTES);
 
   private final AtomicInteger myCallsInProgressNumber = new AtomicInteger();
-  private final Alarm         myShutdownAlarm         = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Future<?> myShutdownFuture = CompletableFuture.completedFuture(null);
   private final AtomicLong    myTtlMs                 = new AtomicLong(DEFAULT_REMOTE_PROCESS_TTL_IN_MS);
 
   private volatile boolean myStdOutputConfigured;
@@ -137,17 +139,14 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
    * at IJ. We don't want to keep remote process that communicates with the gradle api then.
    */
   private void updateAutoShutdownTime() {
-    myShutdownAlarm.cancelAllRequests();
-    myShutdownAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (myCallsInProgressNumber.get() > 0) {
-          updateAutoShutdownTime();
-          return;
-        }
-        System.exit(0);
+    myShutdownFuture.cancel(false);
+    myShutdownFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      if (myCallsInProgressNumber.get() > 0) {
+        updateAutoShutdownTime();
+        return;
       }
-    }, (int)myTtlMs.get());
+      System.exit(0);
+    }, (int)myTtlMs.get(), TimeUnit.MILLISECONDS);
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")

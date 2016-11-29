@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.eclipse.config;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -37,16 +36,16 @@ import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
 
 final class ClasspathSaveSession implements StateStorage.ExternalizationSession, StateStorage.SaveSession, SafeWriteRequestor {
-  private final Map<String, Element> modifiedContent = new THashMap<String, Element>();
-  private final Set<String> deletedContent = new THashSet<String>();
+  private final Map<String, Element> modifiedContent = new THashMap<>();
+  private final Set<String> deletedContent = new THashSet<>();
 
   private final Module module;
 
@@ -114,12 +113,11 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
   public void save() throws IOException {
     CachedXmlDocumentSet fileSet = EclipseClasspathStorageProvider.getFileCache(module);
 
-    AccessToken token = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       for (String key : modifiedContent.keySet()) {
         Element content = modifiedContent.get(key);
         String path = fileSet.getParent(key) + '/' + key;
-        Writer writer = new OutputStreamWriter(StorageUtil.getOrCreateVirtualFile(this, new File(path)).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
+        Writer writer = new OutputStreamWriter(StorageUtil.getOrCreateVirtualFile(this, Paths.get(path)).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
         try {
           EclipseJDOMUtil.output(content, writer, module.getProject());
         }
@@ -143,9 +141,6 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
         }
       }
       deletedContent.clear();
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 }

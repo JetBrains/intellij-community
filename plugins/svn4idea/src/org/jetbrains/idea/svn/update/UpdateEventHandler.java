@@ -68,7 +68,7 @@ public class UpdateEventHandler implements ProgressTracker {
     myVCS = vcs;
     mySequentialUpdatesContext = sequentialUpdatesContext;
     myExternalsCount = 1;
-    myUrlToCheckForSwitch = new HashMap<File, SVNURL>();
+    myUrlToCheckForSwitch = new HashMap<>();
     myFilesWaitingForRevision = ContainerUtil.newStack();
   }
 

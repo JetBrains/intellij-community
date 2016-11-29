@@ -34,7 +34,7 @@ public class PyTypeHandler {
 
   private static final Map<String, Formatter> FORMATTERS;
   static {
-    FORMATTERS = new HashMap<String, Formatter>();
+    FORMATTERS = new HashMap<>();
     FORMATTERS.put("str", STR_FORMATTER);
     FORMATTERS.put("unicode", UNI_FORMATTER);
     //numpy types

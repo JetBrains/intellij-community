@@ -29,7 +29,7 @@ public class DvcsRememberedInputs {
   private State myState = new State();
 
   public static class State {
-    public List<UrlAndUserName> visitedUrls = new ArrayList<UrlAndUserName>();
+    public List<UrlAndUserName> visitedUrls = new ArrayList<>();
     public String cloneParentDir = "";
   }
 
@@ -79,7 +79,7 @@ public class DvcsRememberedInputs {
 
   @NotNull
   public List<String> getVisitedUrls() {
-    List<String> urls = new ArrayList<String>(myState.visitedUrls.size());
+    List<String> urls = new ArrayList<>(myState.visitedUrls.size());
     for (UrlAndUserName urlAndUserName : myState.visitedUrls) {
       urls.add(urlAndUserName.url);
     }

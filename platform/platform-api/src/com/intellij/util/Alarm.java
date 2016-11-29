@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
@@ -30,6 +31,7 @@ import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +71,7 @@ public class Alarm implements Disposable {
       myDisposed = true;
       cancelAllRequests();
 
-      if (myThreadToUse != ThreadToUse.SWING_THREAD) {
+      if (myExecutorService != EdtExecutorService.getScheduledExecutorInstance()) {
         myExecutorService.shutdownNow();
       }
     }
@@ -119,8 +121,6 @@ public class Alarm implements Disposable {
 
   public Alarm(@NotNull ThreadToUse threadToUse) {
     this(threadToUse, null);
-    LOG.assertTrue(threadToUse != ThreadToUse.POOLED_THREAD && threadToUse != ThreadToUse.OWN_THREAD,
-                   "You must provide parent Disposable for ThreadToUse.POOLED_THREAD and ThreadToUse.OWN_THREAD Alarm");
   }
 
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
@@ -133,9 +133,20 @@ public class Alarm implements Disposable {
                         // or pass to app pooled thread.
                         // have to restrict the number of running tasks because otherwise the (implicit) contract of
                         // "addRequests with the same delay are executed in order" will be broken
-                        AppExecutorUtil.createBoundedScheduledExecutorService(1);
+                        AppExecutorUtil.createBoundedScheduledExecutorService("Alarm pool",1);
 
-    if (parentDisposable != null) {
+    if (parentDisposable == null) {
+      if (threadToUse == ThreadToUse.POOLED_THREAD || threadToUse != ThreadToUse.SWING_THREAD) {
+        boolean crash = threadToUse == ThreadToUse.POOLED_THREAD || ApplicationManager.getApplication().isUnitTestMode();
+        IllegalArgumentException t = new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm");
+        if (crash) {
+          throw t;
+        }
+        // do not crash yet in case of deprecated SHARED_THREAD
+        LOG.warn(t);
+      }
+    }
+    else {
       Disposer.register(parentDisposable, this);
     }
   }
@@ -161,7 +172,7 @@ public class Alarm implements Disposable {
     if (myThreadToUse != ThreadToUse.SWING_THREAD) return null;
     Application application = ApplicationManager.getApplication();
     if (application == null) return null;
-    return application.getCurrentModalityState();
+    return application.getDefaultModalityState();
   }
 
   public void addRequest(@NotNull Runnable request, long delayMillis) {
@@ -282,6 +293,7 @@ public class Alarm implements Disposable {
       }
       request.first.run();
     }
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   @TestOnly
@@ -391,14 +403,12 @@ public class Alarm implements Disposable {
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(scheduledTask);
           }
-          else if (app.isDispatchThread() && app.getCurrentModalityState().equals(myModalityState)) {
-            scheduledTask.run();
-          }
           else {
             app.invokeLater(scheduledTask, myModalityState);
           }
         }
       }
+      catch (ProcessCanceledException ignored) { }
       catch (Throwable e) {
         LOG.error(e);
       }
@@ -428,10 +438,11 @@ public class Alarm implements Disposable {
 
     @Override
     public String toString() {
+      Runnable task;
       synchronized (LOCK) {
-        Runnable task = myTask;
-        return super.toString() + (task != null ? ": "+task : "");
+        task = myTask;
       }
+      return super.toString() + (task != null ? ": "+task : "");
     }
   }
 

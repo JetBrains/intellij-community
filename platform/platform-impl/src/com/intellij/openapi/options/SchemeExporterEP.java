@@ -62,7 +62,7 @@ public class SchemeExporterEP <S extends Scheme> extends AbstractExtensionPointB
    */
   @NotNull
   public static <S extends Scheme> Collection<SchemeExporterEP<S>> getExtensions(Class<S> schemeClass) {
-    List<SchemeExporterEP<S>> exporters = new ArrayList<SchemeExporterEP<S>>();
+    List<SchemeExporterEP<S>> exporters = new ArrayList<>();
     for (SchemeExporterEP<?> exporterEP : EP_NAME.getExtensions()) {
       if (schemeClass.getName().equals(exporterEP.schemeClass)) {
         //noinspection unchecked

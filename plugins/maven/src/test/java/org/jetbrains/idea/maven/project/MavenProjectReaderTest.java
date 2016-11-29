@@ -1037,12 +1037,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</profiles>");
 
     MavenModel p = readProject(module);
-    assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), new Function<MavenProfile, Object>() {
-      @Override
-      public Object fun(MavenProfile profile) {
-        return profile.getId();
-      }
-    }), "profileFromChild", "profileFromParent");
+    assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), (Function<MavenProfile, Object>)profile -> profile.getId()), "profileFromChild", "profileFromParent");
   }
 
   public void testCorrectlyCollectProfilesFromDifferentSources() throws Exception {
@@ -1586,7 +1581,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   private MavenProjectReaderResult readProject(VirtualFile file,
                                                MavenProjectReaderProjectLocator locator,
                                                String... profiles) {
-    MavenProjectReaderResult result = new MavenProjectReader().readProject(getMavenGeneralSettings(),
+    MavenProjectReaderResult result = new MavenProjectReader(myProject).readProject(getMavenGeneralSettings(),
                                                                            file,
                                                                            new MavenExplicitProfiles(Arrays.asList(profiles)),
                                                                            locator);
@@ -1617,7 +1612,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   private static void assertProblems(MavenProjectReaderResult readerResult, String... expectedProblems) {
-    List<String> actualProblems = new ArrayList<String>();
+    List<String> actualProblems = new ArrayList<>();
     for (MavenProjectProblem each : readerResult.readingProblems) {
       actualProblems.add(each.getDescription());
     }

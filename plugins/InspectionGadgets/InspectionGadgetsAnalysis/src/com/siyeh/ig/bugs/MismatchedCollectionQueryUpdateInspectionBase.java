@@ -37,7 +37,7 @@ import java.util.Set;
 
 public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspection {
   private static final Set<String> QUERY_EXCLUDES = Collections.singleton("java.util.Collections");
-  private static final Set<String> UPDATE_EXCLUDES = new HashSet<String>(CollectionUtils.getAllCollectionNames());
+  private static final Set<String> UPDATE_EXCLUDES = new HashSet<>(CollectionUtils.getAllCollectionNames());
   static {
     UPDATE_EXCLUDES.add("java.util.Collections");
   }

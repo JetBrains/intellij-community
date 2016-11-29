@@ -58,8 +58,8 @@ class GitNewChangesCollector extends GitChangesCollector {
 
   private static final Logger LOG = Logger.getInstance(GitNewChangesCollector.class);
   private final GitRepository myRepository;
-  private final Collection<Change> myChanges = new HashSet<Change>();
-  private final Set<VirtualFile> myUnversionedFiles = new HashSet<VirtualFile>();
+  private final Collection<Change> myChanges = new HashSet<>();
+  private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
   @NotNull private final Git myGit;
 
   /**
@@ -121,18 +121,15 @@ class GitNewChangesCollector extends GitChangesCollector {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.STATUS);
     final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);
-    handler.setSilent(true);
-    handler.setStdoutSuppressed(true);
     handler.endOptions();
     handler.addRelativePaths(dirtyPaths);
     if (handler.isLargeCommandLine()) {
       // if there are too much files, just get all changes for the project
       handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.STATUS);
       handler.addParameters(params);
-      handler.setSilent(true);
-      handler.setStdoutSuppressed(true);
       handler.endOptions();
     }
+    handler.setSilent(true);
     return handler;
   }
 
@@ -219,7 +216,7 @@ class GitNewChangesCollector extends GitChangesCollector {
 
         case 'U':
           if (yStatus == 'U' || yStatus == 'A' || yStatus == 'D' || yStatus == 'T') {
-            // UU - unmerged, both modified; UD - unmerged, deleted by them; UA - umerged, added by them
+            // UU - unmerged, both modified; UD - unmerged, deleted by them; UA - unmerged, added by them
             reportConflict(filepath, head);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);

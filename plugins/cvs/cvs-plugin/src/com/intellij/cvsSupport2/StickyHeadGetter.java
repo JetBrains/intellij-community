@@ -126,7 +126,7 @@ public abstract class StickyHeadGetter {
                                        final String name,
                                        final Convertor<CvsRevisionNumber, Boolean> chooser) {
     final LocalPathIndifferentLogOperation operation = new LocalPathIndifferentLogOperation(new File(parent.getPath(), name));
-    final Ref<Boolean> logSuccess = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> logSuccess = new Ref<>(Boolean.TRUE);
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(new CvsMessagesAdapter(),
       CvsExecutionEnvironment.DUMMY_STOPPER, new ErrorProcessor() {
       public void addError(VcsException ex) {

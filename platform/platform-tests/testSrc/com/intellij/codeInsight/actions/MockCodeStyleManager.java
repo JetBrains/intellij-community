@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.actions;
 
+import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
@@ -38,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MockCodeStyleManager extends CodeStyleManager {
-  private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<PsiFile, ChangedLines[]>();
+  private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<>();
 
   @NotNull
   public ChangedLines[] getFormattedLinesFor(@NotNull PsiFile file) {
@@ -72,8 +74,9 @@ public class MockCodeStyleManager extends CodeStyleManager {
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
-    reformatText(file, ranges);
+  public void reformatTextWithContext(@NotNull PsiFile file, 
+                                      @NotNull ChangedRangesInfo ranges) throws IncorrectOperationException {
+    reformatText(file, ranges.allChangedRanges);
   }
 
   @NotNull
@@ -121,7 +124,7 @@ public class MockCodeStyleManager extends CodeStyleManager {
   }
 
   @Override
-  public int adjustLineIndent(@NotNull Document document, int offset) {
+  public int adjustLineIndent(@NotNull Document document, int offset, FormattingMode mode) {
     throw new UnsupportedOperationException("com.intellij.codeInsight.actions.MockCodeStyleManager.adjustLineIndent(...)");
   }
 
@@ -184,5 +187,11 @@ public class MockCodeStyleManager extends CodeStyleManager {
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {
     throw new UnsupportedOperationException(
       "com.intellij.codeInsight.actions.MockCodeStyleManager.performActionWithFormatterDisabled(...)");
+  }
+
+  @Override
+  public FormattingMode getCurrentFormattingMode() {
+    throw new UnsupportedOperationException(
+      "com.intellij.codeInsight.actions.MockCodeStyleManager.getCurrentFormattingMode(...)");
   }
 }

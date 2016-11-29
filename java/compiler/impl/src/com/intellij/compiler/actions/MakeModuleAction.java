@@ -17,10 +17,10 @@ package com.intellij.compiler.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.task.ProjectTaskManager;
 
 public class MakeModuleAction extends CompileActionBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.actions.MakeModuleAction");
@@ -36,7 +36,7 @@ public class MakeModuleAction extends CompileActionBase {
       modules = new Module[]{module};
     }
     try {
-      CompilerManager.getInstance(project).make(modules[0].getProject(), modules, null);
+      ProjectTaskManager.getInstance(project).build(modules);
     }
     catch (Exception e) {
       LOG.error(e);

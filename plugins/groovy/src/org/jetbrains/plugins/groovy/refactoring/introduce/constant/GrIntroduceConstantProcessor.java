@@ -229,7 +229,7 @@ public class GrIntroduceConstantProcessor {
   @NotNull
   private String[] collectModifiers(PsiClass targetClass) {
     String modifier = isEscalateVisibility() ? PsiModifier.PRIVATE : settings.getVisibilityModifier();
-    ArrayList<String> modifiers = new ArrayList<String>();
+    ArrayList<String> modifiers = new ArrayList<>();
     if (modifier!= null && !PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
       modifiers.add(modifier);
     }

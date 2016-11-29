@@ -19,11 +19,12 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -39,6 +40,7 @@ import java.util.Set;
  * @author peter
  */
 public class GroovyNoVariantsDelegator extends CompletionContributor {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.GroovyNoVariantsDelegator");
 
   private static boolean suggestAnnotations(CompletionParameters parameters) {
     return PsiJavaPatterns.psiElement().withParents(GrCodeReferenceElement.class, GrAnnotation.class).accepts(parameters.getPosition());
@@ -83,17 +85,14 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
   }
 
   private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result) {
-    GrMainCompletionProvider.addAllClasses(parameters, new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        JavaPsiClassReferenceElement classElement =
-          element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
-        if (classElement != null) {
-          classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-        }
-        result.addElement(element);
+    GrMainCompletionProvider.addAllClasses(parameters, element -> {
+      JavaPsiClassReferenceElement classElement =
+        element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
+      if (classElement != null) {
+        classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       }
-    }, new InheritorsHolder(result), result.getPrefixMatcher());
+      result.addElement(element);
+    }, new JavaCompletionSession(result), result.getPrefixMatcher());
   }
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result) {
@@ -114,25 +113,22 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     String fullPrefix = position.getContainingFile().getText().substring(parent.getTextRange().getStartOffset(), parameters.getOffset());
     final CompletionResultSet qualifiedCollector = result.withPrefixMatcher(fullPrefix);
-    InheritorsHolder inheritors = new InheritorsHolder(result);
-    for (final LookupElement base : suggestQualifierItems(parameters, (GrReferenceElement)qualifier, inheritors)) {
+    JavaCompletionSession session = new JavaCompletionSession(result);
+    for (final LookupElement base : suggestQualifierItems(parameters, (GrReferenceElement)qualifier, session)) {
       final PsiType type = getPsiType(base.getObject());
       if (type != null && !PsiType.VOID.equals(type)) {
         GrReferenceElement ref = createMockReference(position, type, base);
-        PsiElement refName = ref.getReferenceNameElement();
-        assert refName != null;
+        PsiElement refName = ref == null ? null : ref.getReferenceNameElement();
+        if (refName == null) continue;
+
         CompletionParameters newParams = parameters.withPosition(refName, refName.getTextRange().getStartOffset());
-        GrMainCompletionProvider.completeReference(newParams, ref, inheritors, result.getPrefixMatcher(), new Consumer<LookupElement>() {
-          @Override
-          public void consume(LookupElement element) {
-            qualifiedCollector.addElement(new JavaChainLookupElement(base, element) {
-              @Override
-              protected boolean shouldParenthesizeQualifier(PsiFile file, int startOffset, int endOffset) {
-                return false;
-              }
-            });
-          }
-        });
+        GrMainCompletionProvider.completeReference(newParams, ref, session, result.getPrefixMatcher(), element ->
+          qualifiedCollector.addElement(new JavaChainLookupElement(base, element) {
+            @Override
+            protected boolean shouldParenthesizeQualifier(PsiFile file, int startOffset, int endOffset) {
+              return false;
+            }
+          }));
       }
     }
   }
@@ -155,11 +151,18 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     return null;
   }
 
+  @Nullable
   private static GrReferenceElement createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(place.getProject());
     if (qualifierItem.getObject() instanceof PsiClass) {
-      return factory
-        .createReferenceExpressionFromText(((PsiClass)qualifierItem.getObject()).getQualifiedName() + ".xxx", place);
+      try {
+        return factory
+          .createReferenceExpressionFromText(((PsiClass)qualifierItem.getObject()).getQualifiedName() + ".xxx", place);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.debug(e);
+        return null;
+      }
     }
 
     return factory.createReferenceExpressionFromText("xxx.xxx",
@@ -170,7 +173,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
   private static Set<LookupElement> suggestQualifierItems(CompletionParameters _parameters,
                                                           GrReferenceElement qualifier,
-                                                          InheritorsHolder inheritors) {
+                                                          JavaCompletionSession session) {
     CompletionParameters parameters =
       _parameters.withPosition(qualifier.getReferenceNameElement(), qualifier.getTextRange().getEndOffset());
     String referenceName = qualifier.getReferenceName();
@@ -179,13 +182,10 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     }
 
     final PrefixMatcher qMatcher = new CamelHumpMatcher(referenceName);
-    final Set<LookupElement> variants = new LinkedHashSet<LookupElement>();
-    GrMainCompletionProvider.completeReference(parameters, qualifier, inheritors, qMatcher, new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        if (qMatcher.prefixMatches(element)) {
-          variants.add(element);
-        }
+    final Set<LookupElement> variants = new LinkedHashSet<>();
+    GrMainCompletionProvider.completeReference(parameters, qualifier, session, qMatcher, element -> {
+      if (qMatcher.prefixMatches(element)) {
+        variants.add(element);
       }
     });
 
@@ -195,14 +195,11 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
 
     if (variants.isEmpty()) {
-      GrMainCompletionProvider.addAllClasses(parameters, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          if (qMatcher.prefixMatches(element)) {
-            variants.add(element);
-          }
+      GrMainCompletionProvider.addAllClasses(parameters, element -> {
+        if (qMatcher.prefixMatches(element)) {
+          variants.add(element);
         }
-      }, inheritors, qMatcher);
+      }, session, qMatcher);
     }
     return variants;
   }

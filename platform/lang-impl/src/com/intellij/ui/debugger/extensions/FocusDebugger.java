@@ -26,6 +26,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.debugger.UiDebuggerExtension;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -147,15 +148,12 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
 
     myLogModel.addElement(new FocusElement(text, new Throwable()));
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myLog != null && myLog.isShowing()) {
-          final int h = myLog.getFixedCellHeight();
-          myLog.scrollRectToVisible(new Rectangle(0, myLog.getPreferredSize().height - h, myLog.getWidth(), h));
-          if (myLog.getModel().getSize() > 0) {
-            myLog.setSelectedIndex(myLog.getModel().getSize() - 1);
-          }
+    SwingUtilities.invokeLater(() -> {
+      if (myLog != null && myLog.isShowing()) {
+        final int h = myLog.getFixedCellHeight();
+        myLog.scrollRectToVisible(new Rectangle(0, myLog.getPreferredSize().height - h, myLog.getWidth(), h));
+        if (myLog.getModel().getSize() > 0) {
+          myLog.setSelectedIndex(myLog.getModel().getSize() - 1);
         }
       }
     });
@@ -167,7 +165,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
   static class FocusElementRenderer extends ColoredListCellRenderer {
     @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       clear();
       final FocusElement element = (FocusElement)value;
       final SimpleColoredText text = element.getText();

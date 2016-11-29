@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
@@ -78,44 +77,41 @@ public class LambdaRefactoringUtil {
     final PsiParameter[] psiParameters = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getParameterList().getParameters() : null;
 
     final StringBuilder buf = new StringBuilder("(");
-    LOG.assertTrue(functionalInterfaceType != null);
     buf.append(GenericsUtil.getVariableTypeByExpressionType(functionalInterfaceType).getCanonicalText()).append(")(");
     final PsiParameterList parameterList = interfaceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
 
-    final Map<PsiParameter, String> map = new HashMap<PsiParameter, String>();
+    final Map<PsiParameter, String> map = new HashMap<>();
     final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(referenceExpression.getProject());
-    final String paramsString = StringUtil.join(parameters, new Function<PsiParameter, String>() {
-      @Override
-      public String fun(PsiParameter parameter) {
-        final int parameterIndex = parameterList.getParameterIndex(parameter);
-        String baseName;
-        if (isReceiver && parameterIndex == 0) {
-          final SuggestedNameInfo
-            nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, psiSubstitutor.substitute(parameter.getType()));
-          baseName = nameInfo.names.length > 0 ? nameInfo.names[0] : parameter.getName();
+    final String paramsString = StringUtil.join(parameters, parameter -> {
+      final int parameterIndex = parameterList.getParameterIndex(parameter);
+      String baseName;
+      if (isReceiver && parameterIndex == 0) {
+        final SuggestedNameInfo
+          nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, psiSubstitutor.substitute(parameter.getType()));
+        baseName = nameInfo.names.length > 0 ? nameInfo.names[0] : parameter.getName();
+      }
+      else {
+        final String initialName;
+        if (psiParameters != null) {
+          final int idx = parameterIndex - (isReceiver ? 1 : 0);
+          initialName = psiParameters.length > 0 ? psiParameters[idx < psiParameters.length ? idx : psiParameters.length - 1].getName()
+                                                 : parameter.getName();
         }
         else {
-          final String initialName;
-          if (psiParameters != null) {
-            final int idx = parameterIndex - (isReceiver ? 1 : 0);
-            initialName = psiParameters.length > 0 ? psiParameters[idx < psiParameters.length ? idx : psiParameters.length - 1].getName()
-                                                   : parameter.getName();
-          }
-          else {
-            initialName = parameter.getName();
-          }
-          baseName = codeStyleManager.variableNameToPropertyName(initialName, VariableKind.PARAMETER);
+          initialName = parameter.getName();
         }
-
-        if (baseName != null) {
-          String parameterName = nameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true));
-          map.put(parameter, parameterName);
-          return parameterName;
-        }
-        return "";
+        LOG.assertTrue(initialName != null);
+        baseName = codeStyleManager.variableNameToPropertyName(initialName, VariableKind.PARAMETER);
       }
+
+      if (baseName != null) {
+        String parameterName = nameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true));
+        map.put(parameter, parameterName);
+        return parameterName;
+      }
+      return "";
     }, ", ");
     buf.append(paramsString);
     buf.append(") -> ");
@@ -151,7 +147,10 @@ public class LambdaRefactoringUtil {
             }
           }
           else if (qualifier != null &&
-                   !(qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).getQualifier() == null && PsiTreeUtil.isAncestor(containingClass, referenceExpression, false) ||
+
+                   !(qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass &&
+                     ((PsiReferenceExpression)qualifier).getQualifier() == null && PsiTreeUtil.isAncestor(containingClass, referenceExpression, false) ||
+
                      qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
             buf.append(qualifier.getText()).append(".");
           }
@@ -183,13 +182,10 @@ public class LambdaRefactoringUtil {
 
           LOG.assertTrue(containingClass != null);
           if (containingClass.hasTypeParameters() && !PsiUtil.isRawSubstitutor(containingClass, substitutor)) {
-            buf.append("<").append(StringUtil.join(containingClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
-              @Override
-              public String fun(PsiTypeParameter parameter) {
-                final PsiType psiType = substitutor.substitute(parameter);
-                LOG.assertTrue(psiType != null);
-                return psiType.getCanonicalText();
-              }
+            buf.append("<").append(StringUtil.join(containingClass.getTypeParameters(), parameter -> {
+              final PsiType psiType = substitutor.substitute(parameter);
+              LOG.assertTrue(psiType != null);
+              return psiType.getCanonicalText();
             }, ", ")).append(">");
           }
         }
@@ -233,7 +229,7 @@ public class LambdaRefactoringUtil {
 
   public static void simplifyToExpressionLambda(@NotNull final PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
-    final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression, body);
+    final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(body);
     if (singleExpression != null) {
       body.replace(singleExpression);
     }
@@ -255,7 +251,7 @@ public class LambdaRefactoringUtil {
       }
 
       if (qualifierExpression != null) {
-        final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+        final List<PsiElement> sideEffects = new ArrayList<>();
         SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
         if (!sideEffects.isEmpty()) {
           if (ApplicationManager.getApplication().isUnitTestMode() ||
@@ -268,5 +264,17 @@ public class LambdaRefactoringUtil {
         }
       }
     }
+  }
+
+  /**
+   * Checks whether method reference can be converted to lambda without significant semantics change
+   * (i.e. method reference qualifier has no side effects)
+   *
+   * @param methodReferenceExpression method reference to check
+   * @return true if method reference can be converted to lambda
+   */
+  public static boolean canConvertToLambda(PsiMethodReferenceExpression methodReferenceExpression) {
+    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+    return qualifierExpression != null && !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
   }
 }

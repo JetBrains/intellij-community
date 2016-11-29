@@ -780,8 +780,9 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertModules("m1", "m2");
 
     Module m1m = ModuleManager.getInstance(myProject).findModuleByName("m1");
-    List<OrderEntry> modules1 = new ArrayList<OrderEntry>();
-    ModuleRootManager.getInstance(m1m).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(new CommonProcessors.CollectProcessor<OrderEntry>(modules1));
+    List<OrderEntry> modules1 = new ArrayList<>();
+    ModuleRootManager.getInstance(m1m).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(
+      new CommonProcessors.CollectProcessor<>(modules1));
     GlobalSearchScope scope1 = LibraryScopeCache.getInstance(myProject).getLibraryScope(modules1);
     assertSearchScope(scope1,
                       getProjectPath() + "/m1/src/main/java",
@@ -791,15 +792,18 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                       );
 
     String libraryPath = getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar";
+    String librarySrcPath = getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar";
     Module m2m = ModuleManager.getInstance(myProject).findModuleByName("m2");
-    List<OrderEntry> modules2 = new ArrayList<OrderEntry>();
-    ModuleRootManager.getInstance(m2m).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(new CommonProcessors.CollectProcessor<OrderEntry>(modules2));
+    List<OrderEntry> modules2 = new ArrayList<>();
+    ModuleRootManager.getInstance(m2m).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(
+      new CommonProcessors.CollectProcessor<>(modules2));
     GlobalSearchScope scope2 = LibraryScopeCache.getInstance(myProject).getLibraryScope(modules2);
-    assertSearchScope(scope2,
-                      getProjectPath() + "/m2/src/main/java",
-                      getProjectPath() + "/m2/src/test/java",
-                      libraryPath
-    );
+
+    List<String> expectedPaths = ContainerUtil.newArrayList(getProjectPath() + "/m2/src/main/java", getProjectPath() + "/m2/src/test/java", libraryPath);
+    if (new File(librarySrcPath).exists()) {
+      expectedPaths.add(librarySrcPath);
+    }
+    assertSearchScope(scope2, ArrayUtil.toStringArray(expectedPaths));
   }
 
   public void testDoNotIncludeConflictingTransitiveDependenciesInTheClasspath() throws Exception {
@@ -1314,19 +1318,12 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
   }
 
   private static List<Module> orderEntriesToOwnerModules(List<OrderEntry> orderEntries) {
-    return ContainerUtil.map(orderEntries, new Function<OrderEntry,Module>() {
-      @Override
-      public Module fun(OrderEntry orderEntry) { return orderEntry.getOwnerModule(); }
-    });
+    return ContainerUtil.map(orderEntries, orderEntry -> orderEntry.getOwnerModule());
   }
 
   private static List<Module> orderEntriesToDepModules(List<OrderEntry> orderEntries) {
-    return ContainerUtil.map(orderEntries, new Function<OrderEntry,Module>() {
-      @Override
-      public Module fun(OrderEntry orderEntry) {
-        return (orderEntry instanceof ModuleOrderEntry) ? ((ModuleOrderEntry)orderEntry).getModule() : null;
-      }
-    });
+    return ContainerUtil.map(orderEntries,
+                             orderEntry -> (orderEntry instanceof ModuleOrderEntry) ? ((ModuleOrderEntry)orderEntry).getModule() : null);
   }
 
   private void assertAllProductionClasspath(String moduleName, String... paths) throws Exception {
@@ -1444,10 +1441,10 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     else {
       roots = ((LibraryRuntimeClasspathScope)searchScope).getRoots();
     }
-    final List<VirtualFile> entries = new ArrayList<VirtualFile>(roots);
+    final List<VirtualFile> entries = new ArrayList<>(roots);
     entries.removeAll(Arrays.asList(ProjectRootManager.getInstance(myProject).orderEntries().sdkOnly().classes().getRoots()));
 
-    List<String> actualPaths = new ArrayList<String>();
+    List<String> actualPaths = new ArrayList<>();
     for (VirtualFile each : entries) {
       actualPaths.add(each.getPresentableUrl());
     }
@@ -1456,8 +1453,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
   }
 
   private static void assertPaths(String[] expectedPaths, List<String> actualPaths) {
-    List<String> normalizedActualPaths = new ArrayList<String>();
-    List<String> normalizedExpectedPaths = new ArrayList<String>();
+    List<String> normalizedActualPaths = new ArrayList<>();
+    List<String> normalizedExpectedPaths = new ArrayList<>();
 
     for (String each : actualPaths) {
       normalizedActualPaths.add(FileUtil.toSystemDependentName(each));

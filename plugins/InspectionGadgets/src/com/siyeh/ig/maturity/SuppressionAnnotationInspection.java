@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.RemoveAnnotationQuickFix;
+import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -73,12 +75,6 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
 
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
       return "Remove //" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME;
     }
@@ -104,12 +100,7 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
           myAllowedSuppressions.add(id);
         }
       }
-      saveProfile(project);
-    }
-
-    private void saveProfile(Project project) {
-      final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
     }
 
     @NotNull

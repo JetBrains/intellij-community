@@ -46,12 +46,7 @@ public class ToolWindowModuleService extends AbstractToolWindowService<ModuleDat
 
   @NotNull
   public static final Function<DataNode<ModuleData>, ExternalProjectPojo> MAPPER
-    = new Function<DataNode<ModuleData>, ExternalProjectPojo>() {
-    @Override
-    public ExternalProjectPojo fun(DataNode<ModuleData> node) {
-      return ExternalProjectPojo.from(node.getData());
-    }
-  };
+    = node -> ExternalProjectPojo.from(node.getData());
 
   @NotNull
   @Override

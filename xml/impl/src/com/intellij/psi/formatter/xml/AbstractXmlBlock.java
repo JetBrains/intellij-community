@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,10 +201,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       processSimpleChild(child, indent, result, wrap, alignment);
       return child;
     }
-    else {
+    else if (!isBuildIndentsOnly()) {
       myInjectedBlockBuilder.addInjectedLanguageBlockWrapper(result, child, indent, 0, null);
-      return child;
     }
+    
+    return child;
   }
 
   protected boolean doesNotIntersectSubTagsWith(final PsiElement tag) {
@@ -231,13 +232,13 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       return collectSubTags((XmlElement)myNode.getPsi());
     }
     else {
-      return new XmlTag[0];
+      return XmlTag.EMPTY;
     }
 
   }
 
   private static XmlTag[] collectSubTags(final XmlElement node) {
-    final List<XmlTag> result = new ArrayList<XmlTag>();
+    final List<XmlTag> result = new ArrayList<>();
     node.processElements(new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {
@@ -435,6 +436,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected boolean buildInjectedPsiBlocks(List<Block> result, final ASTNode child, Wrap wrap, Alignment alignment, Indent indent) {
+    if (isBuildIndentsOnly()) return false;
+    
     if (myInjectedBlockBuilder.addInjectedBlocks(result, child, wrap, alignment, indent)) {
       return true;
     }

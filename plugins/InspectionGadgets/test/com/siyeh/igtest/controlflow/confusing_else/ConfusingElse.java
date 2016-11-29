@@ -5,7 +5,7 @@ public class ConfusingElse {
     public static void main(String[] args) {
         if (foo()) {
             return;
-        } else {
+        } <warning descr="'else' branch may be unwrapped, as the 'if' branch never completes">else</warning> {
             System.out.println("ConfusingElseInspection.main");
         }
         bar();
@@ -55,7 +55,7 @@ public class ConfusingElse {
     void elseIf(int i) {
         if (i == 1) {
             return;
-        } else if (i == 3) {
+        } <warning descr="'else' branch may be unwrapped, as the 'if' branch never completes">else</warning> if (i == 3) {
             System.out.println("i = " + i);
         }
         System.out.println();

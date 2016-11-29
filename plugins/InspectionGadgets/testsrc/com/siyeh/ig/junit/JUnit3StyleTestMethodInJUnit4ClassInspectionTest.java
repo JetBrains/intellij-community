@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspectionTest extends LightInspe
 
   public void testJUnit3StyleTestMethodInJUnit4Class() { doTest(); }
   public void testBeforeAnnotationUsed() { doTest(); }
+  public void testSimpleJUnit5() { doTest(); }
 
   @Nullable
   @Override
@@ -45,6 +46,14 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspectionTest extends LightInspe
       "@Target({ElementType.METHOD})" +
       "public @interface Before {}",
       "package org.junit;" +
+      "import java.lang.annotation.ElementType;" +
+      "import java.lang.annotation.Retention;" +
+      "import java.lang.annotation.RetentionPolicy;" +
+      "import java.lang.annotation.Target;" +
+      "@Retention(RetentionPolicy.RUNTIME)" +
+      "@Target({ElementType.METHOD})" +
+      "public @interface Test {}",
+      "package org.junit.jupiter.api;" +
       "import java.lang.annotation.ElementType;" +
       "import java.lang.annotation.Retention;" +
       "import java.lang.annotation.RetentionPolicy;" +

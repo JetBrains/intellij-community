@@ -56,7 +56,7 @@ public class GroovyUnusedCatchParameterInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitCatchClause(GrCatchClause catchClause) {
+    public void visitCatchClause(@NotNull GrCatchClause catchClause) {
       super.visitCatchClause(catchClause);
       final GrOpenBlock block = catchClause.getBody();
       if (block == null) {

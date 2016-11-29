@@ -185,7 +185,7 @@ public class MergeHelper {
               if (firstif == stat.getFirst()) {
                 BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
                   DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
-                bstat.setExprents(new ArrayList<Exprent>());
+                bstat.setExprents(new ArrayList<>());
                 stat.replaceStatement(firstif, bstat);
               }
               else {
@@ -224,7 +224,7 @@ public class MergeHelper {
               if (firstif.getIfstat() == null) {
                 BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
                   DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
-                bstat.setExprents(new ArrayList<Exprent>());
+                bstat.setExprents(new ArrayList<>());
 
                 ifedge.setSource(bstat);
                 bstat.addSuccessor(ifedge);
@@ -382,7 +382,7 @@ public class MergeHelper {
     if (stat == dostat.getFirst()) {
       BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
         DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
-      bstat.setExprents(new ArrayList<Exprent>());
+      bstat.setExprents(new ArrayList<>());
       dostat.replaceStatement(stat, bstat);
     }
     else {

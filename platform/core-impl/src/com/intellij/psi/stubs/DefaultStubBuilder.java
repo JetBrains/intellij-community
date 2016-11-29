@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.StubBuilder;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.BooleanStack;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -33,7 +36,7 @@ public class DefaultStubBuilder implements StubBuilder {
 
   @Override
   public StubElement buildStubTree(@NotNull PsiFile file) {
-    return buildStubTreeFor(file, createStubForFile(file));
+    return buildStubTreeFor(file.getNode(), createStubForFile(file));
   }
 
   @NotNull
@@ -42,44 +45,8 @@ public class DefaultStubBuilder implements StubBuilder {
     return stub;
   }
 
-  @NotNull
-  private StubElement buildStubTreeFor(@NotNull PsiElement root, @NotNull StubElement parentStub) {
-    Stack<StubElement> parentStubs = new Stack<StubElement>();
-    Stack<PsiElement> parentElements = new Stack<PsiElement>();
-    parentElements.push(root);
-    parentStubs.push(parentStub);
-
-    while (!parentElements.isEmpty()) {
-      StubElement stub = parentStubs.pop();
-      PsiElement elt = parentElements.pop();
-
-      if (elt instanceof StubBasedPsiElement) {
-        final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
-
-        if (type.shouldCreateStub(elt.getNode())) {
-          @SuppressWarnings("unchecked") StubElement s = type.createStub(elt, stub);
-          stub = s;
-        }
-      }
-      else {
-        final ASTNode node = elt.getNode();
-        final IElementType type = node == null? null : node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-          LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + elt);
-        }
-      }
-
-      for (PsiElement child = elt.getLastChild(); child != null; child = child.getPrevSibling()) {
-        if (!skipChildProcessingWhenBuildingStubs(elt, child)) {
-          parentStubs.push(stub);
-          parentElements.push(child);
-        }
-      }
-    }
-    return parentStub;
-  }
-
   /**
+   * @deprecated override and invoke {@link #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)} (to be removed in IDEA 2017)
    * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}.
    */
   protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement parent, @NotNull PsiElement element) {
@@ -87,15 +54,52 @@ public class DefaultStubBuilder implements StubBuilder {
   }
 
   @NotNull
-  protected StubElement buildStubTreeFor(@NotNull ASTNode root, @NotNull StubElement parentStub) {
-    Stack<StubElement> parentStubs = new Stack<StubElement>();
-    Stack<ASTNode> parentNodes = new Stack<ASTNode>();
-    parentNodes.push(root);
-    parentStubs.push(parentStub);
+  protected final StubElement buildStubTreeFor(@NotNull ASTNode root, @NotNull StubElement parentStub) {
+    new StubBuildingWalkingVisitor(root, parentStub).buildStubTree();
+    return parentStub;
+  }
 
-    while (!parentStubs.isEmpty()) {
-      StubElement stub = parentStubs.pop();
-      ASTNode node = parentNodes.pop();
+  /**
+   * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(PsiElement, PsiElement)}.
+   */
+  @Override
+  public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
+    return false;
+  }
+
+  protected class StubBuildingWalkingVisitor {
+    private final Stack<StubElement> parentStubs = new Stack<StubElement>();
+    private final Stack<ASTNode> parentNodes = new Stack<ASTNode>();
+    private final BooleanStack parentNodesStubbed = new BooleanStack();
+
+    protected StubBuildingWalkingVisitor(ASTNode root, StubElement parentStub) {
+      parentNodes.push(root);
+      parentStubs.push(parentStub);
+      parentNodesStubbed.push(true);
+    }
+
+    public final void buildStubTree() {
+      while (!parentStubs.isEmpty()) {
+        visitNode(parentStubs.pop(), parentNodes.pop(), parentNodesStubbed.pop());
+      }
+    }
+
+    protected void visitNode(StubElement parentStub, ASTNode node, boolean immediateParentStubbed) {
+      StubElement stub = createStub(parentStub, node);
+      if (stub != null && !immediateParentStubbed) {
+        ((ObjectStubBase)stub).markDangling();
+      }
+
+      pushChildren(node, node instanceof FileElement || stub != null, stub != null ? stub : parentStub);
+    }
+
+    @Nullable
+    protected final ASTNode peekNextElement() {
+      return parentNodes.isEmpty() ? null : parentNodes.peek();
+    }
+
+    @Nullable
+    private StubElement createStub(StubElement parentStub, ASTNode node) {
       IElementType nodeType = node.getElementType();
 
       if (nodeType instanceof IStubElementType) {
@@ -106,28 +110,23 @@ public class DefaultStubBuilder implements StubBuilder {
           if (!(element instanceof StubBasedPsiElement)) {
             LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element);
           }
-          @SuppressWarnings("unchecked") StubElement s = type.createStub(element, stub);
-          stub = s;
+          @SuppressWarnings("unchecked") StubElement stub = type.createStub(element, parentStub);
+          //noinspection ConstantConditions
           LOG.assertTrue(stub != null, element);
+          return stub;
         }
       }
+      return null;
+    }
 
+    private void pushChildren(ASTNode node, boolean hasStub, StubElement stub) {
       for (ASTNode childNode = node.getLastChildNode(); childNode != null; childNode = childNode.getTreePrev()) {
         if (!skipChildProcessingWhenBuildingStubs(node, childNode)) {
           parentNodes.push(childNode);
           parentStubs.push(stub);
+          parentNodesStubbed.push(hasStub);
         }
       }
     }
-
-    return parentStub;
-  }
-
-  /**
-   * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(PsiElement, PsiElement)}.
-   */
-  @Override
-  public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
-    return false;
   }
 }

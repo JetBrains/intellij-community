@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,14 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
  * @author ilyas
@@ -33,19 +37,20 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   private static final int INTERFACE = 0x02;
   private static final int ENUM = 0x04;
   private static final int ANNOTATION = 0x08;
-  private static final int IS_IN_QUALIFIED_NEW = 0x10;
   private static final int DEPRECATED_BY_DOC = 0x20;
   private static final int TRAIT = 0x40;
 
   private final StringRef myName;
-  private final String[] mySuperClasses;
+  private final @Nullable String myBaseClassName;
   private final StringRef myQualifiedName;
   private final String[] myAnnotations;
   private final byte myFlags;
 
+  private SoftReference<GrCodeReferenceElement> myStubBaseReference;
+
   public GrTypeDefinitionStub(StubElement parent,
                                   final String name,
-                                  final String[] supers,
+                                  @Nullable final String baseClassName,
                                   @NotNull IStubElementType elementType,
                                   final String qualifiedName,
                                   String[] annotations,
@@ -53,13 +58,27 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     super(parent, elementType);
     myAnnotations = annotations;
     myName = StringRef.fromString(name);
-    mySuperClasses = supers;
+    myBaseClassName = baseClassName;
     myQualifiedName = StringRef.fromString(qualifiedName);
     myFlags = flags;
   }
 
-  public String[] getSuperClassNames() {
-    return mySuperClasses;
+  @Nullable
+  public String getBaseClassName() {
+    return myBaseClassName;
+  }
+
+  @Nullable
+  public GrCodeReferenceElement getBaseClassReference() {
+    String baseClassName = getBaseClassName();
+    if (baseClassName == null) return null;
+
+    GrCodeReferenceElement reference = SoftReference.dereference(myStubBaseReference);
+    if (reference == null) {
+      reference = GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(baseClassName, getPsi());
+      myStubBaseReference = new SoftReference<>(reference);
+    }
+    return reference;
   }
 
   @Override
@@ -81,10 +100,6 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
 
   public boolean isAnonymous() {
     return (myFlags & ANONYMOUS) != 0;
-  }
-
-  public boolean isAnonymousInQualifiedNew() {
-    return (myFlags & IS_IN_QUALIFIED_NEW) != 0;
   }
 
   public boolean isInterface() {
@@ -112,9 +127,6 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     if (typeDefinition.isAnonymous()) {
       flags |= ANONYMOUS;
       assert typeDefinition instanceof GrAnonymousClassDefinition;
-      if (((GrAnonymousClassDefinition)typeDefinition).isInQualifiedNew()) {
-        flags |= IS_IN_QUALIFIED_NEW;
-      }
     }
     if (typeDefinition.isAnnotationType()) flags |= ANNOTATION;
     if (typeDefinition.isInterface()) flags |= INTERFACE;

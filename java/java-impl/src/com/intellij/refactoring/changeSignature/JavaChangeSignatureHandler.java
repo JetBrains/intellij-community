@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,30 @@ import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
+import com.intellij.refactoring.changeSignature.inplace.InplaceChangeSignature;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
+
+  private static final Logger LOG = Logger.getInstance(JavaChangeSignatureHandler.class);
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -45,16 +54,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   private static void invokeOnElement(Project project, @Nullable Editor editor, PsiElement element) {
-    if (element instanceof PsiMethod) {
-      final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(project);
-      final PsiIdentifier nameIdentifier = ((PsiMethod)element).getNameIdentifier();
-      if (nameIdentifier != null && 
-          editor != null &&
-          editor.getDocument().isWritable() && 
-          detector.isChangeSignatureAvailable(element)) {
-        detector.changeSignature(element.getContainingFile(), false);
-        return;
-      }
+    if (element instanceof PsiMethod && ((PsiMethod)element).getNameIdentifier() != null) {
       invoke((PsiMethod) element, project, editor);
     }
     else if (element instanceof PsiClass) {
@@ -92,8 +92,57 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     final PsiClass containingClass = method.getContainingClass();
     final PsiReferenceExpression refExpr = editor != null ? JavaTargetElementEvaluator.findReferenceExpression(editor) : null;
     final boolean allowDelegation = containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(containingClass));
-    final DialogWrapper dialog = new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr == null ? method : refExpr);
-    dialog.show();
+    InplaceChangeSignature inplaceChangeSignature = editor != null ? InplaceChangeSignature.getCurrentRefactoring(editor) : null;
+    ChangeInfo initialChange = inplaceChangeSignature != null ? inplaceChangeSignature.getStableChange() : null;
+
+    boolean isInplace = Registry.is("inplace.change.signature") &&
+                        editor != null && editor.getSettings().isVariableInplaceRenameEnabled() &&
+                        (initialChange == null || initialChange.getMethod() != method) &&
+                        refExpr == null;
+    PsiIdentifier nameIdentifier = method.getNameIdentifier();
+    LOG.assertTrue(nameIdentifier != null);
+    if (isInplace) {
+      CommandProcessor.getInstance().executeCommand(project, () -> new InplaceChangeSignature(project, editor, nameIdentifier), REFACTORING_NAME, null);
+    }
+    else {
+      JavaMethodDescriptor methodDescriptor = new JavaMethodDescriptor(method);
+      if (initialChange != null) {
+        JavaChangeInfo currentInfo = (JavaChangeInfo)inplaceChangeSignature.getCurrentInfo();
+        if (currentInfo != null) {
+          methodDescriptor = new JavaMethodDescriptor(method) {
+            @Override
+            public String getName() {
+              return currentInfo.getNewName();
+            }
+
+            @Override
+            public List<ParameterInfoImpl> getParameters() {
+              return Arrays.asList((ParameterInfoImpl[])currentInfo.getNewParameters());
+            }
+
+            @Override
+            public String getVisibility() {
+              return currentInfo.getNewVisibility();
+            }
+
+
+            @Override
+            public int getParametersCount() {
+              return currentInfo.getNewParameters().length;
+            }
+
+            @Nullable
+            @Override
+            public String getReturnTypeText() {
+              return currentInfo.getNewReturnType().getTypeText();
+            }
+          };
+        }
+        inplaceChangeSignature.cancel();
+      }
+      final DialogWrapper dialog = new JavaChangeSignatureDialog(project, methodDescriptor, allowDelegation, refExpr == null ? method : refExpr);
+      dialog.show();
+    }
   }
 
   private static void invoke(final PsiClass aClass, Editor editor) {

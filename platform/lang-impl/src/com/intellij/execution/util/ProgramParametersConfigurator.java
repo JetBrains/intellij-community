@@ -43,7 +43,7 @@ public class ProgramParametersConfigurator {
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 
-    Map<String, String> envs = new HashMap<String, String>(configuration.getEnvs());
+    Map<String, String> envs = new HashMap<>(configuration.getEnvs());
     EnvironmentUtil.inlineParentOccurrences(envs);
     for (Map.Entry<String, String> each : envs.entrySet()) {
       each.setValue(expandPath(each.getValue(), module, project));

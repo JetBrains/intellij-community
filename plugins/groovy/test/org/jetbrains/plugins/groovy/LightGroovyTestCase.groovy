@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,26 @@ import org.jetbrains.annotations.Nullable
 /**
  * @author peter
  */
-public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
+abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
 
   JavaCodeInsightTestFixture getFixture() {
     myFixture
   }
 
   @Override
+  void setUp() throws Exception {
+    super.setUp()
+  }
+
+  @Override
+  void tearDown() throws Exception {
+    super.tearDown()
+  }
+
+  @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_2_1;
+    return GroovyLightProjectDescriptor.GROOVY_2_1
   }
 
   /**
@@ -48,11 +58,11 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
    */
   @Override
   @NonNls
-  protected abstract String getBasePath();
+  protected String getBasePath() { null }
 
 
   protected void addGroovyTransformField() {
-    myFixture.addClass('''package groovy.transform; public @interface Field{}''');
+    myFixture.addClass('''package groovy.transform; public @interface Field{}''')
   }
 
   protected void addGroovyObject() throws IOException {
@@ -65,7 +75,7 @@ public interface GroovyObject {
     groovy.lang.MetaClass getMetaClass();
     void setMetaClass(groovy.lang.MetaClass metaClass);
 }
-''');
+''')
   }
 
 
@@ -250,7 +260,7 @@ public abstract class TestCase extends junit.framework.Assert implements junit.f
 ''')
   }
 
-  public static void assertType(@Nullable String expected, @Nullable PsiType actual) {
+  static void assertType(@Nullable String expected, @Nullable PsiType actual) {
     if (expected == null) {
       assertNull(actual)
       return

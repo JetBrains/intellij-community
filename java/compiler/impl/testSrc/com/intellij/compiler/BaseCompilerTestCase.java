@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject.getMessageBus().connect(myTestRootDisposable).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
@@ -212,28 +212,20 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
 
   protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter, final boolean forceCompile,
                                    final boolean errorsExpected) {
-    return compile(errorsExpected, new ParameterizedRunnable<CompileStatusNotification>() {
-      @Override
-      public void run(CompileStatusNotification callback) {
-        final CompilerManager compilerManager = getCompilerManager();
-        if (forceCompile) {
-          Assert.assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
-          compilerManager.compile(scope, callback);
-        }
-        else {
-          compilerManager.make(scope, filter, callback);
-        }
+    return compile(errorsExpected, callback -> {
+      final CompilerManager compilerManager = getCompilerManager();
+      if (forceCompile) {
+        Assert.assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
+        compilerManager.compile(scope, callback);
+      }
+      else {
+        compilerManager.make(scope, filter, callback);
       }
     });
   }
 
   protected CompilationLog rebuild() {
-    return compile(false, new ParameterizedRunnable<CompileStatusNotification>() {
-      @Override
-      public void run(CompileStatusNotification compileStatusNotification) {
-        getCompilerManager().rebuild(compileStatusNotification);
-      }
-    });
+    return compile(false, compileStatusNotification -> getCompilerManager().rebuild(compileStatusNotification));
   }
 
   protected CompilationLog compile(final boolean errorsExpected, final ParameterizedRunnable<CompileStatusNotification> action) {
@@ -251,13 +243,13 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    final List<String> generatedFilePaths = new ArrayList<String>();
+    final List<String> generatedFilePaths = new ArrayList<>();
     getCompilerManager().addCompilationStatusListener(new CompilationStatusAdapter() {
       @Override
       public void fileGenerated(String outputRoot, String relativePath) {
         generatedFilePaths.add(relativePath);
       }
-    }, myTestRootDisposable);
+    }, getTestRootDisposable());
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -423,7 +415,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       myExternalBuildUpToDate = externalBuildUpToDate;
       myErrors = errors;
       myWarnings = warnings;
-      myGeneratedPaths = new THashSet<String>(generatedFilePaths, FileUtil.PATH_HASHING_STRATEGY);
+      myGeneratedPaths = new THashSet<>(generatedFilePaths, FileUtil.PATH_HASHING_STRATEGY);
     }
 
     public void assertUpToDate() {
@@ -445,7 +437,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     private static void assertSet(String name, Set<String> actual, String[] expected) {
       for (String path : expected) {
         if (!actual.remove(path)) {
-          Assert.fail("'" + path + "' is not " + name + ". " + name + ": " + new HashSet<String>(actual));
+          Assert.fail("'" + path + "' is not " + name + ". " + name + ": " + new HashSet<>(actual));
         }
       }
       if (!actual.isEmpty()) {

@@ -31,9 +31,8 @@ import java.util.Set;
  * @author peter
  */
 public class UndoHelper {
-  private final Project myProject;
   private boolean myShowing;
-  private final Set<Document> myCurrentDocuments = new HashSet<Document>();
+  private final Set<Document> myCurrentDocuments = new HashSet<>();
   private boolean myDirty;
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     @Override
@@ -45,7 +44,6 @@ public class UndoHelper {
   };
 
   public UndoHelper(final Project project, final Committable committable) {
-    myProject = project;
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
       @Override
@@ -86,23 +84,11 @@ public class UndoHelper {
   }
 
   public final void setShowing(final boolean showing) {
-    commitAllDocuments();
     myShowing = showing;
   }
 
   public boolean isShowing() {
     return myShowing;
-  }
-
-  public final void commitAllDocuments() {
-    final PsiDocumentManager manager = getDocumentManager();
-    for (final Document document : myCurrentDocuments) {
-      manager.commitDocument(document);
-    }
-  }
-
-  private PsiDocumentManager getDocumentManager() {
-    return PsiDocumentManager.getInstance(myProject);
   }
 
   public final void addWatchedDocument(final Document document) {

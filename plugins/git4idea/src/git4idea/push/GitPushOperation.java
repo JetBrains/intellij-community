@@ -36,7 +36,10 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import git4idea.*;
+import git4idea.DialogManager;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitRevisionNumber;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -80,7 +83,6 @@ public class GitPushOperation {
   private final Git myGit;
   private final ProgressIndicator myProgressIndicator;
   private final GitVcsSettings mySettings;
-  private final GitPlatformFacade myPlatformFacade;
   private final GitRepositoryManager myRepositoryManager;
 
   public GitPushOperation(@NotNull Project project,
@@ -96,7 +98,6 @@ public class GitPushOperation {
     myGit = ServiceManager.getService(Git.class);
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
     mySettings = GitVcsSettings.getInstance(myProject);
-    myPlatformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
     myRepositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
 
     Map<GitRepository, GitRevisionNumber> currentHeads = ContainerUtil.newHashMap();
@@ -207,7 +208,7 @@ public class GitPushOperation {
           if (target == null) {
             return null;
           }
-          pushSpec = new PushSpec<GitPushSource, GitPushTarget>(source, target);
+          pushSpec = new PushSpec<>(source, target);
         }
         String baseRef = pushSpec.getTarget().getBranch().getFullName();
         String currentRef = pushSpec.getSource().getBranch().getFullName();
@@ -352,7 +353,7 @@ public class GitPushOperation {
   private void collectUpdatedFiles(@NotNull UpdatedFiles updatedFiles, @NotNull GitRepository repository,
                                    @NotNull String preUpdatePosition) {
     MergeChangeCollector collector = new MergeChangeCollector(myProject, repository.getRoot(), new GitRevisionNumber(preUpdatePosition));
-    ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
+    ArrayList<VcsException> exceptions = new ArrayList<>();
     collector.collect(updatedFiles, exceptions);
     for (VcsException exception : exceptions) {
       LOG.info(exception);
@@ -437,8 +438,8 @@ public class GitPushOperation {
   protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate,
                                    @NotNull UpdateMethod updateMethod,
                                    boolean checkForRebaseOverMergeProblem) {
-    GitUpdateResult updateResult = new GitUpdateProcess(myProject, myPlatformFacade, myProgressIndicator,
-                                                        new HashSet<GitRepository>(rootsToUpdate), UpdatedFiles.create(),
+    GitUpdateResult updateResult = new GitUpdateProcess(myProject, myProgressIndicator,
+                                                        new HashSet<>(rootsToUpdate), UpdatedFiles.create(),
                                                         checkForRebaseOverMergeProblem).update(updateMethod);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);

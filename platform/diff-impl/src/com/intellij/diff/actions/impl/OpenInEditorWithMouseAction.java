@@ -19,9 +19,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,13 +36,15 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
   @NotNull private List<? extends Editor> myEditors = Collections.emptyList();
 
   public OpenInEditorWithMouseAction() {
-    setShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_DECLARATION).getShortcutSet());
+    AnAction navigateAction = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_DECLARATION); // null in MPS
+    setShortcutSet(navigateAction != null ?
+                   navigateAction.getShortcutSet() :
+                   new CustomShortcutSet(new MouseShortcut(MouseEvent.BUTTON1, InputEvent.CTRL_DOWN_MASK, 1)));
   }
 
-  public void register(@NotNull List<? extends Editor> editors) {
+  public void install(@NotNull List<? extends Editor> editors) {
     myEditors = editors;
     for (Editor editor : editors) {
-      if (editor == null) continue;
       registerCustomShortcutSet(getShortcutSet(), (EditorGutterComponentEx)editor.getGutter());
     }
   }
@@ -110,10 +112,10 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
 
     int line = editor.xyToLogicalPosition(convertedEvent.getPoint()).line;
 
-    OpenFileDescriptor descriptor = getDescriptor(editor, line);
-    if (descriptor == null) return;
+    Navigatable navigatable = getNavigatable(editor, line);
+    if (navigatable == null) return;
 
-    openInEditorAction.openEditor(project, descriptor);
+    openInEditorAction.openEditor(project, navigatable);
   }
 
   @Nullable
@@ -127,5 +129,5 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
   }
 
   @Nullable
-  protected abstract OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line);
+  protected abstract Navigatable getNavigatable(@NotNull Editor editor, int line);
 }

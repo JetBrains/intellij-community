@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
@@ -52,21 +51,18 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final String myBranchToMerge;
   private final GitBrancher.DeleteOnMergeOption myDeleteOnMerge;
-  @NotNull private final Map<GitRepository, String> myCurrentRevisionsBeforeMerge;
 
   // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.
-  @NotNull private final Map<GitRepository, Boolean> myConflictedRepositories = new HashMap<GitRepository, Boolean>();
+  @NotNull private final Map<GitRepository, Boolean> myConflictedRepositories = new HashMap<>();
   private GitPreservingProcess myPreservingProcess;
 
-  GitMergeOperation(@NotNull Project project, GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
+  GitMergeOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                     @NotNull Collection<GitRepository> repositories,
-                    @NotNull String branchToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge,
-                    @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge) {
-    super(project, facade, git, uiHandler, repositories);
+                    @NotNull String branchToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge) {
+    super(project, git, uiHandler, repositories);
     myBranchToMerge = branchToMerge;
     myDeleteOnMerge = deleteOnMerge;
-    myCurrentRevisionsBeforeMerge = currentRevisionsBeforeMerge;
-    myChangeListManager = myFacade.getChangeListManager(myProject);
+    myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
   @Override
@@ -168,7 +164,7 @@ class GitMergeOperation extends GitBranchOperation {
           @Override
           public void run() {
             GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-            brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+            brancher.deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
           }
         });
         break;
@@ -216,9 +212,9 @@ class GitMergeOperation extends GitBranchOperation {
 
   private boolean doSmartMerge(@NotNull final Collection<GitRepository> repositories) {
     final AtomicBoolean success = new AtomicBoolean();
-    myPreservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, GitUtil.getRootsFromRepositories(repositories), "merge",
+    myPreservingProcess = new GitPreservingProcess(myProject, myGit, GitUtil.getRootsFromRepositories(repositories), "merge",
                                                    myBranchToMerge, GitVcsSettings.UpdateChangesPolicy.STASH, getIndicator(),
-      new Runnable() {
+                                                   new Runnable() {
         @Override
         public void run() {
           success.set(doMerge(repositories));
@@ -273,9 +269,9 @@ class GitMergeOperation extends GitBranchOperation {
   @Override
   protected void rollback() {
     LOG.info("starting rollback...");
-    Collection<GitRepository> repositoriesForSmartRollback = new ArrayList<GitRepository>();
-    Collection<GitRepository> repositoriesForSimpleRollback = new ArrayList<GitRepository>();
-    Collection<GitRepository> repositoriesForMergeRollback = new ArrayList<GitRepository>();
+    Collection<GitRepository> repositoriesForSmartRollback = new ArrayList<>();
+    Collection<GitRepository> repositoriesForSimpleRollback = new ArrayList<>();
+    Collection<GitRepository> repositoriesForMergeRollback = new ArrayList<>();
     for (GitRepository repository : getSuccessfulRepositories()) {
       if (myConflictedRepositories.containsKey(repository)) {
         repositoriesForMergeRollback.add(repository);
@@ -312,10 +308,10 @@ class GitMergeOperation extends GitBranchOperation {
     LOG.info("Starting smart rollback...");
     final GitCompoundResult result = new GitCompoundResult(myProject);
     Collection<VirtualFile> roots = GitUtil.getRootsFromRepositories(repositories);
-    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, roots, "merge",
+    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myGit, roots, "merge",
                                                                       myBranchToMerge, GitVcsSettings.UpdateChangesPolicy.STASH,
                                                                       getIndicator(),
-      new Runnable() {
+                                                                      new Runnable() {
         @Override public void run() {
           for (GitRepository repository : repositories) {
             result.append(repository, rollback(repository));
@@ -329,7 +325,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   @NotNull
   private GitCommandResult rollback(@NotNull GitRepository repository) {
-    return myGit.reset(repository, GitResetMode.HARD, myCurrentRevisionsBeforeMerge.get(repository));
+    return myGit.reset(repository, GitResetMode.HARD, getInitialRevision(repository));
   }
 
   @NotNull
@@ -391,7 +387,7 @@ class GitMergeOperation extends GitBranchOperation {
                                 @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+        brancher.deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
       }
     }
   }

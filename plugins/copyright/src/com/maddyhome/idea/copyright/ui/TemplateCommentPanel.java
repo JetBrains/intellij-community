@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
@@ -27,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.UIUtil;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
@@ -82,10 +82,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
 
   private void updateBox() {
     boolean enable = true;
-    if (!cbSeparatorBefore.isSelected()) {
-      enable = false;
-    }
-    else if (!cbSeparatorAfter.isSelected()) {
+    if (!cbSeparatorBefore.isSelected() || !cbSeparatorAfter.isSelected()) {
       enable = false;
     }
     else {
@@ -336,19 +333,15 @@ public class TemplateCommentPanel implements SearchableConfigurable {
       mySeparatorCharLabel.setEnabled(true);
       updateBox();
     } else {
-      UIUtil.setEnabled(myCommentTypePanel, enable, true);
-      UIUtil.setEnabled(myBorderPanel, enable, true);
+      UIUtil.setEnabled(myCommentTypePanel, false, true);
+      UIUtil.setEnabled(myBorderPanel, false, true);
     }
   }
 
   private void showPreview(LanguageOptions options) {
     final String defaultCopyrightText = myNoCopyright.isSelected() ? "" : FileTypeUtil
       .buildComment(fileType, VelocityHelper.evaluate(null, null, null, EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE)), options);
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        preview.setText(defaultCopyrightText);
-      }
-    });
+    SwingUtilities.invokeLater(() -> preview.setText(defaultCopyrightText));
   }
 
 
@@ -446,9 +439,5 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   @NotNull
   public String getId() {
     return getHelpTopic() + "." + fileType.getName();
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

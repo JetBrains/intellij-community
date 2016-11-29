@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,13 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.annotations.Property;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -68,11 +68,11 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     myModule.setModule(module);
   }
 
-  protected void readModule(final Element element) throws InvalidDataException {
+  protected void readModule(final Element element) {
     myModule.readExternal(element);
   }
 
-  protected void writeModule(final Element element) throws WriteExternalException {
+  protected void writeModule(final Element element) {
     myModule.writeExternal(element);
   }
 
@@ -80,6 +80,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
   }
 
+  /**
+   * @deprecated  method {@link com.intellij.execution.configurations.ConfigurationFactory#createTemplateConfiguration(com.intellij.openapi.project.Project)}
+   * would be used instead to avoid wrong custom 'cloning'
+   */
   protected ModuleBasedConfiguration createInstance() {
     ModuleBasedConfiguration<ConfigurationModule> configuration =
       (ModuleBasedConfiguration<ConfigurationModule>)getFactory().createTemplateConfiguration(getProject());
@@ -92,15 +96,16 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     final Element element = new Element(TO_CLONE_ELEMENT_NAME);
     try {
       writeExternal(element);
-      final ModuleBasedConfiguration configuration = createInstance();
-
+      RunConfiguration configuration = getFactory().createTemplateConfiguration(getProject());
+      configuration.setName(getName());
       configuration.readExternal(element);
-
-      return configuration;
-    } catch (InvalidDataException e) {
+      return (ModuleBasedConfiguration)configuration;
+    }
+    catch (InvalidDataException e) {
       LOG.error(e);
       return null;
-    } catch (WriteExternalException e) {
+    }
+    catch (WriteExternalException e) {
       LOG.error(e);
       return null;
     }
@@ -109,24 +114,22 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   @Override
   @NotNull
   public Module[] getModules() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
-      @Override
-      @SuppressWarnings({"ConstantConditions"})
-      public Module[] compute() {
-        final Module module = getConfigurationModule().getModule();
-        return module == null ? Module.EMPTY_ARRAY : new Module[] {module};
-      }
-    });
+    Module module = ApplicationManager.getApplication().runReadAction((Computable<Module>)() -> getConfigurationModule().getModule());
+    return module == null ? Module.EMPTY_ARRAY : new Module[] {module};
   }
 
   public void restoreOriginalModule(final Module originalModule) {
-    if (originalModule == null) return;
-    final Module[] classModules = getModules();
-    final Set<Module> modules = new HashSet<Module>();
-    for (Module classModule : classModules) {
+    if (originalModule == null) {
+      return;
+    }
+
+    Set<Module> modules = new THashSet<>();
+    for (Module classModule : getModules()) {
       ModuleUtilCore.collectModulesDependsOn(classModule, modules);
     }
-    if (modules.contains(originalModule)) setModule(originalModule);
+    if (modules.contains(originalModule)) {
+      setModule(originalModule);
+    }
   }
 
   public void onNewConfigurationCreated() {

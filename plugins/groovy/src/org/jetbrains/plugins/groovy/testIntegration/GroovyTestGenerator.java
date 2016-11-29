@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -58,48 +57,41 @@ public class GroovyTestGenerator implements TestGenerator {
   @Nullable
   @Override
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
-    AccessToken accessToken = WriteAction.start();
-    try {
+    return WriteAction.compute(() -> {
       final PsiClass test = (PsiClass)PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
-        new Computable<PsiElement>() {
-          @Override
-          public PsiElement compute() {
-            try {
-              IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+        (Computable<PsiElement>)() -> {
+          try {
+            IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-              GrTypeDefinition targetClass = CreateClassActionBase.createClassByType(
-                d.getTargetDirectory(),
-                d.getClassName(),
-                PsiManager.getInstance(project),
-                null,
-                GroovyTemplates.GROOVY_CLASS, true);
-              if (targetClass == null) return null;
+            GrTypeDefinition targetClass = CreateClassActionBase.createClassByType(
+              d.getTargetDirectory(),
+              d.getClassName(),
+              PsiManager.getInstance(project),
+              null,
+              GroovyTemplates.GROOVY_CLASS, true);
+            if (targetClass == null) return null;
 
-              addSuperClass(targetClass, project, d.getSuperClassName());
+            addSuperClass(targetClass, project, d.getSuperClassName());
 
-              Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
-              addTestMethods(editor,
-                             targetClass,
-                             d.getSelectedTestFrameworkDescriptor(),
-                             d.getSelectedMethods(),
-                             d.shouldGeneratedBefore(),
-                             d.shouldGeneratedAfter());
-              return targetClass;
-            }
-            catch (IncorrectOperationException e1) {
-              showErrorLater(project, d.getClassName());
-              return null;
-            }
+            Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
+            addTestMethods(editor,
+                           targetClass,
+                           d.getSelectedTestFrameworkDescriptor(),
+                           d.getSelectedMethods(),
+                           d.shouldGeneratedBefore(),
+                           d.shouldGeneratedAfter());
+            return targetClass;
+          }
+          catch (IncorrectOperationException e1) {
+            showErrorLater(project, d.getClassName());
+            return null;
           }
         });
       if (test == null) return null;
       JavaCodeStyleManager.getInstance(test.getProject()).shortenClassReferences(test);
       CodeStyleManager.getInstance(project).reformat(test);
       return test;
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Override
@@ -141,7 +133,7 @@ public class GroovyTestGenerator implements TestGenerator {
                                      Collection<MemberInfo> methods,
                                      boolean generateBefore,
                                      boolean generateAfter) throws IncorrectOperationException {
-    final HashSet<String> existingNames = new HashSet<String>();
+    final HashSet<String> existingNames = new HashSet<>();
     if (generateBefore) {
       generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, null, existingNames);
     }
@@ -154,17 +146,12 @@ public class GroovyTestGenerator implements TestGenerator {
   }
 
   private static void showErrorLater(final Project project, final String targetClassName) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showErrorDialog(project,
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(project,
+                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
+                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.title")));
   }
 
-  private static void generateMethod(TestIntegrationUtils.MethodKind methodKind,
+  private static void generateMethod(@NotNull TestIntegrationUtils.MethodKind methodKind,
                                      TestFramework descriptor,
                                      PsiClass targetClass,
                                      Editor editor,

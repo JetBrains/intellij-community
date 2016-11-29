@@ -42,8 +42,8 @@ public class KeepingExpandedExpander implements Expander {
   public void onBeforeRefresh(final RepositoryTreeNode node) {
     mySelectionExpander.onBeforeRefresh(node);
     
-    myThirdLevel = new HashMap<String, ChildrenData>();
-    myExpanded = new ArrayList<TreeNode>();
+    myThirdLevel = new HashMap<>();
+    myExpanded = new ArrayList<>();
 
     final Enumeration<TreeNode> children = node.children();
     while (children.hasMoreElements()) {

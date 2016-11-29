@@ -51,9 +51,9 @@ public class SetupTaskChooserAction extends AnAction {
     final Module module = e.getData(LangDataKeys.MODULE);
     if (module == null) return;
     final Project project = module.getProject();
-    final ListChooseByNameModel<SetupTask> model = new ListChooseByNameModel<SetupTask>(project, "Enter setup.py task name",
-                                                                                        "No tasks found",
-                                                                                        SetupTaskIntrospector.getTaskList(module));
+    final ListChooseByNameModel<SetupTask> model = new ListChooseByNameModel<>(project, "Enter setup.py task name",
+                                                                               "No tasks found",
+                                                                               SetupTaskIntrospector.getTaskList(module));
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, GotoActionBase.getPsiContext(e));
     popup.setShowListForEmptyPattern(true);
 
@@ -64,11 +64,7 @@ public class SetupTaskChooserAction extends AnAction {
       public void elementChosen(Object element) {
         if (element != null) {
           final SetupTask task = (SetupTask) element;
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              runSetupTask(task.getName(), module);
-            }
-          }, ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(() -> runSetupTask(task.getName(), module), ModalityState.NON_MODAL);
         }
       }
     }, ModalityState.current(), false);
@@ -78,14 +74,14 @@ public class SetupTaskChooserAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE);
-    e.getPresentation().setEnabled(module != null && PyPackageUtil.findSetupPy(module) != null && PythonSdkType.findPythonSdk(module) != null);
+    e.getPresentation().setEnabled(module != null && PyPackageUtil.hasSetupPy(module) && PythonSdkType.findPythonSdk(module) != null);
   }
 
   public static void runSetupTask(String taskName, Module module) {
     final PyFile setupPy = PyPackageUtil.findSetupPy(module);
     try {
       final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, taskName);
-      List<String> parameters = new ArrayList<String>();
+      List<String> parameters = new ArrayList<>();
       parameters.add(taskName);
       if (options != null) {
         SetupTaskDialog dialog = new SetupTaskDialog(module.getProject(), taskName, options);
@@ -99,12 +95,7 @@ public class SetupTaskChooserAction extends AnAction {
       task.setRunnerScript(virtualFile.getPath());
       task.setWorkingDirectory(virtualFile.getParent().getPath());
       task.setParameters(parameters);
-      task.setAfterCompletion(new Runnable() {
-        @Override
-        public void run() {
-          LocalFileSystem.getInstance().refresh(true);
-        }
-      });
+      task.setAfterCompletion(() -> LocalFileSystem.getInstance().refresh(true));
       task.run(null, null);
     }
     catch (ExecutionException ee) {

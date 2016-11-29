@@ -45,7 +45,7 @@ public class IntTimestampGetter implements TimestampGetter {
       saveTimestamps[i] = delegateGetter.getTimestamp(blockSize * i);
     }
 
-    Map<Integer, Long> brokenDeltas = new HashMap<Integer, Long>();
+    Map<Integer, Long> brokenDeltas = new HashMap<>();
     int[] deltas = new int[delegateGetter.size()];
 
     for (int i = 0; i < delegateGetter.size(); i++) {

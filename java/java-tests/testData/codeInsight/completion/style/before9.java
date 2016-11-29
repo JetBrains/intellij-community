@@ -7,6 +7,6 @@ class A{
  public void foo(boolean bol){}
 
  {
-  foo(<caret>equals(null));
+  foo(x<caret>equals(null));
  }
 }

@@ -1,5 +1,7 @@
 package com.siyeh.igtest.errorhandling.try_identical_catches;
 
+import java.io.*;
+
 class TryIdenticalCatches {
   public void notIdentical() {
     try {
@@ -130,5 +132,74 @@ class TryIdenticalCatches {
       causeException = e;
     }
     System.out.println("causeException = " + causeException);
+  }
+
+  public void x() throws IOException {
+    try {
+      foo();
+    } catch (FileNotFoundException e) {
+      throw e;
+    } catch (IOException e) {
+      throw INSTANCE;
+    }
+  }
+
+  public void y() throws IOException {
+    try {
+
+    } catch (RuntimeException g) {
+      try {
+        foo();
+      } catch (FileNotFoundException e) {
+        throw e;
+      } catch (IOException e) {
+        throw g;
+      }
+    }
+  }
+
+  void foo() throws IOException {}
+  private static final IOException INSTANCE = new IOException();
+
+  public boolean returning() {
+    try {
+      // work
+    }
+    catch(NumberFormatException e) {
+      return true;
+    }
+    catch(RuntimeException e) {
+      return true;
+    }
+    return false;
+  }
+
+  public void suppress() {
+    try {
+      // ...
+    }
+    catch (NumberFormatException e) {
+      System.out.println(e);
+    }
+    catch (@SuppressWarnings("TryWithIdenticalCatches") RuntimeException e) {
+      System.out.println(e);
+    }
+  }
+}
+class TestInspection {
+  public void foo() throws MyException {
+    try {
+      toString();
+    } catch (IllegalArgumentException e) {
+      throw new MyException(e);
+    } catch (IllegalStateException e) {
+      throw new MyException(e);
+    }
+  }
+
+  private static class MyException extends Exception {
+    public MyException(IllegalArgumentException e) {}
+
+    public MyException(IllegalStateException e) {}
   }
 }

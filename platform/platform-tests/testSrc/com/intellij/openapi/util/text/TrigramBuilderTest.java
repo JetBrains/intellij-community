@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 
 public class TrigramBuilderTest extends TestCase {
   public void testBuilder() {
-    final Ref<Integer> trigramCountRef = new Ref<Integer>();
+    final Ref<Integer> trigramCountRef = new Ref<>();
     final TIntArrayList list = new TIntArrayList();
 
     TrigramBuilder.processTrigrams("String$CharData", new TrigramBuilder.TrigramProcessor() {

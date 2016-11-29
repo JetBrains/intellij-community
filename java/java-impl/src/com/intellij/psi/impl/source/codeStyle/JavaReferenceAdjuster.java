@@ -166,7 +166,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
 
   @Override
   public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode) {
-    List<ASTNode> array = new ArrayList<ASTNode>();
+    List<ASTNode> array = new ArrayList<>();
     addReferencesInRange(array, element, startOffset, endOffset);
     for (ASTNode ref : array) {
       if (ref.getPsi().isValid()) {
@@ -265,6 +265,14 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
       if (psiReference instanceof PsiJavaCodeReferenceElement) {
         PsiElement parent = psiReference.getParent();
         if (parent instanceof PsiNewExpression || parent.getParent() instanceof PsiNewExpression) return true;
+
+        if (parent instanceof PsiTypeElement &&
+            parent.getParent() instanceof PsiInstanceOfExpression) {
+          final PsiClass containingClass = refClass.getContainingClass();
+          if (containingClass != null && containingClass.hasTypeParameters()) {
+            return false;
+          }
+        }
       }
       return helper.resolveReferencedVariable(referenceText, psiReference) == null;
     }

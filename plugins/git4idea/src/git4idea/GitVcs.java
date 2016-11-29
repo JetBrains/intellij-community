@@ -36,7 +36,6 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
@@ -49,6 +48,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.annotate.GitRepositoryForAnnotationsListener;
@@ -60,7 +60,6 @@ import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commands.Git;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
-import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
@@ -101,7 +100,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitUpdateEnvironment myUpdateEnvironment;
   private final GitAnnotationProvider myAnnotationProvider;
   private final DiffProvider myDiffProvider;
-  private final VcsHistoryProvider myHistoryProvider;
+  private final GitHistoryProvider myHistoryProvider;
   @NotNull private final Git myGit;
   private final ProjectLevelVcsManager myVcsManager;
   private final GitVcsApplicationSettings myAppSettings;
@@ -112,7 +111,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
-  private final TreeDiffProvider myTreeDiffProvider;
   @Nullable private final GitCommitAndPushExecutor myCommitAndPushExecutor;
   private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
@@ -153,7 +151,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
-    myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = myCheckinEnvironment != null ? new GitCommitAndPushExecutor(myCheckinEnvironment) : null;
     myExecutableValidator = new GitExecutableValidator(myProject);
   }
@@ -202,12 +199,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @NotNull
-  public VcsHistoryProvider getVcsHistoryProvider() {
+  public GitHistoryProvider getVcsHistoryProvider() {
     return myHistoryProvider;
   }
 
   @Override
-  public VcsHistoryProvider getVcsBlockHistoryProvider() {
+  public GitHistoryProvider getVcsBlockHistoryProvider() {
     return myHistoryProvider;
   }
 
@@ -225,7 +222,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @NotNull
-  public GitAnnotationProvider getAnnotationProvider() {
+  public AnnotationProviderEx getAnnotationProvider() {
     return myAnnotationProvider;
   }
 
@@ -300,7 +297,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myRepositoryForAnnotationsListener == null) {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
-    ServiceManager.getService(myProject, GitUserRegistry.class).activate();
+    GitUserRegistry.getInstance(myProject).activate();
   }
 
   private void checkExecutableAndVersion() {
@@ -464,7 +461,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
-    Collections.sort(in, new ComparatorDelegate<S, VirtualFile>(convertor, FilePathComparator.getInstance()));
+    Collections.sort(in, new ComparatorDelegate<>(convertor, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {
       final S sChild = in.get(i);
@@ -513,11 +510,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public RemoteDifferenceStrategy getRemoteDifferenceStrategy() {
     return RemoteDifferenceStrategy.ASK_TREE_PROVIDER;
-  }
-
-  @Override
-  protected TreeDiffProvider getTreeDiffProviderImpl() {
-    return myTreeDiffProvider;
   }
 
   @Override

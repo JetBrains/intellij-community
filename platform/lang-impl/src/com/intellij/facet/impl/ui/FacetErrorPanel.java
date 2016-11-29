@@ -103,7 +103,7 @@ public class FacetErrorPanel {
   }
 
   private class FacetValidatorsManagerImpl implements FacetValidatorsManager {
-    private final List<FacetEditorValidator> myValidators = new ArrayList<FacetEditorValidator>();
+    private final List<FacetEditorValidator> myValidators = new ArrayList<>();
 
     @Override
     public void registerValidator(final FacetEditorValidator validator, JComponent... componentsToWatch) {

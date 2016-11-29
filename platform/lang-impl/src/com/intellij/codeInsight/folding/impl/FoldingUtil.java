@@ -54,7 +54,7 @@ public class FoldingUtil {
   }
 
   public static FoldRegion[] getFoldRegionsAtOffset(Editor editor, int offset){
-    List<FoldRegion> list = new ArrayList<FoldRegion>();
+    List<FoldRegion> list = new ArrayList<>();
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : allRegions) {
       if (region.getStartOffset() <= offset && offset <= region.getEndOffset()) {
@@ -67,7 +67,7 @@ public class FoldingUtil {
     return regions;
   }
 
-  public static boolean caretInsideRange(final Editor editor, final TextRange range) {
+  static boolean caretInsideRange(final Editor editor, final TextRange range) {
     final int offset = editor.getCaretModel().getOffset();
     return range.contains(offset) && range.getStartOffset() != offset;
   }

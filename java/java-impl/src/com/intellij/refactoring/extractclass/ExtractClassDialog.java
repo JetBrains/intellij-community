@@ -54,7 +54,7 @@ import java.util.List;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener<PsiMember, MemberInfo> {
-  private final Map<MemberInfoBase<PsiMember>, PsiMember> myMember2CauseMap = new HashMap<MemberInfoBase<PsiMember>, PsiMember>();
+  private final Map<MemberInfoBase<PsiMember>, PsiMember> myMember2CauseMap = new HashMap<>();
   private final PsiClass sourceClass;
   private final List<MemberInfo> memberInfo;
   private final JTextField classNameField;
@@ -64,7 +64,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final JavaVisibilityPanel myVisibilityPanel;
   private final JCheckBox extractAsEnum;
   private final JCheckBox createInner;
-  private final List<MemberInfo> enumConstants = new ArrayList<MemberInfo>();
+  private final List<MemberInfo> enumConstants = new ArrayList<>();
 
   ExtractClassDialog(PsiClass sourceClass, PsiMember selectedMember) {
     super(sourceClass.getProject(), true);
@@ -143,11 +143,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final String newClassName = getClassName();
     final String packageName = getPackageName();
 
-    Collections.sort(enumConstants, new Comparator<MemberInfo>() {
-      public int compare(MemberInfo o1, MemberInfo o2) {
-        return o1.getMember().getTextOffset() - o2.getMember().getTextOffset();
-      }
-    });
+    Collections.sort(enumConstants, (o1, o2) -> o1.getMember().getTextOffset() - o2.getMember().getTextOffset());
     final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName,
                                                                       myDestinationFolderComboBox.selectDirectory(
                                                                         new PackageWrapper(PsiManager.getInstance(myProject), packageName),
@@ -207,7 +203,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   }
 
   public <T> List<T> getMembersToExtract(final boolean checked, Class<T> memberClass) {
-    final List<T> out = new ArrayList<T>();
+    final List<T> out = new ArrayList<>();
     for (MemberInfo info : memberInfo) {
       if (checked && !info.isChecked()) continue;
       if (!checked && info.isChecked()) continue;
@@ -341,7 +337,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     });
 
     final MemberSelectionPanelBase<PsiMember, MemberInfo, MemberSelectionTable> memberSelectionPanel =
-      new MemberSelectionPanelBase<PsiMember, MemberInfo, MemberSelectionTable>(RefactorJBundle.message("members.to.extract.label"), table);
+      new MemberSelectionPanelBase<>(RefactorJBundle.message("members.to.extract.label"), table);
 
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
     table.addMemberInfoChangeListener(this);
@@ -429,9 +425,9 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   }
 
   private boolean canExtractEnum() {
-    final List<PsiField> fields = new ArrayList<PsiField>();
-    final List<PsiClass> innerClasses = new ArrayList<PsiClass>();
-    final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    final List<PsiField> fields = new ArrayList<>();
+    final List<PsiClass> innerClasses = new ArrayList<>();
+    final List<PsiMethod> methods = new ArrayList<>();
     for (MemberInfo info : memberInfo) {
       if (info.isChecked()) {
         final PsiMember member = info.getMember();

@@ -15,11 +15,14 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.TextRange;
@@ -33,16 +36,18 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Path2D;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class DiffDrawUtil {
-  private static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
-  private static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 3;
-  private static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
-  private static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
+  public static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
+  public static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 3;
+  public static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
+  public static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
+  public static final int LST_LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
 
   private static final double CTRL_PROXIMITY_X = 0.3;
 
@@ -218,6 +223,7 @@ public class DiffDrawUtil {
   @NotNull
   private static LineSeparatorRenderer createDiffLineRenderer(@NotNull final Editor editor,
                                                               @NotNull final TextDiffType type,
+                                                              @NotNull SeparatorPlacement placement,
                                                               final boolean doubleLine,
                                                               final boolean resolved) {
     return new LineSeparatorRenderer() {
@@ -226,7 +232,36 @@ public class DiffDrawUtil {
         // TODO: change LineSeparatorRenderer interface ?
         Rectangle clip = g.getClipBounds();
         x2 = clip.x + clip.width;
+        if (placement == SeparatorPlacement.TOP) y++;
         drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor), doubleLine, resolved);
+      }
+    };
+  }
+
+  @NotNull
+  private static LineMarkerRenderer createFoldingGutterLineRenderer(@NotNull final TextDiffType type,
+                                                                    @NotNull final SeparatorPlacement placement,
+                                                                    final boolean doubleLine,
+                                                                    final boolean resolved) {
+    return new LineMarkerRendererEx() {
+      @Override
+      public void paint(Editor editor, Graphics g, Rectangle r) {
+        EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
+        Graphics2D g2 = (Graphics2D)g;
+
+        int x1 = gutter.getWhitespaceSeparatorOffset();
+        int x2 = gutter.getWidth();
+
+        int y = r.y;
+        if (placement == SeparatorPlacement.BOTTOM) y += editor.getLineHeight();
+
+        drawChunkBorderLine(g2, x1, x2, y - 1, type.getColor(editor), doubleLine, resolved);
+      }
+
+      @NotNull
+      @Override
+      public Position getPosition() {
+        return Position.CUSTOM;
       }
     };
   }
@@ -236,6 +271,43 @@ public class DiffDrawUtil {
   //
 
   // TODO: desync of range and 'border' line markers on typing
+
+  @NotNull
+  public static List<RangeHighlighter> createUnifiedChunkHighlighters(@NotNull Editor editor,
+                                                                      @NotNull LineRange deleted,
+                                                                      @NotNull LineRange inserted,
+                                                                      @Nullable List<DiffFragment> innerFragments) {
+    boolean ignored = innerFragments != null;
+
+    List<RangeHighlighter> list = new ArrayList<>();
+    if (!inserted.isEmpty() && !deleted.isEmpty()) {
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+    }
+    else if (!inserted.isEmpty()) {
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+    }
+    else if (!deleted.isEmpty()) {
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
+    }
+
+    if (innerFragments != null) {
+      int deletedStartOffset = editor.getDocument().getLineStartOffset(deleted.start);
+      int insertedStartOffset = editor.getDocument().getLineStartOffset(inserted.start);
+
+      for (DiffFragment fragment : innerFragments) {
+        int deletedWordStart = deletedStartOffset + fragment.getStartOffset1();
+        int deletedWordEnd = deletedStartOffset + fragment.getEndOffset1();
+        list.addAll(createInlineHighlighter(editor, deletedWordStart, deletedWordEnd, TextDiffType.DELETED));
+
+        int insertedWordStart = insertedStartOffset + fragment.getStartOffset2();
+        int insertedWordEnd = insertedStartOffset + fragment.getEndOffset2();
+        list.addAll(createInlineHighlighter(editor, insertedWordStart, insertedWordEnd, TextDiffType.INSERTED));
+      }
+    }
+
+    return list;
+  }
 
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
@@ -256,31 +328,20 @@ public class DiffDrawUtil {
   }
 
   @NotNull
-  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line1, int line2,
-                                                        @NotNull final TextDiffType type, final boolean resolved) {
-    if (line1 == line2) {
-      if (line1 == 0) return Collections.emptyList();
-      return createLineMarker(editor, line1 - 1, type, SeparatorPlacement.BOTTOM, true, resolved);
-    }
-    else {
-      return ContainerUtil.concat(
-        createLineMarker(editor, line1, type, SeparatorPlacement.TOP, false, resolved),
-        createLineMarker(editor, line2 - 1, type, SeparatorPlacement.BOTTOM, false, resolved)
-      );
-    }
-  }
-
-  @NotNull
-  public static List<RangeHighlighter> createLineMarker(@NotNull Editor editor, int line, @NotNull final TextDiffType type,
-                                                        @NotNull final SeparatorPlacement placement) {
-    return new LineMarkerBuilder(editor, line, placement).withType(type).doneDefaultRenderer();
+  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type) {
+    if (line == 0) return Collections.emptyList();
+    return createLineMarker(editor, line - 1, type, SeparatorPlacement.BOTTOM, false, false, true);
   }
 
   @NotNull
   private static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                          @NotNull final SeparatorPlacement placement,
-                                                         final boolean doubleLine, final boolean resolved) {
-    return new LineMarkerBuilder(editor, line, placement).withType(type).withResolved(resolved).doneDefaultRenderer(doubleLine);
+                                                         boolean doubleLine, boolean resolved, boolean paintFoldingOutline) {
+    LineMarkerBuilder builder = new LineMarkerBuilder(editor, line, placement)
+      .withType(type).withResolved(resolved)
+      .withDefaultRenderer(doubleLine);
+    if (paintFoldingOutline) builder.withDefaultGutterRenderer(doubleLine);
+    return builder.done();
   }
 
   @NotNull
@@ -341,6 +402,8 @@ public class DiffDrawUtil {
 
     @NotNull
     public List<RangeHighlighter> done() {
+      List<RangeHighlighter> highlighters = new ArrayList<>();
+
       boolean isEmptyRange = startLine == endLine;
       boolean isLastLine = endLine == getLineCount(editor.getDocument());
 
@@ -353,16 +416,31 @@ public class DiffDrawUtil {
 
       RangeHighlighter highlighter = editor.getMarkupModel()
         .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, HighlighterTargetArea.LINES_IN_RANGE);
+      highlighters.add(highlighter);
 
       highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, ignored, resolved,
                                                                    hideWithoutLineNumbers, isEmptyRange, isLastLine));
 
-      if (stripeAttributes == null) return Collections.singletonList(highlighter);
+      if (isEmptyRange) {
+        if (startLine == 0) {
+          highlighters.addAll(createLineMarker(editor, 0, type, SeparatorPlacement.TOP, true, resolved, false));
+        }
+        else {
+          highlighters.addAll(createLineMarker(editor, startLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved, false));
+        }
+      }
+      else if (resolved) {
+        highlighters.addAll(createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, resolved, false));
+        highlighters.addAll(createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved, false));
+      }
 
-      RangeHighlighter stripeHighlighter = editor.getMarkupModel()
-        .addRangeHighlighter(start, end, STRIPE_LAYER, stripeAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+      if (stripeAttributes != null) {
+        RangeHighlighter stripeHighlighter = editor.getMarkupModel()
+          .addRangeHighlighter(start, end, STRIPE_LAYER, stripeAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+        highlighters.add(stripeHighlighter);
+      }
 
-      return ContainerUtil.list(highlighter, stripeHighlighter);
+      return highlighters;
     }
   }
 
@@ -400,6 +478,7 @@ public class DiffDrawUtil {
     private boolean resolved = false;
     @Nullable private TextDiffType type;
     @Nullable private LineSeparatorRenderer renderer;
+    @Nullable private LineMarkerRenderer gutterRenderer;
 
     private LineMarkerBuilder(@NotNull Editor editor, int line, @NotNull SeparatorPlacement placement) {
       this.editor = editor;
@@ -426,15 +505,17 @@ public class DiffDrawUtil {
     }
 
     @NotNull
-    public List<RangeHighlighter> doneDefaultRenderer() {
-      return doneDefaultRenderer(false);
+    public LineMarkerBuilder withDefaultRenderer(boolean doubleLine) {
+      assert type != null;
+      this.renderer = createDiffLineRenderer(editor, type, placement, doubleLine, resolved);
+      return this;
     }
 
     @NotNull
-    public List<RangeHighlighter> doneDefaultRenderer(boolean doubleLine) {
+    public LineMarkerBuilder withDefaultGutterRenderer(boolean doubleLine) {
       assert type != null;
-      this.renderer = createDiffLineRenderer(editor, type, doubleLine, resolved);
-      return done();
+      this.gutterRenderer = createFoldingGutterLineRenderer(type, placement, doubleLine, resolved);
+      return this;
     }
 
     @NotNull
@@ -448,6 +529,7 @@ public class DiffDrawUtil {
 
       highlighter.setLineSeparatorPlacement(placement);
       highlighter.setLineSeparatorRenderer(renderer);
+      highlighter.setLineMarkerRenderer(gutterRenderer);
 
       if (type == null || resolved) return Collections.singletonList(highlighter);
 

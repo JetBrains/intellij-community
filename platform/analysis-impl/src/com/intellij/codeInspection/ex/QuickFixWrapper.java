@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author max
@@ -92,12 +95,22 @@ public class QuickFixWrapper implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    final LocalQuickFix fix = getFix();
-    return !(fix instanceof IntentionAction) || ((IntentionAction)fix).startInWriteAction();
+    return getFix().startInWriteAction();
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return getFix().getElementToMakeWritable(file);
   }
 
   public LocalQuickFix getFix() {
     return (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
+  }
+
+  @TestOnly
+  public ProblemHighlightType getHighlightType() {
+    return myDescriptor.getHighlightType();
   }
 
   public String toString() {

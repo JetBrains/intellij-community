@@ -21,7 +21,7 @@ import java.util.LinkedList;
  * @author db
  */
 public class SolutionHolder {
-  private final LinkedList<Binding> mySolutions = new LinkedList<Binding>();
+  private final LinkedList<Binding> mySolutions = new LinkedList<>();
 
   public void putSolution(final Binding b1) {
     for (final Binding b2 : mySolutions) {

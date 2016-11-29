@@ -1,4 +1,3 @@
-import java.awt.event.*;
 
 class A {
     private ActionListener b = new Inner();
@@ -7,7 +6,11 @@ class A {
     }
 
     private class <caret>Inner extends MyActionListener implements ActionListener {
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(int e) {
         }
     }
+}
+interface ActionListener {
+    public void actionPerformed(int e);
+
 }

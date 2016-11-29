@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface JreProvider {
 
-  ExtensionPointName<JreProvider> EP_NAME = new ExtensionPointName<JreProvider>("com.intellij.jreProvider");
+  ExtensionPointName<JreProvider> EP_NAME = new ExtensionPointName<>("com.intellij.jreProvider");
   
   @NotNull
   String getJrePath();

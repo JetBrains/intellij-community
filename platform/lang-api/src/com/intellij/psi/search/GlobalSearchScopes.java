@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,12 +27,12 @@ import java.util.Arrays;
  * @author yole
  */
 public class GlobalSearchScopes extends GlobalSearchScopesCore {
-  private GlobalSearchScopes() {
-  }
+
+  private GlobalSearchScopes() {}
 
   @NotNull
   public static GlobalSearchScope openFilesScope(@NotNull Project project) {
     final VirtualFile[] files = FileEditorManager.getInstance(project).getOpenFiles();
-    return GlobalSearchScope.filesScope(project, Arrays.asList(files), "Open Files");
+    return GlobalSearchScope.filesScope(project, Arrays.asList(files), IdeBundle.message("scope.open.files"));
   }
 }

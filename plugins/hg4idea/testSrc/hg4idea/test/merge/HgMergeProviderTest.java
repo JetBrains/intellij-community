@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import hg4idea.test.HgPlatformTest;
 import hg4idea.test.HgTestUtil;
 import org.testng.Assert;
@@ -27,16 +28,14 @@ import org.zmlx.hg4idea.HgVcs;
 
 import java.io.IOException;
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.echo;
-import static com.intellij.openapi.vcs.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.*;
 
 public class HgMergeProviderTest extends HgPlatformTest {
   protected MergeProvider myMergeProvider;
 
   @Override
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     super.setUp();
 
     HgVcs vcs = HgVcs.getInstance(myProject);
@@ -185,10 +184,12 @@ public class HgMergeProviderTest extends HgPlatformTest {
 
   private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer)
     throws VcsException {
-    final MergeData mergeData = myMergeProvider.loadRevisions(file);
-    assertEquals(expectedBase, mergeData.ORIGINAL);
-    assertEquals(expectedServer, mergeData.LAST);
-    assertEquals(expectedLocal, mergeData.CURRENT);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      MergeData mergeData = myMergeProvider.loadRevisions(file);
+      assertEquals(expectedBase, mergeData.ORIGINAL);
+      assertEquals(expectedServer, mergeData.LAST);
+      assertEquals(expectedLocal, mergeData.CURRENT);
+    });
   }
 
   private static void assertEquals(String s, byte[] bytes) {

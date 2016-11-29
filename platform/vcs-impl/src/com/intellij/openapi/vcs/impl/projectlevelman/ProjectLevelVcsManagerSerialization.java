@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.VcsShowConfirmationOptionImpl;
 import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
@@ -38,7 +37,7 @@ public class ProjectLevelVcsManagerSerialization {
   private final Map<String, VcsShowConfirmationOption.Value> myReadValue;
 
   public ProjectLevelVcsManagerSerialization() {
-    myReadValue = new HashMap<String, VcsShowConfirmationOption.Value>();
+    myReadValue = new HashMap<>();
   }
 
   private static VcsShowOptionsSettingImpl getOrCreateOption(Map<String, VcsShowOptionsSettingImpl> options, String actionName) {
@@ -80,7 +79,7 @@ public class ProjectLevelVcsManagerSerialization {
     final Map<String, VcsShowConfirmationOptionImpl> confirmations = optionsAndConfirmations.getConfirmations();
     
     for (VcsShowOptionsSettingImpl setting : options.values()) {
-      if (!Registry.is("saving.state.in.new.format.is.allowed", false) || !setting.getValue()) {
+      if (!setting.getValue()) {
         Element settingElement = new Element(OPTIONS_SETTING);
         element.addContent(settingElement);
         settingElement.setAttribute(VALUE_ATTTIBUTE, Boolean.toString(setting.getValue()));
@@ -89,7 +88,7 @@ public class ProjectLevelVcsManagerSerialization {
     }
 
     for (VcsShowConfirmationOptionImpl setting : confirmations.values()) {
-      if (!Registry.is("saving.state.in.new.format.is.allowed", false) || setting.getValue() != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+      if (setting.getValue() != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
         final Element settingElement = new Element(CONFIRMATIONS_SETTING);
         element.addContent(settingElement);
         settingElement.setAttribute(VALUE_ATTTIBUTE, setting.getValue().toString());

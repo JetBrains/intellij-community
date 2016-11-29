@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -81,14 +82,15 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final Ref<PsiExpression> refInitializer = new Ref<PsiExpression>();
-    final Ref<PsiExpression> refConstantInitializer = new Ref<PsiExpression>();
-    final Ref<PsiCallExpression> refMethodCall = new Ref<PsiCallExpression>();
+    final Ref<PsiExpression> refInitializer = new Ref<>();
+    final Ref<PsiExpression> refConstantInitializer = new Ref<>();
+    final Ref<PsiCallExpression> refMethodCall = new Ref<>();
     final List<PsiReference> occurrences = Collections.synchronizedList(new ArrayList<PsiReference>());
     final Collection<PsiFile> containingFiles = Collections.synchronizedSet(new HashSet<PsiFile>());
     containingFiles.add(psiParameter.getContainingFile());
-    boolean result = ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference psiReference) {
+    boolean[] result = new boolean[1];
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      result[0] = ReferencesSearch.search(method).forEach(psiReference -> {
         PsiElement element = psiReference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiCallExpression) {
@@ -117,8 +119,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
           }
         }
         return true;
-      }
-    });
+      });
+    }, "Searching for Method Usages", true, project)) {
+      return;
+    }
     final PsiReference reference = TargetElementUtil.findReference(editor);
     final PsiReferenceExpression refExpr = reference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)reference) : null;
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(refExpr, PsiCodeBlock.class);
@@ -155,7 +159,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         .showErrorHint(project, editor, "Method has no usages", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
-    if (!result) {
+    if (!result[0]) {
       CommonRefactoringUtil.showErrorHint(project, editor, "Cannot find constant initializer for parameter", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
@@ -179,7 +183,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final Ref<Boolean> isNotConstantAccessible = new Ref<Boolean>();
+    final Ref<Boolean> isNotConstantAccessible = new Ref<>();
     final PsiExpression constantExpression = refConstantInitializer.get();
     constantExpression.accept(new JavaRecursiveElementVisitor(){
       @Override
@@ -223,13 +227,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(psiElement.copy());
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
-        SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, constantExpression);
-        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
-      }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
+      SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, constantExpression);
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
     }, REFACTORING_NAME, null);
   }
 
@@ -280,8 +281,12 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       return RefactoringBundle.message("inline.parameter.error.varargs");
     }
     if (method.findSuperMethods().length > 0 ||
-        OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
+        OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
       return RefactoringBundle.message("inline.parameter.error.hierarchy");
+    }
+
+    if (!method.getManager().isInProject(method)) {
+      return "Inline is not supported for non-project methods";
     }
     return null;
   }

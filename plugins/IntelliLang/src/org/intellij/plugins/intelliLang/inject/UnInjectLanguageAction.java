@@ -63,11 +63,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        invokeImpl(project, editor, file);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
   }
 
   public static void invokeImpl(Project project, Editor editor, PsiFile file) {
@@ -116,7 +112,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
   }
 
   private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host) {
-    final THashSet<String> languages = new THashSet<String>();
+    final THashSet<String> languages = new THashSet<>();
     final List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
     if (files == null) return false;
     for (Pair<PsiElement, TextRange> pair : files) {

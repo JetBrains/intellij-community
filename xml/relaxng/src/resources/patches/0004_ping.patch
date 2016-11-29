@@ -1,6 +1,6 @@
 --- /Users/denofevil/Code/sandbox/checker/syntax/relaxng/phrase.rnc	2014-01-24 12:18:24.000000000 +0400
 +++ html5/phrase.rnc	2014-01-24 14:08:26.000000000 +0400
-@@ -76,10 +76,6 @@
+@@ -78,10 +78,6 @@
      attribute type {
        common.data.mimetype
      }

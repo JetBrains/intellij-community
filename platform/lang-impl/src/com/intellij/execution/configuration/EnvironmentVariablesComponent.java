@@ -75,6 +75,9 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     myEnvVars.setData(envData);
   }
 
+  /**
+   * Consider using {@link EnvironmentVariablesData#readExternal(Element)} instead for simplicity and better performance.
+   */
   public static void readExternal(Element element, Map<String, String> envs) {
     final Element envsElement = element.getChild(ENVS);
     if (envsElement != null) {
@@ -108,6 +111,9 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     }
   }
 
+  /**
+   * Consider using {@link EnvironmentVariablesData#writeExternal(Element)} instead for simplicity and better performance.
+   */
   public static void writeExternal(@NotNull Element element, @NotNull Map<String, String> envs) {
     final Element envsElement = new Element(ENVS);
     for (String envName : envs.keySet()) {

@@ -45,6 +45,7 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.zip.ZipFile;
 
 /**
  * @author max
@@ -56,7 +57,7 @@ public class JarHandler extends ZipHandler {
   private static final int FS_TIME_RESOLUTION = 2000;
 
   private final JarFileSystemImpl myFileSystem;
-  private volatile File myFileWithMirrorResolved;
+  private volatile File myFileWithMirrorResolved; // field is reflectively referenced in tests
 
   public JarHandler(@NotNull String path) {
     super(path);
@@ -76,6 +77,33 @@ public class JarHandler extends ZipHandler {
       myFileWithMirrorResolved = fileWithMirrorResolved;
     }
     return fileWithMirrorResolved;
+  }
+
+  @NotNull
+  @Override
+  protected Map<String, EntryInfo> createEntriesMap() throws IOException {
+    FileAccessorCache.Handle<ZipFile> existingZipRef = getCachedZipFileHandle(
+      !myFileSystem.isMakeCopyOfJar(getFile()) || myFileWithMirrorResolved != null);
+
+    if (existingZipRef == null) {
+      File file = getFile();
+      ZipFile zipFile = new ZipFile(file);
+
+      setFileStampAndLength(this, file.getPath());
+      try {
+        return buildEntryMapForZipFile(zipFile);
+      }
+      finally {
+        zipFile.close();
+      }
+    }
+
+    try {
+      return buildEntryMapForZipFile(existingZipRef.get());
+    }
+    finally {
+      existingZipRef.release();
+    }
   }
 
   private File getMirrorFile(@NotNull File originalFile) {
@@ -162,9 +190,9 @@ public class JarHandler extends ZipHandler {
       String mirrorName = getSnapshotName(originalFile.getName(), sha1.digest());
       mirrorFile = new File(jarDir, mirrorName);
 
-      if (mirrorDiffers(originalAttributes, FileSystemUtil.getAttributes(mirrorFile), true)) {
+      FileAttributes mirrorFileAttributes = FileSystemUtil.getAttributes(mirrorFile);
+      if (mirrorFileAttributes == null) {
         try {
-          FileUtil.delete(mirrorFile);
           FileUtil.rename(tempJarFile, mirrorFile);
           FileUtil.setLastModified(mirrorFile, originalAttributes.lastModified);
         }
@@ -177,7 +205,7 @@ public class JarHandler extends ZipHandler {
         FileUtil.delete(tempJarFile);
       }
 
-      info = new CacheLibraryInfo(mirrorFile.getName(), originalAttributes.lastModified, originalAttributes.length);
+      info = new CacheLibraryInfo(mirrorFile.getName(),  originalAttributes.lastModified, originalAttributes.length);
       CacheLibraryInfo.ourCachedLibraryInfo.put(path, info);
       return mirrorFile;
     }
@@ -276,8 +304,8 @@ public class JarHandler extends ZipHandler {
       PersistentHashMap<String, CacheLibraryInfo> info = null;
       for (int i = 0; i < 2; ++i) {
         try {
-          info = new PersistentHashMap<String, CacheLibraryInfo>(
-            snapshotInfoFile, new EnumeratorStringDescriptor(), new DataExternalizer<CacheLibraryInfo>() {
+          info = new PersistentHashMap<>(
+            snapshotInfoFile, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<CacheLibraryInfo>() {
 
             @Override
             public void save(@NotNull DataOutput out, CacheLibraryInfo value) throws IOException {
@@ -303,19 +331,9 @@ public class JarHandler extends ZipHandler {
 
       assert info != null;
       ourCachedLibraryInfo = info;
-      FlushingDaemon.everyFiveSeconds(new Runnable() {
-        @Override
-        public void run() {
-          flushCachedLibraryInfos();
-        }
-      });
+      FlushingDaemon.everyFiveSeconds(() -> flushCachedLibraryInfos());
 
-      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-        @Override
-        public void run() {
-          flushCachedLibraryInfos();
-        }
-      });
+      ShutDownTracker.getInstance().registerShutdownTask(() -> flushCachedLibraryInfos());
     }
 
     @NotNull
@@ -336,7 +354,7 @@ public class JarHandler extends ZipHandler {
       // - Collect librarySnapshot -> projectLibraryPaths and existing projectLibraryPath -> librarySnapshot
       // - Remove all projectLibraryPaths that doesn't exist from persistent mapping
       // - Remove jar library snapshots that have no projectLibraryPath
-      Set<String> availableLibrarySnapshots = new THashSet<String>(Arrays.asList(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
+      Set<String> availableLibrarySnapshots = new THashSet<>(Arrays.asList(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
           int lastDotPosition = name.lastIndexOf('.');
@@ -356,10 +374,10 @@ public class JarHandler extends ZipHandler {
 
       final List<String> invalidLibraryFilePaths = ContainerUtil.newArrayList();
       final List<String> allLibraryFilePaths = ContainerUtil.newArrayList();
-      MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<String, String>();
+      MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<>();
       Set<String> validLibraryFilePathToJarSnapshotFilePaths = ContainerUtil.newTroveSet();
 
-      info.processKeys(new CommonProcessors.CollectProcessor<String>(allLibraryFilePaths));
+      info.processKeys(new CommonProcessors.CollectProcessor<>(allLibraryFilePaths));
       for(String filePath:allLibraryFilePaths) {
         CacheLibraryInfo libraryInfo = info.get(filePath);
         if (libraryInfo == null) continue;

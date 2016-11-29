@@ -1,4 +1,5 @@
 from pycharm_generator_utils.constants import *
+import keyword
 
 try:
     import inspect
@@ -71,6 +72,42 @@ class __generator(object):
 
     def throw(self, type, value=None, traceback=None):
         '''Used to raise an exception inside the generator.'''
+        pass
+"""
+    return txt
+
+def create_async_generator():
+    # Fake <type 'asyncgenerator'>
+    txt = """
+class __asyncgenerator(object):
+    '''A mock class representing the async generator function type.'''
+    def __init__(self):
+        '''Create an async generator object.'''
+        self.__name__ = ''
+        self.__qualname__ = ''
+        self.ag_await = None
+        self.ag_frame = None
+        self.ag_running = False
+        self.ag_code = None
+
+    def __aiter__(self):
+        '''Defined to support iteration over container.'''
+        pass
+
+    def __anext__(self):
+        '''Returns an awaitable, that performs one asynchronous generator iteration when awaited.'''
+        pass
+
+    def aclose(self):
+        '''Returns an awaitable, that throws a GeneratorExit exception into generator.'''
+        pass
+
+    def asend(self, value):
+        '''Returns an awaitable, that pushes the value object in generator.'''
+        pass
+
+    def athrow(self, type, value=None, traceback=None):
+        '''Returns an awaitable, that throws an exception into generator.'''
         pass
 """
     return txt
@@ -151,9 +188,6 @@ class __coroutine(object):
         self.cr_code = None
 
     def __await__(self):
-        return []
-
-    def __iter__(self):
         return []
 
     def close(self):
@@ -400,6 +434,8 @@ def make_names_unique(seq, name_map=None):
         if type(one) is list:
             ret.append(make_names_unique(one, name_map))
         else:
+            if keyword.iskeyword(one):
+                one += "_"
             one_key = lstrip(one, "*") # starred parameters are unique sans stars
             if one_key in name_map:
                 old_one = one_key

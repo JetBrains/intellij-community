@@ -31,7 +31,7 @@ import java.util.List;
 
 public class ActionPanel extends NonOpaquePanel {
 
-  private final List<ActionButton> myButtons = new ArrayList<ActionButton>();
+  private final List<ActionButton> myButtons = new ArrayList<>();
   private final JBTabsImpl myTabs;
 
   private boolean myAutoHide;

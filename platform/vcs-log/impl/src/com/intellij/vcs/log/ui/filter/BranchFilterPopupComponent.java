@@ -22,12 +22,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -53,32 +51,13 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected String getText(@NotNull VcsLogBranchFilter filter) {
-    return displayableText(getTextValues(filter));
+    return displayableText(myFilterModel.getFilterValues(filter));
   }
 
   @Nullable
   @Override
   protected String getToolTip(@NotNull VcsLogBranchFilter filter) {
-    return tooltip(getTextValues(filter));
-  }
-
-  @NotNull
-  @Override
-  protected VcsLogBranchFilter createFilter(@NotNull Collection<String> values) {
-    return VcsLogBranchFilterImpl
-      .fromTextPresentation(values, ContainerUtil.map2Set(myUi.getDataPack().getRefs().getBranches(), new Function<VcsRef, String>() {
-        @Override
-        public String fun(VcsRef vcsRef) {
-          return vcsRef.getName();
-        }
-      }));
-  }
-
-  @Override
-  @NotNull
-  protected Collection<String> getTextValues(@Nullable VcsLogBranchFilter filter) {
-    if (filter == null) return Collections.emptySet();
-    return filter.getTextPresentation();
+    return tooltip(myFilterModel.getFilterValues(filter));
   }
 
   @Override
@@ -89,7 +68,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected ListPopup createPopupMenu() {
-    return new FlatSpeedSearchPopup(createActionGroup(), DataManager.getInstance().getDataContext(this));
+    return new BranchLogSpeedSearchPopup(createActionGroup(), DataManager.getInstance().getDataContext(this));
   }
 
   @Override
@@ -112,18 +91,13 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
   @Override
   protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<String>(values));
+    myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<>(values));
   }
 
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), new Function<VcsRef, String>() {
-      @Override
-      public String fun(VcsRef ref) {
-        return ref.getName();
-      }
-    });
+    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), VcsRef::getName);
   }
 
   private class MyBranchPopupBuilder extends BranchPopupBuilder {
@@ -136,10 +110,10 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     @NotNull
     @Override
     public AnAction createAction(@NotNull String name) {
-      return new PredefinedValueAction(Collections.singleton(name)) {
+      return new PredefinedValueAction(Collections.singletonList(name)) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          myFilterModel.setFilter(BranchFilterPopupComponent.this.createFilter(myValues)); // does not add to recent
+          myFilterModel.setFilter(myFilterModel.createFilter(myValues)); // does not add to recent
         }
       };
     }
@@ -152,7 +126,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     @NotNull
     @Override
     protected AnAction createCollapsedAction(String actionName) {
-      return createPredefinedValueAction(Collections.singleton(actionName)); // adds to recent
+      return createPredefinedValueAction(Collections.singletonList(actionName)); // adds to recent
     }
   }
 }

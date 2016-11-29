@@ -162,27 +162,24 @@ public class PsiCopyPasteManager {
     public PsiElement[] getElements() {
       if (myElements == null) return PsiElement.EMPTY_ARRAY;
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          int validElementsCount = 0;
+      ApplicationManager.getApplication().runReadAction(() -> {
+        int validElementsCount = 0;
+        for (PsiElement element : myElements) {
+          if (element.isValid()) {
+            validElementsCount++;
+          }
+        }
+
+        if (validElementsCount != myElements.length) {
+          PsiElement[] validElements = new PsiElement[validElementsCount];
+          int j = 0;
           for (PsiElement element : myElements) {
             if (element.isValid()) {
-              validElementsCount++;
+              validElements[j++] = element;
             }
           }
 
-          if (validElementsCount != myElements.length) {
-            PsiElement[] validElements = new PsiElement[validElementsCount];
-            int j = 0;
-            for (PsiElement element : myElements) {
-              if (element.isValid()) {
-                validElements[j++] = element;
-              }
-            }
-
-            myElements = validElements;
-          }
+          myElements = validElements;
         }
       });
 
@@ -260,7 +257,7 @@ public class PsiCopyPasteManager {
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         @Override
         public String compute() {
-          final List<String> names = new ArrayList<String>();
+          final List<String> names = new ArrayList<>();
           for (PsiElement element : myDataProxy.getElements()) {
             if (element instanceof PsiNamedElement) {
               String name = ((PsiNamedElement)element).getName();
@@ -301,7 +298,7 @@ public class PsiCopyPasteManager {
 
   @Nullable
   public static List<File> asFileList(final PsiElement[] elements) {
-    final List<File> result = new ArrayList<File>();
+    final List<File> result = new ArrayList<>();
     for (PsiElement element : elements) {
       final PsiFileSystemItem psiFile;
       if (element instanceof PsiFileSystemItem) {

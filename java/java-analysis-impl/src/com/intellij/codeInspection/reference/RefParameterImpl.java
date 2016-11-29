@@ -86,12 +86,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          ((RefJavaVisitor)visitor).visitParameter(RefParameterImpl.this);
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitParameter(this));
     } else {
       super.accept(visitor);
     }
@@ -151,13 +146,10 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   @Override
   public String getExternalName() {
     final String[] result = new String[1];
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        PsiParameter parameter = getElement();
-        LOG.assertTrue(parameter != null);
-        result[0] = PsiFormatUtil.getExternalName(parameter);
-      }
+    final Runnable runnable = () -> {
+      PsiParameter parameter = getElement();
+      LOG.assertTrue(parameter != null);
+      result[0] = PsiFormatUtil.getExternalName(parameter);
     };
 
     ApplicationManager.getApplication().runReadAction(runnable);

@@ -47,7 +47,7 @@ public class PsiUtilTest extends LightCodeInsightTestCase {
 
 
   private static void compareIterator(String[] expected, Iterator<PsiTypeParameter> it) {
-    final ArrayList<String> actual = new ArrayList<String>();
+    final ArrayList<String> actual = new ArrayList<>();
     while (it.hasNext()) {
       PsiTypeParameter typeParameter = it.next();
       actual.add(typeParameter.getName());

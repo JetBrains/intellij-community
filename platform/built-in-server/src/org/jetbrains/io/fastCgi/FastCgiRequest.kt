@@ -1,14 +1,14 @@
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.writeUtf8
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
-import io.netty.buffer.ByteBufUtilEx
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import org.jetbrains.builtInWebServer.PathInfo
-import org.jetbrains.io.Responses
+import org.jetbrains.io.serverHeaderValue
 import java.net.InetSocketAddress
 import java.util.*
 
@@ -67,7 +67,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     }
 
     ByteBufUtil.writeAscii(buffer, key)
-    ByteBufUtilEx.writeUtf8(buffer, value)
+    buffer!!.writeUtf8(value)
   }
 
   fun writeHeaders(request: FullHttpRequest, clientChannel: Channel) {
@@ -79,8 +79,8 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     addHeader("REMOTE_PORT", Integer.toString(remote.port))
 
     val local = clientChannel.localAddress() as InetSocketAddress
-    addHeader("SERVER_SOFTWARE", Responses.getServerHeaderValue())
-    addHeader("SERVER_NAME", Responses.getServerHeaderValue())
+    addHeader("SERVER_SOFTWARE", serverHeaderValue)
+    addHeader("SERVER_NAME", serverHeaderValue)
 
     addHeader("SERVER_ADDR", local.address.hostAddress)
     addHeader("SERVER_PORT", Integer.toString(local.port))

@@ -59,7 +59,7 @@ public class FunctionDeclarationParsing {
     final String name = match(lexer, XPathTokenTypes.FUNCTION_NAME);
     match(lexer, XPathTokenTypes.LPAREN);
 
-    final List<Parameter> parameters = new ArrayList<Parameter>();
+    final List<Parameter> parameters = new ArrayList<>();
     while (lexer.getTokenType() != XPathTokenTypes.RPAREN) {
       if (lexer.getTokenType() == XPathTokenTypes.DOTDOT) {
         lexer.advance();

@@ -7,8 +7,8 @@ public class PyPackageAliasesProvider {
   private PyPackageAliasesProvider() {
   }
 
-  public static final Map<String, String> commonImportAliases = new HashMap<String, String>();
-  public static final Map<String, String> packageAliases = new HashMap<String, String>();
+  public static final Map<String, String> commonImportAliases = new HashMap<>();
+  public static final Map<String, String> packageAliases = new HashMap<>();
 
   static {
     commonImportAliases.put("np", "numpy");

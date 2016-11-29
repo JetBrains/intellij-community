@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.execution;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -26,17 +24,17 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -45,6 +43,22 @@ import java.util.Map;
 
 public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
   private static final Logger LOG = Logger.getInstance(GradleOrderEnumeratorHandler.class);
+  private final boolean myResolveModulePerSourceSet;
+  private final boolean myShouldProcessDependenciesRecursively;
+
+  public GradleOrderEnumeratorHandler(@NotNull Module module) {
+    String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+    if (rootProjectPath != null) {
+      GradleProjectSettings settings = GradleSettings.getInstance(module.getProject()).getLinkedProjectSettings(rootProjectPath);
+      myResolveModulePerSourceSet = settings != null && settings.isResolveModulePerSourceSet();
+      String gradleVersion = GradleLocalSettings.getInstance(module.getProject()).getGradleVersion(rootProjectPath);
+      myShouldProcessDependenciesRecursively = gradleVersion != null && GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.5")) < 0;
+    }
+    else {
+      myShouldProcessDependenciesRecursively = false;
+      myResolveModulePerSourceSet = false;
+    }
+  }
 
   public static class FactoryImpl extends Factory {
     @Override
@@ -56,25 +70,23 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
 
     @Override
     public OrderEnumerationHandler createHandler(@NotNull Module module) {
-      return INSTANCE;
+      return new GradleOrderEnumeratorHandler(module);
     }
   }
 
-  private static final GradleOrderEnumeratorHandler INSTANCE = new GradleOrderEnumeratorHandler();
-
   @Override
   public boolean shouldAddRuntimeDependenciesToTestCompilationClasspath() {
-    return true;
+    return myResolveModulePerSourceSet;
   }
 
   @Override
   public boolean shouldIncludeTestsFromDependentModulesToTestClasspath() {
-    return false;
+    return !myResolveModulePerSourceSet;
   }
 
   @Override
   public boolean shouldProcessDependenciesRecursively() {
-    return false;
+    return myShouldProcessDependenciesRecursively;
   }
 
   @Override

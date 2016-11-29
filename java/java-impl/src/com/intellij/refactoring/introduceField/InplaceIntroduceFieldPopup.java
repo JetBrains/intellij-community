@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +71,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
     final GridBagConstraints constraints =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                             new Insets(0, 0, 0, 0), 0, 0);
+                             JBUI.emptyInsets(), 0, 0);
     myWholePanel.add(getPreviewComponent(), constraints);
 
     final JComponent centerPanel = myIntroduceFieldPanel.createCenterPanel();
@@ -83,7 +84,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
   protected PsiField createFieldToStartTemplateOn(final String[] names,
                                                 final PsiType defaultType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
+    final PsiField field = ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
         PsiField field = elementFactory.createField(chooseName(names, myParentClass.getLanguage()), defaultType);
@@ -96,10 +97,12 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
         if (visibility != null) {
           PsiUtil.setModifierProperty(field, visibility, true);
         }
-         myFieldRangeStart = myEditor.getDocument().createRangeMarker(field.getTextRange());
+        myFieldRangeStart = myEditor.getDocument().createRangeMarker(field.getTextRange());
         return field;
       }
     });
+    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+    return field;
   }
 
   @Override

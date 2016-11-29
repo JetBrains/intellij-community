@@ -39,7 +39,7 @@ public class SizeReplaceableByIsEmptyInspectionBase extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreNegations = false;
   @SuppressWarnings("PublicField")
-  public OrderedSet<String> ignoredTypes = new OrderedSet<String>();
+  public OrderedSet<String> ignoredTypes = new OrderedSet<>();
 
   @Override
   @NotNull
@@ -60,15 +60,10 @@ public class SizeReplaceableByIsEmptyInspectionBase extends BaseInspection {
 
   protected static class SizeReplaceableByIsEmptyFix
     extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("size.replaceable.by.isempty.quickfix");
     }
 

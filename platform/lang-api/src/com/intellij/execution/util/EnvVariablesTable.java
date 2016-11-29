@@ -108,24 +108,16 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   public void editVariableName(final EnvironmentVariable environmentVariable) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final EnvironmentVariable actualEnvVar = ContainerUtil.find(getElements(),
+                                                                  item -> StringUtil.equals(environmentVariable.getName(), item.getName()));
+      if (actualEnvVar == null) {
+        return;
+      }
 
-      @Override
-      public void run() {
-        final EnvironmentVariable actualEnvVar = ContainerUtil.find(getElements(), new Condition<EnvironmentVariable>() {
-          @Override
-          public boolean value(EnvironmentVariable item) {
-            return StringUtil.equals(environmentVariable.getName(), item.getName());
-          }
-        });
-        if (actualEnvVar == null) {
-          return;
-        }
-
-        setSelection(actualEnvVar);
-        if (actualEnvVar.getNameIsWriteable()) {
-          editSelection(0);
-        }
+      setSelection(actualEnvVar);
+      if (actualEnvVar.getNameIsWriteable()) {
+        editSelection(0);
       }
     });
   }
@@ -174,7 +166,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         stopEditing();
         String content = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
         if (content == null || !content.contains("=")) return;
-        List<EnvironmentVariable> parsed = new ArrayList<EnvironmentVariable>();
+        List<EnvironmentVariable> parsed = new ArrayList<>();
         List<String> lines = StringUtil.split(content, "\n");
         for (String line : lines) {
           int pos = line.indexOf('=');
@@ -188,7 +180,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
             StringUtil.unescapeStringCharacters(line.substring(pos + 1)),
             false));
         }
-        List<EnvironmentVariable> variables = new ArrayList<EnvironmentVariable>(getEnvironmentVariables());
+        List<EnvironmentVariable> variables = new ArrayList<>(getEnvironmentVariables());
         variables.addAll(parsed);
         setValues(variables);
       }

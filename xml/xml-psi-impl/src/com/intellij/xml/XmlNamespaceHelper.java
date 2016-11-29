@@ -36,7 +36,7 @@ import java.util.Set;
  * @author yole
  */
 public abstract class XmlNamespaceHelper {
-  private static final ExtensionPointName<XmlNamespaceHelper> EP_NAME = new ExtensionPointName<XmlNamespaceHelper>("com.intellij.xml.namespaceHelper");
+  private static final ExtensionPointName<XmlNamespaceHelper> EP_NAME = new ExtensionPointName<>("com.intellij.xml.namespaceHelper");
 
   public static final XmlNamespaceHelper DEFAULT_EXTENSION = new DefaultXmlNamespaceHelper();
 

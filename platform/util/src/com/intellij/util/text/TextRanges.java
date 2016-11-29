@@ -24,13 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TextRanges implements Iterable<TextRange> {
-  private final static Comparator<TextRange> START_COMP = new Comparator<TextRange>() {
+  private static final Comparator<TextRange> START_COMP = new Comparator<TextRange>() {
     @Override
     public int compare(TextRange o1, TextRange o2) {
       return Comparing.compare(o1.getStartOffset(), o2.getStartOffset());
     }
   };
-  private final static Comparator<TextRange> END_COMP = new Comparator<TextRange>() {
+  private static final Comparator<TextRange> END_COMP = new Comparator<TextRange>() {
     @Override
     public int compare(TextRange o1, TextRange o2) {
       return Comparing.compare(o1.getEndOffset(), o2.getEndOffset());
@@ -67,7 +67,7 @@ public class TextRanges implements Iterable<TextRange> {
 
   public Iterator<TextRange> revIterator() {
     return new Iterator<TextRange>() {
-      private ListIterator<TextRange> it = myRanges.listIterator(myRanges.size());
+      private final ListIterator<TextRange> it = myRanges.listIterator(myRanges.size());
 
       @Override
       public boolean hasNext() {

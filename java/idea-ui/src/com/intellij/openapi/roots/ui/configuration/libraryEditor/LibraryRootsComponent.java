@@ -92,7 +92,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private LibraryRootsComponent.AddExcludedRootActionButton myAddExcludedRootActionButton;
 
   public LibraryRootsComponent(@Nullable Project project, @NotNull LibraryEditor libraryEditor) {
-    this(project, new Computable.PredefinedValueComputable<LibraryEditor>(libraryEditor));
+    this(project, new Computable.PredefinedValueComputable<>(libraryEditor));
   }
 
   public LibraryRootsComponent(@Nullable Project project, @NotNull Computable<LibraryEditor> libraryEditorComputable) {
@@ -159,7 +159,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       .setRemoveActionName(ProjectBundle.message("library.remove.action"))
       .disableRemoveAction();
     toolbarDecorator.setPanelBorder(new CustomLineBorder(1, 0, 0, 0));
-    final List<AttachRootButtonDescriptor> popupItems = new ArrayList<AttachRootButtonDescriptor>();
+    final List<AttachRootButtonDescriptor> popupItems = new ArrayList<>();
     for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
       Icon icon = descriptor.getToolbarIcon();
       if (icon != null) {
@@ -179,24 +179,21 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         if (selectedElements.length == 0) {
           return;
         }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (Object selectedElement : selectedElements) {
-              if (selectedElement instanceof ItemElement) {
-                final ItemElement itemElement = (ItemElement)selectedElement;
-                getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          for (Object selectedElement : selectedElements) {
+            if (selectedElement instanceof ItemElement) {
+              final ItemElement itemElement = (ItemElement)selectedElement;
+              getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
+            }
+            else if (selectedElement instanceof OrderRootTypeElement) {
+              final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
+              final String[] urls = getLibraryEditor().getUrls(rootType);
+              for (String url : urls) {
+                getLibraryEditor().removeRoot(url, rootType);
               }
-              else if (selectedElement instanceof OrderRootTypeElement) {
-                final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
-                final String[] urls = getLibraryEditor().getUrls(rootType);
-                for (String url : urls) {
-                  getLibraryEditor().removeRoot(url, rootType);
-                }
-              }
-              else if (selectedElement instanceof ExcludedRootElement) {
-                getLibraryEditor().removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
-              }
+            }
+            else if (selectedElement instanceof ExcludedRootElement) {
+              getLibraryEditor().removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
             }
           }
         });
@@ -208,7 +205,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         super.updateButton(e);
         Object[] elements = getSelectedElements();
         Presentation presentation = e.getPresentation();
-        if (ContainerUtil.and(elements, new FilteringIterator.InstanceOf<ExcludedRootElement>(ExcludedRootElement.class))) {
+        if (ContainerUtil.and(elements, new FilteringIterator.InstanceOf<>(ExcludedRootElement.class))) {
           presentation.setText("Cancel Exclusion");
         }
         else {
@@ -229,7 +226,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
           return;
         }
 
-        List<AnAction> actions = new ArrayList<AnAction>();
+        List<AnAction> actions = new ArrayList<>();
         actions.add(new AttachFilesAction(myDescriptor.getAttachFilesActionName()));
         for (AttachRootButtonDescriptor descriptor : popupItems) {
           actions.add(new AttachItemAction(descriptor, descriptor.getButtonText(), null));
@@ -311,7 +308,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (selectionPaths == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    List<Object> elements = new ArrayList<Object>();
+    List<Object> elements = new ArrayList<>();
     for (TreePath selectionPath : selectionPaths) {
       final Object pathElement = getPathElement(selectionPath);
       if (pathElement != null) {
@@ -444,7 +441,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       final VirtualFile[] files = myDescriptor.selectFiles(myPanel, initialSelection, myContextModule, getLibraryEditor());
       if (files.length == 0) return Collections.emptyList();
 
-      List<OrderRoot> roots = new ArrayList<OrderRoot>();
+      List<OrderRoot> roots = new ArrayList<>();
       for (VirtualFile file : myDescriptor.scanForActualRoots(files, myPanel)) {
         roots.add(new OrderRoot(file, myDescriptor.getRootType(), myDescriptor.addAsJarDirectories()));
       }
@@ -455,12 +452,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private List<OrderRoot> attachFiles(List<OrderRoot> roots) {
     final List<OrderRoot> rootsToAttach = filterAlreadyAdded(roots);
     if (!rootsToAttach.isEmpty()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          getLibraryEditor().addRoots(rootsToAttach);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> getLibraryEditor().addRoots(rootsToAttach));
       updatePropertiesLabel();
       onRootsChanged();
       myTreeBuilder.queueUpdate();
@@ -469,7 +461,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private List<OrderRoot> filterAlreadyAdded(@NotNull List<OrderRoot> roots) {
-    List<OrderRoot> result = new ArrayList<OrderRoot>();
+    List<OrderRoot> result = new ArrayList<>();
     for (OrderRoot root : roots) {
       final VirtualFile[] libraryFiles = getLibraryEditor().getFiles(root.getType());
       if (!ArrayUtil.contains(root.getFile(), libraryFiles)) {
@@ -504,9 +496,9 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private Set<VirtualFile> getNotExcludedRoots() {
-    Set<VirtualFile> roots = new LinkedHashSet<VirtualFile>();
+    Set<VirtualFile> roots = new LinkedHashSet<>();
     String[] excludedRootUrls = getLibraryEditor().getExcludedRootUrls();
-    Set<VirtualFile> excludedRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> excludedRoots = new HashSet<>();
     for (String url : excludedRootUrls) {
       ContainerUtil.addIfNotNull(excludedRoots, VirtualFileManager.getInstance().findFileByUrl(url));
     }
@@ -546,12 +538,9 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
       final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myPanel, myProject, toSelect);
       if (files.length > 0) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (VirtualFile file : files) {
-              getLibraryEditor().addExcludedRoot(file.getUrl());
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          for (VirtualFile file : files) {
+            getLibraryEditor().addExcludedRoot(file.getUrl());
           }
         });
         myLastChosen = files[0];

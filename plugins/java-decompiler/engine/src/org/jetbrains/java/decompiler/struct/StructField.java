@@ -55,4 +55,9 @@ public class StructField extends StructMember {
   public String getDescriptor() {
     return descriptor;
   }
+
+  @Override
+  public String toString() {
+    return name;
+  }
 }

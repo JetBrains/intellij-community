@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,38 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 12-Aug-2006
- * Time: 21:25:38
- */
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
-import java.util.concurrent.Future;
-
+/**
+ * @author Anna.Kozlova
+ * @since 12-Aug-2006
+ */
 public class SdkVersionUtil {
-  private static final JdkVersionDetector.ActionRunner ACTION_RUNNER = new JdkVersionDetector.ActionRunner() {
-    @Override
-    public Future<?> run(Runnable runnable) {
-      return ApplicationManager.getApplication().executeOnPooledThread(runnable);
-    }
-  };
+  private static final JdkVersionDetector.ActionRunner ACTION_RUNNER = (r) -> ApplicationManager.getApplication().executeOnPooledThread(r);
 
-  private SdkVersionUtil() {
-  }
+  private SdkVersionUtil() { }
 
-  @Deprecated
+  /** @deprecated use {@link #detectJdkVersion(String)} to be removed in IDEA 2018 */
   @Nullable
-  public static String readVersionFromProcessOutput(@NotNull String homePath, @NonNls @NotNull String[] command, @NonNls String versionLineMarker) {
-    return JdkVersionDetector.getInstance().readVersionFromProcessOutput(homePath, command, versionLineMarker, ACTION_RUNNER);
+  @SuppressWarnings("unused")
+  public static String readVersionFromProcessOutput(@NotNull String homePath, @NotNull String[] command, String versionLineMarker) {
+    return JdkVersionDetector.getInstance().detectJdkVersion(homePath, ACTION_RUNNER);
   }
 
   @Nullable

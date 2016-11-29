@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,15 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 
 import java.io.IOException;
 
 public class MethodProcessorRunnable implements Runnable {
-
   public final Object lock = new Object();
 
   private final StructMethod method;
+  private final MethodDescriptor methodDescriptor;
   private final VarProcessor varProc;
   private final DecompilerContext parentContext;
 
@@ -44,8 +45,9 @@ public class MethodProcessorRunnable implements Runnable {
   private volatile Throwable error;
   private volatile boolean finished = false;
 
-  public MethodProcessorRunnable(StructMethod method, VarProcessor varProc, DecompilerContext parentContext) {
+  public MethodProcessorRunnable(StructMethod method, MethodDescriptor methodDescriptor, VarProcessor varProc, DecompilerContext parentContext) {
     this.method = method;
+    this.methodDescriptor = methodDescriptor;
     this.varProc = varProc;
     this.parentContext = parentContext;
   }
@@ -58,7 +60,7 @@ public class MethodProcessorRunnable implements Runnable {
     root = null;
 
     try {
-      root = codeToJava(method, varProc);
+      root = codeToJava(method, methodDescriptor, varProc);
     }
     catch (ThreadDeath ex) {
       throw ex;
@@ -76,7 +78,7 @@ public class MethodProcessorRunnable implements Runnable {
     }
   }
 
-  public static RootStatement codeToJava(StructMethod mt, VarProcessor varProc) throws IOException {
+  public static RootStatement codeToJava(StructMethod mt, MethodDescriptor md, VarProcessor varProc) throws IOException {
     StructClass cl = mt.getClassStruct();
 
     boolean isInitializer = CodeConstants.CLINIT_NAME.equals(mt.getName()); // for now static initializer only
@@ -119,7 +121,7 @@ public class MethodProcessorRunnable implements Runnable {
 
     RootStatement root = DomHelper.parseGraph(graph);
 
-    FinallyProcessor fProc = new FinallyProcessor(varProc);
+    FinallyProcessor fProc = new FinallyProcessor(md, varProc);
     while (fProc.iterateGraph(mt, root, graph)) {
       root = DomHelper.parseGraph(graph);
     }
@@ -134,7 +136,7 @@ public class MethodProcessorRunnable implements Runnable {
 
     ClearStructHelper.clearStatements(root);
 
-    ExprProcessor proc = new ExprProcessor();
+    ExprProcessor proc = new ExprProcessor(md, varProc);
     proc.processStatement(root, cl);
 
     SequenceHelper.condenseSequences(root);
@@ -195,7 +197,7 @@ public class MethodProcessorRunnable implements Runnable {
 
     ExitHelper.removeRedundantReturns(root);
 
-    SecondaryFunctionsHelper.identifySecondaryFunctions(root);
+    SecondaryFunctionsHelper.identifySecondaryFunctions(root, varProc);
 
     varProc.setVarDefinitions(root);
 

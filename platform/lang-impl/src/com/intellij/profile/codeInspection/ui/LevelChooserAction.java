@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.SeverityUtil;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.SeverityEditorDialog;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,13 +27,13 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.table.SeverityRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -42,21 +41,23 @@ import java.util.TreeSet;
 public abstract class LevelChooserAction extends ComboBoxAction implements DumbAware {
 
   private final SeverityRegistrar mySeverityRegistrar;
+  private final boolean myIncludeDoNotShow;
   private HighlightSeverity myChosen = null;
 
-  public LevelChooserAction(final InspectionProfileImpl profile) {
-    this(((SeverityProvider)profile.getProfileManager()).getOwnSeverityRegistrar());
+  public LevelChooserAction(final SeverityRegistrar severityRegistrar) {
+    this(severityRegistrar, false);
   }
 
-  public LevelChooserAction(final SeverityRegistrar severityRegistrar) {
+  public LevelChooserAction(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
     mySeverityRegistrar = severityRegistrar;
+    myIncludeDoNotShow = includeDoNotShow;
   }
 
   @NotNull
   @Override
   public DefaultActionGroup createPopupActionGroup(final JComponent anchor) {
     final DefaultActionGroup group = new DefaultActionGroup();
-    for (final HighlightSeverity severity : getSeverities(mySeverityRegistrar)) {
+    for (final HighlightSeverity severity : getSeverities(mySeverityRegistrar, myIncludeDoNotShow)) {
       final HighlightSeverityAction action = new HighlightSeverityAction(severity);
       if (myChosen == null) {
         setChosen(action.getSeverity());
@@ -81,15 +82,20 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     return group;
   }
 
-  public static SortedSet<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
-    final SortedSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
+  public static List<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
+    return getSeverities(severityRegistrar, true);
+  }
+
+  public static List<HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
+    final List<HighlightSeverity> severities = new ArrayList<>();
     for (final SeverityRegistrar.SeverityBasedTextAttributes type : SeverityUtil.getRegisteredHighlightingInfoTypes(severityRegistrar)) {
       severities.add(type.getSeverity());
     }
-    severities.add(HighlightSeverity.ERROR);
-    severities.add(HighlightSeverity.WARNING);
-    severities.add(HighlightSeverity.WEAK_WARNING);
-    severities.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
+    if (includeDoNotShow) {
+      severities.add(HighlightSeverity.INFORMATION);
+    }
+    severities.remove(HighlightSeverity.INFO);
+    Collections.sort(severities, severityRegistrar.reversed());
     return severities;
   }
 

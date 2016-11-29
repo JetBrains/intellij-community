@@ -33,7 +33,7 @@ import java.util.Set;
  * Time: 4:17 PM
  */
 public interface FavoritesListProvider extends Comparator<FavoritesTreeNodeDescriptor>, Comparable<FavoritesListProvider> {
-  ExtensionPointName<FavoritesListProvider> EP_NAME = new ExtensionPointName<FavoritesListProvider>("com.intellij.favoritesListProvider");
+  ExtensionPointName<FavoritesListProvider> EP_NAME = new ExtensionPointName<>("com.intellij.favoritesListProvider");
 
   String getListName(final Project project);
 

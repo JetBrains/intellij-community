@@ -45,7 +45,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
@@ -371,7 +370,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     synchronizer.insertString(document, 3, "a");
     buffer.insert(3, "a");
 
-    synchronizer.commitTransaction(this.document);
+    synchronizer.commitTransaction(document);
 
     assertEquals(buffer.toString(), document.getText());
 
@@ -389,7 +388,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     String newText = StringUtil.replaceSubstring(document.getText(), TextRange.create(marker), "");
     synchronizer.replaceString(document, 0, document.getTextLength(), newText);
 
-    final List<DocumentEvent> events = new ArrayList<DocumentEvent>();
+    final List<DocumentEvent> events = new ArrayList<>();
     document.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -472,8 +471,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     buffer.replace(0, 10, "0");
 
     for (int i = 1; i < 10; i++) {
-      synchronizer.insertString(document, i, "" + i);
-      buffer.insert(i, "" + i);
+      synchronizer.insertString(document, i, String.valueOf(i));
+      buffer.insert(i, String.valueOf(i));
     }
     final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
     assertSize(1, transaction.getAffectedFragments().keySet());
@@ -494,8 +493,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertNotNull(transaction);
 
     for (int i = 0; i < 10; i++) {
-      synchronizer.insertString(document, i, "" + i);
-      buffer.insert(i, "" + i);
+      synchronizer.insertString(document, i, String.valueOf(i));
+      buffer.insert(i, String.valueOf(i));
     }
 
     assertSize(1, transaction.getAffectedFragments().keySet());
@@ -649,7 +648,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   private static List<RangeMarker> add(DocumentEx document, int... offsets) {
-    List<RangeMarker> result = new ArrayList<RangeMarker>();
+    List<RangeMarker> result = new ArrayList<>();
     for (int i=0; i<offsets.length; i+=2) {
       int start = offsets[i];
       int end = offsets[i+1];
@@ -687,8 +686,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', N));
 
       Random gen = new Random();
-      List<Pair<RangeMarker, TextRange>> adds = new ArrayList<Pair<RangeMarker, TextRange>>();
-      List<Pair<RangeMarker, TextRange>> dels = new ArrayList<Pair<RangeMarker, TextRange>>();
+      List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
+      List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
 
 
       try {
@@ -702,7 +701,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
           RangeMarkerEx r = (RangeMarkerEx)document.createRangeMarker(x, y);
           adds.add(Pair.create((RangeMarker)r, TextRange.create(r)));
         }
-        List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<Pair<RangeMarker, TextRange>>(adds);
+        List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<>(adds);
         while (!candidates.isEmpty()) {
           int size = candidates.size();
           int x = gen.nextInt(size);
@@ -904,16 +903,16 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       new WriteCommandAction(getProject()) {
         @Override
         protected void run(@NotNull Result result) throws Exception {
-          List<Pair<RangeMarker, TextRange>> adds = new ArrayList<Pair<RangeMarker, TextRange>>();
-          List<Pair<RangeMarker, TextRange>> dels = new ArrayList<Pair<RangeMarker, TextRange>>();
-          List<Trinity<Integer, Integer, Integer>> edits = new ArrayList<Trinity<Integer, Integer, Integer>>();
+          List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
+          List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
+          List<Trinity<Integer, Integer, Integer>> edits = new ArrayList<>();
 
           try {
             for (int i = 0; i < 30; i++) {
               int x = gen.nextInt(N);
               int y = x + gen.nextInt(N - x);
               RangeMarkerEx r = (RangeMarkerEx)finalDocument.createRangeMarker(x, y);
-              adds.add(Pair.create((RangeMarker)r, TextRange.create(r)));
+              adds.add(Pair.create(r, TextRange.create(r)));
             }
 
             for (int i = 0; i < 10; i++) {
@@ -929,7 +928,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
                 finalDocument.deleteString(offset, offset + length);
               }
             }
-            List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<Pair<RangeMarker, TextRange>>(adds);
+            List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<>(adds);
             while (!candidates.isEmpty()) {
               int size = candidates.size();
               int x = gen.nextInt(size);
@@ -1042,12 +1041,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     try {
       final FoldRegion[] fold = new FoldRegion[1];
-      editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          fold[0] = editor.getFoldingModel().addFoldRegion(0, 2, "");
-        }
-      });
+      editor.getFoldingModel().runBatchFoldingOperation(() -> fold[0] = editor.getFoldingModel().addFoldRegion(0, 2, ""));
       RangeMarker marker = document.createRangeMarker(0, 2);
       document.deleteString(1,2);
 
@@ -1138,16 +1132,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
     markupModel.addRangeHighlighter(N / 2, N / 2 + 1, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
 
-    PlatformTestUtil.startPerformanceTest("slow highlighters lookup", (int)(N*Math.log(N)/1000), new ThrowableRunnable() {
-      @Override
-      public void run() {
-        List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
-        CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list);
-        for (int i=0; i<N-1;i++) {
-          list.clear();
-          markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
-          assertEquals(2, list.size());  // 1 line plus one exact range marker
-        }
+    PlatformTestUtil.startPerformanceTest("slow highlighters lookup", (int)(N*Math.log(N)/1000), () -> {
+      List<RangeHighlighterEx> list = new ArrayList<>();
+      CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<>(list);
+      for (int i=0; i<N-1;i++) {
+        list.clear();
+        markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
+        assertEquals(2, list.size());  // 1 line plus one exact range marker
       }
     }).useLegacyScaling().assertTiming();
   }
@@ -1158,8 +1149,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, ourProject, true);
     RangeHighlighter exact = markupModel.addRangeHighlighter(3, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
     RangeHighlighter line = markupModel.addRangeHighlighter(4, 5, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
-    List<RangeHighlighter> list = new ArrayList<RangeHighlighter>();
-    markupModel.processRangeHighlightersOverlappingWith(2, 9, new CommonProcessors.CollectProcessor<RangeHighlighter>(list));
+    List<RangeHighlighter> list = new ArrayList<>();
+    markupModel.processRangeHighlightersOverlappingWith(2, 9, new CommonProcessors.CollectProcessor<>(list));
     assertEquals(Arrays.asList(line, exact), list);
   }
 
@@ -1212,4 +1203,19 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertValidMarker(marker, 0, 9);
   }
 
+  public void testMoveTextCrashes() {
+    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    Random random = new Random();
+    for(int i = 0; i < 10000; i++) {
+      int limit = doc.getTextLength() + 1;
+      int offset = random.nextInt(limit);
+      doc.createRangeMarker(offset, offset);
+      int startOffset = random.nextInt(limit);
+      int endOffset = random.nextInt(limit);
+      int targetOffset = random.nextInt(limit);
+      if (endOffset > startOffset && (targetOffset < startOffset || targetOffset > endOffset)) {
+        doc.moveText(startOffset, endOffset, targetOffset);
+      }
+    }
+  }
 }

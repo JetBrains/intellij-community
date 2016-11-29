@@ -29,8 +29,8 @@ import java.util.*;
  */
 public class DClassElement implements DNamedElement {
   public String myName;
-  public Set<DPropertyElement> myProperties = new HashSet<DPropertyElement>();
-  public Set<DMethodElement> myMethods = new HashSet<DMethodElement>();
+  public Set<DPropertyElement> myProperties = new HashSet<>();
+  public Set<DMethodElement> myMethods = new HashSet<>();
 
   @SuppressWarnings("UnusedDeclaration") //used for serialization
   public DClassElement() {

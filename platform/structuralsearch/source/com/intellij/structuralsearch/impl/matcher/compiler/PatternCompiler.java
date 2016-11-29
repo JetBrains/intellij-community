@@ -77,7 +77,7 @@ public class PatternCompiler {
 
       if (context.getSearchHelper().doOptimizing() && context.getSearchHelper().isScannedSomething()) {
         final Set<PsiFile> set = context.getSearchHelper().getFilesSetToScan();
-        final List<PsiFile> filesToScan = new ArrayList<PsiFile>(set.size());
+        final List<PsiFile> filesToScan = new ArrayList<>(set.size());
         final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
 
         for (final PsiFile file : set) {
@@ -429,14 +429,7 @@ public class PatternCompiler {
         addPredicate(handler,predicate);
       }
 
-      Set<MatchPredicate> predicates = new LinkedHashSet<MatchPredicate>();
-      for (MatchPredicateProvider matchPredicateProvider : Extensions.getExtensions(MatchPredicateProvider.EP_NAME)) {
-        matchPredicateProvider.collectPredicates(constraint, name, options, predicates);
-      }
-      for (MatchPredicate matchPredicate : predicates) {
-        addPredicate(handler, matchPredicate);
-      }
-
+      addExtensionPredicates(options, constraint, handler);
       addScriptConstraint(project, name, constraint, handler);
 
       if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
@@ -474,6 +467,7 @@ public class PatternCompiler {
         addPredicate(handler,predicate);
       }
 
+      addExtensionPredicates(options, constraint, handler);
       addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler);
     }
 
@@ -493,7 +487,7 @@ public class PatternCompiler {
 
     GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
     compilingVisitor.compile(matchStatements,context);
-    ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> elements = new ArrayList<>();
 
     for (PsiElement matchStatement : matchStatements) {
       if (!filter.accepts(matchStatement)) {
@@ -503,6 +497,16 @@ public class PatternCompiler {
 
     new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
+  }
+
+  private static void addExtensionPredicates(MatchOptions options, MatchVariableConstraint constraint, SubstitutionHandler handler) {
+    Set<MatchPredicate> predicates = new LinkedHashSet<>();
+    for (MatchPredicateProvider matchPredicateProvider : Extensions.getExtensions(MatchPredicateProvider.EP_NAME)) {
+      matchPredicateProvider.collectPredicates(constraint, handler.getName(), options, predicates);
+    }
+    for (MatchPredicate matchPredicate : predicates) {
+      addPredicate(handler, matchPredicate);
+    }
   }
 
   private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint, SubstitutionHandler handler) {
@@ -515,12 +519,11 @@ public class PatternCompiler {
     }
   }
 
-  static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {
+  private static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {
     if (handler.getPredicate()==null) {
       handler.setPredicate(predicate);
     } else {
       handler.setPredicate(new BinaryPredicate(handler.getPredicate(), predicate, false));
     }
   }
-
 }

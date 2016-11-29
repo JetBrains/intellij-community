@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.lang.ant;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.TaskContainer;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
@@ -35,9 +38,9 @@ public final class AntIntrospector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.AntIntrospector");
   private final Object myHelper;
   //private static final ObjectCache<String, SoftReference<Object>> ourCache = new ObjectCache<String, SoftReference<Object>>(300);
-  private static final HashMap<Class, Object> ourCache = new HashMap<Class, Object>();
+  private static final HashMap<Class, Object> ourCache = new HashMap<>();
   private static final Object ourNullObject = new Object();
-  private static final Alarm ourCacheCleaner = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private static final Alarm ourCacheCleaner = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private static final int CACHE_CLEAN_TIMEOUT = 10000; // 10 seconds
   private final Class myTypeClass;
 
@@ -89,17 +92,10 @@ public final class AntIntrospector {
 
   public Set<String> getExtensionPointTypes() {
     final List<Method> methods = invokeMethod("getExtensionPoints", true);
-    if (methods == null || methods.size() == 0) {
+    if (ContainerUtil.isEmpty(methods)) {
       return Collections.emptySet();
     }
-    final Set<String> types = new HashSet<String>();
-    for (Method method : methods) {
-      final Class<?>[] paramTypes = method.getParameterTypes();
-      for (Class<?> paramType : paramTypes) {
-        types.add(paramType.getName());
-      }
-    }
-    return types;
+    return methods.stream().map(Method::getParameterTypes).flatMap(Arrays::stream).map(Class::getName).collect(Collectors.toSet());
   }
   
   public Enumeration<String> getNestedElements() {
@@ -242,11 +238,9 @@ public final class AntIntrospector {
 
   private static void scheduleCacheCleaning() {
     ourCacheCleaner.cancelAllRequests();
-    ourCacheCleaner.addRequest(new Runnable() {
-      public void run() {
-        synchronized (ourCache) {
-          ourCache.clear();
-        }
+    ourCacheCleaner.addRequest(() -> {
+      synchronized (ourCache) {
+        ourCache.clear();
       }
     }, CACHE_CLEAN_TIMEOUT);
   }

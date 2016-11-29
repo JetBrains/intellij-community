@@ -33,7 +33,7 @@ abstract class AutoMatchStrategy {
 
   AutoMatchStrategy(final VirtualFile baseDir) {
     myBaseDir = baseDir;
-    myResult = new LinkedList<TextFilePatchInProgress>();
+    myResult = new LinkedList<>();
     myFolderDecisions = MultiMap.createSet();
   }
 
@@ -80,7 +80,7 @@ abstract class AutoMatchStrategy {
     path = path.replace("\\", "/");
 
     final boolean caseSensitive = SystemInfo.isFileSystemCaseSensitive;
-    final Collection<VirtualFile> result = new LinkedList<VirtualFile>();
+    final Collection<VirtualFile> result = new LinkedList<>();
     for (VirtualFile vf : in) {
       final String vfPath = vf.getPath();
       if ((caseSensitive && vfPath.endsWith(path)) || ((!caseSensitive) && StringUtil.endsWithIgnoreCase(vfPath, path))) {

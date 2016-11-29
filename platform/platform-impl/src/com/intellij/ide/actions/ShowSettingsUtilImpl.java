@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
-import com.intellij.openapi.options.ex.*;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
+import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -36,14 +37,12 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
-  private final AtomicBoolean myShown = new AtomicBoolean(false);
 
   @NotNull
   private static Project getProject(@Nullable Project project) {
@@ -88,16 +87,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] group) {
+  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... group) {
     try {
-      myShown.set(true);
       getDialog(project, group, null).show();
     }
     catch (Exception e) {
       LOG.error(e);
-    }
-    finally {
-      myShown.set(false);
     }
   }
 
@@ -148,7 +143,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @NotNull
   private static ConfigurableGroup[] filterEmptyGroups(@NotNull final ConfigurableGroup[] group) {
-    List<ConfigurableGroup> groups = new ArrayList<ConfigurableGroup>();
+    List<ConfigurableGroup> groups = new ArrayList<>();
     for (ConfigurableGroup g : group) {
       if (g.getConfigurables().length > 0) {
         groups.add(g);
@@ -236,9 +231,5 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   @Override
   public boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable) {
     return editConfigurable(parent, null, configurable, dimensionServiceKey, null, isWorthToShowApplyButton(configurable));
-  }
-
-  public boolean isAlreadyShown() {
-    return myShown.get();
   }
 }

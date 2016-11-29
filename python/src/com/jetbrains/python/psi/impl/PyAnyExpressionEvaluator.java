@@ -19,7 +19,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +36,7 @@ public class PyAnyExpressionEvaluator extends PyEvaluator {
     myEvalSequence = evalSequence;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public Object evaluate(final PyExpression expr) {
     final Object evaluate = super.evaluate(expr);

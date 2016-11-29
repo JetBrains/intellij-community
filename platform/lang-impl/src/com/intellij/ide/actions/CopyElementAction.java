@@ -28,6 +28,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
 
 public class CopyElementAction extends AnAction {
+
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
@@ -36,11 +42,7 @@ public class CopyElementAction extends AnAction {
       return;
     }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      }}, "", null
+    CommandProcessor.getInstance().executeCommand(project, () -> PsiDocumentManager.getInstance(project).commitAllDocuments(), "", null
     );
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;

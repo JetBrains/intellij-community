@@ -23,16 +23,13 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.template.TemplateLookupSelectionHandler;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -62,22 +59,24 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
 
   void handleTemplateInsert(List<? extends LookupElement> elements, final char completionChar) {
     final InsertionContext context = createInsertionContext(this, myState.getPsiFile(), elements, myState.getEditor(), completionChar);
-    new WriteCommandAction(context.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        handleInsert(context);
-      }
-    }.execute();
+    WriteAction.run(() -> doHandleInsert(context));
     Disposer.dispose(context.getOffsetMap());
+
+    if (handleCompletionChar(context) && !myState.isFinished()) {
+      myState.calcResults(true);
+      myState.considerNextTabOnLookupItemSelected(getDelegate());
+    }
   }
 
   @Override
   public void handleInsert(final InsertionContext context) {
-    LookupElement item = getDelegate();
-    Project project = context.getProject();
-    Editor editor = context.getEditor();
+    doHandleInsert(context);
+    handleCompletionChar(context);
+  }
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+  private void doHandleInsert(InsertionContext context) {
+    LookupElement item = getDelegate();
+    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
 
     TextRange range = myState.getCurrentVariableRange();
     final TemplateLookupSelectionHandler handler = item.getUserData(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM);
@@ -87,17 +86,14 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
     else {
       super.handleInsert(context);
     }
+  }
 
+  private static boolean handleCompletionChar(InsertionContext context) {
     if (context.getCompletionChar() == '.') {
-      EditorModificationUtil.insertStringAtCaret(editor, ".");
-      AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
-      return;
+      WriteAction.run(() -> EditorModificationUtil.insertStringAtCaret(context.getEditor(), "."));
+      AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+      return false;
     }
-
-    if (!myState.isFinished()) {
-      myState.calcResults(true);
-    }
-
-    myState.nextTab();
+    return true;
   }
 }

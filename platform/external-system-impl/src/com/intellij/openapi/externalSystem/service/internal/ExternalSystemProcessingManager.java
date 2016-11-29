@@ -47,7 +47,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
 
   @NotNull private final ConcurrentMap<ExternalSystemTaskId, Long> myTasksInProgress = ContainerUtil.newConcurrentMap();
   @NotNull private final ConcurrentMap<ExternalSystemTaskId, ExternalSystemTask> myTasksDetails = ContainerUtil.newConcurrentMap();
-  @NotNull private final Alarm                                     myAlarm           = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  @NotNull private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,this);
 
   @NotNull private final ExternalSystemFacadeManager               myFacadeManager;
   @NotNull private final ExternalSystemProgressNotificationManager myProgressNotificationManager;
@@ -108,7 +108,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
   @NotNull
   public List<ExternalSystemTask> findTasksOfState(@NotNull ProjectSystemId projectSystemId,
                                                    @NotNull final ExternalSystemTaskState... taskStates) {
-    List<ExternalSystemTask> result = new SmartList<ExternalSystemTask>();
+    List<ExternalSystemTask> result = new SmartList<>();
     for (ExternalSystemTask task : myTasksDetails.values()) {
       if (task instanceof AbstractExternalSystemTask) {
         AbstractExternalSystemTask externalSystemTask = (AbstractExternalSystemTask)task;
@@ -133,12 +133,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
   public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
     myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
     if (myAlarm.getActiveRequestCount() <= 0) {
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          update();
-        }
-      }, TOO_LONG_EXECUTION_MS);
+      myAlarm.addRequest(() -> update(), TOO_LONG_EXECUTION_MS);
     }
   }
 
@@ -209,12 +204,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
 
     if (!newState.isEmpty()) {
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          update(); 
-        }
-      }, delay);
+      myAlarm.addRequest(() -> update(), delay);
     }
   }
 }

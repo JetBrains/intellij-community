@@ -176,7 +176,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
 
   private class Node extends CachingSimpleNode {
 
-    private final LinkedHashMap<String, Node> myKids = new LinkedHashMap<String, Node>();
+    private final LinkedHashMap<String, Node> myKids = new LinkedHashMap<>();
 
     private Node(final SimpleNode aParent, String name) {
       super(aParent);
@@ -213,7 +213,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
   }
 
   private Object findNode(final String name) {
-    final Ref<Object> node = new Ref<Object>();
+    final Ref<Object> node = new Ref<>();
     ((SimpleTree)myTree).accept(myBuilder, new SimpleNodeVisitor() {
       @Override
       public boolean accept(final SimpleNode simpleNode) {

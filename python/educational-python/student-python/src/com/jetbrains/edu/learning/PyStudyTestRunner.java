@@ -7,10 +7,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +35,14 @@ public class PyStudyTestRunner extends StudyTestRunner {
       LOG.info("Language manager is null for " + course.getLanguageById().getDisplayName());
       return null;
     }
-    final File testRunner = new File(myTaskDir.getPath(), manager.getTestFileName());
+
+    String testsFileName = manager.getTestFileName();
+    if (myTask.hasSubtasks() && myTask.getActiveSubtaskIndex() != 0) {
+      testsFileName = FileUtil.getNameWithoutExtension(testsFileName);
+      int index = myTask.getActiveSubtaskIndex();
+      testsFileName += EduNames.SUBTASK_MARKER + index + "." + FileUtilRt.getExtension(manager.getTestFileName());
+    }
+    final File testRunner = new File(myTaskDir.getPath(), testsFileName);
     final GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.withWorkDirectory(myTaskDir.getPath());
     final Map<String, String> env = commandLine.getEnvironment();

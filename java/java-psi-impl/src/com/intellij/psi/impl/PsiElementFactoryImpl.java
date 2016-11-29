@@ -21,6 +21,7 @@ import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -49,7 +50,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
-  private final NotNullLazyValue<PsiClass> myArrayClass = new NotNullLazyValue<PsiClass>() {
+  private final NotNullLazyValue<PsiClass> myArrayClass = new AtomicNotNullLazyValue<PsiClass>() {
     @NotNull
     @Override
     protected PsiClass compute() {
@@ -57,7 +58,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     }
   };
 
-  private final NotNullLazyValue<PsiClass> myArrayClass15 = new NotNullLazyValue<PsiClass>() {
+  private final NotNullLazyValue<PsiClass> myArrayClass15 = new AtomicNotNullLazyValue<PsiClass>() {
     @NotNull
     @Override
     protected PsiClass compute() {
@@ -182,11 +183,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (type instanceof PsiClassReferenceType) {
       return ((PsiClassReferenceType)type).getReference();
     }
-
-    final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
-    final PsiClass refClass = resolveResult.getElement();
-    assert refClass != null : type;
-    return new LightClassReference(myManager, type.getCanonicalText(true), refClass, resolveResult.getSubstitutor());
+    return new LightClassTypeReference(myManager, type);
   }
 
   @NotNull
@@ -229,7 +226,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create field with type \"null\".");
     }
 
-    @NonNls final String text = "class _Dummy_ { private " + type.getCanonicalText(true) + " " + name + "; }";
+    @NonNls final String text = "class _Dummy_ { private " + GenericsUtil.getVariableTypeByExpressionType(type).getCanonicalText(true) + " " + name + "; }";
     final PsiJavaFile aFile = createDummyJavaFile(text);
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
@@ -253,8 +250,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create method with type \"null\".");
     }
 
-    final String canonicalText = returnType.getCanonicalText(true);
-    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public " + canonicalText + " " + name + "() {} }");
+    final String canonicalText = GenericsUtil.getVariableTypeByExpressionType(returnType).getCanonicalText(true);
+    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public " + canonicalText + " " + name + "() {\n} }");
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
       throw new IncorrectOperationException("Class was not created. Method name: " + name + "; return type: " + canonicalText);
@@ -271,7 +268,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType, PsiElement context) throws IncorrectOperationException {
-    return createMethodFromText("public " + returnType.getCanonicalText(true) + " " + name + "() {}", context);
+    return createMethodFromText("public " + GenericsUtil.getVariableTypeByExpressionType(returnType).getCanonicalText(true) + " " + name + "() {}", context);
   }
 
   @NotNull
@@ -582,7 +579,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiKeyword createKeyword(@NotNull @NonNls String keyword, PsiElement context) throws IncorrectOperationException {
-    if (!JavaLexer.isKeyword(keyword, PsiUtil.getLanguageLevel(context))) {
+    LanguageLevel level = PsiUtil.getLanguageLevel(context);
+    if (!JavaLexer.isKeyword(keyword, level) && !JavaLexer.isSoftKeyword(keyword, level)) {
       throw new IncorrectOperationException("\"" + keyword + "\" is not a keyword.");
     }
     return new LightKeyword(myManager, keyword);
@@ -643,7 +641,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(text, context);
 
     PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
-    replace(variable.getTypeElement(), createTypeElement(type), text);
+    replace(variable.getTypeElement(), createTypeElement(GenericsUtil.getVariableTypeByExpressionType(type)), text);
 
     boolean generateFinalLocals = JavaCodeStyleSettingsFacade.getInstance(myManager.getProject()).isGenerateFinalLocals();
     PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, generateFinalLocals);

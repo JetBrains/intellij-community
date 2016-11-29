@@ -50,7 +50,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   private final FileEditorManager myFileEditorManager;
   private final CommittedChangesCache myCache;
   private final Project myProject;
-  private static final Key<OutdatedRevisionPanel> PANEL_KEY = new Key<OutdatedRevisionPanel>("OutdatedRevisionPanel");
+  private static final Key<OutdatedRevisionPanel> PANEL_KEY = new Key<>("OutdatedRevisionPanel");
   private volatile boolean myIncomingChangesRequested;
 
   public OutdatedVersionNotifier(FileEditorManager fileEditorManager,

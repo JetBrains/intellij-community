@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
 
   private final XmlFile myFile;
   private final String myLocalPath;
-  private final Map<String, XmlFile> myPathToFileMap = new HashMap<String, XmlFile>();
+  private final Map<String, XmlFile> myPathToFileMap = new HashMap<>();
   private String myOriginalContext = NONE;
   
   private JComboBox myCombo;
@@ -76,11 +77,11 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     myCombo.putClientProperty(CONTEXTS_COMBO_KEY, Boolean.TRUE);
     panel.add(
         new JLabel("Included into:"), 
-        new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0)
+        new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(5, 0), 0, 0)
     );
     panel.add(
       myCombo,
-      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 0), 0, 0));
+      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(5, 5, 5, 0), 0, 0));
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     final FileBasedIndex fbi = FileBasedIndex.getInstance();
@@ -99,12 +100,8 @@ public class AntHectorConfigurable extends HectorComponentPanel {
       }
     }
 
-    final List<String> paths = new ArrayList<String>(myPathToFileMap.keySet());
-    Collections.sort(paths, new Comparator<String>() {
-      public int compare(final String o1, final String o2) {
-        return o1.compareTo(o2);
-      }
-    });
+    final List<String> paths = new ArrayList<>(myPathToFileMap.keySet());
+    Collections.sort(paths, (o1, o2) -> o1.compareTo(o2));
 
     myCombo.addItem(NONE);
     for (String path : paths) {

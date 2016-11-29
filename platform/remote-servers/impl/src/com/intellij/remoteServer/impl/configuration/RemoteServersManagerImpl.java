@@ -40,8 +40,8 @@ import java.util.List;
 @State(name = "RemoteServers", storages = @Storage("remote-servers.xml"))
 public class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
   public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
-  private List<RemoteServer<?>> myServers = new ArrayList<RemoteServer<?>>();
-  private List<RemoteServerState> myUnknownServers = new ArrayList<RemoteServerState>();
+  private List<RemoteServer<?>> myServers = new ArrayList<>();
+  private List<RemoteServerState> myUnknownServers = new ArrayList<>();
   private final MessageBus myMessageBus;
 
   public RemoteServersManagerImpl(MessageBus messageBus) {
@@ -55,7 +55,7 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
 
   @Override
   public <C extends ServerConfiguration> List<RemoteServer<C>> getServers(@NotNull ServerType<C> type) {
-    List<RemoteServer<C>> servers = new ArrayList<RemoteServer<C>>();
+    List<RemoteServer<C>> servers = new ArrayList<>();
     for (RemoteServer<?> server : myServers) {
       if (server.getType().equals(type)) {
         servers.add((RemoteServer<C>)server);
@@ -77,7 +77,7 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
 
   @Override
   public <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type, @NotNull String name) {
-    return new RemoteServerImpl<C>(name, type, type.createDefaultConfiguration());
+    return new RemoteServerImpl<>(name, type, type.createDefaultConfiguration());
   }
 
   @Override
@@ -126,7 +126,7 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
     C configuration = type.createDefaultConfiguration();
     PersistentStateComponent<?> serializer = configuration.getSerializer();
     ComponentSerializationUtil.loadComponentState(serializer, server.myConfiguration);
-    return new RemoteServerImpl<C>(server.myName, type, configuration);
+    return new RemoteServerImpl<>(server.myName, type, configuration);
   }
 
   @Nullable

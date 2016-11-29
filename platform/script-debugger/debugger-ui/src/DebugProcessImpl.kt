@@ -41,6 +41,7 @@ interface MultiVmDebugProcess {
   val mainVm: Vm?
   val activeOrMainVm: Vm?
   val childConnections: List<VmConnection<*>>
+    get() = emptyList()
 }
 
 abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
@@ -63,7 +64,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   private val _breakpointHandlers: Array<XBreakpointHandler<*>> by lazy(LazyThreadSafetyMode.NONE) { createBreakpointHandlers() }
 
-  protected final val realProcessHandler: ProcessHandler?
+  protected val realProcessHandler: ProcessHandler?
     get() = executionResult?.processHandler
 
   override final fun getSmartStepIntoHandler() = smartStepIntoHandler
@@ -136,7 +137,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   override final fun startStepInto(context: XSuspendContext?) {
     val vm = context.vm
     updateLastCallFrame(vm)
-    continueVm(vm, if (vm.captureAsyncStackTraces) StepAction.IN_ASYNC else StepAction.IN)
+    continueVm(vm, StepAction.IN)
   }
 
   override final fun startStepOut(context: XSuspendContext?) {
@@ -184,7 +185,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     else {
       lastStep = stepAction
     }
-    return suspendContextManager.continueVm(stepAction, 1)
+    return suspendContextManager.continueVm(stepAction)
   }
 
   protected fun setOverlay(context: SuspendContext<*>) {
@@ -256,15 +257,8 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   protected fun addChildVm(vm: Vm) {
     beforeInitBreakpoints(vm)
 
-    val breakpointManager = XDebuggerManager.getInstance(session.project).breakpointManager
-    @Suppress("UNCHECKED_CAST")
-    for (breakpointHandler in breakpointHandlers) {
-      if (breakpointHandler is LineBreakpointHandler) {
-        val breakpoints = runReadAction { breakpointManager.getBreakpoints(breakpointHandler.breakpointTypeClass) }
-        for (breakpoint in breakpoints) {
-          breakpointHandler.manager.setBreakpoint(vm, breakpoint)
-        }
-      }
+    processBreakpoints { handler, breakpoint ->
+      handler.manager.setBreakpoint(vm, breakpoint)
     }
   }
 
@@ -273,6 +267,18 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     childConnection.stateChanged {
       if (it.status == ConnectionStatus.CONNECTION_FAILED || it.status == ConnectionStatus.DISCONNECTED || it.status == ConnectionStatus.DETACHED) {
         childConnections.remove(childConnection)
+      }
+    }
+  }
+
+  protected inline fun processBreakpoints(processor: (handler: LineBreakpointHandler, breakpoint: XLineBreakpoint<*>) -> Unit) {
+    val breakpointManager = XDebuggerManager.getInstance(session.project).breakpointManager
+    for (breakpointHandler in breakpointHandlers) {
+      if (breakpointHandler is LineBreakpointHandler) {
+        val breakpoints = runReadAction { breakpointManager.getBreakpoints(breakpointHandler.breakpointTypeClass) }
+        for (breakpoint in breakpoints) {
+          processor(breakpointHandler, breakpoint)
+        }
       }
     }
   }

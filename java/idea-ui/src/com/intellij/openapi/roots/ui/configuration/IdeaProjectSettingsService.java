@@ -44,34 +44,19 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   @Override
   public void openProjectSettings() {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
-    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
-      @Override
-      public void run() {
-        config.selectProjectGeneralSettings(true);
-      }
-    });
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, () -> config.selectProjectGeneralSettings(true));
   }
 
   @Override
   public void openGlobalLibraries() {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
-    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
-      @Override
-      public void run() {
-        config.selectGlobalLibraries(true);
-      }
-    });
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, () -> config.selectGlobalLibraries(true));
   }
 
   @Override
   public void openLibrary(@NotNull final Library library) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
-    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
-      @Override
-      public void run() {
-        config.selectProjectOrGlobalLibrary(library, true);
-      }
-    });
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, () -> config.selectProjectOrGlobalLibrary(library, true));
   }
 
   @Override
@@ -111,12 +96,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
 
   @Override
   public void openModuleDependenciesSettings(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
-    ShowSettingsUtil.getInstance().editConfigurable(myProject, ProjectStructureConfigurable.getInstance(myProject), new Runnable() {
-      @Override
-      public void run() {
-        ProjectStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry);
-      }
-    });
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, ProjectStructureConfigurable.getInstance(myProject), () -> ProjectStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry));
   }
 
   @Override
@@ -127,14 +107,11 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   @Override
   public void openLibraryOrSdkSettings(@NotNull final OrderEntry orderEntry) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
-    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
-      @Override
-      public void run() {
-        if (orderEntry instanceof JdkOrderEntry) {
-          config.select(((JdkOrderEntry)orderEntry).getJdk(), true);
-        } else {
-          config.select((LibraryOrderEntry)orderEntry, true);
-        }
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, () -> {
+      if (orderEntry instanceof JdkOrderEntry) {
+        config.select(((JdkOrderEntry)orderEntry).getJdk(), true);
+      } else {
+        config.select((LibraryOrderEntry)orderEntry, true);
       }
     });
   }

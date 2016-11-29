@@ -21,6 +21,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings({"EqualsBetweenInconvertibleTypes", "ResultOfMethodCallIgnored"})
 public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {

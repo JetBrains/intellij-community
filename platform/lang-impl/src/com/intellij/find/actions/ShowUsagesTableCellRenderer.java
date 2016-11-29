@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -36,6 +37,7 @@ import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,7 +83,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       textChunks.append(">...");
       return textComponentSpanningWholeRow(textChunks, panelBackground, panelForeground, column, list);
     }
-    else if (usage == ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
+    if (usage == ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
       textChunks.append("...<");
       textChunks.append(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
@@ -104,40 +106,50 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setBackground(panelBackground);
     panel.setForeground(panelForeground);
 
+    // greying the current usage you originated your "find usages" from is turned off by @nik orders
+    boolean isEnabled = true;//!myUsageView.isOriginUsage(usage);
+    if (!isEnabled) {
+      fg = UIUtil.getLabelDisabledForeground();
+    }
     if (column == 0) {
       appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
-      return panel;
     }
-    else if (usage != ShowUsagesAction.MORE_USAGES_SEPARATOR && usage != ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
-      UsagePresentation presentation = usage.getPresentation();
-      TextChunk[] text = presentation.getText();
+    else {
+      if (usage != ShowUsagesAction.MORE_USAGES_SEPARATOR && usage != ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
+        UsagePresentation presentation = usage.getPresentation();
+        TextChunk[] text = presentation.getText();
 
-      if (lineNumberColumn) { // line number
-        if (text.length != 0) {
-          TextChunk chunk = text[0];
-          textChunks.append(chunk.getText(), getAttributes(isSelected, fileBgColor, bg, fg, chunk));
+        if (lineNumberColumn) { // line number
+          if (text.length != 0) {
+            TextChunk chunk = text[0];
+            textChunks.append(chunk.getText(), getAttributes(isSelected, fileBgColor, bg, fg, chunk));
+          }
+        }
+        else if (column == 2) {
+          Icon icon = presentation.getIcon();
+          textChunks.setIcon(icon == null ? EmptyIcon.ICON_16 : icon);
+          textChunks.append("").appendTextPadding(JBUI.scale(16 + 5));
+          for (int i = 1; i < text.length; i++) {
+            TextChunk chunk = text[i];
+            textChunks.append(chunk.getText(), getAttributes(isSelected, fileBgColor, bg, fg, chunk));
+          }
+        }
+        else {
+          assert false : column;
         }
       }
-      else if (column == 2) {
-        Icon icon = presentation.getIcon();
-        textChunks.setIcon(icon == null ? EmptyIcon.ICON_16 : icon);
-        textChunks.append("").appendTextPadding(16 + 5);
-        for (int i = 1; i < text.length; i++) {
-          TextChunk chunk = text[i];
-          textChunks.append(chunk.getText(), getAttributes(isSelected, fileBgColor, bg, fg, chunk));
-        }
-      }
-      else {
-        assert false : column;
-      }
+      SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
+      panel.add(textChunks);
     }
-    SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
-    panel.add(textChunks);
+
+    if (!isEnabled) {
+      GuiUtils.enableChildren(panel, false);
+    }
     return panel;
   }
 
   @NotNull
-  public static SimpleTextAttributes getAttributes(boolean isSelected, Color fileBgColor, Color bg, Color fg, TextChunk chunk) {
+  private static SimpleTextAttributes getAttributes(boolean isSelected, Color fileBgColor, Color bg, Color fg, @NotNull TextChunk chunk) {
     SimpleTextAttributes background = chunk.getSimpleAttributesIgnoreBackground();
     return isSelected
            ? new SimpleTextAttributes(bg, fg, null, background.getStyle())

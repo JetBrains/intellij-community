@@ -75,9 +75,9 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
       boolean accepted = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
         @Override
         public Boolean compute() {
-          PsiModifierList modlist = (PsiModifierList)annotation.getParent();
-          final PsiElement owner = modlist.getParent();
-          if ((owner instanceof PsiClass)) {
+          PsiModifierList modList = (PsiModifierList)annotation.getParent();
+          final PsiElement owner = modList.getParent();
+          if (owner instanceof PsiClass) {
             PsiClass candidate = (PsiClass)owner;
             if ("package-info".equals(candidate.getName())) {
               LOG.assertTrue(candidate.isValid());
@@ -105,25 +105,22 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
       useScope.intersectWith(infoFilesFilter);
 
     final boolean[] wantMore = {true};
-    helper.processAllFilesWithWord(annotationShortName, infoFiles, new Processor<PsiFile>() {
-      @Override
-      public boolean process(final PsiFile psiFile) {
-        PsiPackageStatement stmt = PsiTreeUtil.getChildOfType(psiFile, PsiPackageStatement.class);
-        if (stmt == null) return true;
+    helper.processAllFilesWithWord(annotationShortName, infoFiles, psiFile -> {
+      PsiPackageStatement stmt = PsiTreeUtil.getChildOfType(psiFile, PsiPackageStatement.class);
+      if (stmt == null) return true;
 
-        final PsiModifierList annotations = stmt.getAnnotationList();
-        if (annotations == null) return true;
-        final PsiAnnotation ann = annotations.findAnnotation(annotationFQN);
-        if (ann == null) return true;
+      final PsiModifierList annotations1 = stmt.getAnnotationList();
+      if (annotations1 == null) return true;
+      final PsiAnnotation ann = annotations1.findAnnotation(annotationFQN);
+      if (ann == null) return true;
 
-        final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
-        if (ref == null) return true;
+      final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
+      if (ref == null) return true;
 
-        if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) return true;
+      if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) return true;
 
-        wantMore[0] = consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(stmt.getPackageName()));
-        return wantMore[0];
-      }
+      wantMore[0] = consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(stmt.getPackageName()));
+      return wantMore[0];
     }, true);
 
     return wantMore[0];

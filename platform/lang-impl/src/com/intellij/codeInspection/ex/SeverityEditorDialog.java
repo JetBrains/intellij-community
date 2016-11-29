@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
@@ -42,6 +41,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import org.jdom.Element;
@@ -91,7 +91,8 @@ public class SeverityEditorDialog extends DialogWrapper {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value instanceof SeverityBasedTextAttributes) {
-          setText(((SeverityBasedTextAttributes)value).getSeverity().getName());
+          final HighlightSeverity severity = ((SeverityBasedTextAttributes)value).getSeverity();
+          setText(StringUtil.capitalizeWords(severity.getName().toLowerCase(), true));
         }
         return rendererComponent;
       }
@@ -124,7 +125,7 @@ public class SeverityEditorDialog extends DialogWrapper {
               final ListModel listModel = myOptionsList.getModel();
               for (int i = 0; i < listModel.getSize(); i++) {
                 final String severityName = ((SeverityBasedTextAttributes)listModel.getElementAt(i)).getSeverity().myName;
-                if (Comparing.strEqual(severityName, inputString)) return false;
+                if (Comparing.strEqual(severityName, inputString, false)) return false;
               }
               return true;
             }
@@ -243,13 +244,10 @@ public class SeverityEditorDialog extends DialogWrapper {
       assert colorAndFontOptions != null;
       final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
       LOG.assertTrue(javaPage != null);
-      settings.select(javaPage).doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          final Runnable runnable = javaPage.enableSearch(toConfigure);
-          if (runnable != null) {
-            SwingUtilities.invokeLater(runnable);
-          }
+      settings.select(javaPage).doWhenDone(() -> {
+        final Runnable runnable = javaPage.enableSearch(toConfigure);
+        if (runnable != null) {
+          SwingUtilities.invokeLater(runnable);
         }
       });
     }
@@ -273,17 +271,13 @@ public class SeverityEditorDialog extends DialogWrapper {
   private void fillList(final @Nullable HighlightSeverity severity) {
     DefaultListModel model = new DefaultListModel();
     model.removeAllElements();
-    final List<SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityBasedTextAttributes>();
+    final List<SeverityBasedTextAttributes> infoTypes = new ArrayList<>();
     infoTypes.addAll(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
-    Collections.sort(infoTypes, new Comparator<SeverityBasedTextAttributes>() {
-      @Override
-      public int compare(SeverityBasedTextAttributes attributes1,
-                         SeverityBasedTextAttributes attributes2) {
-        return -mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity());
-      }
-    });
+    Collections.sort(infoTypes,
+                     (attributes1, attributes2) -> -mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity()));
     SeverityBasedTextAttributes preselection = null;
     for (SeverityBasedTextAttributes type : infoTypes) {
+      if (HighlightSeverity.INFO.equals(type.getSeverity())) continue;
       model.addElement(type);
       if (type.getSeverity().equals(severity)) {
         preselection = type;
@@ -301,10 +295,9 @@ public class SeverityEditorDialog extends DialogWrapper {
     if (info == null) {
       return;
     }
-    final MyTextAttributesDescription description =
-      new MyTextAttributesDescription(info.getType().toString(), null, new TextAttributes(), info.getType().getAttributesKey());
+    MyTextAttributesDescription description = new MyTextAttributesDescription(info.getType().toString(), null, new TextAttributes(), info.getType().getAttributesKey());
     myOptionsPanel.apply(description, null);
-    @NonNls Element textAttributes = new Element("temp");
+    Element textAttributes = new Element("temp");
     try {
       description.getTextAttributes().writeExternal(textAttributes);
       info.getAttributes().readExternal(textAttributes);
@@ -335,9 +328,9 @@ public class SeverityEditorDialog extends DialogWrapper {
   protected void doOKAction() {
     apply((SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
     final Collection<SeverityBasedTextAttributes> infoTypes =
-      new HashSet<SeverityBasedTextAttributes>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
+      new HashSet<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
     final ListModel listModel = myOptionsList.getModel();
-    final List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
+    final List<HighlightSeverity> order = new ArrayList<>();
     for (int i = listModel.getSize() - 1; i >= 0; i--) {
       SeverityBasedTextAttributes info = (SeverityBasedTextAttributes)listModel.getElementAt(i);
       order.add(info.getSeverity());
@@ -386,11 +379,6 @@ public class SeverityEditorDialog extends DialogWrapper {
                                        final TextAttributes attributes,
                                        final TextAttributesKey type) {
       super(name, group, attributes, type, null, null, null);
-    }
-
-    @Override
-    public void apply(EditorColorsScheme scheme) {
-
     }
 
     @Override

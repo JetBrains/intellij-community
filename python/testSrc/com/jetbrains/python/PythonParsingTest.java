@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -506,8 +506,32 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
+  // PY-18972
+  public void testFStrings() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-19036
+  public void testAwaitInNonAsyncNestedFunction() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
   public void testUnpackingExpressions() {
     doTest(LanguageLevel.PYTHON35);
+  }
+
+  public void testVariableAnnotations() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-20770
+  public void testAsyncComprehensions() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-20770
+  public void testAwaitInComprehensions() {
+    doTest(LanguageLevel.PYTHON36);
   }
 
   public void doTest(LanguageLevel languageLevel) {

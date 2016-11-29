@@ -83,6 +83,12 @@ public class CodeStyleSettingsCodeFragmentFilter {
         typeToTask.put(type, task);
       }
 
+      Set<String> otherFields = myProvider.getSupportedFields();
+      final FilterFieldsTask otherFieldsTask = new FilterFieldsTask(otherFields);
+      if (!otherFields.isEmpty()) {
+        compositeTask.addTask(otherFieldsTask);
+      }
+      
       progressTask.setTask(compositeTask);
       progressTask.setMinIterationTime(10);
       ProgressManager.getInstance().run(progressTask);
@@ -92,6 +98,11 @@ public class CodeStyleSettingsCodeFragmentFilter {
         public List<String> getSettings(LanguageCodeStyleSettingsProvider.SettingsType type) {
           FilterFieldsTask task = typeToTask.get(type);
           return task.getAffectedFields();
+        }
+        
+        @Override
+        public List<String> getOtherSetting() {
+          return ContainerUtil.newArrayList(otherFieldsTask.getAffectedFields());
         }
       };
     }
@@ -105,12 +116,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
     final int rangeEnd = myTextRangeMarker.getEndOffset();
     CharSequence textBefore = myDocument.getCharsSequence();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CodeStyleManager.getInstance(myProject).reformatText(myFile, rangeStart, rangeEnd);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CodeStyleManager.getInstance(myProject).reformatText(myFile, rangeStart, rangeEnd));
 
     if (rangeStart != myTextRangeMarker.getStartOffset() || rangeEnd != myTextRangeMarker.getEndOffset()) {
       return true;
@@ -213,6 +219,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
   public interface CodeStyleSettingsToShow {
     List<String> getSettings(LanguageCodeStyleSettingsProvider.SettingsType type);
+
+    List<String> getOtherSetting();
   }
 }
 

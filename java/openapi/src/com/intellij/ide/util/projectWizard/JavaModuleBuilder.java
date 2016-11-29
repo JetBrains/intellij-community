@@ -23,8 +23,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -49,7 +48,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   // Pair<Source Path, Package Prefix>
   private List<Pair<String,String>> mySourcePaths;
   // Pair<Library path, Source path>
-  private final List<Pair<String, String>> myModuleLibraries = new ArrayList<Pair<String, String>>();
+  private final List<Pair<String, String>> myModuleLibraries = new ArrayList<>();
   public static final int JAVA_WEIGHT = 100;
   public static final int BUILD_SYSTEM_WEIGHT = 80;
   public static final int JAVA_MOBILE_WEIGHT = 60;
@@ -60,7 +59,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   public List<Pair<String,String>> getSourcePaths() {
     if (mySourcePaths == null) {
-      final List<Pair<String, String>> paths = new ArrayList<Pair<String, String>>();
+      final List<Pair<String, String>> paths = new ArrayList<>();
       @NonNls final String path = getContentEntryPath() + File.separator + "src";
       new File(path).mkdirs();
       paths.add(Pair.create(path, ""));
@@ -70,12 +69,12 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   }
 
   public void setSourcePaths(List<Pair<String,String>> sourcePaths) {
-    mySourcePaths = sourcePaths != null? new ArrayList<Pair<String, String>>(sourcePaths) : null;
+    mySourcePaths = sourcePaths != null ? new ArrayList<>(sourcePaths) : null;
   }
 
   public void addSourcePath(Pair<String,String> sourcePathInfo) {
     if (mySourcePaths == null) {
-      mySourcePaths = new ArrayList<Pair<String, String>>();
+      mySourcePaths = new ArrayList<>();
     }
     mySourcePaths.add(sourcePathInfo);
   }
@@ -162,7 +161,15 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
       instance.setDefault(false);
     }
     else {
-      instance.setDefault(true);
+      //setup language level according to jdk, then setup default flag
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null) {
+        JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+        if (version != null) {
+          instance.setLanguageLevel(version.getMaxLanguageLevel());
+          instance.setDefault(true);
+        }
+      }
     }
     return super.commit(project, model, modulesProvider);
   }

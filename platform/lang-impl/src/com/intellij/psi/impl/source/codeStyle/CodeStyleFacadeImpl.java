@@ -22,11 +22,15 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,9 +52,18 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
 
   @Override
   @Nullable
+  @Deprecated
   public String getLineIndent(@NotNull final Document document, int offset) {
     if (myProject == null) return null;
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
     return CodeStyleManager.getInstance(myProject).getLineIndent(document, offset);
+  }
+
+  @Override
+  public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset) {
+    if (myProject == null) return null;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    return lineIndentProvider != null ? lineIndentProvider.getLineIndent(myProject, editor, language, offset) : null;
   }
 
   @Override

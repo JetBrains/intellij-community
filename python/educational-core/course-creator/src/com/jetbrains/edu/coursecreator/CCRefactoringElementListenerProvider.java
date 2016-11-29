@@ -16,24 +16,31 @@
 package com.jetbrains.edu.coursecreator;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.actions.CCRunTestsAction;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class CCRefactoringElementListenerProvider implements RefactoringElementListenerProvider {
+  private static final Logger LOG = Logger.getInstance(CCRefactoringElementListenerProvider.class);
+
   @Nullable
   @Override
   public RefactoringElementListener getListener(PsiElement element) {
@@ -43,27 +50,27 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
 
   static class CCRenameListener extends RefactoringElementAdapter {
 
-    private String myElementName;
+    private String myElementRelativePath;
 
     public CCRenameListener(PsiElement element) {
       if (element instanceof PsiFile) {
         PsiFile psiFile = (PsiFile)element;
-        myElementName = psiFile.getName();
+        myElementRelativePath = StudyUtils.pathRelativeToTask(psiFile.getVirtualFile());
       }
     }
 
     @Override
     protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-      if (newElement instanceof PsiFile && myElementName != null) {
+      if (newElement instanceof PsiFile && myElementRelativePath != null) {
         PsiFile psiFile = (PsiFile)newElement;
-        tryToRenameTaskFile(psiFile, myElementName);
+        tryToRenameTaskFile(psiFile, myElementRelativePath);
       }
     }
 
     private static void tryToRenameTaskFile(PsiFile file, String oldName) {
       final PsiDirectory taskDir = file.getContainingDirectory();
-      final CCProjectService service = CCProjectService.getInstance(file.getProject());
-      Course course = service.getCourse();
+      final Project project = file.getProject();
+      Course course = StudyTaskManager.getInstance(project).getCourse();
       if (course == null) {
         return;
       }
@@ -82,16 +89,26 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
       if (task == null) {
         return;
       }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          CCRunTestsAction.clearTestEnvironment(taskDir.getVirtualFile(), taskDir.getProject());
-        }
-      });
       Map<String, TaskFile> taskFiles = task.getTaskFiles();
       TaskFile taskFile = task.getTaskFile(oldName);
+      if (taskFile == null) {
+        return;
+      }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, oldName);
+        if (patternFile != null) {
+          try {
+            patternFile.delete(CCRefactoringElementListenerProvider.class);
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+        }
+      });
+
       taskFiles.remove(oldName);
-      taskFiles.put(file.getName(), taskFile);
+      taskFiles.put(StudyUtils.pathRelativeToTask(file.getVirtualFile()), taskFile);
+      CCUtils.createResourceFile(file.getVirtualFile(), course, taskDir.getVirtualFile());
     }
 
     @Override

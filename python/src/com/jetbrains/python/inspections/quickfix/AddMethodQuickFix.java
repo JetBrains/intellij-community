@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       PyFunctionBuilder builder = new PyFunctionBuilder(myIdentifier, cls);
       PsiElement pe = problemElement.getParent();
       String decoratorName = null; // set to non-null to add a decorator
-      PyExpression[] args = new PyExpression[0];
+      PyExpression[] args = PyExpression.EMPTY_ARRAY;
       if (pe instanceof PyCallExpression) {
         PyArgumentList arglist = ((PyCallExpression)pe).getArgumentList();
         if (arglist == null) return;
@@ -96,8 +96,9 @@ public class AddMethodQuickFix implements LocalQuickFix {
       boolean madeInstance = false;
       if (callByClass) {
         if (args.length > 0) {
-          PyType firstArgType = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile()).getType(args[0]);
-          if (firstArgType instanceof PyClassType && ((PyClassType)firstArgType).getPyClass().isSubclass(cls, null)) {
+          final TypeEvalContext context = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile());
+          final PyType firstArgType = context.getType(args[0]);
+          if (firstArgType instanceof PyClassType && ((PyClassType)firstArgType).getPyClass().isSubclass(cls, context)) {
             // class, first arg ok: instance method
             builder.parameter("self"); // NOTE: might use a name other than 'self', according to code style.
             madeInstance = true;

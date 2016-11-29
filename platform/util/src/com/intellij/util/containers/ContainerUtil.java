@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,9 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
-import com.intellij.util.Function;
 import gnu.trove.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +35,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class ContainerUtil extends ContainerUtilRt {
-  private static final Logger LOG = Logger.getInstance(ContainerUtil.class);
-
   private static final int INSERTION_SORT_THRESHOLD = 10;
   private static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(16, Runtime.getRuntime().availableProcessors());
 
@@ -385,12 +381,14 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> newConcurrentSet() {
+    //noinspection deprecation
     return new ConcurrentHashSet<T>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> newConcurrentSet(@NotNull TObjectHashingStrategy<T> hashStrategy) {
+    //noinspection deprecation
     return new ConcurrentHashSet<T>(hashStrategy);
   }
 
@@ -452,6 +450,12 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> union(@NotNull Set<T> set, @NotNull Set<T> set2) {
+    return union((Collection<T>)set, set2);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> Set<T> union(@NotNull Collection<T> set, @NotNull Collection<T> set2) {
     Set<T> result = new THashSet<T>(set.size() + set2.size());
     result.addAll(set);
     result.addAll(set2);
@@ -768,11 +772,17 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<V> values, @NotNull Convertor<V, K> keyConvertor) {
     Map<K, V> map = newHashMap();
+    fillMapWithValues(map, values, keyConvertor);
+    return map;
+  }
+
+  public static <K, V> void fillMapWithValues(@NotNull Map<K, V> map,
+                                              @NotNull Iterator<V> values,
+                                              @NotNull Convertor<V, K> keyConvertor) {
     while (values.hasNext()) {
       V value = values.next();
       map.put(keyConvertor.convert(value), value);
     }
-    return map;
   }
 
   @NotNull
@@ -987,12 +997,6 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> filter(@NotNull Condition<? super T> condition, @NotNull T... collection) {
-    return findAll(collection, condition);
-  }
-
-  @NotNull
-  @Contract(pure=true)
   public static <T> List<T> findAll(@NotNull T[] collection, @NotNull Condition<? super T> condition) {
     final List<T> result = new SmartList<T>();
     for (T t : collection) {
@@ -1066,6 +1070,9 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> T[] findAllAsArray(@NotNull T[] collection, @NotNull Condition<? super T> instanceOf) {
     List<T> list = findAll(collection, instanceOf);
+    if (list.size() == collection.length) {
+      return collection;
+    }
     @SuppressWarnings("unchecked") T[] array = (T[])Array.newInstance(collection.getClass().getComponentType(), list.size());
     return list.toArray(array);
   }
@@ -1109,8 +1116,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> Iterator<T> iterate(@NotNull T[] arrays) {
-    return Arrays.asList(arrays).iterator();
+  public static <T> Iterator<T> iterate(@NotNull T[] array) {
+    return array.length == 0 ? EmptyIterator.<T>getInstance() : Arrays.asList(array).iterator();
   }
 
   @NotNull
@@ -1315,8 +1322,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   public static <T, U extends T> U findInstance(@NotNull Iterator<T> iterator, @NotNull Class<U> aClass) {
     //noinspection unchecked
-    U u = (U)find(iterator, FilteringIterator.instanceOf(aClass));
-    return u;
+    return (U)find(iterator, FilteringIterator.instanceOf(aClass));
   }
 
   @Nullable
@@ -1476,8 +1482,13 @@ public class ContainerUtil extends ContainerUtilRt {
         if (index >= 0 && index < finalSize) {
           int from = 0;
           for (List<? extends T> each : lists) {
-            if (from <= index && index < from + each.size()) return each.get(index - from);
+            if (from <= index && index < from + each.size()) {
+              return each.get(index - from);
+            }
             from += each.size();
+          }
+          if (from != finalSize) {
+            throw new ConcurrentModificationException("The list has changed. Its size was " + finalSize + "; now it's " + from);
           }
         }
         throw new IndexOutOfBoundsException("index: " + index + "size: " + size());
@@ -1565,13 +1576,13 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * The main difference from <code>subList</code> is that <code>getFirstItems</code> does not
+   * The main difference from {@code subList} is that {@code getFirstItems} does not
    * throw any exceptions, even if maxItems is greater than size of the list
    *
    * @param items list
-   * @param maxItems size of the result will be equal or less than <code>maxItems</code>
+   * @param maxItems size of the result will be equal or less than {@code maxItems}
    * @param <T> type of list
-   * @return new list with no more than <code>maxItems</code> first elements
+   * @return new list with no more than {@code maxItems} first elements
    */
   @NotNull
   @Contract(pure=true)
@@ -1902,7 +1913,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> List<T> packNullables(@NotNull T... elements) {
     List<T> list = new ArrayList<T>();
     for (T element : elements) {
-      addIfNotNull(element, list);
+      addIfNotNull(list, element);
     }
     return list.isEmpty() ? ContainerUtil.<T>emptyList() : list;
   }
@@ -2212,7 +2223,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> singleton(final T o, @NotNull final TObjectHashingStrategy<T> strategy) {
-    return strategy == TObjectHashingStrategy.CANONICAL ? new SingletonSet<T>(o) : SingletonSet.<T>withCustomStrategy(o, strategy);
+    return strategy == TObjectHashingStrategy.CANONICAL ? new SingletonSet<T>(o) : SingletonSet.withCustomStrategy(o, strategy);
   }
 
   /**
@@ -2285,7 +2296,6 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
   public static <K,V> V[] convert(@NotNull K[] from, @NotNull V[] to, @NotNull Function<K,V> fun) {
     if (to.length < from.length) {
       @SuppressWarnings("unchecked") V[] array = (V[])Array.newInstance(to.getClass().getComponentType(), from.length);
@@ -2408,7 +2418,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return true;
   }
 
-  @Nullable
+  @Contract("null -> null; !null -> !null")
   public static <T> List<T> trimToSize(@Nullable List<T> list) {
     if (list == null) return null;
     if (list.isEmpty()) return emptyList();
@@ -2457,7 +2467,7 @@ public class ContainerUtil extends ContainerUtilRt {
    * - less memory
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
    *
-   * N.B. Avoid using <code>list.toArray(new T[list.size()])</code> on this list because it is inherently racey and
+   * N.B. Avoid using {@code list.toArray(new T[list.size()])} on this list because it is inherently racey and
    * therefore can return array with null elements at the end.
    */
   @NotNull
@@ -2499,6 +2509,12 @@ public class ContainerUtil extends ContainerUtilRt {
     //noinspection deprecation
     return new ConcurrentLongObjectHashMap<V>();
   }
+  @NotNull
+  @Contract(pure=true)
+  public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap(int initialCapacity) {
+    //noinspection deprecation
+    return new ConcurrentLongObjectHashMap<V>(initialCapacity);
+  }
 
   @NotNull
   @Contract(pure=true)
@@ -2522,6 +2538,14 @@ public class ContainerUtil extends ContainerUtilRt {
                                                                              @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
     //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftKeySoftValueMap(int initialCapacity,
+                                                                             float loadFactor,
+                                                                             int concurrencyLevel,
+                                                                             @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    return new ConcurrentSoftKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   @NotNull
@@ -2590,7 +2614,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @see {@link #createLockFreeCopyOnWriteList()}
+   * @see #createLockFreeCopyOnWriteList()
    */
   @NotNull
   @Contract(pure=true)
@@ -2598,6 +2622,16 @@ public class ContainerUtil extends ContainerUtilRt {
     return new LockFreeCopyOnWriteArrayList<T>();
   }
 
+  @NotNull
+  @Contract(pure=true)
+  public static <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> collection) {
+    return new LockFreeCopyOnWriteArrayList<T>(collection);
+  }
+
+  /**
+   * @see #addIfNotNull(Collection, Object)
+   */
+  @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
     ContainerUtilRt.addIfNotNull(element, result);
   }
@@ -2702,6 +2736,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return collection == null || collection.isEmpty();
   }
 
+  @Contract(value = "null -> true", pure = true)
+  public static boolean isEmpty(Map map) {
+    return map == null || map.isEmpty();
+  }
+
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> notNullize(@Nullable List<T> list) {
@@ -2733,30 +2772,35 @@ public class ContainerUtil extends ContainerUtilRt {
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap() {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>();
     }
 
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap(int initialCapacity) {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>(initialCapacity);
     }
 
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap(@NotNull TObjectHashingStrategy<T> hashStrategy) {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>(hashStrategy);
     }
 
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>(initialCapacity, loadFactor, concurrencyLevel);
     }
 
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<T> hashingStrategy) {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
     }
   };
@@ -2867,6 +2911,12 @@ public class ContainerUtil extends ContainerUtilRt {
     @Override
     protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
       return new TreeMap<K, Collection<V>>();
+    }
+
+    @NotNull
+    public NavigableSet<K> navigableKeySet() {
+      //noinspection unchecked
+      return ((TreeMap)myMap).navigableKeySet();
     }
   }
 

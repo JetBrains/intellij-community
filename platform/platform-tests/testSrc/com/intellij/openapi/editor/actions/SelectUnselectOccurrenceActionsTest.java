@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
         hintCount++;
       }
     };
-    ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(EditorHintListener.TOPIC, listener);
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, listener);
   }
 
   public void testAllWithoutInitialSelection() throws Exception {
@@ -161,13 +161,10 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
          "collapsed line");
     final FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
     final Document document = myFixture.getEditor().getDocument();
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        FoldRegion foldRegion = foldingModel.addFoldRegion(document.getLineStartOffset(1), document.getLineEndOffset(1), "...");
-        assertNotNull(foldRegion);
-        foldRegion.setExpanded(false);
-      }
+    foldingModel.runBatchFoldingOperation(() -> {
+      FoldRegion foldRegion = foldingModel.addFoldRegion(document.getLineStartOffset(1), document.getLineEndOffset(1), "...");
+      assertNotNull(foldRegion);
+      foldRegion.setExpanded(false);
     });
     executeAction();
     checkResult("normal <selection><caret>line</selection>\n" +

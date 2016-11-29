@@ -53,10 +53,10 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.DirectoryChooserModuleTreeView");
 
   private final Tree myTree;
-  private final List<DirectoryChooser.ItemWrapper>  myItems = new ArrayList<DirectoryChooser.ItemWrapper>();
-  private final Map<DirectoryChooser.ItemWrapper, DefaultMutableTreeNode> myItemNodes = new HashMap<DirectoryChooser.ItemWrapper, DefaultMutableTreeNode>();
-  private final Map<Module, DefaultMutableTreeNode> myModuleNodes = new HashMap<Module, DefaultMutableTreeNode>();
-  private final Map<ModuleGroup, DefaultMutableTreeNode> myModuleGroupNodes = new HashMap<ModuleGroup, DefaultMutableTreeNode>();
+  private final List<DirectoryChooser.ItemWrapper>  myItems = new ArrayList<>();
+  private final Map<DirectoryChooser.ItemWrapper, DefaultMutableTreeNode> myItemNodes = new HashMap<>();
+  private final Map<Module, DefaultMutableTreeNode> myModuleNodes = new HashMap<>();
+  private final Map<ModuleGroup, DefaultMutableTreeNode> myModuleGroupNodes = new HashMap<>();
   private final DefaultMutableTreeNode myRootNode;
   private final ProjectFileIndex myFileIndex;
   private final Project myProject;
@@ -160,18 +160,8 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         final DefaultMutableTreeNode parentNode = ModuleGroupUtil.buildModuleGroupPath(new ModuleGroup(groupPath),
                                                                                        myRootNode,
                                                                                        myModuleGroupNodes,
-                                                                                       new Consumer<ModuleGroupUtil.ParentChildRelation<DefaultMutableTreeNode>>() {
-                                                                                         @Override
-                                                                                         public void consume(final ModuleGroupUtil.ParentChildRelation<DefaultMutableTreeNode> parentChildRelation) {
-                                                                                           insertNode(parentChildRelation.getChild(), parentChildRelation.getParent());
-                                                                                         }
-                                                                                       },
-                                                                                       new Function<ModuleGroup, DefaultMutableTreeNode>() {
-                                                                                         @Override
-                                                                                         public DefaultMutableTreeNode fun(final ModuleGroup moduleGroup) {
-                                                                                           return new DefaultMutableTreeNode(moduleGroup, true);
-                                                                                         }
-                                                                                       });
+                                                                                       parentChildRelation -> insertNode(parentChildRelation.getChild(), parentChildRelation.getParent()),
+                                                                                       moduleGroup -> new DefaultMutableTreeNode(moduleGroup, true));
         insertNode(node, parentNode);
       }
       myModuleNodes.put(module, node);
@@ -185,25 +175,22 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private void insertNode(final DefaultMutableTreeNode nodeToInsert, DefaultMutableTreeNode rootNode) {
     final Enumeration enumeration = rootNode.children();
     ArrayList children = Collections.list(enumeration);
-    final int index = Collections.binarySearch(children, nodeToInsert, new Comparator<DefaultMutableTreeNode>() {
-      @Override
-      public int compare(DefaultMutableTreeNode node1, DefaultMutableTreeNode node2) {
-        final Object o1 = node1.getUserObject();
-        final Object o2 = node2.getUserObject();
-        if (o1 instanceof Module && o2 instanceof Module) {
-          return ((Module)o1).getName().compareToIgnoreCase(((Module)o2).getName());
-        }
-        if (o1 instanceof ModuleGroup && o2 instanceof ModuleGroup){
-          return o1.toString().compareToIgnoreCase(o2.toString());
-        }
-        if (o1 instanceof ModuleGroup) return -1;
-        if (o1 instanceof DirectoryChooser.ItemWrapper && o2 instanceof DirectoryChooser.ItemWrapper) {
-          final VirtualFile virtualFile1 = ((DirectoryChooser.ItemWrapper)o1).getDirectory().getVirtualFile();
-          final VirtualFile virtualFile2 = ((DirectoryChooser.ItemWrapper)o2).getDirectory().getVirtualFile();
-          return Comparing.compare(virtualFile1.getPath(), virtualFile2.getPath());
-        }
-        return 1;
+    final int index = Collections.binarySearch(children, nodeToInsert, (node1, node2) -> {
+      final Object o1 = node1.getUserObject();
+      final Object o2 = node2.getUserObject();
+      if (o1 instanceof Module && o2 instanceof Module) {
+        return ((Module)o1).getName().compareToIgnoreCase(((Module)o2).getName());
       }
+      if (o1 instanceof ModuleGroup && o2 instanceof ModuleGroup){
+        return o1.toString().compareToIgnoreCase(o2.toString());
+      }
+      if (o1 instanceof ModuleGroup) return -1;
+      if (o1 instanceof DirectoryChooser.ItemWrapper && o2 instanceof DirectoryChooser.ItemWrapper) {
+        final VirtualFile virtualFile1 = ((DirectoryChooser.ItemWrapper)o1).getDirectory().getVirtualFile();
+        final VirtualFile virtualFile2 = ((DirectoryChooser.ItemWrapper)o2).getDirectory().getVirtualFile();
+        return Comparing.compare(virtualFile1.getPath(), virtualFile2.getPath());
+      }
+      return 1;
     });
     final int insertionPoint = -(index+1);
     if (insertionPoint < 0 || insertionPoint > rootNode.getChildCount()) {

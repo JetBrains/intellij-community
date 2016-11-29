@@ -18,14 +18,12 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.LightColors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -181,8 +179,8 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
       if (fileColor != null) return fileColor;
     }
 
-    //todo[kb] slightly_green for darcula
-    return FileEditorManager.getInstance(myProject).isFileOpen(vFile) && !UIUtil.isUnderDarcula() ? LightColors.SLIGHTLY_GREEN : null;
+    //return FileEditorManager.getInstance(myProject).isFileOpen(vFile) && !UIUtil.isUnderDarcula() ? LightColors.SLIGHTLY_GREEN : null;
+    return null;
   }
 
   @Nullable
@@ -216,6 +214,14 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     initProjectLevelConfigurations();
 
     final String colorName = myModel.getColor(file, getProject());
+    return colorName == null ? null : getColor(colorName);
+  }
+  
+  @Nullable
+  public Color getScopeColor(@NotNull String scopeName) {
+    initProjectLevelConfigurations();
+
+    final String colorName = myModel.getScopeColor(scopeName, getProject());
     return colorName == null ? null : getColor(colorName);
   }
 

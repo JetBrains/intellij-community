@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -29,7 +30,7 @@ import java.util.*;
  * @author max
  */
 public class VirtualFileHolder implements FileHolder {
-  private final Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
+  private final Set<VirtualFile> myFiles = new HashSet<>();
   private final Project myProject;
   private final HolderType myType;
   private int myNumDirs;
@@ -129,8 +130,9 @@ public class VirtualFileHolder implements FileHolder {
   }
 
   // todo track number of copies made
+  @NotNull
   public List<VirtualFile> getFiles() {
-    return new ArrayList<VirtualFile>(myFiles);
+    return new ArrayList<>(myFiles);
   }
 
   public VirtualFileHolder copy() {

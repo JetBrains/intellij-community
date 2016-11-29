@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class MagicConstantCompletionTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test in method argument"() {
+  void "test in method argument"() {
     addModifierList()
     myFixture.configureByText "a.java", """
 class Foo {
@@ -37,7 +37,7 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'PROTECTED', 'PUBLIC'
   }
 
-  public void "test nothing after dot"() {
+  void "test nothing after dot"() {
     addModifierList()
     myFixture.configureByText "a.java", """
 class Foo {
@@ -49,7 +49,7 @@ class Foo {
     assert !myFixture.complete(CompletionType.SMART)
   }
 
-  public void "test magic constant in equality"() {
+  void "test magic constant in equality"() {
     addMagicConstant()
 
     myFixture.configureByText "a.java", """
@@ -75,7 +75,7 @@ interface Foo {
     myFixture.assertPreferredCompletionItems 0, 'BAR', 'FOO'
   }
 
-  public void "test magic constant in equality before another equality"() {
+  void "test magic constant in equality before another equality"() {
     addMagicConstant()
 
     myFixture.configureByText "a.java", """

@@ -42,7 +42,7 @@ public class RegExpUtil {
       return null;
     }
     final RegExpBranch[] branches = pattern.getBranches();
-    final Set<String> values = new HashSet<String>();
+    final Set<String> values = new HashSet<>();
     for (RegExpBranch branch : branches) {
       if (analyzeBranch(branch)) {
         values.add(branch.getUnescapedText());

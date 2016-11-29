@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,17 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 
 public class EditSourceAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
 
     if(project == null) {
       return;
@@ -89,7 +92,7 @@ public class EditSourceAction extends DebuggerAction{
   }
 
   public void update(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
 
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
@@ -101,11 +104,7 @@ public class EditSourceAction extends DebuggerAction{
         public void threadAction() {
           final SourcePosition position = getSourcePosition(node, debuggerContext);
           if (position == null) {
-            DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
-              public void run() {
-                presentation.setEnabled(false);
-              }
-            });
+            DebuggerInvocationUtil.swingInvokeLater(project, () -> presentation.setEnabled(false));
           }
         }
       });

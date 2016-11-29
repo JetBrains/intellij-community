@@ -32,33 +32,30 @@ import org.jetbrains.annotations.NotNull;
 public class EditorPlaybackCall {
 
   public static AsyncResult<String> assertEditorLine(final PlaybackContext context, final String expected) {
-    final AsyncResult<String> result = new AsyncResult<String>();
-    WindowSystemPlaybackCall.getUiReady(context).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
-        if (editor == null) {
-          editor = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
-        }
+    final AsyncResult<String> result = new AsyncResult<>();
+    WindowSystemPlaybackCall.getUiReady(context).doWhenDone(() -> {
+      Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
+      if (editor == null) {
+        editor = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
+      }
 
-        if (editor == null) {
-          result.setRejected("Cannot find editor");
-          return;
-        }
+      if (editor == null) {
+        result.setRejected("Cannot find editor");
+        return;
+      }
 
 
-        final int line = editor.getCaretModel().getLogicalPosition().line;
-        final int caret = editor.getCaretModel().getOffset();
-        final int start = editor.getDocument().getLineStartOffset(line);
-        final int end = editor.getDocument().getLineEndOffset(line);
+      final int line = editor.getCaretModel().getLogicalPosition().line;
+      final int caret = editor.getCaretModel().getOffset();
+      final int start = editor.getDocument().getLineStartOffset(line);
+      final int end = editor.getDocument().getLineEndOffset(line);
 
-        final StringBuffer actualText = new StringBuffer(editor.getDocument().getText(new TextRange(start, caret)));
-        actualText.append("<caret>").append(editor.getDocument().getText(new TextRange(caret, end)));
-        if (expected.equals(actualText.toString())) {
-          result.setDone();
-        } else {
-          result.setRejected("Expected:" + expected + " but was:" + actualText);
-        }
+      final StringBuffer actualText = new StringBuffer(editor.getDocument().getText(new TextRange(start, caret)));
+      actualText.append("<caret>").append(editor.getDocument().getText(new TextRange(caret, end)));
+      if (expected.equals(actualText.toString())) {
+        result.setDone();
+      } else {
+        result.setRejected("Expected:" + expected + " but was:" + actualText);
       }
     });
     
@@ -67,14 +64,9 @@ public class EditorPlaybackCall {
 
   
   public static AsyncResult<String> waitDaemonForFinish(final PlaybackContext context) {
-    final AsyncResult<String> result = new AsyncResult<String>();
+    final AsyncResult<String> result = new AsyncResult<>();
     final Disposable connection = Disposer.newDisposable();
-    result.doWhenProcessed(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(connection);
-      }
-    });
+    result.doWhenProcessed(() -> Disposer.dispose(connection));
 
 
     WindowSystemPlaybackCall.findProject().doWhenDone(new Consumer<Project>() {
@@ -93,12 +85,7 @@ public class EditorPlaybackCall {
           }
         });
       }
-    }).doWhenRejected(new Runnable() {
-      @Override
-      public void run() {
-        result.setRejected("Cannot find project");
-      }
-    });
+    }).doWhenRejected(() -> result.setRejected("Cannot find project"));
     
     return result;
   }

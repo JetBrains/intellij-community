@@ -84,7 +84,7 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
     Change changeInCommunity = createChangeForPath("community/com.txt");
     myChangeListManager.addChanges(changeBeforeCommunity, changeAfterCommunity, changeInCommunity);
     
-    Map<VirtualFile, Collection<Change>> expected = new HashMap<VirtualFile, Collection<Change>>();
+    Map<VirtualFile, Collection<Change>> expected = new HashMap<>();
     expected.put(roots.get(0), Arrays.asList(changeBeforeCommunity, changeAfterCommunity));
     expected.put(roots.get(1), Collections.singletonList(changeInCommunity));
 
@@ -99,8 +99,8 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
       if (!actual.containsKey(root)) {
         fail("Didn't find root [" + root + "]. " + expectedActualMessage(expected, actual));
       }
-      List<Change> expectedChanges = new ArrayList<Change>(expectedEntry.getValue());
-      List<Change> actualChanges = new ArrayList<Change>(actual.get(root));
+      List<Change> expectedChanges = new ArrayList<>(expectedEntry.getValue());
+      List<Change> actualChanges = new ArrayList<>(actual.get(root));
       Collections.sort(expectedChanges, ChangesComparator.getInstance(false));
       Collections.sort(actualChanges, ChangesComparator.getInstance(false));
       assertEquals("Changes not equal for root [" + root + "]. " + expectedActualMessage(expected, actual), expectedChanges, actualChanges);
@@ -112,8 +112,8 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
   }
 
   private List<VirtualFile> createRootStructure(Pair<String, String>... pathAndVcs) {
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
-    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>();
+    List<VirtualFile> roots = new ArrayList<>();
+    List<VcsDirectoryMapping> mappings = new ArrayList<>();
     for (Pair<String, String> pathAndVc : pathAndVcs) {
       String path = pathAndVc.first;
       String vcs = pathAndVc.second;

@@ -30,6 +30,7 @@ public abstract class CredentialsType<T> {
   public static final Key<VagrantBasedCredentialsHolder> VAGRANT_BASED_CREDENTIALS = Key.create("VAGRANT_BASED_CREDENTIALS");
   public static final Key<WebDeploymentCredentialsHolder> WEB_DEPLOYMENT_BASED_CREDENTIALS = Key.create("WEB_DEPLOYMENT_BASED_CREDENTIALS");
   public static final Key<RemoteCredentialsHolder> PLAIN_SSH_CREDENTIALS = Key.create("PLAIN_SSH_CREDENTIALS");
+  public static final Key<UnknownCredentialsHolder> UNKNOWN_CREDENTIALS = Key.create("UNKNOWN_CREDENTIALS");
 
   public static final CredentialsType<RemoteCredentialsHolder> SSH_HOST
     = new CredentialsType<RemoteCredentialsHolder>("SSH Credentials", RemoteCredentialsHolder.SSH_PREFIX) {
@@ -84,6 +85,23 @@ public abstract class CredentialsType<T> {
     @Override
     public WebDeploymentCredentialsHolder createCredentials() {
       return new WebDeploymentCredentialsHolder();
+    }
+  };
+
+  public static final CredentialsType<UnknownCredentialsHolder> UNKNOWN = new CredentialsType<UnknownCredentialsHolder>("Unknown", "") {
+    @Override
+    public Key<UnknownCredentialsHolder> getCredentialsKey() {
+      return UNKNOWN_CREDENTIALS;
+    }
+
+    @Override
+    public RemoteCredentialsHandler getHandler(UnknownCredentialsHolder credentials) {
+      return new UnknownTypeRemoteCredentialHandler(credentials);
+    }
+
+    @Override
+    public UnknownCredentialsHolder createCredentials() {
+      return new UnknownCredentialsHolder();
     }
   };
 

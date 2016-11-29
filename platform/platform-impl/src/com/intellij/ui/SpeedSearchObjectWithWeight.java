@@ -36,7 +36,7 @@ public class SpeedSearchObjectWithWeight {
   }
 
   public static List<SpeedSearchObjectWithWeight> findElement(String pattern, SpeedSearchBase speedSearch) {
-    List<SpeedSearchObjectWithWeight> elements = new ArrayList<SpeedSearchObjectWithWeight>();
+    List<SpeedSearchObjectWithWeight> elements = new ArrayList<>();
     pattern = pattern.trim();
     //noinspection unchecked
     final ListIterator<Object> it = speedSearch.getElementIterator(0);
@@ -48,7 +48,7 @@ public class SpeedSearchObjectWithWeight {
       }
     }
     SpeedSearchObjectWithWeight cur = null;
-    ArrayList<SpeedSearchObjectWithWeight> current = new ArrayList<SpeedSearchObjectWithWeight>();
+    ArrayList<SpeedSearchObjectWithWeight> current = new ArrayList<>();
     for (SpeedSearchObjectWithWeight element : elements) {
       if (cur == null) {
         cur = element;

@@ -62,5 +62,8 @@
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="cucumber-java" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
+    <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="library" exported="" scope="TEST" name="cucumber-testing" level="project" />
   </component>
 </module>

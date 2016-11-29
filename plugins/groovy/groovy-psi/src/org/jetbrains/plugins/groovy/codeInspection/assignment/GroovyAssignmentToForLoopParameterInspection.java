@@ -62,7 +62,7 @@ public class GroovyAssignmentToForLoopParameterInspection extends BaseInspection
   private static class Visitor extends BaseInspectionVisitor {
     
     @Override
-    public void visitAssignmentExpression(GrAssignmentExpression grAssignmentExpression) {
+    public void visitAssignmentExpression(@NotNull GrAssignmentExpression grAssignmentExpression) {
       super.visitAssignmentExpression(grAssignmentExpression);
       final GrExpression lhs = grAssignmentExpression.getLValue();
       if (!(lhs instanceof GrReferenceExpression)) {

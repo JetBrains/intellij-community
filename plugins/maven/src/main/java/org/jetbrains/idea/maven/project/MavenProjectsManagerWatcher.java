@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.Consumer;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -65,7 +67,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class MavenProjectsManagerWatcher {
 
-  private static final Key<ConcurrentMap<Project, Integer>> CRC_WITHOUT_SPACES = Key.create("MavenProjectsManagerWatcher.CRC_WITHOUT_SPACES");
+  private static final Key<ConcurrentMap<Project, Long>> CRC_WITHOUT_SPACES = Key.create("MavenProjectsManagerWatcher.CRC_WITHOUT_SPACES");
 
   public static final Key<Boolean> FORCE_IMPORT_AND_RESOLVE_ON_REFRESH =
     Key.create(MavenProjectsManagerWatcher.class + "FORCE_IMPORT_AND_RESOLVE_ON_REFRESH");
@@ -79,10 +81,10 @@ public class MavenProjectsManagerWatcher {
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
-  private final List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<LocalFileSystem.WatchRequest>();
+  private final List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<>();
+  private final List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<>();
 
-  private final Set<Document> myChangedDocuments = new THashSet<Document>();
+  private final Set<Document> myChangedDocuments = new THashSet<>();
   private final MavenMergingUpdateQueue myChangedDocumentsQueue;
 
   public MavenProjectsManagerWatcher(Project project,
@@ -147,8 +149,9 @@ public class MavenProjectsManagerWatcher {
         VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
 
         if (file == null) return;
-        boolean isMavenFile =
-          file.getName().equals(MavenConstants.POM_XML) || file.getName().equals(MavenConstants.PROFILES_XML) || isSettingsFile(file);
+        String fileName = file.getName();
+        boolean isMavenFile = fileName.equals(MavenConstants.POM_XML) || fileName.equals(MavenConstants.PROFILES_XML) ||
+                              isSettingsFile(file) || fileName.startsWith("pom.");
         if (!isMavenFile) return;
 
         synchronized (myChangedDocuments) {
@@ -164,20 +167,15 @@ public class MavenProjectsManagerWatcher {
               myChangedDocuments.clear();
             }
 
-            MavenUtil.invokeLater(myProject, new Runnable() {
+            MavenUtil.invokeLater(myProject, () -> new WriteAction() {
               @Override
-              public void run() {
-                new WriteAction() {
-                  @Override
-                  protected void run(@NotNull Result result) throws Throwable {
-                    for (Document each : copy) {
-                      PsiDocumentManager.getInstance(myProject).commitDocument(each);
-                      ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
-                    }
-                  }
-                }.execute();
+              protected void run(@NotNull Result result) throws Throwable {
+                for (Document each : copy) {
+                  PsiDocumentManager.getInstance(myProject).commitDocument(each);
+                  ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
+                }
               }
-            });
+            }.execute());
           }
         });
       }
@@ -210,7 +208,7 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void addFilePointer(File... settingsFiles) {
-    Collection<String> pathsToWatch = new ArrayList<String>(settingsFiles.length);
+    Collection<String> pathsToWatch = new ArrayList<>(settingsFiles.length);
 
     for (File settingsFile : settingsFiles) {
       if (settingsFile == null) continue;
@@ -278,7 +276,7 @@ public class MavenProjectsManagerWatcher {
    * if project is closed)
    */
   public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
-    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
     return promise;
@@ -288,7 +286,7 @@ public class MavenProjectsManagerWatcher {
                                       List<VirtualFile> filesToDelete,
                                       boolean force,
                                       final boolean forceImportAndResolve) {
-    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(filesToUpdate,
                                                                           filesToDelete,
@@ -301,27 +299,19 @@ public class MavenProjectsManagerWatcher {
 
   @NotNull
   private Runnable createScheduleImportAction(final boolean forceImportAndResolve, final AsyncPromise<Void> promise) {
-    return new Runnable() {
-        @Override
-        public void run() {
-          if (myProject.isDisposed()) {
-            promise.setError("Project disposed");
-            return;
-          }
+    return () -> {
+      if (myProject.isDisposed()) {
+        promise.setError("Project disposed");
+        return;
+      }
 
-          if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
-            myManager.scheduleImportAndResolve().done(new Consumer<List<Module>>() {
-              @Override
-              public void consume(List<Module> modules) {
-                promise.setResult(null);
-              }
-            });
-          }
-          else {
-            promise.setResult(null);
-          }
-        }
-      };
+      if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
+        myManager.scheduleImportAndResolve().done(modules -> promise.setResult(null));
+      }
+      else {
+        promise.setResult(null);
+      }
+    };
   }
 
   private void onSettingsChange() {
@@ -339,8 +329,8 @@ public class MavenProjectsManagerWatcher {
     public void rootsChanged(ModuleRootEvent event) {
       // todo is this logic necessary?
       List<VirtualFile> existingFiles = myProjectsTree.getProjectsFiles();
-      List<VirtualFile> newFiles = new ArrayList<VirtualFile>();
-      List<VirtualFile> deletedFiles = new ArrayList<VirtualFile>();
+      List<VirtualFile> newFiles = new ArrayList<>();
+      List<VirtualFile> deletedFiles = new ArrayList<>();
 
       for (VirtualFile f : myProjectsTree.getExistingManagedFiles()) {
         if (!existingFiles.contains(f)) {
@@ -357,7 +347,8 @@ public class MavenProjectsManagerWatcher {
   }
 
   private boolean isPomFile(String path) {
-    if (!path.endsWith("/" + MavenConstants.POM_XML)) return false;
+    String nameWithoutExtension = FileUtil.getNameWithoutExtension(new File(path));
+    if (!MavenConstants.POM_EXTENSION.equals(nameWithoutExtension)) return false;
     return myProjectsTree.isPotentialProject(path);
   }
 
@@ -416,7 +407,7 @@ public class MavenProjectsManagerWatcher {
 
       VirtualFile pom = getPomFileProfilesFile(file);
       if (pom != null) {
-        if (remove || xmlFileWasChanged(pom, event)) {
+        if (remove || fileWasChanged(pom, event)) {
           filesToUpdate.add(pom);
         }
         return;
@@ -426,32 +417,37 @@ public class MavenProjectsManagerWatcher {
         filesToRemove.add(file);
       }
       else {
-        if (xmlFileWasChanged(file, event)) {
+        if (fileWasChanged(file, event)) {
           filesToUpdate.add(file);
         }
       }
     }
 
-    private boolean xmlFileWasChanged(VirtualFile xmlFile, VFileEvent event) {
-      if (!xmlFile.isValid() || !(event instanceof VFileContentChangeEvent)) return true;
+    private boolean fileWasChanged(VirtualFile file, VFileEvent event) {
+      if (!file.isValid() || !(event instanceof VFileContentChangeEvent)) return true;
 
-      ConcurrentMap<Project, Integer> map = xmlFile.getUserData(CRC_WITHOUT_SPACES);
+      ConcurrentMap<Project, Long> map = file.getUserData(CRC_WITHOUT_SPACES);
       if (map == null) {
-        ConcurrentMap<Project, Integer> value = ContainerUtil.createConcurrentWeakMap();
-        map = xmlFile.putUserDataIfAbsent(CRC_WITHOUT_SPACES, value);
+        ConcurrentMap<Project, Long> value = ContainerUtil.createConcurrentWeakMap();
+        map = file.putUserDataIfAbsent(CRC_WITHOUT_SPACES, value);
       }
 
-      Integer crc = map.get(myProject);
-      Integer newCrc;
+      Long crc = map.get(myProject);
+      Long newCrc;
 
-      try {
-        newCrc = MavenUtil.crcWithoutSpaces(xmlFile);
-      }
-      catch (IOException ignored) {
-        return true;
+      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+      if(psiFile instanceof XmlFile) {
+        try {
+          newCrc = Long.valueOf(MavenUtil.crcWithoutSpaces(file));
+        }
+        catch (IOException ignored) {
+          return true;
+        }
+      } else {
+        newCrc = file.getModificationStamp();
       }
 
-      if (newCrc == -1 // XML is invalid
+      if (newCrc == -1 // file is invalid
           || newCrc.equals(crc)) {
         return false;
       }
@@ -497,8 +493,8 @@ public class MavenProjectsManagerWatcher {
       // but on project initialization to avoid this situation.
       if (areFileSetsInitialised()) return;
 
-      filesToUpdate = new ArrayList<VirtualFile>();
-      filesToRemove = new ArrayList<VirtualFile>();
+      filesToUpdate = new ArrayList<>();
+      filesToRemove = new ArrayList<>();
       settingsHaveChanged = false;
       forceImportAndResolve = false;
     }

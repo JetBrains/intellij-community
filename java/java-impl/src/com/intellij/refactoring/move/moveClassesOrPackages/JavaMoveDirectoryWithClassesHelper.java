@@ -24,7 +24,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
                          boolean searchInComments,
                          boolean searchInNonJavaFiles,
                          Project project) {
-    final Set<String> packageNames = new HashSet<String>();
+    final Set<String> packageNames = new HashSet<>();
     for (PsiFile psiFile : filesToMove) {
       if (psiFile instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();

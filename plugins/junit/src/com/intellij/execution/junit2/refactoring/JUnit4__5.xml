@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<migrationMap>
+  <name value="JUnit (4.x -&gt; 5.0)" />
+  <description value="This map is for transferring the JUnit 4 test annotations to the new jupiter ones." />
+  <entry oldName="org.junit.Before" newName="org.junit.jupiter.api.BeforeEach" type="class"/>
+  <entry oldName="org.junit.BeforeClass" newName="org.junit.jupiter.api.BeforeAll" type="class"/>
+  <entry oldName="org.junit.After" newName="org.junit.jupiter.api.AfterEach" type="class"/>
+  <entry oldName="org.junit.AfterClass" newName="org.junit.jupiter.api.AfterAll" type="class"/>
+  <entry oldName="org.junit.Test" newName="org.junit.jupiter.api.Test" type="class"/>
+  <entry oldName="org.junit.Ignore" newName="org.junit.jupiter.api.Disabled" type="class"/>
+</migrationMap>
+

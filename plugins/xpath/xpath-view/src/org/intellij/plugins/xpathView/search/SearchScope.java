@@ -193,23 +193,13 @@ public final class SearchScope {
         final ContentIterator iterator;
         if (myCustomScope instanceof GlobalSearchScope) {
           final GlobalSearchScope searchScope = (GlobalSearchScope)myCustomScope;
-          iterator = new MyFileIterator(processor, new Condition<VirtualFile>() {
-            @Override
-            public boolean value(VirtualFile virtualFile) {
-              return searchScope.contains(virtualFile);
-            }
-          });
+          iterator = new MyFileIterator(processor, virtualFile13 -> searchScope.contains(virtualFile13));
           if (searchScope.isSearchInLibraries()) {
             final OrderEnumerator enumerator = OrderEnumerator.orderEntries(project).withoutModuleSourceEntries().withoutDepModules();
-            final Collection<VirtualFile> libraryFiles = new THashSet<VirtualFile>();
+            final Collection<VirtualFile> libraryFiles = new THashSet<>();
             Collections.addAll(libraryFiles, enumerator.getClassesRoots());
             Collections.addAll(libraryFiles, enumerator.getSourceRoots());
-            final Processor<VirtualFile> adapter = new Processor<VirtualFile>() {
-              @Override
-              public boolean process(VirtualFile virtualFile) {
-                return iterator.processFile(virtualFile);
-              }
-            };
+            final Processor<VirtualFile> adapter = virtualFile1 -> iterator.processFile(virtualFile1);
             for (final VirtualFile file : libraryFiles) {
               iterateRecursively(file, adapter, true);
             }
@@ -217,12 +207,9 @@ public final class SearchScope {
         }
         else {
           final PsiManager manager = PsiManager.getInstance(project);
-          iterator = new MyFileIterator(processor, new Condition<VirtualFile>() {
-            @Override
-            public boolean value(VirtualFile virtualFile) {
-              final PsiFile element = manager.findFile(virtualFile);
-              return element != null && PsiSearchScopeUtil.isInScope(myCustomScope, element);
-            }
+          iterator = new MyFileIterator(processor, virtualFile12 -> {
+            final PsiFile element = manager.findFile(virtualFile12);
+            return element != null && PsiSearchScopeUtil.isInScope(myCustomScope, element);
           });
         }
 

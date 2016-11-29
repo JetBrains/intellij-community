@@ -27,7 +27,7 @@ public class SelectedChangeSetChecker extends SelectedChangeListsChecker {
 
   public SelectedChangeSetChecker() {
     super();
-    mySelectedChanges = new ArrayList<Change>();
+    mySelectedChanges = new ArrayList<>();
   }
 
   private void fillChanges(final AnActionEvent event) {

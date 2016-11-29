@@ -26,7 +26,7 @@ import java.util.List;
  * @author nik
  */
 public class ProjectConfigurationProblems {
-  private final MultiValuesMap<ProjectStructureElement, ConfigurationError> myErrors = new MultiValuesMap<ProjectStructureElement, ConfigurationError>();
+  private final MultiValuesMap<ProjectStructureElement, ConfigurationError> myErrors = new MultiValuesMap<>();
   private final ProjectStructureDaemonAnalyzer myAnalyzer;
   private final StructureConfigurableContext myContext;
 

@@ -120,13 +120,10 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
       @NotNull
       @Override
       public Comparator getComparator() {
-        return new Comparator() {
-          @Override
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof Group && !(o2 instanceof Group)) return -1;
-            if (!(o1 instanceof Group) && o2 instanceof Group) return 1;
-            return 0;
-          }
+        return (o1, o2) -> {
+          if (o1 instanceof Group && !(o2 instanceof Group)) return -1;
+          if (!(o1 instanceof Group) && o2 instanceof Group) return 1;
+          return 0;
         };
       }
 
@@ -152,12 +149,7 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
       @NotNull
       @Override
       public Comparator getComparator() {
-        return new Comparator() {
-          @Override
-          public int compare(Object o1, Object o2) {
-            return o1.toString().compareTo(o2.toString());
-          }
-        };
+        return (o1, o2) -> o1.toString().compareTo(o2.toString());
       }
 
       @Override

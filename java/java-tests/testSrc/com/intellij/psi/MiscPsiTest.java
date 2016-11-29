@@ -31,6 +31,8 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 @SkipSlowTestLocally
 public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -128,11 +130,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     final PsiClass aClass = getJavaFacade().getElementFactory().createClassFromText("public int i, j;", null);
 
     final PsiField aField = aClass.getFields()[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        aField.delete();
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> aField.delete());
 
     assertEquals("public int j;", aClass.getFields()[0].getText());
   }
@@ -185,11 +183,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   public void testDeleteAnnotationAttribute() throws Exception {
     final PsiAnnotation annotation = getJavaFacade().getElementFactory().createAnnotationFromText("@A(b,c)", null);
     final PsiNameValuePair secondAttribute = annotation.getParameterList().getAttributes()[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        secondAttribute.delete();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> secondAttribute.delete());
 
     assertEquals("@A(b )", annotation.getText());
   }
@@ -199,11 +193,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     final PsiNameValuePair firstAttribute = annotation.getParameterList().getAttributes()[0];
     assertTrue(firstAttribute.getValue() instanceof PsiArrayInitializerMemberValue);
     final PsiAnnotationMemberValue firstInitializer = ((PsiArrayInitializerMemberValue)firstAttribute.getValue()).getInitializers()[0];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        firstInitializer.delete();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> firstInitializer.delete());
 
     assertEquals("@A({ c})", annotation.getText());
   }
@@ -345,5 +335,42 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveDocument(document);
 
     assertEquals(file.getText(), LoadTextUtil.loadText(file.getVirtualFile()).toString());
+  }
+
+  public void testPsiClassMethodsCantBeModified() {
+    PsiClass psiClass = myFixture.addClass("class Foo { " +
+                                           "Foo() {} " +
+                                           "void bar() {} " +
+                                           "void goo() {} " +
+                                           "void goo42() {} " +
+                                           "}");
+    PsiMethod[] golden = psiClass.getMethods().clone();
+
+    PsiMethod[] mutated = psiClass.getMethods();
+    mutated[0] = mutated[1];
+    mutated[2] = null;
+
+    assertOrderedEquals(psiClass.getMethods(), golden);
+  }
+
+  public void testRecoverAfterPsiDocSyncError() throws IOException {
+    VirtualFile vFile = myFixture.addFileToProject("a.java", "class A{}").getVirtualFile();
+
+    try {
+      myFixture.findClass("A").replace(JavaPsiFacade.getElementFactory(getProject()).createClassFromText("class B {\r\n}", null));
+      fail("Should fail");
+    }
+    catch (Throwable e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Wrong line separators"));
+    }
+    
+    assertEquals("class A{}", getPsiManager().findFile(vFile).getText());
+
+    VfsUtil.saveText(vFile, "class C {}");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    PsiClass c = myFixture.findClass("C");
+    assertNotNull(c);
+    assertEquals(vFile, c.getContainingFile().getVirtualFile());
   }
 }

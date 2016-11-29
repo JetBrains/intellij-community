@@ -19,6 +19,7 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 
+import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -28,7 +29,7 @@ import static java.awt.Cursor.*;
 /**
  * @author Sergey Malenkov
  */
-abstract class WindowMouseListener extends MouseAdapter {
+abstract class WindowMouseListener extends MouseAdapter implements MouseInputListener {
   private final Component myContent;
   @JdkConstants.CursorType int myType;
   private Point myLocation;
@@ -83,6 +84,19 @@ abstract class WindowMouseListener extends MouseAdapter {
   }
 
   /**
+   * @param view the component to move/resize
+   * @return {@code true} if the specified component cannot be moved/resized, or {@code false} otherwise
+   */
+  protected boolean isDisabled(Component view) {
+    if (view instanceof Frame) {
+      int state = ((Frame)view).getExtendedState();
+      if (isStateSet(Frame.ICONIFIED, state)) return true;
+      if (isStateSet(Frame.MAXIMIZED_BOTH, state)) return true;
+    }
+    return false;
+  }
+
+  /**
    * Updates a cursor and starts moving/resizing if the {@code start} is specified.
    */
   private void update(MouseEvent event, boolean start) {
@@ -91,7 +105,7 @@ abstract class WindowMouseListener extends MouseAdapter {
       Component content = getContent(event);
       Component view = getView(content);
       if (view != null) {
-        myType = getCursorType(view, event.getLocationOnScreen());
+        myType = isDisabled(view) ? CUSTOM_CURSOR : getCursorType(view, event.getLocationOnScreen());
         setCursor(content, getPredefinedCursor(myType == CUSTOM_CURSOR ? DEFAULT_CURSOR : myType));
         if (start && myType != CUSTOM_CURSOR) {
           myLocation = event.getLocationOnScreen();
@@ -112,7 +126,14 @@ abstract class WindowMouseListener extends MouseAdapter {
       Component view = getView(content);
       if (view != null) {
         Rectangle bounds = new Rectangle(myViewBounds);
-        updateBounds(bounds, view, event.getXOnScreen() - myLocation.x, event.getYOnScreen() - myLocation.y);
+        int dx = event.getXOnScreen() - myLocation.x;
+        int dy = event.getYOnScreen() - myLocation.y;
+        if (myType == DEFAULT_CURSOR && view instanceof Frame) {
+          int state = ((Frame)view).getExtendedState();
+          if (isStateSet(Frame.MAXIMIZED_HORIZ, state)) dx = 0;
+          if (isStateSet(Frame.MAXIMIZED_VERT, state)) dy = 0;
+        }
+        updateBounds(bounds, view, dx, dy);
         if (!bounds.equals(view.getBounds())) {
           view.setBounds(bounds);
           view.invalidate();
@@ -164,5 +185,9 @@ abstract class WindowMouseListener extends MouseAdapter {
    */
   public boolean isBusy() {
     return myLocation != null;
+  }
+
+  static boolean isStateSet(int mask, int state) {
+    return mask == (mask & state);
   }
 }

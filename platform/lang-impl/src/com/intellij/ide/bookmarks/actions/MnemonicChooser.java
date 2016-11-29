@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -37,7 +37,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class MnemonicChooser extends JPanel {
-  private static final Color OCCUPIED_CELL_COLOR = new JBColor(new Color(250, 250, 139), new Color(103, 81, 51));
+  private static final Color OCCUPIED_CELL_COLOR = new JBColor(0xfafa8b, 0x675133);
   private static final Color FREE_CELL_COLOR = new JBColor(LightColors.SLIGHTLY_GRAY, Gray._80);
 
   public MnemonicChooser() {
@@ -97,7 +97,7 @@ public class MnemonicChooser extends JPanel {
     private MnemonicLabel(final char c) {
       setOpaque(true);
       setText(Character.toString(c));
-      setBorder(new LineBorder(new JBColor(Gray._192, Gray._150), 1));
+      setBorder(JBUI.Borders.customLine(new JBColor(Gray._192, Gray._150)));
       setHorizontalAlignment(CENTER);
 
       setBackground(backgroundForMnemonic(c));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -32,5 +33,5 @@ public interface PyReferenceResolveProvider {
    * Allows to provide a custom resolve result for qualified expression
    */
   @NotNull
-  List<RatedResolveResult> resolveName(@NotNull final PyQualifiedExpression element);
+  List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context);
 }

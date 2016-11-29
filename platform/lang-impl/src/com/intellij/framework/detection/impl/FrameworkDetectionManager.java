@@ -66,7 +66,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       doRunDetection();
     }
   };
-  private final Set<Integer> myDetectorsToProcess = new HashSet<Integer>();
+  private final Set<Integer> myDetectorsToProcess = new HashSet<>();
   private MergingUpdateQueue myDetectionQueue;
   private final Object myLock = new Object();
   private DetectedFrameworksData myDetectedFrameworksData;
@@ -110,16 +110,13 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   @Override
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        final Collection<Integer> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
-        synchronized (myLock) {
-          myDetectorsToProcess.clear();
-          myDetectorsToProcess.addAll(ids);
-        }
-        queueDetection();
+    StartupManager.getInstance(myProject).registerPostStartupActivity(() -> {
+      final Collection<Integer> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
+      synchronized (myLock) {
+        myDetectorsToProcess.clear();
+        myDetectorsToProcess.addAll(ids);
       }
+      queueDetection();
     });
   }
 
@@ -161,7 +158,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   private void doRunDetection() {
     Set<Integer> detectorsToProcess;
     synchronized (myLock) {
-      detectorsToProcess = new HashSet<Integer>(myDetectorsToProcess);
+      detectorsToProcess = new HashSet<>(myDetectorsToProcess);
       detectorsToProcess.addAll(myDetectorsToProcess);
       myDetectorsToProcess.clear();
     }
@@ -171,8 +168,8 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       LOG.debug("Starting framework detectors: " + detectorsToProcess);
     }
     final FileBasedIndex index = FileBasedIndex.getInstance();
-    List<DetectedFrameworkDescription> newDescriptions = new ArrayList<DetectedFrameworkDescription>();
-    List<DetectedFrameworkDescription> oldDescriptions = new ArrayList<DetectedFrameworkDescription>();
+    List<DetectedFrameworkDescription> newDescriptions = new ArrayList<>();
+    List<DetectedFrameworkDescription> oldDescriptions = new ArrayList<>();
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(myProject);
     for (Integer id : detectorsToProcess) {
       final List<? extends DetectedFrameworkDescription> frameworks = runDetector(id, index, excludesConfiguration, true);
@@ -185,7 +182,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       }
     }
 
-    Set<String> frameworkNames = new HashSet<String>();
+    Set<String> frameworkNames = new HashSet<>();
     for (final DetectedFrameworkDescription description : FrameworkDetectionUtil.removeDisabled(newDescriptions, oldDescriptions)) {
       frameworkNames.add(description.getDetector().getFrameworkType().getPresentableName());
     }
@@ -214,7 +211,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       filesToProcess = myDetectedFrameworksData.retainNewFiles(detectorId, acceptedFiles);
     }
     else {
-      filesToProcess = new ArrayList<VirtualFile>(acceptedFiles);
+      filesToProcess = new ArrayList<>(acceptedFiles);
     }
     FrameworkDetector detector = FrameworkDetectorRegistry.getInstance().getDetectorById(detectorId);
     if (detector == null) {
@@ -266,7 +263,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   private List<? extends DetectedFrameworkDescription> getValidDetectedFrameworks() {
     final Set<Integer> detectors = myDetectedFrameworksData.getDetectorsForDetectedFrameworks();
-    List<DetectedFrameworkDescription> descriptions = new ArrayList<DetectedFrameworkDescription>();
+    List<DetectedFrameworkDescription> descriptions = new ArrayList<>();
     final FileBasedIndex index = FileBasedIndex.getInstance();
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(myProject);
     for (Integer id : detectors) {

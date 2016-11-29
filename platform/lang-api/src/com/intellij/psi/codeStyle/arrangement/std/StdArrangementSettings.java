@@ -31,8 +31,8 @@ import java.util.*;
  * @since 9/17/12 11:53 AM
  */
 public class StdArrangementSettings implements ArrangementSettings {
-  @NotNull private final   List<ArrangementSectionRule> mySectionRules     = new ArrayList<ArrangementSectionRule>();
-  @NotNull private final   List<ArrangementGroupingRule> myGroupings       = new ArrayList<ArrangementGroupingRule>();
+  @NotNull private final   List<ArrangementSectionRule> mySectionRules     = new ArrayList<>();
+  @NotNull private final   List<ArrangementGroupingRule> myGroupings       = new ArrayList<>();
 
   // cached values
   @NotNull protected final List<StdArrangementMatchRule> myRulesByPriority =
@@ -54,7 +54,7 @@ public class StdArrangementSettings implements ArrangementSettings {
 
   public static StdArrangementSettings createByMatchRules(@NotNull List<ArrangementGroupingRule> groupingRules,
                                                           @NotNull List<StdArrangementMatchRule> matchRules) {
-    final List<ArrangementSectionRule> sectionRules = new ArrayList<ArrangementSectionRule>();
+    final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     for (StdArrangementMatchRule rule : matchRules) {
       sectionRules.add(ArrangementSectionRule.create(rule));
     }
@@ -63,7 +63,7 @@ public class StdArrangementSettings implements ArrangementSettings {
 
   @NotNull
   protected List<ArrangementGroupingRule> cloneGroupings() {
-    final ArrayList<ArrangementGroupingRule> groupings = new ArrayList<ArrangementGroupingRule>();
+    final ArrayList<ArrangementGroupingRule> groupings = new ArrayList<>();
     for (ArrangementGroupingRule grouping : myGroupings) {
       groupings.add(grouping.clone());
     }
@@ -72,7 +72,7 @@ public class StdArrangementSettings implements ArrangementSettings {
 
   @NotNull
   protected List<ArrangementSectionRule> cloneSectionRules() {
-    final ArrayList<ArrangementSectionRule> rules = new ArrayList<ArrangementSectionRule>();
+    final ArrayList<ArrangementSectionRule> rules = new ArrayList<>();
     for (ArrangementSectionRule rule : mySectionRules) {
       rules.add(rule.clone());
     }

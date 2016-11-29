@@ -17,7 +17,9 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -26,9 +28,11 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class RowIcon extends AbstractSizeAdjustingIcon {
+public class RowIcon extends JBUI.AuxScalableJBIcon {
   private final Alignment myAlignment;
-  private float myScale = 1f;
+
+  private int myWidth;
+  private int myHeight;
 
   public enum Alignment {TOP, CENTER, BOTTOM}
 
@@ -48,37 +52,42 @@ public class RowIcon extends AbstractSizeAdjustingIcon {
   public RowIcon(Icon... icons) {
     this(icons.length);
     System.arraycopy(icons, 0, myIcons, 0, icons.length);
-    adjustSize();
+    updateSize();
   }
 
+  protected RowIcon(RowIcon icon) {
+    super(icon);
+    myAlignment = icon.myAlignment;
+    myWidth = icon.myWidth;
+    myHeight = icon.myHeight;
+    myIcons = ArrayUtil.copyOf(icon.myIcons);
+    myScaledIcons = null;
+  }
 
   @Override
-  public Icon scale(float scale) {
-    if (myScale != scale || (myScale != 1f && myScaledIcons == null)) {
-      myScale = scale;
-      rescale();
-    }
-    return this;
+  protected RowIcon copy() {
+    return new RowIcon(this);
   }
 
-  private void rescale() {
-    if (myScale == 1f) {
-      myScaledIcons = null;
-      return;
+  private Icon[] myScaledIcons() {
+    if (myScaledIcons != null) {
+      return myScaledIcons;
     }
-
+    if (getScale() == 1f) {
+      return myScaledIcons = myIcons;
+    }
     for (Icon icon : myIcons) {
       if (icon != null && !(icon instanceof ScalableIcon)) {
-        return;
+        return myScaledIcons = myIcons;
       }
     }
-
     myScaledIcons = new Icon[myIcons.length];
     for (int i = 0; i < myIcons.length; i++) {
-      ScalableIcon icon = (ScalableIcon)myIcons[i];
-      myScaledIcons[i] = icon == null ? null : icon.scale(myScale);
+      if (myIcons[i] != null) {
+        myScaledIcons[i] = ((ScalableIcon)myIcons[i]).scale(getScale());
+      }
     }
-    adjustSize();
+    return myScaledIcons;
   }
 
   @TestOnly
@@ -102,24 +111,20 @@ public class RowIcon extends AbstractSizeAdjustingIcon {
 
   public void setIcon(Icon icon, int layer) {
     myIcons[layer] = icon;
-    rescale();
-    adjustSize();
+    myScaledIcons = null;
+    updateSize();
   }
 
   public Icon getIcon(int index) {
     return myIcons[index];
   }
 
-  public Icon[] getIcons() {
-    Icon[] icons = myScale == 1f ? myIcons : myScaledIcons;
-    return icons == null ? myIcons : icons;
-  }
-
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
+    if (updateJBUIScale()) updateSize();
     int _x = x;
     int _y = y;
-    for (Icon icon : getIcons()) {
+    for (Icon icon : myScaledIcons()) {
       if (icon == null) continue;
       switch (myAlignment) {
         case TOP: _y = y;
@@ -136,10 +141,21 @@ public class RowIcon extends AbstractSizeAdjustingIcon {
   }
 
   @Override
-  protected void adjustSize() {
+  public int getIconWidth() {
+    if (updateJBUIScale()) updateSize();
+    return scaleVal(myWidth, Scale.ARBITRARY);
+  }
+
+  @Override
+  public int getIconHeight() {
+    if (updateJBUIScale()) updateSize();
+    return scaleVal(myHeight, Scale.ARBITRARY);
+  }
+
+  private void updateSize() {
     int width = 0;
     int height = 0;
-    for (Icon icon : getIcons()) {
+    for (Icon icon : myIcons) {
       if (icon == null) continue;
       width += icon.getIconWidth();
       //height += icon.getIconHeight();

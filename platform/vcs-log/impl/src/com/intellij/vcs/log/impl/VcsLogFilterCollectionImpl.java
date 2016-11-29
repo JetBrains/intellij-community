@@ -103,4 +103,16 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
   public List<VcsLogDetailsFilter> getDetailsFilters() {
     return ContainerUtil.skipNulls(Arrays.asList(myUserFilter, myDateFilter, myTextFilter, myStructureFilter));
   }
+
+  @Override
+  public String toString() {
+    return "filters: (" +
+           (myBranchFilter != null ? myBranchFilter + ", " : "") +
+           (myUserFilter != null ? myUserFilter + ", " : "") +
+           (myHashFilter != null ? myHashFilter + ", " : "") +
+           (myDateFilter != null ? myDateFilter + ", " : "") +
+           (myTextFilter != null ? myTextFilter + ", " : "") +
+           (myStructureFilter != null ? myStructureFilter + ", " : "") +
+           (myRootFilter != null ? myRootFilter : "") + ")";
+  }
 }

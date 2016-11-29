@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.history.LocalHistory;
@@ -28,7 +25,10 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.PackagesPaneSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
+import com.intellij.ide.projectView.impl.nodes.PackageUtil;
+import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -224,6 +224,11 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
       protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
         return new PackageViewProjectNode(project, settings);
       }
+
+      @Override
+      public boolean isToBuildChildrenInBackground(Object element) {
+        return true;
+      }
     };
   }
 
@@ -309,7 +314,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     private Module[] getModulesFor(PsiDirectory dir) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       final VirtualFile vFile = dir.getVirtualFile();
-      final Set<Module> modules = new HashSet<Module>();
+      final Set<Module> modules = new HashSet<>();
       final Module module = fileIndex.getModuleForFile(vFile);
       if (module != null) {
         modules.add(module);
@@ -339,7 +344,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiDirectory> allElements = Arrays.asList(getSelectedDirectories());
-      List<PsiElement> validElements = new ArrayList<PsiElement>();
+      List<PsiElement> validElements = new ArrayList<>();
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 
 /**
  * @author tav
@@ -49,14 +51,47 @@ public class SVGLoader {
 
     public int value(@NotNull Document document) {
       String value = document.getDocumentElement().getAttribute(name());
-      assert value.endsWith("px") : "unexpected '" + name() + "' format in " + document.getBaseURI();
+      if (value.endsWith("px")) {
+        try {
+          return Integer.parseInt(value.substring(0, value.length() - 2));
+        }
+        catch (NumberFormatException ex) {
+          ex.printStackTrace();
+        }
+      }
       try {
-        return Integer.parseInt(value.substring(0, value.length() - 2));
+        ViewBox viewBox = ViewBox.fromString(document.getDocumentElement().getAttribute("viewBox"));
+        return this == width ? viewBox.width : viewBox.height;
       }
-      catch (NumberFormatException ex) {
-        ex.printStackTrace();
-        return FALLBACK_VALUE;
+      catch (Exception e) {
+        e.printStackTrace();
       }
+      return FALLBACK_VALUE;
+    }
+  }
+
+  private static class ViewBox {
+    private final int x;
+    private final int y;
+    private final int width;
+    private final int height;
+
+    public ViewBox(int x, int y, int width, int height) {
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+    }
+
+    public static ViewBox fromString(String s) {
+      final List<String> values = StringUtil.split(s, " ");
+      if (values.size() == 4) {
+        return new ViewBox(Integer.parseInt(values.get(0)),
+                           Integer.parseInt(values.get(1)),
+                           Integer.parseInt(values.get(2)),
+                           Integer.parseInt(values.get(3)));
+      }
+      throw new IllegalArgumentException("String should be formatted like 'x y width height'");
     }
   }
 

@@ -68,7 +68,7 @@ public class RareLogger extends Logger {
         return super.remove(key);
       }
     };
-    myConvertors = new LinkedList<LogFilter>();
+    myConvertors = new LinkedList<>();
 
     // just passes to parent logger
     myProxy = new LogFilter() {

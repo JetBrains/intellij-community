@@ -88,7 +88,7 @@ final class ControlFlowBuilder extends FramelessAnalyzer {
     for (int i = 0; i < transitions.length; i++) {
       transitions[i] = new TIntArrayList();
     }
-    errorTransitions = new HashSet<Edge>();
+    errorTransitions = new HashSet<>();
   }
 
   final ControlFlowGraph buildCFG() throws AnalyzerException {
@@ -138,7 +138,7 @@ final class LiteControlFlowBuilder extends LiteFramelessAnalyzer {
     for (int i = 0; i < transitions.length; i++) {
       transitions[i] = new TIntArrayList();
     }
-    errorTransitions = new HashSet<Edge>();
+    errorTransitions = new HashSet<>();
   }
 
   final ControlFlowGraph buildCFG() throws AnalyzerException {

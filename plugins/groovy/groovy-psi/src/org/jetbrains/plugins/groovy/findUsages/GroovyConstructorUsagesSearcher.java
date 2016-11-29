@@ -99,15 +99,12 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
 
     final LiteralConstructorSearcher literalProcessor = new LiteralConstructorSearcher(constructor, consumer, includeOverloads);
 
-    final Processor<GrNewExpression> newExpressionProcessor = new Processor<GrNewExpression>() {
-      @Override
-      public boolean process(GrNewExpression grNewExpression) {
-        final PsiMethod resolvedConstructor = grNewExpression.resolveMethod();
-        if (includeOverloads || constructor.getManager().areElementsEquivalent(resolvedConstructor, constructor)) {
-          return consumer.process(grNewExpression.getReferenceElement());
-        }
-        return true;
+    final Processor<GrNewExpression> newExpressionProcessor = grNewExpression -> {
+      final PsiMethod resolvedConstructor = grNewExpression.resolveMethod();
+      if (includeOverloads || constructor.getManager().areElementsEquivalent(resolvedConstructor, constructor)) {
+        return consumer.process(grNewExpression.getReferenceElement());
       }
+      return true;
     };
 
     processGroovyClassUsages(clazz, searchScope, collector, newExpressionProcessor, literalProcessor);
@@ -135,19 +132,16 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
                                               SearchRequestCollector collector,
                                               final Processor<GrNewExpression> newExpressionProcessor,
                                               final LiteralConstructorSearcher literalProcessor) {
-    ReferencesSearch.searchOptimized(clazz, scope, false, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
-      @Override
-      public boolean process(PsiReference ref, SearchRequestCollector collector) {
-        final PsiElement element = ref.getElement();
+    ReferencesSearch.searchOptimized(clazz, scope, false, collector, true, (ref, collector1) -> {
+      final PsiElement element = ref.getElement();
 
-        if (element instanceof GrCodeReferenceElement) {
-          if (!processGroovyConstructorUsages((GrCodeReferenceElement)element, newExpressionProcessor, literalProcessor)) {
-            return false;
-          }
+      if (element instanceof GrCodeReferenceElement) {
+        if (!processGroovyConstructorUsages((GrCodeReferenceElement)element, newExpressionProcessor, literalProcessor)) {
+          return false;
         }
-
-        return true;
       }
+
+      return true;
     });
   }
 

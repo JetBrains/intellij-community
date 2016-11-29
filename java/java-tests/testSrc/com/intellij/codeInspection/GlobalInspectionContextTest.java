@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
   public void testProblemDuplication() throws Exception {
     String shortName = new VisibilityInspection().getShortName();
     InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
-    profile.disableAllTools(getProject());
+    ProjectInspectionManagerTestKt.disableAllTools(profile, getProject());
     profile.enableTool(shortName, getProject());
 
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
@@ -69,7 +69,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
       if (!toolWrapper.isEnabledByDefault()) {
         InspectionManagerEx instance = (InspectionManagerEx)InspectionManager.getInstance(myProject);
         GlobalInspectionContextImpl context = RunInspectionIntention.createContext(toolWrapper, instance, file);
-        context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+        context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         assertEquals(1, context.getTools().size());
         return;
       }

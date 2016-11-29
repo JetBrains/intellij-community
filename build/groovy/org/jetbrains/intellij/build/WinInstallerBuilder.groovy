@@ -18,8 +18,9 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.SystemInfoRt
 import org.codehaus.gant.GantBuilder
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
+
 /**
- * @author nik
+ * @deprecated use {@link BuildTasks} instead.
  */
 class WinInstallerBuilder {
   GantBuilder ant
@@ -73,8 +74,8 @@ class WinInstallerBuilder {
    * @return path to the created installer file
    */
   def buildInstaller(List<String> pathsToInclude, String stringsFile, String pathsFile) {
-    if (!SystemInfoRt.isWindows) {
-      projectBuilder.warning("Windows installer can be built only under Windows")
+    if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
+      projectBuilder.warning("Windows installer can be built only under Windows or Linux")
       return null
     }
 
@@ -144,20 +145,30 @@ class WinInstallerBuilder {
       replacefilter(token: "__BUILD_NUMBER__", value: buildNumber)
       replacefilter(token: "__VERSION_MAJOR__", value: applicationInfo.majorVersion)
       replacefilter(token: "__VERSION_MINOR__", value: applicationInfo.minorVersion)
-      replacefilter(token: "__MIN_UPGRADE_BUILD__", value: applicationInfo.installOver.minBuild)
-      replacefilter(token: "__MAX_UPGRADE_BUILD__", value: applicationInfo.installOver.maxBuild)
-      replacefilter(token: "__UPGRADE_VERSION__", value: applicationInfo.installOver.version)
       replacefilter(token: "__PRODUCT_PATHS_SELECTOR__", value: systemSelector)
     }
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
-    ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
-                      " /DBASE_DIR=\"$baseDirectory\"" +
-                      " /DCOMMUNITY_DIR=\"$communityHome\"" +
-                      " /DIPR=\"${associateIpr}\"" +
-                      " /DOUT_FILE=\"${outFileName}\"" +
-                      " /DOUT_DIR=\"$artifactsPath\"" +
-                      " \"${box}/nsiconf/idea.nsi\"")
+    if (SystemInfoRt.isWindows) {
+      ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
+                        " /DBASE_DIR=\"$baseDirectory\"" +
+                        " /DCOMMUNITY_DIR=\"$communityHome\"" +
+                        " /DIPR=\"${associateIpr}\"" +
+                        " /DOUT_FILE=\"${outFileName}\"" +
+                        " /DOUT_DIR=\"$artifactsPath\"" +
+                        " \"${box}/nsiconf/idea.nsi\"")
+    }
+    else if (SystemInfoRt.isLinux) {
+      ant.exec(command: "makensis" +
+                        " '-X!AddPluginDir \"${box}/NSIS/Plugins\"'" +
+                        " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
+                        " -DBASE_DIR=\"$baseDirectory\"" +
+                        " -DCOMMUNITY_DIR=\"$communityHome\"" +
+                        " -DIPR=\"${associateIpr}\"" +
+                        " -DOUT_FILE=\"${outFileName}\"" +
+                        " -DOUT_DIR=\"$artifactsPath\"" +
+                        " \"${box}/nsiconf/idea.nsi\"")
+    }
 
     def installerPath = "$artifactsPath/${outFileName}.exe"
     if (!new File(installerPath).exists()) {

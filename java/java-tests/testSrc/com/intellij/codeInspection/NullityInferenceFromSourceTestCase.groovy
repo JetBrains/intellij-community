@@ -19,6 +19,7 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.DfaUtil
 import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Contract
 
@@ -73,6 +74,10 @@ String bar() { return "z"; }
     assert inferNullity(parse('String bar() { return equals(2) ? "a" : equals(3) ? null : "a"; }; ')) == NULLABLE
   }
 
+  void "test string concatenation"() {
+    assert inferNullity(parse('String bar(String s1, String s2) { return s1 + s2; }; ')) == NOT_NULL
+  }
+
   void "test delegation to nullable means nothing"() {
     assert inferNullity(parse('String foo() { return bar("2"); }; String bar(String s) { if (s != "2") return null; return "a"; }; ')) == UNKNOWN
   }
@@ -120,7 +125,10 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
 
   static class LightInferenceTest extends NullityInferenceFromSourceTestCase {
     Nullness inferNullity(PsiMethod method) {
-      return NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
+      assert !((PsiFileImpl) method.containingFile).contentsLoaded
+      def result = NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
+      assert !((PsiFileImpl) method.containingFile).contentsLoaded
+      return result
     }
 
     void "test skip when errors"() {

@@ -35,7 +35,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   private final List<DocumentationProvider> myProviders;
 
   public static DocumentationProvider wrapProviders(Collection<DocumentationProvider> providers) {
-    ArrayList<DocumentationProvider> list = new ArrayList<DocumentationProvider>();
+    ArrayList<DocumentationProvider> list = new ArrayList<>();
     for (DocumentationProvider provider : providers) {
       if (provider instanceof CompositeDocumentationProvider) {
         list.addAll(((CompositeDocumentationProvider)provider).getProviders());

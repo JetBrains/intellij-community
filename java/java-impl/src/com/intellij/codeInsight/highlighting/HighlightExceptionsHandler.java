@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +57,7 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
   protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
     new ChooseClassAndDoHighlightRunnable(myClassTypes, myEditor, CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")) {
       @Override
-      protected void selected(PsiClass... classes) {
+      protected void selected(@NotNull PsiClass... classes) {
         selectionConsumer.consume(Arrays.asList(classes));
       }
     }.run();

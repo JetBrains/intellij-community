@@ -28,14 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public class PyConvertToNewStyleQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("QFIX.convert.to.new.style");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.convert.to.new.style");
   }
 
   @Override

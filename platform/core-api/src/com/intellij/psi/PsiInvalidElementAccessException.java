@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,20 +74,40 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
 
       try {
-        Object trace = recursiveInvocation ? null : findInvalidationTrace(element.getNode());
+        Object trace = recursiveInvocation ? null : getPsiInvalidationTrace(element);
         myMessage = getMessageWithReason(element, message, recursiveInvocation, trace);
-        if (trace == null) {
-          myDiagnostic = Attachment.EMPTY_ARRAY;
-        }
-        else {
-          String diagnostic = trace instanceof Throwable ? ExceptionUtil.getThrowableText((Throwable)trace) : trace.toString();
-          myDiagnostic = new Attachment[]{new Attachment("diagnostic.txt", diagnostic)};
-        }
+        myDiagnostic = createAttachments(trace);
       }
       finally {
         element.putUserData(REPORTING_EXCEPTION, null);
       }
     }
+  }
+
+  private PsiInvalidElementAccessException(@NotNull ASTNode node, @Nullable String message) {
+    myElementReference = new SoftReference<PsiElement>(null);
+    final IElementType elementType = node.getElementType();
+    myMessage = "Element " + node.getClass() + " of type " + elementType + " (" + elementType.getClass() + ")" +
+                (message == null ? "" : "; " + message);
+    myDiagnostic = createAttachments(findInvalidationTrace(node));
+  }
+
+  public static PsiInvalidElementAccessException createByNode(@NotNull ASTNode node, @Nullable String message) {
+    return new PsiInvalidElementAccessException(node, message);
+  }
+
+  @NotNull
+  private static Attachment[] createAttachments(@Nullable Object trace) {
+    return trace == null
+           ? Attachment.EMPTY_ARRAY
+           : new Attachment[]{trace instanceof Throwable ? new Attachment("invalidation", (Throwable)trace)
+                                                         : new Attachment("diagnostic.txt", trace.toString())};
+  }
+
+  @Nullable
+  private static Object getPsiInvalidationTrace(@NotNull PsiElement element) {
+    Object trace = getInvalidationTrace(element);
+    return trace != null || element instanceof PsiFile ? trace : findInvalidationTrace(element.getNode());
   }
 
   private static String getMessageWithReason(@NotNull PsiElement element,
@@ -99,7 +119,12 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       String traceText = !isTrackingInvalidation() ? "disabled" :
                          trace != null ? "see attachment" :
                          "no info";
-      reason += " because: " + reason(element) + "\ninvalidated at: " + traceText;
+      try {
+        reason += " because: " + reason(element);
+      }
+      catch (PsiInvalidElementAccessException ignore) {
+      }
+      reason += "\ninvalidated at: " + traceText;
     }
     return reason + (message == null ? "" : "; " + message);
   }

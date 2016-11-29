@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,23 +26,23 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -59,12 +59,16 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     if (!ProjectAttachProcessor.canAttachToProject()) {
       return !PlatformUtils.isIntelliJ();
     }
+
     for (Module module : modules) {
-      final File moduleFile = new File(module.getModuleFilePath());
-      @SuppressWarnings("ConstantConditions")
-      File projectFile = new File(module.getProject().getProjectFilePath());
-      if (moduleFile.getParent().equals(projectFile.getParent()) &&
-          moduleFile.getParentFile().getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
+      String moduleFile = module.getModuleFilePath();
+      Project project = module.getProject();
+      if (!ProjectKt.isDirectoryBased(project)) {
+        continue;
+      }
+
+      String ideaDir = ProjectKt.getStateStore(project).getDirectoryStorePath();
+      if (PathUtilRt.getParentPath(moduleFile).equals(ideaDir)) {
         return true;
       }
     }
@@ -77,40 +81,29 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     assert modules != null;
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
-    String names = StringUtil.join(Arrays.asList(modules), new Function<Module, String>() {
-      @Override
-      public String fun(final Module module) {
-        return "\'" + module.getName() + "\'";
-      }
-    }, ", ");
+    String names = StringUtil.join(Arrays.asList(modules), module -> "\'" + module.getName() + "\'", ", ");
     int ret = Messages.showOkCancelDialog(getConfirmationText(modules, names), getActionTitle(), Messages.getQuestionIcon());
     if (ret != Messages.OK) return;
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        final Runnable action = new Runnable() {
-          @Override
-          public void run() {
-            final ModuleManager moduleManager = ModuleManager.getInstance(project);
-            final Module[] currentModules = moduleManager.getModules();
-            final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
-            final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<Module, ModifiableRootModel>();
-            for (final Module module : modules) {
-              final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-              for (final Module otherModule : currentModules) {
-                if (otherModule == module || ArrayUtilRt.find(modules, otherModule) != -1) continue;
-                if (!otherModuleRootModels.containsKey(otherModule)) {
-                  otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
-                }
-              }
-              removeModule(module, modifiableModel, otherModuleRootModels.values(), modifiableModuleModel);
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      final Runnable action = () -> {
+        final ModuleManager moduleManager = ModuleManager.getInstance(project);
+        final Module[] currentModules = moduleManager.getModules();
+        final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
+        final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<>();
+        for (final Module module : modules) {
+          final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+          for (final Module otherModule : currentModules) {
+            if (otherModule == module || ArrayUtilRt.find(modules, otherModule) != -1) continue;
+            if (!otherModuleRootModels.containsKey(otherModule)) {
+              otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
             }
-            final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[otherModuleRootModels.size()]);
-            ModifiableModelCommitter.multiCommit(modifiableRootModels, modifiableModuleModel);
           }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
-      }
+          removeModule(module, modifiableModel, otherModuleRootModels.values(), modifiableModuleModel);
+        }
+        final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[otherModuleRootModels.size()]);
+        ModifiableModelCommitter.multiCommit(modifiableRootModels, modifiableModuleModel);
+      };
+      ApplicationManager.getApplication().runWriteAction(action);
     }, ProjectBundle.message("module.remove.command"), null);
   }
 

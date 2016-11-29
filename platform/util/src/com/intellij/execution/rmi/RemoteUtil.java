@@ -52,7 +52,7 @@ public class RemoteUtil {
             if (cpts.length != mpts.length) continue;
             for (int i = 0; i < mpts.length; i++) {
               Class<?> mpt = mpts[i];
-              Class<?> cpt = cpts[i];
+              Class<?> cpt = castArgumentClassToLocal(cpts[i]);
               if (!cpt.isAssignableFrom(mpt)) continue main;
             }
             m = candidate;
@@ -90,6 +90,51 @@ public class RemoteUtil {
       return Class.forName(className, true, loader);
     }
     return returnType;
+  }
+
+  private static Class<?> castArgumentClassToLocal(@NotNull Class<?> remote) {
+    try {
+      if (!CastableArgument.class.isAssignableFrom(remote)) return remote;
+      Type[] generics = remote.getGenericInterfaces();
+      for (Type generic : generics) {
+        if (generic instanceof ParameterizedType) {
+          Type rawType = ((ParameterizedType)generic).getRawType();
+          if (rawType == CastableArgument.class) return (Class<?>)((ParameterizedType)generic).getActualTypeArguments()[0];
+        }
+      }
+    }
+    catch (Exception ignore) {
+    }
+    return remote;
+  }
+
+  @Nullable
+  private static Object[] fixArgs(@Nullable Object[] args, @NotNull Method method) {
+    if (args == null) return null;
+    Object[] result = new Object[args.length];
+    try {
+      Class<?>[] methodArgs = method.getParameterTypes();
+      if (methodArgs.length != args.length) return args;
+      for (int i = 0; i < args.length; i++) {
+        result[i] = fixArg(args[i], methodArgs[i]);
+      }
+    }
+    catch (Exception e) {
+      return args;
+    }
+    return result;
+  }
+
+  @Nullable
+  private static Object fixArg(@Nullable Object arg, @NotNull Class<?> fieldClass) {
+    if (arg == null) return null;
+    if (!fieldClass.isPrimitive() && Proxy.isProxyClass(arg.getClass())) {
+      InvocationHandler handler = Proxy.getInvocationHandler(arg);
+      RemoteInvocationHandler remoteHandler = ObjectUtils.tryCast(handler, RemoteInvocationHandler.class);
+      boolean isCastableArg = remoteHandler != null && CastableArgument.class.isAssignableFrom(remoteHandler.myRemote.getClass());
+      if (isCastableArg && remoteHandler.myClazz == fieldClass) return remoteHandler.myRemote;
+    }
+    return arg;
   }
 
   public static <T> T substituteClassLoader(@NotNull final T remote, @Nullable final ClassLoader classLoader) throws Exception {
@@ -226,8 +271,11 @@ public class RemoteUtil {
       else {
         Method remoteMethod = ourRemoteToLocalMap.get(Couple.of(myRemote.getClass(), myClazz)).get(method);
         if (remoteMethod == null) throw new NoSuchMethodError(method.getName() + " in " + myRemote.getClass());
-        return invokeRemote(method, remoteMethod, myRemote, args, myLoader, false);
+        return invokeRemote(method, remoteMethod, myRemote, fixArgs(args, method), myLoader, false);
       }
     }
+  }
+
+  public interface CastableArgument<T> {
   }
 }

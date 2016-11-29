@@ -50,10 +50,10 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   private final LibrariesContainer myLibrariesContainer;
   private final EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
   private final EventDispatcher<FrameworkVersionListener> myVersionEventDispatcher = EventDispatcher.create(FrameworkVersionListener.class);
-  private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
-  private final Map<String, FrameworkSupportOptionsComponent> myOptionsComponentsMap = new HashMap<String, FrameworkSupportOptionsComponent>();
-  private final Map<String, FrameworkVersion> mySelectedVersions = new HashMap<String, FrameworkVersion>();
-  private final Map<String, String> myFrameworkVersions = new HashMap<String, String>();
+  private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<>();
+  private final Map<String, FrameworkSupportOptionsComponent> myOptionsComponentsMap = new HashMap<>();
+  private final Map<String, FrameworkVersion> mySelectedVersions = new HashMap<>();
+  private final Map<String, String> myFrameworkVersions = new HashMap<>();
   private FrameworkLibraryProvider myLibraryProvider;
 
   public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {

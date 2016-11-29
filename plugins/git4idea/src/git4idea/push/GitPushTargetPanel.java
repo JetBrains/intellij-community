@@ -29,20 +29,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.remote.GitDefineRemoteDialog;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +54,12 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static java.util.stream.Collectors.toList;
 
 public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
@@ -62,6 +67,10 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   private static final Comparator<GitRemoteBranch> REMOTE_BRANCH_COMPARATOR = new MyRemoteBranchComparator();
   private static final String SEPARATOR = " : ";
+  private static final Color NEW_BRANCH_LABEL_FG = new JBColor(0x00b53d, 0x24953c);
+  private static final Color NEW_BRANCH_LABEL_BG = ColorUtil.toAlpha(NEW_BRANCH_LABEL_FG, 40);
+  private static final RelativeFont NEW_BRANCH_LABEL_FONT = RelativeFont.TINY.small();
+  private static final TextIcon NEW_BRANCH_LABEL = new TextIcon("New", NEW_BRANCH_LABEL_FG, NEW_BRANCH_LABEL_BG, 0);
 
   @NotNull private final GitPushSupport myPushSupport;
   @NotNull private final GitRepository myRepository;
@@ -112,7 +121,6 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     updateComponents(defaultTarget);
 
     setFocusCycleRoot(true);
-    setFocusTraversalPolicyProvider(true);
     myRemoteRenderer.setFocusable(true);
     myTargetEditor.setFocusable(true);
     setFocusTraversalPolicy(new MyGitTargetFocusTraversalPolicy());
@@ -166,7 +174,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private void addRemoteUnderModal(@NotNull final String remoteName, @NotNull final String remoteUrl) {
-    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Adding remote...", true) {
+    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Adding Remote...", true) {
       private GitCommandResult myResult;
 
       @Override
@@ -194,19 +202,31 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private void showRemoteSelector(@NotNull Component component, @NotNull Point point) {
-    final List<String> remotes = getRemotes();
+    List<PopupItem> remotes = getPopupItems();
     if (remotes.size() <= 1) {
       return;
     }
-    ListPopup popup = new ListPopupImpl(new BaseListPopupStep<String>(null, remotes) {
+    ListPopup popup = new ListPopupImpl(new BaseListPopupStep<PopupItem>(null, remotes) {
       @Override
-      public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-        myRemoteRenderer.updateLinkText(selectedValue);
-        if (myFireOnChangeAction != null && !myTargetEditor.isShowing()) {
-          //fireOnChange only when editing completed
-          myFireOnChangeAction.run();
-        }
-        return super.onChosen(selectedValue, finalChoice);
+      public PopupStep onChosen(@NotNull PopupItem selectedValue, boolean finalChoice) {
+        return doFinalStep(() -> {
+          if (selectedValue.isDefineRemote()) {
+            showDefineRemoteDialog();
+          }
+          else {
+            myRemoteRenderer.updateLinkText(selectedValue.getPresentable());
+            if (myFireOnChangeAction != null && !myTargetEditor.isShowing()) {
+              //fireOnChange only when editing completed
+              myFireOnChangeAction.run();
+            }
+          }
+        });
+      }
+
+      @Nullable
+      @Override
+      public ListSeparator getSeparatorAbove(PopupItem value) {
+        return value.isDefineRemote() ? new ListSeparator() : null;
       }
     }) {
       @Override
@@ -223,13 +243,10 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   @NotNull
-  private List<String> getRemotes() {
-    return ContainerUtil.map(myRepository.getRemotes(), new Function<GitRemote, String>() {
-      @Override
-      public String fun(GitRemote remote) {
-        return remote.getName();
-      }
-    });
+  private List<PopupItem> getPopupItems() {
+    List<PopupItem> items = newArrayList(ContainerUtil.map(myRepository.getRemotes(), PopupItem::forRemote));
+    items.add(PopupItem.DEFINE_REMOTE);
+    return items;
   }
 
   @Override
@@ -240,16 +257,11 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       renderer.append(myError, PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.ERROR_ATTRIBUTES, isActive));
     }
     else {
-      String currentRemote = myRemoteRenderer.getText();
-      List<String> remotes = getRemotes();
-      if (remotes.isEmpty() || remotes.size() > 1) {
-        myRemoteRenderer.setSelected(isSelected);
-        myRemoteRenderer.setTransparent(!remotes.isEmpty() && !isActive);
-        myRemoteRenderer.render(renderer);
-      }
-      else {
-        renderer.append(currentRemote, targetTextAttributes);
-      }
+      Collection<GitRemote> remotes = myRepository.getRemotes();
+      myRemoteRenderer.setSelected(isSelected);
+      myRemoteRenderer.setTransparent(!remotes.isEmpty() && !isActive);
+      myRemoteRenderer.render(renderer);
+
       if (!remotes.isEmpty()) {
         renderer.append(SEPARATOR, targetTextAttributes);
         if (forceRenderedText != null) {
@@ -258,12 +270,17 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
           return;
         }
         GitPushTarget target = getValue();
-        if (target != null && target.isNewBranchCreated()) {
-          renderer.append("+", PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, isActive), this);
-        }
+        boolean newRemoteBranch = target != null && target.isNewBranchCreated();
         myTargetRenderer.setSelected(isSelected);
         myTargetRenderer.setTransparent(!isActive);
         myTargetRenderer.render(renderer);
+        if (newRemoteBranch) {
+          renderer.setIconOnTheRight(true);
+          NEW_BRANCH_LABEL.setInsets(JBUI.insets(2));
+          NEW_BRANCH_LABEL.setRound(JBUI.scale(4));
+          NEW_BRANCH_LABEL.setFont(NEW_BRANCH_LABEL_FONT.derive(renderer.getFont()));
+          renderer.setIcon(NEW_BRANCH_LABEL);
+        }
       }
     }
   }
@@ -322,13 +339,9 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @NotNull
   private static List<String> getTargetNames(@NotNull GitRepository repository) {
-    List<GitRemoteBranch> remoteBranches = ContainerUtil.sorted(repository.getBranches().getRemoteBranches(), REMOTE_BRANCH_COMPARATOR);
-    return ContainerUtil.map(remoteBranches, new Function<GitRemoteBranch, String>() {
-      @Override
-      public String fun(GitRemoteBranch branch) {
-        return branch.getNameForRemoteOperations();
-      }
-    });
+    return repository.getBranches().getRemoteBranches().stream().
+      sorted(REMOTE_BRANCH_COMPARATOR).
+      map(GitRemoteBranch::getNameForRemoteOperations).collect(toList());
   }
 
   private static class MyRemoteBranchComparator implements Comparator<GitRemoteBranch> {
@@ -338,10 +351,10 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       String remoteName2 = o2.getRemote().getName();
       int remoteComparison = remoteName1.compareTo(remoteName2);
       if (remoteComparison != 0) {
-        if (remoteName1.equals(GitRemote.ORIGIN_NAME)) {
+        if (remoteName1.equals(GitRemote.ORIGIN)) {
           return -1;
         }
-        if (remoteName2.equals(GitRemote.ORIGIN_NAME)) {
+        if (remoteName2.equals(GitRemote.ORIGIN)) {
           return 1;
         }
         return remoteComparison;
@@ -389,16 +402,45 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
+  private static class PopupItem {
+    static final PopupItem DEFINE_REMOTE = new PopupItem(null);
+
+    @Nullable GitRemote remote;
+
+    @NotNull
+    static PopupItem forRemote(@NotNull GitRemote remote) {
+      return new PopupItem(remote);
+    }
+
+    private PopupItem(@Nullable GitRemote remote) {
+      this.remote = remote;
+    }
+
+    @NotNull
+    String getPresentable() {
+      return remote == null ? "Define Remote" : remote.getName();
+    }
+
+    boolean isDefineRemote() {
+      return remote == null;
+    }
+
+    @Override
+    public String toString() {
+      return getPresentable();
+    }
+  }
+
   private class MyGitTargetFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return ContainerUtil.<Component>newArrayList(myTargetEditor.getFocusTarget(), myRemoteRenderer);
+      return newArrayList(myTargetEditor.getFocusTarget(), myRemoteRenderer);
     }
 
     @Override
     public Component getComponentAfter(Container aContainer, Component aComponent) {
-      if (getRemotes().size() > 1) {
+      if (getPopupItems().size() > 1) {
         return super.getComponentAfter(aContainer, aComponent);
       }
       return aComponent;
@@ -406,7 +448,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
     @Override
     public Component getComponentBefore(Container aContainer, Component aComponent) {
-      if (getRemotes().size() > 1) {
+      if (getPopupItems().size() > 1) {
         return super.getComponentBefore(aContainer, aComponent);
       }
       return aComponent;

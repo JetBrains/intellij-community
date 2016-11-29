@@ -81,12 +81,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
 
     // Update the rest of projects in combobox, if repository is already configured
     if (myRepository.getCurrentProject() != null) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          new FetchMantisProjects().queue();
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> new FetchMantisProjects().queue());
     }
   }
 

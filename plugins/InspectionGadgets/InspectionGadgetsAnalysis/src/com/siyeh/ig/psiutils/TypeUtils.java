@@ -30,7 +30,7 @@ import java.util.Map;
 
 public class TypeUtils {
 
-  private static final Map<PsiType, Integer> typePrecisions = new HashMap<PsiType, Integer>(7);
+  private static final Map<PsiType, Integer> typePrecisions = new HashMap<>(7);
 
   static {
     typePrecisions.put(PsiType.BYTE, 1);
@@ -85,7 +85,10 @@ public class TypeUtils {
   }
 
   public static boolean isOptional(@Nullable PsiType type) {
-    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return isOptional(PsiUtil.resolveClassInClassTypeOnly(type));
+  }
+
+  public static boolean isOptional(PsiClass aClass) {
     if (aClass == null) {
       return false;
     }

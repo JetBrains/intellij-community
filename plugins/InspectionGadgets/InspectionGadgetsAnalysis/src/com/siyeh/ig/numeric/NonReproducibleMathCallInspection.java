@@ -34,7 +34,7 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
 
   @SuppressWarnings("StaticCollection")
   @NonNls private static final Set<String> nonReproducibleMethods =
-    new HashSet<String>(20);
+    new HashSet<>(20);
 
   static {
     nonReproducibleMethods.add("acos");
@@ -78,15 +78,10 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
   }
 
   private static class MakeStrictFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "non.reproducible.math.call.replace.quickfix");
     }
@@ -130,7 +125,7 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
         return;
       }
       final String className = referencedClass.getQualifiedName();
-      if (!"java.lang.Math".equals(className)) {
+      if (!CommonClassNames.JAVA_LANG_MATH.equals(className)) {
         return;
       }
       registerMethodCallError(expression);

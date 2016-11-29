@@ -49,7 +49,7 @@ public class GenericDomValueConvertersRegistry {
   }
 
   private final Map<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>> myConditionConverters =
-    new LinkedHashMap<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>>();
+    new LinkedHashMap<>();
 
   public void registerDefaultConverters() {
     registerBooleanConverters();
@@ -100,11 +100,7 @@ public class GenericDomValueConvertersRegistry {
   }
 
   public void registerConverter(@NotNull Converter<?> provider, @NotNull final PsiType type) {
-    registerConverter(provider, new Condition<Pair<PsiType, GenericDomValue>>() {
-      public boolean value(final Pair<PsiType, GenericDomValue> pair) {
-        return Comparing.equal(pair.getFirst(), type);
-      }
-    });
+    registerConverter(provider, pair -> Comparing.equal(pair.getFirst(), type));
   }
 
   public void registerConverter(@NotNull Converter<?> provider, @NotNull Condition<Pair<PsiType, GenericDomValue>> condition) {
@@ -124,11 +120,7 @@ public class GenericDomValueConvertersRegistry {
 
   public void registerConverter(@NotNull Converter<?> provider, @NotNull Class type) {
     final String name = type.getCanonicalName();
-    registerConverter(provider, new Condition<Pair<PsiType, GenericDomValue>>() {
-      public boolean value(final Pair<PsiType, GenericDomValue> pair) {
-        return pair.first != null && Comparing.equal(name, pair.first.getCanonicalText());
-      }
-    });
+    registerConverter(provider, pair -> pair.first != null && Comparing.equal(name, pair.first.getCanonicalText()));
   }
 
 }

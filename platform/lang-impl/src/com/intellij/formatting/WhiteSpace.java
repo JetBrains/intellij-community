@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.formatting.engine.BlockRangesMap;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -45,7 +46,7 @@ import java.util.ArrayList;
  * <p/>
  * Not thread-safe.
  */
-class WhiteSpace {
+public class WhiteSpace {
 
   private static final char LINE_FEED = '\n';
 
@@ -72,6 +73,8 @@ class WhiteSpace {
 
   private static final int LF_COUNT_SHIFT = 7;
   private static final int MAX_LF_COUNT = 1 << 24;
+
+  private static final RangesAssert myRangesAssert = new RangesAssert();
 
   /**
    * Creates new <code>WhiteSpace</code> object with the given start offset and a flag that shows if current white space is
@@ -107,15 +110,11 @@ class WhiteSpace {
    * @param model                 formatting model that is used to access to the underlying document text
    * @param options               indent formatting options
    */
-  public void append(int newEndOffset, FormattingDocumentModel model, CommonCodeStyleSettings.IndentOptions options) {
+  public void changeEndOffset(int newEndOffset, FormattingDocumentModel model, CommonCodeStyleSettings.IndentOptions options) {
     final int oldEndOffset = myEnd;
     if (newEndOffset == oldEndOffset) return;
     if (myStart >= newEndOffset) {
-      InitialInfoBuilder.assertInvalidRanges(myStart,
-        newEndOffset,
-        model,
-        "some block intersects with whitespace"
-      );
+      myRangesAssert.assertInvalidRanges(myStart, newEndOffset, model, "some block intersects with whitespace");
     }
 
     myEnd = newEndOffset;
@@ -124,14 +123,9 @@ class WhiteSpace {
     myInitial = model.getText(range);
 
     if (!coveredByBlock(model)) {
-      InitialInfoBuilder.assertInvalidRanges(myStart,
-        myEnd,
-        model,
-        "nonempty text is not covered by block"
-      );
+      myRangesAssert.assertInvalidRanges(myStart, myEnd, model, "nonempty text is not covered by block");
     }
 
-    // There is a possible case that this method is called more than once on the same object. We want to
     if (newEndOffset > oldEndOffset) {
       refreshStateOnEndOffsetIncrease(newEndOffset, oldEndOffset, options.TAB_SIZE);
     } else {
@@ -292,13 +286,10 @@ class WhiteSpace {
    * @param indent      new value for the {@link #getIndentSpaces()}  indentSpaces} property
    */
   public void setSpaces(final int spaces, final int indent) {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        if (!isKeepFirstColumn() || getFlag(CONTAINS_SPACES_INITIALLY_MASK)) {
-          mySpaces = spaces;
-          myIndentSpaces = indent;
-        }
+    performModification(() -> {
+      if (!isKeepFirstColumn() || getFlag(CONTAINS_SPACES_INITIALLY_MASK)) {
+        mySpaces = spaces;
+        myIndentSpaces = indent;
       }
     });
   }
@@ -372,17 +363,14 @@ class WhiteSpace {
    * @param spaceProperty     spacing settings holder
    */
   public void arrangeSpaces(final SpacingImpl spaceProperty) {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        if (spaceProperty != null) {
-          if (getLineFeeds() == 0) {
-            if (spaceProperty.getMinSpaces() >= 0 && getTotalSpaces() < spaceProperty.getMinSpaces()) {
-              setSpaces(spaceProperty.getMinSpaces(), 0);
-            }
-            if (spaceProperty.getMaxSpaces() >= 0 && getTotalSpaces() > spaceProperty.getMaxSpaces()) {
-              setSpaces(spaceProperty.getMaxSpaces(), 0);
-            }
+    performModification(() -> {
+      if (spaceProperty != null) {
+        if (getLineFeeds() == 0) {
+          if (spaceProperty.getMinSpaces() >= 0 && getTotalSpaces() < spaceProperty.getMinSpaces()) {
+            setSpaces(spaceProperty.getMinSpaces(), 0);
+          }
+          if (spaceProperty.getMaxSpaces() >= 0 && getTotalSpaces() > spaceProperty.getMaxSpaces()) {
+            setSpaces(spaceProperty.getMaxSpaces(), 0);
           }
         }
       }
@@ -392,50 +380,44 @@ class WhiteSpace {
   /**
    * Tries to ensure that number of line feeds managed by the current {@link WhiteSpace} is consistent to the settings
    * defined at the given spacing property.
-   *
-   * @param spaceProperty       space settings holder
-   * @param formatProcessor    format processor to use for space settings state refreshing
    */
-  public void arrangeLineFeeds(final SpacingImpl spaceProperty, final FormatProcessor formatProcessor) {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        if (spaceProperty != null) {
-          spaceProperty.refresh(formatProcessor);
+  public void arrangeLineFeeds(final SpacingImpl spaceProperty, final BlockRangesMap helper) {
+    performModification(() -> {
+      if (spaceProperty != null) {
+        spaceProperty.refresh(helper);
 
-          if (spaceProperty.getMinLineFeeds() >= 0 && getLineFeeds() < spaceProperty.getMinLineFeeds()) {
-            setLineFeeds(spaceProperty.getMinLineFeeds());
-          }
-          if (getLineFeeds() > 0) {
-            if (spaceProperty.getKeepBlankLines() > 0) {
-              if (getLineFeeds() >= spaceProperty.getKeepBlankLines() + 1) {
-                setLineFeeds(spaceProperty.getKeepBlankLines() + 1);
-              }
-            }
-            else {
-              if (getLineFeeds() > spaceProperty.getMinLineFeeds()) {
-                if (spaceProperty.shouldKeepLineFeeds()) {
-                  setLineFeeds(Math.max(spaceProperty.getMinLineFeeds(), 1));
-                }
-                else {
-                  setLineFeeds(spaceProperty.getMinLineFeeds());
-                  if (getLineFeeds() == 0) mySpaces = 0;
-                }
-              }
-            }
-            if (getLineFeeds() == 1 && !spaceProperty.shouldKeepLineFeeds() && spaceProperty.getMinLineFeeds() == 0) {
-              setLineFeeds(0);
-              mySpaces = 0;
-            }
-
-            if (getLineFeeds() > 0 && getLineFeeds() < spaceProperty.getPrefLineFeeds()) {
-              setLineFeeds(spaceProperty.getPrefLineFeeds());
-            }
-          }
-        } else if (isFirst()) {
-          setLineFeeds(0);
-          mySpaces = 0;
+        if (spaceProperty.getMinLineFeeds() >= 0 && getLineFeeds() < spaceProperty.getMinLineFeeds()) {
+          setLineFeeds(spaceProperty.getMinLineFeeds());
         }
+        if (getLineFeeds() > 0) {
+          if (spaceProperty.getKeepBlankLines() > 0) {
+            if (getLineFeeds() >= spaceProperty.getKeepBlankLines() + 1) {
+              setLineFeeds(spaceProperty.getKeepBlankLines() + 1);
+            }
+          }
+          else {
+            if (getLineFeeds() > spaceProperty.getMinLineFeeds()) {
+              if (spaceProperty.shouldKeepLineFeeds()) {
+                setLineFeeds(Math.max(spaceProperty.getMinLineFeeds(), 1));
+              }
+              else {
+                setLineFeeds(spaceProperty.getMinLineFeeds());
+                if (getLineFeeds() == 0) mySpaces = 0;
+              }
+            }
+          }
+          if (getLineFeeds() == 1 && !spaceProperty.shouldKeepLineFeeds() && spaceProperty.getMinLineFeeds() == 0) {
+            setLineFeeds(0);
+            mySpaces = 0;
+          }
+
+          if (getLineFeeds() > 0 && getLineFeeds() < spaceProperty.getPrefLineFeeds()) {
+            setLineFeeds(spaceProperty.getPrefLineFeeds());
+          }
+        }
+      } else if (isFirst()) {
+        setLineFeeds(0);
+        mySpaces = 0;
       }
     });
 
@@ -482,13 +464,10 @@ class WhiteSpace {
    * Tries to ensure that current {@link WhiteSpace} object contains at least one line feed.
    */
   public void ensureLineFeed() {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        if (!containsLineFeeds()) {
-          setLineFeeds(1);
-          mySpaces = 0;
-        }
+    performModification(() -> {
+      if (!containsLineFeeds()) {
+        setLineFeeds(1);
+        mySpaces = 0;
       }
     });
   }
@@ -541,20 +520,14 @@ class WhiteSpace {
    * <p/>
    * This method may be considered a shortcut for calling {@link #arrangeLineFeeds(SpacingImpl, FormatProcessor)} and
    * {@link #arrangeSpaces(SpacingImpl)}.
-   *
-   * @param spacing             spacing settings holder
-   * @param formatProcessor     format processor to use to refresh state of the given <code>'spacing'</code> object
    */
-  public void removeLineFeeds(final SpacingImpl spacing, final FormatProcessor formatProcessor) {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        setLineFeeds(0);
-        mySpaces = 0;
-        myIndentSpaces = 0;
-      }
+  public void removeLineFeeds(final SpacingImpl spacing, final BlockRangesMap helper) {
+    performModification(() -> {
+      setLineFeeds(0);
+      mySpaces = 0;
+      myIndentSpaces = 0;
     });
-    arrangeLineFeeds(spacing, formatProcessor);
+    arrangeLineFeeds(spacing, helper);
     arrangeSpaces(spacing);
   }
 
@@ -681,7 +654,7 @@ class WhiteSpace {
    */
   private CharSequence[] getInitialLines() {
     if (myInitial == null) return new CharSequence[]{""};
-    final ArrayList<CharSequence> result = new ArrayList<CharSequence>();
+    final ArrayList<CharSequence> result = new ArrayList<>();
     StringBuilder currentLine = new StringBuilder();
     for (int i = 0; i < myInitial.length(); i++) {
       final char c = myInitial.charAt(i);

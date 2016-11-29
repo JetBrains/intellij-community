@@ -1,0 +1,11 @@
+REGEXP_FILE
+  RegExpPatternImpl: <abc\u22>
+    RegExpBranchImpl: <abc\u22>
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpCharImpl: <b>
+        PsiElement(CHARACTER)('b')
+      RegExpCharImpl: <c>
+        PsiElement(CHARACTER)('c')
+      RegExpCharImpl: <\u22>
+        PsiElement(INVALID_UNICODE_ESCAPE_TOKEN)('\u22')

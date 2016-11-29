@@ -50,7 +50,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public Collection<String> suggestHomePaths() {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    List<String> candidates = new ArrayList<String>();
+    List<String> candidates = new ArrayList<>();
     if (project != null) {
       VirtualFile rootDir = project.getBaseDir();
       if (rootDir != null)
@@ -89,7 +89,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   }
 
   public static List<VirtualFile> getCondaDefaultLocations() {
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = new ArrayList<>();
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
     if (userHome != null) {
       for (String root : CONDA_DEFAULT_ROOTS) {
@@ -137,7 +137,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   }
 
   public static Collection<String> findInDirectory(VirtualFile rootDir) {
-    List<String> candidates = new ArrayList<String>();
+    List<String> candidates = new ArrayList<>();
     if (rootDir != null) {
       rootDir.refresh(true, false);
       VirtualFile[] suspects = rootDir.getChildren();

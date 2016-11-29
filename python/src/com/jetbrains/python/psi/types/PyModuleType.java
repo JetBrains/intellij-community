@@ -91,7 +91,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       return attributes;
     }
     if (PyUtil.isPackage(myModule)) {
-      final List<PyImportElement> importElements = new ArrayList<PyImportElement>();
+      final List<PyImportElement> importElements = new ArrayList<>();
       if (myImportedModule != null && (location == null || !inSameFile(location, myImportedModule))) {
         final PyImportElement importElement = myImportedModule.getImportElement();
         if (importElement != null) {
@@ -175,7 +175,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @NotNull
   private static List<QualifiedName> getImportedQNames(@NotNull PyImportElement element) {
-    final List<QualifiedName> importedQNames = new ArrayList<QualifiedName>();
+    final List<QualifiedName> importedQNames = new ArrayList<>();
     final PyStatement stmt = element.getContainingImportStatement();
     if (stmt instanceof PyFromImportStatement) {
       final PyFromImportStatement fromImportStatement = (PyFromImportStatement)stmt;
@@ -216,10 +216,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       if (file != null && absoluteQName != null) {
         final QualifiedName prefixQName = PyUtil.isPackage(file) ? absoluteQName : absoluteQName.removeLastComponent();
         if (prefixQName.getComponentCount() > 0) {
-          final List<QualifiedName> results = new ArrayList<QualifiedName>();
+          final List<QualifiedName> results = new ArrayList<>();
           results.addAll(importedQNames);
           for (QualifiedName qName : importedQNames) {
-            final List<String> components = new ArrayList<String>();
+            final List<String> components = new ArrayList<>();
             components.addAll(prefixQName.getComponents());
             components.addAll(qName.getComponents());
             results.add(QualifiedName.fromComponents(components));
@@ -233,7 +233,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @NotNull
   public static List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
-    final List<PyImportElement> visibleImports = new ArrayList<PyImportElement>();
+    final List<PyImportElement> visibleImports = new ArrayList<>();
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -264,7 +264,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
    */
   @NotNull
   private static List<PsiFileSystemItem> getSubmodulesList(final PsiDirectory directory, @Nullable PsiElement anchor) {
-    List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
+    List<PsiFileSystemItem> result = new ArrayList<>();
 
     if (directory != null) { // just in case
       // file modules
@@ -308,7 +308,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public List<LookupElement> getCompletionVariantsAsLookupElements(PsiElement location,
                                                                    ProcessingContext context,
                                                                    boolean wantAllSubmodules, boolean suppressParentheses) {
-    List<LookupElement> result = new ArrayList<LookupElement>();
+    List<LookupElement> result = new ArrayList<>();
 
     Set<String> namesAlready = context.get(CTX_NAMES);
     PointInImport point = ResolveImportUtil.getPointInImport(location);
@@ -368,13 +368,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   private static CompletionVariantsProcessor createCompletionVariantsProcessor(PsiElement location,
                                                                                boolean suppressParentheses,
                                                                                PointInImport point) {
-    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement psiElement) {
-        return !(psiElement instanceof PyImportElement) ||
-               PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
-      }
-    }, null);
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location,
+                                                                                  psiElement -> !(psiElement instanceof PyImportElement) ||
+                                                                                                                                                                          PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement, null);
     if (suppressParentheses) {
       processor.suppressParentheses();
     }
@@ -389,18 +385,15 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
     final List<PsiElement> elements = collectImportedSubmodules(pyPackage, location);
     return elements != null ? ContainerUtil.mapNotNull(elements,
-                                    new Function<PsiElement, LookupElement>() {
-                                      @Override
-                                      public LookupElement fun(PsiElement element) {
-                                        if (element instanceof PsiFileSystemItem) {
-                                          return buildFileLookupElement((PsiFileSystemItem)element, existingNames);
-                                        }
-                                        else if (element instanceof PsiNamedElement) {
-                                          return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
-                                        }
-                                        return null;
-                                      }
-                                    }) : Collections.<LookupElement>emptyList();
+                                                       (Function<PsiElement, LookupElement>)element -> {
+                                                         if (element instanceof PsiFileSystemItem) {
+                                                           return buildFileLookupElement((PsiFileSystemItem)element, existingNames);
+                                                         }
+                                                         else if (element instanceof PsiNamedElement) {
+                                                           return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
+                                                         }
+                                                         return null;
+                                                       }) : Collections.<LookupElement>emptyList();
   }
 
   @Nullable
@@ -420,7 +413,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     if (scopeOwner == null) {
       return Collections.emptyList();
     }
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     nextImportElement:
     for (PyImportElement importElement : getVisibleImports(scopeOwner)) {
       PsiElement resolvedChild = PyUtil.turnInitIntoDir(importElement.resolve());
@@ -444,7 +437,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public static List<LookupElement> getSubModuleVariants(final PsiDirectory directory,
                                                          PsiElement location,
                                                          Set<String> namesAlready) {
-    List<LookupElement> result = new ArrayList<LookupElement>();
+    List<LookupElement> result = new ArrayList<>();
     for (PsiFileSystemItem item : getSubmodulesList(directory, location)) {
       if (item != location.getContainingFile().getOriginalFile()) {
         LookupElement lookupElement = buildFileLookupElement(item, namesAlready);

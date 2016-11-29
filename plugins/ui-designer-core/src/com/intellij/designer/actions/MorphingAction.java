@@ -53,20 +53,17 @@ public class MorphingAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        List<RadComponent> newComponents = new ArrayList<RadComponent>();
+    myDesigner.getToolProvider().execute(() -> {
+      List<RadComponent> newComponents = new ArrayList<>();
 
-        for (RadComponent component : myComponents) {
-          RadComponent newComponent = component.morphingTo(myTarget);
-          if (newComponent != null) {
-            newComponents.add(newComponent);
-          }
+      for (RadComponent component : myComponents) {
+        RadComponent newComponent = component.morphingTo(myTarget);
+        if (newComponent != null) {
+          newComponents.add(newComponent);
         }
-
-        myArea.setSelection(newComponents);
       }
+
+      myArea.setSelection(newComponents);
     }, "Run Morphing action", true);
   }
 

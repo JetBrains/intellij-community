@@ -32,9 +32,12 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
   private static final String MY_SHIFT_SHIFT_ACTION = "ModifierKeyDoubleClickHandlerTest.action1";
   private static final String MY_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action2";
   private static final String MY_SHIFT_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action3";
+  private static final String MY_SHIFT_OTHER_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action4";
 
   private static final KeyboardShortcut SHIFT_KEY_SHORTCUT =
     new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_MASK), null);
+  private static final KeyboardShortcut SHIFT_OTHER_KEY_SHORTCUT =
+    new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK), null);
 
   private final JComponent myComponent = new JPanel();
 
@@ -42,6 +45,7 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
   private int myShiftShiftActionInvocationCount;
   private int myShiftKeyActionInvocationCount;
   private int myShiftShiftKeyActionInvocationCount;
+  private int myShiftOtherKeyActionInvocationCount;
 
   @Override
   public void setUp() throws Exception {
@@ -65,7 +69,14 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
         myShiftShiftKeyActionInvocationCount++;
       }
     });
+    ActionManager.getInstance().registerAction(MY_SHIFT_OTHER_KEY_ACTION, new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myShiftOtherKeyActionInvocationCount++;
+      }
+    });
     KeymapManager.getInstance().getActiveKeymap().addShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT);
+    KeymapManager.getInstance().getActiveKeymap().addShortcut(MY_SHIFT_OTHER_KEY_ACTION, SHIFT_OTHER_KEY_SHORTCUT);
     ModifierKeyDoubleClickHandler.getInstance().registerAction(MY_SHIFT_SHIFT_ACTION, KeyEvent.VK_SHIFT, -1);
     ModifierKeyDoubleClickHandler.getInstance().registerAction(MY_SHIFT_SHIFT_KEY_ACTION, KeyEvent.VK_SHIFT, KeyEvent.VK_BACK_SPACE);
   }
@@ -74,7 +85,9 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
   public void tearDown() throws Exception {
     ModifierKeyDoubleClickHandler.getInstance().unregisterAction(MY_SHIFT_SHIFT_KEY_ACTION);
     ModifierKeyDoubleClickHandler.getInstance().unregisterAction(MY_SHIFT_SHIFT_ACTION);
+    KeymapManager.getInstance().getActiveKeymap().removeShortcut(MY_SHIFT_OTHER_KEY_ACTION, SHIFT_OTHER_KEY_SHORTCUT);
     KeymapManager.getInstance().getActiveKeymap().removeShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT);
+    ActionManager.getInstance().unregisterAction(MY_SHIFT_OTHER_KEY_ACTION);
     ActionManager.getInstance().unregisterAction(MY_SHIFT_SHIFT_KEY_ACTION);
     ActionManager.getInstance().unregisterAction(MY_SHIFT_KEY_ACTION);
     ActionManager.getInstance().unregisterAction(MY_SHIFT_SHIFT_ACTION);
@@ -86,9 +99,9 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
     press();
     release();
     press();
-    assertInvocationCounts(0, 0, 0);
+    assertInvocationCounts(0, 0, 0, 0);
     release();
-    assertInvocationCounts(0, 1, 0);
+    assertInvocationCounts(0, 1, 0, 0);
   }
 
   public void testLongSecondClick() {
@@ -97,7 +110,7 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
     press();
     timeStep(400);
     release();
-    assertInvocationCounts(0, 0, 0);
+    assertInvocationCounts(0, 0, 0, 0);
   }
 
   public void testShiftShiftKeySuccessfulCase() {
@@ -105,15 +118,15 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
     release();
     press();
     key();
-    assertInvocationCounts(0, 0, 1);
+    assertInvocationCounts(0, 0, 1, 0);
     release();
-    assertInvocationCounts(0, 0, 1);
+    assertInvocationCounts(0, 0, 1, 0);
   }
 
   public void testShiftKey() {
     press();
     key();
-    assertInvocationCounts(1, 0, 0);
+    assertInvocationCounts(1, 0, 0, 0);
     release();
   }
 
@@ -122,15 +135,26 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
     release();
     press();
     key(2);
-    assertInvocationCounts(0, 0, 2);
+    assertInvocationCounts(0, 0, 2, 0);
     release();
-    assertInvocationCounts(0, 0, 2);
+    assertInvocationCounts(0, 0, 2, 0);
   }
 
-  public void assertInvocationCounts(int shiftKeyCount, int shiftShiftCount, int shiftShiftKeyCount) {
+  public void testNoTriggeringAfterUnrelatedAction() {
+    press();
+    release();
+    press();
+    otherKey();
+    key();
+    release();
+    assertInvocationCounts(1, 0, 0, 1);
+  }
+
+  public void assertInvocationCounts(int shiftKeyCount, int shiftShiftCount, int shiftShiftKeyCount, int shiftOtherKeyCount) {
     assertEquals(shiftKeyCount, myShiftKeyActionInvocationCount);
     assertEquals(shiftShiftCount, myShiftShiftActionInvocationCount);
     assertEquals(shiftShiftKeyCount, myShiftShiftKeyActionInvocationCount);
+    assertEquals(shiftOtherKeyCount, myShiftOtherKeyActionInvocationCount);
   }
 
   private void press() {
@@ -152,30 +176,38 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
   }
 
   private void key() {
-    key(1);
+    key(1, false);
   }
 
   private void key(int repeat) {
+    key(repeat, false);
+  }
+
+  private void otherKey() {
+    key(1, true);
+  }
+
+  private void key(int repeat, boolean otherKey) {
     for (int i = 0; i < repeat; i++) {
       IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
                                                              KeyEvent.KEY_PRESSED,
                                                              Clock.getTime(),
                                                              InputEvent.SHIFT_MASK,
-                                                             KeyEvent.VK_BACK_SPACE,
-                                                             '\b'));
+                                                             otherKey ? KeyEvent.VK_ENTER : KeyEvent.VK_BACK_SPACE,
+                                                             otherKey ? '\n' : '\b'));
       IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
                                                              KeyEvent.KEY_TYPED,
                                                              Clock.getTime(),
                                                              InputEvent.SHIFT_MASK,
                                                              0,
-                                                             '\b'));
+                                                             otherKey ? '\n' : '\b'));
     }
     IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
                                                            KeyEvent.KEY_RELEASED,
                                                            Clock.getTime(),
                                                            InputEvent.SHIFT_MASK,
-                                                           KeyEvent.VK_BACK_SPACE,
-                                                           '\b'));
+                                                           otherKey ? KeyEvent.VK_ENTER : KeyEvent.VK_BACK_SPACE,
+                                                           otherKey ? '\n' : '\b'));
   }
 
   private void timeStep(long step) {

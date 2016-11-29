@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
 
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final List<PsiClass> classes = getTargetClasses();
     if (classes.size() == 1) {
       invokeImpl(project, classes.get(0));
@@ -102,30 +102,17 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     final Project project = classes.get(0).getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
+    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
     renderer.installSpeedSearch(builder);
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        final PsiClass aClass = (PsiClass)list.getSelectedValue();
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                invokeImpl(project, aClass);
-              }
-            });
-          }
-        }, getText(), null);
-      }
+    Runnable runnable = () -> {
+      int index = list.getSelectedIndex();
+      if (index < 0) return;
+      final PsiClass aClass = (PsiClass)list.getSelectedValue();
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(project, aClass)), getText(), null);
     };
 
     builder.
@@ -143,7 +130,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     final PsiClass targetClass = QuickfixUtil.findTargetClass(ref, compileStatic);
     if (targetClass == null || !canBeTargetClass(targetClass)) return Collections.emptyList();
 
-    final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
+    final ArrayList<PsiClass> classes = new ArrayList<>();
     collectSupers(targetClass, classes);
     return classes;
   }

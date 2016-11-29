@@ -58,7 +58,7 @@ public class VcsGeneralConfigurationPanel {
   private JPanel myPromptsPanel;
 
 
-  Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<VcsShowOptionsSettingImpl, JCheckBox>();
+  Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<>();
   private JPanel myRemoveConfirmationPanel;
   private JPanel myAddConfirmationPanel;
   private JCheckBox myCbOfferToMoveChanges;
@@ -287,7 +287,7 @@ public class VcsGeneralConfigurationPanel {
   }
 
   private static String composeText(final List<AbstractVcs> applicableVcses) {
-    final TreeSet<String> result = new TreeSet<String>();
+    final TreeSet<String> result = new TreeSet<>();
     for (AbstractVcs abstractVcs : applicableVcses) {
       result.add(abstractVcs.getDisplayName());
     }

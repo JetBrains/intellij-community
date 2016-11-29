@@ -39,11 +39,11 @@ public class HgTagCreateCommand {
     this.revisionNumberOrHash = revisionNumberOrHash;
   }
 
-  public void execute(HgCommandResultHandler resultHandler) throws HgCommandException {
+  public void executeAsynchronously(HgCommandResultHandler resultHandler) throws HgCommandException {
     if (StringUtil.isEmptyOrSpaces(tagName)) {
       throw new HgCommandException("tag name is empty");
     }
-    List<String> arguments = new ArrayList<String>();
+    List<String> arguments = new ArrayList<>();
     arguments.add(tagName);
     if (!StringUtil.isEmptyOrSpaces(revisionNumberOrHash)) {
       arguments.add("--rev");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class SearchUtils{
 
     public static Iterable<PsiReference> findAllReferences(PsiElement element, SearchScope scope){
 
-        return new ArrayIterable<PsiReference>(ReferencesSearch.search(element, scope, true).toArray(new PsiReference[0]));
+        return new ArrayIterable<>(ReferencesSearch.search(element, scope, true).toArray(PsiReference.EMPTY_ARRAY));
 /*
         try {
             Class<?> searchClass = Class.forName("com.intellij.psi.search.searches.ReferencesSearch");
@@ -59,12 +59,12 @@ public class SearchUtils{
     }
 
     public static Iterable<PsiMethod> findOverridingMethods(PsiMethod method){
-        return new ArrayIterable<PsiMethod>(OverridingMethodsSearch.search(method, true).toArray(new PsiMethod[0]));
+        return new ArrayIterable<>(OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY));
        // return OverridingMethodsSearch.search(method, method.getUseScope(), true).findAll();
     }
 
     public static Iterable<PsiClass> findClassInheritors(PsiClass aClass, boolean deep){
-        return new ArrayIterable<PsiClass>(ClassInheritorsSearch.search(aClass, deep).toArray(new PsiClass[0]));
+        return new ArrayIterable<>(ClassInheritorsSearch.search(aClass, deep).toArray(PsiClass.EMPTY_ARRAY));
        // return ClassInheritorsSearch.search(aClass, deep);
     }
 

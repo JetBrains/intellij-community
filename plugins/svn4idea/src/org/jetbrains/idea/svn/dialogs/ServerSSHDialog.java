@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -93,7 +94,7 @@ public class ServerSSHDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout(5,5));
+    JPanel panel = JBUI.Panels.simplePanel(5, 5);
     final JPanel wrapper = new JPanel();
     final BoxLayout boxLayout = new BoxLayout(wrapper, BoxLayout.Y_AXIS);
     wrapper.setLayout(boxLayout);
@@ -103,10 +104,10 @@ public class ServerSSHDialog extends DialogWrapper {
     wrapper.add(label2);
     final JTextField textField = new JTextField(myFingerprints);
     textField.setEditable(false);
-    textField.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+    textField.setBorder(JBUI.Borders.empty(10, 0));
     wrapper.add(textField);
     final JLabel label3 = new JLabel(SvnBundle.message("label.ssh.server.provided.fingerprints3"));
-    label3.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
+    label3.setBorder(JBUI.Borders.emptyBottom(5));
     wrapper.add(label3);
     panel.add(wrapper, BorderLayout.CENTER);
     myJCheckBox = new JCheckBox(SvnBundle.message("checkbox.svn.ssh.cache.fingerprint"));

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,7 +46,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
-  private volatile List<MavenIndex> myProjectIndices = new ArrayList<MavenIndex>();
+  private volatile List<MavenIndex> myProjectIndices = new ArrayList<>();
   private final MergingUpdateQueue myUpdateQueue;
 
   public static MavenProjectIndicesManager getInstance(Project p) {
@@ -130,7 +131,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   private Set<Pair<String, String>> collectRemoteRepositoriesIdsAndUrls() {
-    Set<Pair<String, String>> result = new THashSet<Pair<String, String>>();
+    Set<Pair<String, String>> result = new THashSet<>();
     Set<MavenRemoteRepository> remoteRepositories = ContainerUtil.newHashSet(getMavenProjectManager().getRemoteRepositories());
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
       ContainerUtil.addAll(remoteRepositories, repositoryProvider.getRemoteRepositories(myProject));
@@ -145,7 +146,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   public List<MavenIndex> getIndices() {
-    return new ArrayList<MavenIndex>(myProjectIndices);
+    return new ArrayList<>(myProjectIndices);
   }
 
   public void scheduleUpdateAll() {
@@ -165,6 +166,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   public Set<String> getGroupIds() {
+    ProgressIndicatorProvider.checkCanceled();
     Set<String> result = getProjectGroupIds();
     for (MavenIndex each : myProjectIndices) {
       result.addAll(each.getGroupIds());
@@ -173,6 +175,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   public Set<String> getArtifactIds(String groupId) {
+    ProgressIndicatorProvider.checkCanceled();
     Set<String> result = getProjectArtifactIds(groupId);
     for (MavenIndex each : myProjectIndices) {
       result.addAll(each.getArtifactIds(groupId));
@@ -181,6 +184,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   public Set<String> getVersions(String groupId, String artifactId) {
+    ProgressIndicatorProvider.checkCanceled();
     Set<String> result = getProjectVersions(groupId, artifactId);
     for (MavenIndex each : myProjectIndices) {
       result.addAll(each.getVersions(groupId, artifactId));
@@ -229,7 +233,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   public Set<MavenArtifactInfo> search(Query query, int maxResult) {
-    Set<MavenArtifactInfo> result = new THashSet<MavenArtifactInfo>();
+    Set<MavenArtifactInfo> result = new THashSet<>();
 
     for (MavenIndex each : myProjectIndices) {
       int remained = maxResult - result.size();
@@ -241,7 +245,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   private Set<String> getProjectGroupIds() {
-    Set<String> result = new THashSet<String>();
+    Set<String> result = new THashSet<>();
     for (MavenId each : getProjectsIds()) {
       result.add(each.getGroupId());
     }
@@ -249,7 +253,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   private Set<String> getProjectArtifactIds(String groupId) {
-    Set<String> result = new THashSet<String>();
+    Set<String> result = new THashSet<>();
     for (MavenId each : getProjectsIds()) {
       if (groupId.equals(each.getGroupId())) {
         result.add(each.getArtifactId());
@@ -259,7 +263,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   private Set<String> getProjectVersions(String groupId, String artifactId) {
-    Set<String> result = new THashSet<String>();
+    Set<String> result = new THashSet<>();
     for (MavenId each : getProjectsIds()) {
       if (groupId.equals(each.getGroupId()) && artifactId.equals(each.getArtifactId())) {
         result.add(each.getVersion());
@@ -281,7 +285,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   private Set<MavenId> getProjectsIds() {
-    Set<MavenId> result = new THashSet<MavenId>();
+    Set<MavenId> result = new THashSet<>();
     for (MavenProject each : MavenProjectsManager.getInstance(myProject).getProjects()) {
       result.add(each.getMavenId());
     }

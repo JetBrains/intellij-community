@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -92,11 +92,8 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   @Override
   public void tearDown() throws Exception {
     try {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();// drop all caches
-        }
+      EdtTestUtil.runInEdtAndWait(() -> {
+        ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();// drop all caches
       });
     }
     finally {

@@ -15,9 +15,7 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +26,7 @@ import java.io.*;
  * @author Dmitry Avdeev
  *         Date: 8/10/11
  */
-class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContainer<Value>> {
+class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValueContainer<Value>> {
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
 
@@ -37,7 +35,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile
                     ) throws IOException {
-    super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
+    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
@@ -48,7 +46,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
   }
 
   @Override
-  protected void doPut(Key key, ValueContainer<Value> container) throws IOException {
+  protected void doPut(Key key, UpdatableValueContainer<Value> container) throws IOException {
     synchronized (myEnumerator) {
       ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
 
@@ -56,15 +54,10 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
       // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
       // file) and there is no benefit to accumulate values for particular key because only one value exists
       if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
-        final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        final DataOutputStream _out = new DataOutputStream(bytes);
-        valueContainer.saveTo(_out, myValueExternalizer);
-
         appendData(key, new PersistentHashMap.ValueDataAppender() {
           @Override
           public void append(@NotNull final DataOutput out) throws IOException {
-            out.write(bytes.getInternalBuffer(), 0, bytes.size());
+            valueContainer.saveTo(out, myValueExternalizer);
           }
         });
       }
@@ -75,7 +68,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
     }
   }
 
-  private static final class ValueContainerExternalizer<T> implements DataExternalizer<ValueContainer<T>> {
+  private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
     @NotNull private final DataExternalizer<T> myValueExternalizer;
 
     private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer) {
@@ -83,14 +76,14 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
     }
 
     @Override
-    public void save(@NotNull final DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
+    public void save(@NotNull final DataOutput out, @NotNull final UpdatableValueContainer<T> container) throws IOException {
       container.saveTo(out, myValueExternalizer);
     }
 
     @NotNull
     @Override
-    public ValueContainerImpl<T> read(@NotNull final DataInput in) throws IOException {
-      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
+    public UpdatableValueContainer<T> read(@NotNull final DataInput in) throws IOException {
+      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
 
       valueContainer.readFrom((DataInputStream)in, myValueExternalizer);
       return valueContainer;

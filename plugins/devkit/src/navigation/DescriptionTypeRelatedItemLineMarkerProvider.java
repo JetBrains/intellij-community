@@ -45,22 +45,10 @@ import java.util.List;
 public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
 
   private static final NotNullFunction<PsiFile, Collection<? extends PsiElement>> CONVERTER =
-    new NotNullFunction<PsiFile, Collection<? extends PsiElement>>() {
-      @NotNull
-      @Override
-      public Collection<? extends PsiElement> fun(PsiFile psiFile) {
-        return ContainerUtil.createMaybeSingletonList(psiFile);
-      }
-    };
+    psiFile -> ContainerUtil.createMaybeSingletonList(psiFile);
 
   private static final NotNullFunction<PsiFile, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
-    new NotNullFunction<PsiFile, Collection<? extends GotoRelatedItem>>() {
-      @NotNull
-      @Override
-      public Collection<? extends GotoRelatedItem> fun(PsiFile psiFile) {
-        return GotoRelatedItem.createItems(Collections.singleton(psiFile), "DevKit");
-      }
-    };
+    psiFile -> GotoRelatedItem.createItems(Collections.singleton(psiFile), "DevKit");
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
@@ -126,12 +114,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedL
   private static void addBeforeAfterTemplateFilesGutterIcon(PsiElement highlightingElement,
                                                             PsiDirectory descriptionDirectory,
                                                             Collection<? super RelatedItemLineMarkerInfo> result) {
-    final List<PsiFile> templateFiles = new SortedList<PsiFile>(new Comparator<PsiFile>() {
-      @Override
-      public int compare(PsiFile o1, PsiFile o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    final List<PsiFile> templateFiles = new SortedList<>((o1, o2) -> o1.getName().compareTo(o2.getName()));
     for (PsiFile file : descriptionDirectory.getFiles()) {
       final String fileName = file.getName();
       if (fileName.endsWith(".template")) {

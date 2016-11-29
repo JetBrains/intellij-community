@@ -64,7 +64,7 @@ final class PanelWithActions extends JPanel {
     // use actions from console itself
 
 
-    final List<AnAction> actionList = new ArrayList<AnAction>(Arrays.asList(customActions));
+    final List<AnAction> actionList = new ArrayList<>(Arrays.asList(customActions));
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     actionList.add(new MyCloseAction(closeListeners));
     toolbarActions.addAll(actionList);
@@ -92,7 +92,7 @@ final class PanelWithActions extends JPanel {
    */
   private static final class MyCloseAction extends CloseAction {
     @NotNull
-    private final Collection<Runnable> myCloseListeners = new ArrayList<Runnable>();
+    private final Collection<Runnable> myCloseListeners = new ArrayList<>();
 
     /**
      * @param closeListeners engines to be called when user clicks "close"

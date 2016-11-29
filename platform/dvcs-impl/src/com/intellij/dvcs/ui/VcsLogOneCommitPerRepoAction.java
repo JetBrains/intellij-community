@@ -17,7 +17,6 @@ package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
@@ -45,12 +44,7 @@ public abstract class VcsLogOneCommitPerRepoAction<Repo extends Repository> exte
   protected abstract void actionPerformed(@NotNull Project project, @NotNull Map<Repo, VcsFullCommitDetails> commits);
 
   private boolean allValuesAreSingletons(@NotNull MultiMap<Repo, Hash> grouped) {
-    return !ContainerUtil.exists(grouped.entrySet(), new Condition<Map.Entry<Repo, Collection<Hash>>>() {
-      @Override
-      public boolean value(Map.Entry<Repo, Collection<Hash>> entry) {
-        return entry.getValue().size() != 1;
-      }
-    });
+    return ContainerUtil.and(grouped.entrySet(), entry -> entry.getValue().size() == 1);
   }
 
   @Nullable
@@ -65,6 +59,4 @@ public abstract class VcsLogOneCommitPerRepoAction<Repo extends Repository> exte
     }
     return map;
   }
-
-
 }

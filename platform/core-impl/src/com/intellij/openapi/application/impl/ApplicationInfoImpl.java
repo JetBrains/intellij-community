@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -35,6 +36,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,40 +49,41 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx {
-  private String myCodeName = null;
-  private String myMajorVersion = null;
-  private String myMinorVersion = null;
-  private String myMicroVersion = null;
-  private String myPatchVersion = null;
-  private String myFullVersion = null;
-  private String myBuildNumber = null;
-  private String myApiVersion = null;
+  private String myCodeName;
+  private String myMajorVersion;
+  private String myMinorVersion;
+  private String myMicroVersion;
+  private String myPatchVersion;
+  private String myFullVersionFormat;
+  private String myBuildNumber;
+  private String myApiVersion;
   private String myCompanyName = "JetBrains s.r.o.";
+  private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
-  private Color myProgressColor = null;
+  private Color myProgressColor;
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
-  private Color myAboutLinkColor = null;
-  private String myProgressTailIconName = null;
-  private Icon myProgressTailIcon = null;
+  private Color myAboutLinkColor;
+  private String myProgressTailIconName;
+  private Icon myProgressTailIcon;
 
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
   private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
-  private String mySplashImageUrl = null;
-  private String myAboutImageUrl = null;
+  private String mySplashImageUrl;
+  private String myAboutImageUrl;
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
-  private String myBigIconUrl = null;
+  private String myBigIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
-  private String myWelcomeScreenLogoUrl = null;
-  private String myEditorBackgroundImageUrl = null;
+  private String myWelcomeScreenLogoUrl;
+  private String myEditorBackgroundImageUrl;
 
-  private Calendar myBuildDate = null;
-  private Calendar myMajorReleaseBuildDate = null;
-  private String myPackageCode = null;
+  private Calendar myBuildDate;
+  private Calendar myMajorReleaseBuildDate;
+  private String myPackageCode;
   private boolean myShowLicensee = true;
   private String myCustomizeIDEWizardStepsProvider;
   private UpdateUrls myUpdateUrls;
@@ -111,6 +114,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
+
+  private String mySubscriptionFormId;
+  private String mySubscriptionNewsKey;
+  private String mySubscriptionNewsValue;
+  private String mySubscriptionTipsKey;
+  private boolean mySubscriptionTipsAvailable;
+  private String mySubscriptionAdditionalFormData;
 
   private Rectangle myAboutLogoRect;
 
@@ -193,6 +203,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_KEY_CONVERSION_URL = "key-conversion-url";
   private static final String ESSENTIAL_PLUGIN = "essential-plugin";
 
+  private static final String ELEMENT_SUBSCRIPTIONS = "subscriptions";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_FORM_ID = "formid";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY = "news-key";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE = "news-value";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY = "tips-key";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
+
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
   ApplicationInfoImpl() {
@@ -262,7 +280,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getFullVersion() {
-    if (myFullVersion == null) {
+    String result = doGetFullVersion();
+    if (isEAP()) result += " EAP";
+    return result;
+  }
+
+  private String doGetFullVersion() {
+    if (myFullVersionFormat == null) {
       if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
         if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
           return myMajorVersion + "." + myMinorVersion;
@@ -275,7 +299,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         return getVersionName();
       }
     } else {
-      return MessageFormat.format(myFullVersion, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
+      return MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
     }
   }
 
@@ -296,6 +320,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getHelpURL() {
     return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
+  }
+
+  @Override
+  public String getShortCompanyName() {
+    return myShortCompanyName;
   }
 
   @Override
@@ -503,16 +532,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getFullApplicationName() {
-    StringBuilder buffer = new StringBuilder();
-    buffer.append(getVersionName());
-    buffer.append(" ");
-    if (getMajorVersion() != null && !isEAP() && !isBetaOrRC()) {
-      buffer.append(getFullVersion());
-    }
-    else {
-      buffer.append(getBuild().asStringWithAllDetails());
-    }
-    return buffer.toString();
+    return getVersionName() + " " + getFullVersion();
   }
 
   @Override
@@ -557,6 +577,37 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myAboutLogoRect;
   }
 
+  @Override
+  public String getSubscriptionFormId() {
+    return mySubscriptionFormId;
+  }
+
+  @Override
+  public String getSubscriptionNewsKey() {
+    return mySubscriptionNewsKey;
+  }
+
+  @Override
+  public String getSubscriptionNewsValue() {
+    return mySubscriptionNewsValue;
+  }
+
+  @Override
+  public String getSubscriptionTipsKey() {
+    return mySubscriptionTipsKey;
+  }
+
+  @Override
+  public boolean areSubscriptionTipsAvailable() {
+    return mySubscriptionTipsAvailable;
+  }
+
+  @Nullable
+  @Override
+  public String getSubscriptionAdditionalFormData() {
+    return mySubscriptionAdditionalFormData;
+  }
+
   private static ApplicationInfoImpl ourShadowInstance;
 
   public boolean isBetaOrRC() {
@@ -569,6 +620,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return false;
   }
 
+  @NotNull
   public static ApplicationInfoEx getShadowInstance() {
     if (ourShadowInstance == null) {
       ourShadowInstance = new ApplicationInfoImpl();
@@ -583,7 +635,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
       myMicroVersion = versionElement.getAttributeValue(ATTRIBUTE_MICRO);
       myPatchVersion = versionElement.getAttributeValue(ATTRIBUTE_PATCH);
-      myFullVersion = versionElement.getAttributeValue(ATTRIBUTE_FULL);
+      myFullVersionFormat = versionElement.getAttributeValue(ATTRIBUTE_FULL);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
     }
@@ -591,6 +643,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element companyElement = parentNode.getChild(ELEMENT_COMPANY);
     if (companyElement != null) {
       myCompanyName = companyElement.getAttributeValue(ATTRIBUTE_NAME, myCompanyName);
+      myShortCompanyName = companyElement.getAttributeValue("shortName", shortenCompanyName(myCompanyName));
       myCompanyUrl = companyElement.getAttributeValue(ATTRIBUTE_URL, myCompanyUrl);
     }
 
@@ -816,12 +869,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
 
     myPluginChooserPages = new ArrayList<PluginChooserPage>();
-    final List children = parentNode.getChildren(PLUGINS_PAGE_ELEMENT_NAME);
-    for(Object child: children) {
-      myPluginChooserPages.add(new PluginChooserPageImpl((Element) child));
+    for (Element child : parentNode.getChildren(PLUGINS_PAGE_ELEMENT_NAME)) {
+      myPluginChooserPages.add(new PluginChooserPageImpl(child));
     }
 
-    List<Element> essentialPluginsElements = JDOMUtil.getChildren(parentNode, ESSENTIAL_PLUGIN);
+    List<Element> essentialPluginsElements = parentNode.getChildren(ESSENTIAL_PLUGIN);
     Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, new Function<Element, String>() {
       @Override
       public String fun(Element element) {
@@ -869,6 +921,21 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    Element subscriptionsElement = parentNode.getChild(ELEMENT_SUBSCRIPTIONS);
+    if (subscriptionsElement != null) {
+      mySubscriptionFormId = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_FORM_ID);
+      mySubscriptionNewsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY);
+      mySubscriptionNewsValue = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE, "yes");
+      mySubscriptionTipsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY);
+      mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
+      mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
+    }
+  }
+
+  //copy of ApplicationInfoProperties.shortenCompanyName
+  @VisibleForTesting
+  static String shortenCompanyName(String name) {
+    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.");
   }
 
   private static void setBuildNumber(String apiVersion, String buildNumber) {
@@ -876,20 +943,22 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private static GregorianCalendar parseDate(final String dateString) {
-    @SuppressWarnings("MultipleVariablesInDeclaration")
-    int year = 0, month = 0, day = 0, hour = 0, minute = 0;
+    GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     try {
-      year = Integer.parseInt(dateString.substring(0, 4));
-      month = Integer.parseInt(dateString.substring(4, 6));
-      day = Integer.parseInt(dateString.substring(6, 8));
+      calendar.set(Calendar.YEAR, Integer.parseInt(dateString.substring(0, 4)));
+      calendar.set(Calendar.MONTH, Integer.parseInt(dateString.substring(4, 6)) - 1);
+      calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateString.substring(6, 8)));
       if (dateString.length() > 8) {
-        hour = Integer.parseInt(dateString.substring(8, 10));
-        minute = Integer.parseInt(dateString.substring(10, 12));
+        calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(dateString.substring(8, 10)));
+        calendar.set(Calendar.MINUTE, Integer.parseInt(dateString.substring(10, 12)));
+      }
+      else {
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
       }
     }
     catch (Exception ignore) { }
-    if (month > 0) month--;
-    return new GregorianCalendar(year, month, day, hour, minute);
+    return calendar;
   }
 
   @SuppressWarnings("UseJBColor")
@@ -961,6 +1030,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   public static boolean isInPerformanceTest() {
     return myInPerformanceTest;
   }
+  @TestOnly
   public static void setInPerformanceTest(boolean inPerformanceTest) {
     myInPerformanceTest = inPerformanceTest;
   }

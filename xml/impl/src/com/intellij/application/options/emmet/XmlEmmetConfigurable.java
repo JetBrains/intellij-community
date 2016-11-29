@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,10 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +47,10 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
   private JPanel myFiltersListPanel;
   private JBCheckBox myEnableHrefAutodetectJBCheckBox;
   private JBCheckBox myAddEditPointAtTheEndOfTemplateJBCheckBox;
+  private JBTextField myBemElementSeparatorTextField;
+  private JBTextField myBemModifierSeparatorTextField;
+  private JBTextField myBemShortElementPrefixTextField;
+  private JPanel myBemPanel;
 
   private Map<String, JBCheckBox> myFilterCheckboxes = ContainerUtil.newHashMap();
 
@@ -53,23 +60,26 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
       public void actionPerformed(ActionEvent e) {
         boolean selected = myEnableEmmetJBCheckBox.isSelected();
         myEnablePreviewJBCheckBox.setEnabled(selected);
-        myAddEditPointAtTheEndOfTemplateJBCheckBox.setEnabled(selected);
         myFiltersListPanel.setEnabled(selected);
         myEnableHrefAutodetectJBCheckBox.setEnabled(selected);
+        myAddEditPointAtTheEndOfTemplateJBCheckBox.setEnabled(selected);
+        UIUtil.setEnabled(myBemPanel, selected, true);
         for (JBCheckBox checkBox : myFilterCheckboxes.values()) {
           checkBox.setEnabled(selected);
         }
       }
     });
     myFiltersListPanel.setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("emmet.filters.enabled.by.default")));
+    myBemPanel.setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("emmet.bem.title")));
     createFiltersCheckboxes();
+    
   }
 
   public void createFiltersCheckboxes() {
     final List<ZenCodingFilter> filters = ZenCodingFilter.getInstances();
     final GridBagLayout layoutManager = new GridBagLayout();
-    final GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 
-                                                                  new Insets(0, 0, 0, 0), 0, 0);
+    final GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                                  JBUI.emptyInsets(), 0, 0);
     myFiltersListPanel.setLayout(layoutManager);
     for (int i = 0; i < filters.size(); i++) {
       ZenCodingFilter filter = filters.get(i);
@@ -100,7 +110,10 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
            emmetOptions.isPreviewEnabled() != myEnablePreviewJBCheckBox.isSelected() ||
            emmetOptions.isHrefAutoDetectEnabled() != myEnableHrefAutodetectJBCheckBox.isSelected() ||
            emmetOptions.isAddEditPointAtTheEndOfTemplate() != myAddEditPointAtTheEndOfTemplateJBCheckBox.isSelected() ||
-           !emmetOptions.getFiltersEnabledByDefault().equals(enabledFilters());
+           !emmetOptions.getFiltersEnabledByDefault().equals(enabledFilters()) ||
+           !emmetOptions.getBemElementSeparator().equals(myBemElementSeparatorTextField.getText()) ||
+           !emmetOptions.getBemModifierSeparator().equals(myBemModifierSeparatorTextField.getText()) ||
+           !emmetOptions.getBemShortElementPrefix().equals(myBemShortElementPrefixTextField.getText());
   }
 
   @Override
@@ -111,8 +124,10 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     emmetOptions.setHrefAutoDetectEnabled(myEnableHrefAutodetectJBCheckBox.isSelected());
     emmetOptions.setAddEditPointAtTheEndOfTemplate(myAddEditPointAtTheEndOfTemplateJBCheckBox.isSelected());
     emmetOptions.setFiltersEnabledByDefault(enabledFilters());
+    emmetOptions.setBemElementSeparator(myBemElementSeparatorTextField.getText());
+    emmetOptions.setBemModifierSeparator(myBemModifierSeparatorTextField.getText());
+    emmetOptions.setBemShortElementPrefix(myBemShortElementPrefixTextField.getText());
   }
-
 
   @Override
   public void reset() {
@@ -124,6 +139,10 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     myEnableHrefAutodetectJBCheckBox.setSelected(emmetOptions.isHrefAutoDetectEnabled());
     myAddEditPointAtTheEndOfTemplateJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
     myAddEditPointAtTheEndOfTemplateJBCheckBox.setSelected(emmetOptions.isAddEditPointAtTheEndOfTemplate());
+    
+    myBemElementSeparatorTextField.setText(emmetOptions.getBemElementSeparator());
+    myBemModifierSeparatorTextField.setText(emmetOptions.getBemModifierSeparator());
+    myBemShortElementPrefixTextField.setText(emmetOptions.getBemShortElementPrefix());
 
     Set<String> enabledByDefault = emmetOptions.getFiltersEnabledByDefault();
     for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
@@ -168,11 +187,5 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
   @Override
   public String getId() {
     return "reference.idesettings.emmet.xml";
-  }
-
-  @Nullable
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

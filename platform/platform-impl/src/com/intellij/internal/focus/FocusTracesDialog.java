@@ -20,13 +20,14 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.impl.FocusRequestInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,9 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -55,9 +58,14 @@ public class FocusTracesDialog extends DialogWrapper {
     myRequests = requests;
     setTitle("Focus Traces");
     final String[][] data = new String[requests.size()][];
+    SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.SSS");
     for (int i = 0; i < data.length; i++) {
       final FocusRequestInfo r = requests.get(i);
-      data[i] = new String[]{r.getDate(), String.valueOf(r.isForced()), String.valueOf(r.getComponent())};
+      data[i] = new String[]{
+        dateFormat.format(new Date(r.timestamp)),
+        String.valueOf(r.forced),
+        r.componentString + (!"null".equals(r.componentString) &&
+                             r.component.get() == null ? " <collected>" : "")};
     }
     setModal(false);
     myRequestsTable = new JBTable(new DefaultTableModel(data, COLUMNS) {
@@ -73,22 +81,22 @@ public class FocusTracesDialog extends DialogWrapper {
         final int index = myRequestsTable.getSelectedRow();
         consoleView.clear();
         if (-1 < index && index < myRequests.size()) {
-          consoleView.print(myRequests.get(index).getStackTrace(), ConsoleViewContentType.NORMAL_OUTPUT);
+          consoleView.print(ExceptionUtil.getThrowableText(myRequests.get(index).trace), ConsoleViewContentType.NORMAL_OUTPUT);
         }
       }
     };
     myRequestsTable.getSelectionModel().addListSelectionListener(selectionListener);
     final TableColumnModel columnModel = myRequestsTable.getColumnModel();
-    columnModel.getColumn(0).setMinWidth(120);
-    columnModel.getColumn(0).setMaxWidth(120);
-    columnModel.getColumn(0).setPreferredWidth(120);
-    columnModel.getColumn(1).setMinWidth(60);
-    columnModel.getColumn(1).setMaxWidth(60);
-    columnModel.getColumn(1).setPreferredWidth(60);
+    columnModel.getColumn(0).setMinWidth(JBUI.scale(120));
+    columnModel.getColumn(0).setMaxWidth(JBUI.scale(120));
+    columnModel.getColumn(0).setPreferredWidth(JBUI.scale(120));
+    columnModel.getColumn(1).setMinWidth(JBUI.scale(60));
+    columnModel.getColumn(1).setMaxWidth(JBUI.scale(60));
+    columnModel.getColumn(1).setPreferredWidth(JBUI.scale(60));
     myRequestsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myRequestsTable.changeSelection(0, 0, false, true);
 
-    consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(ProjectManager.getInstance().getDefaultProject()).getConsole();
+    consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
     init();
   }
@@ -104,9 +112,12 @@ public class FocusTracesDialog extends DialogWrapper {
     JBSplitter splitter = new JBSplitter(true, .5F, .2F, .8F);
     splitter.setFirstComponent(new JBScrollPane(myRequestsTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
 
-    final JComponent consoleComponent = new JPanel(new BorderLayout());
+    JComponent consoleComponent = new JPanel(new BorderLayout());
     consoleComponent.add(consoleView.getComponent(), BorderLayout.CENTER);
-    consoleView.print(myRequests.get(myRequestsTable.getSelectedRow()).getStackTrace(), ConsoleViewContentType.NORMAL_OUTPUT);
+    int row = myRequestsTable.getSelectedRow();
+    if (row >= 0) {
+      consoleView.print(ExceptionUtil.getThrowableText(myRequests.get(row).trace), ConsoleViewContentType.NORMAL_OUTPUT);
+    }
 
     splitter.setSecondComponent(
       new JBScrollPane(consoleComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
@@ -129,7 +140,8 @@ public class FocusTracesDialog extends DialogWrapper {
     return new AbstractAction("&Copy stacktrace") {
       @Override
       public void actionPerformed(ActionEvent e) {
-        CopyPasteManager.getInstance().setContents(new StringSelection(myRequests.get(myRequestsTable.getSelectedRow()).getStackTrace()));
+        String text = ExceptionUtil.getThrowableText(myRequests.get(myRequestsTable.getSelectedRow()).trace);
+        CopyPasteManager.getInstance().setContents(new StringSelection(text));
       }
     };
   }
@@ -153,6 +165,7 @@ public class FocusTracesDialog extends DialogWrapper {
     public void run() {
       try {
         while (running) {
+          //noinspection BusyWait
           sleep(100);
           paintBorder();
         }
@@ -160,7 +173,7 @@ public class FocusTracesDialog extends DialogWrapper {
           prev.repaint();
         }
       }
-      catch (InterruptedException e) {//
+      catch (InterruptedException ignored) {
       }
     }
 
@@ -168,10 +181,10 @@ public class FocusTracesDialog extends DialogWrapper {
       final int row = FocusTracesDialog.this.myRequestsTable.getSelectedRow();
       if (row != -1) {
         final FocusRequestInfo info = FocusTracesDialog.this.myRequests.get(row);
-        if (prev != null && prev != info.getComponent()) {
+        if (prev != null && prev != info.component.get()) {
           prev.repaint();
         }
-        prev = info.getComponent();
+        prev = info.component.get();
         if (prev != null && prev.isDisplayable()) {
           final Graphics g = prev.getGraphics();
           g.setColor(JBColor.RED);

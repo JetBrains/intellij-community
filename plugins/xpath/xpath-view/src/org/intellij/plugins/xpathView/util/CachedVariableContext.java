@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CachedVariableContext implements VariableContext {
-    private final Map<String, Object> myMap = new HashMap<String, Object>();
+    private final Map<String, Object> myMap = new HashMap<>();
 
     public CachedVariableContext(Collection<Variable> variables, XPath xpath, XmlElement contextNode) throws SAXPathException {
        for (Variable variable : variables) {

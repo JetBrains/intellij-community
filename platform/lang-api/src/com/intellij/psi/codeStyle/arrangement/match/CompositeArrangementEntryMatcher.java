@@ -26,7 +26,7 @@ import java.util.*;
  */
 public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementEntryMatcher> myMatchers = new HashSet<ArrangementEntryMatcher>();
+  @NotNull private final Set<ArrangementEntryMatcher> myMatchers = new HashSet<>();
 
   public CompositeArrangementEntryMatcher(@NotNull ArrangementEntryMatcher... matchers) {
     myMatchers.addAll(Arrays.asList(matchers));

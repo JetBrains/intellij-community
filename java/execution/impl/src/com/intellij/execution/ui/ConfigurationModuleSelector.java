@@ -37,12 +37,12 @@ import java.util.List;
 
 public class ConfigurationModuleSelector {
   private final Project myProject;
-  private final JComboBox myModulesList;
+  private final JComboBox<Module> myModulesList;
 
   /**
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox)} instead
    */
-  public ConfigurationModuleSelector(final Project project, final JComboBox modulesList) {
+  public ConfigurationModuleSelector(final Project project, final JComboBox<Module> modulesList) {
     this(project, modulesList, "<no module>");
   }
 
@@ -59,7 +59,7 @@ public class ConfigurationModuleSelector {
   /**
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox, String)} instead
    */
-  public ConfigurationModuleSelector(final Project project, final JComboBox modulesList, final String noModule) {
+  public ConfigurationModuleSelector(final Project project, final JComboBox<Module> modulesList, final String noModule) {
     myProject = project;
     myModulesList = modulesList;
     new ComboboxSpeedSearch(modulesList){
@@ -72,7 +72,7 @@ public class ConfigurationModuleSelector {
         return super.getElementText(element);
       }
     };
-    myModulesList.setModel(new SortedComboBoxModel<Module>(ModulesAlphaComparator.INSTANCE));
+    myModulesList.setModel(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
     myModulesList.setRenderer(new ModuleListCellRenderer(noModule));
   }
 
@@ -82,7 +82,7 @@ public class ConfigurationModuleSelector {
 
   public void reset(final ModuleBasedConfiguration configuration) {
     final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    final List<Module> list = new ArrayList<Module>();
+    final List<Module> list = new ArrayList<>();
     for (final Module module : modules) {
       if (isModuleAccepted(module)) list.add(module);
     }

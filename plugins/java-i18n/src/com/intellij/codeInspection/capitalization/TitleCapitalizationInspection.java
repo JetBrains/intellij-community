@@ -29,12 +29,15 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -76,7 +79,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
         Collection<PsiReturnStatement> statements = PsiTreeUtil.findChildrenOfType(method, PsiReturnStatement.class);
         for (PsiReturnStatement returnStatement : statements) {
           PsiExpression expression = returnStatement.getReturnValue();
-          String value = getTitleValue(expression);
+          String value = getTitleValue(expression, new HashSet<>());
           if (value == null) continue;
           Nls.Capitalization capitalization = getCapitalizationFromAnno(method);
           checkCapitalization(expression, holder, capitalization);
@@ -112,7 +115,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
 
   private static void checkCapitalization(PsiExpression element, @NotNull ProblemsHolder holder, Nls.Capitalization capitalization) {
     if (capitalization == Nls.Capitalization.NotSpecified) return;
-    String titleValue = getTitleValue(element);
+    String titleValue = getTitleValue(element, new HashSet<>());
     if (!checkCapitalization(titleValue, capitalization)) {
       holder.registerProblem(element, "String '" + titleValue + "' is not properly capitalized. It should have " +
                                       StringUtil.toLowerCase(capitalization.toString()) + " capitalization",
@@ -121,7 +124,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Nullable
-  private static String getTitleValue(@Nullable PsiExpression arg) {
+  private static String getTitleValue(@Nullable PsiExpression arg, Set<PsiElement> processed) {
     if (arg instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)arg).getValue();
       if (value instanceof String) {
@@ -134,8 +137,8 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       if (arg == returnValue) {
         return null;
       }
-      if (returnValue != null) {
-        return getTitleValue(returnValue);
+      if (returnValue != null && processed.add(returnValue)) {
+        return getTitleValue(returnValue, processed);
       }
       Property propertyArgument = getPropertyArgument((PsiMethodCallExpression)arg);
       if (propertyArgument != null) {
@@ -145,7 +148,10 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     if (arg instanceof PsiReferenceExpression) {
       PsiElement result = ((PsiReferenceExpression)arg).resolve();
       if (result instanceof PsiVariable && ((PsiVariable)result).hasModifierProperty(PsiModifier.FINAL)) {
-        return getTitleValue(((PsiVariable) result).getInitializer());
+        PsiExpression initializer = ((PsiVariable)result).getInitializer();
+        if (processed.add(initializer)) {
+          return getTitleValue(initializer, processed);
+        }
       }
     }
     return null;
@@ -182,11 +188,11 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static boolean checkSentenceCapitalization(@NotNull String value) {
-    String[] words = value.split(" ");
-    if (words.length == 0) return true;
-    if (!isCapitalizedWord(words[0])) return false;
-    for (int i = 1; i < words.length; i++) {
-      String word = words[i];
+    List<String> words = StringUtil.split(value, " ");
+    if (words.size() == 0) return true;
+    if (Character.isLetter(words.get(0).charAt(0)) && !isCapitalizedWord(words.get(0))) return false;
+    for (int i = 1, size = words.size(); i < size; i++) {
+      String word = words.get(i);
       if (isCapitalizedWord(word)) {
         // check for abbreviations like SQL or I18n
         if (word.length() == 1 || !Character.isLowerCase(word.charAt(1)))
@@ -197,8 +203,8 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     return true;
   }
 
-  private static boolean isCapitalizedWord(@Nullable String word) {
-    return StringUtil.isNotEmpty(word) && (!Character.isLetter(word.charAt(0)) || StringUtil.isCapitalized(word));
+  private static boolean isCapitalizedWord(String word) {
+    return word.length() > 0 && Character.isLetter(word.charAt(0)) && Character.isUpperCase(word.charAt(0));
   }
 
   private static class TitleCapitalizationFix implements LocalQuickFix {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,29 +47,25 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
    */
   static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository) {
     final GitVcsSettings vcsSettings = GitVcsSettings.getInstance(project);
-    Condition<AnAction> preselectActionCondition = new Condition<AnAction>() {
-      @Override
-      public boolean value(AnAction action) {
+    Condition<AnAction> preselectActionCondition = action -> {
+      if (action instanceof GitBranchPopupActions.LocalBranchActions) {
+        GitBranchPopupActions.LocalBranchActions branchAction = (GitBranchPopupActions.LocalBranchActions)action;
+        String branchName = branchAction.getBranchName();
 
-        if (action instanceof GitBranchPopupActions.LocalBranchActions) {
-          GitBranchPopupActions.LocalBranchActions branchAction = (GitBranchPopupActions.LocalBranchActions)action;
-          String branchName = branchAction.getBranchName();
-
-          String recentBranch;
-          List<GitRepository> repositories = branchAction.getRepositories();
-          if (repositories.size() == 1) {
-            recentBranch = vcsSettings.getRecentBranchesByRepository().get(repositories.iterator().next().getRoot().getPath());
-          }
-          else {
-            recentBranch = vcsSettings.getRecentCommonBranch();
-          }
-
-          if (recentBranch != null && recentBranch.equals(branchName)) {
-            return true;
-          }
+        String recentBranch;
+        List<GitRepository> repositories = branchAction.getRepositories();
+        if (repositories.size() == 1) {
+          recentBranch = vcsSettings.getRecentBranchesByRepository().get(repositories.iterator().next().getRoot().getPath());
         }
-        return false;
+        else {
+          recentBranch = vcsSettings.getRecentCommonBranch();
+        }
+
+        if (recentBranch != null && recentBranch.equals(branchName)) {
+          return true;
+        }
       }
+      return false;
     };
     return new GitBranchPopup(currentRepository, GitUtil.getRepositoryManager(project), vcsSettings, preselectActionCondition);
   }
@@ -129,9 +125,9 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
     for (GitRepository repository : DvcsUtil.sortRepositories(myRepositoryManager.getRepositories())) {
-      popupGroup.add(new RootAction<GitRepository>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
-                                                   new GitBranchPopupActions(repository.getProject(), repository).createActions(null),
-                                                   GitBranchUtil.getDisplayableBranchText(repository)));
+      popupGroup.add(new RootAction<>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
+                                      new GitBranchPopupActions(repository.getProject(), repository).createActions(null),
+                                      GitBranchUtil.getDisplayableBranchText(repository)));
     }
     return popupGroup;
   }

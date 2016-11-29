@@ -16,7 +16,9 @@
 package com.intellij.vcs.log.data;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface VcsLogUiProperties {
@@ -50,7 +52,8 @@ public interface VcsLogUiProperties {
 
   void enableHighlighter(@NotNull String id, boolean value);
 
-  boolean isShowBranchesPanel();
+  void saveFilterValues(@NotNull String filterName, @Nullable List<String> values);
 
-  void setShowBranchesPanel(boolean show);
+  @Nullable
+  List<String> getFilterValues(@NotNull String filterName);
 }

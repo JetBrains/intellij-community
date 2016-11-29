@@ -18,6 +18,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +68,9 @@ public class FileChooser {
                                        @Nullable final Component parent,
                                        @Nullable final Project project,
                                        @Nullable final VirtualFile toSelect) {
+    Component parentComponent = (parent == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : parent;
     LOG.assertTrue(!descriptor.isChooseMultiple());
-    return ArrayUtil.getFirstElement(chooseFiles(descriptor, parent, project, toSelect));
+    return ArrayUtil.getFirstElement(chooseFiles(descriptor, parentComponent, project, toSelect));
   }
 
   /**
@@ -106,8 +108,9 @@ public class FileChooser {
                                  @Nullable final Component parent,
                                  @Nullable final VirtualFile toSelect,
                                  @NotNull final Consumer<List<VirtualFile>> callback) {
+    Component parentComponent = (parent == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : parent;
     final FileChooserFactory factory = FileChooserFactory.getInstance();
-    final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parent);
+    final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parentComponent);
     pathChooser.choose(toSelect, callback);
   }
 
@@ -145,11 +148,6 @@ public class FileChooser {
                                 @Nullable final VirtualFile toSelect,
                                 @NotNull final Consumer<VirtualFile> callback) {
     LOG.assertTrue(!descriptor.isChooseMultiple());
-    chooseFiles(descriptor, project, parent, toSelect, new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(List<VirtualFile> files) {
-        callback.consume(files.get(0));
-      }
-    });
+    chooseFiles(descriptor, project, parent, toSelect, files -> callback.consume(files.get(0)));
   }
 }

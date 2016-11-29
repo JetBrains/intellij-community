@@ -61,30 +61,22 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
                                                   true, true,
                                                   new FileType[]{XmlFileType.INSTANCE}) {
 
-        private final Condition<PsiFileSystemItem> PLUGIN_XML_CONDITION = new Condition<PsiFileSystemItem>() {
-          @Override
-          public boolean value(PsiFileSystemItem item) {
-            return !item.isDirectory() &&
-                   !item.equals(getContainingFile()) &&
-                   (item instanceof XmlFile && DescriptorUtil.isPluginXml((PsiFile)item)) &&
-                   !isAlreadyUsed((XmlFile)item);
-          }
-        };
+        private final Condition<PsiFileSystemItem> PLUGIN_XML_CONDITION = item -> !item.isDirectory() &&
+                                                                              !item.equals(getContainingFile()) &&
+                                                                              (item instanceof XmlFile && DescriptorUtil.isPluginXml((PsiFile)item)) &&
+                                                                              !isAlreadyUsed((XmlFile)item);
 
         private boolean isAlreadyUsed(final XmlFile xmlFile) {
           final PsiFile file = getContainingFile();
           if (!(file instanceof XmlFile)) return false;
           final DomFileElement<IdeaPlugin> ideaPlugin = DescriptorUtil.getIdeaPlugin((XmlFile)file);
           if (ideaPlugin == null) return false;
-          return !ContainerUtil.process(ideaPlugin.getRootElement().getDependencies(), new Processor<Dependency>() {
-            @Override
-            public boolean process(Dependency dependency) {
-              final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
-              if (!DomUtil.hasXml(configFileAttribute)) return true;
-              final PathReference pathReference = configFileAttribute.getValue();
-              if (pathReference == null) return true;
-              return !xmlFile.equals(pathReference.resolve());
-            }
+          return !ContainerUtil.process(ideaPlugin.getRootElement().getDependencies(), dependency -> {
+            final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
+            if (!DomUtil.hasXml(configFileAttribute)) return true;
+            final PathReference pathReference = configFileAttribute.getValue();
+            if (pathReference == null) return true;
+            return !xmlFile.equals(pathReference.resolve());
           });
         }
 
@@ -101,7 +93,7 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
             return Collections.emptyList();
           }
 
-          final Set<VirtualFile> roots = new HashSet<VirtualFile>();
+          final Set<VirtualFile> roots = new HashSet<>();
           final VirtualFile parent = containingFile.getVirtualFile().getParent();
           roots.add(parent);
 

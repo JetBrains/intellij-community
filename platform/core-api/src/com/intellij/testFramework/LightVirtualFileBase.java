@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +102,13 @@ public abstract class LightVirtualFileBase extends VirtualFile {
 
   @NotNull
   @Override
+  public FileType getFileType() {
+    if (myOriginalFile != null) return myOriginalFile.getFileType();
+    return super.getFileType();
+  }
+
+  @NotNull
+  @Override
   public String getPath() {
     return "/" + getName();
   }
@@ -178,6 +186,51 @@ public abstract class LightVirtualFileBase extends VirtualFile {
 
   @Override
   public void rename(Object requestor, @NotNull String newName) throws IOException {
+    assertWritable();
     myName = newName;
+  }
+
+  void assertWritable() {
+    if (!isWritable()) {
+      throw new IncorrectOperationException("File is not writable: "+this);
+    }
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+    assertWritable();
+    return super.createChildDirectory(requestor, name);
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
+    assertWritable();
+    return super.createChildData(requestor, name);
+  }
+
+  @Override
+  public void delete(Object requestor) throws IOException {
+    assertWritable();
+    super.delete(requestor);
+  }
+
+  @Override
+  public void move(Object requestor, @NotNull VirtualFile newParent) throws IOException {
+    assertWritable();
+    super.move(requestor, newParent);
+  }
+
+  @Override
+  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
+    assertWritable();
+    super.setBinaryContent(content, newModificationStamp, newTimeStamp);
+  }
+
+  @Override
+  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
+    assertWritable();
+    super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
   }
 }

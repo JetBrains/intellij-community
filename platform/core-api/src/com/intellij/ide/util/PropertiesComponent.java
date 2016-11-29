@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,12 +106,11 @@ public abstract class PropertiesComponent {
     return ObjectUtils.notNull(getValue(name), defaultValue);
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
   /**
    * @deprecated Use {@link #getInt(String, int)}
    * Init was never performed and in any case is not recommended.
    */
+  @Deprecated
   public final int getOrInitInt(@NotNull String name, int defaultValue) {
     return getInt(name, defaultValue);
   }
@@ -130,10 +129,10 @@ public abstract class PropertiesComponent {
     }
   }
 
-  @Deprecated
   /**
    * @deprecated Use {@link #getValue(String, String)}
    */
+  @Deprecated
   public String getOrInit(@NonNls String name, String defaultValue) {
     if (!isValueSet(name)) {
       setValue(name, defaultValue);

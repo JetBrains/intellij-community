@@ -16,6 +16,11 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.util.io.DataExternalizer;
+
+import java.io.DataOutput;
+import java.io.IOException;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Feb 27, 2008
@@ -25,4 +30,16 @@ public abstract class UpdatableValueContainer<T> extends ValueContainer<T>{
   public abstract void addValue(int inputId, T value);
 
   public abstract void removeAssociatedValue(int inputId);
+
+  private volatile boolean myNeedsCompacting;
+
+  boolean needsCompacting() {
+    return myNeedsCompacting;
+  }
+
+  void setNeedsCompacting(boolean value) {
+    myNeedsCompacting = value;
+  }
+
+  public abstract void saveTo(DataOutput out, DataExternalizer<T> externalizer) throws IOException;
 }

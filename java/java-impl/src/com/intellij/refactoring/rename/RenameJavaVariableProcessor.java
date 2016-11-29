@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,10 +63,10 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                             final UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiVariable variable = (PsiVariable) psiElement;
-    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
-    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
+    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<>();
+    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<>();
 
-    List<PsiElement> occurrencesToCheckForConflict = new ArrayList<PsiElement>();
+    List<PsiElement> occurrencesToCheckForConflict = new ArrayList<>();
     // rename all references
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
@@ -165,7 +165,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
 
     if (getters != null) {
-      List<PsiMethod> validGetters = new ArrayList<PsiMethod>();
+      List<PsiMethod> validGetters = new ArrayList<>();
       for (PsiMethod getter : getters) {
         String newGetterName = GetterSetterPrototypeProvider.suggestNewGetterName(propertyName, newPropertyName, getter);
         String getterId = null;
@@ -260,12 +260,10 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       methods = new PsiMethod[] {methodPrototype};
     }
     for (PsiMethod method : methods) {
-      OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
-        public boolean process(PsiMethod psiMethod) {
-          RenameProcessor.assertNonCompileElement(psiMethod);
-          addGetterOrSetterWithParameter(psiMethod, newName, newPropertyName, oldParameterName, manager, allRenames);
-          return true;
-        }
+      OverridingMethodsSearch.search(method).forEach(psiMethod -> {
+        RenameProcessor.assertNonCompileElement(psiMethod);
+        addGetterOrSetterWithParameter(psiMethod, newName, newPropertyName, oldParameterName, manager, allRenames);
+        return true;
       });
       
       addGetterOrSetterWithParameter(method, newName, newPropertyName, oldParameterName, manager, allRenames);
@@ -375,7 +373,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     if (field.getContainingClass() == null) return;
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
     final PsiClass containingClass = field.getContainingClass();
-    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, true).findAll();
+    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass).findAll();
     for (PsiClass inheritor : inheritors) {
       PsiField conflictingField = inheritor.findFieldByName(newName, false);
       if (conflictingField != null) {
@@ -384,7 +382,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       else { //local class
         final PsiMember member = PsiTreeUtil.getParentOfType(inheritor, PsiMember.class);
         if (member != null) {
-          final ArrayList<PsiVariable> variables = new ArrayList<PsiVariable>();
+          final ArrayList<PsiVariable> variables = new ArrayList<>();
           ControlFlowUtil.collectOuterLocals(variables, inheritor, inheritor, member);
           for (PsiVariable variable : variables) {
             if (newName.equals(variable.getName())) {

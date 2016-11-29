@@ -13,23 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl;
 
-
-import com.intellij.codeInsight.template.EverywhereContextType;
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TemplateContext {
-  private final Map<String, Boolean> myContextStates = ContainerUtil.newLinkedHashMap();
+  private final Map<String, Boolean> myContextStates = ContainerUtil.newTroveMap();
+
+  private static class ContextInterner {
+    private static final Map<String, String> internMap = Arrays.stream(TemplateContextType.EP_NAME.getExtensions())
+      .map(TemplateContextType::getContextId)
+      .distinct()
+      .collect(Collectors.toMap(Function.identity(), Function.identity()));
+  }
 
   public TemplateContext createCopy()  {
     TemplateContext cloneResult = new TemplateContext();
@@ -37,46 +47,20 @@ public class TemplateContext {
     return cloneResult;
   }
 
-  Map<TemplateContextType, Boolean> getDifference(@Nullable TemplateContext defaultContext) {
-    Map<TemplateContextType, Boolean> result = ContainerUtil.newLinkedHashMap();
-    synchronized (myContextStates) {
-      //noinspection NestedSynchronizedStatement
-      synchronized (defaultContext == null ? myContextStates : defaultContext.myContextStates) {
-        for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
-          Boolean ownValue = getOwnValue(contextType);
-          if (ownValue != null) {
-            if (defaultContext == null || isEnabled(contextType) != defaultContext.isEnabled(contextType)) {
-              result.put(contextType, ownValue);
-            }
-          }
-        }
-      }
-    }
-    return result;
+  @Nullable
+  TemplateContextType getDifference(@NotNull TemplateContext defaultContext) {
+    return ContainerUtil.find(TemplateManagerImpl.getAllContextTypes(), type -> isEnabled(type) != defaultContext.isEnabled(type));
   }
 
-  public boolean isEnabled(TemplateContextType contextType) {
+  public boolean isEnabled(@NotNull TemplateContextType contextType) {
     synchronized (myContextStates) {
       Boolean storedValue = getOwnValue(contextType);
       if (storedValue == null) {
         TemplateContextType baseContextType = contextType.getBaseContextType();
-        if (baseContextType != null && !(baseContextType instanceof EverywhereContextType)) {
-          return isEnabled(baseContextType);
-        }
-        return false;
+        return baseContextType != null && isEnabled(baseContextType);
       }
       return storedValue.booleanValue();
     }
-  }
-
-  public void putValue(TemplateContextType context, boolean enabled) {
-    synchronized (myContextStates) {
-      myContextStates.put(context.getContextId(), enabled);
-    }
-  }
-
-  public boolean isExplicitlyEnabled(TemplateContextType contextType) {
-    return Boolean.TRUE.equals(getOwnValue(contextType));
   }
 
   @Nullable
@@ -93,32 +77,99 @@ public class TemplateContext {
   }
 
   // used during initialization => no sync
-  void setDefaultContext(@NotNull TemplateContext defContext) {
-    HashMap<String, Boolean> copy = new HashMap<String, Boolean>(myContextStates);
+  @VisibleForTesting
+  public void setDefaultContext(@NotNull TemplateContext defContext) {
+    HashMap<String, Boolean> copy = new HashMap<>(myContextStates);
     myContextStates.clear();
     myContextStates.putAll(defContext.myContextStates);
     myContextStates.putAll(copy);
   }
 
   // used during initialization => no sync
-  void readTemplateContext(Element element) {
+  @VisibleForTesting
+  public void readTemplateContext(@NotNull Element element) {
     for (Element option : element.getChildren("option")) {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
       if (name != null && value != null) {
-        myContextStates.put(name, Boolean.parseBoolean(value));
+        myContextStates.put(ContainerUtil.getOrElse(ContextInterner.internMap, name, name), Boolean.parseBoolean(value));
       }
     }
+
+    myContextStates.putAll(makeInheritanceExplicit());
   }
 
-  void writeTemplateContext(Element element, @Nullable TemplateContext defaultContext) throws WriteExternalException {
-    Map<TemplateContextType, Boolean> diff = getDifference(defaultContext);
-    for (TemplateContextType type : diff.keySet()) {
-      Element optionElement = new Element("option");
-      optionElement.setAttribute("name", type.getContextId());
-      optionElement.setAttribute("value", diff.get(type).toString());
-      element.addContent(optionElement);
+  /**
+   * Mark contexts explicitly as excluded which are excluded because some of their bases is explicitly marked as excluded.
+   * Otherwise that `excluded` status will be forgotten if the base context is enabled.
+   */
+  @NotNull
+  private Map<String, Boolean> makeInheritanceExplicit() {
+    Map<String, Boolean> explicitStates = ContainerUtil.newHashMap();
+    for (TemplateContextType type : ContainerUtil.filter(TemplateManagerImpl.getAllContextTypes(), this::isDisabledByInheritance)) {
+      explicitStates.put(type.getContextId(), false);
     }
+    return explicitStates;
+  }
+
+  private boolean isDisabledByInheritance(TemplateContextType type) {
+    return !hasOwnValue(type) &&
+           !isEnabled(type) &&
+           JBIterable.generate(type, TemplateContextType::getBaseContextType).filter(this::hasOwnValue).first() != null;
+  }
+
+  private boolean hasOwnValue(TemplateContextType t) {
+    return getOwnValue(t) != null;
+  }
+
+  @VisibleForTesting
+  @Nullable
+  public Element writeTemplateContext(@Nullable TemplateContext defaultContext) {
+    if (myContextStates.isEmpty()) {
+      return null;
+    }
+
+    Map<String, TemplateContextType> idToType = new THashMap<>();
+    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+      idToType.put(type.getContextId(), type);
+    }
+
+    Element element = new Element(TemplateSettings.CONTEXT);
+    for (Map.Entry<String, Boolean> entry : myContextStates.entrySet()) {
+      Boolean ownValue = entry.getValue();
+      if (ownValue == null) {
+        continue;
+      }
+
+      TemplateContextType type = idToType.get(entry.getKey());
+      if (type == null) {
+        // https://youtrack.jetbrains.com/issue/IDEA-155623#comment=27-1721029
+        JdomKt.addOptionTag(element, entry.getKey(), ownValue.toString());
+      }
+      else if (isValueChanged(ownValue, type, defaultContext)) {
+        JdomKt.addOptionTag(element, type.getContextId(), ownValue.toString());
+      }
+    }
+    return element;
+  }
+
+  /**
+   * Default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
+   * Base value is `false`.
+   *
+   * If default value is defined (as in our example) — we must not take base value in account.
+   * Because on init `setDefaultContext` will be called and we will have own value.
+   * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
+   * See TemplateSchemeTest.
+   */
+  private boolean isValueChanged(@NotNull Boolean ownValue, @NotNull TemplateContextType type, @Nullable TemplateContext defaultContext) {
+    Boolean defaultValue = defaultContext == null ? null : defaultContext.getOwnValue(type);
+    if (defaultValue == null) {
+      TemplateContextType base = type.getBaseContextType();
+      boolean baseEnabled = base != null && isEnabled(base);
+      return ownValue != baseEnabled;
+    }
+    return !ownValue.equals(defaultValue);
   }
 
   @Override

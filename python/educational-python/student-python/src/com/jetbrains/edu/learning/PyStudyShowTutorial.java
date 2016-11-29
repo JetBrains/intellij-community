@@ -44,12 +44,7 @@ public class PyStudyShowTutorial extends AbstractProjectComponent {
                   }
                 });
               }
-              notification.whenExpired(new Runnable() {
-                @Override
-                public void run() {
-                  PropertiesComponent.getInstance().setValue(ourShowPopup, false, true);
-                }
-              });
+              notification.whenExpired(() -> PropertiesComponent.getInstance().setValue(ourShowPopup, false, true));
             }
           }
         });

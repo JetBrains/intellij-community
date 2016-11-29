@@ -30,18 +30,8 @@ public class GenericValueUtil {
   private GenericValueUtil() {
   }
 
-  public static NullableFunction<GenericValue, String> STRING_VALUE = new NullableFunction<GenericValue, String>() {
-    @Override
-    public String fun(final GenericValue genericValue) {
-      return genericValue.getStringValue();
-    }
-  };
-  public static NullableFunction<GenericValue, Object> OBJECT_VALUE = new NullableFunction<GenericValue, Object>() {
-    @Override
-    public Object fun(final GenericValue genericValue) {
-      return genericValue.getValue();
-    }
-  };
+  public static NullableFunction<GenericValue, String> STRING_VALUE = genericValue -> genericValue.getStringValue();
+  public static NullableFunction<GenericValue, Object> OBJECT_VALUE = genericValue -> genericValue.getValue();
 
 
   public static boolean containsString(final Collection<? extends GenericValue<?>> collection, String value) {
@@ -61,7 +51,7 @@ public class GenericValueUtil {
   @NotNull
   public static <T> Collection<T> getValueCollection(final Collection<? extends GenericValue<? extends T>> collection, Collection<T> result) {
     for (GenericValue<? extends T> o : collection) {
-      ContainerUtil.addIfNotNull(o.getValue(), result);
+      ContainerUtil.addIfNotNull(result, o.getValue());
     }
     return result;
   }
@@ -69,7 +59,7 @@ public class GenericValueUtil {
   @NotNull
   public static Collection<String> getStringCollection(final Collection<? extends GenericValue> collection, Collection<String> result) {
     for (GenericValue o : collection) {
-      ContainerUtil.addIfNotNull(o.getStringValue(), result);
+      ContainerUtil.addIfNotNull(result, o.getStringValue());
     }
     return result;
   }

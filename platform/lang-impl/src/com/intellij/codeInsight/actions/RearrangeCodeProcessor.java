@@ -72,31 +72,28 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   @NotNull
   @Override
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
-    return new FutureTask<Boolean>(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        try {
-          Collection<TextRange> ranges = getRangesToFormat(file, processChangedTextOnly);
-          Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    return new FutureTask<>(() -> {
+      try {
+        Collection<TextRange> ranges = getRangesToFormat(file, processChangedTextOnly);
+        Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
 
-          if (document != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null) {
-            PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
-            PsiDocumentManager.getInstance(myProject).commitDocument(document);
-            Runnable command = prepareRearrangeCommand(file, ranges);
-            try {
-              CommandProcessor.getInstance().executeCommand(myProject, command, COMMAND_NAME, null);
-            }
-            finally {
-              PsiDocumentManager.getInstance(myProject).commitDocument(document);
-            }
+        if (document != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null) {
+          PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
+          PsiDocumentManager.getInstance(myProject).commitDocument(document);
+          Runnable command = prepareRearrangeCommand(file, ranges);
+          try {
+            CommandProcessor.getInstance().executeCommand(myProject, command, COMMAND_NAME, null);
           }
+          finally {
+            PsiDocumentManager.getInstance(myProject).commitDocument(document);
+          }
+        }
 
-          return true;
-        }
-        catch (FilesTooBigForDiffException e) {
-          handleFileTooBigException(LOG, e, file);
-          return false;
-        }
+        return true;
+      }
+      catch (FilesTooBigForDiffException e) {
+        handleFileTooBigException(LOG, e, file);
+        return false;
       }
     });
   }
@@ -104,14 +101,11 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   @NotNull
   private Runnable prepareRearrangeCommand(@NotNull final PsiFile file, @NotNull final Collection<TextRange> ranges) {
     final ArrangementEngine engine = ServiceManager.getService(myProject, ArrangementEngine.class);
-    return new Runnable() {
-      @Override
-      public void run() {
-        engine.arrange(file, ranges);
-        if (getInfoCollector() != null) {
-          String info = engine.getUserNotificationInfo();
-          getInfoCollector().setRearrangeCodeNotification(info);
-        }
+    return () -> {
+      engine.arrange(file, ranges);
+      if (getInfoCollector() != null) {
+        String info = engine.getUserNotificationInfo();
+        getInfoCollector().setRearrangeCodeNotification(info);
       }
     };
   }

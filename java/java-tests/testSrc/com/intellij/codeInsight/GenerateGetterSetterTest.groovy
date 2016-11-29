@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight
+
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.GenerateGetterHandler
 import com.intellij.codeInsight.generation.GenerateSetterHandler
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import org.jetbrains.annotations.Nullable
+
 /**
  * @author peter
  */
 class GenerateGetterSetterTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test don't strip is of non-boolean fields"() {
+  void "test don't strip is of non-boolean fields"() {
     myFixture.addClass('class YesNoRAMField {}')
     myFixture.configureByText 'a.java', '''
 class Foo {
@@ -52,11 +52,12 @@ class Foo {
 }
 '''
   }
-  
-  public void "test strip is of boolean fields"() {
+
+  void "test strip is of boolean fields"() {
     myFixture.configureByText 'a.java', '''
 class Foo {
     boolean isStateForceMailField;
+    boolean isic;
 
     <caret>
 }
@@ -65,15 +66,20 @@ class Foo {
     myFixture.checkResult '''
 class Foo {
     boolean isStateForceMailField;
+    boolean isic;
 
     public boolean isStateForceMailField() {
         return isStateForceMailField;
     }
+
+    public boolean isIsic() {
+        return isic;
+    }
 }
 '''
-  } 
-  
-  public void "test strip is of boolean fields setter"() {
+  }
+
+  void "test strip is of boolean fields setter"() {
     myFixture.configureByText 'a.java', '''
 class Foo {
     boolean isStateForceMailField;
@@ -93,7 +99,7 @@ class Foo {
 '''
   }
 
-  public void "test strip field prefix"() {
+  void "test strip field prefix"() {
     def settings = CodeStyleSettingsManager.getInstance(getProject()).currentSettings
     String oldPrefix = settings.FIELD_NAME_PREFIX
     try {
@@ -121,7 +127,7 @@ class Foo {
     }
   }
 
-  public void "test qualified this"() {
+  void "test qualified this"() {
     myFixture.enableInspections(UnqualifiedFieldAccessInspection.class)
     myFixture.configureByText 'a.java', '''
 class Foo {
@@ -142,7 +148,7 @@ class Foo {
 '''
   }
 
-  public void "test nullable stuff"() {
+  void "test nullable stuff"() {
     myFixture.addClass("package org.jetbrains.annotations;\n" +
                        "public @interface NotNull {}")
     myFixture.configureByText 'a.java', '''
@@ -191,7 +197,7 @@ class Foo {
     UIUtil.dispatchAllInvocationEvents()
   }
 
-  public void "test static or this setter with same name parameter"() {
+  void "test static or this setter with same name parameter"() {
     myFixture.enableInspections(UnqualifiedFieldAccessInspection.class)
     myFixture.configureByText 'a.java', '''
 class Foo {

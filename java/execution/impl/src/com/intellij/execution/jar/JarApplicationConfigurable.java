@@ -74,7 +74,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   }
 
   private void createUIComponents() {
-    myJarPathComponent = new LabeledComponent<TextFieldWithBrowseButton>();
+    myJarPathComponent = new LabeledComponent<>();
     TextFieldWithBrowseButton textFieldWithBrowseButton = new TextFieldWithBrowseButton();
     textFieldWithBrowseButton.addBrowseFolderListener("Choose JAR File", null, myProject,
                                                       new FileChooserDescriptor(false, false, true, true, false, false));

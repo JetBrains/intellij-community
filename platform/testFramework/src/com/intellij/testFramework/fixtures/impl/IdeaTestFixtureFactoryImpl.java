@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   protected final Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> myFixtureBuilderProviders =
-    new HashMap<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>>();
+    new HashMap<>();
 
   public IdeaTestFixtureFactoryImpl() {
     registerFixtureBuilder(EmptyModuleFixtureBuilder.class, MyEmptyModuleFixtureBuilderImpl.class);
@@ -72,7 +72,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     if (projectDescriptor == null) {
       projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
     }
-    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(projectDescriptor));
+    return new LightTestFixtureBuilderImpl<>(new LightIdeaTestFixtureImpl(projectDescriptor));
   }
 
   @NotNull

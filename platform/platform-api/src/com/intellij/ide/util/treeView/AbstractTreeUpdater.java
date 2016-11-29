@@ -38,9 +38,9 @@ import java.util.*;
 public class AbstractTreeUpdater implements Disposable, Activatable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeUpdater");
 
-  private final LinkedList<TreeUpdatePass> myNodeQueue = new LinkedList<TreeUpdatePass>();
+  private final LinkedList<TreeUpdatePass> myNodeQueue = new LinkedList<>();
   private final AbstractTreeBuilder myTreeBuilder;
-  private final List<Runnable> myRunAfterUpdate = new ArrayList<Runnable>();
+  private final List<Runnable> myRunAfterUpdate = new ArrayList<>();
   private Runnable myRunBeforeUpdate;
   private final MergingUpdateQueue myUpdateQueue;
 
@@ -278,7 +278,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
           List<Runnable> runAfterUpdate = null;
           synchronized (myRunAfterUpdate) {
             if (!myRunAfterUpdate.isEmpty()) {
-              runAfterUpdate = new ArrayList<Runnable>(myRunAfterUpdate);
+              runAfterUpdate = new ArrayList<>(myRunAfterUpdate);
               myRunAfterUpdate.clear();
             }
           }

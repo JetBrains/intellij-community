@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -2080,47 +2079,35 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   private Library createProjectLibrary(final String libraryName) {
-    AccessToken accessToken = WriteAction.start();
-    try {
-      return ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName);
-    }
-    finally {
-      accessToken.finish();
-    }
+    return WriteAction.compute(() -> ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName));
   }
 
   private void createAndAddProjectLibrary(final String moduleName, final String libraryName) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        Library lib = createProjectLibrary(libraryName);
-        ModuleRootModificationUtil.addDependency(getModule(moduleName), lib);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Library lib = createProjectLibrary(libraryName);
+      ModuleRootModificationUtil.addDependency(getModule(moduleName), lib);
     });
   }
 
   private void clearLibraryRoots(final String libraryName, final OrderRootType... types) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
-        Library.ModifiableModel model = lib.getModifiableModel();
-        for (OrderRootType eachType : types) {
-          for (String each : model.getUrls(eachType)) {
-            model.removeRoot(each, eachType);
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+      Library.ModifiableModel model = lib.getModifiableModel();
+      for (OrderRootType eachType : types) {
+        for (String each : model.getUrls(eachType)) {
+          model.removeRoot(each, eachType);
         }
-        model.commit();
       }
+      model.commit();
     });
   }
 
   private void addLibraryRoot(final String libraryName, final OrderRootType type, final String path) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
-        Library.ModifiableModel model = lib.getModifiableModel();
-        model.addRoot(path, type);
-        model.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+      Library.ModifiableModel model = lib.getModifiableModel();
+      model.addRoot(path, type);
+      model.commit();
     });
   }
 
@@ -2153,13 +2140,11 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-        Library lib = appTable.createLibrary("foo");
-        ModuleRootModificationUtil.addDependency(getModule("project"), lib);
-        appTable.removeLibrary(lib);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+      Library lib = appTable.createLibrary("foo");
+      ModuleRootModificationUtil.addDependency(getModule("project"), lib);
+      appTable.removeLibrary(lib);
     });
 
 

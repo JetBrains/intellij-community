@@ -27,7 +27,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 11/6/13
  */
-public class WebConfigurationModelData extends AbstractExternalEntityData {
+public class WebConfigurationModelData extends AbstractExternalEntityData implements ArtifactConfiguration {
   private static final long serialVersionUID = 1L;
 
   @NotNull
@@ -42,7 +42,7 @@ public class WebConfigurationModelData extends AbstractExternalEntityData {
   }
 
   @NotNull
-  public List<War> getWars() {
+  public List<War> getArtifacts() {
     return myWars;
   }
 

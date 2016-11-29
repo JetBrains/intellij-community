@@ -43,7 +43,7 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
     final String s = genericDomValue.getStringValue();
     if (s != null) {
       final int offset = ElementManipulators.getOffsetInElement(element);
-      final ArrayList<PsiReference> list = new ArrayList<PsiReference>();
+      final ArrayList<PsiReference> list = new ArrayList<>();
       int pos = -1;
       while (true) {
         while (pos + 1 < s.length()) {

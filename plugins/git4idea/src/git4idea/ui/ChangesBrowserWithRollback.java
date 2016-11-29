@@ -15,8 +15,6 @@
  */
 package git4idea.ui;
 
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.Change;
@@ -41,7 +39,7 @@ public class ChangesBrowserWithRollback extends ChangesBrowser {
     super(project, null, changes, null, false, true, null, MyUseCase.LOCAL_CHANGES, null);
     myOriginalChanges = changes;
     RollbackDialogAction rollback = new RollbackDialogAction();
-    EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, this);
+    rollback.registerCustomShortcutSet(this, null);
     addToolbarAction(rollback);
     setChangesToDisplay(changes);
   }

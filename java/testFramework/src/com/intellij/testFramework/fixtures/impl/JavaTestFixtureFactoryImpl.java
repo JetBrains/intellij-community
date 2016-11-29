@@ -39,7 +39,7 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
 
   @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
-    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(ourJavaProjectDescriptor));
+    return new LightTestFixtureBuilderImpl<>(new LightIdeaTestFixtureImpl(ourJavaProjectDescriptor));
   }
 
   public static class MyJavaModuleFixtureBuilderImpl extends JavaModuleFixtureBuilderImpl {

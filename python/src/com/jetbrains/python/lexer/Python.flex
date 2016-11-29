@@ -13,8 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 %unicode
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 DIGIT = [0-9]
 NONZERODIGIT = [1-9]
@@ -22,25 +20,25 @@ OCTDIGIT = [0-7]
 HEXDIGIT = [0-9A-Fa-f]
 BINDIGIT = [01]
 
-HEXINTEGER = 0[Xx]({HEXDIGIT})+
-OCTINTEGER = 0[Oo]?({OCTDIGIT})+
-BININTEGER = 0[Bb]({BINDIGIT})+
-DECIMALINTEGER = (({NONZERODIGIT}({DIGIT})*)|0)
+HEXINTEGER = 0[Xx]("_"?{HEXDIGIT})+
+OCTINTEGER = 0[Oo]?("_"?{OCTDIGIT})+
+BININTEGER = 0[Bb]("_"?{BINDIGIT})+
+DECIMALINTEGER = (({NONZERODIGIT}("_"?{DIGIT})*)|0)
 INTEGER = {DECIMALINTEGER}|{OCTINTEGER}|{HEXINTEGER}|{BININTEGER}
 LONGINTEGER = {INTEGER}[Ll]
 
 END_OF_LINE_COMMENT="#"[^\r\n]*
 
-IDENT_START = [a-zA-Z_]|[:unicode_uppercase_letter:]|[:unicode_lowercase_letter:]|[:unicode_titlecase_letter:]|[:unicode_modifier_letter:]|[:unicode_other_letter:]|[:unicode_letter_number:]
-IDENT_CONTINUE = [a-zA-Z0-9_]|[:unicode_uppercase_letter:]|[:unicode_lowercase_letter:]|[:unicode_titlecase_letter:]|[:unicode_modifier_letter:]|[:unicode_other_letter:]|[:unicode_letter_number:]|[:unicode_non_spacing_mark:]|[:unicode_combining_spacing_mark:]|[:unicode_decimal_digit_number:]|[:unicode_connector_punctuation:]
-IDENTIFIER = {IDENT_START}{IDENT_CONTINUE}**
+IDENT_START = [\w_--\d]
+IDENT_CONTINUE = [\w_]
+IDENTIFIER = {IDENT_START}{IDENT_CONTINUE}*
 
 FLOATNUMBER=({POINTFLOAT})|({EXPONENTFLOAT})
 POINTFLOAT=(({INTPART})?{FRACTION})|({INTPART}\.)
 EXPONENTFLOAT=(({INTPART})|({POINTFLOAT})){EXPONENT}
-INTPART = ({DIGIT})+
-FRACTION = \.({DIGIT})+
-EXPONENT = [eE][+\-]?({DIGIT})+
+INTPART = {DIGIT}("_"?{DIGIT})*
+FRACTION = \.{INTPART}
+EXPONENT = [eE][+\-]?{INTPART}
 
 IMAGNUMBER=(({FLOATNUMBER})|({INTPART}))[Jj]
 
@@ -48,8 +46,10 @@ IMAGNUMBER=(({FLOATNUMBER})|({INTPART}))[Jj]
 //RAW_STRING=[Rr]{QUOTED_STRING}
 //QUOTED_STRING=({TRIPLE_APOS_LITERAL})|({QUOTED_LITERAL})|({DOUBLE_QUOTED_LITERAL})|({TRIPLE_QUOTED_LITERAL})
 
-SINGLE_QUOTED_STRING=[UuBbCcRr]{0,2}({QUOTED_LITERAL} | {DOUBLE_QUOTED_LITERAL})
-TRIPLE_QUOTED_STRING=[UuBbCcRr]{0,2}[UuBbCcRr]?({TRIPLE_QUOTED_LITERAL}|{TRIPLE_APOS_LITERAL})
+// If you change patterns for string literals, don't forget to update PythonStringUtil!
+// "c" prefix character is included for Cython
+SINGLE_QUOTED_STRING=[UuBbCcRrFf]{0,3}({QUOTED_LITERAL} | {DOUBLE_QUOTED_LITERAL})
+TRIPLE_QUOTED_STRING=[UuBbCcRrFf]{0,3}({TRIPLE_QUOTED_LITERAL}|{TRIPLE_APOS_LITERAL})
 
 DOCSTRING_LITERAL=({SINGLE_QUOTED_STRING}|{TRIPLE_QUOTED_STRING})
 
@@ -205,7 +205,7 @@ return PyTokenTypes.DOCSTRING; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
 
-.                     { return PyTokenTypes.BAD_CHARACTER; }
+[^]                   { return PyTokenTypes.BAD_CHARACTER; }
 }
 
 <IN_DOCSTRING_OWNER> {

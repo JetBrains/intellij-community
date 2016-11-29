@@ -70,7 +70,7 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
                                                                           ((PyFunction)next).getContainingClass().getName() +
                                                                           ".\nDo you want to find usages of the base method?",  "Find Usages", Messages.getQuestionIcon());
             if (rc == Messages.YES) {
-              List<PsiElement> allMethods = new ArrayList<PsiElement>();
+              List<PsiElement> allMethods = new ArrayList<>();
               allMethods.add(element);
               allMethods.addAll(superMethods);
               return new PyFunctionFindUsagesHandler(element, allMethods);

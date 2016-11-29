@@ -30,10 +30,6 @@ public interface VcsLogUi {
 
   void removeLogListener(@NotNull VcsLogListener listener);
 
-  void setBranchesPanelVisible(boolean visible);
-
-  boolean isBranchesPanelVisible();
-
   boolean areGraphActionsEnabled();
 
   boolean isMultipleRoots();

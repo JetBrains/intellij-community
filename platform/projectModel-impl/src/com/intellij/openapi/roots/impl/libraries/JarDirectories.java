@@ -33,8 +33,8 @@ import java.util.List;
  * @author nik
  */
 public class JarDirectories implements JDOMExternalizable {
-  private final MultiMap<OrderRootType, String> myDirectories = new MultiMap<OrderRootType, String>();
-  private final MultiMap<OrderRootType, String> myRecursivelyIncluded = new MultiMap<OrderRootType, String>();
+  private final MultiMap<OrderRootType, String> myDirectories = new MultiMap<>();
+  private final MultiMap<OrderRootType, String> myRecursivelyIncluded = new MultiMap<>();
 
   @NonNls private static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
   @NonNls private static final String URL_ATTR = "url";
@@ -137,7 +137,7 @@ public class JarDirectories implements JDOMExternalizable {
   public void writeExternal(Element element) {
     final List<OrderRootType> rootTypes = LibraryImpl.sortRootTypes(getRootTypes());
     for (OrderRootType rootType : rootTypes) {
-      final List<String> urls = new ArrayList<String>(getDirectories(rootType));
+      final List<String> urls = new ArrayList<>(getDirectories(rootType));
       Collections.sort(urls, String.CASE_INSENSITIVE_ORDER);
       for (String url : urls) {
         final Element jarDirElement = new Element(JAR_DIRECTORY_ELEMENT);

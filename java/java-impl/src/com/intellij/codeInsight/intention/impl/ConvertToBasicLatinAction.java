@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.java.JavaLanguage;
@@ -77,7 +76,6 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     if (pair == null) return;
     final PsiElement workElement = pair.first;
     final Handler handler = pair.second;
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(workElement)) return;
     final String newText = handler.processText(workElement);
     final PsiElement newElement = handler.createReplacement(workElement, newText);
     workElement.replace(newElement);
@@ -196,7 +194,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
         LOG.error(e); return;
       }
 
-      ourEntities = new HashMap<Character, String>();
+      ourEntities = new HashMap<>();
       final Pattern pattern = Pattern.compile("&#(\\d+);");
       XmlUtil.processXmlElements(file, new PsiElementProcessor() {
         @Override

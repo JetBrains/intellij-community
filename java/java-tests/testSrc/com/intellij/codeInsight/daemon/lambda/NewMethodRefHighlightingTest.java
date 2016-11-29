@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -498,6 +497,38 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA152659() throws Exception {
+    doTest();
+  }
+
+  public void testFreshVariableLowerBoundsDuringSuptypeChecks() throws Exception {
+    doTest();
+  }
+
+  public void testTypeParameterInstantiation() throws Exception {
+    doTest();
+  }
+
+  public void testIgnoreForeignVariables() throws Exception {
+    doTest();
+  }
+
+  public void testChainedCallsWithMethodReferenceInside() throws Exception {
+    doTest();
+  }
+
+  public void testMethodReferenceSecondSearchDontInfluenceTopSiteSubstitutor() throws Exception {
+    doTest();
+  }
+
+  public void testCheckReturnTypeOfMethodReferenceWhenTheRestIsGood() throws Exception {
+    doTest();
+  }
+
+  public void testEnsureResolveToClassInConstructorRefs() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
@@ -505,10 +536,5 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

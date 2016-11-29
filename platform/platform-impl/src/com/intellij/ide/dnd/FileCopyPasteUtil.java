@@ -101,12 +101,7 @@ public class FileCopyPasteUtil {
       if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
         @SuppressWarnings({"unchecked"})
         List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
-        return fileList == null ? null : ContainerUtil.filter(fileList, new Condition<File>() {
-          @Override
-          public boolean value(File file) {
-            return !StringUtil.isEmptyOrSpaces(file.getPath());
-          }
-        });
+        return fileList == null ? null : ContainerUtil.filter(fileList, file -> !StringUtil.isEmptyOrSpaces(file.getPath()));
       }
       else {
         return LinuxDragAndDropSupport.getFiles(transferable);
@@ -140,7 +135,7 @@ public class FileCopyPasteUtil {
       result = Collections.emptyList();
     }
     else {
-      result = new ArrayList<VirtualFile>(fileList.size());
+      result = new ArrayList<>(fileList.size());
       for (File file : fileList) {
         VirtualFile virtualFile = VfsUtil.findFileByIoFile(file, true);
         if (virtualFile == null) continue;

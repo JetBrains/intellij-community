@@ -29,7 +29,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -58,19 +57,15 @@ public class PropertiesReferenceManager {
   @NotNull
   public List<PropertiesFile> findPropertiesFiles(@NotNull final Module module, final String bundleName) {
     ConcurrentFactoryMap<String, List<PropertiesFile>> map =
-      CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<ConcurrentFactoryMap<String, List<PropertiesFile>>>() {
-        @Nullable
-        @Override
-        public Result<ConcurrentFactoryMap<String, List<PropertiesFile>>> compute() {
-          ConcurrentFactoryMap<String, List<PropertiesFile>> factoryMap = new ConcurrentFactoryMap<String, List<PropertiesFile>>() {
-            @Nullable
-            @Override
-            protected List<PropertiesFile> create(String bundleName) {
-              return findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName, BundleNameEvaluator.DEFAULT);
-            }
-          };
-          return Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
-        }
+      CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+        ConcurrentFactoryMap<String, List<PropertiesFile>> factoryMap = new ConcurrentFactoryMap<String, List<PropertiesFile>>() {
+          @Nullable
+          @Override
+          protected List<PropertiesFile> create(String bundleName1) {
+            return findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName1, BundleNameEvaluator.DEFAULT);
+          }
+        };
+        return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
       });
     return map.get(bundleName);
   }
@@ -81,7 +76,7 @@ public class PropertiesReferenceManager {
                                                   BundleNameEvaluator bundleNameEvaluator) {
 
 
-    final ArrayList<PropertiesFile> result = new ArrayList<PropertiesFile>();
+    final ArrayList<PropertiesFile> result = new ArrayList<>();
     processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
       public boolean process(String baseName, PropertiesFile propertiesFile) {
         if (baseName.equals(bundleName)) {
@@ -121,17 +116,6 @@ public class PropertiesReferenceManager {
     return null;
   }
 
-  public String[] getPropertyFileBaseNames(@NotNull final GlobalSearchScope searchScope, final BundleNameEvaluator bundleNameEvaluator) {
-    final ArrayList<String> result = new ArrayList<String>();
-    processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
-      public boolean process(String baseName, PropertiesFile propertiesFile) {
-        result.add(baseName);
-        return true;
-      }
-    }, bundleNameEvaluator);
-    return ArrayUtil.toStringArray(result);
-  }
-
   public boolean processAllPropertiesFiles(@NotNull final PropertiesFileProcessor processor) {
     return processPropertiesFiles(GlobalSearchScope.allScope(myPsiManager.getProject()), processor, BundleNameEvaluator.DEFAULT);
   }
@@ -139,21 +123,16 @@ public class PropertiesReferenceManager {
   public boolean processPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
                                         @NotNull final PropertiesFileProcessor processor,
                                         @NotNull final BundleNameEvaluator evaluator) {
+    for(VirtualFile file:FileTypeIndex.getFiles(PropertiesFileType.INSTANCE, searchScope)) {
+      if (!processFile(file, evaluator, processor)) return false;
+    }
+    if (!myDumbService.isDumb()) {
+      for(VirtualFile file:FileBasedIndex.getInstance().getContainingFiles(XmlPropertiesIndex.NAME, XmlPropertiesIndex.MARKER_KEY, searchScope)) {
+        if (!processFile(file, evaluator, processor)) return false;
+      }
+    }
 
-    boolean result = FileBasedIndex.getInstance()
-      .processValues(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, null, new FileBasedIndex.ValueProcessor<Void>() {
-        public boolean process(VirtualFile file, Void value) {
-          return processFile(file, evaluator, processor);
-        }
-      }, searchScope);
-    if (!result) return false;
-
-    return myDumbService.isDumb() || FileBasedIndex.getInstance()
-      .processValues(XmlPropertiesIndex.NAME, XmlPropertiesIndex.MARKER_KEY, null, new FileBasedIndex.ValueProcessor<String>() {
-        public boolean process(VirtualFile file, String value) {
-          return processFile(file, evaluator, processor);
-        }
-      }, searchScope);
+    return true;
   }
 
   private boolean processFile(VirtualFile file, BundleNameEvaluator evaluator, PropertiesFileProcessor processor) {

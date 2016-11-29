@@ -72,16 +72,16 @@ public class AppEngineSdkUtil {
   }
 
   public static Map<String, Set<String>> loadWhiteList(File input) throws IOException {
-    final THashMap<String, Set<String>> map = new THashMap<String, Set<String>>();
+    final THashMap<String, Set<String>> map = new THashMap<>();
     BufferedReader reader = new BufferedReader(new FileReader(input));
     try {
       String line;
-      Set<String> currentClasses = new THashSet<String>();
+      Set<String> currentClasses = new THashSet<>();
       map.put("", currentClasses);
       while ((line = reader.readLine()) != null) {
         if (line.startsWith(".")) {
           String packageName = line.substring(1);
-          currentClasses = new THashSet<String>();
+          currentClasses = new THashSet<>();
           map.put(packageName, currentClasses);
         }
         else {
@@ -97,7 +97,7 @@ public class AppEngineSdkUtil {
 
   public static Map<String, Set<String>> computeWhiteList(final File toolsApiJarFile) {
     try {
-      final THashMap<String, Set<String>> map = new THashMap<String, Set<String>>();
+      final THashMap<String, Set<String>> map = new THashMap<>();
       final ClassLoader loader = UrlClassLoader.build().urls(toolsApiJarFile.toURI().toURL()).parent(
         AppEngineSdkUtil.class.getClassLoader()).get();
       final Class<?> whiteListClass = Class.forName("com.google.apphosting.runtime.security.WhiteList", true, loader);
@@ -106,7 +106,7 @@ public class AppEngineSdkUtil {
         final String packageName = StringUtil.getPackageName(qualifiedName);
         Set<String> classNames = map.get(packageName);
         if (classNames == null) {
-          classNames = new THashSet<String>();
+          classNames = new THashSet<>();
           map.put(packageName, classNames);
         }
         classNames.add(StringUtil.getShortName(qualifiedName));

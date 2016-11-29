@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.sanselan.ImageWriteException;
 import org.apache.sanselan.common.BinaryConstants;
 import org.apache.sanselan.common.BinaryOutputStream;
+import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -45,12 +48,26 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public abstract class AppIcon {
+  private static final Logger LOG = Logger.getInstance(AppIcon.class);
 
-  private static final Logger LOG = Logger.getInstance("AppIcon");
+  private static AppIcon ourIcon;
 
-  static AppIcon ourMacImpl;
-  static AppIcon ourWin7Impl;
-  static AppIcon ourEmptyImpl;
+  @NotNull
+  public static AppIcon getInstance() {
+    if (ourIcon == null) {
+      if (SystemInfo.isMac) {
+        ourIcon = new MacAppIcon();
+      }
+      else if (SystemInfo.isWin7OrNewer) {
+        ourIcon = new Win7AppIcon();
+      }
+      else {
+        ourIcon = new EmptyIcon();
+      }
+    }
+
+    return ourIcon;
+  }
 
   public abstract boolean setProgress(Project project, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
 
@@ -64,26 +81,8 @@ public abstract class AppIcon {
 
   public abstract void requestFocus(IdeFrame frame);
 
-  public static AppIcon getInstance() {
-    if (ourMacImpl == null) {
-      ourMacImpl = new MacAppIcon();
-      ourWin7Impl = new Win7AppIcon();
-      ourEmptyImpl = new EmptyIcon();
-    }
-
-    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.6")) {
-      return ourMacImpl;
-    }
-    else if (SystemInfo.isWin7OrNewer) {
-      return ourWin7Impl;
-    }
-    else {
-      return ourEmptyImpl;
-    }
-  }
 
   private static abstract class BaseIcon extends AppIcon {
-
     private ApplicationActivationListener myAppListener;
     protected Object myCurrentProcessId;
     protected double myLastValue;
@@ -163,9 +162,9 @@ public abstract class AppIcon {
   }
 
 
+  @SuppressWarnings("UseJBColor")
   private static class MacAppIcon extends BaseIcon {
-
-    private static BufferedImage myAppImage;
+    private BufferedImage myAppImage;
 
     private BufferedImage getAppImage() {
       assertIsDispatchThread();
@@ -177,13 +176,7 @@ public abstract class AppIcon {
         Image appImage = (Image)getAppMethod("getDockIconImage").invoke(app);
 
         if (appImage == null) return null;
-
-        int width = appImage.getWidth(null);
-        int height = appImage.getHeight(null);
-        BufferedImage img = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = img.createGraphics();
-        g2d.drawImage(appImage, null, null);
-        myAppImage = img;
+        myAppImage = ImageUtil.toBufferedImage(appImage);
       }
       catch (NoSuchMethodException e) {
         return null;
@@ -202,9 +195,7 @@ public abstract class AppIcon {
       try {
         getAppMethod("setDockIconBadge", String.class).invoke(getApp(), text);
       }
-      catch (NoSuchMethodException e) {
-        return;
-      }
+      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -217,9 +208,7 @@ public abstract class AppIcon {
       try {
         getAppMethod("requestForeground", boolean.class).invoke(getApp(), true);
       }
-      catch (NoSuchMethodException e) {
-        return;
-      }
+      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -232,9 +221,7 @@ public abstract class AppIcon {
       try {
         getAppMethod("requestUserAttention", boolean.class).invoke(getApp(), critical);
       }
-      catch (NoSuchMethodException e) {
-        return;
-      }
+      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -270,7 +257,12 @@ public abstract class AppIcon {
       if (visible) {
         Icon okIcon = AllIcons.Mac.AppIconOk512;
 
-        int x = img.myImg.getWidth() - okIcon.getIconWidth();
+        int myImgWidth = img.myImg.getWidth();
+        if (myImgWidth != 128) {
+          okIcon = IconUtil.scale(okIcon, myImgWidth / 128);
+        }
+
+        int x = myImgWidth - okIcon.getIconWidth();
         int y = 0;
 
         okIcon.paintIcon(JOptionPane.getRootFrame(), img.myG2d, x, y);
@@ -290,6 +282,8 @@ public abstract class AppIcon {
       if (getAppImage() == null) return false;
 
       myCurrentProcessId = processId;
+
+      if (myLastValue > value) return true;
 
       if (Math.abs(myLastValue - value) < 0.02d) return true;
 
@@ -340,14 +334,17 @@ public abstract class AppIcon {
     }
 
     private AppImage createAppImage() {
-      BufferedImage current = UIUtil.createImage(getAppImage().getWidth(), getAppImage().getHeight(), BufferedImage.TYPE_INT_ARGB);
+      BufferedImage appImage = getAppImage();
+      assert appImage != null;
+      @SuppressWarnings("UndesirableClassUsage")
+      BufferedImage current = new BufferedImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = current.createGraphics();
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.drawImage(getAppImage(), null, null);
+      UIUtil.drawImage(g, appImage, 0, 0, null);
       return new AppImage(current, g);
     }
 
-    private class AppImage {
+    private static class AppImage {
       BufferedImage myImg;
       Graphics2D myG2d;
 
@@ -357,7 +354,7 @@ public abstract class AppIcon {
       }
     }
 
-    private void setDockIcon(BufferedImage image) {
+    private static void setDockIcon(BufferedImage image) {
       try {
         getAppMethod("setDockIconImage", Image.class).invoke(getApp(), image);
       }
@@ -366,19 +363,21 @@ public abstract class AppIcon {
       }
     }
 
-    private Method getAppMethod(final String name, Class... args) throws NoSuchMethodException, ClassNotFoundException {
+    private static Method getAppMethod(final String name, Class... args) throws NoSuchMethodException, ClassNotFoundException {
       return getAppClass().getMethod(name, args);
     }
 
-    private Object getApp() throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, IllegalAccessException {
+    private static Object getApp() throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, IllegalAccessException {
       return getAppClass().getMethod("getApplication").invoke(null);
     }
 
-    private Class<?> getAppClass() throws ClassNotFoundException {
+    private static Class<?> getAppClass() throws ClassNotFoundException {
       return Class.forName("com.apple.eawt.Application");
     }
   }
 
+
+  @SuppressWarnings("UseJBColor")
   private static class Win7AppIcon extends BaseIcon {
     @Override
     public boolean _setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
@@ -582,7 +581,7 @@ public abstract class AppIcon {
       }
     }
 
-    private static Object myOkIcon;
+    private Object myOkIcon;
 
     @Override
     public void _setOkBadge(IdeFrame frame, boolean visible) {
@@ -637,13 +636,13 @@ public abstract class AppIcon {
     }
 
     @Override
-    public void requestFocus(IdeFrame frame) {
-    }
+    public void requestFocus(IdeFrame frame) { }
 
     private static boolean isValid(IdeFrame frame) {
       return frame != null && ((Component)frame).isDisplayable();
     }
   }
+
 
   private static class EmptyIcon extends AppIcon {
     @Override
@@ -657,20 +656,16 @@ public abstract class AppIcon {
     }
 
     @Override
-    public void setErrorBadge(Project project, String text) {
-    }
+    public void setErrorBadge(Project project, String text) { }
 
     @Override
-    public void setOkBadge(Project project, boolean visible) {
-    }
+    public void setOkBadge(Project project, boolean visible) { }
 
     @Override
-    public void requestAttention(Project project, boolean critical) {
-    }
+    public void requestAttention(Project project, boolean critical) { }
 
     @Override
-    public void requestFocus(IdeFrame frame) {
-    }
+    public void requestFocus(IdeFrame frame) { }
   }
 
   private static void assertIsDispatchThread() {

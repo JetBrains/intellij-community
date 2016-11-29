@@ -17,14 +17,17 @@
 package com.intellij.usages.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.impl.SettingsImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -33,6 +36,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,11 +47,12 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class UsagePreviewPanel extends UsageContextPanelBase {
+public class UsagePreviewPanel extends UsageContextPanelBase implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
   private Editor myEditor;
   private final boolean myIsEditor;
   private int myLineHeight;
+  private List<UsageInfo> myCachedSelectedUsageInfos;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -60,17 +65,20 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     myIsEditor = isEditor;
   }
 
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.EDITOR.getName().equals(dataId) && myEditor != null) {
+      return myEditor;
+    }
+    return null;
+  }
+
   public static class Provider implements UsageContextPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true) {
-        @Override
-        protected void customizeEditorSettings(EditorSettings settings) {
-          super.customizeEditorSettings(settings);
-          settings.setUseSoftWraps(true);
-        }
-      };
+      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true);
     }
 
     @Override
@@ -103,15 +111,19 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
       releaseEditor();
       removeAll();
       myEditor = createEditor(psiFile, document);
-      myLineHeight = myEditor.getLineHeight();
       if (myEditor == null) return;
+      myLineHeight = myEditor.getLineHeight();
       myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
-      revalidate();
+      invalidate();
+      validate();
     }
 
-    highlight(infos, myEditor, myProject);
+    if (!Comparing.equal(infos, myCachedSelectedUsageInfos)) { // avoid moving viewport
+      highlight(infos, myEditor, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX);
+      myCachedSelectedUsageInfos = infos;
+    }
   }
 
   public int getLineHeight() {
@@ -121,20 +133,12 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
 
   private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
 
-  public static void highlight(@NotNull final List<UsageInfo> infos, @NotNull final Editor editor, @NotNull final Project project) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) return;
-        if (!editor.isDisposed()) {
-          doHighlight(infos, editor, project);
-        }
-      }
-    }, ModalityState.current());
-  }
-
-  private static void doHighlight(@NotNull List<UsageInfo> infos, @NotNull Editor editor, @NotNull Project project) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+  public static void highlight(@NotNull final List<UsageInfo> infos,
+                               @NotNull final Editor editor,
+                               @NotNull final Project project,
+                               boolean highlightOnlyNameElements,
+                               int highlightLayer) {
+    LOG.assertTrue(!PsiDocumentManager.getInstance(project).hasUncommitedDocuments());
 
     MarkupModel markupModel = editor.getMarkupModel();
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
@@ -159,7 +163,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
                                                                                    : elementRange.cutOut(infoRange);
       if (textRange == null) textRange = elementRange;
       // hack to determine element range to highlight
-      if (psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
+      if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
         PsiFile psiFile = psiElement.getContainingFile();
         PsiElement nameElement = psiFile.findElementAt(offsetInFile);
         if (nameElement != null) {
@@ -170,7 +174,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
       textRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiElement, textRange);
 
       RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                                   HighlighterLayer.ADDITIONAL_SYNTAX, attributes,
+                                                                                   highlightLayer, attributes,
                                                                                    HighlighterTargetArea.EXACT_RANGE);
       highlighter.putUserData(IN_PREVIEW_USAGE_FLAG, Boolean.TRUE);
       editor.getCaretModel().moveToOffset(textRange.getEndOffset());
@@ -194,11 +198,13 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
 
   protected void customizeEditorSettings(EditorSettings settings) {
     settings.setLineMarkerAreaShown(false);
-    settings.setIndentGuidesShown(false);
     settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
-    settings.setVirtualSpace(true);
+    settings.setAnimatedScrolling(false);
+    if (settings instanceof SettingsImpl) {
+      ((SettingsImpl)settings).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
+    }
   }
 
   @Override
@@ -216,8 +222,11 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     if (myEditor != null) {
       EditorFactory.getInstance().releaseEditor(myEditor);
       myEditor = null;
+      myCachedSelectedUsageInfos = null;
     }
   }
+
+
 
   @Override
   public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {

@@ -38,23 +38,32 @@ import javax.swing.Icon
 
 fun VariableView(variable: Variable, context: VariableContext) = VariableView(variable.name, variable, context)
 
-class VariableView(name: String, private val variable: Variable, private val context: VariableContext) : XNamedValue(name), VariableContext {
+class VariableView(override val variableName: String, private val variable: Variable, private val context: VariableContext) : XNamedValue(variableName), VariableContext {
   @Volatile private var value: Value? = null
   // lazy computed
-  private var memberFilter: MemberFilter? = null
+  private var _memberFilter: MemberFilter? = null
 
   @Volatile private var remainingChildren: List<Variable>? = null
   @Volatile private var remainingChildrenOffset: Int = 0
 
   override fun watchableAsEvaluationExpression() = context.watchableAsEvaluationExpression()
 
-  override fun getViewSupport() = context.viewSupport
+  override val viewSupport: DebuggerViewSupport
+    get() = context.viewSupport
 
-  override fun getParent() = context
+  override val parent = context
 
-  override fun getMemberFilter(): Promise<MemberFilter> {
-    return context.viewSupport.getMemberFilter(this)
-  }
+  override val memberFilter: Promise<MemberFilter>
+    get() = context.viewSupport.getMemberFilter(this)
+
+  override val evaluateContext: EvaluateContext
+    get() = context.evaluateContext
+
+  override val scope: Scope?
+    get() = context.scope
+
+  override val vm: Vm?
+    get() = context.vm
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     value = variable.value
@@ -86,8 +95,12 @@ class VariableView(name: String, private val variable: Variable, private val con
     }, false)
     node.setFullValueEvaluator(object : XFullValueEvaluator(" (invoke getter)") {
       override fun startEvaluation(callback: XFullValueEvaluator.XFullValueEvaluationCallback) {
-        val valueModifier = variable.valueModifier
-        assert(valueModifier != null)
+        var valueModifier = variable.valueModifier
+        var nonProtoContext = context
+        while (nonProtoContext is VariableView && nonProtoContext.variableName == PROTOTYPE_PROP) {
+          valueModifier = nonProtoContext.variable.valueModifier
+          nonProtoContext = nonProtoContext.parent
+        }
         valueModifier!!.evaluateGet(variable, evaluateContext)
           .done(node) {
             callback.evaluated("")
@@ -144,7 +157,7 @@ class VariableView(name: String, private val variable: Variable, private val con
     if (list != null) {
       val to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size)
       val isLast = to == list.size
-      node.addChildren(createVariablesList(list, remainingChildrenOffset, to, this, memberFilter), isLast)
+      node.addChildren(createVariablesList(list, remainingChildrenOffset, to, this, _memberFilter), isLast)
       if (!isLast) {
         node.tooManyChildren(list.size - to)
         remainingChildrenOffset += XCompositeNode.MAX_CHILDREN_TO_SHOW
@@ -177,12 +190,13 @@ class VariableView(name: String, private val variable: Variable, private val con
     }
 
     if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
-      Promise.all(promises).processed(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
+      all(promises).processed(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
     }
   }
 
   abstract class ObsolescentIndexedVariablesConsumer(protected val node: XCompositeNode) : IndexedVariablesConsumer() {
-    override fun isObsolete() = node.isObsolete
+    override val isObsolete: Boolean
+      get() = node.isObsolete
   }
 
   private fun computeIndexedProperties(value: ArrayValue, node: XCompositeNode, isLastChildren: Boolean): Promise<*> {
@@ -190,22 +204,22 @@ class VariableView(name: String, private val variable: Variable, private val con
       override fun consumeRanges(ranges: IntArray?) {
         if (ranges == null) {
           val groupList = XValueChildrenList()
-          LazyVariablesGroup.addGroups(value, LazyVariablesGroup.GROUP_FACTORY, groupList, 0, value.length, XCompositeNode.MAX_CHILDREN_TO_SHOW, this@VariableView)
+          addGroups(value, ::lazyVariablesGroup, groupList, 0, value.length, XCompositeNode.MAX_CHILDREN_TO_SHOW, this@VariableView)
           node.addChildren(groupList, isLastChildren)
         }
         else {
-          LazyVariablesGroup.addRanges(value, ranges, node, this@VariableView, isLastChildren)
+          addRanges(value, ranges, node, this@VariableView, isLastChildren)
         }
       }
 
       override fun consumeVariables(variables: List<Variable>) {
         node.addChildren(createVariablesList(variables, this@VariableView, null), isLastChildren)
       }
-    }, null)
+    })
   }
 
   private fun computeNamedProperties(value: ObjectValue, node: XCompositeNode, isLastChildren: Boolean) = processVariables(this, value.properties, node) { memberFilter, variables ->
-    this@VariableView.memberFilter = memberFilter
+    _memberFilter = memberFilter
 
     if (value.type == ValueType.ARRAY && value !is ArrayValue) {
       computeArrayRanges(variables, node)
@@ -229,7 +243,7 @@ class VariableView(name: String, private val variable: Variable, private val con
   }
 
   private fun computeArrayRanges(properties: List<Variable>, node: XCompositeNode) {
-    val variables = filterAndSort(properties, memberFilter!!)
+    val variables = filterAndSort(properties, _memberFilter!!)
     var count = variables.size
     val bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW
     if (count <= bucketSize) {
@@ -246,7 +260,7 @@ class VariableView(name: String, private val variable: Variable, private val con
 
     val groupList = XValueChildrenList()
     if (count > 0) {
-      LazyVariablesGroup.addGroups(variables, VariablesGroup.GROUP_FACTORY, groupList, 0, count, bucketSize, this)
+      addGroups(variables, ::createArrayRangeGroup, groupList, 0, count, bucketSize, this)
     }
 
     var notGroupedVariablesOffset: Int
@@ -260,7 +274,7 @@ class VariableView(name: String, private val variable: Variable, private val con
       }
 
       if (notGroupedVariablesOffset > 0) {
-        LazyVariablesGroup.addGroups(variables, VariablesGroup.GROUP_FACTORY, groupList, count, notGroupedVariablesOffset, bucketSize, this)
+        addGroups(variables, ::createArrayRangeGroup, groupList, count, notGroupedVariablesOffset, bucketSize, this)
       }
     }
     else {
@@ -269,7 +283,7 @@ class VariableView(name: String, private val variable: Variable, private val con
 
     for (i in notGroupedVariablesOffset..variables.size - 1) {
       val variable = variables.get(i)
-      groupList.add(VariableView(memberFilter!!.rawNameToSource(variable), variable, this))
+      groupList.add(VariableView(_memberFilter!!.rawNameToSource(variable), variable, this))
     }
 
     node.addChildren(groupList, true)
@@ -309,8 +323,6 @@ class VariableView(name: String, private val variable: Variable, private val con
     }
   }
 
-  override fun getEvaluateContext() = context.evaluateContext
-
   fun getValue() = variable.value
 
   override fun canNavigateToSource() = value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
@@ -319,13 +331,10 @@ class VariableView(name: String, private val variable: Variable, private val con
     if (value is FunctionValue) {
       (value as FunctionValue).resolve()
         .done { function ->
-          viewSupport.vm!!.scriptManager.getScript(function)
+          vm!!.scriptManager.getScript(function)
             .done {
-              val position = if (it == null) null else viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn)
-              navigatable.setSourcePosition(if (position == null)
-                null
-              else
-                object : XSourcePositionWrapper(position) {
+              navigatable.setSourcePosition(it?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
+                object : XSourcePositionWrapper(it) {
                   override fun createNavigatable(project: Project): Navigatable {
                     return PsiVisitors.visit(myPosition, project) { position, element, positionOffset, document ->
                       // element will be "open paren", but we should navigate to function name,
@@ -354,29 +363,37 @@ class VariableView(name: String, private val variable: Variable, private val con
                       (if (psiReference == null) element.navigationElement else psiReference.navigationElement) as? Navigatable
                     } ?: super.createNavigatable(project)
                   }
-                })
+                }
+              })
             }
         }
     }
     else {
-      viewSupport.computeSourcePosition(name, value!!, variable, context, navigatable)
+      viewSupport.computeSourcePosition(variableName, value!!, variable, context, navigatable)
     }
   }
 
-  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback) = viewSupport.computeInlineDebuggerData(name, variable, context, callback)
+  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback) = viewSupport.computeInlineDebuggerData(variableName, variable, context, callback)
 
   override fun getEvaluationExpression(): String? {
     if (!watchableAsEvaluationExpression()) {
       return null
     }
 
-    val list = SmartList(variable.name)
+    val list = SmartList<String>()
+    addVarName(list, parent, variable.name)
+
     var parent: VariableContext? = context
-    while (parent != null && parent.name != null) {
-      list.add(parent.name!!)
+    while (parent != null && parent.variableName != null) {
+      addVarName(list, parent.parent, parent.variableName!!)
       parent = parent.parent
     }
     return context.viewSupport.propertyNamesToString(list, false)
+  }
+
+  private fun addVarName(list: SmartList<String>, parent: VariableContext?, name: String) {
+    if (parent == null || parent.variableName != null) list.add(name)
+    else list.addAll(name.split(".").reversed())
   }
 
   private class MyFullValueEvaluator(private val value: Value) : XFullValueEvaluator(if (value is StringValue) value.length else value.valueString!!.length) {
@@ -396,8 +413,6 @@ class VariableView(name: String, private val variable: Variable, private val con
         .rejected { callback.errorOccurred(it.message!!) }
     }
   }
-
-  override fun getScope() = context.scope
 
   companion object {
     fun setObjectPresentation(value: ObjectValue, icon: Icon, node: XValueNode) {
@@ -476,3 +491,5 @@ private class ArrayPresentation(length: Int, className: String?) : XValuePresent
     renderer.renderSpecialSymbol("]")
   }
 }
+
+private val PROTOTYPE_PROP = "__proto__"

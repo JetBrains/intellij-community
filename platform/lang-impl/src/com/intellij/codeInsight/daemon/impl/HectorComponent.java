@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -80,7 +80,7 @@ public class HectorComponent extends JPanel {
     super(new GridBagLayout());
     setBorder(BorderFactory.createEmptyBorder(0, 0, 7, 0));
     myFile = file;
-    mySliders = new HashMap<Language, JSlider>();
+    mySliders = new HashMap<>();
 
     final Project project = myFile.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -89,11 +89,11 @@ public class HectorComponent extends JPanel {
     final boolean notInLibrary =
       !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    List<Language> languages = new ArrayList<Language>(viewProvider.getLanguages());
+    List<Language> languages = new ArrayList<>(viewProvider.getLanguages());
     Collections.sort(languages, PsiUtilBase.LANGUAGE_COMPARATOR);
     for (Language language : languages) {
       @SuppressWarnings("UseOfObsoleteCollectionType")
-      final Hashtable<Integer, JComponent> sliderLabels = new Hashtable<Integer, JComponent>();
+      final Hashtable<Integer, JComponent> sliderLabels = new Hashtable<>();
       sliderLabels.put(1, new JLabel(EditorBundle.message("hector.none.slider.label"), AllIcons.Ide.HectorOff, SwingConstants.LEFT));
       sliderLabels.put(2, new JLabel(EditorBundle.message("hector.syntax.slider.label"), AllIcons.Ide.HectorSyntax, SwingConstants.LEFT));
       if (notInLibrary) {
@@ -165,9 +165,7 @@ public class HectorComponent extends JPanel {
         }
         if (!DaemonCodeAnalyzer.getInstance(myFile.getProject()).isHighlightingAvailable(myFile)) return;
         final Project project = myFile.getProject();
-        final ErrorsConfigurable errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);
-        assert errorsConfigurable != null;
-        ShowSettingsUtil.getInstance().editConfigurable(project, errorsConfigurable);
+        ShowSettingsUtil.getInstance().editConfigurable(project, new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstance(myFile.getProject())));
       }
     });
 
@@ -175,7 +173,7 @@ public class HectorComponent extends JPanel {
     gc.weightx = 1.0;
     gc.insets.right = 0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    myAdditionalPanels = new ArrayList<HectorComponentPanel>();
+    myAdditionalPanels = new ArrayList<>();
     for (HectorComponentPanelsProvider provider : Extensions.getExtensions(HectorComponentPanelsProvider.EP_NAME, project)) {
       final HectorComponentPanel componentPanel = provider.createConfigurable(file);
       if (componentPanel != null) {
@@ -189,7 +187,7 @@ public class HectorComponent extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
-    final int width = 300;
+    final int width = JBUI.scale(300);
     if (preferredSize.width < width){
       preferredSize.width = width;
     }
@@ -221,17 +219,14 @@ public class HectorComponent extends JPanel {
     final JBPopup hector = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)
       .setRequestFocus(true)
       .setMovable(true)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          for (HectorComponentPanel additionalPanel : myAdditionalPanels) {
-            if (!additionalPanel.canClose()) {
-              return Boolean.FALSE;
-            }
+      .setCancelCallback(() -> {
+        for (HectorComponentPanel additionalPanel : myAdditionalPanels) {
+          if (!additionalPanel.canClose()) {
+            return Boolean.FALSE;
           }
-          onClose();
-          return Boolean.TRUE;
         }
+        onClose();
+        return Boolean.TRUE;
       })
       .createPopup();
     Disposer.register(myFile.getProject(), new Disposable() {
@@ -248,7 +243,7 @@ public class HectorComponent extends JPanel {
     if (oldHector != null){
       oldHector.cancel();
     } else {
-      myHectorRef = new WeakReference<JBPopup>(hector);
+      myHectorRef = new WeakReference<>(hector);
       hector.show(point);
     }
   }

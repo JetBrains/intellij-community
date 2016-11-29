@@ -51,6 +51,10 @@ public class ForLoopWithMissingComponentInspectionTest extends LightInspectionTe
                  "}");
   }
 
+  public void testEnumeration() {
+    doStatementTest("for (java.util.Enumeration e = java.util.Collections.emptyEnumeration(); e.hasMoreElements(); );");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     final ForLoopWithMissingComponentInspection inspection = new ForLoopWithMissingComponentInspection();

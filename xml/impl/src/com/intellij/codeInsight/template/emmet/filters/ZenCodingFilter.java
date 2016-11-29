@@ -30,7 +30,7 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public abstract class ZenCodingFilter {
-  public static final ExtensionPointName<ZenCodingFilter> EP_NAME = new ExtensionPointName<ZenCodingFilter>("com.intellij.xml.zenCodingFilter");
+  public static final ExtensionPointName<ZenCodingFilter> EP_NAME = new ExtensionPointName<>("com.intellij.xml.zenCodingFilter");
 
   private static final ZenCodingFilter[] OUR_STANDARD_FILTERS = new ZenCodingFilter[]{
     new XslZenCodingFilter(),
@@ -64,7 +64,7 @@ public abstract class ZenCodingFilter {
   public abstract String getDisplayName();
 
   public static List<ZenCodingFilter> getInstances() {
-    List<ZenCodingFilter> generators = new ArrayList<ZenCodingFilter>();
+    List<ZenCodingFilter> generators = new ArrayList<>();
     Collections.addAll(generators, OUR_STANDARD_FILTERS);
     Collections.addAll(generators, EP_NAME.getExtensions());
     return generators;

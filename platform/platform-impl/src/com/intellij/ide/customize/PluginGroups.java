@@ -16,6 +16,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 
 public class PluginGroups {
@@ -40,16 +42,16 @@ public class PluginGroups {
   
   public static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
 
-  final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<String, Pair<Icon, List<String>>>();
-  final Map<String, String> myFeaturedPlugins = new LinkedHashMap<String, String>();
+  final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<>();
+  final Map<String, String> myFeaturedPlugins = new LinkedHashMap<>();
 
-  private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<String, List<IdSet>>();
-  private final Map<String, String> myDescriptions = new LinkedHashMap<String, String>();
-  private final List<IdeaPluginDescriptor> myPluginsFromRepository = new ArrayList<IdeaPluginDescriptor>();
-  private Collection<String> myDisabledPluginIds = new HashSet<String>();
+  private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<>();
+  private final Map<String, String> myDescriptions = new LinkedHashMap<>();
+  private final List<IdeaPluginDescriptor> myPluginsFromRepository = new ArrayList<>();
+  private Collection<String> myDisabledPluginIds = new HashSet<>();
   private IdeaPluginDescriptor[] myAllPlugins;
   private boolean myInitialized = false;
-  private Set<String> myFeaturedIds = new HashSet<String>();
+  private Set<String> myFeaturedIds = new HashSet<>();
   private Runnable myLoadingCallback = null;
 
   public PluginGroups() {
@@ -84,12 +86,36 @@ public class PluginGroups {
     PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
     initGroups(myTree, myFeaturedPlugins);
+    initCloudPlugins();
   }
 
   public void setLoadingCallback(Runnable loadingCallback) {
     myLoadingCallback = loadingCallback;
     if (!myPluginsFromRepository.isEmpty()) {
       myLoadingCallback.run();
+    }
+  }
+
+  private void initCloudPlugins() {
+    CloudConfigProvider provider = CloudConfigProvider.getProvider();
+    if (provider == null) {
+      return;
+    }
+
+    List<String> plugins = provider.getInstalledPlugins();
+    if (plugins.isEmpty()) {
+      return;
+    }
+
+    for (Iterator<Entry<String, String>> I = myFeaturedPlugins.entrySet().iterator(); I.hasNext(); ) {
+      String value = I.next().getValue();
+      if (ContainerUtil.find(plugins, plugin -> value.endsWith(":" + plugin)) != null) {
+        I.remove();
+      }
+    }
+
+    for (String plugin : plugins) {
+      myFeaturedPlugins.put(plugin, "#Cloud:#Cloud:" + plugin);
     }
   }
 
@@ -216,8 +242,9 @@ public class PluginGroups {
                         "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
     addVimPlugin(featuredPlugins);
     featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
+    featuredPlugins.put("Angular", "Web Development:Angular 1&2 support:AngularJS");
     featuredPlugins.put("Atlassian Connector",
-                        "Tools Integration:Integration for Atlassian JIRA, Bamboo, Cricible, FishEye:atlassian-idea-plugin");
+                        "Tools Integration:Integration for Atlassian JIRA, Bamboo, Crucible, FishEye:atlassian-idea-plugin");
   }
 
   public static void addVcsGroup(Map<String, Pair<Icon, List<String>>> tree) {
@@ -242,7 +269,7 @@ public class PluginGroups {
   }
 
   public static void addGoPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("Go", "Custom Languages:Go language supprt:ro.redeul.google.go");
+    featuredPlugins.put("Go", "Custom Languages:Go language support:ro.redeul.google.go");
   }
 
   public static void addMarkdownPlugin(Map<String, String> featuredPlugins) {
@@ -262,11 +289,11 @@ public class PluginGroups {
   private void initIfNeed() {
     if (myInitialized) return;
     myInitialized = true;
-    for (Map.Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
+    for (Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
       final String group = entry.getKey();
       if (CORE.equals(group)) continue;
 
-      List<IdSet> idSets = new ArrayList<IdSet>();
+      List<IdSet> idSets = new ArrayList<>();
       StringBuilder description = new StringBuilder();
       for (String idDescription : entry.getValue().getSecond()) {
         IdSet idSet = new IdSet(this, idDescription);
@@ -370,9 +397,9 @@ public class PluginGroups {
 
   void setPluginEnabledWithDependencies(final String pluginId, boolean enabled) {
     initIfNeed();
-    Set<String> ids = new HashSet<String>();
+    Set<String> ids = new HashSet<>();
     collectInvolvedIds(pluginId, enabled, ids);
-    Set<IdSet> sets = new HashSet<IdSet>();
+    Set<IdSet> sets = new HashSet<>();
     for (String id : ids) {
       IdSet set = getSet(id);
       if (set != null) {
@@ -400,12 +427,7 @@ public class PluginGroups {
       }
     }
     else {
-      Condition<PluginId> condition = new Condition<PluginId>() {
-        @Override
-        public boolean value(PluginId id) {
-          return pluginId.equals(id.getIdString());
-        }
-      };
+      Condition<PluginId> condition = id -> pluginId.equals(id.getIdString());
       for (final IdeaPluginDescriptor plugin : myAllPlugins) {
         if (null != ContainerUtil.find(plugin.getDependentPluginIds(), condition) &&
             null == ContainerUtil.find(plugin.getOptionalDependentPluginIds(), condition)) {
@@ -416,7 +438,7 @@ public class PluginGroups {
   }
 
   private List<String> getNonOptionalDependencies(final String id) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     IdeaPluginDescriptor descriptor = findPlugin(id);
     if (descriptor != null) {
       for (PluginId pluginId : descriptor.getDependentPluginIds()) {

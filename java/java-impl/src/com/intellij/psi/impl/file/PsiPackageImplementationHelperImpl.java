@@ -58,7 +58,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
   @NotNull
   @Override
   public VirtualFile[] occursInPackagePrefixes(@NotNull PsiPackage psiPackage) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     final Module[] modules = ModuleManager.getInstance(psiPackage.getProject()).getModules();
 
     String qualifiedName = psiPackage.getQualifiedName();
@@ -102,7 +102,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
 
   private static boolean changePackagePrefixes(@NotNull PsiPackage psiPackage, @NotNull String oldQualifiedName, @NotNull String newQualifiedName) {
     final Module[] modules = ModuleManager.getInstance(psiPackage.getProject()).getModules();
-    List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
+    List<ModifiableRootModel> modelsToCommit = new ArrayList<>();
     for (final Module module : modules) {
       boolean anyChange = false;
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -138,14 +138,11 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     final Project project = psiPackage.getProject();
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
     window.activate(null);
-    window.getActivation().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        final ProjectView projectView = ProjectView.getInstance(project);
-        PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
-        if (directories.length == 0) return;
-        projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
-      }
+    window.getActivation().doWhenDone(() -> {
+      final ProjectView projectView = ProjectView.getInstance(project);
+      PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
+      if (directories.length == 0) return;
+      projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
     });
   }
 

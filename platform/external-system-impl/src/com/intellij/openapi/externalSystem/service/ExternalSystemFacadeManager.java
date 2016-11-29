@@ -253,7 +253,7 @@ public class ExternalSystemFacadeManager {
   
   private class MyHandler implements InvocationHandler {
 
-    @NotNull private final AtomicReference<IntegrationKey> myKey = new AtomicReference<IntegrationKey>();
+    @NotNull private final AtomicReference<IntegrationKey> myKey = new AtomicReference<>();
 
     MyHandler(@NotNull IntegrationKey key) {
       myKey.set(key);

@@ -33,10 +33,10 @@ public abstract class IdeScriptEngineManager {
   public abstract List<String> getFileExtensions(@Nullable String language);
 
   @Nullable
-  public abstract IdeScriptEngine getEngineForLanguage(@NotNull String language);
+  public abstract IdeScriptEngine getEngineForLanguage(@NotNull String language, @Nullable ClassLoader loader);
 
   @Nullable
-  public abstract IdeScriptEngine getEngineForFileExtension(@NotNull String extension);
+  public abstract IdeScriptEngine getEngineForFileExtension(@NotNull String extension, @Nullable ClassLoader loader);
 
   public abstract boolean isInitialized();
 }

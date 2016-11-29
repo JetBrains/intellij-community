@@ -25,7 +25,7 @@ import java.util.*;
  */
 public class TextRangeUtil {
 
-  private final static Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
+  private static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
     @Override
     public int compare(TextRange range1, TextRange range2) {
       int startOffsetDiff = range1.getStartOffset() - range2.getStartOffset();
@@ -47,11 +47,11 @@ public class TextRangeUtil {
    */
   public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<TextRange> excludedRanges) {
     if (!excludedRanges.isEmpty()) {
-      List<TextRange> enabledRanges = new ArrayList<TextRange>();
       if (excludedRanges.size() > 1) {
         Collections.sort(excludedRanges, RANGE_COMPARATOR);
       }
       int enabledRangeStart = original.getStartOffset();
+      List<TextRange> enabledRanges = new ArrayList<TextRange>();
       for (TextRange excludedRange : excludedRanges) {
         if (excludedRange.getEndOffset() < enabledRangeStart) continue;
         int excludedRangeStart = excludedRange.getStartOffset();
@@ -66,6 +66,6 @@ public class TextRangeUtil {
       }
       return enabledRanges;
     }
-    return Arrays.asList(original);
+    return Collections.singletonList(original);
   }
 }

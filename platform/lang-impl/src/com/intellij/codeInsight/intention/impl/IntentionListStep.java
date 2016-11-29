@@ -27,7 +27,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -43,9 +42,11 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
 * @author cdr
@@ -53,10 +54,8 @@ import java.util.*;
 public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionListStep");
 
-  private final Set<IntentionActionWithTextCaching> myCachedIntentions =
-    ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedErrorFixes =
-    ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedIntentions = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myCachedErrorFixes = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedGutters = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedNotifications = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
@@ -81,10 +80,10 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private Runnable myFinalRunnable;
 
   public IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent,
-                    @NotNull ShowIntentionsPass.IntentionsInfo intentions,
-                    @Nullable Editor editor,
-                    @NotNull PsiFile file,
-                    @NotNull Project project) {
+                           @NotNull ShowIntentionsPass.IntentionsInfo intentions,
+                           @Nullable Editor editor,
+                           @NotNull PsiFile file,
+                           @NotNull Project project) {
     this(intentionHintComponent, editor, file, project);
     wrapAndUpdateActions(intentions, false); // when create bulb do not update actions again since it would impede the EDT
   }
@@ -158,7 +157,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       }
 
       Set<IntentionActionWithTextCaching> wrappedNew =
-        new THashSet<IntentionActionWithTextCaching>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
+        new THashSet<>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
       for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
         final IntentionAction action = descriptor.getAction();
         if (element != null &&
@@ -196,7 +195,15 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     final List<IntentionAction> options = descriptor.getOptions(element, containingEditor);
     if (options == null) return cachedAction;
     for (IntentionAction option : options) {
-      if (!option.isAvailable(myProject, containingEditor, containingFile)) {
+      if (containingFile != null && containingEditor != null && myEditor != null) {
+        if (!ShowIntentionActionsHandler.availableFor(containingFile, containingEditor, option)) {
+          //if option is not applicable in injected fragment, check in host file context
+          if (containingEditor == myEditor || !ShowIntentionActionsHandler.availableFor(myFile, myEditor, option)) {
+            continue;
+          }
+        }
+      }
+      else if (!option.isAvailable(myProject, containingEditor, containingFile)) {
         // if option is not applicable in injected fragment, check in host file context
         if (containingEditor == myEditor || !option.isAvailable(myProject, myEditor, myFile)) {
           continue;
@@ -248,34 +255,22 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   private void applyAction(final IntentionActionWithTextCaching cachedAction) {
-    myFinalRunnable = new Runnable() {
-      @Override
-      public void run() {
-        HintManager.getInstance().hideAllHints();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
-            if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
-              DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
-              return;
-            }
-            
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            PsiFile file;
-            if (myEditor != null) {
-              file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
-              if (file == null) {
-                return;
-              }
-            } else {
-              file = myFile;
-            }
-
-            ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
-          }
-        });
+    myFinalRunnable = () -> {
+      HintManager.getInstance().hideAllHints();
+      if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
+      if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
+        DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
+        return;
       }
+
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      PsiFile file = myEditor != null ? PsiUtilBase.getPsiFileInEditor(myEditor, myProject) : myFile;
+      if (file == null) {
+        return;
+      }
+
+      ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
     };
   }
 
@@ -304,6 +299,24 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     return optionIntention instanceof Iconable ? ((Iconable)optionIntention).getIcon(0) : null;
   }
 
+  @TestOnly
+  public Map<IntentionAction, List<IntentionAction>> getActionsWithSubActions() {
+    Map<IntentionAction, List<IntentionAction>> result = ContainerUtil.newLinkedHashMap();
+
+    for (IntentionActionWithTextCaching cached : getValues()) {
+      IntentionAction action = cached.getAction();
+      if (ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, action) == null) continue;
+
+      List<IntentionActionWithTextCaching> subActions = getSubStep(cached, cached.getToolName()).getValues();
+      List<IntentionAction> options = subActions.stream()
+          .map(IntentionActionWithTextCaching::getAction)
+          .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, option) != null)
+          .collect(Collectors.toList());
+      result.put(action, options);
+    }
+    return result;
+  }
+
   @Override
   public boolean hasSubstep(final IntentionActionWithTextCaching action) {
     return action.getOptionIntentions().size() + action.getOptionErrorFixes().size() > 0;
@@ -312,22 +325,19 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   @Override
   @NotNull
   public List<IntentionActionWithTextCaching> getValues() {
-    List<IntentionActionWithTextCaching> result = new ArrayList<IntentionActionWithTextCaching>(myCachedErrorFixes);
+    List<IntentionActionWithTextCaching> result = new ArrayList<>(myCachedErrorFixes);
     result.addAll(myCachedInspectionFixes);
     result.addAll(myCachedIntentions);
     result.addAll(myCachedGutters);
     result.addAll(myCachedNotifications);
     result = DumbService.getInstance(myProject).filterByDumbAwareness(result);
-    Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
-      @Override
-      public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
-        int weight1 = getWeight(o1);
-        int weight2 = getWeight(o2);
-        if (weight1 != weight2) {
-          return weight2 - weight1;
-        }
-        return o1.compareTo(o2);
+    Collections.sort(result, (o1, o2) -> {
+      int weight1 = getWeight(o1);
+      int weight2 = getWeight(o2);
+      if (weight1 != weight2) {
+        return weight2 - weight1;
       }
+      return o1.compareTo(o2);
     });
     return result;
   }
@@ -377,12 +387,8 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     if (myCachedGutters.contains(action)) {
       return 5;
     }
-    final IntentionAction underlyingAction = action.getAction();
-    if (underlyingAction instanceof EmptyIntentionAction) {
+    if (action.getAction() instanceof EmptyIntentionAction) {
       return -10;
-    }
-    if (underlyingAction instanceof SuppressIntentionActionFromFix && ((SuppressIntentionActionFromFix)underlyingAction).isSuppressAll()) {
-      return -15;
     }
     return 0;
   }

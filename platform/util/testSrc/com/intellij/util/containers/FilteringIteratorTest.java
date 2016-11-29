@@ -27,12 +27,7 @@ import java.util.Iterator;
 public class FilteringIteratorTest extends TestCase {
   public static final Condition STRINGS_ONLY = FilteringIterator.instanceOf(String.class);
   public static final Assertion CHECK = new Assertion();
-  public static final Condition ANY = new Condition(){
-          @Override
-          public boolean value(Object object) {
-            return true;
-          }
-        };
+  public static final Condition ANY = object -> true;
 
   public void testIteration() {
     Object[] values = new Object[]{"1", new Object(), "3", new Object()};

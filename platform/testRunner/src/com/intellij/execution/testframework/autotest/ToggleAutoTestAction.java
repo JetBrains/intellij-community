@@ -32,7 +32,7 @@ public class ToggleAutoTestAction extends ToggleAction {
   public boolean isSelected(AnActionEvent e) {
     Project project = e.getProject();
     RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
-    return project != null && descriptor != null && AutoTestManager.getInstance(project).isAutoTestEnabled(descriptor);
+    return project != null && descriptor != null && getAutoTestManager(project).isAutoTestEnabled(descriptor);
   }
 
   @Override
@@ -41,7 +41,15 @@ public class ToggleAutoTestAction extends ToggleAction {
     RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
     if (project != null && descriptor != null && environment != null) {
-      AutoTestManager.getInstance(project).setAutoTestEnabled(descriptor, environment, state);
+      getAutoTestManager(project).setAutoTestEnabled(descriptor, environment, state);
     }
+  }
+
+  public boolean isDelayApplicable() {
+    return true;
+  }
+
+  public AbstractAutoTestManager getAutoTestManager(Project project) {
+    return AutoTestManager.getInstance(project);
   }
 }

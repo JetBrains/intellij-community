@@ -16,13 +16,12 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -50,18 +49,12 @@ public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
   }
 
   @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
-  }
-
-  @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    final XmlToken endTagName = XmlTagUtil.getEndTagNameElement(tag);
+    final TextRange range = XmlTagUtil.getEndTagRange(tag);
 
-    if (endTagName != null && tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag.getName())) {
-      holder.registerProblem(endTagName, XmlErrorMessages.message("extra.closing.tag.for.empty.element"),
-                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveExtraClosingTagIntentionAction());
+    if (range != null && tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag.getName())) {
+      holder.registerProblem(tag, XmlErrorMessages.message("extra.closing.tag.for.empty.element"),
+                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, range.shiftRight(-tag.getTextRange().getStartOffset()), new RemoveExtraClosingTagIntentionAction());
     }
   }
 }

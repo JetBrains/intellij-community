@@ -44,7 +44,7 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
   private XDependentBreakpointManager myDependentBreakpointManager;
 
   private List<BreakpointItem> getBreakpointItemsExceptMy() {
-    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+    List<BreakpointItem> items = new ArrayList<>();
     DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class).getBreakpointPanelProvider().provideBreakpointItems(myProject, items);
     for (BreakpointItem item : items) {
       if (item.getBreakpoint() == myBreakpoint) {

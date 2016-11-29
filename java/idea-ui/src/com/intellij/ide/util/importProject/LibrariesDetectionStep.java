@@ -83,7 +83,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
   protected List<LibraryDescriptor> calculate() {
     final List<DetectedSourceRoot> sourceRoots = getSourceRoots();
 
-    final HashSet<String> ignored = new HashSet<String>();
+    final HashSet<String> ignored = new HashSet<>();
     final StringTokenizer tokenizer = new StringTokenizer(FileTypeManager.getInstance().getIgnoredFilesList(), ";", false);
     while (tokenizer.hasMoreTokens()) {
       ignored.add(tokenizer.nextToken());
@@ -96,7 +96,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
   }
 
   private List<DetectedSourceRoot> getSourceRoots() {
-    final List<DetectedSourceRoot> sourceRoots = new ArrayList<DetectedSourceRoot>();
+    final List<DetectedSourceRoot> sourceRoots = new ArrayList<>();
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
       for (DetectedProjectRoot root : myBuilder.getProjectRoots(detector)) {
         if (myInsight.isApplicableRoot(root)) {

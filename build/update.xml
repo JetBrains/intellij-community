@@ -59,7 +59,8 @@
   </macrodef>
 
   <target name="layout">
-    <run script="${project.home}/build/scripts/layouts.gant"
+    <run script="${project.home}/build/scripts/dist.gant"
+         target="update-from-sources"
          deploy="${project.home}/out/deploy"/>
   </target>
 

@@ -47,6 +47,11 @@ public final class UrlImpl implements Url {
     this.parameters = StringUtil.nullize(parameters);
   }
 
+  @Override
+  public Url resolve(@NotNull String subPath) {
+    return new UrlImpl(scheme, authority, path.isEmpty() ? subPath : (path + "/" + subPath), parameters);
+  }
+
   @NotNull
   @Override
   public String getPath() {

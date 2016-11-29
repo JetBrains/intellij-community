@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,10 @@ public class CollectionUtils {
    * @noinspection StaticCollection
    */
   @NonNls private static final Map<String, String> s_interfaceForCollection =
-    new HashMap<String, String>();
+    new HashMap<>();
 
   static {
-    final Set<String> allCollectionClassesAndInterfaces = new HashSet<String>();
+    final Set<String> allCollectionClassesAndInterfaces = new HashSet<>();
     allCollectionClassesAndInterfaces.add("java.util.AbstractCollection");
     allCollectionClassesAndInterfaces.add("java.util.AbstractList");
     allCollectionClassesAndInterfaces.add("java.util.AbstractMap");
@@ -190,7 +190,7 @@ public class CollectionUtils {
   }
 
   public static boolean isCollectionClassOrInterface(PsiClass aClass) {
-    return isCollectionClassOrInterface(aClass, new HashSet<PsiClass>());
+    return isCollectionClassOrInterface(aClass, new HashSet<>());
   }
 
   /**
@@ -231,13 +231,11 @@ public class CollectionUtils {
     return isEmptyArray(field);
   }
 
-  public static boolean isEmptyArray(PsiField field) {
-    final PsiExpression initializer = field.getInitializer();
+  public static boolean isEmptyArray(PsiVariable variable) {
+    final PsiExpression initializer = variable.getInitializer();
     if (initializer instanceof PsiArrayInitializerExpression) {
-      final PsiArrayInitializerExpression arrayInitializerExpression =
-        (PsiArrayInitializerExpression)initializer;
-      final PsiExpression[] initializers =
-        arrayInitializerExpression.getInitializers();
+      final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)initializer;
+      final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
       return initializers.length == 0;
     }
     return ExpressionUtils.isZeroLengthArrayConstruction(initializer);

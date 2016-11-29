@@ -15,11 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.lambda;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
@@ -75,6 +78,66 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testObjectOverloadsWithDiamondsOverMultipleConstructors() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
+  public void testCachingOfResultsDuringCandidatesIteration() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    final Collection<PsiMethodCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiMethodCallExpression.class);
+
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
+    for (PsiMethodCallExpression expression : methodCallExpressions) {
+      CandidateInfo[] candidates = helper.getReferencedMethodCandidates(expression, false, true);
+      PsiExpressionList argumentList = expression.getArgumentList();
+      PsiExpression[] args = argumentList.getExpressions();
+      for (JavaResolveResult result : candidates) {
+        if (result instanceof MethodCandidateInfo) {
+          final MethodCandidateInfo info = (MethodCandidateInfo)result;
+          MethodCandidateInfo.ourOverloadGuard
+            .doPreventingRecursion(argumentList, false, () -> info.inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, args, true));
+        }
+      }
+
+      PsiMethodCallExpression parentCall = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true);
+      if (parentCall != null) {
+        JavaResolveResult result = parentCall.getMethodExpression().advancedResolve(false);
+        if (result instanceof MethodCandidateInfo) {
+          assertNull(((MethodCandidateInfo)result).getInferenceErrorMessage());
+        }
+      }
+    }
+  }
+
+  public void testNonCachingFolding() throws Exception {
+    final String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+    PsiNewExpression newWithAnonym =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiNewExpression.class);
+    ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(newWithAnonym, false);
+    assertNotNull(types);
+
+    doTestConfiguredFile(false, false, filePath);
+  }
+
+  public void testRejectCachedTopLevelSessionIfItCorrespondsToTheWrongOverload() throws Exception {
+    final String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+    PsiMethodCallExpression methodCall =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+    assertNotNull(methodCall);
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(methodCall.getProject()).getResolveHelper();
+    CandidateInfo[] candidates = helper.getReferencedMethodCandidates(methodCall, false, true);
+    for (CandidateInfo candidate : candidates) {
+      if (candidate instanceof MethodCandidateInfo) {
+        //try to cache top level session
+        candidate.getSubstitutor();
+      }
+    }
+
+    doTestConfiguredFile(false, false, filePath);
+  }
+
   private void doTestCachedUnresolved() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     PsiMethodCallExpression callExpression =
@@ -108,24 +171,34 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testOverloadResolutionInsideLambdaInsideNestedCall() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
   private void doTestAllMethodCallExpressions() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final Collection<PsiCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class);
     for (PsiCallExpression expression : methodCallExpressions) {
       getPsiManager().dropResolveCaches();
+      if (expression instanceof PsiMethodCallExpression) {
+        assertNotNull("Failed to resolve: " + expression.getText(), expression.resolveMethod());
+      }
       assertNotNull("Failed inference for: " + expression.getText(), expression.getType());
     }
 
-    final Collection<PsiReferenceParameterList> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiReferenceParameterList.class);
-    for (PsiReferenceParameterList list : parameterLists) {
+    final Collection<PsiNewExpression> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiNewExpression.class);
+    for (PsiNewExpression newExpression : parameterLists) {
       getPsiManager().dropResolveCaches();
-      final PsiType[] arguments = list.getTypeArguments();
-      assertNotNull("Failed inference for: " + list.getParent().getText(), arguments);
+      final PsiType[] arguments = newExpression.getTypeArguments();
+      String failMessage = "Failed inference for: " + newExpression.getParent().getText();
+      assertNotNull(failMessage, arguments);
+      PsiDiamondType diamondType = PsiDiamondType.getDiamondType(newExpression);
+      if (diamondType != null) {
+        JavaResolveResult staticFactory = diamondType.getStaticFactory();
+        assertNotNull(staticFactory);
+        assertTrue(staticFactory instanceof MethodCandidateInfo);
+        assertNull(failMessage, ((MethodCandidateInfo)staticFactory).getInferenceErrorMessage());
+      }
     }
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

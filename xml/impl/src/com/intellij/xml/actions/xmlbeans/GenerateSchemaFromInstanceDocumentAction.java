@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
-  private static final Map<String, String> DESIGN_TYPES = new HashMap<String, String>();
-  private static final Map<String, String> CONTENT_TYPES = new HashMap<String, String>();
+  private static final Map<String, String> DESIGN_TYPES = new HashMap<>();
+  private static final Map<String, String> CONTENT_TYPES = new HashMap<>();
   static {
     DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES, "vb");
     DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_TYPES, "ss");
@@ -68,16 +68,11 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
     final GenerateSchemaFromInstanceDocumentDialog dialog = new GenerateSchemaFromInstanceDocumentDialog(project, file);
-    dialog.setOkAction(new Runnable() {
-      @Override
-      public void run() {
-        doAction(project, dialog);
-      }
-    });    
+    dialog.setOkAction(() -> doAction(project, dialog));
 
     dialog.show();
   }
@@ -99,7 +94,7 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
       return;
     }
 
-    @NonNls List<String> parameters = new LinkedList<String>();
+    @NonNls List<String> parameters = new LinkedList<>();
     parameters.add("-design");
     parameters.add(DESIGN_TYPES.get(dialog.getDesignType()));
 
@@ -129,13 +124,10 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     File xsd = new File(dirPath + File.separator + dialog.getTargetSchemaName());
     final VirtualFile xsdFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xsd);
     if (xsdFile != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              xsdFile.delete(null);
-            } catch (IOException e) {//
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            xsdFile.delete(null);
+          } catch (IOException e) {//
           }
         });
     }

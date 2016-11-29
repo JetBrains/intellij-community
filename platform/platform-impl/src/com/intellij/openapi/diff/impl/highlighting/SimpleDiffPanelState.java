@@ -89,17 +89,15 @@ public abstract class SimpleDiffPanelState implements Disposable  {
   }
 
   private LineBlocks addMarkup(final List<LineFragment> lines) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myAppender1, myAppender2);
-        for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
-          LineFragment line = iterator.next();
-          fragmentHighlighter.setIsLast(!iterator.hasNext());
-          line.highlight(fragmentHighlighter);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myAppender1, myAppender2);
+      for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
+        LineFragment line = iterator.next();
+        fragmentHighlighter.setIsLast(!iterator.hasNext());
+        line.highlight(fragmentHighlighter);
       }
     });
-    ArrayList<LineFragment> allLineFragments = new ArrayList<LineFragment>();
+    ArrayList<LineFragment> allLineFragments = new ArrayList<>();
     for (LineFragment lineFragment : lines) {
       allLineFragments.add(lineFragment);
       lineFragment.addAllDescendantsTo(allLineFragments);

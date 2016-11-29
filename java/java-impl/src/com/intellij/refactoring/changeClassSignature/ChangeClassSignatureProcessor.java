@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -71,10 +70,10 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
-    final Map<String, TypeParameterInfo> infos = new HashMap<String, TypeParameterInfo>();
+    final Map<String, TypeParameterInfo> infos = new HashMap<>();
     for (TypeParameterInfo info : myNewSignature) {
       final String newName = info.getName(parameters);
       TypeParameterInfo existing = infos.get(newName);
@@ -89,7 +88,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    List<UsageInfo> result = new ArrayList<UsageInfo>();
+    List<UsageInfo> result = new ArrayList<>();
 
     boolean hadTypeParameters = myClass.hasTypeParameters();
     for (final PsiReference reference : ReferencesSearch.search(myClass, projectScope, false)) {
@@ -100,7 +99,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
                                                  parent.getParent() instanceof PsiClassObjectAccessExpression)) {
           continue;
         }
-        if (parent instanceof PsiNewExpression && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)parent)) {
+        if (parent instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)parent)) {
           continue;
         }
         if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression || parent instanceof PsiAnonymousClass ||
@@ -157,7 +156,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
       LOG.assertTrue(usage.getElement() instanceof PsiJavaCodeReferenceElement);
       processUsage(usage, typeParameters, toRemoveParms);
     }
-    final Map<PsiTypeElement, PsiClass> supersMap = new HashMap<PsiTypeElement, PsiClass>();
+    final Map<PsiTypeElement, PsiClass> supersMap = new HashMap<>();
     myClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitTypeElement(PsiTypeElement typeElement) {
@@ -181,7 +180,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
 
   private void changeClassSignature(final PsiTypeParameter[] originalTypeParameters, boolean[] toRemoveParms)
     throws IncorrectOperationException {
-    List<PsiTypeParameter> newTypeParameters = new ArrayList<PsiTypeParameter>();
+    List<PsiTypeParameter> newTypeParameters = new ArrayList<>();
     for (final TypeParameterInfo info : myNewSignature) {
       newTypeParameters.add(info.getTypeParameter(originalTypeParameters, myProject));
     }
@@ -211,7 +210,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     assert referenceParameterList != null : referenceElement;
     PsiTypeElement[] oldValues = referenceParameterList.getTypeParameterElements();
     if (oldValues.length != original.length) return;
-    List<PsiTypeElement> newValues = new ArrayList<PsiTypeElement>();
+    List<PsiTypeElement> newValues = new ArrayList<>();
     for (final TypeParameterInfo info : myNewSignature) {
       if (info instanceof TypeParameterInfo.Existing) {
         newValues.add(oldValues[((TypeParameterInfo.Existing)info).getParameterIndex()]);

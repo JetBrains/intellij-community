@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IconUtil;
@@ -51,12 +50,12 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
   @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
 
-  private List<Executor> myExecutors = new ArrayList<Executor>();
+  private List<Executor> myExecutors = new ArrayList<>();
   private ActionManager myActionManager;
-  private final Map<String, Executor> myId2Executor = new HashMap<String, Executor>();
-  private final Set<String> myContextActionIdSet = new HashSet<String>();
-  private final Map<String, AnAction> myId2Action = new HashMap<String, AnAction>();
-  private final Map<String, AnAction> myContextActionId2Action = new HashMap<String, AnAction>();
+  private final Map<String, Executor> myId2Executor = new HashMap<>();
+  private final Set<String> myContextActionIdSet = new HashSet<>();
+  private final Map<String, AnAction> myId2Action = new HashMap<>();
+  private final Map<String, AnAction> myContextActionId2Action = new HashMap<>();
 
   // [Project, ExecutorId, RunnerId]
   private final Set<Trinity<Project, String, String>> myInProgress = Collections.synchronizedSet(new java.util.HashSet<Trinity<Project, String, String>>());
@@ -138,19 +137,19 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       @Override
       public void projectOpened(final Project project) {
         final MessageBusConnection connect = project.getMessageBus().connect(project);
-        connect.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter(){
+        connect.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener(){
           @Override
-          public void processStartScheduled(String executorId, ExecutionEnvironment environment) {
+          public void processStartScheduled(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
             myInProgress.add(createExecutionId(executorId, environment));
           }
 
           @Override
-          public void processNotStarted(String executorId, @NotNull ExecutionEnvironment environment) {
+          public void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
             myInProgress.remove(createExecutionId(executorId, environment));
           }
 
           @Override
-          public void processStarted(String executorId, @NotNull ExecutionEnvironment environment, @NotNull ProcessHandler handler) {
+          public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment environment, @NotNull ProcessHandler handler) {
             myInProgress.remove(createExecutionId(executorId, environment));
           }
         });
@@ -195,7 +194,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   @Override
   public synchronized void disposeComponent() {
     if (!myExecutors.isEmpty()) {
-      for (Executor executor : new ArrayList<Executor>(myExecutors)) {
+      for (Executor executor : new ArrayList<>(myExecutors)) {
         deinitExecutor(executor);
       }
     }
@@ -260,19 +259,11 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       List<RunContentDescriptor> runningDescriptors =
-        executionManager.getRunningDescriptors(new Condition<RunnerAndConfigurationSettings>() {
-          @Override
-          public boolean value(RunnerAndConfigurationSettings s) {
-            return s == selectedConfiguration;
-          }
-        });
-      runningDescriptors = ContainerUtil.filter(runningDescriptors, new Condition<RunContentDescriptor>() {
-        @Override
-        public boolean value(RunContentDescriptor descriptor) {
-          RunContentDescriptor contentDescriptor =
-            executionManager.getContentManager().findContentDescriptor(myExecutor, descriptor.getProcessHandler());
-          return contentDescriptor != null && executionManager.getExecutors(contentDescriptor).contains(myExecutor);
-        }
+        executionManager.getRunningDescriptors(s -> s != null && s.getConfiguration() == selectedConfiguration.getConfiguration());
+      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> {
+        RunContentDescriptor contentDescriptor =
+          executionManager.getContentManager().findContentDescriptor(myExecutor, descriptor.getProcessHandler());
+        return contentDescriptor != null && executionManager.getExecutors(contentDescriptor).contains(myExecutor);
       });
 
       if (!runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId()) && selectedConfiguration.isSingleton()) {

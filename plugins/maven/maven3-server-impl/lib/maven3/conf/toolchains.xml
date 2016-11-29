@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<!--
+ | This is the toolchains file for Maven. It can be specified at two levels:
+ |
+ |  1. User Level. This toolchains.xml file provides configuration for a single user,
+ |                 and is normally provided in ${user.home}/.m2/toolchains.xml.
+ |
+ |                 NOTE: This location can be overridden with the CLI option:
+ |
+ |                 -t /path/to/user/toolchains.xml
+ |
+ |  2. Global Level. This toolchains.xml file provides configuration for all Maven
+ |                 users on a machine (assuming they're all using the same Maven
+ |                 installation). It's normally provided in
+ |                 ${maven.home}/conf/toolchains.xml.
+ |
+ |                 NOTE: This location can be overridden with the CLI option:
+ |
+ |                 -gt /path/to/global/toolchains.xml
+ |
+ | The sections in this sample file are intended to give you a running start at
+ | getting the most out of your Maven installation.
+ |-->
+<toolchains xmlns="http://maven.apache.org/TOOLCHAINS/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/TOOLCHAINS/1.1.0 http://maven.apache.org/xsd/toolchains-1.1.0.xsd">
+
+  <!-- 
+   | With toolchains you can refer to installations on your system. This 
+   | way you don't have to hardcode paths in your pom.xml. 
+   | 
+   | Every toolchain consist of 3 elements: 
+   | * type: the type of tool. An often used value is 'jdk'. Toolchains-aware 
+   |   plugins should document which type you must use. 
+   | 
+   | * provides: A list of key/value-pairs. 
+   |   Based on the toolchain-configuration in the pom.xml Maven will search for 
+   |   matching <provides/> configuration. You can decide for yourself which key-value 
+   |   pairs to use. Often used keys are 'version', 'vendor' and 'arch'. By default 
+   |   the version has a special meaning. If you configured in the pom.xml '1.5' 
+   |   Maven will search for 1.5 and above.
+   |   
+   | * configuration: Additional configuration for this tool.
+   |   Look for documentation of the toolchains-aware plugin which configuration elements
+   |   can be used.   
+   |
+   | See also http://maven.apache.org/guides/mini/guide-using-toolchains.html
+   |
+   | General example
+
+  <toolchain>
+    <type/>
+    <provides> 
+      <version>1.0</version> 
+    </provides> 
+    <configuration/>
+  </toolchain>
+   
+   | JDK examples
+
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>1.5</version>
+      <vendor>sun</vendor>
+    </provides>
+    <configuration>
+      <jdkHome>/path/to/jdk/1.5</jdkHome>
+    </configuration>
+  </toolchain>
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>1.6</version>
+      <vendor>sun</vendor>
+    </provides>
+    <configuration>
+      <jdkHome>/path/to/jdk/1.6</jdkHome>
+    </configuration>
+  </toolchain>
+   
+  -->
+
+</toolchains>

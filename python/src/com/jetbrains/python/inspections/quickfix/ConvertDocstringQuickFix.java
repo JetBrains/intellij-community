@@ -36,13 +36,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertDocstringQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.convert.single.quoted.docstring");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.convert.single.quoted.docstring");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

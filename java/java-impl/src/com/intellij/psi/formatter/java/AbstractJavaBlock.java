@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
 import static com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper.findLastFieldInGroup;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock, ReservedWrapsProvider {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.AbstractJavaBlock");
 
   @NotNull protected final CommonCodeStyleSettings mySettings;
@@ -58,9 +57,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private final Indent myIndent;
   protected Indent myChildIndent;
   protected Alignment myChildAlignment;
-  protected boolean myUseChildAttributes = false;
+  protected boolean myUseChildAttributes;
   @NotNull protected final AlignmentStrategy myAlignmentStrategy;
-  private boolean myIsAfterClassKeyword = false;
+  private boolean myIsAfterClassKeyword;
 
   protected Alignment myReservedAlignment;
   protected Alignment myReservedAlignment2;
@@ -173,18 +172,20 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                 @NotNull AlignmentStrategy alignmentStrategy,
                                 int startOffset) {
     Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, getJavaIndentOptions(settings)) : indent;
-    final IElementType elementType = child.getElementType();
+    IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
+    PsiElement childPsi = child.getPsi();
 
-    if (child.getPsi() instanceof PsiWhiteSpace) {
+    if (childPsi instanceof PsiWhiteSpace) {
       String text = child.getText();
       int start = CharArrayUtil.shiftForward(text, 0, " \t\n");
       int end = CharArrayUtil.shiftBackward(text, text.length() - 1, " \t\n") + 1;
       LOG.assertTrue(start < end);
-      return new PartialWhitespaceBlock(child, new TextRange(start + child.getStartOffset(), end + child.getStartOffset()),
-                                        wrap, alignment, actualIndent, settings, javaSettings);
+      TextRange range = new TextRange(start + child.getStartOffset(), end + child.getStartOffset());
+      return new PartialWhitespaceBlock(child, range, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    if (child.getPsi() instanceof PsiClass) {
+
+    if (childPsi instanceof PsiClass || childPsi instanceof PsiJavaModule) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
     if (child.getElementType() == JavaElementType.METHOD) {
@@ -202,34 +203,33 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)child)) {
       return new CommentWithInjectionBlock(child, wrap, alignment, indent, settings, javaSettings);
     }
-    if (child instanceof LeafElement) {
+    if (child instanceof LeafElement || childPsi instanceof PsiJavaModuleReferenceElement) {
       final LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
       block.setStartOffset(startOffset);
       return block;
     }
-    else if (isLikeExtendsList(elementType)) {
+    if (isLikeExtendsList(elementType)) {
       return new ExtendsListBlock(child, wrap, alignmentStrategy, settings, javaSettings);
     }
-    else if (elementType == JavaElementType.CODE_BLOCK) {
+    if (elementType == JavaElementType.CODE_BLOCK) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    else if (elementType == JavaElementType.LABELED_STATEMENT) {
+    if (elementType == JavaElementType.LABELED_STATEMENT) {
       return new LabeledJavaBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    else if (elementType == JavaDocElementType.DOC_COMMENT) {
+    if (elementType == JavaDocElementType.DOC_COMMENT) {
       return new DocCommentBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    else {
-      final SimpleJavaBlock simpleJavaBlock = new SimpleJavaBlock(child, wrap, alignmentStrategy, actualIndent, settings, javaSettings);
-      simpleJavaBlock.setStartOffset(startOffset);
-      return simpleJavaBlock;
-    }
+
+    final SimpleJavaBlock simpleJavaBlock = new SimpleJavaBlock(child, wrap, alignmentStrategy, actualIndent, settings, javaSettings);
+    simpleJavaBlock.setStartOffset(startOffset);
+    return simpleJavaBlock;
   }
 
   @NotNull
   public static Block newJavaBlock(@NotNull ASTNode child,
-                                      @NotNull CommonCodeStyleSettings settings,
-                                      @NotNull JavaCodeStyleSettings javaSettings) {
+                                   @NotNull CommonCodeStyleSettings settings,
+                                   @NotNull JavaCodeStyleSettings javaSettings) {
     final Indent indent = getDefaultSubtreeIndent(child, getJavaIndentOptions(settings));
     return newJavaBlock(child, settings, javaSettings, indent, null, AlignmentStrategy.getNullStrategy());
   }
@@ -301,9 +301,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);
       if (defaultChildIndent != null) return defaultChildIndent;
-    }
-    if (child.getTreeParent() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
-      return Indent.getNoneIndent();
+      if (parent.getPsi() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
+        return Indent.getNoneIndent();
+      }
     }
 
     return null;
@@ -427,9 +427,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         defaultAlignment = myAlignment;
       }
       return createAlignment(mySettings.ALIGN_MULTILINE_BINARY_OPERATION, defaultAlignment);
-    }
-    if (nodeType == JavaElementType.CLASS || nodeType == JavaElementType.METHOD) {
-      return null;
     }
     return null;
   }
@@ -605,7 +602,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return child;
   }
 
-  private boolean isInsideMethodCall(@NotNull PsiElement element) {
+  private static boolean isInsideMethodCall(@NotNull PsiElement element) {
     PsiElement e = element.getParent();
     int parentsVisited = 0;
     while (e != null && !(e instanceof PsiStatement) && parentsVisited < 5) {
@@ -648,7 +645,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return child;
     }
     else {
-      final ArrayList<Block> localResult = new ArrayList<Block>();
+      final ArrayList<Block> localResult = new ArrayList<>();
       while (child != null) {
         if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
           localResult.add(createJavaBlock(
@@ -675,7 +672,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                                @NotNull final ASTNode child,
                                                final Wrap defaultWrap,
                                                final Indent childIndent) {
-    final ArrayList<Block> localResult = new ArrayList<Block>();
+    final ArrayList<Block> localResult = new ArrayList<>();
     final Wrap wrap = arrangeChildWrap(child, defaultWrap);
     final Alignment alignment = myReservedAlignment;
     final Alignment alignment2 = myReservedAlignment2;
@@ -708,7 +705,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @NotNull
   private Block createMethodCallExpressionBlock(@NotNull ASTNode node, Wrap blockWrap, Alignment alignment, Indent indent) {
-    final ArrayList<ASTNode> nodes = new ArrayList<ASTNode>();
+    final ArrayList<ASTNode> nodes = new ArrayList<>();
     collectNodes(nodes, node);
     return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings).build(nodes);
   }
@@ -819,7 +816,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * @return        alignment to use for the given node
    * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
-  @Nullable
   private boolean shouldAlignFieldInColumns(@NotNull ASTNode child) {
     // The whole idea of variable declarations alignment is that complete declaration blocks which children are to be aligned hold
     // reference to the same AlignmentStrategy object, hence, reuse the same Alignment objects. So, there is no point in checking
@@ -943,7 +939,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return prev;
   }
 
-  private boolean isInsideMethodCallParenthesis(ASTNode child) {
+  private static boolean isInsideMethodCallParenthesis(ASTNode child) {
     ASTNode currentPredecessor = child.getTreeParent();
     if (currentPredecessor != null) {
       currentPredecessor = currentPredecessor.getTreeParent();
@@ -1057,9 +1053,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     final int braceStyle = getBraceStyle();
-    return braceStyle == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ?
-           createNormalIndent(baseChildrenIndent - 1, enforceParentIndent)
-           : createNormalIndent(baseChildrenIndent, enforceParentIndent);
+    final int shift = braceStyle == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? 1 : 0;
+    return createNormalIndent(baseChildrenIndent - shift, enforceParentIndent);
   }
 
   protected static Indent createNormalIndent(final int baseChildrenIndent) {
@@ -1212,7 +1207,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                      final Indent indent,
                                      final int childrenIndent,
                                      @Nullable final Wrap childWrap) {
-    final ArrayList<Block> localResult = new ArrayList<Block>();
+    final ArrayList<Block> localResult = new ArrayList<>();
     processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, Indent.getNoneIndent());
     child = child.getTreeNext();
 
@@ -1283,6 +1278,4 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(childrenIndent), null));
     return result;
   }
-
-
 }

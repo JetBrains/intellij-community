@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.core.GridConstraints;
 import org.jdom.Element;
 
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;/**
+import java.util.LinkedHashMap;
+import java.util.List;
+
+/**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
@@ -72,10 +75,10 @@ public abstract class LwComponent implements IComponent{
     }
     myBounds = new Rectangle();
     myConstraints = new GridConstraints();
-    myIntrospectedProperty2Value = new HashMap();
+    myIntrospectedProperty2Value = new LinkedHashMap();
     myClassName = className;
-    myClientProperties = new HashMap();
-    myDelegeeClientProperties = new HashMap();
+    myClientProperties = new LinkedHashMap();
+    myDelegeeClientProperties = new LinkedHashMap();
   }
 
   public final String getId() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -84,7 +81,8 @@ public final class MockJdkWrapper implements Sdk {
 
   @NotNull
   public Object clone() throws CloneNotSupportedException {
-    throw new CloneNotSupportedException();
+    Sdk delegateClone = (Sdk)myDelegate.clone();
+    return new MockJdkWrapper(myHomePath, delegateClone);
   }
 
   public SdkAdditionalData getSdkAdditionalData() {

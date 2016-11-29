@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -28,12 +29,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.pattern.VelocityHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -59,12 +60,12 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   private JTextField myAllowReplaceTextField;
   private JPanel myEditorPanel;
 
-  public CopyrightConfigurable(Project project, CopyrightProfile copyrightProfile, Runnable updater) {
+  public CopyrightConfigurable(@NotNull Project project, CopyrightProfile copyrightProfile, Runnable updater) {
     super(true, updater);
     myProject = project;
     myCopyrightProfile = copyrightProfile;
     myDisplayName = myCopyrightProfile.getName();
-    final Set<EditorCustomization> features = new HashSet<EditorCustomization>();
+    final Set<EditorCustomization> features = new HashSet<>();
     ContainerUtil.addIfNotNull(features, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
@@ -130,6 +131,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     catch (PatternSyntaxException e) {
       throw new ConfigurationException("Keyword pattern syntax is incorrect: " + e.getMessage());
     }
+
     myCopyrightProfile.setKeyword(keyword);
     myCopyrightProfile.setAllowReplaceKeyword(myAllowReplaceTextField.getText().trim());
     CopyrightManager.getInstance(myProject).replaceCopyright(myDisplayName, myCopyrightProfile);
@@ -139,17 +141,8 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public void reset() {
     myDisplayName = myCopyrightProfile.getName();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-          @Override
-          public void run() {
-            myEditor.getDocument().setText(EntityUtil.decode(myCopyrightProfile.getNotice()));
-          }
-        });
-      }
-    });
+    SwingUtilities.invokeLater(() -> DocumentUtil.writeInRunUndoTransparentAction(
+      () -> myEditor.getDocument().setText(EntityUtil.decode(myCopyrightProfile.getNotice()))));
     myKeywordTf.setText(myCopyrightProfile.getKeyword());
     myAllowReplaceTextField.setText(myCopyrightProfile.getAllowReplaceKeyword());
   }

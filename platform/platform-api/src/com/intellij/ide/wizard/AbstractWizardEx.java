@@ -31,8 +31,8 @@ import java.util.Map;
 public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
 
   private final String myTitle;
-  private final Map<Object, Integer> myStepId2Index = new HashMap<Object, Integer>();
-  private final Map<Integer, AbstractWizardStepEx> myIndex2Step = new HashMap<Integer, AbstractWizardStepEx>();
+  private final Map<Object, Integer> myStepId2Index = new HashMap<>();
+  private final Map<Integer, AbstractWizardStepEx> myIndex2Step = new HashMap<>();
 
   public AbstractWizardEx(String title, @Nullable Project project, List<? extends AbstractWizardStepEx> steps) {
     super(title, project);

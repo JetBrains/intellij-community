@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
@@ -14,6 +29,7 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -22,7 +38,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -31,8 +47,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -44,7 +60,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
@@ -159,7 +175,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
       @Nullable
       public Module compute() {
-        return ModuleUtil.findModuleForPsiElement(psiFile);
+        return ModuleUtilCore.findModuleForPsiElement(psiFile);
       }
     });
     return module != null;
@@ -169,8 +185,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return false;
     final Project project = psiFile.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (!suite.isTrackTestFolders() && fileIndex.isInTestSourceContent(virtualFile)) {
+    if (!suite.isTrackTestFolders() && TestSourcesFilter.isTestSources(virtualFile, project)) {
       return false;
     }
 
@@ -183,7 +198,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       } else {
         final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(project);
         for (PsiClass aClass : classes) {
-          final PsiFile containingFile = aClass.getContainingFile();
+          final PsiFile containingFile = ReadAction.compute(aClass::getContainingFile);
           if (psiFile.equals(containingFile)) {
             return true;
           }
@@ -204,26 +219,22 @@ public class JavaCoverageEngine extends CoverageEngine {
       final Project project = module.getProject();
       if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          if (Messages.showOkCancelDialog(
-            "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
-            "Project is out of date", Messages.getWarningIcon()) == Messages.OK) {
-            final CompilerManager compilerManager = CompilerManager.getInstance(project);
-            compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
-              public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
-                if (aborted || errors != 0) return;
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    if (project.isDisposed()) return;
-                    CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
-                  }
-                });
-              }
-            });
-          } else if (!project.isDisposed()) {
-            CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
-          }
+      final Runnable runnable = () -> {
+        if (Messages.showOkCancelDialog(
+          "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
+          "Project is out of date", Messages.getWarningIcon()) == Messages.OK) {
+          final CompilerManager compilerManager = CompilerManager.getInstance(project);
+          compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
+            public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
+              if (aborted || errors != 0) return;
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (project.isDisposed()) return;
+                CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
+              });
+            }
+          });
+        } else if (!project.isDisposed()) {
+          CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
         }
       };
       ApplicationManager.getApplication().invokeLater(runnable);
@@ -251,7 +262,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Nullable
   public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile, @NotNull final CoverageSuitesBundle suite) {
-    final List<Integer> uncoveredLines = new ArrayList<Integer>();
+    final List<Integer> uncoveredLines = new ArrayList<>();
 
     final byte[] content;
     try {
@@ -294,7 +305,7 @@ public class JavaCoverageEngine extends CoverageEngine {
         return ((PsiClassOwner)sourceFile).getClasses();
       }
     });
-    final Set<String> qNames = new HashSet<String>();
+    final Set<String> qNames = new HashSet<>();
     for (final JavaCoverageEngineExtension nameExtension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
       if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
@@ -324,7 +335,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (module == null) {
       return Collections.emptySet();
     }
-    final Set<File> classFiles = new HashSet<File>();
+    final Set<File> classFiles = new HashSet<>();
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
 
@@ -335,7 +346,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final String packageFQName = getPackageName(srcFile);
     final String packageVmName = packageFQName.replace('.', '/');
 
-    final List<File> children = new ArrayList<File>();
+    final List<File> children = new ArrayList<>();
     final File vDir =
       outputpath == null
       ? null : packageVmName.length() > 0
@@ -402,7 +413,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
     }
 
-    final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+    final List<PsiExpression> expressions = new ArrayList<>();
 
     final Project project = editor.getProject();
     for(int offset = startOffset; offset < endOffset; offset++) {
@@ -507,7 +518,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @NotNull
   public List<PsiElement> findTestsByNames(@NotNull String[] testNames, @NotNull Project project) {
-    final List<PsiElement> elements = new ArrayList<PsiElement>();
+    final List<PsiElement> elements = new ArrayList<>();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
     for (String testName : testNames) {
@@ -594,12 +605,10 @@ public class JavaCoverageEngine extends CoverageEngine {
           builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
           final SourceCodeProvider sourceCodeProvider = new SourceCodeProvider() {
             public String getSourceCode(@NotNull final String classname) throws IOException {
-              return DumbService.getInstance(project).runReadActionInSmartMode(new Computable<String>() {
-                public String compute() {
-                  if (project.isDisposed()) return "";
-                  final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
-                  return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
-                }
+              return DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+                if (project.isDisposed()) return "";
+                final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
+                return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
               });
             }
           };
@@ -610,14 +619,12 @@ public class JavaCoverageEngine extends CoverageEngine {
               final Collection<ClassInfo> classes = super.getClasses();
               if (!currentSuite.isTrackTestFolders()) {
                 final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-                final GlobalSearchScope productionScope = GlobalSearchScopes.projectProductionScope(project);
+                final GlobalSearchScope productionScope = GlobalSearchScopesCore.projectProductionScope(project);
                 for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
                   final ClassInfo aClass = iterator.next();
-                  final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(new Computable<PsiClass>() {
-                    public PsiClass compute() {
-                      if (project.isDisposed()) return null;
-                      return psiFacade.findClass(aClass.getFQName(), productionScope);
-                    }
+                  final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+                    if (project.isDisposed()) return null;
+                    return psiFacade.findClass(aClass.getFQName(), productionScope);
                   });
                   if (psiClass == null) {
                     iterator.remove();

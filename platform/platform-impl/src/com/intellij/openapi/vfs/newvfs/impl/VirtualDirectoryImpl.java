@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -61,7 +60,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
   private static final VirtualDirectoryImpl NULL_VIRTUAL_FILE =
-    new VirtualDirectoryImpl(-42, null, null, null, LocalFileSystem.getInstance()) {
+    new VirtualDirectoryImpl(-42, new VfsData.Segment(), new VfsData.DirectoryData(), null, LocalFileSystem.getInstance()) {
       @Override
       public String toString() {
         return "NULL";
@@ -71,7 +70,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private final VfsData.DirectoryData myData;
   private final NewVirtualFileSystem myFs;
 
-  public VirtualDirectoryImpl(int id, VfsData.Segment segment, VfsData.DirectoryData data, VirtualDirectoryImpl parent, NewVirtualFileSystem fs) {
+  public VirtualDirectoryImpl(int id,
+                              @NotNull VfsData.Segment segment,
+                              @NotNull VfsData.DirectoryData data,
+                              @Nullable VirtualDirectoryImpl parent,
+                              @NotNull NewVirtualFileSystem fs) {
     super(id, segment, parent);
     myData = data;
     myFs = fs;
@@ -308,23 +311,20 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         result = ArrayUtil.EMPTY_INT_ARRAY;
       }
       else {
-        Arrays.sort(childrenIds, new Comparator<FSRecords.NameId>() {
-          @Override
-          public int compare(FSRecords.NameId o1, FSRecords.NameId o2) {
-            CharSequence name1 = o1.name;
-            CharSequence name2 = o2.name;
-            int cmp = compareNames(name1, name2, ignoreCase);
-            if (cmp == 0 && name1 != name2) {
-              LOG.error(ourPersistence + " returned duplicate file names("+name1+","+name2+")" +
-                        " ignoreCase: "+ignoreCase+
-                        " SystemInfo.isFileSystemCaseSensitive: "+ SystemInfo.isFileSystemCaseSensitive+
-                        " SystemInfo.OS: "+ SystemInfo.OS_NAME+" "+SystemInfo.OS_VERSION+
-                        " wasChildrenLoaded: "+wasChildrenLoaded+
-                        " in the dir: "+VirtualDirectoryImpl.this+";" +
-                        " children: "+Arrays.toString(childrenIds));
-            }
-            return cmp;
+        Arrays.sort(childrenIds, (o1, o2) -> {
+          CharSequence name1 = o1.name;
+          CharSequence name2 = o2.name;
+          int cmp = compareNames(name1, name2, ignoreCase);
+          if (cmp == 0 && name1 != name2) {
+            LOG.error(ourPersistence + " returned duplicate file names(" + name1 + "," + name2 + ")" +
+                      " ignoreCase: " + ignoreCase +
+                      " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
+                      " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
+                      " wasChildrenLoaded: " + wasChildrenLoaded +
+                      " in the dir: " + this + ";" +
+                      " children: " + Arrays.toString(childrenIds));
           }
+          return cmp;
         });
         TIntHashSet prevChildren = new TIntHashSet(myData.myChildrenIds);
         result = new int[childrenIds.length];
@@ -373,32 +373,24 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  private static final Function<VirtualFileSystemEntry, String> verboseToString = new Function<VirtualFileSystemEntry, String>() {
-    @Override
-    public String fun(VirtualFileSystemEntry file) {
-      if (file == null) return "null";
-      return file + " (name: '" + file.getName()
-             + "', " + file.getClass()
-             + ", parent: "+file.getParent()
-             + "; id: "+file.getId()
-             + "; FS: " +file.getFileSystem()
-             + "; delegate.attrs: " +file.getFileSystem().getAttributes(file)
-             + "; caseSensitive: " +file.getFileSystem().isCaseSensitive()
-             + "; canonical: " +file.getFileSystem().getCanonicallyCasedName(file)
-             + ") ";
-    }
+  private static final Function<VirtualFileSystemEntry, String> verboseToString = file -> {
+    if (file == null) return "null";
+    return file + " (name: '" + file.getName()
+           + "', " + file.getClass()
+           + ", parent: "+file.getParent()
+           + "; id: "+file.getId()
+           + "; FS: " +file.getFileSystem()
+           + "; delegate.attrs: " +file.getFileSystem().getAttributes(file)
+           + "; caseSensitive: " +file.getFileSystem().isCaseSensitive()
+           + "; canonical: " +file.getFileSystem().getCanonicallyCasedName(file)
+           + ") ";
   };
 
   private static void error(String message, VirtualFileSystemEntry[] array, Object... details) {
     String children = StringUtil.join(array, verboseToString, ",");
     throw new AssertionError(
       message + "; children: " + children + "\nDetails: " + ContainerUtil.map(
-        details, new Function<Object, Object>() {
-        @Override
-        public Object fun(Object o) {
-          return o instanceof Object[] ? Arrays.toString((Object[])o) : o;
-        }
-      }));
+        details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o));
   }
 
   @Override
@@ -514,7 +506,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public List<VirtualFile> getCachedChildren() {
-    return Arrays.<VirtualFile>asList(getArraySafely());
+    return Arrays.asList(getArraySafely());
   }
 
   @Override
@@ -562,7 +554,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   static void checkLeaks(KeyFMap newMap) {
-    for (Key key : newMap.getKeys()) {
+    for (Key<?> key : newMap.getKeys()) {
       if (key != null && newMap.get(key) instanceof PsiCachedValue) {
         throw new AssertionError("Don't store CachedValue in VFS user data, since it leads to memory leaks");
       }

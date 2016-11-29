@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyClassImpl;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       if (containingClass == null) return;
       final String name = node.getName();
       if (name != null && name.startsWith("_")) return;
-      if (!isApplicable(containingClass)) {
+      if (!isApplicable(containingClass, myTypeEvalContext)) {
         return;
       }
 
@@ -77,7 +78,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       if (modifier != null) return;
       final List<PyTargetExpression> classAttributes = containingClass.getClassAttributes();
 
-      Map<String, PyTargetExpression> attributesInInit = new HashMap<String, PyTargetExpression>();
+      Map<String, PyTargetExpression> attributesInInit = new HashMap<>();
       for (PyTargetExpression classAttr : classAttributes) {
         attributesInInit.put(classAttr.getName(), classAttr);
       }
@@ -96,7 +97,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         }
       }
 
-      Map<String, PyTargetExpression> attributes = new HashMap<String, PyTargetExpression>();
+      Map<String, PyTargetExpression> attributes = new HashMap<>();
       PyClassImpl.collectInstanceAttributes(node, attributes);
 
       for (Map.Entry<String, PyTargetExpression> attribute : attributes.entrySet()) {
@@ -111,7 +112,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
     }
   }
 
-  private static boolean isApplicable(@NotNull final PyClass containingClass) {
-    return !PythonUnitTestUtil.isUnitTestCaseClass(containingClass) && !containingClass.isSubclass("django.db.models.base.Model", null);
+  private static boolean isApplicable(@NotNull PyClass containingClass, @NotNull TypeEvalContext context) {
+    return !PythonUnitTestUtil.isUnitTestCaseClass(containingClass) && !containingClass.isSubclass("django.db.models.base.Model", context);
   }
 }

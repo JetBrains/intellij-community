@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +42,7 @@ public class BalloonTest {
     final JTree tree = new Tree();
     content.add(tree);
 
-    final Ref<BalloonImpl> balloon = new Ref<BalloonImpl>();
+    final Ref<BalloonImpl> balloon = new Ref<>();
 
     tree.addMouseListener(new MouseAdapter() {
       @Override
@@ -59,8 +60,8 @@ public class BalloonTest {
           //pane.setBorder(new LineBorder(Color.blue));
 
           balloon.set(new BalloonImpl(
-            new JLabel("Content"), Color.black, null , MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, false, null,
-            false, 500, 25, 0, 0, false, "This is the title", new Insets(2, 2, 2, 2), true, false, false, Balloon.Layer.normal));
+            new JLabel("Content"), Color.black, null , MessageType.ERROR.getPopupBackground(), true, true, true, true, true, true, 0, true, false, null,
+            false, 500, 25, 0, 0, false, "This is the title", JBUI.insets(2), true, false, false, Balloon.Layer.normal, false));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {

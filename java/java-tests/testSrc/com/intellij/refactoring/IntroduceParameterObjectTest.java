@@ -22,14 +22,20 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
-import com.intellij.refactoring.util.VariableData;
+import com.intellij.refactoring.changeSignature.JavaMethodDescriptor;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor;
+import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class IntroduceParameterObjectTest extends MultiFileTestCase{
   @NotNull
@@ -52,30 +58,34 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   private void doTest(final boolean delegate,
                       final boolean createInner,
-                      final Function<PsiMethod, VariableData[]> function) throws Exception {
+                      final Function<PsiMethod, ParameterInfoImpl[]> function) throws Exception {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
 
       assertNotNull("Class Test not found", aClass);
 
       final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-      final VariableData[] datas = function.fun(method);
+      final ParameterInfoImpl[] datas = function.fun(method);
 
-      IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", null, method, datas, delegate, false,
-                                                                                          createInner, null, false);
+      final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
+        new JavaIntroduceParameterObjectClassDescriptor("Param", "", null, false, createInner, null, datas, method, false);
+      final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
+      IntroduceParameterObjectProcessor processor =
+        new IntroduceParameterObjectProcessor<>(
+          method, classDescriptor,
+          parameters,
+          delegate);
       processor.run();
     });
   }
 
-  private static VariableData[] generateParams(final PsiMethod method) {
+  private static ParameterInfoImpl[] generateParams(final PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-    final VariableData[] datas = new VariableData[parameters.length];
+    final ParameterInfoImpl[] datas = new ParameterInfoImpl[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      datas[i] = new VariableData(parameter);
-      datas[i].name = parameter.getName();
-      datas[i].passAsParameter = true;
+      datas[i] = new ParameterInfoImpl(i, parameter.getName(), parameter.getType());
     }
     return datas;
   }
@@ -124,16 +134,26 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTest();
   }
 
+  public void testTypeParametersWithSubstitution() throws Exception {
+    final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
+    final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    try {
+      projectExtension.setLanguageLevel(LanguageLevel.HIGHEST);
+      doTest();
+    }
+    finally {
+      projectExtension.setLanguageLevel(oldLevel);
+    }
+  }
+
   public void testSameTypeAndVarargs() throws Exception {
     doTest(false, false, method -> {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-      final VariableData[] datas = new VariableData[parameters.length - 1];
+      final ParameterInfoImpl[] datas = new ParameterInfoImpl[parameters.length - 1];
       for (int i = 0; i < parameters.length - 1; i++) {
         PsiParameter parameter = parameters[i];
-        datas[i] = new VariableData(parameter);
-        datas[i].name = parameter.getName();
-        datas[i].passAsParameter = true;
+        datas[i] = new ParameterInfoImpl(i, parameter.getName(), parameter.getType());
       }
       return datas;
     });
@@ -143,14 +163,20 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTest(false, true, method -> {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-      final VariableData[] datas = new VariableData[parameters.length - 1];
+      final ParameterInfoImpl[] datas = new ParameterInfoImpl[parameters.length - 1];
       for (int i = 0; i < parameters.length - 1; i++) {
         PsiParameter parameter = parameters[i];
-        datas[i] = new VariableData(parameter);
-        datas[i].name = parameter.getName();
-        datas[i].passAsParameter = true;
+        datas[i] = new ParameterInfoImpl(i, parameter.getName(), parameter.getType());
       }
       return datas;
+    });
+  }
+
+  public void testIncludeOneParameter() throws Exception {
+    doTestExistingClass("Param", "", false, "public", method -> {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      PsiParameter parameter = parameters[1];
+      return new ParameterInfoImpl[]{new ParameterInfoImpl(1, parameter.getName(), parameter.getType())};
     });
   }
 
@@ -158,11 +184,9 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTest(false, true, psiMethod -> {
       final PsiParameter parameter = psiMethod.getParameterList().getParameters()[0];
       final PsiClass collectionClass = getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_COLLECTION);
-      final VariableData variableData =
-        new VariableData(parameter, JavaPsiFacade.getElementFactory(getProject()).createType(collectionClass));
-      variableData.name = parameter.getName();
-      variableData.passAsParameter = true;
-      return new VariableData[]{variableData};
+      final ParameterInfoImpl variableData =
+        new ParameterInfoImpl(0, parameter.getName(), JavaPsiFacade.getElementFactory(getProject()).createType(collectionClass));
+      return new ParameterInfoImpl[]{variableData};
     });
   }
 
@@ -180,6 +204,15 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors,
                                    final String newVisibility) throws Exception {
+    doTestExistingClass(existingClassName, existingClassPackage, generateAccessors, newVisibility,
+                        IntroduceParameterObjectTest::generateParams);
+  }
+
+  private void doTestExistingClass(final String existingClassName,
+                                   final String existingClassPackage,
+                                   final boolean generateAccessors,
+                                   final String newVisibility,
+                                   final Function<PsiMethod, ParameterInfoImpl[]> function) throws Exception {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
       if (aClass == null) {
@@ -188,9 +221,16 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
       assertNotNull("Class Test not found", aClass);
 
       final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-      IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor(existingClassName, existingClassPackage, null, method,
-                                                                                          generateParams(method), false, true,
-                                                                                          false, newVisibility, generateAccessors);
+      final ParameterInfoImpl[] mergedParams = function.fun(method);
+      final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
+        new JavaIntroduceParameterObjectClassDescriptor(existingClassName, existingClassPackage, null, true, false, newVisibility,
+                                                        mergedParams, method, generateAccessors);
+      final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
+      IntroduceParameterObjectProcessor processor =
+        new IntroduceParameterObjectProcessor<>(
+          method, classDescriptor,
+          parameters,
+          false);
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -202,9 +242,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testIntegerIncremental() throws Exception {
-    checkExceptionThrown("Integer", "java.lang", "Cannot perform the refactoring.\n" +
-                                                 "Setters for the following fields are required:\n" +
-                                                 "value.\n");
+    checkExceptionThrown("Integer", "java.lang", "Setter for field 'value' is required");
   }
 
   private void checkExceptionThrown(String existingClassName, String existingClassPackage, String exceptionMessage) throws Exception {
@@ -227,7 +265,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testExistingBeanIfNoGeneration() throws Exception {
-    checkExceptionThrown("Param", "", "Cannot perform the refactoring.\n" + "Setters for the following fields are required:\n" + "i.\n");
+    checkExceptionThrown("Param", "", "Setter for field 'i' is required");
   }
 
   public void testParamNameConflict() throws Exception {
@@ -244,6 +282,6 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testWrongBean() throws Exception {
-    checkExceptionThrown("Param", "", "Cannot perform the refactoring.\n" + "Getters for the following fields are required:\n" + "i.\n");
+    checkExceptionThrown("Param", "", "Getter for field 'i' is required");
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,15 +89,15 @@ public class PatternPackageSet extends PatternBasedPackageSet {
       return fileIndex.isInContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_SOURCE) {
-      return isSource && !fileIndex.isInTestSourceContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern,
-                                                                                                       file, fileIndex);
+      return isSource && !TestSourcesFilter.isTestSources(file, project)
+             && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_LIBRARY) {
       return (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file)) && matchesLibrary(myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_TEST) {
-      return isSource && fileIndex.isInTestSourceContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern,
-                                                                                                      file, fileIndex);
+      return isSource && TestSourcesFilter.isTestSources(file, project) &&
+             FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_PROBLEM) {
       return isSource && WolfTheProblemSolver.getInstance(project).isProblemFile(file) &&

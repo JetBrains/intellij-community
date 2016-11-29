@@ -16,19 +16,20 @@
 package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
-import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+
+import static com.intellij.openapi.vcs.Executor.touch;
+import static git4idea.test.GitExecutor.git;
 
 public class GitTaskBranchesTest extends TaskBranchesTest {
 
@@ -50,6 +51,14 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
     return repository;
   }
 
+  @Override
+  protected void createAndCommitChanges(@NotNull Repository repository) throws IOException, VcsException {
+    touch("foo.txt");
+    git("add foo.txt");
+    git("commit -m commit");
+    repository.update();
+  }
+
   @NotNull
   @Override
   protected String getDefaultBranchName() {
@@ -59,10 +68,5 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
   @Override
   protected int getNumberOfBranches(@NotNull Repository repository) {
     return ((GitRepository)repository).getBranches().getLocalBranches().size();
-  }
-
-  @Override
-  protected void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull VirtualFile file) throws VcsException {
-    GitFileUtils.addFiles(project, root, file);
   }
 }

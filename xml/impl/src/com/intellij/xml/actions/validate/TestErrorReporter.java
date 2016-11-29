@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestErrorReporter extends ErrorReporter {
-  private final ArrayList<String> errors = new ArrayList<String>(3);
+  private final ArrayList<String> errors = new ArrayList<>(3);
 
   public TestErrorReporter(ValidateXmlActionHandler handler) {
     super(handler);

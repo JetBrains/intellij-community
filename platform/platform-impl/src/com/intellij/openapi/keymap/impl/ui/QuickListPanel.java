@@ -43,7 +43,7 @@ class QuickListPanel {
   QuickList item;
 
   public QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
-    actionsModel = new CollectionListModel<Object>();
+    actionsModel = new CollectionListModel<>();
     myActionsList = new JBList(actionsModel);
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));

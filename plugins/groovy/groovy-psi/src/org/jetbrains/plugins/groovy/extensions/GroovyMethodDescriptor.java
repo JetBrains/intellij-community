@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.impl.StringTypeCondition;
 
 import java.util.*;
 
@@ -137,7 +138,7 @@ public class GroovyMethodDescriptor {
     }
 
     Map<String, NamedArgumentDescriptor> res =
-      new HashMap<String, NamedArgumentDescriptor>();
+      new HashMap<>();
 
     if (myArguments != null) {
       for (NamedArgument arguments : myArguments) {
@@ -178,12 +179,6 @@ public class GroovyMethodDescriptor {
       return showFirst ? NamedArgumentDescriptor.SIMPLE_ON_TOP : NamedArgumentDescriptor.SIMPLE_NORMAL;
     }
 
-    NamedArgumentDescriptor descriptor = new NamedArgumentDescriptor.StringTypeCondition(type.trim());
-
-    if (!showFirst) {
-      descriptor.setPriority(NamedArgumentDescriptor.Priority.NORMAL);
-    }
-
-    return descriptor;
+    return showFirst ? new StringTypeCondition(type.trim()) : new StringTypeCondition(NamedArgumentDescriptor.Priority.NORMAL, type.trim());
   }
 }

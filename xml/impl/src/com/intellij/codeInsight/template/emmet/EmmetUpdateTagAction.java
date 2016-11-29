@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -92,43 +91,37 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
       String templateText = expandTemplate(abbreviation, file, editor);
 
       final Collection<String> classNames = ContainerUtil.newLinkedHashSet();
-      final String classAttribute = tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME);
-      if (classAttribute != null) {
-        ContainerUtil.addAll(classNames, StringUtil.tokenize(classAttribute, " \t"));
-      }
+      ContainerUtil.addAll(classNames, HtmlUtil.splitClassNames(tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME)));
       final Map<String, String> attributes = ContainerUtil.newLinkedHashMap();
       final Ref<String> newTagName = Ref.create();
-      processTags(file.getProject(), templateText, new PairProcessor<XmlTag, Boolean>() {
-        @Override
-        public boolean process(XmlTag tag, Boolean firstTag) {
-          if (firstTag && !abbreviation.isEmpty() && StringUtil.isJavaIdentifierPart(abbreviation.charAt(0))) {
-            newTagName.set(tag.getName());
-          }
-          
-          for (String clazz : StringUtil.tokenize(StringUtil.notNullize(tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME)), " \t")) {
-            if (StringUtil.startsWithChar(clazz, '+')) {
-              classNames.add(clazz.substring(1));
-            }
-            else if (StringUtil.startsWithChar(clazz, '-')) {
-              classNames.remove(clazz.substring(1));
-            }
-            else {
-              classNames.clear();
-              classNames.add(clazz);
-            }
-          }
-
-          if (!firstTag) {
-            classNames.add(tag.getName());
-          }
-
-          for (XmlAttribute xmlAttribute : tag.getAttributes()) {
-            if (!HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(xmlAttribute.getName())) {
-              attributes.put(xmlAttribute.getName(), StringUtil.notNullize(xmlAttribute.getValue()));
-            }
-          }
-          return true;
+      processTags(file.getProject(), templateText, (tag1, firstTag) -> {
+        if (firstTag && !abbreviation.isEmpty() && StringUtil.isJavaIdentifierPart(abbreviation.charAt(0))) {
+          newTagName.set(tag1.getName());
         }
+
+        for (String clazz : HtmlUtil.splitClassNames(tag1.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME))) {
+          if (StringUtil.startsWithChar(clazz, '+')) {
+            classNames.add(clazz.substring(1));
+          }
+          else if (StringUtil.startsWithChar(clazz, '-')) {
+            classNames.remove(clazz.substring(1));
+          }
+          else {
+            classNames.clear();
+            classNames.add(clazz);
+          }
+        }
+
+        if (!firstTag) {
+          classNames.add(tag1.getName());
+        }
+
+        for (XmlAttribute xmlAttribute : tag1.getAttributes()) {
+          if (!HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(xmlAttribute.getName())) {
+            attributes.put(xmlAttribute.getName(), StringUtil.notNullize(xmlAttribute.getValue()));
+          }
+        }
+        return true;
       });
 
       doUpdateTagAttributes(tag, file, newTagName.get(), classNames, attributes).execute();
@@ -138,7 +131,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
   @Nullable
   private static String expandTemplate(@NotNull String abbreviation, @NotNull PsiFile file, @NotNull Editor editor) throws EmmetException {
     final CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
-    ZenCodingTemplate.expand(abbreviation, callback, XmlZenCodingGeneratorImpl.INSTANCE, Collections.<ZenCodingFilter>emptyList(),
+    ZenCodingTemplate.expand(abbreviation, callback, XmlZenCodingGeneratorImpl.INSTANCE, Collections.emptyList(),
                              true, Registry.intValue("emmet.segments.limit"));
     TemplateImpl template = callback.getGeneratedTemplate();
     return template != null ? template.getTemplateText() : null;

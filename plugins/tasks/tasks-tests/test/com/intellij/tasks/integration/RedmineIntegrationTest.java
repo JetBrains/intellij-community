@@ -112,12 +112,7 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
 
   public void testIssueFilteringByProject() throws Exception {
     final List<RedmineProject> allProjects = myRepository.fetchProjects();
-    final RedmineProject project = ContainerUtil.find(allProjects, new Condition<RedmineProject>() {
-      @Override
-      public boolean value(RedmineProject project) {
-        return project.getName().equals("With-Minus");
-      }
-    });
+    final RedmineProject project = ContainerUtil.find(allProjects, project1 -> project1.getName().equals("With-Minus"));
     assertNotNull(project);
     myRepository.setCurrentProject(project);
     final Task[] issues = myRepository.getIssues("", 0, 10, false);

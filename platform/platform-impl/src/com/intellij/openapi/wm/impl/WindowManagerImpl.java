@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.Patches;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
@@ -89,8 +88,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     }
   }
 
-  private static final int ORACLE_BUG_8007219_THRESHOLD = 5;
-
   private Boolean myAlphaModeSupported = null;
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
@@ -141,8 +138,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
     myLayout = new DesktopLayout();
-    myProject2Frame = new HashMap<Project, IdeFrameImpl>();
-    myDialogsToDispose = new HashMap<Project, Set<JDialog>>();
+    myProject2Frame = new HashMap<>();
+    myDialogsToDispose = new HashMap<>();
     myFrameExtendedState = Frame.NORMAL;
 
     myActivationListener = new WindowAdapter() {
@@ -522,47 +519,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       JBInsets.removeFrom(myFrameBounds, new Insets(yOff, xOff, yOff, xOff));
     }
 
-    fixForOracleBug8007219(frame);
-
     frame.setBounds(myFrameBounds);
     frame.setExtendedState(myFrameExtendedState);
     frame.setVisible(true);
 
-  }
-
-  private void fixForOracleBug8007219(IdeFrameImpl frame) {
-    if ((myFrameExtendedState & Frame.MAXIMIZED_BOTH) > 0 && Patches.JDK_BUG_ID_8007219) {
-      final Rectangle screenBounds = ScreenUtil.getMainScreenBounds();
-      final Insets screenInsets = ScreenUtil.getScreenInsets(frame.getGraphicsConfiguration());
-
-      final int leftGap = myFrameBounds.x - screenInsets.left;
-
-      myFrameBounds.x = leftGap > ORACLE_BUG_8007219_THRESHOLD ?
-                        myFrameBounds.x :
-                        screenInsets.left + ORACLE_BUG_8007219_THRESHOLD + 1;
-
-      final int topGap = myFrameBounds.y - screenInsets.top;
-
-      myFrameBounds.y = topGap > ORACLE_BUG_8007219_THRESHOLD ?
-                        myFrameBounds.y :
-                        screenInsets.top + ORACLE_BUG_8007219_THRESHOLD + 1;
-
-      final int maximumFrameWidth = screenBounds.width - screenInsets.right - myFrameBounds.x;
-
-      final int rightGap = maximumFrameWidth - myFrameBounds.width;
-
-      myFrameBounds.width = rightGap > ORACLE_BUG_8007219_THRESHOLD ?
-                            myFrameBounds.width :
-                            maximumFrameWidth - ORACLE_BUG_8007219_THRESHOLD - 1;
-
-      final int maximumFrameHeight = screenBounds.height - screenInsets.bottom - myFrameBounds.y;
-
-      final int bottomGap = maximumFrameHeight - myFrameBounds.height;
-
-      myFrameBounds.height =  bottomGap > ORACLE_BUG_8007219_THRESHOLD ?
-                             myFrameBounds.height :
-                             - ORACLE_BUG_8007219_THRESHOLD - 1;
-    }
   }
 
   private IdeFrameImpl getDefaultEmptyIdeFrame() {
@@ -591,7 +551,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       }
 
       if (myFrameBounds != null) {
-        fixForOracleBug8007219(frame);
         frame.setBounds(myFrameBounds);
       }
       frame.setProject(project);
@@ -624,7 +583,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   private void queueForDisposal(JDialog dialog, Project project) {
     Set<JDialog> dialogs = myDialogsToDispose.get(project);
     if (dialogs == null) {
-      dialogs = new HashSet<JDialog>();
+      dialogs = new HashSet<>();
       myDialogsToDispose.put(project, dialogs);
     }
     dialogs.add(dialog);

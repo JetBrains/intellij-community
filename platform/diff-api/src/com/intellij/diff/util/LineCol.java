@@ -16,6 +16,7 @@
 package com.intellij.diff.util;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
 public class LineCol {
@@ -59,12 +60,37 @@ public class LineCol {
 
   @NotNull
   public static LineCol fromOffset(@NotNull Document document, int offset) {
-    int line = document.getLineNumber(offset);
-    int column = offset - document.getLineStartOffset(line);
-    return new LineCol(line, column);
+    if (offset < document.getTextLength()) {
+      int line = document.getLineNumber(offset);
+      int column = offset - document.getLineStartOffset(line);
+      return new LineCol(line, column);
+    }
+    else {
+      int line = Math.max(0, document.getLineCount() - 1);
+      int column = document.getLineEndOffset(line) - document.getLineStartOffset(line);
+      return new LineCol(line, column);
+    }
+  }
+
+  @NotNull
+  public static LineCol fromCaret(@NotNull Editor editor) {
+    return fromOffset(editor.getDocument(), editor.getCaretModel().getOffset());
   }
 
   public static int toOffset(@NotNull Document document, @NotNull LineCol linecol) {
-    return document.getLineStartOffset(linecol.line) + linecol.column;
+    return linecol.toOffset(document);
+  }
+
+  public static int toOffset(@NotNull Document document, int line, int col) {
+    return new LineCol(line, col).toOffset(document);
+  }
+
+  public int toOffset(@NotNull Document document) {
+    if (line >= document.getLineCount()) return document.getTextLength();
+    return Math.min(document.getLineStartOffset(line) + column, document.getLineEndOffset(line));
+  }
+
+  public int toOffset(@NotNull Editor editor) {
+    return toOffset(editor.getDocument());
   }
 }

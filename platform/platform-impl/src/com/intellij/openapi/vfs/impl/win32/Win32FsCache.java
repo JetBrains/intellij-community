@@ -19,52 +19,59 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 class Win32FsCache {
   private final IdeaWin32 myKernel = IdeaWin32.getInstance();
-  private Reference<Map<String, FileAttributes>> myCache;
+  private Reference<TIntObjectHashMap<THashMap<String, FileAttributes>>> myCache;
 
   void clearCache() {
     myCache = null;
   }
 
   @NotNull
-  private Map<String, FileAttributes> getMap() {
-    Map<String, FileAttributes> map = com.intellij.reference.SoftReference.dereference(myCache);
+  private TIntObjectHashMap<THashMap<String, FileAttributes>> getMap() {
+    TIntObjectHashMap<THashMap<String, FileAttributes>> map = com.intellij.reference.SoftReference.dereference(myCache);
     if (map == null) {
-      map = new THashMap<String, FileAttributes>(FileUtil.PATH_HASHING_STRATEGY);
-      myCache = new SoftReference<Map<String, FileAttributes>>(map);
+      map = new TIntObjectHashMap<>();
+      myCache = new SoftReference<>(map);
     }
     return map;
   }
 
   @NotNull
-  String[] list(@NotNull String path) {
+  String[] list(@NotNull VirtualFile file) {
+    String path = file.getPath();
     FileInfo[] fileInfo = myKernel.listChildren(path);
     if (fileInfo == null || fileInfo.length == 0) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    if (!StringUtil.endsWithChar(path, '/')) path += "/";
     String[] names = new String[fileInfo.length];
-    Map<String, FileAttributes> map = getMap();
+    TIntObjectHashMap<THashMap<String, FileAttributes>> map = getMap();
+    int parentId = ((VirtualFileWithId)file).getId();
+    THashMap<String, FileAttributes> nestedMap = map.get(parentId);
+    if (nestedMap == null) {
+      nestedMap = new THashMap<>(fileInfo.length, FileUtil.PATH_HASHING_STRATEGY);
+      map.put(parentId, nestedMap);
+    }
     for (int i = 0, length = fileInfo.length; i < length; i++) {
       FileInfo info = fileInfo[i];
       String name = info.getName();
-      map.put(path + name, info.toFileAttributes());
+      nestedMap.put(name, info.toFileAttributes());
       names[i] = name;
     }
     return names;
@@ -72,17 +79,34 @@ class Win32FsCache {
 
   @Nullable
   FileAttributes getAttributes(@NotNull VirtualFile file) {
-    String path = file.getPath();
-    Map<String, FileAttributes> map = getMap();
-    FileAttributes attributes = map.get(path);
+    VirtualFile parent = file.getParent();
+    int parentId = parent instanceof VirtualFileWithId ? ((VirtualFileWithId)parent).getId() : -((VirtualFileWithId)file).getId();
+    TIntObjectHashMap<THashMap<String, FileAttributes>> map = getMap();
+    THashMap<String, FileAttributes> nestedMap = map.get(parentId);
+    String name = file.getName();
+    FileAttributes attributes = nestedMap != null ? nestedMap.get(name) : null;
+
     if (attributes == null) {
-      FileInfo info = myKernel.getInfo(path);
+      if (nestedMap != null && !(nestedMap instanceof IncompleteChildrenMap)) {
+        return null; // our info from parent doesn't mention the child in this refresh session
+      }
+      FileInfo info = myKernel.getInfo(file.getPath());
       if (info == null) {
         return null;
       }
       attributes = info.toFileAttributes();
-      map.put(path, attributes);
+      if (nestedMap == null) {
+        nestedMap = new IncompleteChildrenMap<>(FileUtil.PATH_HASHING_STRATEGY);
+        map.put(parentId, nestedMap);
+      }
+      nestedMap.put(name, attributes);
     }
     return attributes;
+  }
+
+  private static class IncompleteChildrenMap<K, V> extends THashMap<K,V> {
+    IncompleteChildrenMap(TObjectHashingStrategy<K> strategy) {
+      super(strategy);
+    }
   }
 }

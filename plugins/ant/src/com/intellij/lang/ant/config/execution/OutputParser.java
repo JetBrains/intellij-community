@@ -62,7 +62,7 @@ public class OutputParser{
     myProject = project;
     myProcessHandler = processHandler;
     myMessageView = errorsView;
-    myProgress = new WeakReference<ProgressIndicator>(progress);
+    myProgress = new WeakReference<>(progress);
     myBuildName = buildName;
     myMessageView.setParsingThread(this);
   }
@@ -132,7 +132,7 @@ public class OutputParser{
     else if (IdeaAntLogger2.TASK == tagName) {
       setProgressText(AntBundle.message("executing.task.tag.value.status.text", tagValue));
       if (JAVAC.equals(tagValue)) {
-        myJavacMessages = new ArrayList<String>();
+        myJavacMessages = new ArrayList<>();
       }
       else if (ECHO.equals(tagValue)) {
         myIsEcho = true;
@@ -240,16 +240,14 @@ public class OutputParser{
         for (int idx = 0; tokenizer.hasMoreTokens(); idx++) {
           strings[idx] = tokenizer.nextToken();
         }
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            VirtualFile file = url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
-            messageView.outputJavacMessage(convertCategory(category), strings, file, url, lineNum, columnNum);
+        ApplicationManager.getApplication().runReadAction(() -> {
+          VirtualFile file = url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
+          messageView.outputJavacMessage(convertCategory(category), strings, file, url, lineNum, columnNum);
 
-            if (file != null && category == CompilerMessageCategory.ERROR) {
-              final WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
-              final Problem problem = wolf.convertToProblem(file, lineNum, columnNum, strings);
-              wolf.weHaveGotNonIgnorableProblems(file, Collections.singletonList(problem));
-            }
+          if (file != null && category == CompilerMessageCategory.ERROR) {
+            final WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
+            final Problem problem = wolf.convertToProblem(file, lineNum, columnNum, strings);
+            wolf.weHaveGotNonIgnorableProblems(file, Collections.singletonList(problem));
           }
         });
       }

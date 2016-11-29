@@ -24,11 +24,11 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.data.ScalaCompileOptionsData;
+import org.jetbrains.plugins.gradle.model.data.ScalaModelData;
 import org.jetbrains.plugins.gradle.model.scala.ScalaCompileOptions;
 import org.jetbrains.plugins.gradle.model.scala.ScalaForkOptions;
 import org.jetbrains.plugins.gradle.model.scala.ScalaModel;
-import org.jetbrains.plugins.gradle.model.data.ScalaCompileOptionsData;
-import org.jetbrains.plugins.gradle.model.data.ScalaModelData;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 

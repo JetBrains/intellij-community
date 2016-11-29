@@ -139,17 +139,15 @@ public final class ImageEditorImpl implements ImageEditor {
   void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
     if (file.equals(event.getFile())) {
       // Change document
-      file.refresh(true, false, new Runnable() {
-        public void run() {
-          if (ImageFileTypeManager.getInstance().isImage(file)) {
-            setValue(file);
-          }
-          else {
-            setValue(null);
-            // Close editor
-            FileEditorManager editorManager = FileEditorManager.getInstance(project);
-            editorManager.closeFile(file);
-          }
+      file.refresh(true, false, () -> {
+        if (ImageFileTypeManager.getInstance().isImage(file)) {
+          setValue(file);
+        }
+        else {
+          setValue(null);
+          // Close editor
+          FileEditorManager editorManager = FileEditorManager.getInstance(project);
+          editorManager.closeFile(file);
         }
       });
     }
@@ -158,11 +156,7 @@ public final class ImageEditorImpl implements ImageEditor {
   void contentsChanged(@NotNull VirtualFileEvent event) {
     if (file.equals(event.getFile())) {
       // Change document
-      Runnable postRunnable = new Runnable() {
-        public void run() {
-          setValue(file);
-        }
-      };
+      Runnable postRunnable = () -> setValue(file);
       RefreshQueue.getInstance().refresh(true, false, postRunnable, ModalityState.current(), file);
     }
   }

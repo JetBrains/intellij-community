@@ -117,30 +117,28 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       return null;
     }
     final LocalSearchScope scope = new LocalSearchScope(boundClassFile);
-    ReferencesSearch.search(boundField, scope).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference ref) {
-        final PsiElement element = ref.getElement();
-        if (element.getParent() instanceof PsiReferenceExpression) {
-          PsiReferenceExpression refExpr = (PsiReferenceExpression) element.getParent();
-          if (refExpr.getParent() instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCall = (PsiMethodCallExpression) refExpr.getParent();
-            final PsiElement psiElement = refExpr.resolve();
-            if (psiElement instanceof PsiMethod) {
-              PsiMethod method = (PsiMethod) psiElement;
-              for(EventSetDescriptor eventSetDescriptor: eventSetDescriptors) {
-                if (Comparing.equal(eventSetDescriptor.getAddListenerMethod().getName(), method.getName())) {
-                  final String eventName = eventSetDescriptor.getName();
-                  final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-                  if (args.length > 0) {
-                    addListenerRef(actionGroup, eventName, args[0]);
-                  }
+    ReferencesSearch.search(boundField, scope).forEach(ref -> {
+      final PsiElement element = ref.getElement();
+      if (element.getParent() instanceof PsiReferenceExpression) {
+        PsiReferenceExpression refExpr = (PsiReferenceExpression) element.getParent();
+        if (refExpr.getParent() instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression methodCall = (PsiMethodCallExpression) refExpr.getParent();
+          final PsiElement psiElement = refExpr.resolve();
+          if (psiElement instanceof PsiMethod) {
+            PsiMethod method = (PsiMethod) psiElement;
+            for(EventSetDescriptor eventSetDescriptor: eventSetDescriptors) {
+              if (Comparing.equal(eventSetDescriptor.getAddListenerMethod().getName(), method.getName())) {
+                final String eventName = eventSetDescriptor.getName();
+                final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+                if (args.length > 0) {
+                  addListenerRef(actionGroup, eventName, args[0]);
                 }
               }
             }
           }
         }
-        return true;
       }
+      return true;
     });
 
     return actionGroup;

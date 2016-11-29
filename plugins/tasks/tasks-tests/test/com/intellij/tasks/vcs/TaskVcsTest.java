@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,9 +304,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(2, myTaskManager.getLocalTasks().size()); // extra task created
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());
 
-    assertTrue(ContainerUtil.exists(myTaskManager.getLocalTasks(), task -> {
-      return task.getSummary().equals("New Changelist");
-    }));
+    assertTrue(ContainerUtil.exists(myTaskManager.getLocalTasks(), task -> task.getSummary().equals("New Changelist")));
   }
 
   private LocalChangeList addChangeList(String title, String comment) {
@@ -427,7 +425,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
       @NotNull
       @Override
       public Comment[] getComments() {
-        return new Comment[0];
+        return Comment.EMPTY_ARRAY;
       }
 
       @NotNull

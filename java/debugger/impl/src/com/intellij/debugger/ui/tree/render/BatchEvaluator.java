@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -55,7 +56,7 @@ public class BatchEvaluator {
 
   private BatchEvaluator(DebugProcess process) {
     myDebugProcess = process;
-    myDebugProcess.addDebugProcessListener(new DebugProcessAdapter() {
+    myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
       public void processDetached(DebugProcess process, boolean closedByUser) {
         myBatchEvaluatorChecked = false;
         myBatchEvaluatorObject= null;
@@ -67,8 +68,7 @@ public class BatchEvaluator {
   @SuppressWarnings({"HardCodedStringLiteral"}) public boolean hasBatchEvaluator(EvaluationContext evaluationContext) {
     if (!myBatchEvaluatorChecked) {
       myBatchEvaluatorChecked = true;
-      final Boolean isRemote = myDebugProcess.getUserData(REMOTE_SESSION_KEY);
-      if (isRemote != null && isRemote.booleanValue()) {
+      if (DebuggerUtilsImpl.isRemote(myDebugProcess)) {
         // optimization: for remote sessions the BatchEvaluator is not there for sure
         return false;
       }

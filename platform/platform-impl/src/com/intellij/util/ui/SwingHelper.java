@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
@@ -35,6 +34,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
+import com.intellij.ui.components.ComponentsKt;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ObjectUtils;
@@ -54,13 +55,18 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionListener;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class SwingHelper {
 
@@ -106,11 +112,6 @@ public class SwingHelper {
   @NotNull
   public static JPanel newHorizontalPanel(float childAlignmentY, Component... children) {
     return newGenericBoxPanel(false, childAlignmentY, children);
-  }
-
-  @NotNull
-  public static JPanel newHorizontalPanel(float childAlignmentY, @NotNull Collection<Component> children) {
-    return newHorizontalPanel(childAlignmentY, children.toArray(new Component[children.size()]));
   }
 
   private static JPanel newGenericBoxPanel(boolean verticalOrientation,
@@ -191,6 +192,7 @@ public class SwingHelper {
 
   public static void adjustDialogSizeToFitPreferredSize(@NotNull DialogWrapper dialogWrapper) {
     JRootPane rootPane = dialogWrapper.getRootPane();
+    if (rootPane == null) return;
     Dimension componentSize = rootPane.getSize();
     Dimension componentPreferredSize = rootPane.getPreferredSize();
     if (componentPreferredSize.width <= componentSize.width && componentPreferredSize.height <= componentSize.height) {
@@ -211,55 +213,41 @@ public class SwingHelper {
 
   public static void resizeDialogToFitTextFor(@NotNull final JComponent... components) {
     if (components.length == 0) return;
-    doWithDialogWrapper(components[0], new Consumer<DialogWrapper>() {
-      @Override
-      public void consume(final DialogWrapper dialogWrapper) {
-        if (dialogWrapper instanceof SettingsDialog || dialogWrapper instanceof SingleConfigurableEditor) {
-          for (Component component : components) {
-            if (component instanceof TextFieldWithHistoryWithBrowseButton) {
-              setPreferredWidthToFitText((TextFieldWithHistoryWithBrowseButton)component);
-            }
-            else if (component instanceof TextFieldWithBrowseButton) {
-              setPreferredWidthToFitText((TextFieldWithBrowseButton)component);
-            }
-            else if (component instanceof JTextField) {
-              setPreferredWidthToFitText((JTextField)component);
-            }
+    doWithDialogWrapper(components[0], dialogWrapper -> {
+      if (dialogWrapper instanceof SettingsDialog || dialogWrapper instanceof SingleConfigurableEditor) {
+        for (Component component : components) {
+          if (component instanceof TextFieldWithHistoryWithBrowseButton) {
+            setPreferredWidthToFitText((TextFieldWithHistoryWithBrowseButton)component);
           }
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              adjustDialogSizeToFitPreferredSize(dialogWrapper);
-            }
-          }, ModalityState.any());
+          else if (component instanceof TextFieldWithBrowseButton) {
+            setPreferredWidthToFitText((TextFieldWithBrowseButton)component);
+          }
+          else if (component instanceof JTextField) {
+            setPreferredWidthToFitText((JTextField)component);
+          }
         }
+        ApplicationManager.getApplication().invokeLater(() -> adjustDialogSizeToFitPreferredSize(dialogWrapper), ModalityState.any());
       }
     });
   }
 
   private static void doWithDialogWrapper(@NotNull final JComponent component, @NotNull final Consumer<DialogWrapper> consumer) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (component.getClientProperty(DIALOG_RESIZED_TO_FIT_TEXT) != null) {
-          return;
-        }
-        component.putClientProperty(DIALOG_RESIZED_TO_FIT_TEXT, true);
-        DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
-        if (dialogWrapper != null) {
-          consumer.consume(dialogWrapper);
-        }
-        else {
-          UiNotifyConnector.doWhenFirstShown(component, new Runnable() {
-            @Override
-            public void run() {
-              DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
-              if (dialogWrapper != null) {
-                consumer.consume(dialogWrapper);
-              }
-            }
-          });
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (component.getClientProperty(DIALOG_RESIZED_TO_FIT_TEXT) != null) {
+        return;
+      }
+      component.putClientProperty(DIALOG_RESIZED_TO_FIT_TEXT, true);
+      DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
+      if (dialogWrapper != null) {
+        consumer.consume(dialogWrapper);
+      }
+      else {
+        UiNotifyConnector.doWhenFirstShown(component, () -> {
+          DialogWrapper dialogWrapper1 = DialogWrapper.findInstance(component);
+          if (dialogWrapper1 != null) {
+            consumer.consume(dialogWrapper1);
+          }
+        });
       }
     });
   }
@@ -440,25 +428,8 @@ public class SwingHelper {
                                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
                                                        @NotNull FileChooserDescriptor fileChooserDescriptor,
                                                        @NotNull TextComponentAccessor<T> textComponentAccessor) {
-    fileChooserDescriptor = fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix);
-    componentWithBrowseButton.addBrowseFolderListener(
-      project,
-      new ComponentWithBrowseButton.BrowseFolderActionListener<T>(
-        browseDialogTitle,
-        null,
-        componentWithBrowseButton,
-        project,
-        fileChooserDescriptor,
-        textComponentAccessor
-      ),
-      true
-    );
-    FileChooserFactory.getInstance().installFileCompletion(
-      textField,
-      fileChooserDescriptor,
-      true,
-      project
-    );
+    ComponentsKt.installFileCompletionAndBrowseDialog(project, componentWithBrowseButton, textField, browseDialogTitle,
+                                                      fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix), textComponentAccessor);
   }
 
   @NotNull
@@ -483,6 +454,49 @@ public class SwingHelper {
     Dimension preferredSize = component.getPreferredSize();
     preferredSize.width = width;
     component.setPreferredSize(preferredSize);
+  }
+
+  public static boolean scrollToReference(JEditorPane view, String reference) {
+    reference = StringUtil.trimStart(reference, "#");
+    List<String> toCheck = Arrays.asList("a", "h1", "h2", "h3", "h4");
+    Document document = view.getDocument();
+    if (document instanceof HTMLDocument) {
+      List<Element> list = new ArrayList<>();
+      for (Element root : document.getRootElements()) {
+        getAllElements(root, list, toCheck);
+      }
+      for (Element element : list) {
+          AttributeSet attributes = element.getAttributes();
+          String nm = (String)attributes.getAttribute(HTML.Attribute.NAME);
+          if (nm == null) nm = (String)attributes.getAttribute(HTML.Attribute.ID);
+          if ((nm != null) && nm.equals(reference)) {
+            try {
+              int pos = element.getStartOffset();
+              Rectangle r = view.modelToView(pos);
+              if (r != null) {
+                Rectangle vis = view.getVisibleRect();
+                r.y -= 5;
+                r.height = vis.height;
+                view.scrollRectToVisible(r);
+                return true;
+              }
+            }
+            catch (BadLocationException ex) {
+              //ignore
+            }
+          }
+      }
+    }
+    return false;
+  }
+
+  private static void getAllElements(Element root, List<Element> list, List<String> toCheck) {
+    if (toCheck.contains(root.getName().toLowerCase(Locale.US))) {
+      list.add(root);
+    }
+    for (int i = 0; i < root.getElementCount(); i++) {
+      getAllElements(root.getElement(i), list, toCheck);
+    }
   }
 
   public static class HtmlViewerBuilder {
@@ -574,12 +588,12 @@ public class SwingHelper {
   }
 
   @NotNull
-  public static JEditorPane createHtmlViewer(boolean carryTextOver,
+  public static JEditorPane createHtmlViewer(boolean lineWrap,
                                              @Nullable Font font,
                                              @Nullable Color background,
                                              @Nullable Color foreground) {
     final JEditorPane textPane;
-    if (carryTextOver) {
+    if (lineWrap) {
       textPane = new JEditorPane() {
         @Override
         public Dimension getPreferredSize() {
@@ -595,13 +609,13 @@ public class SwingHelper {
       textPane = new JEditorPane();
     }
     textPane.setFont(font != null ? font : UIUtil.getLabelFont());
-    textPane.setContentType(UIUtil.HTML_MIME);
+    textPane.setEditorKit(UIUtil.getHTMLEditorKit());
     textPane.setEditable(false);
     if (background != null) {
       textPane.setBackground(background);
     }
     else {
-      textPane.setOpaque(false);
+      NonOpaquePanel.setTransparent(textPane);
     }
     textPane.setForeground(foreground != null ? foreground : UIUtil.getLabelForeground());
     textPane.setFocusable(false);
@@ -624,27 +638,14 @@ public class SwingHelper {
                                                                                                 @NotNull String browseDialogTitle,
                                                                                                 @NotNull FileChooserDescriptor fileChooserDescriptor,
                                                                                                 @Nullable NotNullProducer<List<String>> historyProvider) {
-    TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton = new TextFieldWithHistoryWithBrowseButton();
-    TextFieldWithHistory textFieldWithHistory = textFieldWithHistoryWithBrowseButton.getChildComponent();
-    textFieldWithHistory.setHistorySize(-1);
-    textFieldWithHistory.setMinimumAndPreferredWidth(0);
-    if (historyProvider != null) {
-      addHistoryOnExpansion(textFieldWithHistory, historyProvider);
-    }
-    installFileCompletionAndBrowseDialog(
-      project,
-      textFieldWithHistoryWithBrowseButton,
-      browseDialogTitle,
-      fileChooserDescriptor
-    );
-    return textFieldWithHistoryWithBrowseButton;
+    return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider == null ? null : () -> historyProvider.produce());
   }
 
   @NotNull
   public static <C extends JComponent> ComponentWithBrowseButton<C> wrapWithInfoButton(@NotNull final C component,
                                                                                        @NotNull String infoButtonTooltip,
                                                                                        @NotNull ActionListener listener) {
-    ComponentWithBrowseButton<C> comp = new ComponentWithBrowseButton<C>(component, listener);
+    ComponentWithBrowseButton<C> comp = new ComponentWithBrowseButton<>(component, listener);
     FixedSizeButton uiHelpButton = comp.getButton();
     uiHelpButton.setToolTipText(infoButtonTooltip);
     uiHelpButton.setIcon(UIUtil.getBalloonInformationIcon());

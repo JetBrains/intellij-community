@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import com.intellij.util.PsiNavigateUtil;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -54,13 +53,8 @@ public class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
       final PyElement skeleton = getUserSkeleton(element);
       if (skeleton != null) {
         result.add(new LineMarkerInfo<PsiElement>(
-          element, element.getTextRange(), ICON, Pass.UPDATE_OVERRIDEN_MARKERS,
-          new Function<PsiElement, String>() {
-            @Override
-            public String fun(PsiElement e) {
-              return "Has user skeleton";
-            }
-          },
+          element, element.getTextRange(), ICON, Pass.LINE_MARKERS,
+          e -> "Has user skeleton",
           new GutterIconNavigationHandler<PsiElement>() {
             @Override
             public void navigate(MouseEvent e, PsiElement elt) {

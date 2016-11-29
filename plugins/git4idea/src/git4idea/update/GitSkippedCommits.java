@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -192,6 +191,10 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
         ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null);
       }
     });
+  }
+
+  @Override
+  public void dispose() {
   }
 
   /**

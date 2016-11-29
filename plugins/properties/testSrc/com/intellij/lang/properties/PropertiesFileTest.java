@@ -22,8 +22,6 @@ import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -44,10 +42,8 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
 
   public void testAddPropertyAfterComment() throws Exception {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "#xxxxx");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        propertiesFile.addProperty(myPropertyToAdd);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      propertiesFile.addProperty(myPropertyToAdd);
     });
 
 
@@ -63,10 +59,8 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
 
   public void testAddPropertyAfterProperty() throws Exception {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        propertiesFile.addProperty(myPropertyToAdd);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      propertiesFile.addProperty(myPropertyToAdd);
     });
 
 
@@ -83,11 +77,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     assertPropertyEquals(properties.get(0), "xxx", "yyy");
     assertPropertyEquals(properties.get(1), "zzz", "ttt");
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        properties.get(1).getPsiElement().delete();
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> properties.get(1).getPsiElement().delete());
 
     List<IProperty> propertiesAfter = propertiesFile.getProperties();
     assertEquals(1, propertiesAfter.size());
@@ -98,11 +88,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx2");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        property.delete();
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, property::delete);
 
 
     assertEquals("xxx=yyy\nxxx3=ttt\n\n", propertiesFile.getContainingFile().getText());
@@ -111,10 +97,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
-        property.delete();
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, property::delete);
 
 
     assertEquals("xxx2=tyrt\nxxx3=ttt\n\n", propertiesFile.getText());
@@ -123,10 +106,9 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
   public void testAddToEnd() throws IncorrectOperationException {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\nccc");
     assertEquals(1,propertiesFile.getProperties().size());
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, () -> {
         propertiesFile.addProperty(myPropertyToAdd);
-      }
-    });
+      });
 
     assertEquals("a=b\\nccc\nkkk=vvv", propertiesFile.getText());
   }
@@ -144,29 +126,25 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
   public void testAddPropertyAfter() throws IncorrectOperationException {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
     final Property c = (Property)propertiesFile.findPropertyByKey("c");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, () -> {
         propertiesFile.addPropertyAfter(myPropertyToAdd, c);
-      }
-    });
+      });
 
     assertEquals("a=b\nc=d\nkkk=vvv\ne=f", propertiesFile.getText());
   }
   public void testAddPropertyAfterLast() throws IncorrectOperationException {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
     final Property p = (Property)propertiesFile.findPropertyByKey("e");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, () -> {
         propertiesFile.addPropertyAfter(myPropertyToAdd, p);
-      }
-    });
+      });
 
     assertEquals("a=b\nc=d\ne=f\nkkk=vvv", propertiesFile.getText());
   }
   public void testAddPropertyAfterInBeginning() throws IncorrectOperationException {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        propertiesFile.addPropertyAfter(myPropertyToAdd, null);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      propertiesFile.addPropertyAfter(myPropertyToAdd, null);
     });
 
     assertEquals("kkk=vvv\na=b\nc=d\ne=f", propertiesFile.getText());

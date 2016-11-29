@@ -17,6 +17,7 @@ package com.intellij.util.ui.table;
 
 import com.intellij.util.ui.EditableModel;
 
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
@@ -28,6 +29,13 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
 
   public JBListTableModel(TableModel model) {
     myModel = model;
+    myModel.addTableModelListener(e ->
+      fireTableChanged(
+        new TableModelEvent(
+          this, e.getFirstRow(), e.getLastRow(), e.getColumn(), e.getType()
+        )
+      )
+    );
   }
 
   @Override
@@ -63,17 +71,12 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
     for (int i = 0; i < myModel.getColumnCount(); i++) {
       myModel.setValueAt(((JBTableRow)value).getValueAt(i), row, i);
     }
-    fireTableCellUpdated(row, column);
   }
 
   @Override
   public void addRow() {
-    final int count = myModel.getRowCount();
     if (myModel instanceof EditableModel) {
       ((EditableModel)myModel).addRow();
-    }
-    if (count < myModel.getRowCount()) {
-      fireTableRowsInserted(count, myModel.getRowCount() - 1);
     }
   }
 
@@ -82,7 +85,6 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
     if (myModel instanceof EditableModel) {
       ((EditableModel)myModel).removeRow(index);
     }
-    fireTableRowsDeleted(index, index);
   }
 
   @Override
@@ -98,6 +100,5 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
     if (myModel instanceof EditableModel) {
       ((EditableModel)myModel).exchangeRows(oldIndex, newIndex);
     }
-    fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
   }
 }

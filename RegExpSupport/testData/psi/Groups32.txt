@@ -1,0 +1,16 @@
+REGEXP_FILE
+  RegExpPatternImpl: <(?i:*>
+    RegExpBranchImpl: <(?i:*>
+      RegExpClosureImpl: <(?i:*>
+        RegExpGroupImpl: <(?i:>
+          PsiElement(SET_OPTIONS)('(?')
+          RegExpOptionsImpl: <i>
+            PsiElement(OPTIONS_ON)('i')
+          PsiElement(COLON)(':')
+          PsiErrorElement:Dangling metacharacter
+            <empty list>
+        RegExpQuantifierImpl: <*>
+          PsiElement(STAR)('*')
+  PsiErrorElement:Unmatched closing ')'
+    <empty list>
+  PsiElement(GROUP_END)(')')

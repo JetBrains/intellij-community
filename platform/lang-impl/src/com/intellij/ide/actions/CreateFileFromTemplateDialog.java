@@ -59,7 +59,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   @Override
   protected ValidationInfo doValidate() {
     if (myInputValidator != null) {
-      final String text = myNameField.getText();
+      final String text = myNameField.getText().trim();
       final boolean canClose = myInputValidator.canClose(text);
       if (!canClose) {
         String errorText = LangBundle.message("incorrect.name");

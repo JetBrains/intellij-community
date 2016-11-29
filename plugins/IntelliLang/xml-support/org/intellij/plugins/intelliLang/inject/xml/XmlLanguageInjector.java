@@ -75,27 +75,25 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement host) {
     final XmlElement xmlElement = (XmlElement) host;
     if (!isInIndex(xmlElement)) return;
-    final TreeSet<TextRange> ranges = new TreeSet<TextRange>(InjectorUtils.RANGE_COMPARATOR);
+    final TreeSet<TextRange> ranges = new TreeSet<>(InjectorUtils.RANGE_COMPARATOR);
     final PsiFile containingFile = xmlElement.getContainingFile();
     final Ref<Boolean> unparsableRef = Ref.create();
-    getInjectedLanguage(xmlElement, unparsableRef, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
-      public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
-        for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-          if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
-        }
-        for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-          final PsiLanguageInjectionHost host = trinity.first;
-          if (host.getContainingFile() != containingFile) continue;
-          final TextRange textRange = trinity.third;
-          ranges.add(textRange.shiftRight(host.getTextRange().getStartOffset()));
-        }
-        InjectorUtils.registerInjection(language, list, containingFile, registrar);
-        InjectorUtils.registerSupport(mySupport, true, registrar);
-        if (Boolean.TRUE.equals(unparsableRef.get())) {
-          InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
-        }
-        return true;
+    getInjectedLanguage(xmlElement, unparsableRef, (language, list) -> {
+      for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+        if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
       }
+      for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+        final PsiLanguageInjectionHost host1 = trinity.first;
+        if (host1.getContainingFile() != containingFile) continue;
+        final TextRange textRange = trinity.third;
+        ranges.add(textRange.shiftRight(host1.getTextRange().getStartOffset()));
+      }
+      InjectorUtils.registerInjection(language, list, containingFile, registrar);
+      InjectorUtils.registerSupport(mySupport, true, registrar);
+      if (Boolean.TRUE.equals(unparsableRef.get())) {
+        InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+      }
+      return true;
     });
   }
 
@@ -179,7 +177,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
 
           final List<TextRange> ranges = injection.getInjectedArea(value);
           if (ranges.isEmpty()) continue;
-          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
+          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<>();
           final InjectedLanguage l =
             InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
           for (TextRange textRange : ranges) {
@@ -236,7 +234,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   private Trinity<Long, Pattern, Collection<String>> getXmlAnnotatedElementsValue() {
     Trinity<Long, Pattern, Collection<String>> index = myXmlIndex;
     if (index == null || myConfiguration.getModificationCount() != index.first.longValue()) {
-      final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
+      final Map<ElementPattern<?>, BaseInjection> map = new THashMap<>();
       for (BaseInjection injection : myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
         for (InjectionPlace place : injection.getInjectionPlaces()) {
           if (!place.isEnabled() || place.getElementPattern() == null) continue;

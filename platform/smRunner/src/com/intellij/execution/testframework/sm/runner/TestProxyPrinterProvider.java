@@ -49,12 +49,8 @@ public final class TestProxyPrinterProvider {
 
   private static class HyperlinkPrinter extends TestsOutputConsolePrinter {
 
-    public static final Condition<ConsoleViewContentType> ERROR_CONTENT_TYPE = new Condition<ConsoleViewContentType>() {
-      @Override
-      public boolean value(ConsoleViewContentType contentType) {
-        return ConsoleViewContentType.ERROR_OUTPUT == contentType;
-      }
-    };
+    public static final Condition<ConsoleViewContentType> ERROR_CONTENT_TYPE =
+      contentType -> ConsoleViewContentType.ERROR_OUTPUT == contentType;
     private static final String NL = "\n";
 
     private final Condition<ConsoleViewContentType> myContentTypeCondition;
@@ -92,7 +88,7 @@ public final class TestProxyPrinterProvider {
     }
 
     private void printLine(@NotNull String line, @NotNull ConsoleViewContentType contentType) {
-      Filter.Result result = null;
+      Filter.Result result;
       try {
         result = myFilter.applyFilter(line, line.length());
       }
@@ -100,10 +96,12 @@ public final class TestProxyPrinterProvider {
         throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
       }
       if (result != null) {
-        defaultPrint(line.substring(0, result.getHighlightStartOffset()), contentType);
-        String linkText = line.substring(result.getHighlightStartOffset(), result.getHighlightEndOffset());
-        printHyperlink(linkText, result.getHyperlinkInfo());
-        defaultPrint(line.substring(result.getHighlightEndOffset()), contentType);
+        for (Filter.ResultItem item : result.getResultItems()) {
+          defaultPrint(line.substring(0, item.getHighlightStartOffset()), contentType);
+          String linkText = line.substring(item.getHighlightStartOffset(), item.getHighlightEndOffset());
+          printHyperlink(linkText, item.getHyperlinkInfo());
+          defaultPrint(line.substring(item.getHighlightEndOffset()), contentType);
+        }
       }
       else {
         defaultPrint(line, contentType);

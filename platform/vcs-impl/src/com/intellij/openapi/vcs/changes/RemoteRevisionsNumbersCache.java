@@ -21,7 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -77,9 +80,9 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   RemoteRevisionsNumbersCache(final Project project) {
     myProject = project;
     myLock = new Object();
-    myData = new HashMap<String, Pair<VcsRoot, VcsRevisionNumber>>();
+    myData = new HashMap<>();
     myRefreshingQueues = Collections.synchronizedMap(new HashMap<VcsRoot, LazyRefreshingSelfQueue<String>>());
-    myLatestRevisionsMap = new HashMap<String, VcsRevisionNumber>();
+    myLatestRevisionsMap = new HashMap<>();
     myLfs = LocalFileSystem.getInstance();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myVcsConfiguration = VcsConfiguration.getInstance(project);
@@ -90,7 +93,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     // copy under lock
     final HashMap<VcsRoot, LazyRefreshingSelfQueue> copyMap;
     synchronized (myLock) {
-      copyMap = new HashMap<VcsRoot, LazyRefreshingSelfQueue>(myRefreshingQueues);
+      copyMap = new HashMap<>(myRefreshingQueues);
     }
 
     // filter only items for vcs roots that support background operations
@@ -116,17 +119,17 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     // copy myData under lock
     HashSet<String> keys;
     synchronized (myLock) {
-      keys = new HashSet<String>(myData.keySet());
+      keys = new HashSet<>(myData.keySet());
     }
     // collect new vcs for scheduled files
-    final Map<String, Pair<VirtualFile, AbstractVcs>> vFiles = new HashMap<String, Pair<VirtualFile, AbstractVcs>>();
+    final Map<String, Pair<VirtualFile, AbstractVcs>> vFiles = new HashMap<>();
     for (String key : keys) {
       final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(key));
       final AbstractVcs newVcs = (vf == null) ? null : myVcsManager.getVcsFor(vf);
       vFiles.put(key, vf == null ? Pair.create((VirtualFile) null, (AbstractVcs)null) : Pair.create(vf, newVcs));
     }
     synchronized (myLock) {
-      keys = new HashSet<String>(myData.keySet());
+      keys = new HashSet<>(myData.keySet());
       for (String key : keys) {
         final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(key);
         final VcsRoot storedVcsRoot = value.getFirst();
@@ -228,9 +231,11 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       LazyRefreshingSelfQueue<String> queue = myRefreshingQueues.get(vcsRoot);
       if (queue != null) return queue;
 
-      queue = new LazyRefreshingSelfQueue<String>(new Getter<Long>() {
+      queue = new LazyRefreshingSelfQueue<>(new Getter<Long>() {
         public Long get() {
-          return myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0 ? myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000 : ourRottenPeriod;
+          return myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0
+                 ? myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000
+                 : ourRottenPeriod;
         }
       }, new MyShouldUpdateChecker(vcsRoot), new MyUpdater(vcsRoot));
       myRefreshingQueues.put(vcsRoot, queue);
@@ -324,7 +329,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     if (revision != null) {
       // TODO: Seems peg revision should also be tracked here.
       final VcsRevisionNumber local = revision.getRevisionNumber();
-      final String path = revision.getFile().getIOFile().getAbsolutePath();
+      final String path = revision.getFile().getPath();
       final VcsRevisionNumber remote = getNumber(path);
 
       return NOT_LOADED == remote || UNKNOWN == remote || local.compareTo(remote) >= 0;

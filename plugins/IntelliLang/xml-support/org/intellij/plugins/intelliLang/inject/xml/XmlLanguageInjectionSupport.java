@@ -119,7 +119,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     final Configuration configuration = Configuration.getProjectInstance(project);
     final ArrayList<BaseInjection> injections = collectInjections(host, configuration);
     if (injections.isEmpty()) return false;
-    final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+    final ArrayList<BaseInjection> newInjections = new ArrayList<>();
     for (BaseInjection injection : injections) {
       final BaseInjection newInjection = injection.copy();
       newInjection.setPlaceEnabled(null, false);
@@ -168,11 +168,9 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     builder.addCancelAction();
     builder.setCenterPanel(panel.getComponent());
     builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
-    builder.setOkOperation(new Runnable() {
-      public void run() {
-        panel.apply();
-        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-      }
+    builder.setOkOperation(() -> {
+      panel.apply();
+      builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
       return xmlInjection.copy();
@@ -338,7 +336,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
 
   private static ArrayList<BaseInjection> collectInjections(final PsiElement host,
                                         final Configuration configuration) {
-    final ArrayList<BaseInjection> result = new ArrayList<BaseInjection>();
+    final ArrayList<BaseInjection> result = new ArrayList<>();
     final PsiElement element = host instanceof XmlText? ((XmlText)host).getParentTag() :
                                host instanceof XmlAttributeValue? host.getParent(): host;
     for (BaseInjection injection : configuration.getInjections(XML_SUPPORT_ID)) {

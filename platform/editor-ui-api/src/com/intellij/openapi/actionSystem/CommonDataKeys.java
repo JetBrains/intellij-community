@@ -81,4 +81,10 @@ public class CommonDataKeys {
    * for this key if explicit value isn't provided. Also it'll return the containing file if a value for {@link #PSI_ELEMENT} key is provided.
    */
   public static final DataKey<PsiFile> PSI_FILE = DataKey.create("psi.File");
+
+  /**
+   * This key can be used to check if the current context relates to a virtual space in editor.
+   * @see com.intellij.openapi.editor.EditorSettings#setVirtualSpace(boolean)
+   */
+  public static final DataKey<Boolean> EDITOR_VIRTUAL_SPACE = DataKey.create("editor.virtual.space");
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
+import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
 
 @SuppressWarnings("GrPackage")
 class JetGradlePlugin implements Plugin<Project> {
@@ -25,20 +26,20 @@ class JetGradlePlugin implements Plugin<Project> {
   }
 
   public void apply(Project project) {
-    registry.register(project.jetExtraModelBuilderClass.newInstance())
+    registry.register(project.extraModelBuilder)
   }
 }
 
-try {
-  System.setProperty("idea.active", "true");
-  String[] paths = ${EXTENSIONS_JARS_PATH}
-  URL[] urls = paths.collect{ new File(it).toURI().toURL() }
-  URLClassLoader classLoader = new URLClassLoader(urls, getClass().classLoader)
-  Class modelClass = classLoader.loadClass('org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder')
-  allprojects {
-    ext.jetExtraModelBuilderClass = modelClass
-    apply plugin: JetGradlePlugin
+System.setProperty("idea.active", "true")
+
+initscript {
+  dependencies {
+    classpath files(${EXTENSIONS_JARS_PATH})
   }
 }
-catch (all) {
+
+def extraModelBuilderInstance = new ExtraModelBuilder()
+allprojects {
+  ext.extraModelBuilder = extraModelBuilderInstance
+  apply plugin: JetGradlePlugin
 }

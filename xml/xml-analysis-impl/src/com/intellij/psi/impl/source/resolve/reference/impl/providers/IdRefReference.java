@@ -128,7 +128,7 @@ public class IdRefReference extends BasicAttributeValueReference {
 
     @Override
     protected List<PsiElement> doCompute(PsiFile file) {
-      final List<PsiElement> result = new ArrayList<PsiElement>();
+      final List<PsiElement> result = new ArrayList<>();
 
       file.accept(new XmlRecursiveElementVisitor(true) {
         @Override
@@ -204,7 +204,7 @@ public class IdRefReference extends BasicAttributeValueReference {
   @Override
   @NotNull
   public Object[] getVariants() {
-    final List<String> result = new LinkedList<String>();
+    final List<String> result = new LinkedList<>();
 
     process(new PsiElementProcessor<PsiElement>() {
       @Override

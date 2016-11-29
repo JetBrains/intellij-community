@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -241,6 +243,32 @@ public class Extensions {
     @Override
     public void warn(@NotNull Throwable t) {
       t.printStackTrace();
+    }
+  }
+
+  public static boolean isComponentSuitableForOs(@Nullable String os) {
+    if (StringUtil.isEmpty(os)) {
+      return true;
+    }
+
+    if (os.equals("mac")) {
+      return SystemInfoRt.isMac;
+    }
+    else if (os.equals("linux")) {
+      return SystemInfoRt.isLinux;
+    }
+    else if (os.equals("windows")) {
+      return SystemInfoRt.isWindows;
+    }
+    else if (os.equals("unix")) {
+      return SystemInfoRt.isUnix;
+    }
+    else if (os.equals("freebsd")) {
+      return SystemInfoRt.isFreeBSD;
+    }
+    else {
+      ourLogger.warn("Unknown OS " + os);
+      return true;
     }
   }
 }

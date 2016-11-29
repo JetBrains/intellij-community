@@ -17,6 +17,7 @@ package com.intellij.find.impl.livePreview;
 
 import com.intellij.find.*;
 import com.intellij.find.impl.FindResultImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +28,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.Alarm;
@@ -46,7 +46,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
 
-  private final Alarm myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myLivePreviewAlarm;
   protected SearchResults mySearchResults;
   private LivePreview myLivePreview;
   private final boolean myReplaceDenied = false;
@@ -112,10 +112,11 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return myReplaceDenied;
   }
 
-  public LivePreviewController(SearchResults searchResults, @Nullable EditorSearchSession component) {
+  public LivePreviewController(SearchResults searchResults, @Nullable EditorSearchSession component, @NotNull Disposable parentDisposable) {
     mySearchResults = searchResults;
     myComponent = component;
     getEditor().getDocument().addDocumentListener(myDocumentListener);
+    myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
   public int getUserActivityDelay() {
@@ -134,14 +135,11 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     final FindModel copy = new FindModel();
     copy.copyFrom(findModel);
 
-    Runnable request = new Runnable() {
-      @Override
-      public void run() {
-        if (myDisposed) return;
-        Project project = mySearchResults.getProject();
-        if (project != null && project.isDisposed()) return;
-        mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp);
-      }
+    Runnable request = () -> {
+      if (myDisposed) return;
+      Project project = mySearchResults.getProject();
+      if (project != null && project.isDisposed()) return;
+      mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp);
     };
     if (unitTestMode) {
       request.run();
@@ -162,7 +160,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
     if (currentModel != null) {
       if (currentModel.isReplaceState()) {
-        FindManager findManager = FindManager.getInstance(editor.getProject());
+        FindManager findManager = FindManager.getInstance(mySearchResults.getProject());
         try {
           stringToReplace = findManager.getStringToReplace(foundString, currentModel,
                                                            findResult.getStartOffset(), documentText);
@@ -177,22 +175,24 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   @Nullable
   public TextRange performReplace(final FindResult occurrence, final String replacement, final Editor editor) {
-    if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(editor.getProject(), editor.getDocument())) return null;
+    Project project = mySearchResults.getProject();
+    if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(project, editor.getDocument())) return null;
     FindModel findModel = mySearchResults.getFindModel();
-    TextRange result = FindUtil.doReplace(editor.getProject(),
+    TextRange result = FindUtil.doReplace(project,
                                           editor.getDocument(),
                                           findModel,
                                           new FindResultImpl(occurrence.getStartOffset(), occurrence.getEndOffset()),
                                           replacement,
                                           true,
-                                          new ArrayList<Pair<TextRange, String>>());
+                                          new ArrayList<>());
     myLivePreview.inSmartUpdate();
     mySearchResults.updateThreadSafe(findModel, true, result, mySearchResults.getStamp());
     return result;
   }
 
   public void performReplaceAll(Editor e) {
-    if (!ReadonlyStatusHandler.ensureDocumentWritable(e.getProject(), e.getDocument())) return;
+    Project project = mySearchResults.getProject();
+    if (!ReadonlyStatusHandler.ensureDocumentWritable(project, e.getDocument())) return;
     if (mySearchResults.getFindModel() != null) {
       final FindModel copy = new FindModel();
       copy.copyFrom(mySearchResults.getFindModel());
@@ -206,7 +206,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       } else {
         offset = selectionModel.getBlockSelectionStarts()[0];
       }
-      FindUtil.replace(e.getProject(), e, offset, copy, this);
+      FindUtil.replace(project, e, offset, copy, this);
     }
   }
 

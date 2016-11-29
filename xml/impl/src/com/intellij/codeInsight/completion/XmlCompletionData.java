@@ -153,7 +153,7 @@ public class XmlCompletionData extends CompletionData {
       if (tag != null) {
         final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent(tag);
         if (simpleContent != null) {
-          final HashSet<String> variants = new HashSet<String>();
+          final HashSet<String> variants = new HashSet<>();
           XmlUtil.collectEnumerationValues(simpleContent, variants);
           return ArrayUtil.toObjectArray(variants);
         }
@@ -235,7 +235,7 @@ public class XmlCompletionData extends CompletionData {
       }
 
       if (descriptorFile != null) {
-        final List<Object> results = new ArrayList<Object>();
+        final List<Object> results = new ArrayList<>();
         final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
 
         final PsiElementProcessor processor = new PsiElementProcessor() {

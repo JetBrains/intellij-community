@@ -4,7 +4,7 @@
 # DO NOT edit manually!
 import sys
 import weakref
-from _pydev_imps import _pydev_thread
+from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, dict_iter_items
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 
@@ -113,7 +113,7 @@ cdef class PyDBAdditionalThreadInfo:
 #         #Or if the user compiled threadframe (from http://www.majid.info/mylos/stories/2004/06/10/threadframe.html)
 # 
 #         #NOT RLock!! (could deadlock if it was)
-#         self.lock = _pydev_thread.allocate_lock()
+#         self.lock = thread.allocate_lock()
 #         self._acquire_lock = self.lock.acquire
 #         self._release_lock = self.lock.release
 # 
@@ -207,16 +207,20 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
+    dict_keys, dict_pop, RETURN_VALUES_DICT
+from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
+from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
+
 try:
     from inspect import CO_GENERATOR
 except:
     CO_GENERATOR = 0
 
 try:
-    from _pydevd_bundle.pydevd_signature import send_signature_call_trace
+    from _pydevd_bundle.pydevd_signature import send_signature_call_trace, send_signature_return_trace
 except ImportError:
     def send_signature_call_trace(*args, **kwargs):
         pass
@@ -227,6 +231,7 @@ IGNORE_EXCEPTION_TAG = re.compile('[^#]*#.*@IgnoreException')
 DEBUG_START = ('pydevd.py', 'run')
 DEBUG_START_PY3K = ('_pydev_execfile.py', 'execfile')
 TRACE_PROPERTY = 'pydevd_traceproperty.py'
+get_file_type = DONT_TRACE.get
 
 
 #=======================================================================================================================
@@ -276,6 +281,12 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 return self.trace_dispatch
 
         return self.trace_exception
+
+    def trace_return(self, frame, event, arg):
+        if event == 'return':
+            main_debugger, filename, info, thread = self._args
+            send_signature_return_trace(main_debugger, frame, filename, arg)
+        return self.trace_return
 
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     def should_stop_on_exception(self, frame, str event, arg):
@@ -452,6 +463,42 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
             main_debugger = None
             thread = None
 
+    def manage_return_values(self, main_debugger, frame, event, arg):
+
+        def get_func_name(frame):
+            code_obj = frame.f_code
+            func_name = code_obj.co_name
+            try:
+                cls_name = get_clsname_for_code(code_obj, frame)
+                if cls_name is not None:
+                    return "%s.%s" % (cls_name, func_name)
+                else:
+                    return func_name
+            except:
+                traceback.print_exc()
+                return func_name
+
+        try:
+            if main_debugger.show_return_values:
+                if event == "return" and hasattr(frame, "f_code") and hasattr(frame.f_code, "co_name"):
+                    if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
+                        if RETURN_VALUES_DICT not in dict_keys(frame.f_back.f_locals):
+                            frame.f_back.f_locals[RETURN_VALUES_DICT] = {}
+                        name = get_func_name(frame)
+                        frame.f_back.f_locals[RETURN_VALUES_DICT][name] = arg
+            if main_debugger.remove_return_values_flag:
+                # Showing return values was turned off, we should remove them from locals dict.
+                # The values can be in the current frame or in the back one
+                if RETURN_VALUES_DICT in dict_keys(frame.f_locals):
+                    dict_pop(frame.f_locals, RETURN_VALUES_DICT)
+                if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
+                    if RETURN_VALUES_DICT in dict_keys(frame.f_back.f_locals):
+                        dict_pop(frame.f_back.f_locals, RETURN_VALUES_DICT)
+                main_debugger.remove_return_values_flag = False
+        except:
+            main_debugger.remove_return_values_flag = False
+            traceback.print_exc()
+
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     def trace_dispatch(self, frame, str event, arg):
         cdef str filename;
@@ -471,12 +518,15 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
         try:
             # print 'frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event
             info.is_tracing = True
+            need_trace_return = False
 
             if main_debugger._finish_debugging_session:
                 return None
 
             if event == 'call' and main_debugger.signature_factory:
-                send_signature_call_trace(main_debugger, frame, filename)
+                need_trace_return = send_signature_call_trace(main_debugger, frame, filename)
+            if event == 'return' and main_debugger.signature_factory:
+                send_signature_return_trace(main_debugger, frame, filename, arg)
 
             plugin_manager = main_debugger.plugin
 
@@ -529,6 +579,11 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 if can_skip and plugin_manager is not None and main_debugger.has_plugin_line_breaks:
                     can_skip = not plugin_manager.can_not_skip(main_debugger, self, frame)
 
+                if can_skip and main_debugger.show_return_values:
+                    # trace function for showing return values after step over
+                    if info.pydev_step_cmd == CMD_STEP_OVER and hasattr(frame, "f_back") and frame.f_back == info.pydev_step_stop:
+                        can_skip = False
+
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
                 #also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
@@ -538,7 +593,10 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                         if has_exception_breakpoints:
                             return self.trace_exception
                         else:
-                            return None
+                            if need_trace_return:
+                                return self.trace_return
+                            else:
+                                return None
 
                 else:
                     #checks the breakpoint to see if there is a context match in some function
@@ -558,7 +616,10 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                             if has_exception_breakpoints:
                                 return self.trace_exception
                             else:
-                                return None
+                                if need_trace_return:
+                                    return self.trace_return
+                                else:
+                                    return None
 
 
             #We may have hit a breakpoint or we are already in step mode. Either way, let's check what we should do in this frame
@@ -659,8 +720,14 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                         if main_debugger.is_filter_libraries and main_debugger.not_in_scope(filename):
                             # ignore library files while stepping
                             return self.trace_dispatch
+
+                if main_debugger.show_return_values or main_debugger.remove_return_values_flag:
+                    self.manage_return_values(main_debugger, frame, event, arg)
+
                 if stop:
                     self.set_suspend(thread, CMD_SET_BREAK)
+                    if breakpoint and breakpoint.suspend_policy == "ALL":
+                        main_debugger.suspend_all_other_threads(thread)
                 elif flag and plugin_manager is not None:
                     result = plugin_manager.suspend(main_debugger, thread, frame, bp_type)
                     if result:
@@ -764,6 +831,15 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 else:
                     stop = False
 
+                if stop and step_cmd != -1 and IS_PY3K:
+                    # in Py3k we start script via our custom `execfile` function, and we shouldn't stop there
+                    # while stepping when execution is finished
+                    if event == 'return' and hasattr(frame, "f_back") and hasattr(frame.f_back, "f_code"):
+                        back_filename = os.path.basename(frame.f_back.f_code.co_filename)
+                        file_type = get_file_type(back_filename)
+                        if file_type == PYDEV_FILE:
+                            stop = False
+
                 if plugin_stop:
                     stopped_on_plugin = plugin_manager.stop(main_debugger, frame, event, self._args, stop_info, arg, step_cmd)
                 elif stop:
@@ -828,7 +904,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 import traceback
 
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
-from _pydev_imps import _pydev_threading as threading
+from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads

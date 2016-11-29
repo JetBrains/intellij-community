@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +40,7 @@ public class ShowImageDuplicatesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     assert project != null;
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        collectAndShowDuplicates(project);
-      }
-    }, "Gathering images", true, project);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> collectAndShowDuplicates(project), "Gathering images", true, project);
   }
 
   private static void collectAndShowDuplicates(final Project project) {
@@ -53,13 +48,13 @@ public class ShowImageDuplicatesAction extends AnAction {
     if (indicator != null && !indicator.isCanceled()) {
       indicator.setText("Collecting project images...");
       indicator.setIndeterminate(false);
-      final List<VirtualFile> images = new ArrayList<VirtualFile>();
+      final List<VirtualFile> images = new ArrayList<>();
       for (String ext : IMAGE_EXTENSIONS) {
         images.addAll(FilenameIndex.getAllFilesByExt(project, ext));
       }
 
-      final Map<Long, Set<VirtualFile>> duplicates = new HashMap<Long, Set<VirtualFile>>();
-      final Map<Long, VirtualFile> all = new HashMap<Long, VirtualFile>();
+      final Map<Long, Set<VirtualFile>> duplicates = new HashMap<>();
+      final Map<Long, VirtualFile> all = new HashMap<>();
       for (int i = 0; i < images.size(); i++) {
         indicator.setFraction((double)(i + 1) / (double)images.size());
         final VirtualFile file = images.get(i);
@@ -67,7 +62,7 @@ public class ShowImageDuplicatesAction extends AnAction {
         final long length = file.getLength();
         if (all.containsKey(length)) {
           if (!duplicates.containsKey(length)) {
-            final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
+            final HashSet<VirtualFile> files = new HashSet<>();
             files.add(all.get(length));
             duplicates.put(length, files);
           }
@@ -88,9 +83,8 @@ public class ShowImageDuplicatesAction extends AnAction {
     if (indicator == null || indicator.isCanceled()) return;
     indicator.setText("MD5 check");
 
-    int count = 0;
-    for (Set set : duplicates.values()) count+=set.size();
-    final Map<String, Set<VirtualFile>> realDuplicates = new HashMap<String, Set<VirtualFile>>();
+    int count = duplicates.values().stream().mapToInt(Set::size).sum();
+    final Map<String, Set<VirtualFile>> realDuplicates = new HashMap<>();
     int seek = 0;
     for (Set<VirtualFile> files : duplicates.values()) {
       for (VirtualFile file : files) {
@@ -101,7 +95,7 @@ public class ShowImageDuplicatesAction extends AnAction {
           if (realDuplicates.containsKey(md5)) {
             realDuplicates.get(md5).add(file);
           } else {
-            final HashSet<VirtualFile> set = new HashSet<VirtualFile>();
+            final HashSet<VirtualFile> set = new HashSet<>();
             set.add(file);
             realDuplicates.put(md5, set);
           }
@@ -111,7 +105,7 @@ public class ShowImageDuplicatesAction extends AnAction {
       }
     }
     count = 0;
-    for (String key : new ArrayList<String>(realDuplicates.keySet())) {
+    for (String key : new ArrayList<>(realDuplicates.keySet())) {
       final int size = realDuplicates.get(key).size();
       if (size == 1) {
         realDuplicates.remove(key);
@@ -120,12 +114,7 @@ public class ShowImageDuplicatesAction extends AnAction {
       }
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        new ImageDuplicateResultsDialog(project, images, realDuplicates).show();
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> new ImageDuplicateResultsDialog(project, images, realDuplicates).show());
 
   }
 

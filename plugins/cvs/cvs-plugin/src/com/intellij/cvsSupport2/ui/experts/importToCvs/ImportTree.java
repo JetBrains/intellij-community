@@ -55,8 +55,8 @@ import java.util.Map;
  * @author lesya
  */
 public class ImportTree extends NodeRenderer {
-  private final Collection<VirtualFile> myExcludedFiles = new HashSet<VirtualFile>();
-  private final Collection<VirtualFile> myIncludedFiles = new HashSet<VirtualFile>();
+  private final Collection<VirtualFile> myExcludedFiles = new HashSet<>();
+  private final Collection<VirtualFile> myIncludedFiles = new HashSet<>();
   private final Project myProject;
   private final FileSystemTree myFileSystemTree;
   private final CvsWizard myWizard;
@@ -220,17 +220,17 @@ public class ImportTree extends NodeRenderer {
   }
 
   public IIgnoreFileFilter getIgnoreFileFilter() {
-    final Collection<File> excludedFiles = new HashSet<File>();
+    final Collection<File> excludedFiles = new HashSet<>();
     for (final VirtualFile excludedFile : myExcludedFiles) {
       excludedFiles.add(CvsVfsUtil.getFileFor(excludedFile));
     }
-    final Collection<File> includedFiles = new HashSet<File>();
+    final Collection<File> includedFiles = new HashSet<>();
     for (VirtualFile includedFile : myIncludedFiles) {
       includedFiles.add(CvsVfsUtil.getFileFor(includedFile));
     }
 
     return new IIgnoreFileFilter() {
-      private final Map<File, IgnoredFilesInfo> myParentToIgnoresMap = new HashMap<File, IgnoredFilesInfo>();
+      private final Map<File, IgnoredFilesInfo> myParentToIgnoresMap = new HashMap<>();
 
       public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
         final File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);

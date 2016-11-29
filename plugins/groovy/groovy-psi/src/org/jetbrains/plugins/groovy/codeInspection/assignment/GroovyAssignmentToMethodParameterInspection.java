@@ -63,7 +63,7 @@ public class GroovyAssignmentToMethodParameterInspection extends BaseInspection 
   private static class Visitor extends BaseInspectionVisitor {
     
     @Override
-    public void visitAssignmentExpression(GrAssignmentExpression expr) {
+    public void visitAssignmentExpression(@NotNull GrAssignmentExpression expr) {
       super.visitAssignmentExpression(expr);
 
       check(expr.getLValue());
@@ -87,7 +87,7 @@ public class GroovyAssignmentToMethodParameterInspection extends BaseInspection 
     }
 
     @Override
-    public void visitUnaryExpression(GrUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
       super.visitUnaryExpression(expression);
 
       final IElementType op = expression.getOperationTokenType();

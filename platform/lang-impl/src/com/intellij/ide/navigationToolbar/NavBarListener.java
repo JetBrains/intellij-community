@@ -185,12 +185,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     // required invokeLater since in current call sequence KeyboardFocusManager is not initialized yet
     // but future focused component
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        processFocusLost(e);
-      }
-    });
+    SwingUtilities.invokeLater(() -> processFocusLost(e));
   }
 
   private void processFocusLost(FocusEvent e) {
@@ -326,24 +321,21 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       focusManager.typeAheadUntil(firstCharTyped);
       myPanel.moveDown();
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            final Robot robot = new Robot();
-            final boolean shiftOn = e.isShiftDown();
-            final int code = e.getKeyCode();
-            if (shiftOn) {
-              robot.keyPress(KeyEvent.VK_SHIFT);
-            }
-            robot.keyPress(code);
-            robot.keyRelease(code);
+      SwingUtilities.invokeLater(() -> {
+        try {
+          final Robot robot = new Robot();
+          final boolean shiftOn = e.isShiftDown();
+          final int code = e.getKeyCode();
+          if (shiftOn) {
+            robot.keyPress(KeyEvent.VK_SHIFT);
+          }
+          robot.keyPress(code);
+          robot.keyRelease(code);
 
-            //don't release Shift
-            firstCharTyped.setDone();
-          }
-          catch (AWTException ignored) {
-          }
+          //don't release Shift
+          firstCharTyped.setDone();
+        }
+        catch (AWTException ignored) {
         }
       });
     }
@@ -351,12 +343,9 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   @Override
   public void fileOpened(@NotNull final FileEditorManager manager, @NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myPanel.hasFocus()) {
-          manager.openFile(file, true);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myPanel.hasFocus()) {
+        manager.openFile(file, true);
       }
     });
   }

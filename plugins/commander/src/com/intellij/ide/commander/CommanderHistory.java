@@ -28,7 +28,7 @@ import java.util.List;
 public class CommanderHistory {
   public static final int HISTORY_LIMIT = 2*30; // elements are saved in pairs
   private final Commander myCommander;
-  private final List<HistoryState> myHistory = new ArrayList<HistoryState>();
+  private final List<HistoryState> myHistory = new ArrayList<>();
   private int myCurrentCommandIndex = 0;
   private boolean myStateLoggingEnabled = true;
 

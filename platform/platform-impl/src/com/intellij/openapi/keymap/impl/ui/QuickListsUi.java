@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.ui.ListItemEditor;
 import com.intellij.util.ui.ListModelEditor;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +68,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
     }
   };
 
-  private final ListModelEditor<QuickList> editor = new ListModelEditor<QuickList>(itemEditor);
+  private final ListModelEditor<QuickList> editor = new ListModelEditor<>(itemEditor);
 
   private JComponent component;
   private final QuickListPanel itemPanel;
@@ -145,14 +144,11 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
     itemPanel.apply();
 
     editor.ensureNonEmptyNames("Quick list should have non empty name");
-    editor.processModifiedItems(new PairProcessor<QuickList, QuickList>() {
-      @Override
-      public boolean process(QuickList newItem, QuickList oldItem) {
-        if (!oldItem.getName().equals(newItem.getName())) {
-          keymapListener.quickListRenamed(oldItem, newItem);
-        }
-        return true;
+    editor.processModifiedItems((newItem, oldItem) -> {
+      if (!oldItem.getName().equals(newItem.getName())) {
+        keymapListener.quickListRenamed(oldItem, newItem);
       }
+      return true;
     });
 
     if (isModified(settings)) {

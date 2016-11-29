@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsAdapter;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
@@ -35,10 +35,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -65,13 +67,13 @@ import java.util.List;
  * @author nik
  */
 public class XLineBreakpointManager {
-  private final BidirectionalMap<XLineBreakpointImpl, Document> myBreakpoints = new BidirectionalMap<XLineBreakpointImpl, Document>();
+  private final BidirectionalMap<XLineBreakpointImpl, Document> myBreakpoints = new BidirectionalMap<>();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
   private final XDependentBreakpointManager myDependentBreakpointManager;
   private final StartupManagerEx myStartupManager;
 
-  public XLineBreakpointManager(Project project, final XDependentBreakpointManager dependentBreakpointManager, final StartupManager startupManager) {
+  public XLineBreakpointManager(@NotNull Project project, final XDependentBreakpointManager dependentBreakpointManager, final StartupManager startupManager) {
     myProject = project;
     myDependentBreakpointManager = dependentBreakpointManager;
     myStartupManager = (StartupManagerEx)startupManager;
@@ -98,7 +100,7 @@ public class XLineBreakpointManager {
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          List<XBreakpoint<?>> toRemove = new SmartList<XBreakpoint<?>>();
+          List<XBreakpoint<?>> toRemove = new SmartList<>();
           for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
             if (breakpoint.getFileUrl().equals(event.getFile().getUrl())) {
               toRemove.add(breakpoint);
@@ -111,20 +113,13 @@ public class XLineBreakpointManager {
     myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project);
 
     // Update breakpoints colors if global color schema was changed
-    final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    if (colorsManager != null) { // in some debugger tests EditorColorsManager component isn't loaded
-      colorsManager.addEditorColorsListener(new MyEditorColorsListener(), project);
-    }
+    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
   }
 
   public void updateBreakpointsUI() {
     if (myProject.isDefault()) return;
 
-    Runnable runnable = () -> {
-      for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
-        breakpoint.updateUI();
-      }
-    };
+    DumbAwareRunnable runnable = () -> myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
 
     if (ApplicationManager.getApplication().isUnitTestMode() || myStartupManager.startupActivityPassed()) {
       runnable.run();
@@ -167,7 +162,7 @@ public class XLineBreakpointManager {
     }
 
     TIntHashSet lines = new TIntHashSet();
-    List<XBreakpoint<?>> toRemove = new SmartList<XBreakpoint<?>>();
+    List<XBreakpoint<?>> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
       if (!breakpoint.isValid() || !lines.add(breakpoint.getLine())) {
@@ -218,9 +213,7 @@ public class XLineBreakpointManager {
     myBreakpointsUpdateQueue.queue(new Update("all breakpoints") {
       @Override
       public void run() {
-        for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
-          breakpoint.updateUI();
-        }
+        myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
       }
     });
   }
@@ -272,37 +265,36 @@ public class XLineBreakpointManager {
         return;
       }
 
-      PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(() -> {
-        final int line = EditorUtil.yPositionToLogicalLine(editor, mouseEvent);
-        final Document document = editor.getDocument();
-        final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        if (line >= 0 && line < document.getLineCount() && file != null) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
-              ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      final int line = EditorUtil.yPositionToLogicalLine(editor, mouseEvent);
+      final Document document = editor.getDocument();
+      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (line >= 0 && line < document.getLineCount() && file != null) {
+        ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
 
-              XBreakpointUtil
-                .toggleLineBreakpoint(myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false)
-                .done(breakpoint -> {
-                  if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
-                    breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
-                    String selection = editor.getSelectionModel().getSelectedText();
-                    if (selection != null) {
-                      breakpoint.setLogExpression(selection);
-                    }
-                    else {
-                      breakpoint.setLogMessage(true);
-                    }
-                    // edit breakpoint
-                    DebuggerUIUtil
-                      .showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(),
-                                                    false, breakpoint);
-                  }
-                });
+        XBreakpointUtil.toggleLineBreakpoint(myProject,
+                                             XSourcePositionImpl.create(file, line),
+                                             editor,
+                                             mouseEvent.isAltDown(),
+                                             false,
+                                             !mouseEvent.isShiftDown() && !Registry.is("debugger.click.disable.breakpoints"))
+          .done(breakpoint -> {
+            if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
+              breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
+              String selection = editor.getSelectionModel().getSelectedText();
+              if (selection != null) {
+                breakpoint.setLogExpression(selection);
+              }
+              else {
+                breakpoint.setLogMessage(true);
+              }
+              // edit breakpoint
+              DebuggerUIUtil
+                .showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(),
+                                              false, breakpoint);
             }
           });
-        }
-      });
+      }
     }
 
     private boolean isInsideGutter(EditorMouseEvent e, Editor editor) {
@@ -338,7 +330,7 @@ public class XLineBreakpointManager {
     }
   }
 
-  private class MyEditorColorsListener extends EditorColorsAdapter {
+  private class MyEditorColorsListener implements EditorColorsListener {
     @Override
     public void globalSchemeChange(EditorColorsScheme scheme) {
       updateBreakpointsUI();

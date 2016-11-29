@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.io.File;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -47,10 +48,17 @@ public class IdeaWin32PerformanceTest {
 
     doTest(new File(path));
 
-    long gain = (myJavaTotal - myIdeaTotal) * 100 / myJavaTotal;
-    String message = "home=" + path + " java.io=" + myJavaTotal / 1000 + "ms IdeaWin32=" + myIdeaTotal / 1000 + "ms gain=" + gain + "%";
-    assertTrue(message, myIdeaTotal <= myJavaTotal);
-    System.out.println(message);
+    if (myIdeaTotal >= myJavaTotal) {
+      long loss = (myIdeaTotal - myJavaTotal) * 100 / myJavaTotal;
+      String message = "home=" + path + " java.io=" + myJavaTotal / 1000 + "ms IdeaWin32=" + myIdeaTotal / 1000 + "ms loss=" + loss + "%";
+      assertThat(loss).describedAs(message).isLessThan(10);
+      System.out.println(message);
+    }
+    else {
+      long gain = (myJavaTotal - myIdeaTotal) * 100 / myJavaTotal;
+      String message = "home=" + path + " java.io=" + myJavaTotal / 1000 + "ms IdeaWin32=" + myIdeaTotal / 1000 + "ms gain=" + gain + "%";
+      System.out.println(message);
+    }
   }
 
   private void doTest(File file) {

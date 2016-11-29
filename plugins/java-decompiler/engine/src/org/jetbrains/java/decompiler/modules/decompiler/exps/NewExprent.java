@@ -38,8 +38,8 @@ import java.util.Set;
 public class NewExprent extends Exprent {
   private InvocationExprent constructor;
   private final VarType newType;
-  private List<Exprent> lstDims = new ArrayList<Exprent>();
-  private List<Exprent> lstArrayElements = new ArrayList<Exprent>();
+  private List<Exprent> lstDims = new ArrayList<>();
+  private List<Exprent> lstArrayElements = new ArrayList<>();
   private boolean directArrayInit;
   private boolean anonymous;
   private boolean lambda;
@@ -70,7 +70,7 @@ public class NewExprent extends Exprent {
   }
 
   private static List<Exprent> getDimensions(int arrayDim, ListStack<Exprent> stack) {
-    List<Exprent> lstDims = new ArrayList<Exprent>();
+    List<Exprent> lstDims = new ArrayList<>();
     for (int i = 0; i < arrayDim; i++) {
       lstDims.add(0, stack.pop());
     }
@@ -111,7 +111,7 @@ public class NewExprent extends Exprent {
 
   @Override
   public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<Exprent>();
+    List<Exprent> lst = new ArrayList<>();
     if (newType.arrayDim == 0) {
       if (constructor != null) {
         Exprent constructor_instance = constructor.getInstance();
@@ -133,7 +133,7 @@ public class NewExprent extends Exprent {
 
   @Override
   public Exprent copy() {
-    List<Exprent> lst = new ArrayList<Exprent>();
+    List<Exprent> lst = new ArrayList<>();
     for (Exprent expr : lstDims) {
       lst.add(expr.copy());
     }
@@ -199,7 +199,7 @@ public class NewExprent extends Exprent {
           else {
             if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0 &&
                 !constructor.getLstParameters().isEmpty()) { // member non-static class invoked with enclosing class instance
-              sigFields = new ArrayList<VarVersionPair>(Collections.nCopies(constructor.getLstParameters().size(), (VarVersionPair)null));
+              sigFields = new ArrayList<>(Collections.nCopies(constructor.getLstParameters().size(), (VarVersionPair)null));
               sigFields.set(0, new VarVersionPair(-1, 0));
             }
           }
@@ -304,7 +304,7 @@ public class NewExprent extends Exprent {
           }
           else if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0 && !constructor.getLstParameters().isEmpty()) {
             // member non-static class invoked with enclosing class instance
-            sigFields = new ArrayList<VarVersionPair>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
+            sigFields = new ArrayList<>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
             sigFields.set(0, new VarVersionPair(-1, 0));
           }
         }

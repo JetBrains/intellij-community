@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2006
- * Time: 18:05:20
- */
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -41,16 +39,28 @@ public class PatchReader {
   private final List<String> myLines;
   private final PatchReader.PatchContentParser myPatchContentParser;
   private final AdditionalInfoParser myAdditionalInfoParser;
-  private List<TextFilePatch> myPatches;
+  private List<FilePatch> myPatches;
 
   private enum DiffFormat { CONTEXT, UNIFIED }
 
   @NonNls private static final String CONTEXT_HUNK_PREFIX = "***************";
   @NonNls private static final String CONTEXT_FILE_PREFIX = "*** ";
+  @NonNls private static final String UNIFIED_BEFORE_HUNK_PREFIX = "--- ";
+  @NonNls private static final String UNIFIED_AFTER_HUNK_PREFIX = "+++ ";
+  @NonNls private static final String DIFF_GIT_HEADER_LINE = "diff --git";
+  @NonNls private static final String HASH_PATTERN = "[0-9a-fA-F]+";
+
   @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+)(,(\\d+))? \\+(\\d+)(,(\\d+))? @@.*");
   @NonNls private static final Pattern ourContextBeforeHunkStartPattern = Pattern.compile("\\*\\*\\* (\\d+),(\\d+) \\*\\*\\*\\*");
   @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
-  @NonNls private static final Pattern EMPTY_REVISION_INFO_PATTERN = Pattern.compile(TextPatchBuilder.getEmptyRevisionPattern());
+  @NonNls private static final Pattern ourEmptyRevisionInfoPattern = Pattern.compile("\\(\\s*revision\\s*\\)");
+
+  @NonNls private static final Pattern ourGitHeaderLinePattern = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*");
+  @NonNls private static final Pattern ourIndexHeaderLinePattern =
+    Pattern.compile("index\\s+(" + HASH_PATTERN + ")..(" + HASH_PATTERN + ").*");
+  // need to extend with rename/copy
+  @NonNls private static final Pattern ourFileStatusPattern = Pattern.compile("(new|deleted)\\s+file\\s+mode.*");
+  @NonNls private static final  String ourGitBinaryContentStart = "GIT binary patch";
 
   public PatchReader(CharSequence patchContent) {
     this(patchContent, true);
@@ -62,21 +72,30 @@ public class PatchReader {
     myPatchContentParser = new PatchContentParser(saveHunks);
   }
 
+  /**
+   * @deprecated use {@link PatchReader#readTextPatches()} instead
+   */
+  @Deprecated
+  @NotNull
   public List<TextFilePatch> readAllPatches() throws PatchSyntaxException {
-    parseAllPatches();
-    return myPatches;
+    return readTextPatches();
   }
-  
+
+  @NotNull
+  public List<TextFilePatch> readTextPatches() throws PatchSyntaxException {
+    parseAllPatches();
+    return getTextPatches();
+  }
+
   @Nullable
   public CharSequence getBaseRevision(final Project project, final String relativeFilePath) {
     final Map<String, Map<String, CharSequence>> map = myAdditionalInfoParser.getResultMap();
-    if (! map.isEmpty()) {
+    if (!map.isEmpty()) {
       final Map<String, CharSequence> inner = map.get(relativeFilePath);
       if (inner != null) {
-        final BaseRevisionTextPatchEP baseRevisionTextPatchEP = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
-        if (baseRevisionTextPatchEP != null) {
-          return inner.get(baseRevisionTextPatchEP.getName());
-        }
+        final BaseRevisionTextPatchEP baseRevisionTextPatchEP =
+          Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
+        return inner.get(baseRevisionTextPatchEP.getName());
       }
     }
     return null;
@@ -104,7 +123,22 @@ public class PatchReader {
     }
   }*/
 
+  /**
+   * @deprecated use {@link PatchReader#getTextPatches()} or {@link PatchReader#getAllPatches()} instead
+   */
+  @Deprecated
+  @NotNull
   public List<TextFilePatch> getPatches() {
+    return getTextPatches();
+  }
+
+  @NotNull
+  public List<TextFilePatch> getTextPatches() {
+    return ContainerUtil.findAll(myPatches, TextFilePatch.class);
+  }
+
+  @NotNull
+  public List<FilePatch> getAllPatches() {
     return myPatches;
   }
 
@@ -124,7 +158,7 @@ public class PatchReader {
         myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), "Contains additional information without patch itself"));
       }
       if (containsAdditionalNow) {
-        containsAdditional = containsAdditionalNow;
+        containsAdditional = true;
         myAdditionalInfoParser.parse(next, iterator);
         if (! iterator.hasNext()) {
           myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), "Contains additional information without patch itself"));
@@ -152,10 +186,10 @@ public class PatchReader {
 
   public TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(final Set<String> filterByPaths) {
     final TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException>
-      value = new TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException>();
+      value = new TransparentlyFailedValue<>();
 
     final Map<String, Map<String, CharSequence>> map = myAdditionalInfoParser.getResultMap();
-    final Map<String, Map<String, CharSequence>>newMap = new HashMap<String, Map<String, CharSequence>>();
+    final Map<String, Map<String, CharSequence>>newMap = new HashMap<>();
 
     for (Map.Entry<String, Map<String, CharSequence>> entry : map.entrySet()) {
       final Map<String, CharSequence> innerMap = entry.getValue();
@@ -180,8 +214,8 @@ public class PatchReader {
 
     private AdditionalInfoParser(boolean ignore) {
       myIgnoreMode = ignore;
-      myAddMap = new HashMap<String, CharSequence>();
-      myResultMap = new HashMap<String, Map<String, CharSequence>>();
+      myAddMap = new HashMap<>();
+      myResultMap = new HashMap<>();
     }
 
     public PatchSyntaxException getSyntaxException() {
@@ -195,7 +229,7 @@ public class PatchReader {
     public void copyToResult(final String filePath) {
       if (myAddMap != null && ! myAddMap.isEmpty()) {
         myResultMap.put(filePath, myAddMap);
-        myAddMap = new HashMap<String, CharSequence>();
+        myAddMap = new HashMap<>();
       }
     }
 
@@ -257,18 +291,24 @@ public class PatchReader {
   private static class PatchContentParser implements Parser {
     private final boolean mySaveHunks;
     private DiffFormat myDiffFormat = null;
-    private final List<TextFilePatch> myPatches;
+    private final List<FilePatch> myPatches;
 
     private boolean myDiffCommandLike;
     private boolean myIndexLike;
+    private boolean myGitDiffFormat;
 
     private PatchContentParser(boolean saveHunks) {
       mySaveHunks = saveHunks;
-      myPatches = new SmartList<TextFilePatch>();
+      myPatches = new SmartList<>();
     }
 
     @Override
     public boolean testIsStart(String start) {
+      if (start.startsWith(DIFF_GIT_HEADER_LINE)) {
+        myGitDiffFormat = true;
+        myDiffCommandLike = true;
+        return true;
+      }
       if (start.startsWith("diff")) {
         myDiffCommandLike = true;
         return false;
@@ -291,23 +331,80 @@ public class PatchReader {
 
     @Override
     public void parse(String start, ListIterator<String> iterator) throws PatchSyntaxException {
-      final TextFilePatch patch = readPatch(start, iterator);
+      String next = start;
+      if (myGitDiffFormat) {
+        Couple<String> beforeAfterName = parseNamesFromGitHeaderLine(next);
+        FileStatus parsedStatus = FileStatus.MODIFIED;
+        Couple<String> sha1Indexes = null;
+        if (beforeAfterName == null) {
+          throw new PatchSyntaxException(iterator.previousIndex(), "Can't detect file names from git format header line");
+        }
+        while (iterator.hasNext()) {
+          next = iterator.next();
+          Matcher indexMatcher = ourIndexHeaderLinePattern.matcher(next);
+          Matcher fileStatusMatcher = ourFileStatusPattern.matcher(next);
+          if (fileStatusMatcher.matches()) {
+            parsedStatus = parseFileStatus(fileStatusMatcher.group(1));
+          }
+          else if (indexMatcher.matches()) {
+            myIndexLike = true;
+            sha1Indexes = Couple.of(indexMatcher.group(1), indexMatcher.group(2));
+          }
+          else {
+            if (next.startsWith(ourGitBinaryContentStart)) {
+              FilePatch patch = BinaryPatchContentParser.readGitBinaryFormatPatch(iterator, parsedStatus);
+              patch.setBeforeName(beforeAfterName.getFirst());
+              patch.setAfterName(beforeAfterName.getSecond());
+              if (sha1Indexes != null) {
+                //remember sha-1 as version ids
+                patch.setBeforeVersionId(sha1Indexes.getFirst());
+                patch.setAfterVersionId(sha1Indexes.getSecond());
+              }
+              addPatchAndResetSettings(patch);
+              return;
+            }
+            else if (testIsStart(next)) break;
+          }
+        }
+      }
+      addPatchAndResetSettings(readTextPatch(next, iterator));
+    }
+
+    @NotNull
+    private static FileStatus parseFileStatus(@NotNull String status) {
+      if (status.startsWith("new")) {
+        return FileStatus.ADDED;
+      }
+      else if (status.startsWith("deleted")) return FileStatus.DELETED;
+      return FileStatus.MODIFIED;
+    }
+
+    private void addPatchAndResetSettings(@Nullable FilePatch patch) {
       if (patch != null) {
         myPatches.add(patch);
       }
+      myGitDiffFormat = false;
       myDiffCommandLike = false;
       myIndexLike = false;
     }
 
-    public List<TextFilePatch> getResult() throws PatchSyntaxException {
+    @Nullable
+    private static Couple<String> parseNamesFromGitHeaderLine(@NotNull String start) {
+      Matcher m = ourGitHeaderLinePattern.matcher(start);
+      return m.matches()
+             ? Couple.of(stripPatchNameIfNeeded(m.group(1), true, true), stripPatchNameIfNeeded(m.group(2), true, false))
+             : null;
+    }
+
+    public List<FilePatch> getResult() {
       return myPatches;
     }
 
-    private TextFilePatch readPatch(String curLine, ListIterator<String> iterator) throws PatchSyntaxException {
+    private TextFilePatch readTextPatch(String curLine, ListIterator<String> iterator) throws PatchSyntaxException {
       final TextFilePatch curPatch = mySaveHunks ? new TextFilePatch(null) : new EmptyTextFilePatch();
       extractFileName(curLine, curPatch, true, myDiffCommandLike && myIndexLike);
 
-      if (! iterator.hasNext()) throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");
+      if (!iterator.hasNext()) throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");
       curLine = iterator.next();
       String secondNamePrefix = myDiffFormat == DiffFormat.UNIFIED ? "+++ " : "--- ";
       if (! curLine.startsWith(secondNamePrefix)) {
@@ -336,13 +433,13 @@ public class PatchReader {
     }
 
     @Nullable
-    private PatchHunk readNextHunkUnified(ListIterator<String> iterator) throws PatchSyntaxException {
+    private static PatchHunk readNextHunkUnified(@NotNull ListIterator<String> iterator) throws PatchSyntaxException {
       String curLine = null;
       int numIncrements = 0;
       while (iterator.hasNext()) {
         curLine = iterator.next();
-        ++ numIncrements;
-        if (curLine.startsWith("--- ")) {
+        ++numIncrements;
+        if (curLine.startsWith("--- ") || ourGitHeaderLinePattern.matcher(curLine).matches()) {
           for (int i = 0; i < numIncrements; i++) {
             iterator.previous();
           }
@@ -403,7 +500,7 @@ public class PatchReader {
         return null;
       }
       else {
-        final TextFilePatch patch = myPatches.get(myPatches.size() - 1);
+        final FilePatch patch = myPatches.get(myPatches.size() - 1);
         return patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
       }
     }
@@ -439,7 +536,7 @@ public class PatchReader {
     }
 
     @Nullable
-    private PatchHunk readNextHunkContext(ListIterator<String> iterator) throws PatchSyntaxException {
+    private static PatchHunk readNextHunkContext(ListIterator<String> iterator) throws PatchSyntaxException {
       while (iterator.hasNext()) {
         String curLine = iterator.next();
         if (curLine.startsWith(CONTEXT_FILE_PREFIX)) {
@@ -544,8 +641,8 @@ public class PatchReader {
       return patchLine;
     }
 
-    private List<String> readContextDiffLines(ListIterator<String> iterator) {
-      ArrayList<String> result = new ArrayList<String>();
+    private static List<String> readContextDiffLines(ListIterator<String> iterator) {
+      ArrayList<String> result = new ArrayList<>();
       while (iterator.hasNext()) {
         final String line = iterator.next();
         if (!line.startsWith(" ") && !line.startsWith("+ ") && !line.startsWith("- ") && !line.startsWith("! ") &&
@@ -567,7 +664,7 @@ public class PatchReader {
       if (pos >= 0) {
         String versionId = fileName.substring(pos).trim();
         fileName = fileName.substring(0, pos);
-        if (versionId.length() > 0 && !EMPTY_REVISION_INFO_PATTERN.matcher(versionId).matches()) {
+        if (versionId.length() > 0 && !ourEmptyRevisionInfoPattern.matcher(versionId).matches()) {
           if (before) {
             patch.setBeforeVersionId(versionId);
           }
@@ -576,19 +673,22 @@ public class PatchReader {
           }
         }
       }
-      if ("/dev/null".equals(fileName)) return;
+      String newFileName = stripPatchNameIfNeeded(fileName, gitPatch, before);
+      if (newFileName == null) return;
       if (before) {
-        if (gitPatch && fileName.startsWith("a/")) {
-          fileName = fileName.substring(2);
-        }
-        patch.setBeforeName(fileName);
+        patch.setBeforeName(newFileName);
       }
       else {
-        if (gitPatch && fileName.startsWith("b/")) {
-          fileName = fileName.substring(2);
-        }
-        patch.setAfterName(fileName);
+        patch.setAfterName(newFileName);
       }
+    }
+
+    @Nullable
+    private static String stripPatchNameIfNeeded(@NotNull String fileName, boolean p1Patch, boolean before) {
+      if ("/dev/null".equals(fileName)) return null;
+      String prefix = before ? "a/" : "b/";
+      if (p1Patch && fileName.startsWith(prefix)) return fileName.substring(prefix.length());
+      return fileName;
     }
   }
 
@@ -628,5 +728,37 @@ public class PatchReader {
     public boolean isDeletedFile() {
       return myHunkCount == 1 && myDeleted;
     }
+  }
+
+  public static boolean isPatchContent(@Nullable String content) {
+    if (content == null) return false;
+    List<String> lines = LineTokenizer.tokenizeIntoList(content, false);
+    final ListIterator<String> iterator = lines.listIterator();
+    DiffFormat currentFormat = null;
+    while (iterator.hasNext()) {
+      String line = iterator.next();
+      if (line.startsWith(CONTEXT_HUNK_PREFIX)) {
+        currentFormat = DiffFormat.CONTEXT;
+      }
+      else if (currentFormat == DiffFormat.CONTEXT && ourContextBeforeHunkStartPattern.matcher(line).matches()) {
+        break;
+      }
+      else if (line.startsWith(UNIFIED_BEFORE_HUNK_PREFIX) && currentFormat == null) {
+        currentFormat = DiffFormat.UNIFIED;
+      }
+      else if (currentFormat == DiffFormat.UNIFIED && line.startsWith(UNIFIED_AFTER_HUNK_PREFIX)) break;
+    }
+    if (currentFormat == null) return false; // can't detect format
+    // check that contains at least one chunk
+    while (iterator.hasNext()) {
+      String line = iterator.next();
+      if (currentFormat == DiffFormat.CONTEXT) {
+        if (ourContextAfterHunkStartPattern.matcher(line).matches()) return true;
+      }
+      else {
+        if (ourUnifiedHunkStartPattern.matcher(line).matches()) return true;
+      }
+    }
+    return false;
   }
 }

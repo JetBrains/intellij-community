@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
   }
 
   public PyStringLiteralFileReferenceSet(@NotNull PyStringLiteralExpression element, boolean caseSensitive) {
-    this(element.getStringValue(), element, element.getStringValueTextRange().getStartOffset(), null, caseSensitive, true, new FileType[0]);
+    this(element.getStringValue(), element, element.getStringValueTextRange().getStartOffset(), null, caseSensitive, true,
+         FileType.EMPTY_ARRAY);
   }
 
   public PyStringLiteralFileReferenceSet(@NotNull String str,
@@ -70,7 +71,7 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
     final Matcher matcher = DELIMITERS.matcher(value);
     int start = 0;
     int index = 0;
-    final List<FileReference> results = new ArrayList<FileReference>();
+    final List<FileReference> results = new ArrayList<>();
     while (matcher.find()) {
       final String s = value.substring(start, matcher.start());
       if (!s.isEmpty()) {

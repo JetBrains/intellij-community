@@ -30,7 +30,7 @@ import java.util.List;
  * @author peter
  */
 public class DomTableView extends AbstractTableView<DomElement> {
-  private final List<TypeSafeDataProvider> myCustomDataProviders = new SmartList<TypeSafeDataProvider>();
+  private final List<TypeSafeDataProvider> myCustomDataProviders = new SmartList<>();
 
   public DomTableView(final Project project) {
     super(project);

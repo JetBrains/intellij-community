@@ -26,9 +26,15 @@ import java.util.List;
  * @author peter
  */
 public class CompletionConfidenceEP extends LanguageExtensionPoint<CompletionContributor> {
-  private static final LanguageExtension<CompletionConfidence> INSTANCE = new LanguageExtension<CompletionConfidence>("com.intellij.completion.confidence");
+  private static final LanguageExtension<CompletionConfidence> INSTANCE = new LanguageExtension<CompletionConfidence>("com.intellij.completion.confidence") {
+    @NotNull
+    @Override
+    protected List<CompletionConfidence> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+      return buildExtensions(getAllBaseLanguageIdsWithAny(key));
+    }
+  };
 
   public static List<CompletionConfidence> forLanguage(@NotNull Language language) {
-    return INSTANCE.forKey(language);
+    return INSTANCE.allForLanguage(language);
   }
 }

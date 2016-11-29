@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.util.Map;
  * @author cdr
  */
 public class SliceBackwardTest extends SliceTestCase {
-  private final TIntObjectHashMap<IntArrayList> myFlownOffsets = new TIntObjectHashMap<IntArrayList>();
+  private final TIntObjectHashMap<IntArrayList> myFlownOffsets = new TIntObjectHashMap<>();
 
   private void doTest() throws Exception {
     configureByFile("/codeInsight/slice/backward/"+getTestName(false)+".java");

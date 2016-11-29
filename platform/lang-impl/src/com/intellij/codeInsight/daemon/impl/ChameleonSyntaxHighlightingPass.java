@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -52,6 +51,8 @@ import static com.intellij.psi.SyntaxTraverser.psiApi;
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 class ChameleonSyntaxHighlightingPass extends TextEditorHighlightingPass {
+
+  private List<HighlightInfo> myInfos;
 
   public static class Factory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
 
@@ -79,7 +80,7 @@ class ChameleonSyntaxHighlightingPass extends TextEditorHighlightingPass {
 
     myEditor = editor;
 
-    TextRange range = VisibleHighlightingPassFactory.calculateVisibleRange(myEditor);
+    TextRange range = file.getTextRange();
     myStartOffset = range.getStartOffset();
     myEndOffset = range.getEndOffset();
 
@@ -88,22 +89,12 @@ class ChameleonSyntaxHighlightingPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-  }
-
-  @Override
-  public void doApplyInformationToEditor() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     EditorColorsScheme scheme = myEditor.getColorsScheme();
     TextAttributes defaultAttrs = scheme.getAttributes(HighlighterColors.TEXT);
 
     SyntaxTraverser<PsiElement> s = psiTraverser(myFile).
-      expand(compose(psiApi().TO_RANGE(), new Condition<TextRange>() {
-        @Override
-        public boolean value(TextRange range) {
-          return range.intersects(myStartOffset, myEndOffset);
-        }
-      })).filterTypes(instanceOf(ILazyParseableElementType.class)).filterTypes(notInstanceOf(IFileElementType.class));
-    List<HighlightInfo> infos = ContainerUtil.newArrayList();
+      expand(compose(psiApi().TO_RANGE, range -> range.intersects(myStartOffset, myEndOffset))).filterTypes(instanceOf(ILazyParseableElementType.class)).filterTypes(notInstanceOf(IFileElementType.class));
+    myInfos = ContainerUtil.newArrayList();
 
 
     for (PsiElement e : s) {
@@ -130,7 +121,7 @@ class ChameleonSyntaxHighlightingPass extends TextEditorHighlightingPass {
           forcedAttributes = TextAttributes.ERASE_MARKER;
         }
         else {
-          infos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).
+          myInfos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).
             range(tr).
             textAttributes(TextAttributes.ERASE_MARKER).
             createUnconditionally());
@@ -139,13 +130,23 @@ class ChameleonSyntaxHighlightingPass extends TextEditorHighlightingPass {
                                                 attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
         }
 
-        infos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).
+        myInfos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).
           range(tr).
           textAttributes(forcedAttributes).
           createUnconditionally());
       }
     }
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, getColorsScheme(), getId());
+  }
+
+  @Override
+  public void doApplyInformationToEditor() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myInfos == null || myDocument == null) {
+      return;
+    }
+
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, getColorsScheme(), getId());
   }
 
 

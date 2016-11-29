@@ -16,12 +16,11 @@
 package com.intellij.diff.actions.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 
 public abstract class GoToChangePopupAction extends AnAction implements DumbAware {
   public GoToChangePopupAction() {
-    setEnabledInModalContext(true);
-    EmptyAction.setupAction(this, "GotoChangedFile", null);
+    ActionUtil.copyFrom(this, "GotoChangedFile");
   }
 }

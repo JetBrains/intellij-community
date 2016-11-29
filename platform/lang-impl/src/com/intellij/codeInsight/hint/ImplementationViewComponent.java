@@ -173,72 +173,69 @@ public class ImplementationViewComponent extends JPanel {
 
     setPreferredSize(JBUI.size(600, 400));
 
-    update(elements, new PairFunction<PsiElement[], List<FileDescriptor>, Boolean>() {
-      @Override
-      public Boolean fun(final PsiElement[] psiElements, final List<FileDescriptor> fileDescriptors) {
-        if (psiElements.length == 0) return false;
-        myElements = psiElements;
+    update(elements, (psiElements, fileDescriptors) -> {
+      if (psiElements.length == 0) return false;
+      myElements = psiElements;
 
-        myIndex = index < myElements.length ? index : 0;
-        PsiFile psiFile = getContainingFile(myElements[myIndex]);
+      myIndex = index < myElements.length ? index : 0;
+      PsiFile psiFile = getContainingFile(myElements[myIndex]);
 
-        VirtualFile virtualFile = psiFile.getVirtualFile();
-        EditorHighlighter highlighter;
-        if (virtualFile != null)
-          highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
-        else {
-          String fileName = psiFile.getName();  // some artificial psi file, lets do best we can
-          highlighter = HighlighterFactory.createHighlighter(project, fileName);
-        }
-
-        ((EditorEx)myEditor).setHighlighter(highlighter);
-
-        gc.fill = GridBagConstraints.HORIZONTAL;
-        gc.weightx = 1;
-        myLabel = new JLabel();
-        myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()]), 250);
-        myFileChooser.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            int index = myFileChooser.getSelectedIndex();
-            if (myIndex != index) {
-              myIndex = index;
-              updateControls();
-            }
-          }
-        });
-        toolbarPanel.add(myFileChooser, gc);
-
-        if (myElements.length > 1) {
-          updateRenderer(project);
-          myLabel.setVisible(false);
-        }
-        else {
-          myFileChooser.setVisible(false);
-          myCountLabel.setVisible(false);
-
-          VirtualFile file = psiFile.getVirtualFile();
-          if (file != null) {
-            myLabel.setIcon(getIconForFile(psiFile));
-            myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-            myLabel.setText(file.getPresentableName());
-            myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
-          }
-          toolbarPanel.add(myLabel, gc);
-        }
-
-        gc.fill = GridBagConstraints.NONE;
-        gc.weightx = 0;
-        toolbarPanel.add(myCountLabel, gc);
-
-        header.add(toolbarPanel, BorderLayout.CENTER);
-        header.add(myLocationLabel, BorderLayout.EAST);
-
-        add(header, BorderLayout.NORTH);
-
-        updateControls();
-        return true;
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      EditorHighlighter highlighter;
+      if (virtualFile != null)
+        highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
+      else {
+        String fileName = psiFile.getName();  // some artificial psi file, lets do best we can
+        highlighter = HighlighterFactory.createHighlighter(project, fileName);
       }
+
+      ((EditorEx)myEditor).setHighlighter(highlighter);
+
+      gc.fill = GridBagConstraints.HORIZONTAL;
+      gc.weightx = 1;
+      myLabel = new JLabel();
+      myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()]), 250);
+      myFileChooser.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          int index1 = myFileChooser.getSelectedIndex();
+          if (myIndex != index1) {
+            myIndex = index1;
+            updateControls();
+          }
+        }
+      });
+      toolbarPanel.add(myFileChooser, gc);
+
+      if (myElements.length > 1) {
+        updateRenderer(project);
+        myLabel.setVisible(false);
+      }
+      else {
+        myFileChooser.setVisible(false);
+        myCountLabel.setVisible(false);
+
+        VirtualFile file = psiFile.getVirtualFile();
+        if (file != null) {
+          myLabel.setIcon(getIconForFile(psiFile));
+          myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
+          myLabel.setText(file.getPresentableName());
+          myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+        }
+        toolbarPanel.add(myLabel, gc);
+      }
+
+      gc.fill = GridBagConstraints.NONE;
+      gc.weightx = 0;
+      toolbarPanel.add(myCountLabel, gc);
+
+      header.add(toolbarPanel, BorderLayout.CENTER);
+      header.add(myLocationLabel, BorderLayout.EAST);
+
+      add(header, BorderLayout.NORTH);
+
+      updateControls();
+      return true;
     });
   }
 
@@ -268,65 +265,63 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   public void update(@NotNull final PsiElement[] elements, final int index) {
-    update(elements, new PairFunction<PsiElement[], List<FileDescriptor>, Boolean>() {
-      @Override
-      public Boolean fun(PsiElement[] psiElements, List<FileDescriptor> fileDescriptors) {
-        if (psiElements.length == 0) return false;
+    update(elements, (psiElements, fileDescriptors) -> {
+      if (myEditor.isDisposed()) return false;
+      if (psiElements.length == 0) return false;
 
-        final Project project = psiElements[0].getProject();
-        myElements = psiElements;
+      final Project project = psiElements[0].getProject();
+      myElements = psiElements;
 
-        myIndex = index < myElements.length ? index : 0;
-        PsiFile psiFile = getContainingFile(myElements[myIndex]);
+      myIndex = index < myElements.length ? index : 0;
+      PsiFile psiFile = getContainingFile(myElements[myIndex]);
 
-        VirtualFile virtualFile = psiFile.getVirtualFile();
-        EditorHighlighter highlighter;
-        if (virtualFile != null)
-          highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
-        else {
-          String fileName = psiFile.getName();  // some artificial psi file, lets do best we can
-          highlighter = HighlighterFactory.createHighlighter(project, fileName);
-        }
-
-        ((EditorEx)myEditor).setHighlighter(highlighter);
-
-        if (myElements.length > 1) {
-          myFileChooser.setVisible(true);
-          myCountLabel.setVisible(true);
-          myLabel.setVisible(false);
-
-          myFileChooser.setModel(new DefaultComboBoxModel(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()])));
-          updateRenderer(project);
-        }
-        else {
-          myFileChooser.setVisible(false);
-          myCountLabel.setVisible(false);
-
-          VirtualFile file = psiFile.getVirtualFile();
-          if (file != null) {
-            myLabel.setIcon(getIconForFile(psiFile));
-            myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-            myLabel.setText(file.getPresentableName());
-            myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
-            myLabel.setVisible(true);
-          }
-        }
-
-        updateControls();
-
-        revalidate();
-        repaint();
-
-        return true;
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      EditorHighlighter highlighter;
+      if (virtualFile != null)
+        highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
+      else {
+        String fileName = psiFile.getName();  // some artificial psi file, lets do best we can
+        highlighter = HighlighterFactory.createHighlighter(project, fileName);
       }
+
+      ((EditorEx)myEditor).setHighlighter(highlighter);
+
+      if (myElements.length > 1) {
+        myFileChooser.setVisible(true);
+        myCountLabel.setVisible(true);
+        myLabel.setVisible(false);
+
+        myFileChooser.setModel(new DefaultComboBoxModel(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()])));
+        updateRenderer(project);
+      }
+      else {
+        myFileChooser.setVisible(false);
+        myCountLabel.setVisible(false);
+
+        VirtualFile file = psiFile.getVirtualFile();
+        if (file != null) {
+          myLabel.setIcon(getIconForFile(psiFile));
+          myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
+          myLabel.setText(file.getPresentableName());
+          myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+          myLabel.setVisible(true);
+        }
+      }
+
+      updateControls();
+
+      revalidate();
+      repaint();
+
+      return true;
     });
 
   }
 
   private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
-    List<PsiElement> candidates = new ArrayList<PsiElement>(elements.length);
-    List<FileDescriptor> files = new ArrayList<FileDescriptor>(elements.length);
-    final Set<String> names = new HashSet<String>();
+    List<PsiElement> candidates = new ArrayList<>(elements.length);
+    List<FileDescriptor> files = new ArrayList<>(elements.length);
+    final Set<String> names = new HashSet<>();
     for (PsiElement element : elements) {
       if (element instanceof PsiNamedElement) {
         names.add(((PsiNamedElement)element).getName());
@@ -417,17 +412,14 @@ public class ImplementationViewComponent extends JPanel {
   private void updateTextElement(final PsiElement elt) {
     final String newText = getNewText(elt);
     if (newText == null || Comparing.strEqual(newText, myEditor.getDocument().getText())) return;
-    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        Document fragmentDoc = myEditor.getDocument();
-        fragmentDoc.setReadOnly(false);
+    DocumentUtil.writeInRunUndoTransparentAction(() -> {
+      Document fragmentDoc = myEditor.getDocument();
+      fragmentDoc.setReadOnly(false);
 
-        fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
-        fragmentDoc.setReadOnly(true);
-        myEditor.getCaretModel().moveToOffset(0);
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      }
+      fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
+      fragmentDoc.setReadOnly(true);
+      myEditor.getCaretModel().moveToOffset(0);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     });
   }
 
@@ -446,7 +438,11 @@ public class ImplementationViewComponent extends JPanel {
     final ImplementationTextSelectioner implementationTextSelectioner =
       LanguageImplementationTextSelectioner.INSTANCE.forLanguage(elt.getLanguage());
     int start = implementationTextSelectioner.getTextStartOffset(elt);
-    final int end = implementationTextSelectioner.getTextEndOffset(elt);
+    int end = implementationTextSelectioner.getTextEndOffset(elt);
+    CharSequence rawDefinition = doc.getCharsSequence().subSequence(start, end);
+    while (end > start && StringUtil.isLineBreak(rawDefinition.charAt(end - start - 1))) { // removing trailing EOLs from definition
+      end--;
+    }
 
     final int lineStart = doc.getLineStartOffset(doc.getLineNumber(start));
     final int lineEnd = end < doc.getTextLength() ? doc.getLineEndOffset(doc.getLineNumber(end)) : doc.getTextLength();
@@ -603,7 +599,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private PsiElement[] collectNonBinaryElements() {
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     for (PsiElement element : myElements) {
       if (!(element instanceof PsiBinaryFile)) {
         result.add(element);

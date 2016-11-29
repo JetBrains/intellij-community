@@ -23,9 +23,9 @@ public class PoolInterceptor {
 
   private final IIdentifierRenamer helper;
 
-  private final HashMap<String, String> mapOldToNewNames = new HashMap<String, String>();
+  private final HashMap<String, String> mapOldToNewNames = new HashMap<>();
 
-  private final HashMap<String, String> mapNewToOldNames = new HashMap<String, String>();
+  private final HashMap<String, String> mapNewToOldNames = new HashMap<>();
 
   public PoolInterceptor(IIdentifierRenamer helper) {
     this.helper = helper;

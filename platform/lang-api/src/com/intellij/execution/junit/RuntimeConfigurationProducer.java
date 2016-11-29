@@ -32,7 +32,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -62,21 +61,19 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
     if (result.myConfiguration != null) {
       final PsiElement psiElement = result.getSourceElement();
-      final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement, location != null ? location.getModule() : null);
+      final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement, location.getModule());
       if (_location != null) {
         // replace with existing configuration if any
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = result.myConfiguration.getType();
-        final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(type);
-        final RunnerAndConfigurationSettings configuration = result.findExistingByElement(_location, configurations, context);
+        RunnerAndConfigurationSettings configuration = null;
+        if (type != null) {
+          configuration = result.findExistingByElement(_location, runManager.getConfigurationSettingsList(type), context);
+        }
         if (configuration != null) {
           result.myConfiguration = configuration;
         } else {
-          final ArrayList<String> currentNames = new ArrayList<String>();
-          for (RunnerAndConfigurationSettings configurationSettings : configurations) {
-            currentNames.add(configurationSettings.getName());
-          }
-          result.myConfiguration.setName(RunManager.suggestUniqueName(result.myConfiguration.getName(), currentNames));
+          runManager.setUniqueNameIfNeed(result.myConfiguration);
         }
       }
     }
@@ -201,7 +198,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     @SuppressWarnings({"CloneDoesntCallSuperClone"})
     @Override
     public DelegatingRuntimeConfiguration<T> clone() {
-      return new DelegatingRuntimeConfiguration<T>((T)myConfig.clone());
+      return new DelegatingRuntimeConfiguration<>((T)myConfig.clone());
     }
 
     @Override

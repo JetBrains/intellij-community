@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
@@ -46,6 +47,11 @@ public class JUnit3Framework extends JavaTestFramework {
   @Override
   public boolean isSingleConfig() {
     return true;
+  }
+
+  @Override
+  public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
+    return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
   }
 
   @NotNull

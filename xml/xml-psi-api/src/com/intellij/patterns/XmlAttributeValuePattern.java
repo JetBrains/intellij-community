@@ -26,16 +26,12 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  */
 public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValue,XmlAttributeValuePattern>{
-  private static final InitialPatternCondition<XmlAttributeValue> CONDITION = new InitialPatternCondition<XmlAttributeValue>(XmlAttributeValue.class) {
+  static final XmlAttributeValuePattern XML_ATTRIBUTE_VALUE_PATTERN = new XmlAttributeValuePattern(new InitialPatternCondition<XmlAttributeValue>(XmlAttributeValue.class) {
     @Override
     public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
       return o instanceof XmlAttributeValue;
     }
-  };
-
-  public XmlAttributeValuePattern() {
-    this(CONDITION);
-  }
+  });
 
   public XmlAttributeValuePattern(InitialPatternCondition<XmlAttributeValue> condition) {
     super(condition);

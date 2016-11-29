@@ -65,7 +65,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       value = literalExpression.getValue();
 
-      final Map<String, Object> annotationParams = new HashMap<String, Object>();
+      final Map<String, Object> annotationParams = new HashMap<>();
       annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
       if (JavaI18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
         soft = false;

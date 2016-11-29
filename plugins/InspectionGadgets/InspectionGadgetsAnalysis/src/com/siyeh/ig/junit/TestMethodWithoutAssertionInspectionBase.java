@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,9 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
 
   public TestMethodWithoutAssertionInspectionBase() {
     methodMatcher = new MethodMatcher(true, "assertionMethods")
-      .add("org.junit.Assert", "assert.*|fail.*")
-      .add("junit.framework.Assert", "assert.*|fail.*")
+      .add(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assert.*|fail.*")
+      .add(JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT, "assert.*|fail.*")
+      .add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assert.*|fail.*")
       .add("org.mockito.Mockito", "verify.*")
       .add("org.mockito.InOrder", "verify")
       .add("org.junit.rules.ExpectedException", "expect.*")
@@ -152,6 +153,10 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
+      if ((element instanceof PsiCompiledElement)) {
+        // assume no assertions in libraries (prevents assertion in recursive element walking visitor)
+        return;
+      }
       if (!containsAssertion) {
         super.visitElement(element);
       }

@@ -197,13 +197,10 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
         }
         myContext.getDaemonAnalyzer().queueUpdate(LibraryProjectStructureElement.this);
         final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(myContext.getProject());
-        navigate().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            final NamedConfigurable configurable = structureConfigurable.getConfigurableFor(myLibrary).getSelectedConfigurable();
-            if (configurable instanceof LibraryConfigurable) {
-              ((LibraryConfigurable)configurable).updateComponent();
-            }
+        navigate().doWhenDone(() -> {
+          final NamedConfigurable configurable = structureConfigurable.getConfigurableFor(myLibrary).getSelectedConfigurable();
+          if (configurable instanceof LibraryConfigurable) {
+            ((LibraryConfigurable)configurable).updateComponent();
           }
         });
       }
@@ -241,7 +238,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     public void performFix() {
       BaseLibrariesConfigurable configurable = BaseLibrariesConfigurable.getInstance(myContext.getProject(), LibraryTablesRegistrar.PROJECT_LEVEL);
       Library[] libraries = configurable.getModelProvider().getModifiableModel().getLibraries();
-      List<LibraryProjectStructureElement> toRemove = new ArrayList<LibraryProjectStructureElement>();
+      List<LibraryProjectStructureElement> toRemove = new ArrayList<>();
       for (Library library : libraries) {
         LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
         if (myContext.getDaemonAnalyzer().getUsages(libraryElement).isEmpty()) {

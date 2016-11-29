@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.List;
 
 public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementAnnotationHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl");
-  private final SmartList<Annotation> myAnnotations = new SmartList<Annotation>();
+  private final SmartList<Annotation> myAnnotations = new SmartList<>();
   private final boolean myOnTheFly;
 
   public DomElementAnnotationHolderImpl(boolean onTheFly) {
@@ -73,7 +73,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   public DomElementProblemDescriptor createProblem(@NotNull final DomElement domElement,
                                                    final HighlightSeverity highlightType,
                                                    final String message,
-                                                   final LocalQuickFix[] fixes) {
+                                                   final LocalQuickFix... fixes) {
     return createProblem(domElement, highlightType, message, null, fixes);
   }
 
@@ -126,7 +126,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   private LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
     if (!myOnTheFly) return LocalQuickFix.EMPTY_ARRAY;
 
-    final List<LocalQuickFix> result = new SmartList<LocalQuickFix>();
+    final List<LocalQuickFix> result = new SmartList<>();
     final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,7 @@
  */
 package com.intellij.debugger.ui.tree.actions;
 
-import com.intellij.debugger.ui.tree.render.HexRenderer;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.settings.NodeRendererSettings;
-
-import java.util.List;
-import java.util.Iterator;
 
 public class ShowAllAsHex extends ShowAllAs {
 

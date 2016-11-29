@@ -47,7 +47,7 @@ public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceLi
   @Override
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    PsiClassReferenceListStub stub = getStub();
+    PsiClassReferenceListStub stub = getGreenStub();
     if (stub != null) {
       return stub.getReferencedTypes();
     }

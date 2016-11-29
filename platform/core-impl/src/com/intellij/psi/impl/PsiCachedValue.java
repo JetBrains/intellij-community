@@ -54,7 +54,6 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
                o instanceof PsiModificationTracker ||
                o == PsiModificationTracker.MODIFICATION_COUNT ||
                o == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT ||
-               o == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT ||
                o == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
       }
     });

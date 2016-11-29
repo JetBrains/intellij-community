@@ -31,11 +31,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.siyeh.InspectionGadgetsBundle;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -55,7 +56,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
                             boolean ignoreFieldsUsedInMultipleMethods) {
     if (aClass.isInterface()) return;
     final PsiField[] fields = aClass.getFields();
-    final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
+    final Set<PsiField> candidates = new LinkedHashSet<>();
     for (PsiField field : fields) {
       if (AnnotationUtil.isAnnotated(field, excludeAnnos)) {
         continue;
@@ -69,7 +70,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
     removeFieldsReferencedFromInitializers(aClass, candidates);
     if (candidates.isEmpty()) return;
 
-    final Set<PsiField> usedFields = new THashSet<PsiField>();
+    final Set<PsiField> usedFields = new THashSet<>();
     removeReadFields(aClass, candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
 
     if (candidates.isEmpty()) return;
@@ -77,31 +78,25 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
 
     for (final PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
-        if (!ReferencesSearch.search(field, new LocalSearchScope(aClass)).forEach(new Processor<PsiReference>() {
-          @Override
-          public boolean process(PsiReference reference) {
-            final PsiElement element = reference.getElement();
-            if (element instanceof PsiReferenceExpression) {
-              final PsiElement qualifier = ((PsiReferenceExpression)element).getQualifier();
-              return qualifier == null || qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null;
-            }
-            return true;
+        if (!ReferencesSearch.search(field, new LocalSearchScope(aClass)).forEach(reference -> {
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiReferenceExpression) {
+            final PsiElement qualifier = ((PsiReferenceExpression)element).getQualifier();
+            return qualifier == null || qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null;
           }
+          return true;
         })) {
           continue;
         }
         final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
-        final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
-        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
-          @Override
-          public boolean process(String qualifiedName) {
-            final LocalQuickFix quickFix = SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
-              InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
-              QuickFixBundle.message("fix.add.special.annotation.family"),
-              EXCLUDE_ANNOS, qualifiedName, field);
-            fixes.add(quickFix);
-            return true;
-          }
+        final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
+        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, qualifiedName -> {
+          final LocalQuickFix quickFix = SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
+            InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
+            QuickFixBundle.message("fix.add.special.annotation.family"),
+            EXCLUDE_ANNOS, qualifiedName, field);
+          fixes.add(quickFix);
+          return true;
         });
         final LocalQuickFix fix = createFix();
         if (fix != null) {
@@ -135,6 +130,10 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
             }
           }
         }
+        final PsiDocComment docComment = method.getDocComment();
+        if (docComment != null) {
+          docComment.accept(this);
+        }
         //do not go inside method
       }
 
@@ -145,15 +144,26 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiElement resolved = expression.resolve();
+        excludeFieldCandidate(expression);
+
+        super.visitReferenceExpression(expression);
+      }
+
+      @Override
+      public void visitDocTagValue(PsiDocTagValue value) {
+        excludeFieldCandidate(value.getReference());
+        super.visitDocTagValue(value);
+      }
+
+      private void excludeFieldCandidate(PsiReference ref) {
+        if (ref == null) return;
+        final PsiElement resolved = ref.resolve();
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
           if (aClass.equals(field.getContainingClass())) {
             candidates.remove(field);
           }
         }
-
-        super.visitReferenceExpression(expression);
       }
     });
   }
@@ -162,7 +172,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
                                        final Set<PsiField> candidates,
                                        final Set<PsiField> usedFields,
                                        final boolean ignoreFieldsUsedInMultipleMethods) {
-    final Set<PsiField> ignored = new HashSet<PsiField>();
+    final Set<PsiField> ignored = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -202,9 +212,9 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
                                      boolean ignoreFieldsUsedInMultipleMethods, 
                                      Set<PsiField> ignored) {
     try {
-      final Ref<Collection<PsiVariable>> writtenVariables = new Ref<Collection<PsiVariable>>();
-      final ControlFlow
-        controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
+      final Ref<Collection<PsiVariable>> writtenVariables = new Ref<>();
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject())
+          .getControlFlow(body, AllVariablesControlFlowPolicy.getInstance(), false, false);
       final List<PsiVariable> usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
       for (PsiVariable usedVariable : usedVars) {
         if (usedVariable instanceof PsiField) {

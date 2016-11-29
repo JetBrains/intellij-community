@@ -16,7 +16,7 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.openapi.editor.impl.EditorViewAccessor;
+import com.intellij.openapi.editor.impl.EditorImpl;
 
 import java.io.IOException;
 
@@ -53,6 +53,6 @@ public class VisualLinesIteratorTest extends AbstractEditorTest {
   }
   
   private static VisualLinesIterator createIterator(int startVisualLine) {
-    return new VisualLinesIterator(EditorViewAccessor.getView(myEditor), startVisualLine);
+    return new VisualLinesIterator((EditorImpl)myEditor, startVisualLine);
   }
 }

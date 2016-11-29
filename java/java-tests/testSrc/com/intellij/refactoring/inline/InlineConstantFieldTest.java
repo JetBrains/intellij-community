@@ -2,8 +2,10 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.refactoring.LightRefactoringTestCase;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +14,11 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17(); // has to have src.zip
   }
 
   public void testQualifiedExpression() throws Exception {
@@ -38,15 +45,26 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testFinalInitializedInConstructor() throws Exception {
+    doTest();
+  }
+
+  public void testDiamondInitializer() throws Exception {
+    doTest();
+  }
+
+  public void testMultipleInitializers() throws Exception {
+    configureByFile("/refactoring/inlineConstantField/" + getTestName(false) + ".java");
+    PsiElement element = TargetElementUtil
+      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    assertTrue(element instanceof PsiField);
+    assertNull(InlineConstantFieldHandler.getInitializer((PsiField)element));
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineConstantField/" + name + ".java";
     configureByFile(fileName);
-    performAction();
-    checkResultByFile(fileName + ".after");
-  }
-
-  private void performAction() {
     PsiElement element = TargetElementUtil
       .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
@@ -54,5 +72,6 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     assertTrue(element instanceof PsiField);
     PsiField field = (PsiField)element.getNavigationElement();
     new InlineConstantFieldProcessor(field, getProject(), refExpr, element instanceof PsiCompiledElement).run();
+    checkResultByFile(fileName + ".after");
   }
 }

@@ -18,6 +18,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.StringComboboxEditor;
@@ -28,7 +30,9 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class ComboEditorCompletionContributor extends CompletionContributor{
+public class ComboEditorCompletionContributor extends CompletionContributor implements DumbAware {
+
+  public static final Key<Boolean> CONTINUE_RUN_COMPLETION = Key.create("CONTINUE_RUN_COMPLETION");
 
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
@@ -60,7 +64,9 @@ public class ComboEditorCompletionContributor extends CompletionContributor{
               }), count-i));
           }
         }
-        result.stopHere();
+        if (!Boolean.TRUE.equals(document.getUserData(CONTINUE_RUN_COMPLETION))) {
+          result.stopHere();
+        }
       }
     }
   }

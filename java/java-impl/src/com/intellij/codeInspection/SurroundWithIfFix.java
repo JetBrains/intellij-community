@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.trivialif.MergeIfAndIntention;
 import org.jetbrains.annotations.NonNls;
@@ -51,11 +52,16 @@ public class SurroundWithIfFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    PsiStatement anchorStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    PsiElement anchorStatement = RefactoringUtil.getParentStatement(element, false);
     LOG.assertTrue(anchorStatement != null);
-    Editor editor = PsiUtilBase.findEditor(element);
+    if (anchorStatement.getParent() instanceof PsiLambdaExpression) {
+      final PsiElement body = ((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(anchorStatement)).getBody();
+      LOG.assertTrue(body instanceof PsiCodeBlock);
+      anchorStatement = ((PsiCodeBlock)body).getStatements()[0];
+    }
+    Editor editor = PsiUtilBase.findEditor(anchorStatement);
     if (editor == null) return;
-    PsiFile file = element.getContainingFile();
+    PsiFile file = anchorStatement.getContainingFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = documentManager.getDocument(file);
     if (document == null || !FileModificationService.getInstance().prepareFileForWrite(file)) return;

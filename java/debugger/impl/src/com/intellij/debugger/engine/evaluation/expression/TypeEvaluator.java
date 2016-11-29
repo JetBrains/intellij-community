@@ -26,30 +26,48 @@ import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.reference.SoftReference;
+import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.ref.WeakReference;
 
 public class TypeEvaluator implements Evaluator {
   private final JVMName myTypeName;
 
+  private WeakReference<ReferenceType> myLastResult;
+  private WeakReference<ClassLoaderReference> myLastClassLoader;
+
   public TypeEvaluator(@NotNull JVMName typeName) {
     myTypeName = typeName;
-  }
-
-  public Modifier getModifier() {
-    return null;
   }
 
   /**
    * @return ReferenceType in the target VM, with the given fully qualified name
    */
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+    ClassLoaderReference classLoader = context.getClassLoader();
+    ReferenceType lastRes = SoftReference.dereference(myLastResult);
+    if (lastRes != null && classLoader == SoftReference.dereference(myLastClassLoader)) {
+      // if class loader is null, check that vms match
+      if (classLoader != null || lastRes.virtualMachine().equals(context.getDebugProcess().getVirtualMachineProxy().getVirtualMachine())) {
+        return lastRes;
+      }
+    }
     DebugProcessImpl debugProcess = context.getDebugProcess();
     String typeName = myTypeName.getName(debugProcess);
-    final ReferenceType type = debugProcess.findClass(context, typeName, context.getClassLoader());
+    ReferenceType type = debugProcess.findClass(context, typeName, classLoader);
     if (type == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.class.not.loaded", typeName));
     }
+    myLastClassLoader = new WeakReference<>(classLoader);
+    myLastResult = new WeakReference<>(type);
     return type;
+  }
+
+  @Override
+  public String toString() {
+    return "Type " + myTypeName;
   }
 }

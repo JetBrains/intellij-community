@@ -42,7 +42,7 @@ public class PyFunctionGroupingRuleProvider implements FileStructureGroupRulePro
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
       final PyFunction pyFunction = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class, false, PyClass.class);
       if (pyFunction != null) {
-        return new PsiNamedElementUsageGroupBase<PyFunction>(pyFunction);
+        return new PsiNamedElementUsageGroupBase<>(pyFunction);
       }
       return null;
     }

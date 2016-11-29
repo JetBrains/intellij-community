@@ -37,7 +37,7 @@ public class PyModuleListener {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-        final Collection<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(runManager.getSortedConfigurations());
+        final Collection<RunnerAndConfigurationSettings> configurations = new ArrayList<>(runManager.getSortedConfigurations());
         for (RunnerAndConfigurationSettings configuration : configurations) {
           if (configuration.getConfiguration() instanceof AbstractPythonRunConfiguration) {
             final Module configModule = ((AbstractPythonRunConfiguration)configuration.getConfiguration()).getModule();

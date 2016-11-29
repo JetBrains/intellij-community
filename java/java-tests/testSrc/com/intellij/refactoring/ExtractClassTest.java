@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -117,6 +116,10 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestField(null);
   }
 
+  public void testNonNormalizedFields() throws Exception {
+    doTestField(null);
+  }
+
   public void testDependantFieldInitializers() throws Exception {
     doTestField(null);
   }
@@ -155,6 +158,10 @@ public class ExtractClassTest extends MultiFileTestCase{
 
   public void testInnerClassRefs() throws Exception {
     doTestInnerClass();
+  }
+
+  public void testEnsurePreservedQualifier() throws Exception {
+    doTestMethod();
   }
 
   private void doTestFieldAndMethod(final String methodName) throws Exception {

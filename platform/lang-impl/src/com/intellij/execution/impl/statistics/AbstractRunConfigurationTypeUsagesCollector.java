@@ -41,7 +41,7 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Abstra
   @NotNull
   @Override
   public final Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) {
-    final Set<String> runConfigurationTypes = new HashSet<String>();
+    final Set<String> runConfigurationTypes = new HashSet<>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -62,11 +62,6 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Abstra
         }
       }
     });
-    return ContainerUtil.map2Set(runConfigurationTypes, new Function<String, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(String runConfigurationType) {
-        return new UsageDescriptor(runConfigurationType, 1);
-      }
-    });
+    return ContainerUtil.map2Set(runConfigurationTypes, runConfigurationType -> new UsageDescriptor(runConfigurationType, 1));
   }
 }

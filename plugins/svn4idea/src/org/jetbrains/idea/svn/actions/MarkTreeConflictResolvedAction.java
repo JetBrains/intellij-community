@@ -105,7 +105,7 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
                                                 SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.text"), markText,
                                                 Messages.getQuestionIcon());
     if (result == Messages.YES) {
-      final Ref<VcsException> exception = new Ref<VcsException>();
+      final Ref<VcsException> exception = new Ref<>();
       ProgressManager.getInstance().run(new Task.Backgroundable(checker.getProject(), markText, true) {
         public void run(@NotNull ProgressIndicator indicator) {
           final ConflictedSvnChange change = checker.getChange();
@@ -128,7 +128,7 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
   }
 
   private Collection<FilePath> getDistinctFiles(final Change change) {
-    final List<FilePath> result = new ArrayList<FilePath>(2);
+    final List<FilePath> result = new ArrayList<>(2);
     if (change.getBeforeRevision() != null) {
       result.add(change.getBeforeRevision().getFile());
     }

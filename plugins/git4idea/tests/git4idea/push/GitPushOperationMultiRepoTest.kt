@@ -51,6 +51,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
     Executor.cd(myProjectPath)
     refresh()
+    updateRepositories()
   }
 
   fun test_try_push_from_all_roots_even_if_one_fails() {

@@ -368,7 +368,7 @@ public class MyTestInjector {
   }
 
   public static TextRange textRangeToInject(PsiLanguageInjectionHost host) {
-    ASTNode[] children = ((ASTNode)host).getChildren(null);
+    ASTNode[] children = host.getNode().getChildren(null);
     TextRange insideQuotes = new ProperTextRange(0, host.getTextLength());
 
     if (children.length > 1 && children[0].getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {

@@ -29,6 +29,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -46,6 +47,8 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
 
     if (!psiElement.getLanguage().is(PythonLanguage.getInstance())) return range;
 
+    PyPsiUtils.assertValid(psiElement);
+
     PsiFile file = psiElement.isValid() ? psiElement.getContainingFile() : null;
     if (file == null) return range;
 
@@ -61,7 +64,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
     private final Project myProject;
     private final CodeStyleSettings mySettings;
     private final PyCodeStyleSettings myPyCodeStyleSettings;
-    private final List<Couple<PsiComment>> myCommentReplacements = new ArrayList<Couple<PsiComment>>();
+    private final List<Couple<PsiComment>> myCommentReplacements = new ArrayList<>();
     private TextRange myRange;
     private int myDelta = 0;
 

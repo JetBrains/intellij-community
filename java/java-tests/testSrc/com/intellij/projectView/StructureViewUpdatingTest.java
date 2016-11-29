@@ -145,23 +145,14 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
                                                                          "  myField3: boolean\n" +
                                                                          "  myField4: boolean\n");
 
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        @Override
-        public void run() {
-
-          WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-            @Override
-            public void run() {
-              try {
-                innerClassField.delete();
-              }
-              catch (IncorrectOperationException e) {
-                fail(e.getLocalizedMessage());
-              }
-            }
-          });
+      CommandProcessor.getInstance().executeCommand(myProject, () -> WriteCommandAction.runWriteCommandAction(null, () -> {
+        try {
+          innerClassField.delete();
         }
-      }, null, null);
+        catch (IncorrectOperationException e) {
+          fail(e.getLocalizedMessage());
+        }
+      }), null, null);
 
       PlatformTestUtil.waitForAlarm(600);
 

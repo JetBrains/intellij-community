@@ -62,100 +62,89 @@ public class DomSemContributor extends SemContributor {
 
   @Override
   public void registerSemProviders(SemRegistrar registrar) {
-    registrar.registerSemElementProvider(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlFile(), new NullableFunction<XmlFile, FileDescriptionCachedValueProvider>() {
-      @Override
-      public FileDescriptionCachedValueProvider fun(XmlFile xmlFile) {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
-        return new FileDescriptionCachedValueProvider(DomManagerImpl.getDomManager(xmlFile.getProject()), xmlFile);
-      }
+    registrar.registerSemElementProvider(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlFile(), xmlFile -> {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+      return new FileDescriptionCachedValueProvider(DomManagerImpl.getDomManager(xmlFile.getProject()), xmlFile);
     });
 
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag().withParent(psiElement(XmlElementType.XML_DOCUMENT).withParent(xmlFile())), new NullableFunction<XmlTag, DomInvocationHandler>() {
-      @Override
-      public DomInvocationHandler fun(XmlTag xmlTag) {
-        final FileDescriptionCachedValueProvider provider =
-          mySemService.getSemElement(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlTag.getContainingFile());
-        assert provider != null;
-        final DomFileElementImpl element = provider.getFileElement();
-        if (element != null) {
-          final DomRootInvocationHandler handler = element.getRootHandler();
-          if (handler.getXmlTag() == xmlTag) {
-            return handler;
-          }
-        }
-        return null;
-      }
-    });
+    registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag().withParent(psiElement(XmlElementType.XML_DOCUMENT).withParent(xmlFile())),
+                                         xmlTag -> {
+                                           final FileDescriptionCachedValueProvider provider =
+                                             mySemService.getSemElement(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlTag.getContainingFile());
+                                           assert provider != null;
+                                           final DomFileElementImpl element = provider.getFileElement();
+                                           if (element != null) {
+                                             final DomRootInvocationHandler handler = element.getRootHandler();
+                                             if (handler.getXmlTag() == xmlTag) {
+                                               return handler;
+                                             }
+                                           }
+                                           return null;
+                                         });
 
     final ElementPattern<XmlTag> nonRootTag = xmlTag().withParent(or(xmlTag(), xmlEntityRef().withParent(xmlTag())));
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, IndexedElementInvocationHandler>() {
-      @Override
-      public IndexedElementInvocationHandler fun(XmlTag tag) {
-        final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
-        assert parentTag != null;
-        DomInvocationHandler parent = getParentDom(parentTag);
-        if (parent == null) return null;
+    registrar.registerSemElementProvider(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, nonRootTag, tag -> {
+      final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
+      assert parentTag != null;
+      DomInvocationHandler parent = getParentDom(parentTag);
+      if (parent == null) return null;
 
-        final String localName = tag.getLocalName();
-        final String namespace = tag.getNamespace();
+      final String localName = tag.getLocalName();
+      final String namespace = tag.getNamespace();
 
-        final DomFixedChildDescription description =
-          findChildrenDescription(parent.getGenericInfo().getFixedChildrenDescriptions(), tag, parent);
+      final DomFixedChildDescription description =
+        findChildrenDescription(parent.getGenericInfo().getFixedChildrenDescriptions(), tag, parent);
 
-        if (description != null) {
+      if (description != null) {
 
-          final int totalCount = description.getCount();
+        final int totalCount = description.getCount();
 
-          int index = 0;
-          PsiElement current = tag;
-          while (true) {
-            current = current.getPrevSibling();
-            if (current == null) {
-              break;
-            }
-            if (current instanceof XmlTag) {
-              final XmlTag xmlTag = (XmlTag)current;
-              if (localName.equals(xmlTag.getLocalName()) && namespace.equals(xmlTag.getNamespace())) {
-                index++;
-                if (index >= totalCount) {
-                  return null;
-                }
+        int index = 0;
+        PsiElement current = tag;
+        while (true) {
+          current = current.getPrevSibling();
+          if (current == null) {
+            break;
+          }
+          if (current instanceof XmlTag) {
+            final XmlTag xmlTag = (XmlTag)current;
+            if (localName.equals(xmlTag.getLocalName()) && namespace.equals(xmlTag.getNamespace())) {
+              index++;
+              if (index >= totalCount) {
+                return null;
               }
             }
           }
-
-          final DomManagerImpl myDomManager = parent.getManager();
-          return new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
-                                              new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, null);
         }
-        return null;
+
+        final DomManagerImpl myDomManager = parent.getManager();
+        return new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
+                                            new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, null);
       }
+      return null;
     });
 
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, CollectionElementInvocationHandler>() {
-      @Override
-      public CollectionElementInvocationHandler fun(XmlTag tag) {
-        final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
-        assert parentTag != null;
-        DomInvocationHandler parent = getParentDom(parentTag);
-        if (parent == null) return null;
+    registrar.registerSemElementProvider(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, nonRootTag, tag -> {
+      final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
+      assert parentTag != null;
+      DomInvocationHandler parent = getParentDom(parentTag);
+      if (parent == null) return null;
 
-        final DomCollectionChildDescription description = findChildrenDescription(parent.getGenericInfo().getCollectionChildrenDescriptions(), tag, parent);
-        if (description != null) {
-          DomStub parentStub = parent.getStub();
-          if (parentStub != null) {
-            int index = ArrayUtil.indexOf(parentTag.findSubTags(tag.getName(), tag.getNamespace()), tag);
-            ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
-            if (stub != null) {
-              XmlName name = description.getXmlName();
-              EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
-              return new CollectionElementInvocationHandler(evaluatedXmlName, (AbstractDomChildDescriptionImpl)description, parent.getManager(), stub);
-            }
+      final DomCollectionChildDescription description = findChildrenDescription(parent.getGenericInfo().getCollectionChildrenDescriptions(), tag, parent);
+      if (description != null) {
+        DomStub parentStub = parent.getStub();
+        if (parentStub != null) {
+          int index = ArrayUtil.indexOf(parentTag.findSubTags(tag.getName(), tag.getNamespace()), tag);
+          ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
+          if (stub != null) {
+            XmlName name = description.getXmlName();
+            EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
+            return new CollectionElementInvocationHandler(evaluatedXmlName, (AbstractDomChildDescriptionImpl)description, parent.getManager(), stub);
           }
-          return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent, null);
         }
-        return null;
+        return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent, null);
       }
+      return null;
     });
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_CUSTOM_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, CollectionElementInvocationHandler>() {
@@ -168,12 +157,8 @@ public class DomSemContributor extends SemContributor {
         final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
         assert parentTag != null;
 
-        DomInvocationHandler parent = myGuard.doPreventingRecursion(tag, true, new NullableComputable<DomInvocationHandler>() {
-          @Override
-          public DomInvocationHandler compute() {
-            return getParentDom(parentTag);
-          }
-        });
+        DomInvocationHandler parent = myGuard.doPreventingRecursion(tag, true,
+                                                                    (NullableComputable<DomInvocationHandler>)() -> getParentDom(parentTag));
         if (parent == null) return null;
 
         DomGenericInfoEx info = parent.getGenericInfo();
@@ -204,51 +189,45 @@ public class DomSemContributor extends SemContributor {
       }
     });
 
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, xmlAttribute(), new NullableFunction<XmlAttribute, AttributeChildInvocationHandler>() {
-      @Override
-      public AttributeChildInvocationHandler fun(final XmlAttribute attribute) {
-        final XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
-        final DomInvocationHandler handler = tag == null ? null : getParentDom(tag);
-        if (handler == null) return null;
+    registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, xmlAttribute(), attribute -> {
+      final XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
+      final DomInvocationHandler handler = tag == null ? null : getParentDom(tag);
+      if (handler == null) return null;
 
-        final String localName = attribute.getLocalName();
-        final Ref<AttributeChildInvocationHandler> result = Ref.create(null);
-        handler.getGenericInfo().processAttributeChildrenDescriptions(new Processor<AttributeChildDescriptionImpl>() {
-          @Override
-          public boolean process(AttributeChildDescriptionImpl description) {
-            if (description.getXmlName().getLocalName().equals(localName)) {
-              final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(description.getXmlName());
+      final String localName = attribute.getLocalName();
+      final Ref<AttributeChildInvocationHandler> result = Ref.create(null);
+      handler.getGenericInfo().processAttributeChildrenDescriptions(description -> {
+        if (description.getXmlName().getLocalName().equals(localName)) {
+          final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(description.getXmlName());
 
-              final String ns = evaluatedXmlName.getNamespace(tag, handler.getFile());
-              //see XmlTagImpl.getAttribute(localName, namespace)
-              if (ns.equals(tag.getNamespace()) && localName.equals(attribute.getName()) ||
-                  ns.equals(attribute.getNamespace())) {
-                final DomManagerImpl myDomManager = handler.getManager();
-                final AttributeChildInvocationHandler attributeHandler =
-                  new AttributeChildInvocationHandler(evaluatedXmlName, description, myDomManager,
-                                                      new PhysicalDomParentStrategy(attribute, myDomManager), null);
-                result.set(attributeHandler);
-                return false;
-              }
-            }
-            return true;
+          final String ns = evaluatedXmlName.getNamespace(tag, handler.getFile());
+          //see XmlTagImpl.getAttribute(localName, namespace)
+          if (ns.equals(tag.getNamespace()) && localName.equals(attribute.getName()) ||
+              ns.equals(attribute.getNamespace())) {
+            final DomManagerImpl myDomManager = handler.getManager();
+            final AttributeChildInvocationHandler attributeHandler =
+              new AttributeChildInvocationHandler(evaluatedXmlName, description, myDomManager,
+                                                  new PhysicalDomParentStrategy(attribute, myDomManager), null);
+            result.set(attributeHandler);
+            return false;
           }
-        });
+        }
+        return true;
+      });
 
-        return result.get();
-      }
+      return result.get();
     });
 
   }
 
   @Nullable
   private static DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
-    LinkedHashSet<XmlTag> allParents = new LinkedHashSet<XmlTag>();
+    LinkedHashSet<XmlTag> allParents = new LinkedHashSet<>();
     PsiElement each = tag;
     while (each instanceof XmlTag && allParents.add((XmlTag)each)) {
       each = PhysicalDomParentStrategy.getParentTagCandidate((XmlTag)each);
     }
-    ArrayList<XmlTag> list = new ArrayList<XmlTag>(allParents);
+    ArrayList<XmlTag> list = new ArrayList<>(allParents);
     Collections.reverse(list);
     DomManagerImpl manager = DomManagerImpl.getDomManager(tag.getProject());
     for (XmlTag xmlTag : list) {

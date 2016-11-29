@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,10 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       return null;
     }
     PsiClass psiClass = (PsiClass)resolved;
+    if (PsiUtil.isFromDefaultPackage(psiClass) ||
+        psiClass.hasModifierProperty(PsiModifier.PRIVATE) ||
+        psiClass.getQualifiedName() == null) return null;
+
     final PsiElement ggParent = gParent.getParent();
     if (ggParent instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression call = (PsiMethodCallExpression)ggParent.copy();
@@ -90,7 +94,6 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != psiClass) return null;
     }
 
-    if (Comparing.strEqual(psiClass.getName(), psiClass.getQualifiedName()) || psiClass.hasModifierProperty(PsiModifier.PRIVATE)) return null;
     PsiFile file = refExpr.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
@@ -146,7 +149,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
 
       final TIntArrayList expressionToDequalifyOffsets = new TIntArrayList();
       copy.accept(new JavaRecursiveElementWalkingVisitor() {
-        int delta = 0;
+        int delta;
         @Override
         public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
           if (isParameterizedReference(expression)) return;

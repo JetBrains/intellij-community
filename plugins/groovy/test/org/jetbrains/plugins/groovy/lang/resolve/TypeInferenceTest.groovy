@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -31,220 +32,217 @@ import static com.intellij.psi.CommonClassNames.*
 /**
  * @author ven
  */
-public class TypeInferenceTest extends TypeInferenceTestBase {
+@CompileStatic
+class TypeInferenceTest extends TypeInferenceTestBase {
 
-  public void testTryFinallyFlow() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").element;
-    final PsiType type = ref.type;
-    assertTrue(type instanceof PsiIntersectionType);
-    final PsiType[] conjuncts = ((PsiIntersectionType)type).conjuncts;
-    assertEquals(conjuncts.length, 2);
+  void testTryFinallyFlow() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").element
+    final PsiType type = ref.type
+    assertTrue(type instanceof PsiIntersectionType)
+    final PsiType[] conjuncts = ((PsiIntersectionType)type).conjuncts
+    assertEquals(conjuncts.length, 2)
   }
 
-  public void testTryFinallyFlow1() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow1/A.groovy").element;
-    final PsiType type = ref.type;
-    assertNotNull(type);
-    assertTrue(type.equalsToText("java.lang.Integer"));
+  void testTryFinallyFlow1() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow1/A.groovy").element
+    final PsiType type = ref.type
+    assertNotNull(type)
+    assertTrue(type.equalsToText("java.lang.Integer"))
   }
 
-  public void testTryFinallyFlow2() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow2/A.groovy").element;
-    final PsiType type = ref.type;
-    assertNotNull(type);
-    assertTrue(type.equalsToText("java.lang.Integer"));
+  void testTryFinallyFlow2() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow2/A.groovy").element
+    final PsiType type = ref.type
+    assertNotNull(type)
+    assertTrue(type.equalsToText("java.lang.Integer"))
   }
 
-  public void testThrowVariable() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("throwVariable/A.groovy").element;
-    final PsiType type = ref.type;
-    assertNotNull(type);
-    assertEquals("java.lang.Exception", type.canonicalText);
+  void testThrowVariable() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("throwVariable/A.groovy").element
+    final PsiType type = ref.type
+    assertNotNull(type)
+    assertEquals("java.lang.Exception", type.canonicalText)
   }
 
-  public void testGrvy852() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy852/A.groovy").element;
-    final PsiType type = ref.type;
-    assertNotNull(type);
-    assertEquals("java.lang.Object", type.canonicalText);
+  void testGrvy852() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy852/A.groovy").element
+    final PsiType type = ref.type
+    assertNotNull(type)
+    assertEquals("java.lang.Object", type.canonicalText)
   }
 
-  public void testGenericMethod() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericMethod/A.groovy").element;
-    final PsiType type = ref.type;
-    assertNotNull(type);
-    assertEquals("java.util.List<java.lang.String>", type.canonicalText);
+  void testGenericMethod() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericMethod/A.groovy").element
+    final PsiType type = ref.type
+    assertNotNull(type)
+    assertEquals("java.util.List<java.lang.String>", type.canonicalText)
   }
 
-  public void testCircular() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular/A.groovy").element;
-    assertNull(ref.type);
+  void testCircular() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular/A.groovy").element
+    assertNull(ref.type)
   }
 
-  public void testCircular1() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular1/A.groovy").element;
-    assertNull(ref.type);
+  void testCircular1() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular1/A.groovy").element
+    assertNull(ref.type)
   }
 
-  public void testClosure() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure/A.groovy").element;
-    assertNotNull(ref.type);
+  void testClosure() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure/A.groovy").element
+    assertNotNull(ref.type)
   }
 
-  public void testClosure1() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure1/A.groovy").element;
-    assertTrue(ref.type.equalsToText("java.lang.Integer"));
+  void testClosure1() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure1/A.groovy").element
+    assertTrue(ref.type.equalsToText("java.lang.Integer"))
   }
 
-  public void testClosure2() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element;
-    assertTrue(ref.type.equalsToText("java.lang.Integer"));
+  void testClosure2() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element
+    assertTrue(ref.type.equalsToText("java.lang.Integer"))
   }
 
-  public void testGrvy1209() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy1209/A.groovy").element;
-    assertTrue(ref.type.equalsToText("java.lang.String"));
+  void testGrvy1209() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy1209/A.groovy").element
+    assertTrue(ref.type.equalsToText("java.lang.String"))
   }
 
-  public void testLeastUpperBoundClosureType() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").element;
-    assertInstanceOf(ref.type, GrClosureType.class);
+  void testLeastUpperBoundClosureType() {
+    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").element
+    assertInstanceOf(ref.type, GrClosureType.class)
   }
 
-  public void testJavaLangClassType() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("javaLangClassType/A.groovy").element;
-    assertEquals("java.lang.String", ref.type.canonicalText);
+  void testJavaLangClassType() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("javaLangClassType/A.groovy").element
+    assertEquals("java.lang.String", ref.type.canonicalText)
   }
 
-  public void testGenericWildcard() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericWildcard/A.groovy").element;
-    assertEquals("A<Base>", ref.type.canonicalText);
+  void testGenericWildcard() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericWildcard/A.groovy").element
+    assertEquals("A<Base>", ref.type.canonicalText)
   }
 
-  public void testArrayLikeAccessWithIntSequence() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("arrayLikeAccessWithIntSequence/A.groovy").element;
-    assertEquals("java.util.List<java.lang.Integer>", ref.type.canonicalText);
+  void testArrayLikeAccessWithIntSequence() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("arrayLikeAccessWithIntSequence/A.groovy").element
+    assertEquals("java.util.List<java.lang.Integer>", ref.type.canonicalText)
   }
 
-  public void testArrayAccess() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("arrayAccess/A.groovy");
-    assertEquals(JAVA_LANG_STRING, ref.type.canonicalText);
+  void testArrayAccess() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("arrayAccess/A.groovy")
+    assertEquals(JAVA_LANG_STRING, ref.type.canonicalText)
   }
 
-  public void testReturnTypeByTailExpression() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("returnTypeByTailExpression/A.groovy");
-    assertEquals(JAVA_LANG_STRING, ref.type.canonicalText);
+  void testReturnTypeByTailExpression() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("returnTypeByTailExpression/A.groovy")
+    assertEquals(JAVA_LANG_STRING, ref.type.canonicalText)
   }
 
-  public void testParameterWithBuiltinType() {
-    GrReferenceExpression refExpr = (GrReferenceExpression)configureByFile("parameterWithBuiltinType/A.groovy");
-    assertEquals("java.lang.Integer", refExpr.type.canonicalText);
+  void testParameterWithBuiltinType() {
+    GrReferenceExpression refExpr = (GrReferenceExpression)configureByFile("parameterWithBuiltinType/A.groovy")
+    assertEquals("java.lang.Integer", refExpr.type.canonicalText)
   }
 
-  public void testRawTypeInReturnExpression() {
-    assertNotNull(resolve("A.groovy"));
+  void testRawTypeInReturnExpression() {
+    assertNotNull(resolve("A.groovy"))
   }
 
-  public void testMethodCallInvokedOnArrayAccess() {
-    final GrReferenceExpression reference = (GrReferenceExpression)configureByFile("A.groovy");
+  void testMethodCallInvokedOnArrayAccess() {
+    final GrReferenceExpression reference = (GrReferenceExpression)configureByFile("A.groovy")
     assertNotNull(reference)
     assertNotNull(reference.type)
-    assertEquals("java.lang.Integer", reference.type.canonicalText);
+    assertEquals("java.lang.Integer", reference.type.canonicalText)
   }
 
   private void assertTypeEquals(String expected, String fileName) {
-    final PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
-    assertInstanceOf(ref, GrReferenceExpression.class);
-    final PsiType type = ((GrReferenceExpression)ref).type;
-    assertNotNull(type);
-    assertEquals(expected, type.canonicalText);
+    final PsiReference ref = configureByFile(getTestName(true) + "/" + fileName)
+    assertInstanceOf(ref, GrReferenceExpression.class)
+    final PsiType type = ((GrReferenceExpression)ref).type
+    assertNotNull(type)
+    assertEquals(expected, type.canonicalText)
   }
 
-  public void testTypeOfGroupBy() {
-    assertTypeEquals("java.util.Map<java.lang.Integer,java.util.List<java.lang.Integer>>", "A.groovy");
+  void testTypeOfGroupBy() {
+    assertTypeEquals("java.util.Map<java.lang.Integer,java.util.List<java.lang.Integer>>", "A.groovy")
   }
 
-  public void testConditionalExpressionWithNumericTypes() {
-    assertTypeEquals("java.lang.Number", "A.groovy");
+  void testConditionalExpressionWithNumericTypes() {
+    assertTypeEquals("java.lang.Number", "A.groovy")
   }
 
-  public void testImplicitCallMethod() {
-    assertEquals("java.lang.String", ((GrExpression)configureByFile("A.groovy")).type.canonicalText);
+  void testImplicitCallMethod() {
+    assertEquals("java.lang.String", ((GrExpression)configureByFile("A.groovy")).type.canonicalText)
   }
 
-  public void testTupleWithNullInIt() {
-    assertTypeEquals("java.util.ArrayList", "A.groovy");
+  void testImplicitlyReturnedMethodCall() {
+    assertTypeEquals("java.util.Map<BasicRange,java.util.Map<BasicRange,java.lang.Double>>", "A.groovy")
   }
 
-  public void testImplicitlyReturnedMethodCall() {
-    assertTypeEquals("java.util.Map<BasicRange,java.util.Map<BasicRange,java.lang.Double>>", "A.groovy");
+  void testInferWithClosureType() {
+    assertTypeEquals("java.util.Date", "A.groovy")
   }
 
-  public void testInferWithClosureType() {
-    assertTypeEquals("java.util.Date", "A.groovy");
+  void testPlusEquals1() {
+    assertTypeEquals("Test", "A.groovy")
   }
 
-  public void testPlusEquals1() {
-    assertTypeEquals("Test", "A.groovy");
+  void testPlusEquals2() {
+    assertTypeEquals("java.lang.String", "A.groovy")
   }
 
-  public void testPlusEquals2() {
-    assertTypeEquals("java.lang.String", "A.groovy");
+  void testPlusEquals3() {
+    assertTypeEquals("java.lang.String", "A.groovy")
   }
 
-  public void testPlusEquals3() {
-    assertTypeEquals("java.lang.String", "A.groovy");
+  void testPlusEqualsClosure() {
+    assertTypeEquals("java.lang.String", "A.groovy")
   }
 
-  public void testPlusEqualsClosure() {
-    assertTypeEquals("java.lang.String", "A.groovy");
+  void testGetAtClosure() {
+    assertTypeEquals("java.lang.String", "A.groovy")
   }
 
-  public void testGetAtClosure() {
-    assertTypeEquals("java.lang.String", "A.groovy");
+  void testPreferMethodOverloader() {
+    assertTypeEquals("java.lang.String", "A.groovy")
   }
 
-  public void testPreferMethodOverloader() {
-    assertTypeEquals("java.lang.String", "A.groovy");
+  void testSafeInvocationInClassQualifier() {
+    assertTypeEquals("java.lang.Class", "SafeInvocationInClassQualifier.groovy")
   }
 
-  public void testSafeInvocationInClassQualifier() {
-    assertTypeEquals("java.lang.Class", "SafeInvocationInClassQualifier.groovy");
+  void testReturnTypeFromMethodClosure() {
+    assertTypeEquals("java.lang.String", "A.groovy")
   }
 
-  public void testReturnTypeFromMethodClosure() {
-    assertTypeEquals("java.lang.String", "A.groovy");
+  void testNoSOF() {
+    final PsiReference ref = configureByFile(getTestName(true) + "/A.groovy")
+    assertInstanceOf(ref, GrReferenceExpression.class)
+    final PsiType type = ((GrReferenceExpression)ref).type
+    assertTrue(true) //test just should not fail with SOF exception
   }
 
-  public void testNoSOF() {
-    final PsiReference ref = configureByFile(getTestName(true) + "/A.groovy");
-    assertInstanceOf(ref, GrReferenceExpression.class);
-    final PsiType type = ((GrReferenceExpression)ref).type;
-    assertTrue(true); //test just should not fail with SOF exception
+  void testTraditionalForVar() {
+    assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy")
   }
 
-  public void testTraditionalForVar() {
-    assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy");
+  void testIncMethod() {
+    assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy")
   }
 
-  public void testIncMethod() {
-    assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy");
+  void testDGMFind() {
+    assertTypeEquals("java.io.File", "a.groovy")
   }
 
-  public void testDGMFind() {
-    assertTypeEquals("java.io.File", "a.groovy");
+  void testMultiTypeParameter() {
+    assertTypeEquals("X | Y", "a.groovy")
   }
 
-  public void testMultiTypeParameter() {
-    assertTypeEquals("X | Y", "a.groovy");
+  void testTypeArgsInAccessor() {
+    assertTypeEquals("Foo<java.lang.String>", "a.groovy")
   }
 
-  public void testTypeArgsInAccessor() {
-    assertTypeEquals("Foo<java.lang.String>", "a.groovy");
-  }
-
-  public void testSingleParameterInStringInjection() {
-    assertTypeEquals("java.io.StringWriter", "a.groovy");
+  void testSingleParameterInStringInjection() {
+    assertTypeEquals("java.io.StringWriter", "a.groovy")
   }
 
   void testIndexPropertyPlusAssigned() {
@@ -408,10 +406,7 @@ print lis<caret>t
   }
 
   void testEmptyMapOrMapWithGenerics() {
-    doTest('''\
-def map = cond ? [1:'a', 2:'a', 3:'a'] : [:]
-print ma<caret>p
-''', "java.util.LinkedHashMap<$JAVA_LANG_STRING, $JAVA_LANG_STRING>")
+    doExprTest '''cond ? [1:'a', 2:'a', 3:'a'] : [:]''', "java.util.LinkedHashMap<java.lang.Integer, java.lang.String>"
   }
 
   void testEmptyMapOrMapWithGenerics2() {
@@ -711,7 +706,31 @@ def foo(List list) {
   while(true)
     lis<caret>t = [list]
 }
-''', 'java.util.ArrayList<java.util.List>')
+''', 'java.util.List<java.util.List>')
   }
 
+  void 'test list literal type'() {
+    doExprTest '[]', 'java.util.List'
+    doExprTest '[null]', 'java.util.List'
+    doExprTest '["foo", "bar"]', 'java.util.List<java.lang.String>'
+    doExprTest '["${foo}", "${bar}"]', 'java.util.List<groovy.lang.GString>'
+    doExprTest '[1, "a"]', 'java.util.List<java.io.Serializable>'
+  }
+
+  void 'test map literal type'() {
+    doExprTest "[a: 'foo']", "java.util.LinkedHashMap<java.lang.String, java.lang.String>"
+    doExprTest "[1: 'foo']", "java.util.LinkedHashMap<java.lang.Integer, java.lang.String>"
+    doExprTest "[1L: 'foo']", "java.util.LinkedHashMap<java.lang.Long, java.lang.String>"
+    doExprTest "[null: 'foo']", "java.util.LinkedHashMap<java.lang.String, java.lang.String>"
+    doExprTest "[(null): 'foo']", "java.util.LinkedHashMap<null, java.lang.String>"
+    doExprTest "[foo: null]", "java.util.LinkedHashMap<java.lang.String, null>"
+    doExprTest "[(null): 'foo', bar: null]", "java.util.LinkedHashMap<java.lang.String, java.lang.String>"
+    doExprTest "[foo: 'bar', 2: 'goo']", "java.util.LinkedHashMap<java.io.Serializable, java.lang.String>"
+  }
+
+  void 'test range literal type'() {
+    doExprTest "1..10", "groovy.lang.IntRange"
+    doExprTest "'a'..'z'", "groovy.lang.Range<java.lang.String>"
+    doExprTest "'b'..1", "groovy.lang.Range<java.io.Serializable>"
+  }
 }

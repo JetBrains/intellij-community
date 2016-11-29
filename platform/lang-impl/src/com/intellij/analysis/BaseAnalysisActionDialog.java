@@ -102,11 +102,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   @Override
-  public void setOKActionEnabled(boolean isEnabled) {
-    super.setOKActionEnabled(isEnabled);
-  }
-
-  @Override
   protected JComponent createCenterPanel() {
     myTitledSeparator.setText(myAnalysisNoon);
 
@@ -170,6 +165,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myCustomScopeButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.CUSTOM);
 
     myScopeCombo.init(myProject, searchInLib, true, preselect);
+    myScopeCombo.setCurrentSelection(false);
 
     //correct selection
     myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT || myFileName == null);
@@ -287,7 +283,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
           files = changeListManager.getAffectedFiles();
         }
         else {
-          files = new ArrayList<VirtualFile>();
+          files = new ArrayList<>();
           for (ChangeList list : changeListManager.getChangeListsCopy()) {
             if (!Comparing.strEqual(list.getName(), (String)myChangeLists.getSelectedItem())) continue;
             final Collection<Change> changes = list.getChanges();
@@ -302,7 +298,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
             }
           }
         }
-        scope = new AnalysisScope(project, new HashSet<VirtualFile>(files));
+        scope = new AnalysisScope(project, new HashSet<>(files));
         uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITTED_FILES;
       }
       else {
@@ -312,7 +308,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
     uiOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
     scope.setIncludeTestSource(isInspectTestSources());
-    scope.setScope(getCustomScope());
 
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
     return scope;

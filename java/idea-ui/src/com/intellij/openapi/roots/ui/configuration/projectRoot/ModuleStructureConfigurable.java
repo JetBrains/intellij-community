@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ClonableOrderEntry;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
@@ -58,8 +60,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -82,28 +82,25 @@ import java.util.List;
  * Date: 02-Jun-2006
  */
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
-  private static final Comparator<MyNode> NODE_COMPARATOR = new Comparator<MyNode>() {
-    @Override
-    public int compare(final MyNode o1, final MyNode o2) {
-      final NamedConfigurable configurable1 = o1.getConfigurable();
-      final NamedConfigurable configurable2 = o2.getConfigurable();
-      if (configurable1.getClass() == configurable2.getClass()) {
-        return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
-      }
-      final Object editableObject1 = configurable1.getEditableObject();
-      final Object editableObject2 = configurable2.getEditableObject();
-
-      if (editableObject2 instanceof Module && editableObject1 instanceof ModuleGroup) return -1;
-      if (editableObject1 instanceof Module && editableObject2 instanceof ModuleGroup) return 1;
-
-      if (editableObject2 instanceof Module && editableObject1 instanceof String) return 1;
-      if (editableObject1 instanceof Module && editableObject2 instanceof String) return -1;
-
-      if (editableObject2 instanceof ModuleGroup && editableObject1 instanceof String) return 1;
-      if (editableObject1 instanceof ModuleGroup && editableObject2 instanceof String) return -1;
-
-      return 0;
+  private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
+    final NamedConfigurable configurable1 = o1.getConfigurable();
+    final NamedConfigurable configurable2 = o2.getConfigurable();
+    if (configurable1.getClass() == configurable2.getClass()) {
+      return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
     }
+    final Object editableObject1 = configurable1.getEditableObject();
+    final Object editableObject2 = configurable2.getEditableObject();
+
+    if (editableObject2 instanceof Module && editableObject1 instanceof ModuleGroup) return -1;
+    if (editableObject1 instanceof Module && editableObject2 instanceof ModuleGroup) return 1;
+
+    if (editableObject2 instanceof Module && editableObject1 instanceof String) return 1;
+    if (editableObject1 instanceof Module && editableObject2 instanceof String) return -1;
+
+    if (editableObject2 instanceof ModuleGroup && editableObject1 instanceof String) return 1;
+    if (editableObject1 instanceof ModuleGroup && editableObject2 instanceof String) return -1;
+
+    return 0;
   };
 
   private boolean myPlainMode;
@@ -117,7 +114,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public ModuleStructureConfigurable(Project project, ModuleManager manager) {
     super(project);
     myModuleManager = manager;
-    myRemoveHandlers = new ArrayList<RemoveConfigurableHandler<?>>();
+    myRemoveHandlers = new ArrayList<>();
     myRemoveHandlers.add(new ModuleRemoveHandler());
     myRemoveHandlers.add(new FacetInModuleRemoveHandler());
     for (ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
@@ -138,7 +135,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   protected ArrayList<AnAction> getAdditionalActions() {
-    final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    final ArrayList<AnAction> result = new ArrayList<>();
     result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_MOVE_MODULE_TO_GROUP));
     return result;
   }
@@ -178,7 +175,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @NotNull
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
-    final List<ProjectStructureElement> result = new ArrayList<ProjectStructureElement>();
+    final List<ProjectStructureElement> result = new ArrayList<>();
     for (Module module : myModuleManager.getModules()) {
       result.add(new ModuleProjectStructureElement(myContext, module));
     }
@@ -222,7 +219,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
 
   private void createProjectNodes() {
-    final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<ModuleGroup, MyNode>();
+    final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<>();
     final Module[] modules = myModuleManager.getModules();
     for (final Module module : modules) {
       ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER);
@@ -239,18 +236,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       else {
         final MyNode moduleGroupNode = ModuleGroupUtil
           .buildModuleGroupPath(new ModuleGroup(groupPath), myRoot, moduleGroup2NodeMap,
-                                new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
-                                  @Override
-                                  public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
-                                    parentChildRelation.getParent().add(parentChildRelation.getChild());
-                                  }
-                                },
-                                new Function<ModuleGroup, MyNode>() {
-                                  @Override
-                                  public MyNode fun(final ModuleGroup moduleGroup) {
-                                    final NamedConfigurable moduleGroupConfigurable = createModuleGroupConfigurable(moduleGroup);
-                                    return new MyNode(moduleGroupConfigurable, true);
-                                  }
+                                parentChildRelation -> parentChildRelation.getParent().add(parentChildRelation.getChild()),
+                                moduleGroup -> {
+                                  final NamedConfigurable moduleGroupConfigurable = createModuleGroupConfigurable(moduleGroup);
+                                  return new MyNode(moduleGroupConfigurable, true);
                                 });
         moduleGroupNode.add(moduleNode);
       }
@@ -300,23 +289,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         myRoot.add(moduleNode);
       } else {
         final MyNode moduleGroupNode = ModuleGroupUtil
-          .updateModuleGroupPath(new ModuleGroup(groupPath), myRoot, new Function<ModuleGroup, MyNode>() {
-            @Override
-            @Nullable
-            public MyNode fun(final ModuleGroup group) {
-              return findNodeByObject(myRoot, group);
-            }
-          }, new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
-            @Override
-            public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
-              parentChildRelation.getParent().add(parentChildRelation.getChild());
-            }
-          }, new Function<ModuleGroup, MyNode>() {
-            @Override
-            public MyNode fun(final ModuleGroup moduleGroup) {
-              final NamedConfigurable moduleGroupConfigurable = createModuleGroupConfigurable(moduleGroup);
-              return new MyNode(moduleGroupConfigurable, true);
-            }
+          .updateModuleGroupPath(new ModuleGroup(groupPath), myRoot, group1 -> findNodeByObject(myRoot, group1), parentChildRelation -> parentChildRelation.getParent().add(parentChildRelation.getChild()), moduleGroup -> {
+            final NamedConfigurable moduleGroupConfigurable = createModuleGroupConfigurable(moduleGroup);
+            return new MyNode(moduleGroupConfigurable, true);
           });
         moduleGroupNode.add(moduleNode);
       }
@@ -331,13 +306,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   protected Comparator<MyNode> getNodeComparator() {
     List<Comparator<MyNode>> comparators = ContainerUtil
-      .mapNotNull(ModuleStructureExtension.EP_NAME.getExtensions(), new Function<ModuleStructureExtension, Comparator<MyNode>>() {
-        @Override
-        public Comparator<MyNode> fun(final ModuleStructureExtension moduleStructureExtension) {
-          return moduleStructureExtension.getNodeComparator();
-        }
-      });
-    return new MergingComparator<MyNode>(ContainerUtil.concat(comparators, Collections.singletonList(NODE_COMPARATOR)));
+      .mapNotNull(ModuleStructureExtension.EP_NAME.getExtensions(), moduleStructureExtension -> moduleStructureExtension.getNodeComparator());
+    return new MergingComparator<>(ContainerUtil.concat(comparators, Collections.singletonList(NODE_COMPARATOR)));
   }
 
   @Override
@@ -415,7 +385,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     super.disposeUIResources();
     myFacetEditorFacade.clearMaps(true);
     myContext.myModulesConfigurator.disposeUIResources();
-    ModuleStructureConfigurable.super.disposeUIResources();
+    super.disposeUIResources();
 
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       extension.disposeUIResources();
@@ -473,15 +443,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (node != null) {
       p.putPath(TREE_OBJECT, module);
       p.putPath(ModuleEditor.SELECTED_EDITOR_NAME, ClasspathEditor.NAME);
-      r = new Runnable() {
-        @Override
-        public void run() {
-          if (orderEntry != null) {
-            ModuleEditor moduleEditor = ((ModuleConfigurable)node.getConfigurable()).getModuleEditor();
-            ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.NAME);
-            if (editor instanceof ClasspathEditor) {
-              ((ClasspathEditor)editor).selectOrderEntry(orderEntry);
-            }
+      r = () -> {
+        if (orderEntry != null) {
+          ModuleEditor moduleEditor = ((ModuleConfigurable)node.getConfigurable()).getModuleEditor();
+          ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.NAME);
+          if (editor instanceof ClasspathEditor) {
+            ((ClasspathEditor)editor).selectOrderEntry(orderEntry);
           }
         }
       };
@@ -621,13 +588,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return "project.structure";
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
-
   @Nullable
   public Module getModule(final String moduleName) {
     if (moduleName == null) return null;
@@ -639,10 +599,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private static TextConfigurable<ModuleGroup> createModuleGroupConfigurable(final ModuleGroup moduleGroup) {
-    return new TextConfigurable<ModuleGroup>(moduleGroup, moduleGroup.toString(),
-                                             ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
-                                             ProjectBundle.message("project.roots.module.groups.text"),
-                                             PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+    return new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
+                                  ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
+                                  ProjectBundle.message("project.roots.module.groups.text"),
+                                  PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
   private boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
@@ -712,7 +672,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (DataKeys.MODULE_CONTEXT_ARRAY.is(dataId)){
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
-          ArrayList<Module> modules = new ArrayList<Module>();
+          ArrayList<Module> modules = new ArrayList<>();
           for (TreePath path : paths) {
             MyNode node = (MyNode)path.getLastPathComponent();
             final NamedConfigurable configurable = node.getConfigurable();
@@ -804,7 +764,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       @NotNull
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
 
-        ArrayList<AnAction> result = new ArrayList<AnAction>();
+        ArrayList<AnAction> result = new ArrayList<>();
 
         AnAction addModuleAction = new AddModuleAction(false);
         addModuleAction.getTemplatePresentation().setText("New Module");
@@ -821,19 +781,16 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           result.addAll(actions);
         }
 
-        final NullableComputable<MyNode> selectedNodeRetriever = new NullableComputable<MyNode>() {
-          @Override
-          public MyNode compute() {
-            final TreePath selectionPath = myTree.getSelectionPath();
-            final Object lastPathComponent = selectionPath == null ? null : selectionPath.getLastPathComponent();
-            if (lastPathComponent instanceof MyNode) {
-              return (MyNode)lastPathComponent;
-            }
-            return null;
+        final NullableComputable<MyNode> selectedNodeRetriever = () -> {
+          final TreePath selectionPath = myTree.getSelectionPath();
+          final Object lastPathComponent = selectionPath == null ? null : selectionPath.getLastPathComponent();
+          if (lastPathComponent instanceof MyNode) {
+            return (MyNode)lastPathComponent;
           }
+          return null;
         };
 
-        Collection<AnAction> actionsFromExtensions = new ArrayList<AnAction>();
+        Collection<AnAction> actionsFromExtensions = new ArrayList<>();
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
           actionsFromExtensions.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER, myProject, myRoot));
         }
@@ -882,32 +839,29 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           dialogBuilder.setTitle(ProjectBundle.message("copy.module.dialog.title"));
           dialogBuilder.setCenterPanel(component);
           dialogBuilder.setPreferredFocusComponent(component.getNameComponent());
-          dialogBuilder.setOkOperation(new Runnable() {
-            @Override
-            public void run() {
-              final String name = component.getNameValue();
-              if (name.length() == 0) {
-                Messages.showErrorDialog(ProjectBundle.message("enter.module.copy.name.error.message"), CommonBundle.message("title.error"));
-                return;
-              }
-              if (getModule(name) != null) {
-                Messages.showErrorDialog(ProjectBundle.message("module.0.already.exists.error.message", name), CommonBundle.message("title.error"));
-                return;
-              }
-
-              if (component.getPath().length() == 0) {
-                Messages.showErrorDialog(IdeBundle.message("prompt.enter.project.file.location", modulePresentation),
-                                         CommonBundle.message("title.error"));
-                return;
-              }
-              if (!ProjectWizardUtil
-                 .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
-                                             true)) {
-                Messages.showErrorDialog(ProjectBundle.message("path.0.is.invalid.error.message", component.getPath()), CommonBundle.message("title.error"));
-                 return;
-              }
-              dialogBuilder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
+          dialogBuilder.setOkOperation(() -> {
+            final String name = component.getNameValue();
+            if (name.length() == 0) {
+              Messages.showErrorDialog(ProjectBundle.message("enter.module.copy.name.error.message"), CommonBundle.message("title.error"));
+              return;
             }
+            if (getModule(name) != null) {
+              Messages.showErrorDialog(ProjectBundle.message("module.0.already.exists.error.message", name), CommonBundle.message("title.error"));
+              return;
+            }
+
+            if (component.getPath().length() == 0) {
+              Messages.showErrorDialog(IdeBundle.message("prompt.enter.project.file.location", modulePresentation),
+                                       CommonBundle.message("title.error"));
+              return;
+            }
+            if (!ProjectWizardUtil
+               .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
+                                           true)) {
+              Messages.showErrorDialog(ProjectBundle.message("path.0.is.invalid.error.message", component.getPath()), CommonBundle.message("title.error"));
+               return;
+            }
+            dialogBuilder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
           });
           if (dialogBuilder.show() != DialogWrapper.OK_EXIT_CODE) return;
 
@@ -953,15 +907,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           };
           builder.setName(component.getNameValue());
           builder.setModuleFilePath(path + "/" + builder.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-            @Override
-            public void run() {
-              final Module module = myContext.myModulesConfigurator.addModule(builder);
-              if (module != null) {
-                addModuleNode(module);
-              }
-            }
-          });
+          final Module module = myContext.myModulesConfigurator.addModule(builder);
+          if (module != null) {
+            addModuleNode(module);
+          }
         }
         catch (Exception e1) {
           LOG.error(e1);

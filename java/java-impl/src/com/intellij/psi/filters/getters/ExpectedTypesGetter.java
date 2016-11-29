@@ -51,7 +51,7 @@ public class ExpectedTypesGetter implements ContextGetter{
   }
 
   public static PsiType[] extractTypes(ExpectedTypeInfo[] infos, boolean defaultTypes) {
-    Set<PsiType> result = new THashSet<PsiType>(infos.length);
+    Set<PsiType> result = new THashSet<>(infos.length);
     for (ExpectedTypeInfo info : infos) {
       final PsiType type = info.getType();
       final PsiType defaultType = info.getDefaultType();

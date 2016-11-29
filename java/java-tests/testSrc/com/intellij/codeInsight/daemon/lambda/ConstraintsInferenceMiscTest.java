@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class ConstraintsInferenceMiscTest extends LightDaemonAnalyzerTestCase {
@@ -63,12 +61,11 @@ public class ConstraintsInferenceMiscTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
-  private void doTest(final boolean checkWarnings) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+  public void testExceptionConstraintsWithProperAndNonProperThrows() throws Exception {
+    doTest(false);
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
+  private void doTest(final boolean checkWarnings) {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 }

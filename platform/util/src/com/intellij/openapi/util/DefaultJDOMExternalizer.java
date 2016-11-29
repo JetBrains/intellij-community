@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -32,7 +33,7 @@ import java.util.List;
  * @deprecated {@link com.intellij.util.xmlb.XmlSerializer} should be used instead
  * @author mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class DefaultJDOMExternalizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DefaultJDOMExternalizer");
 
@@ -98,6 +99,9 @@ public class DefaultJDOMExternalizer {
         else if (type.equals(String.class)) {
           value = filterXMLCharacters((String)field.get(data));
         }
+        else if (type.isEnum()) {
+          value = field.get(data).toString();
+        }
         else if (type.equals(Color.class)) {
           Color color = (Color)field.get(data);
           if (color != null) {
@@ -134,7 +138,7 @@ public class DefaultJDOMExternalizer {
   }
 
   @Nullable
-  public static String filterXMLCharacters(String value) {
+  static String filterXMLCharacters(String value) {
     if (value != null) {
       StringBuilder builder = null;
       for (int i=0; i<value.length();i++) {
@@ -172,9 +176,9 @@ public class DefaultJDOMExternalizer {
         Field field = data.getClass().getField(fieldName);
         Class type = field.getType();
         int modifiers = field.getModifiers();
-        if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0) continue;
+        if (!BitUtil.isSet(modifiers, Modifier.PUBLIC) || BitUtil.isSet(modifiers, Modifier.STATIC)) continue;
         field.setAccessible(true); // class might be non-public
-        if ((modifiers & Modifier.FINAL) != 0) {
+        if (BitUtil.isSet(modifiers, Modifier.FINAL)) {
           // read external contents of final field
           Object value = field.get(data);
           if (JDOMExternalizable.class.isInstance(value)) {
@@ -255,6 +259,14 @@ public class DefaultJDOMExternalizer {
             }
           }
         }
+        else if (type.isEnum()) {
+          for (Object enumValue : type.getEnumConstants()) {
+            if (enumValue.toString().equals(value)) {
+              field.set(data, enumValue);
+              break;
+            }
+          }
+        }
         else if (type.equals(String.class)) {
           field.set(data, value);
         }
@@ -280,7 +292,7 @@ public class DefaultJDOMExternalizer {
         }
       }
       catch (NoSuchFieldException ex) {
-        LOG.debug(ex);
+        LOG.debug("No field '" + fieldName + "' in " + data.getClass(), ex);
       }
       catch (SecurityException ex) {
         throw new InvalidDataException();

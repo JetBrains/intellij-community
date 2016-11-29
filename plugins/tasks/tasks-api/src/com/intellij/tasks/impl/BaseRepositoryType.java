@@ -29,6 +29,6 @@ public abstract class BaseRepositoryType<T extends BaseRepository> extends TaskR
 
   @NotNull
   public TaskRepositoryEditor createEditor(final T repository, Project project, final Consumer<T> changeListener) {
-    return new BaseRepositoryEditor<T>(project, repository, changeListener);
+    return new BaseRepositoryEditor<>(project, repository, changeListener);
   }
 }

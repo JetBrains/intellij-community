@@ -4,23 +4,27 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author max
- */
-public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
+public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
+
+  protected final Project myProject;
+  protected final ProjectLevelVcsManager myVcsManager;
   protected final HolderType myHolderType;
   protected final TreeMap<VirtualFile, T> myMap;
   protected final TreeMap<VirtualFile, T> myDirMap;
 
   public RecursiveFileHolder(final Project project, final HolderType holderType) {
-    super(project);
-    myMap = new TreeMap<VirtualFile, T>(FilePathComparator.getInstance());
-    myDirMap = new TreeMap<VirtualFile, T>(FilePathComparator.getInstance());
+    myProject = project;
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myMap = new TreeMap<>(FilePathComparator.getInstance());
+    myDirMap = new TreeMap<>(FilePathComparator.getInstance());
     myHolderType = holderType;
   }
 
@@ -29,7 +33,6 @@ public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
     myDirMap.clear();
   }
 
-  @Override
   protected Collection<VirtualFile> keys() {
     return myMap.keySet();
   }
@@ -51,7 +54,17 @@ public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
     }
   }
 
-  public void removeFile(final VirtualFile file) {
+  @Override
+  public int getDirNum() {
+    return myDirMap.size();
+  }
+
+  @Override
+  public int getFilesNum() {
+    return myMap.size();
+  }
+
+  public void removeFile(@NotNull final VirtualFile file) {
     myMap.remove(file);
     if (file.isDirectory()) {
       myDirMap.remove(file);
@@ -59,7 +72,7 @@ public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
   }
 
   public RecursiveFileHolder copy() {
-    final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<T>(myProject, myHolderType);
+    final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<>(myProject, myHolderType);
     copyHolder.myMap.putAll(myMap);
     copyHolder.myDirMap.putAll(myDirMap);
     return copyHolder;
@@ -71,7 +84,7 @@ public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
     if (floor == null) return false;
     final SortedMap<VirtualFile, T> floorMap = myDirMap.headMap(floor, true);
     for (VirtualFile parent : floorMap.keySet()) {
-      if (VfsUtil.isAncestor(parent, file, false)) {
+      if (VfsUtilCore.isAncestor(parent, file, false)) {
         return true;
       }
     }
@@ -80,6 +93,27 @@ public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
 
   public Collection<VirtualFile> values() {
     return myMap.keySet();
+  }
+
+  @Override
+  public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
+    if (myProject.isDisposed()) return;
+    final Iterator<VirtualFile> iterator = keys().iterator();
+    while (iterator.hasNext()) {
+      final VirtualFile file = iterator.next();
+      if (isFileDirty(scope, file)) {
+        iterator.remove();
+      }
+    }
+  }
+
+  protected boolean isFileDirty(final VcsDirtyScope scope, final VirtualFile file) {
+    if (!file.isValid()) return true;
+    final AbstractVcs[] vcsArr = new AbstractVcs[1];
+    if (scope.belongsTo(VcsUtil.getFilePath(file), vcs -> vcsArr[0] = vcs)) {
+      return true;
+    }
+    return vcsArr[0] == null;
   }
 
   public boolean equals(final Object o) {

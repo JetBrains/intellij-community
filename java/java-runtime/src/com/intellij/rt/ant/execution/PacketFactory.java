@@ -15,8 +15,6 @@
  */
 package com.intellij.rt.ant.execution;
 
-import com.intellij.rt.execution.junit.segments.PacketWriter;
-
 /**
  * @author dyoma
  */

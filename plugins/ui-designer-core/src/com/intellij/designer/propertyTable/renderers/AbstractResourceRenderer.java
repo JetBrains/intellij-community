@@ -21,6 +21,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public abstract class AbstractResourceRenderer<T> implements PropertyRenderer {
-  protected final ColorIcon myColorIcon = new ColorIcon(10, 9);
+  protected final ColorIcon myColorIcon = JBUI.scale(new ColorIcon(10, 9));
   protected final SimpleColoredComponent myColoredComponent = new SimpleColoredComponent() {
     @Override
     protected void doPaintIcon(@NotNull Graphics2D g, @NotNull Icon icon, int offset) {

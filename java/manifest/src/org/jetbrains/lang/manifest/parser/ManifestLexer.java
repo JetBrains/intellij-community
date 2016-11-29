@@ -39,7 +39,7 @@ import java.util.Map;
 public class ManifestLexer extends LexerBase {
   private static final Map<Character, IElementType> SPECIAL_CHARACTERS_TOKEN_MAPPING;
   static {
-    SPECIAL_CHARACTERS_TOKEN_MAPPING = new HashMap<Character, IElementType>();
+    SPECIAL_CHARACTERS_TOKEN_MAPPING = new HashMap<>();
     SPECIAL_CHARACTERS_TOKEN_MAPPING.put(':', ManifestTokenType.COLON);
     SPECIAL_CHARACTERS_TOKEN_MAPPING.put(';', ManifestTokenType.SEMICOLON);
     SPECIAL_CHARACTERS_TOKEN_MAPPING.put(',', ManifestTokenType.COMMA);

@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.command;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventObject;
 
@@ -26,37 +27,45 @@ public class CommandEvent extends EventObject {
   private final String myCommandName;
   private final Object myCommandGroupId;
   private final UndoConfirmationPolicy myUndoConfirmationPolicy;
+  private final boolean myShouldRecordActionForActiveDocument;
   private final Document myDocument;
 
-  public CommandEvent(CommandProcessor processor, Runnable command, Project project, UndoConfirmationPolicy undoConfirmationPolicy) {
+  public CommandEvent(@NotNull CommandProcessor processor, @NotNull Runnable command, Project project, @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
     this(processor, command, null, null, project, undoConfirmationPolicy);
   }
 
-  public CommandEvent(CommandProcessor processor,
-                      Runnable command,
+  public CommandEvent(@NotNull CommandProcessor processor,
+                      @NotNull Runnable command,
                       String commandName,
                       Object commandGroupId,
-                      Project project, UndoConfirmationPolicy undoConfirmationPolicy) {
-    this(processor, command, commandName, commandGroupId, project, undoConfirmationPolicy, null);
+                      Project project,
+                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
+    this(processor, command, commandName, commandGroupId, project, undoConfirmationPolicy, true, null);
   }
-  public CommandEvent(CommandProcessor processor,
-                      Runnable command,
+  public CommandEvent(@NotNull CommandProcessor processor,
+                      @NotNull Runnable command,
                       String commandName,
                       Object commandGroupId,
-                      Project project, UndoConfirmationPolicy undoConfirmationPolicy, Document document) {
+                      Project project,
+                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
+                      boolean shouldRecordActionForActiveDocument,
+                      Document document) {
     super(processor);
     myCommand = command;
     myCommandName = commandName;
     myCommandGroupId = commandGroupId;
     myProject = project;
     myUndoConfirmationPolicy = undoConfirmationPolicy;
+    myShouldRecordActionForActiveDocument = shouldRecordActionForActiveDocument;
     myDocument = document;
   }
 
+  @NotNull
   public CommandProcessor getCommandProcessor() {
     return (CommandProcessor)getSource();
   }
 
+  @NotNull
   public Runnable getCommand() {
     return myCommand;
   }
@@ -73,8 +82,13 @@ public class CommandEvent extends EventObject {
     return myCommandGroupId;
   }
 
+  @NotNull
   public UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return myUndoConfirmationPolicy;
+  }
+
+  public boolean shouldRecordActionForOriginalDocument() {
+    return myShouldRecordActionForActiveDocument;
   }
 
   public Document getDocument() {

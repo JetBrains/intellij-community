@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
@@ -51,7 +52,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
   public XDebuggerTreeRenderer() {
-    setSupportFontFallback(true);
     getIpad().right = 0;
     myLink.getIpad().left = 0;
   }
@@ -77,11 +77,17 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       setupLinkDimensions(treeVisibleRect, rowX);
     }
     else {
-      if (rowX + super.getPreferredSize().width > treeVisibleRect.x + treeVisibleRect.width) {
+      int visibleRectRightX = treeVisibleRect.x + treeVisibleRect.width;
+      int notFittingWidth = rowX + super.getPreferredSize().width - visibleRectRightX;
+      if (node instanceof XValueNodeImpl && notFittingWidth > 0) {
         // text does not fit visible area - show link
-        if (node instanceof XValueNodeImpl) {
-          final String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
-          if (!StringUtil.isEmpty(rawValue)) {
+        String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
+        if (!StringUtil.isEmpty(rawValue) && tree.isShowing()) {
+          Point treeRightSideOnScreen = new Point(visibleRectRightX, 0);
+          SwingUtilities.convertPointToScreen(treeRightSideOnScreen, tree);
+          Rectangle screen = ScreenUtil.getScreenRectangle(treeRightSideOnScreen);
+          // text may fit the screen in ExpandableItemsHandler
+          if (screen.x + screen.width < treeRightSideOnScreen.x + notFittingWidth) {
             myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
             append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
             setupLinkDimensions(treeVisibleRect, rowX);

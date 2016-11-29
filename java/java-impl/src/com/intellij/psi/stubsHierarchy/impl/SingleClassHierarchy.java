@@ -15,127 +15,187 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubsHierarchy.ClassHierarchy;
+import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
 import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
-import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntStack;
+import com.intellij.util.containers.ContainerUtil;
+import org.apache.commons.lang.ArrayUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.BitSet;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Compact representation of total hierarchy of JVM classes.
  */
-public class SingleClassHierarchy {
-  public final SmartClassAnchor[] myClassAnchors;
-  private final SmartClassAnchor[] myClassAnchorsByFileIds;
+public class SingleClassHierarchy extends ClassHierarchy {
+  private final BitSet myCoveredFiles;
+  private final BitSet myAmbiguousSupers;
+  private final BitSet myAnonymous;
+  private final AnchorRepository myClassAnchors;
+  private final int[] myClassAnchorsByFileIds;
   private int[] mySubtypes;
   private int[] mySubtypeStarts;
 
-  public SingleClassHierarchy(ClassSymbol[] classSymbols, int symbolCount) {
-    this.myClassAnchors = mkAnchors(classSymbols, symbolCount);
-    this.myClassAnchorsByFileIds = mkByFileId(this.myClassAnchors);
+  public SingleClassHierarchy(ClassSymbol[] classSymbols, AnchorRepository classAnchors) {
+    classAnchors.trimToSize();
+    myClassAnchors = classAnchors;
+    myCoveredFiles = calcCoveredFiles(classSymbols);
+    myClassAnchorsByFileIds = mkByFileId();
+    excludeUncoveredFiles(classSymbols);
+    connectSubTypes(classSymbols);
+    myAmbiguousSupers = calcAmbiguousSupers(classSymbols);
+    myAnonymous = calcAnonymous(classSymbols);
   }
 
-  // under read actions
-  public SmartClassAnchor[] getSubtypes(PsiClass psiClass) {
-    int fileId = Math.abs(FileBasedIndex.getFileId(psiClass.getContainingFile().getVirtualFile()));
-    SmartClassAnchor anchor = forPsiClass(fileId, psiClass);
-    if (anchor == null) {
-      return SmartClassAnchor.EMPTY_ARRAY;
+  @NotNull
+  private static BitSet calcAmbiguousSupers(ClassSymbol[] classSymbols) {
+    BitSet ambiguousSupers = new BitSet();
+    for (ClassSymbol symbol : classSymbols) {
+      if (!symbol.isHierarchyIncomplete() && symbol.hasAmbiguousSupers()) {
+        ambiguousSupers.set(symbol.myAnchorId);
+      }
     }
-    int symbolId = anchor.myId;
+    return ambiguousSupers;
+  }
+
+  @NotNull
+  private static BitSet calcAnonymous(ClassSymbol[] classSymbols) {
+    BitSet answer = new BitSet();
+    for (ClassSymbol symbol : classSymbols) {
+      if (!symbol.isHierarchyIncomplete() && symbol.myShortName == NameEnvironment.NO_NAME) {
+        answer.set(symbol.myAnchorId);
+      }
+    }
+    return answer;
+  }
+
+  @NotNull
+  private BitSet calcCoveredFiles(ClassSymbol[] classSymbols) {
+    BitSet problematicFiles = new BitSet();
+    BitSet coveredFiles = new BitSet();
+    for (ClassSymbol symbol : classSymbols) {
+      int fileId = myClassAnchors.getFileId(symbol.myAnchorId);
+      coveredFiles.set(fileId);
+      if (symbol.isHierarchyIncomplete()) {
+        problematicFiles.set(fileId);
+      }
+    }
+    coveredFiles.andNot(problematicFiles);
+    return coveredFiles;
+  }
+
+  private boolean isCovered(@NotNull StubClassAnchor anchor) {
+    return myCoveredFiles.get(anchor.myFileId);
+  }
+
+  @Override
+  @NotNull
+  public List<StubClassAnchor> getCoveredClasses() {
+    return ContainerUtil.filter(getAllClasses(), this::isCovered);
+  }
+
+  @Override
+  @NotNull
+  public List<StubClassAnchor> getAllClasses() {
+    return IntStream.range(0, myClassAnchors.size()).boxed().map(myClassAnchors::getAnchor).collect(Collectors.toList());
+  }
+
+  @NotNull
+  @Override
+  public SmartClassAnchor[] getDirectSubtypeCandidates(@NotNull PsiClass psiClass) {
+    SmartClassAnchor anchor = findAnchor(psiClass);
+    return anchor == null ? StubClassAnchor.EMPTY_ARRAY : getDirectSubtypeCandidates(anchor);
+  }
+
+  @Override
+  @Nullable
+  public SmartClassAnchor findAnchor(@NotNull PsiClass psiClass) {
+    VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
+    return vFile instanceof VirtualFileWithId ? forPsiClass(((VirtualFileWithId)vFile).getId(), psiClass) : null;
+  }
+
+  @NotNull
+  @Override
+  public SmartClassAnchor[] getDirectSubtypeCandidates(@NotNull SmartClassAnchor anchor) {
+    int symbolId = ((StubClassAnchor)anchor).myId;
     int start = subtypeStart(symbolId);
     int end = subtypeEnd(symbolId);
     int length = end - start;
     if (length == 0) {
-      return SmartClassAnchor.EMPTY_ARRAY;
+      return StubClassAnchor.EMPTY_ARRAY;
     }
-    SmartClassAnchor[] result = new SmartClassAnchor[length];
+    StubClassAnchor[] result = new StubClassAnchor[length];
     for (int i = 0; i < length; i++) {
-      result[i] = myClassAnchors[mySubtypes[start + i]];
+      result[i] = myClassAnchors.getAnchor(mySubtypes[start + i]);
     }
     return result;
   }
 
-  public SmartClassAnchor[] getAllSubtypes(PsiClass base) {
-    int fileId = Math.abs(FileBasedIndex.getFileId(base.getContainingFile().getVirtualFile()));
+  @Override
+  public boolean hasAmbiguousSupers(@NotNull SmartClassAnchor anchor) {
+    return myAmbiguousSupers.get(((StubClassAnchor)anchor).myId);
+  }
 
-    TIntHashSet resultIds = new TIntHashSet();
-    TIntHashSet processed = new TIntHashSet();
-    TIntStack queue = new TIntStack();
+  @Override
+  public boolean isAnonymous(@NotNull SmartClassAnchor anchor) {
+    return myAnonymous.get(((StubClassAnchor)anchor).myId);
+  }
 
-    SmartClassAnchor baseAnchor = forPsiClass(fileId, base);
-    if (baseAnchor == null) {
-      return SmartClassAnchor.EMPTY_ARRAY;
+  @NotNull
+  @Override
+  public GlobalSearchScope restrictToUncovered(@NotNull GlobalSearchScope scope) {
+    if (myCoveredFiles.isEmpty()) {
+      return scope;
     }
 
-    queue.push(baseAnchor.myId);
-    while (queue.size() > 0) {
-      int id = queue.pop();
-      if (processed.add(id)) {
-        int start = subtypeStart(id);
-        int end = subtypeEnd(id);
-        for (int i = start; i < end; i++) {
-          int subtypeId = mySubtypes[i];
-          resultIds.add(subtypeId);
-          if (!processed.contains(subtypeId)) {
-            queue.push(subtypeId);
-          }
+    return new DelegatingGlobalSearchScope(scope, this) {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        if (file instanceof VirtualFileWithId && myCoveredFiles.get(((VirtualFileWithId)file).getId())) {
+          return false;
         }
+
+        return super.contains(file);
       }
-    }
-    int[] allIds = resultIds.toArray();
-    SmartClassAnchor[] result = new SmartClassAnchor[allIds.length];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = myClassAnchors[allIds[i]];
-    }
-    return result;
+    };
   }
 
-  private static SmartClassAnchor[] mkAnchors(ClassSymbol[] classSymbols, int symbolCount) {
-    SmartClassAnchor[] anchors = new SmartClassAnchor[symbolCount];
-    for (int i = 0; i < symbolCount; i++) {
-      anchors[i] = classSymbols[i].myClassAnchor;
-    }
-    return anchors;
-  }
+  @NotNull
+  private Integer[] getAnchorsFromDistinctFiles() {
+    if (myClassAnchors.size() == 0) return new Integer[0];
 
-  private static SmartClassAnchor[] mkByFileId(final SmartClassAnchor[] classAnchors) {
-    SmartClassAnchor[] result = new SmartClassAnchor[classAnchors.length];
-    SmartClassAnchor lastProcessedAnchor = null;
-    int i = 0;
-    for (SmartClassAnchor classAnchor : classAnchors) {
-      if (lastProcessedAnchor == null || lastProcessedAnchor.myFileId != classAnchor.myFileId) {
+    Integer[] result = new Integer[myClassAnchors.size()];
+    result[0] = 0;
+    int i = 1;
+    for (int classAnchor = 1; classAnchor < result.length; classAnchor++) {
+      if (myClassAnchors.getFileId(classAnchor - 1) != myClassAnchors.getFileId(classAnchor)) {
         result[i++] = classAnchor;
       }
-      lastProcessedAnchor = classAnchor;
     }
-    // compacting
-    result = Arrays.copyOf(result, i);
-
-    Arrays.sort(result, new Comparator<SmartClassAnchor>() {
-      @Override
-      public int compare(SmartClassAnchor o1, SmartClassAnchor o2) {
-        int i1 = o1.myFileId;
-        int i2 = o2.myFileId;
-        if (i1 < i2) {
-          return -1;
-        } else if (i1 > i2) {
-          return +1;
-        } else {
-          return 0;
-        }
-      }
-    });
-    return result;
+    return Arrays.copyOf(result, i);
   }
 
-  void connectSubTypes(ClassSymbol[] classSymbols, int n) {
-    int[] sizes = calculateSizes(classSymbols, n);
+  private int[] mkByFileId() {
+    // using a boxed array since there seems to be no easy way to sort int[] with custom comparator
+    Integer[] ids = getAnchorsFromDistinctFiles();
+    Arrays.sort(ids, (a1, a2) -> Integer.compare(myClassAnchors.getFileId(a1), myClassAnchors.getFileId(a2)));
+    return ArrayUtils.toPrimitive(ids);
+  }
 
-    int[] starts = new int[n];
+  private void connectSubTypes(ClassSymbol[] classSymbols) {
+    int[] sizes = calculateSizes(classSymbols);
+
+    int[] starts = new int[classSymbols.length];
     int count = 0;
 
     for (int i = 0; i < sizes.length; i++) {
@@ -145,10 +205,10 @@ public class SingleClassHierarchy {
     int[] subtypes = new int[count];
     int[] filled = new int[sizes.length];
 
-    for (int subTypeId = 0; subTypeId < n; subTypeId++) {
+    for (int subTypeId = 0; subTypeId < classSymbols.length; subTypeId++) {
       ClassSymbol subType = classSymbols[subTypeId];
-      for (ClassSymbol superType : subType.getSuperClasses()) {
-        int superTypeId = superType.myClassAnchor.myId;
+      for (ClassSymbol superType : subType.rawSuperClasses()) {
+        int superTypeId = superType.myAnchorId;
         subtypes[starts[superTypeId] + filled[superTypeId]] = subTypeId;
         filled[superTypeId] += 1;
       }
@@ -158,13 +218,19 @@ public class SingleClassHierarchy {
     this.mySubtypeStarts = starts;
   }
 
-  private static int[] calculateSizes(ClassSymbol[] classSymbols, int n) {
-    int[] sizes = new int[n];
-    for (int i = 1; i < n; i++) {
-      ClassSymbol subType = classSymbols[i];
-      for (ClassSymbol superType : subType.getSuperClasses()) {
-        int superTypeId = superType.myClassAnchor.myId;
-        sizes[superTypeId] += 1;
+  private void excludeUncoveredFiles(ClassSymbol[] classSymbols) {
+    for (ClassSymbol symbol : classSymbols) {
+      if (!myCoveredFiles.get(myClassAnchors.getFileId(symbol.myAnchorId))) {
+        symbol.markHierarchyIncomplete();
+      }
+    }
+  }
+
+  private static int[] calculateSizes(ClassSymbol[] classSymbols) {
+    int[] sizes = new int[classSymbols.length];
+    for (ClassSymbol subType : classSymbols) {
+      for (ClassSymbol superType : subType.rawSuperClasses()) {
+        sizes[superType.myAnchorId] += 1;
       }
     }
     return sizes;
@@ -178,32 +244,30 @@ public class SingleClassHierarchy {
     return (nameId + 1 >= mySubtypeStarts.length) ? mySubtypes.length : mySubtypeStarts[nameId + 1];
   }
 
-  private SmartClassAnchor forPsiClass(int fileId, PsiClass psiClass) {
-    SmartClassAnchor anchor = getFirst(fileId, myClassAnchorsByFileIds);
-    if (anchor == null) {
+  private StubClassAnchor forPsiClass(int fileId, PsiClass psiClass) {
+    int id = getFirst(fileId);
+    if (id == -1) {
       return null;
     }
-    int id = anchor.myId;
-    while (id < myClassAnchors.length) {
-      SmartClassAnchor candidate = myClassAnchors[id];
-      if (candidate.myFileId != fileId)
-        return null;
-      if (psiClass.isEquivalentTo(ClassAnchorUtil.retrieveInReadAction(psiClass.getProject(), candidate)))
-        return candidate;
+    while (id < myClassAnchors.size() && myClassAnchors.getFileId(id) == fileId) {
+      if (psiClass.isEquivalentTo(myClassAnchors.retrieveClass(psiClass.getProject(), id))) {
+        return myClassAnchors.getAnchor(id);
+      }
       id++;
     }
     return null;
   }
 
-  private static SmartClassAnchor getFirst(int fileId, SmartClassAnchor[] byFileIds) {
+  private int getFirst(int fileId) {
     int lo = 0;
-    int hi = byFileIds.length - 1;
+    int hi = myClassAnchorsByFileIds.length - 1;
     while (lo <= hi) {
       int mid = lo + (hi - lo) / 2;
-      if      (fileId < byFileIds[mid].myFileId) hi = mid - 1;
-      else if (fileId > byFileIds[mid].myFileId) lo = mid + 1;
-      else return byFileIds[mid];
+      int midFileId = myClassAnchors.getFileId(myClassAnchorsByFileIds[mid]);
+      if      (fileId < midFileId) hi = mid - 1;
+      else if (fileId > midFileId) lo = mid + 1;
+      else return myClassAnchorsByFileIds[mid];
     }
-    return null;
+    return -1;
   }
 }

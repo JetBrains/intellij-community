@@ -27,16 +27,26 @@ import com.intellij.openapi.options.BeanConfigurable;
 public class JavaCodeFoldingOptionsProvider extends BeanConfigurable<JavaCodeFoldingSettings> implements CodeFoldingOptionsProvider {
   public JavaCodeFoldingOptionsProvider() {
     super(JavaCodeFoldingSettings.getInstance());
-    checkBox("INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS", ApplicationBundle.message("checkbox.collapse.boolean.parameters"));
-    checkBox("COLLAPSE_ONE_LINE_METHODS", ApplicationBundle.message("checkbox.collapse.one.line.methods"));
-    checkBox("COLLAPSE_ACCESSORS", ApplicationBundle.message("checkbox.collapse.simple.property.accessors"));
-    checkBox("COLLAPSE_INNER_CLASSES", ApplicationBundle.message("checkbox.collapse.inner.classes"));
-    checkBox("COLLAPSE_ANONYMOUS_CLASSES", ApplicationBundle.message("checkbox.collapse.anonymous.classes"));
-    checkBox("COLLAPSE_ANNOTATIONS", ApplicationBundle.message("checkbox.collapse.annotations"));
-    checkBox("COLLAPSE_CLOSURES", ApplicationBundle.message("checkbox.collapse.closures"));
-    checkBox("COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS", ApplicationBundle.message("checkbox.collapse.generic.constructor.parameters"));
-    checkBox("COLLAPSE_I18N_MESSAGES", ApplicationBundle.message("checkbox.collapse.i18n.messages"));
-    checkBox("COLLAPSE_SUPPRESS_WARNINGS", ApplicationBundle.message("checkbox.collapse.suppress.warnings"));
-    checkBox("COLLAPSE_END_OF_LINE_COMMENTS", ApplicationBundle.message("checkbox.collapse.end.of.line.comments"));
+    JavaCodeFoldingSettings settings = getInstance();
+    
+    checkBox(ApplicationBundle.message("checkbox.collapse.one.line.methods"), settings::isCollapseOneLineMethods, settings::setCollapseOneLineMethods);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.simple.property.accessors"), settings::isCollapseAccessors, settings::setCollapseAccessors);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.inner.classes"), settings::isCollapseInnerClasses, settings::setCollapseInnerClasses);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.anonymous.classes"), settings::isCollapseAnonymousClasses, settings::setCollapseAnonymousClasses);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.annotations"), settings::isCollapseAnnotations, settings::setCollapseAnnotations);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.closures"), settings::isCollapseLambdas, settings::setCollapseLambdas);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.generic.constructor.parameters"), settings::isCollapseConstructorGenericParameters, settings::setCollapseConstructorGenericParameters);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.i18n.messages"), settings::isCollapseI18nMessages, settings::setCollapseI18nMessages);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.suppress.warnings"), settings::isCollapseSuppressWarnings, settings::setCollapseSuppressWarnings);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.end.of.line.comments"), settings::isCollapseEndOfLineComments, settings::setCollapseEndOfLineComments);
   }
 }

@@ -28,8 +28,6 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -40,7 +38,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,15 +87,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    final Ref<Boolean> result = Ref.create(false);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        result.set(addSupport());
-      }
-    });
-
-    if (result.get()) {
+    if (addSupport()) {
       super.doOKAction();
     }
   }
@@ -136,7 +125,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       protected void run(@NotNull final Result result) {
         final ModifiableRootModel rootModel = myModifiableModelsProvider.getModuleModifiableModel(myModule);
         if (librarySettings != null) {
-          librarySettings.addLibraries(rootModel, new ArrayList<Library>(), myModel.getLibrariesContainer());
+          librarySettings.addLibraries(rootModel, new ArrayList<>(), myModel.getLibrariesContainer());
         }
         myConfigurable.addSupport(myModule, rootModel, myModifiableModelsProvider);
         myModifiableModelsProvider.commitModuleModifiableModel(rootModel);
@@ -160,7 +149,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
   }
 
   private boolean askAndRemoveDuplicatedLibraryEntry(@NotNull ModifiableRootModel rootModel, @NotNull CustomLibraryDescription description) {
-    List<OrderEntry> existingEntries = new ArrayList<OrderEntry>();
+    List<OrderEntry> existingEntries = new ArrayList<>();
     final LibrariesContainer container = myModel.getLibrariesContainer();
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       if (!(entry instanceof LibraryOrderEntry)) continue;

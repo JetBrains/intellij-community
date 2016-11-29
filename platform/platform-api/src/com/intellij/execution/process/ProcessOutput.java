@@ -28,12 +28,11 @@ import java.util.List;
 public class ProcessOutput {
   private final StringBuilder myStdoutBuilder = new StringBuilder();
   private final StringBuilder myStderrBuilder = new StringBuilder();
-  private int myExitCode;
+  @Nullable private Integer myExitCode;
   private boolean myTimeout;
   private boolean myCancelled;
 
   public ProcessOutput() {
-    myExitCode = -1; // until set explicitly, exit code denotes an error.
   }
 
   public ProcessOutput(final int exitCode) {
@@ -104,7 +103,16 @@ public class ProcessOutput {
   }
 
   public int getExitCode() {
-    return myExitCode;
+    Integer code = myExitCode;
+    return code == null ? -1 : code;
+  }
+
+  /**
+   * @return false if exit code wasn't set, 
+   * for example, when our CapturingProcessHandler.runProcess() is interrupted)
+   */
+  public boolean isExitCodeSet() {
+    return myExitCode != null;
   }
 
   public void setTimeout() {

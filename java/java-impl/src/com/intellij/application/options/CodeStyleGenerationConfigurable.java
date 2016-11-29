@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,27 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CommenterForm;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.SortedListModel;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.Comparator;
 
 public class CodeStyleGenerationConfigurable implements Configurable {
   private final JavaVisibilityPanel myJavaVisibilityPanel;
@@ -50,32 +53,38 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JTextField myLocalVariableSuffixField;
 
   private JCheckBox myCbPreferLongerNames;
-  private final MembersOrderList myMembersOrderList;
 
   private final CodeStyleSettings mySettings;
   private JCheckBox myCbGenerateFinalParameters;
   private JCheckBox myCbGenerateFinalLocals;
   private JCheckBox myCbUseExternalAnnotations;
   private JCheckBox myInsertOverrideAnnotationCheckBox;
-  private JPanel myMembersPanel;
   private JCheckBox myRepeatSynchronizedCheckBox;
   private JPanel myVisibilityPanel;
   
   @SuppressWarnings("unused") private JPanel myCommenterPanel;
+  private JPanel myOverridePanel;
+  private JBCheckBox myReplaceInstanceOfCb;
+  private JBCheckBox myReplaceCastCb;
+  private JBCheckBox myReplaceNullCheckCb;
   private CommenterForm myCommenterForm;
+  private SortedListModel<String> myRepeatAnnotationsModel;
 
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
-    myMembersOrderList = new MembersOrderList();
     myPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
     myJavaVisibilityPanel = new JavaVisibilityPanel(false, true, RefactoringBundle.message("default.visibility.border.title"));
   }
 
   public JComponent createComponent() {
-    final JPanel panel = ToolbarDecorator.createDecorator(myMembersOrderList)
-      .disableAddAction().disableRemoveAction().createPanel();
-    myMembersPanel.add(panel, BorderLayout.CENTER);
     myVisibilityPanel.add(myJavaVisibilityPanel, BorderLayout.CENTER);
+    GridBagConstraints gc =
+      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHEAST, GridBagConstraints.BOTH,
+                             new JBInsets(0, 0, 0, 0), 0, 0);
+    final Condition<PsiClass> isApplicable = aClass -> aClass.isAnnotationType();
+    //noinspection Convert2Diamond
+    myRepeatAnnotationsModel = new SortedListModel<String>(Comparator.naturalOrder());
+    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Repeat", false, isApplicable, myRepeatAnnotationsModel), gc);
     return myPanel;
   }
 
@@ -105,13 +114,18 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
     myCbGenerateFinalLocals.setSelected(settings.GENERATE_FINAL_LOCALS);
     myCbGenerateFinalParameters.setSelected(settings.GENERATE_FINAL_PARAMETERS);
-    myMembersOrderList.reset(mySettings);
 
     myCbUseExternalAnnotations.setSelected(settings.USE_EXTERNAL_ANNOTATIONS);
     myInsertOverrideAnnotationCheckBox.setSelected(settings.INSERT_OVERRIDE_ANNOTATION);
     myRepeatSynchronizedCheckBox.setSelected(settings.REPEAT_SYNCHRONIZED);
     myJavaVisibilityPanel.setVisibility(settings.VISIBILITY);
-    
+
+    myReplaceCastCb.setSelected(settings.REPLACE_CAST);
+    myReplaceInstanceOfCb.setSelected(settings.REPLACE_INSTANCEOF);
+    myReplaceNullCheckCb.setSelected(settings.REPLACE_NULL_CHECK);
+
+    myRepeatAnnotationsModel.clear();
+    myRepeatAnnotationsModel.addAll(settings.getRepeatAnnotations());
     myCommenterForm.reset(settings);
   }
 
@@ -141,9 +155,13 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     
     settings.VISIBILITY = myJavaVisibilityPanel.getVisibility();
 
-    myMembersOrderList.apply(settings);
-    
+    settings.REPLACE_CAST = myReplaceCastCb.isSelected();
+    settings.REPLACE_INSTANCEOF = myReplaceInstanceOfCb.isSelected();
+    settings.REPLACE_NULL_CHECK = myReplaceNullCheckCb.isSelected();
+
+
     myCommenterForm.apply(settings);
+    settings.setRepeatAnnotations(myRepeatAnnotationsModel.getItems());
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
@@ -183,10 +201,15 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     isModified |= isModified(myInsertOverrideAnnotationCheckBox, settings.INSERT_OVERRIDE_ANNOTATION);
     isModified |= isModified(myRepeatSynchronizedCheckBox, settings.REPEAT_SYNCHRONIZED);
 
-    isModified |= myMembersOrderList.isModified(settings);
+    isModified |= isModified(myReplaceCastCb, settings.REPLACE_CAST);
+    isModified |= isModified(myReplaceInstanceOfCb, settings.REPLACE_INSTANCEOF);
+    isModified |= isModified(myReplaceNullCheckCb, settings.REPLACE_NULL_CHECK);
+
     isModified |= !settings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
     
     isModified |= myCommenterForm.isModified(settings);
+
+    isModified |= !myRepeatAnnotationsModel.getItems().equals(settings.getRepeatAnnotations());
 
     return isModified;
   }
@@ -206,160 +229,5 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private void createUIComponents() {
     myCommenterForm =  new CommenterForm(JavaLanguage.INSTANCE);
     myCommenterPanel = myCommenterForm.getCommenterPanel();
-  }
-
-  private static class MembersOrderList extends JBList {
-
-    private static abstract class PropertyManager {
-
-      public final String myName;
-
-      protected PropertyManager(String nameKey) {
-        myName = ApplicationBundle.message(nameKey);
-      }
-
-      abstract void apply(CodeStyleSettings settings, int value);
-      abstract int getValue(CodeStyleSettings settings);
-    }
-
-    private static final Map<String, PropertyManager> PROPERTIES = new HashMap<String, PropertyManager>();
-    static {
-      init();
-    }
-
-    private final DefaultListModel myModel;
-
-    public MembersOrderList() {
-      myModel = new DefaultListModel();
-      setModel(myModel);
-      setVisibleRowCount(PROPERTIES.size());
-    }
-
-    public void reset(final CodeStyleSettings settings) {
-      myModel.removeAllElements();
-      for (String string : getPropertyNames(settings)) {
-        myModel.addElement(string);
-      }
-
-      setSelectedIndex(0);
-    }
-
-    private static void init() {
-      PropertyManager staticFieldManager = new PropertyManager("listbox.members.order.static.fields") {
-        @Override void apply(CodeStyleSettings settings, int value) {
-          settings.STATIC_FIELDS_ORDER_WEIGHT = value;
-        }
-        @Override int getValue(CodeStyleSettings settings) {
-          return settings.STATIC_FIELDS_ORDER_WEIGHT;
-        }
-      };
-      PROPERTIES.put(staticFieldManager.myName, staticFieldManager);
-
-      PropertyManager instanceFieldManager = new PropertyManager("listbox.members.order.fields") {
-        @Override void apply(CodeStyleSettings settings, int value) {
-          settings.FIELDS_ORDER_WEIGHT = value;
-        }
-        @Override int getValue(CodeStyleSettings settings) {
-          return settings.FIELDS_ORDER_WEIGHT;
-        }
-      };
-      PROPERTIES.put(instanceFieldManager.myName, instanceFieldManager);
-
-      PropertyManager constructorManager = new PropertyManager("listbox.members.order.constructors") {
-        @Override void apply(CodeStyleSettings settings, int value) {
-          settings.CONSTRUCTORS_ORDER_WEIGHT = value;
-        }
-        @Override int getValue(CodeStyleSettings settings) {
-          return settings.CONSTRUCTORS_ORDER_WEIGHT;
-        }
-      };
-      PROPERTIES.put(constructorManager.myName, constructorManager);
-
-      PropertyManager staticMethodManager = new PropertyManager("listbox.members.order.static.methods") {
-        @Override void apply(CodeStyleSettings settings, int value) {
-          settings.STATIC_METHODS_ORDER_WEIGHT = value;
-        }
-        @Override int getValue(CodeStyleSettings settings) {
-          return settings.STATIC_METHODS_ORDER_WEIGHT;
-        }
-      };
-      PROPERTIES.put(staticMethodManager.myName, staticMethodManager);
-
-      PropertyManager instanceMethodManager = new PropertyManager("listbox.members.order.methods") {
-        @Override void apply(CodeStyleSettings settings, int value) {
-          settings.METHODS_ORDER_WEIGHT = value;
-        }
-        @Override int getValue(CodeStyleSettings settings) {
-          return settings.METHODS_ORDER_WEIGHT;
-        }
-      };
-      PROPERTIES.put(instanceMethodManager.myName, instanceMethodManager);
-
-      PropertyManager staticInnerClassManager = new PropertyManager("listbox.members.order.inner.static.classes") {
-        @Override void apply(CodeStyleSettings settings, int value) {
-          settings.STATIC_INNER_CLASSES_ORDER_WEIGHT = value;
-        }
-        @Override int getValue(CodeStyleSettings settings) {
-          return settings.STATIC_INNER_CLASSES_ORDER_WEIGHT;
-        }
-      };
-      PROPERTIES.put(staticInnerClassManager.myName, staticInnerClassManager);
-
-      PropertyManager innerClassManager = new PropertyManager("listbox.members.order.inner.classes") {
-        @Override void apply(CodeStyleSettings settings, int value) {
-          settings.INNER_CLASSES_ORDER_WEIGHT = value;
-        }
-        @Override int getValue(CodeStyleSettings settings) {
-          return settings.INNER_CLASSES_ORDER_WEIGHT;
-        }
-      };
-      PROPERTIES.put(innerClassManager.myName, innerClassManager);
-    }
-
-    private static Iterable<String> getPropertyNames(final CodeStyleSettings settings) {
-      List<String> result = new ArrayList<String>(PROPERTIES.keySet());
-      Collections.sort(result, new Comparator<String>() {
-        public int compare(String o1, String o2) {
-          int weight1 = getWeight(o1);
-          int weight2 = getWeight(o2);
-          return weight1 - weight2;
-        }
-
-        private int getWeight(String o) {
-          PropertyManager propertyManager = PROPERTIES.get(o);
-          if (propertyManager == null) {
-            throw new IllegalArgumentException("unexpected " + o);
-          }
-          return propertyManager.getValue(settings);
-        }
-      });
-      return result;
-    }
-
-    public void apply(CodeStyleSettings settings) {
-      for (int i = 0; i < myModel.size(); i++) {
-        Object o = myModel.getElementAt(i);
-        if (o == null) {
-          throw new IllegalArgumentException("unexpected " + o);
-        }
-        PropertyManager propertyManager = PROPERTIES.get(o.toString());
-        if (propertyManager == null) {
-          throw new IllegalArgumentException("unexpected " + o);
-        }
-        propertyManager.apply(settings, i + 1);
-      }
-    }
-
-    public boolean isModified(CodeStyleSettings settings) {
-      Iterable<String> oldProperties = getPropertyNames(settings);
-      int i = 0;
-      for (String property : oldProperties) {
-        if (i >= myModel.size() || !property.equals(myModel.getElementAt(i))) {
-          return true;
-        }
-        i++;
-      }
-      return false;
-    }
   }
 }

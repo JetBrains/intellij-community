@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui.plaf.beg;
 
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -72,7 +73,6 @@ public class BegBorders {
   }
 
   public static class ButtonBorder extends AbstractBorder implements UIResource {
-    protected static Insets borderInsets = new Insets(3, 3, 3, 3);
 
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
       AbstractButton button = (AbstractButton) c;
@@ -97,10 +97,11 @@ public class BegBorders {
     }
 
     public Insets getBorderInsets(Component c) {
-      return (Insets)borderInsets.clone();
+      return JBUI.insets(3);
     }
 
     public Insets getBorderInsets(Component c, Insets newInsets) {
+      Insets borderInsets = JBUI.insets(3);
       newInsets.top = borderInsets.top;
       newInsets.left = borderInsets.left;
       newInsets.bottom = borderInsets.bottom;

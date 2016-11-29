@@ -21,7 +21,8 @@ import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
 internal class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   companion object {
@@ -36,9 +37,9 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
     service<DefaultProjectExportableAndSaveTrigger>().project = project
   }
 
-  private val storage by lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.stateStorageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.stateStorageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
 
-  private class DefaultProjectStorage(file: File, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
+  private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
     override public fun loadLocalData(): Element? {
       val element = super.loadLocalData() ?: return null
       try {
@@ -52,7 +53,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
 
     override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
       override fun saveLocally(element: Element?) {
-        super.saveLocally(Element("application").addContent(Element("component").setAttribute("name", "ProjectManager").addContent(element)))
+        super.saveLocally(element?.let { Element("application").addContent(Element("component").setAttribute("name", "ProjectManager").addContent(it))})
       }
     }
   }
@@ -65,7 +66,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun startExternalization() = storage.startExternalization()?.let { MyExternalizationSession(it) }
+    override fun startExternalization() = storage.startExternalization()?.let(::MyExternalizationSession)
 
     override fun expandMacros(file: String) = throw UnsupportedOperationException()
 
@@ -77,7 +78,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy() = storage.loadLocalData()
   
-  override final fun getPathMacroManagerForDefaults() = pathMacroManager
+  override fun getPathMacroManagerForDefaults() = pathMacroManager
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
 

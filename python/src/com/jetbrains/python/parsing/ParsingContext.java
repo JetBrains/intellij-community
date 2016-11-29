@@ -36,7 +36,7 @@ public class ParsingContext {
     stmtParser = new StatementParsing(this, futureFlag);
     expressionParser = new ExpressionParsing(this);
     functionParser = new FunctionParsing(this);
-    myScopes = new ArrayDeque<ParsingScope>();
+    myScopes = new ArrayDeque<>();
     myScopes.push(emptyParsingScope());
   }
 

@@ -49,7 +49,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    HashSet<String> set = new HashSet<String>();
+    HashSet<String> set = new HashSet<>();
     cache.getAllMethodNames(set);
     cache.getAllFieldNames(set);
     cache.getAllClassNames(set);
@@ -64,7 +64,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
     Condition<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(pattern);
 
-    List<PsiMember> result = new ArrayList<PsiMember>();
+    List<PsiMember> result = new ArrayList<>();
     for (PsiMethod method : cache.getMethodsByName(name, scope)) {
       if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method, scope, qualifiedMatcher)) {
         result.add(method);
@@ -99,21 +99,18 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     if (containingClass == null) return false;
 
     final int parametersCount = method.getParameterList().getParametersCount();
-    return !InheritanceUtil.processSupers(containingClass, false, new Processor<PsiClass>() {
-      @Override
-      public boolean process(PsiClass superClass) {
-        if (PsiSearchScopeUtil.isInScope(scope, superClass)) {
-          for (PsiMethod candidate : superClass.findMethodsByName(method.getName(), false)) {
-            if (parametersCount == candidate.getParameterList().getParametersCount() && 
-                !candidate.hasModifierProperty(PsiModifier.PRIVATE) && 
-                !candidate.hasModifierProperty(PsiModifier.STATIC) && 
-                qualifiedMatcher.value(candidate)) {
-              return false;
-            }
+    return !InheritanceUtil.processSupers(containingClass, false, superClass -> {
+      if (PsiSearchScopeUtil.isInScope(scope, superClass)) {
+        for (PsiMethod candidate : superClass.findMethodsByName(method.getName(), false)) {
+          if (parametersCount == candidate.getParameterList().getParametersCount() &&
+              !candidate.hasModifierProperty(PsiModifier.PRIVATE) &&
+              !candidate.hasModifierProperty(PsiModifier.STATIC) &&
+              qualifiedMatcher.value(candidate)) {
+            return false;
           }
         }
-        return true;
       }
+      return true;
     });
     
   }
@@ -151,29 +148,20 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     final Condition<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(completePattern);
 
     //noinspection UnusedDeclaration
-    final Set<PsiMethod> collectedMethods = new THashSet<PsiMethod>();
-    boolean success = cache.processFieldsWithName(name, new Processor<PsiField>() {
-      @Override
-      public boolean process(PsiField field) {
-        if (isOpenable(field) && qualifiedMatcher.value(field)) return processor.process(field);
-        return true;
-      }
+    final Set<PsiMethod> collectedMethods = new THashSet<>();
+    boolean success = cache.processFieldsWithName(name, field -> {
+      if (isOpenable(field) && qualifiedMatcher.value(field)) return processor.process(field);
+      return true;
     }, scope, filter) &&
-                    cache.processClassesWithName(name, new Processor<PsiClass>() {
-                      @Override
-                      public boolean process(PsiClass aClass) {
+                      cache.processClassesWithName(name, aClass -> {
                         if (isOpenable(aClass) && qualifiedMatcher.value(aClass)) return processor.process(aClass);
                         return true;
+                      }, scope, filter) &&
+                      cache.processMethodsWithName(name, method -> {
+                      if(!method.isConstructor() && isOpenable(method) && qualifiedMatcher.value(method)) {
+                        collectedMethods.add(method);
                       }
-                    }, scope, filter) &&
-                    cache.processMethodsWithName(name, new Processor<PsiMethod>() {
-                      @Override
-                      public boolean process(PsiMethod method) {
-                        if(!method.isConstructor() && isOpenable(method) && qualifiedMatcher.value(method)) {
-                          collectedMethods.add(method);
-                        }
-                        return true;
-                      }
+                      return true;
                     }, scope, filter);
     if (success) {
       // hashSuperMethod accesses index and can not be invoked without risk of the deadlock in processMethodsWithName
@@ -190,13 +178,10 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   private static Condition<PsiMember> getQualifiedNameMatcher(String completePattern) {
     final Condition<PsiMember> qualifiedMatcher;
     if (completePattern.contains(".")) {
-      final MinusculeMatcher matcher = new MinusculeMatcher("*" + StringUtil.replace(completePattern, ".", ".*"), NameUtil.MatchingCaseSensitivity.NONE);
-      qualifiedMatcher = new Condition<PsiMember>() {
-        @Override
-        public boolean value(PsiMember member) {
-          String qualifiedName = PsiUtil.getMemberQualifiedName(member);
-          return qualifiedName != null && matcher.matches(qualifiedName);
-        }
+      final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + StringUtil.replace(completePattern, ".", ".*")).build();
+      qualifiedMatcher = member -> {
+        String qualifiedName = PsiUtil.getMemberQualifiedName(member);
+        return qualifiedName != null && matcher.matches(qualifiedName);
       };
     } else {
       //noinspection unchecked

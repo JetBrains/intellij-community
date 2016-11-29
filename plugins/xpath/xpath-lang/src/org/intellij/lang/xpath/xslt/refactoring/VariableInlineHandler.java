@@ -150,17 +150,15 @@ public class VariableInlineHandler extends InlineActionHandler {
     }
 
     final HighlightManager highlighter = HighlightManager.getInstance(project);
-    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     final PsiReference[] psiReferences = references.toArray(new PsiReference[references.size()]);
-    TextRange[] ranges = ContainerUtil.map2Array(psiReferences, TextRange.class, new Function<PsiReference, TextRange>() {
-      public TextRange fun(PsiReference s) {
-        final PsiElement psiElement = s.getElement();
-        final XmlAttributeValue context = PsiTreeUtil.getContextOfType(psiElement, XmlAttributeValue.class, true);
-        if (psiElement instanceof XPathElement && context != null) {
-          return XsltCodeInsightUtil.getRangeInsideHostingFile((XPathElement)psiElement).cutOut(s.getRangeInElement());
-        }
-        return psiElement.getTextRange().cutOut(s.getRangeInElement());
+    TextRange[] ranges = ContainerUtil.map2Array(psiReferences, TextRange.class, s -> {
+      final PsiElement psiElement = s.getElement();
+      final XmlAttributeValue context = PsiTreeUtil.getContextOfType(psiElement, XmlAttributeValue.class, true);
+      if (psiElement instanceof XPathElement && context != null) {
+        return XsltCodeInsightUtil.getRangeInsideHostingFile((XPathElement)psiElement).cutOut(s.getRangeInElement());
       }
+      return psiElement.getTextRange().cutOut(s.getRangeInElement());
     });
     final Editor e = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     for (TextRange range : ranges) {

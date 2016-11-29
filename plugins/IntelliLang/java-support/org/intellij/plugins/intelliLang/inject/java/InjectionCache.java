@@ -15,13 +15,14 @@
  */
 package org.intellij.plugins.intelliLang.inject.java;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch.Parameters;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -33,6 +34,7 @@ import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,67 +45,66 @@ import java.util.Set;
  * Created by Max Medvedev on 22/03/14
  */
 public class InjectionCache {
-  private final CachedValue<Collection<String>> myAnnoIndex;
+  private final CachedValue<Set<String>> myAnnoIndex;
   private final CachedValue<Collection<String>> myXmlIndex;
+  private final Project myProject;
 
   public InjectionCache(final Project project, final Configuration configuration) {
-
-    myXmlIndex = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Collection<String>>() {
-      public Result<Collection<String>> compute() {
-        final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
-        for (BaseInjection injection : configuration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
-          for (InjectionPlace place : injection.getInjectionPlaces()) {
-            if (!place.isEnabled() || place.getElementPattern() == null) continue;
-            map.put(place.getElementPattern(), injection);
-          }
+    myProject = project;
+    myXmlIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {
+      final Map<ElementPattern<?>, BaseInjection> map = new THashMap<>();
+      for (BaseInjection injection : configuration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
+        for (InjectionPlace place : injection.getInjectionPlaces()) {
+          if (!place.isEnabled() || place.getElementPattern() == null) continue;
+          map.put(place.getElementPattern(), injection);
         }
-        final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
-        return new Result<Collection<String>>(stringSet, configuration);
       }
+      final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
+      return new CachedValueProvider.Result<Collection<String>>(stringSet, configuration);
     }, false);
 
-    myAnnoIndex = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Collection<String>>() {
-      public Result<Collection<String>> compute() {
-        final String annotationClass = configuration.getAdvancedConfiguration().getLanguageAnnotationClass();
-        final Collection<String> result = new THashSet<String>();
-        final ArrayList<String> annoClasses = new ArrayList<String>(3);
-        annoClasses.add(StringUtil.getShortName(annotationClass));
-        for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
-          final String annoClass = annoClasses.get(cursor);
-          for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance().get(annoClass, project, GlobalSearchScope.allScope(project))) {
-            final PsiElement modList = annotation.getParent();
-            if (!(modList instanceof PsiModifierList)) continue;
-            final PsiElement element = modList.getParent();
-            if (element instanceof PsiParameter) {
-              final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
-              if (scope instanceof PsiNamedElement) {
-                ContainerUtil.addIfNotNull(((PsiNamedElement)scope).getName(), result);
-              }
-              else {
-                ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
-              }
-            }
-            else if (element instanceof PsiNamedElement) {
-              if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) {
-                final String s = ((PsiClass)element).getName();
-                if (!annoClasses.contains(s)) annoClasses.add(s);
-              }
-              else {
-                ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
-              }
-            }
+    myAnnoIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {
+      Set<String> result = collectMethodNamesWithLanguage(
+        configuration.getAdvancedConfiguration().getLanguageAnnotationClass());
+      return new CachedValueProvider.Result<>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, configuration);
+    }, false);
+  }
+
+  @NotNull
+  private Set<String> collectMethodNamesWithLanguage(String annotationClassName) {
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
+
+    // todo use allScope once Kotlin support becomes fast enough (https://youtrack.jetbrains.com/issue/KT-13734)
+    GlobalSearchScope usageScope = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, JavaFileType.INSTANCE);
+
+    Set<String> result = new THashSet<>();
+    ArrayList<PsiClass> annoClasses = ContainerUtil.newArrayList(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope));
+    for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
+      Parameters parameters = new Parameters(annoClasses.get(cursor), usageScope, true, PsiClass.class, PsiParameter.class, PsiMethod.class);
+      AnnotatedElementsSearch.searchElements(parameters).forEach(element -> {
+        if (element instanceof PsiParameter) {
+          final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
+          if (scope instanceof PsiMethod) {
+            ContainerUtil.addIfNotNull(result, ((PsiMethod)scope).getName());
           }
         }
-        return new Result<Collection<String>>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, configuration);
-      }
-    }, false);
+        else if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType() && !annoClasses.contains(element)) {
+          annoClasses.add((PsiClass)element);
+        }
+        else if (element instanceof PsiMethod) {
+          ContainerUtil.addIfNotNull(result, ((PsiMember)element).getName());
+        }
+        return true;
+      });
+    }
+    return result;
   }
 
   public static InjectionCache getInstance(Project project) {
     return ServiceManager.getService(project, InjectionCache.class);
   }
 
-  public Collection<String> getAnnoIndex() {
+  public Set<String> getAnnoIndex() {
     return myAnnoIndex.getValue();
   }
 

@@ -33,12 +33,6 @@ public class SecondUnsafeCallQuickFix implements LocalQuickFix {
 
   @Override
   @NotNull
-  public String getName() {
-    return GroovyInspectionBundle.message("second.unsafe.call");
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
     return GroovyInspectionBundle.message("second.unsafe.call");
   }

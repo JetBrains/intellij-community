@@ -67,13 +67,10 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
   }
 
   private String[] getEnumeratedValues(boolean forCompletion) {
-    final List<String> list = new SmartList<String>();
-    processEnumeration(null, new PairProcessor<PsiElement, String>() {
-      @Override
-      public boolean process(PsiElement element, String s) {
-        list.add(s);
-        return true;
-      }
+    final List<String> list = new SmartList<>();
+    processEnumeration(null, (element, s) -> {
+      list.add(s);
+      return true;
     }, forCompletion);
     String defaultValue = getDefaultValue();
     if (defaultValue != null) {
@@ -119,14 +116,11 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
     }
 
     else {
-      final Ref<Boolean> found = new Ref<Boolean>(Boolean.FALSE);
-      myExhaustiveEnum = XmlUtil.processEnumerationValues(declaration, new Processor<XmlTag>() {
-        @Override
-        public boolean process(XmlTag tag) {
-          found.set(Boolean.TRUE);
-          XmlAttribute name = tag.getAttribute("value");
-          return name == null || pairProcessor.process(tag, name.getValue());
-        }
+      final Ref<Boolean> found = new Ref<>(Boolean.FALSE);
+      myExhaustiveEnum = XmlUtil.processEnumerationValues(declaration, tag -> {
+        found.set(Boolean.TRUE);
+        XmlAttribute name1 = tag.getAttribute("value");
+        return name1 == null || pairProcessor.process(tag, name1.getValue());
       });
       return found.get();
     }
@@ -149,16 +143,13 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
   @Override
   public PsiElement getEnumeratedValueDeclaration(XmlElement xmlElement, final String value) {
-    final Ref<PsiElement> result = new Ref<PsiElement>();
-    processEnumeration(getDeclaration(), new PairProcessor<PsiElement, String>() {
-      @Override
-      public boolean process(PsiElement element, String s) {
-        if (value.equals(s)) {
-          result.set(element);
-          return false;
-        }
-        return true;
+    final Ref<PsiElement> result = new Ref<>();
+    processEnumeration(getDeclaration(), (element, s) -> {
+      if (value.equals(s)) {
+        result.set(element);
+        return false;
       }
+      return true;
     }, false);
     return result.get();
   }

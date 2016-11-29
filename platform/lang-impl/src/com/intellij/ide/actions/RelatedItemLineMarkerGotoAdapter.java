@@ -36,9 +36,9 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {
-    List<PsiElement> parents = new ArrayList<PsiElement>();
+    List<PsiElement> parents = new ArrayList<>();
     PsiElement current = context;
-    Set<Language> languages = new HashSet<Language>();
+    Set<Language> languages = new HashSet<>();
     while (current != null) {
       parents.add(current);
       languages.add(current.getLanguage());
@@ -46,17 +46,17 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
       current = current.getParent();
     }
 
-    List<LineMarkerProvider> providers = new ArrayList<LineMarkerProvider>();
+    List<LineMarkerProvider> providers = new ArrayList<>();
     for (Language language : languages) {
       providers.addAll(LineMarkersPass.getMarkerProviders(language, context.getProject()));
     }
-    List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
+    List<GotoRelatedItem> items = new ArrayList<>();
     for (LineMarkerProvider provider : providers) {
       if (provider instanceof RelatedItemLineMarkerProvider) {
-        List<RelatedItemLineMarkerInfo> markers = new ArrayList<RelatedItemLineMarkerInfo>();
+        List<RelatedItemLineMarkerInfo> markers = new ArrayList<>();
         RelatedItemLineMarkerProvider relatedItemLineMarkerProvider = (RelatedItemLineMarkerProvider)provider;
         for (PsiElement parent : parents) {
-          ContainerUtil.addIfNotNull(relatedItemLineMarkerProvider.getLineMarkerInfo(parent), markers);
+          ContainerUtil.addIfNotNull(markers, relatedItemLineMarkerProvider.getLineMarkerInfo(parent));
         }
         relatedItemLineMarkerProvider.collectNavigationMarkers(parents, markers, true);
 
@@ -69,7 +69,7 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
 
   private static void addItemsForMarkers(List<RelatedItemLineMarkerInfo> markers,
                                          List<GotoRelatedItem> result) {
-    Set<PsiFile> addedFiles = new HashSet<PsiFile>();
+    Set<PsiFile> addedFiles = new HashSet<>();
     for (RelatedItemLineMarkerInfo<?> marker : markers) {
       Collection<? extends GotoRelatedItem> items = marker.createGotoRelatedItems();
       for (GotoRelatedItem item : items) {
@@ -81,7 +81,7 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
           }
         }
         if (element != null) {
-          ContainerUtil.addIfNotNull(element.getContainingFile(), addedFiles);
+          ContainerUtil.addIfNotNull(addedFiles, element.getContainingFile());
         }
         result.add(item);
       }

@@ -32,22 +32,28 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author traff
  */
-public class PyMagicLiteralRenameHandler implements RenameHandler {
-  @Override
-  public boolean isAvailableOnDataContext(final DataContext dataContext) {
+public final class PyMagicLiteralRenameHandler implements RenameHandler {
+  /**
+   * @return string literal under data context or null if not a literal.
+   * This method is fast, so it can safely be used at {@link #isAvailableOnDataContext(DataContext)}
+   */
+  @Nullable
+  private static PyStringLiteralExpression getStringLiteral(@NotNull final DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
-      return false;
+      return null;
     }
 
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (file == null) {
-      return false;
+      return null;
     }
 
     final PsiElement element = getElement(file, editor);
-
-    return !((element == null) || !PyMagicLiteralTools.isMagicLiteral(element));
+    if (element instanceof PyStringLiteralExpression) {
+      return (PyStringLiteralExpression)element;
+    }
+    return null;
   }
 
   @Nullable
@@ -60,8 +66,14 @@ public class PyMagicLiteralRenameHandler implements RenameHandler {
   }
 
   @Override
-  public boolean isRenaming(DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
+  public boolean isAvailableOnDataContext(final DataContext dataContext) {
+    return getStringLiteral(dataContext) != null;
+  }
+
+  @Override
+  public boolean isRenaming(final DataContext dataContext) {
+    final PyStringLiteralExpression literal = getStringLiteral(dataContext);
+    return !((literal == null) || !PyMagicLiteralTools.isMagicLiteral(literal));
   }
 
   @Override

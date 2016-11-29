@@ -44,15 +44,8 @@ public class UnnecessaryInitCauseInspection extends UnnecessaryInitCauseInspecti
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.initcause.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("unnecessary.initcause.quickfix");
     }
 
     @Override

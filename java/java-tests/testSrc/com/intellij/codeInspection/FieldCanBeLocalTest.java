@@ -41,6 +41,7 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
   public void testFieldUsedForWritingInLambda() throws Exception {doTest();}
   public void testStaticQualifiedFieldAccessForWriting() throws Exception {doTest();}
   public void testFieldReferencedFromAnotherObject() throws Exception {doTest();}
+  public void testDontSimplifyRuntimeConstants() throws Exception {doTest();}
   public void testIgnoreAnnotated() throws Exception {
     final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     doTestConfigured(inspection);

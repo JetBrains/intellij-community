@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ipp.base;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -24,8 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,18 +39,11 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
-    if (prepareForWriting() && !FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
-      return;
-    }
     final PsiElement matchingElement = findMatchingElement(element, editor);
     if (matchingElement == null) {
       return;
     }
     processIntention(editor, matchingElement);
-  }
-
-  protected boolean prepareForWriting() {
-    return true;
   }
 
   protected abstract void processIntention(@NotNull PsiElement element);
@@ -64,39 +54,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
-
-  protected static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression newExpression, @NotNull PsiExpression expression){
-    final Project project = expression.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiExpression expressionToReplace = expression;
-    final String newExpressionText = newExpression.getText();
-    final String expString;
-    if (BoolUtils.isNegated(expression)) {
-      expressionToReplace = BoolUtils.findNegation(expression);
-      expString = newExpressionText;
-    }
-    else if (ComparisonUtils.isComparison(newExpression)) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)newExpression;
-      final String negatedComparison = ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      assert rhs != null;
-      expString = lhs.getText() + negatedComparison + rhs.getText();
-    }
-    else {
-      if (ParenthesesUtils.getPrecedence(newExpression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-        expString = "!(" + newExpressionText + ')';
-      }
-      else {
-        expString = '!' + newExpressionText;
-      }
-    }
-    final PsiExpression newCall = factory.createExpressionFromText(expString, expression);
-    assert expressionToReplace != null;
-    final PsiElement insertedElement = expressionToReplace.replace(newCall);
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformat(insertedElement);
-  }
 
   protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression) {
     final Project project = expression.getProject();

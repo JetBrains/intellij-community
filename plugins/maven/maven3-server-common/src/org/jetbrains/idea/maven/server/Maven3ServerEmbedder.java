@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -25,14 +26,28 @@ import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
+import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.model.building.ModelBuildingException;
+import org.apache.maven.model.building.ModelBuildingRequest;
+import org.apache.maven.model.building.ModelProblem;
+import org.apache.maven.model.interpolation.ModelInterpolator;
+import org.apache.maven.project.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
+import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 
 import java.io.File;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,9 +60,11 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
+  protected final MavenServerSettings myServerSettings;
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
-    initLog4J(settings);
+    myServerSettings = settings;
+    initLog4J(myServerSettings);
   }
 
   private static void initLog4J(MavenServerSettings settings) {
@@ -109,6 +126,149 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       Maven3ServerGlobals.getLogger().info(e);
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  protected List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
+    final ProjectBuilder builder = getComponent(ProjectBuilder.class);
+
+    CustomMaven3ModelInterpolator2 modelInterpolator = (CustomMaven3ModelInterpolator2)getComponent(ModelInterpolator.class);
+
+    String savedLocalRepository = modelInterpolator.getLocalRepository();
+    modelInterpolator.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
+    List<ProjectBuildingResult> buildingResults = new SmartList<ProjectBuildingResult>();
+
+    final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
+    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
+    projectBuildingRequest.setResolveDependencies(false);
+
+    try {
+      if (files.size() == 1) {
+        buildSinglePom(builder, buildingResults, projectBuildingRequest, files.iterator().next());
+      }
+      else {
+        try {
+          buildingResults = builder.build(new ArrayList<File>(files), false, projectBuildingRequest);
+        }
+        catch (ProjectBuildingException e) {
+          for (ProjectBuildingResult result : e.getResults()) {
+            if (result.getProject() != null) {
+              buildingResults.add(result);
+            }
+            else {
+              buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
+            }
+          }
+        }
+      }
+    }
+    finally {
+      modelInterpolator.setLocalRepository(savedLocalRepository);
+    }
+    return buildingResults;
+  }
+
+  private void buildSinglePom(ProjectBuilder builder,
+                              List<ProjectBuildingResult> buildingResults,
+                              ProjectBuildingRequest projectBuildingRequest,
+                              File pomFile) {
+    try {
+      ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
+      buildingResults.add(build);
+    }
+    catch (ProjectBuildingException e) {
+      handleProjectBuildingException(buildingResults, e);
+    }
+  }
+
+  protected void handleProjectBuildingException(List<ProjectBuildingResult> buildingResults, ProjectBuildingException e) {
+    List<ProjectBuildingResult> results = e.getResults();
+    if (results != null && !results.isEmpty()) {
+      buildingResults.addAll(results);
+    }
+    else {
+      Throwable cause = e.getCause();
+      List<ModelProblem> problems = null;
+      if (cause instanceof ModelBuildingException) {
+        problems = ((ModelBuildingException)cause).getProblems();
+      }
+      buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, problems, null));
+    }
+  }
+
+  private static class MyProjectBuildingResult implements ProjectBuildingResult {
+
+    private final String myProjectId;
+    private final File myPomFile;
+    private final MavenProject myMavenProject;
+    private final List<ModelProblem> myProblems;
+    private final DependencyResolutionResult myDependencyResolutionResult;
+
+    public MyProjectBuildingResult(String projectId,
+                                   File pomFile,
+                                   MavenProject mavenProject,
+                                   List<ModelProblem> problems,
+                                   DependencyResolutionResult dependencyResolutionResult) {
+      myProjectId = projectId;
+      myPomFile = pomFile;
+      myMavenProject = mavenProject;
+      myProblems = problems;
+      myDependencyResolutionResult = dependencyResolutionResult;
+    }
+
+    @Override
+    public String getProjectId() {
+      return myProjectId;
+    }
+
+    @Override
+    public File getPomFile() {
+      return myPomFile;
+    }
+
+    @Override
+    public MavenProject getProject() {
+      return myMavenProject;
+    }
+
+    @Override
+    public List<ModelProblem> getProblems() {
+      return myProblems;
+    }
+
+    @Override
+    public DependencyResolutionResult getDependencyResolutionResult() {
+      return myDependencyResolutionResult;
+    }
+  }
+
+  protected void addMvn2CompatResults(MavenProject project,
+                                      List<Exception> exceptions,
+                                      List<ResolutionListener> listeners,
+                                      ArtifactRepository localRepository,
+                                      Collection<MavenExecutionResult> executionResults) {
+    ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
+    resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
+    resolutionRequest.setArtifact(project.getArtifact());
+    resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
+    resolutionRequest.setLocalRepository(localRepository);
+    resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
+    resolutionRequest.setListeners(listeners);
+
+    resolutionRequest.setResolveRoot(false);
+    resolutionRequest.setResolveTransitively(true);
+
+    ArtifactResolver resolver = getComponent(ArtifactResolver.class);
+    ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
+
+    project.setArtifacts(result.getArtifacts());
+    executionResults.add(new MavenExecutionResult(project, exceptions));
+  }
+
+  @Override
+  @Nullable
+  public MavenModel readModel(File file) throws RemoteException {
+    return null;
   }
 
   @NotNull

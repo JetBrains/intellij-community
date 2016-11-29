@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class XmlTagValueImpl implements XmlTagValue{
@@ -36,9 +37,9 @@ public class XmlTagValueImpl implements XmlTagValue{
 
   private final XmlTag myTag;
   private final XmlTagChild[] myElements;
-  private volatile XmlText[] myTextElements = null;
-  private volatile String myText = null;
-  private volatile String myTrimmedText = null;
+  private volatile XmlText[] myTextElements;
+  private volatile String myText;
+  private volatile String myTrimmedText;
 
   public XmlTagValueImpl(@NotNull XmlTagChild[] bodyElements, @NotNull XmlTag tag) {
     myTag = tag;
@@ -56,11 +57,10 @@ public class XmlTagValueImpl implements XmlTagValue{
   public XmlText[] getTextElements() {
     XmlText[] textElements = myTextElements;
     if(textElements != null) return textElements;
-    final List<XmlText> textElementsList = new ArrayList<XmlText>();
-    for (final XmlTagChild element : myElements) {
-      if (element instanceof XmlText) textElementsList.add((XmlText)element);
-    }
-    return myTextElements = textElementsList.isEmpty() ? XmlText.EMPTY_ARRAY : ContainerUtil.toArray(textElementsList, new XmlText[textElementsList.size()]);
+    textElements = Arrays.stream(myElements)
+      .filter(element -> element instanceof XmlText)
+      .map(element -> (XmlText)element).toArray(XmlText[]::new);
+    return myTextElements = textElements.length == 0 ? XmlText.EMPTY_ARRAY : textElements;
   }
 
   @Override
@@ -148,7 +148,7 @@ public class XmlTagValueImpl implements XmlTagValue{
 
   @Override
   public boolean hasCDATA() {
-    for (XmlText xmlText : myTextElements) {
+    for (XmlText xmlText : getTextElements()) {
       PsiElement[] children = xmlText.getChildren();
       for (PsiElement child : children) {
         if (child.getNode().getElementType() == XmlElementType.XML_CDATA) {
@@ -160,10 +160,10 @@ public class XmlTagValueImpl implements XmlTagValue{
   }
 
   public static XmlTagValue createXmlTagValue(XmlTag tag) {
-    final List<XmlTagChild> bodyElements = new ArrayList<XmlTagChild>();
+    final List<XmlTagChild> bodyElements = new ArrayList<>();
 
     tag.processElements(new PsiElementProcessor() {
-      boolean insideBody = false;
+      boolean insideBody;
       @Override
       public boolean execute(@NotNull PsiElement element) {
         final ASTNode treeElement = element.getNode();

@@ -27,7 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.EventDispatcher;
+import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -38,10 +38,10 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 
 import static com.intellij.util.ui.UIUtil.isValidFont;
 
@@ -53,14 +53,17 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   /** Not tabbed pane. */
   public static final int TABS_NONE = 0;
 
+  private static UISettings ourSettings;
+
   public static UISettings getInstance() {
-    return ServiceManager.getService(UISettings.class);
+    return ourSettings = ServiceManager.getService(UISettings.class);
   }
 
   /**
    * Use this method if you are not sure whether the application is initialized.
    * @return persisted UISettings instance or default values.
    */
+  @NotNull
   public static UISettings getShadowInstance() {
     Application application = ApplicationManager.getApplication();
     UISettings settings = application == null ? null : getInstance();
@@ -132,7 +135,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean SORT_BOOKMARKS = false;
   public boolean MERGE_EQUAL_STACKTRACES = true;
 
-  private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
+  private final ComponentTreeEventDispatcher<UISettingsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener.class);
 
   public UISettings() {
     tweakPlatformDefaults();
@@ -154,34 +157,29 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   /**
-   * @deprecated use {@link UISettings#addUISettingsListener(UISettingsListener, Disposable disposable)} instead.
+   * @deprecated Please use {@link UISettingsListener#TOPIC}
    */
-  public void addUISettingsListener(UISettingsListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable) {
-    myDispatcher.addListener(listener, parentDisposable);
+  @Deprecated
+  public void addUISettingsListener(@NotNull UISettingsListener listener, @NotNull Disposable parentDisposable) {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener);
   }
 
   /**
    * Notifies all registered listeners that UI settings has been changed.
    */
   public void fireUISettingsChanged() {
-    incModificationCount();
-    myDispatcher.getMulticaster().uiSettingsChanged(this);
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
-    IconLoader.setFilter(COLOR_BLINDNESS == ColorBlindness.protanopia
-                         ? DaltonizationFilter.protanopia
-                         : COLOR_BLINDNESS == ColorBlindness.deuteranopia
-                           ? DaltonizationFilter.deuteranopia
-                           : COLOR_BLINDNESS == ColorBlindness.tritanopia
-                             ? DaltonizationFilter.tritanopia
-                             : null);
-  }
+    ColorBlindnessSupport support = ColorBlindnessSupport.get(COLOR_BLINDNESS);
+    IconLoader.setFilter(support == null ? null : support.getFilter());
 
-  public void removeUISettingsListener(UISettingsListener listener) {
-    myDispatcher.removeListener(listener);
+    if (incAndGetModificationCount() == 1) {
+      return;
+    }
+
+    if (ourSettings == this) {
+      // if this is the main UISettings instance push event to bus and to all current components
+      myTreeDispatcher.getMulticaster().uiSettingsChanged(this);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
+    }
   }
 
   private void setSystemFontFaceAndSize() {
@@ -280,7 +278,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
   }
 
-  /* This method must not be used for set up antialiasing for editor components
+  /**
+   *  This method must not be used for set up antialiasing for editor components. To make sure antialiasing settings are taken into account
+   *  when preferred size of component is calculated, {@link #setupComponentAntialiasing(JComponent)} method should be called from
+   *  <code>updateUI()</code> or <code>setUI()</code> method of component.
    */
   public static void setupAntialiasing(final Graphics g) {
 
@@ -304,5 +305,12 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
 
       setupFractionalMetrics(g2d);
+  }
+
+  /**
+   * @see #setupComponentAntialiasing(JComponent)
+   */
+  public static void setupComponentAntialiasing(JComponent component) {
+    component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
   }
 }

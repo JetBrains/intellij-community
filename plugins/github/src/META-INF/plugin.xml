@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>GitHub</name>
   <id>org.jetbrains.plugins.github</id>
   <vendor>JetBrains</vendor>
@@ -46,10 +46,9 @@
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
-    </action>
-    <action id="Github.Open.Commit.In.Browser" class="org.jetbrains.plugins.github.GithubShowCommitInBrowserFromLogAction">
-      <add-to-group group-id="Git.LogContextMenu" />
-      <add-to-group group-id="Vcs.Log.ContextMenu" />
+      <add-to-group group-id="Git.LogContextMenu"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+      <add-to-group group-id="VcsHistoryActionsGroup"/>
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>

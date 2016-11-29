@@ -18,8 +18,6 @@ package com.jetbrains.python.sdk;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -47,7 +45,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Nullable private DialogWrapper myMore;
@@ -100,7 +97,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   private static List<String> getAvailableOptions(boolean showMore) {
-    final List<String> options = new ArrayList<String>();
+    final List<String> options = new ArrayList<>();
     options.add(LOCAL);
     if (PythonRemoteInterpreterManager.getInstance() != null) {
       options.add(REMOTE);
@@ -143,12 +140,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   private void createLocalSdk() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-      SdkConfigurationUtil.createSdk(myProject, myExistingSdks, mySdkAddedCallback, false, PythonSdkType.getInstance());
-      }
-    }, ModalityState.any());
+    SdkConfigurationUtil.createSdk(myProject, myExistingSdks, mySdkAddedCallback, false, PythonSdkType.getInstance());
   }
 
   private void createRemoteSdk() {
@@ -180,10 +172,6 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
       for (String string : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), strings, myExistingSdks)) {
         allSdks.add(new PyDetectedSdk(string));
       }
-    }
-    final Set<String> sdks = PySdkService.getInstance().getAddedSdks();
-    for (String string : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdks, myExistingSdks)) {
-      allSdks.add(new PyDetectedSdk(string));
     }
     if (myProject != null) {
       dialog = new CreateVirtualEnvDialog(myProject, allSdks);
@@ -247,10 +235,6 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   @Override
   public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-    return doFinalStep(new Runnable() {
-      public void run() {
-        optionSelected(selectedValue);
-      }
-    });
+    return doFinalStep(() -> optionSelected(selectedValue));
   }
 }

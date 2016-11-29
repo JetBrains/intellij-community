@@ -125,19 +125,16 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        List<String> macros = new SmartList<String>(PathMacros.getInstance().getUserMacroNames());
+        List<String> macros = new SmartList<>(PathMacros.getInstance().getUserMacroNames());
         if (myModuleContext != null || myHasModuleMacro) {
           macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
         }
 
         final JList list = new JBList(ArrayUtil.toStringArray(macros));
-        JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            final Object value = list.getSelectedValue();
-            if (value instanceof String) {
-              textAccessor.setText('$' + ((String)value) + '$');
-            }
+        JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(() -> {
+          final Object value = list.getSelectedValue();
+          if (value instanceof String) {
+            textAccessor.setText('$' + ((String)value) + '$');
           }
         }).setMovable(false).setResizable(false).createPopup().showUnderneathOf(button);
       }

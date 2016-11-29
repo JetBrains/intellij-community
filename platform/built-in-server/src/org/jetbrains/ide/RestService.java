@@ -15,23 +15,34 @@
  */
 package org.jetbrains.ide;
 
+import com.google.common.base.Supplier;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.google.gson.stream.MalformedJsonException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.NettyKt;
+import com.intellij.util.net.NetUtils;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -39,14 +50,25 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.BuiltInWebServerKt;
 import org.jetbrains.io.Responses;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.ide.impl.ProjectUtil.showYesNoDialog;
 
 /**
  * Document your service using <a href="http://apidocjs.com">apiDoc</a>. To extract big example from source code, consider to use *.coffee file near your source file.
@@ -67,6 +89,12 @@ public abstract class RestService extends HttpRequestHandler {
       return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     }
   };
+
+  private final LoadingCache<InetAddress, AtomicInteger> abuseCounter =
+    CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build(CacheLoader.from((Supplier<AtomicInteger>)AtomicInteger::new));
+
+  private final Cache<String, Boolean> trustedOrigins =
+    CacheBuilder.newBuilder().maximumSize(1024).expireAfterWrite(1, TimeUnit.DAYS).build();
 
   @Override
   public final boolean isSupported(@NotNull FullHttpRequest request) {
@@ -104,10 +132,10 @@ public abstract class RestService extends HttpRequestHandler {
     return false;
   }
 
-  @NotNull
   /**
    * Use human-readable name or UUID if it is an internal service.
    */
+  @NotNull
   protected abstract String getServiceName();
 
   protected abstract boolean isMethodSupported(@NotNull HttpMethod method);
@@ -115,9 +143,20 @@ public abstract class RestService extends HttpRequestHandler {
   @Override
   public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     try {
+      AtomicInteger counter = abuseCounter.get(((InetSocketAddress)context.channel().remoteAddress()).getAddress());
+      if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
+        Responses.send(Responses.orInSafeMode(HttpResponseStatus.TOO_MANY_REQUESTS, HttpResponseStatus.OK), context.channel(), request);
+        return true;
+      }
+
+      if (!isHostTrusted(request)) {
+        Responses.send(Responses.orInSafeMode(HttpResponseStatus.FORBIDDEN, HttpResponseStatus.OK), context.channel(), request);
+        return true;
+      }
+
       String error = execute(urlDecoder, request, context);
       if (error != null) {
-        Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), error, request);
+        Responses.send(HttpResponseStatus.BAD_REQUEST, context.channel(), request, error);
       }
     }
     catch (Throwable e) {
@@ -132,22 +171,64 @@ public abstract class RestService extends HttpRequestHandler {
         LOG.error(e);
         status = HttpResponseStatus.INTERNAL_SERVER_ERROR;
       }
-      Responses.sendStatus(status, context.channel(), ExceptionUtil.getThrowableText(e), request);
+      Responses.send(status, context.channel(), request, ExceptionUtil.getThrowableText(e));
     }
     return true;
   }
 
-  protected final void activateLastFocusedFrame() {
+  // e.g. upsource trust to configured host
+  protected boolean isHostTrusted(@NotNull FullHttpRequest request) throws InterruptedException, InvocationTargetException {
+    if (BuiltInWebServerKt.isSignedRequest(request)) {
+      return true;
+    }
+
+    String referrer = NettyKt.getOrigin(request);
+    if (referrer == null) {
+      referrer = NettyKt.getReferrer(request);
+    }
+
+    String host;
+    try {
+      host = StringUtil.nullize(referrer == null ? null : new URI(referrer).getHost());
+    }
+    catch (URISyntaxException ignored) {
+      return false;
+    }
+
+    Ref<Boolean> isTrusted = Ref.create();
+    if (host != null) {
+      if (NetUtils.isLocalhost(host)) {
+        isTrusted.set(true);
+      }
+      else {
+        isTrusted.set(trustedOrigins.getIfPresent(host));
+      }
+    }
+
+    if (isTrusted.isNull()) {
+      SwingUtilities.invokeAndWait(() -> {
+        isTrusted.set(showYesNoDialog(
+          IdeBundle.message("warning.use.rest.api", getServiceName(), ObjectUtils.chooseNotNull(host, "unknown host")),
+          "title.use.rest.api"));
+        if (host != null) {
+          trustedOrigins.put(host, isTrusted.get());
+        }
+      });
+    }
+    return isTrusted.get();
+  }
+
+  protected static void activateLastFocusedFrame() {
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     if (frame instanceof Window) {
       ((Window)frame).toFront();
     }
   }
 
-  @Nullable("error text or null if successful")
   /**
    * Return error or send response using {@link #sendOk(FullHttpRequest, ChannelHandlerContext)}, {@link #send(BufferExposingByteArrayOutputStream, FullHttpRequest, ChannelHandlerContext)}
    */
+  @Nullable("error text or null if successful")
   public abstract String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException;
 
   @NotNull
@@ -187,12 +268,14 @@ public abstract class RestService extends HttpRequestHandler {
     if (keepAlive) {
       HttpUtil.setKeepAlive(response, true);
     }
+    response.headers().set("X-Frame-Options", "Deny");
     Responses.send(response, channel, !keepAlive);
   }
 
-  protected static void send(@NotNull BufferExposingByteArrayOutputStream byteOut, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
+  protected static void send(@NotNull BufferExposingByteArrayOutputStream byteOut, @NotNull HttpRequest request, @NotNull ChannelHandlerContext context) {
     HttpResponse response = Responses.response("application/json", Unpooled.wrappedBuffer(byteOut.getInternalBuffer(), 0, byteOut.size()));
     Responses.addNoCache(response);
+    response.headers().set("X-Frame-Options", "Deny");
     Responses.send(response, context.channel(), request);
   }
 

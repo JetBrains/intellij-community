@@ -59,7 +59,7 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
       @NotNull
       @Override
       public Module[] getModules() {
-        return new Module[0];
+        return Module.EMPTY_ARRAY;
       }
 
       @Nullable

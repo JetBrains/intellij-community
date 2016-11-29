@@ -21,12 +21,14 @@ import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -58,12 +60,12 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
   @Override
   public PyArgumentList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
-    PyArgumentList argumentList = findArgumentList(context);
+    PyArgumentList argumentList = findArgumentList(context, -1);
     if (argumentList != null) {
       final PyCallExpression callExpr = argumentList.getCallExpression();
       if (callExpr != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
         final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
         if (mapping.getMarkedCallee() != null) {
           context.setItemsToShow(new Object[] { mapping });
@@ -74,8 +76,16 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return null;
   }
 
-  private static PyArgumentList findArgumentList(final ParameterInfoContext context) {
-    return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PyArgumentList.class);
+  private static PyArgumentList findArgumentList(final ParameterInfoContext context, int parameterListStart) {
+    final int offset = context.getOffset();
+    PyArgumentList argumentList = ParameterInfoUtils.findParentOfType(context.getFile(), offset - 1, PyArgumentList.class);
+    if (argumentList != null) {
+      final TextRange range = argumentList.getTextRange();
+      if (parameterListStart >= 0 && range.getStartOffset() != parameterListStart){
+        argumentList = PsiTreeUtil.getParentOfType(argumentList, PyArgumentList.class);
+      }
+    }
+    return argumentList;
   }
 
   @Override
@@ -85,7 +95,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
   @Override
   public PyArgumentList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
-    return findArgumentList(context);
+    return findArgumentList(context, context.getParameterListStart());
   }
 
   /**
@@ -139,22 +149,22 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public void updateUI(final PyCallExpression.PyArgumentsMapping oldMapping, @NotNull final ParameterInfoUIContext context) {
     if (oldMapping == null) return;
     final PyCallExpression callExpression = oldMapping.getCallExpression();
-    if (!callExpression.isValid()) return;
+    PyPsiUtils.assertValid(callExpression);
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
     final PyCallExpression.PyArgumentsMapping mapping = callExpression.mapArguments(resolveContext);
     final PyMarkedCallee marked = mapping.getMarkedCallee();
     if (marked == null) return; // resolution failed
     final PyCallable callable = marked.getCallable();
 
     final List<PyParameter> parameterList = PyUtil.getParameters(callable, typeEvalContext);
-    final List<PyNamedParameter> namedParameters = new ArrayList<PyNamedParameter>(parameterList.size());
+    final List<PyNamedParameter> namedParameters = new ArrayList<>(parameterList.size());
 
     // param -> hint index. indexes are not contiguous, because some hints are parentheses.
-    final Map<PyNamedParameter, Integer> parameterToIndex = new HashMap<PyNamedParameter, Integer>();
+    final Map<PyNamedParameter, Integer> parameterToIndex = new HashMap<>();
     // formatting of hints: hint index -> flags. this includes flags for parens.
-    final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags = new HashMap<Integer, EnumSet<ParameterInfoUIContextEx.Flag>>();
+    final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags = new HashMap<>();
 
     final List<String> hintsList = buildParameterListHint(parameterList, namedParameters, parameterToIndex, hintFlags);
 
@@ -289,7 +299,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
   @NotNull
   private static List<PyNamedParameter> getFlattenedTupleParameterComponents(@NotNull PyTupleParameter parameter) {
-    final List<PyNamedParameter> results = new ArrayList<PyNamedParameter>();
+    final List<PyNamedParameter> results = new ArrayList<>();
     for (PyParameter component : parameter.getContents()) {
       if (component instanceof PyNamedParameter) {
         results.add((PyNamedParameter)component);
@@ -323,7 +333,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
                                                      @NotNull final List<PyNamedParameter> namedParameters,
                                                      @NotNull final Map<PyNamedParameter, Integer> parameterToIndex,
                                                      @NotNull final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags) {
-    final List<String> hintsList = new ArrayList<String>();
+    final List<String> hintsList = new ArrayList<>();
     ParamHelper.walkDownParamArray(
       parameters.toArray(new PyParameter[parameters.size()]),
       new ParamHelper.ParamWalker() {

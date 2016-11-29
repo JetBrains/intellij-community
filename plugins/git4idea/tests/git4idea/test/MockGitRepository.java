@@ -16,9 +16,9 @@
 package git4idea.test;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitLocalBranch;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.*;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +126,7 @@ public class MockGitRepository implements GitRepository {
 
   @NotNull
   @Override
-  public AbstractVcs getVcs() {
+  public GitVcs getVcs() {
     throw new UnsupportedOperationException();
   }
 

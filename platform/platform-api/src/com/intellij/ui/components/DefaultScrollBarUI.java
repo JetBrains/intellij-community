@@ -17,15 +17,12 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane.Alignment;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -36,7 +33,6 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import static com.intellij.ui.components.JBScrollPane.BRIGHTNESS_FROM_VIEW;
 import static java.awt.Adjustable.VERTICAL;
 
 /**
@@ -48,13 +44,13 @@ class DefaultScrollBarUI extends ScrollBarUI {
   private final Listener myListener = new Listener();
   private final Timer myScrollTimer = UIUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener);
 
-  final TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 125, 150, 300) {
+  final TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 11, 150, 125, 300, 125) {
     @Override
     void onValueUpdate() {
       repaint();
     }
   };
-  final TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 6, 125, 150, 300) {
+  final TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 11, 150, 125, 300, 125) {
     @Override
     void onValueUpdate() {
       repaint();
@@ -72,6 +68,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   private boolean isValueCached;
   private int myCachedValue;
+  private int myOldValue;
 
   DefaultScrollBarUI() {
     this(13, 14, 10);
@@ -96,7 +93,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   boolean isBorderNeeded(JComponent c) {
-    return c.isOpaque() && Registry.is("ide.scroll.track.border.paint");
+    return false;
   }
 
   boolean isTrackClickable() {
@@ -104,7 +101,15 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   boolean isTrackExpandable() {
-    return Registry.is("ide.scroll.bar.expand.animation");
+    return false;
+  }
+
+  boolean isTrackContains(int x, int y) {
+    return myTrackBounds.contains(x, y);
+  }
+
+  boolean isThumbContains(int x, int y) {
+    return myThumbBounds.contains(x, y);
   }
 
   void onTrackHover(boolean hover) {
@@ -116,13 +121,13 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
+    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Track.DARCULA : ScrollPainter.Track.DEFAULT;
     paint(p, g, x, y, width, height, c, myTrackAnimator.myValue, false);
   }
 
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = isDark(c) ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
-    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
+    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.DARCULA : ScrollPainter.Thumb.DEFAULT;
+    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
   }
 
   void onThumbMove() {
@@ -188,8 +193,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
   @Override
   public void installUI(JComponent c) {
     myScrollBar = (JScrollBar)c;
-    myScrollBar.setBackground(new JBColor(new ColorProducer(c, 0xF5F5F5, 0x3C3F41)));
-    myScrollBar.setForeground(new JBColor(new ColorProducer(c, 0xE6E6E6, 0x3C3F41)));
+    ScrollColorProducer.setBackground(c);
+    ScrollColorProducer.setForeground(c);
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
     myScrollBar.addMouseMotionListener(myListener);
@@ -228,15 +233,10 @@ class DefaultScrollBarUI extends ScrollBarUI {
     Alignment alignment = Alignment.get(c);
     if (alignment != null && g instanceof Graphics2D) {
       Container parent = c.getParent();
-      Color background = null;
-      if (c.isOpaque()) {
-        background = Registry.is("ide.scroll.background.auto") && parent instanceof JScrollPane
-                     ? JBScrollPane.getViewBackground((JScrollPane)parent)
-                     : c.getBackground();
-        if (background != null) {
-          g.setColor(background);
-          g.fillRect(0, 0, c.getWidth(), c.getHeight());
-        }
+      Color background = !c.isOpaque() ? null : c.getBackground();
+      if (background != null) {
+        g.setColor(background);
+        g.fillRect(0, 0, c.getWidth(), c.getHeight());
       }
       Rectangle bounds = new Rectangle(c.getWidth(), c.getHeight());
       JBInsets.removeFrom(bounds, c.getInsets());
@@ -303,6 +303,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   private void updateThumbBounds() {
+    int value = 0;
     int min = myScrollBar.getMinimum();
     int max = myScrollBar.getMaximum();
     int range = max - min;
@@ -311,42 +312,46 @@ class DefaultScrollBarUI extends ScrollBarUI {
     }
     else if (VERTICAL == myScrollBar.getOrientation()) {
       int extent = myScrollBar.getVisibleAmount();
-      int height = Math.max(myTrackBounds.height * extent / range, 2 * getThickness());
+      int height = Math.max(convert(myTrackBounds.height, extent, range), 2 * getThickness());
       if (myTrackBounds.height <= height) {
         myThumbBounds.setBounds(0, 0, 0, 0);
       }
       else {
-        int value = getValue();
+        value = getValue();
         int maxY = myTrackBounds.y + myTrackBounds.height - height;
-        int y = (value < max - extent) ? (myTrackBounds.height - height) * (value - min) / (range - extent) : maxY;
-        setThumbBounds(myTrackBounds.x, adjust(y, myTrackBounds.y, maxY), myTrackBounds.width, height);
+        int y = (value < max - extent) ? convert(myTrackBounds.height - height, value - min, range - extent) : maxY;
+        myThumbBounds.setBounds(myTrackBounds.x, adjust(y, myTrackBounds.y, maxY), myTrackBounds.width, height);
+        if (myOldValue != value) onThumbMove();
       }
     }
     else {
       int extent = myScrollBar.getVisibleAmount();
-      int width = Math.max(myTrackBounds.width * extent / range, 2 * getThickness());
+      int width = Math.max(convert(myTrackBounds.width, extent, range), 2 * getThickness());
       if (myTrackBounds.width <= width) {
         myThumbBounds.setBounds(0, 0, 0, 0);
       }
       else {
-        int value = getValue();
+        value = getValue();
         int maxX = myTrackBounds.x + myTrackBounds.width - width;
-        int x = (value < max - extent) ? (myTrackBounds.width - width) * (value - min) / (range - extent) : maxX;
+        int x = (value < max - extent) ? convert(myTrackBounds.width - width, value - min, range - extent) : maxX;
         if (!myScrollBar.getComponentOrientation().isLeftToRight()) x = myTrackBounds.x - x + maxX;
-        setThumbBounds(adjust(x, myTrackBounds.x, maxX), myTrackBounds.y, width, myTrackBounds.height);
+        myThumbBounds.setBounds(adjust(x, myTrackBounds.x, maxX), myTrackBounds.y, width, myTrackBounds.height);
+        if (myOldValue != value) onThumbMove();
       }
     }
-  }
-
-  private void setThumbBounds(int x, int y, int width, int height) {
-    if (myThumbBounds.x != x || myThumbBounds.y != y || myThumbBounds.width != width || myThumbBounds.height != height) {
-      myThumbBounds.setBounds(x, y, width, height);
-      onThumbMove();
-    }
+    myOldValue = value;
   }
 
   private int getValue() {
     return isValueCached ? myCachedValue : myScrollBar.getValue();
+  }
+
+  /**
+   * Converts a value from old range to new one.
+   * It is necessary to use floating point calculation to avoid integer overflow.
+   */
+  private static int convert(double newRange, double oldValue, double oldRange) {
+    return (int)(.5 + newRange * oldValue / oldRange);
   }
 
   private static int adjust(int value, int min, int max) {
@@ -362,9 +367,9 @@ class DefaultScrollBarUI extends ScrollBarUI {
     private boolean isOverThumb;
 
     private void updateMouse(int x, int y) {
-      if (myTrackBounds.contains(x, y)) {
+      if (isTrackContains(x, y)) {
         if (!isOverTrack) onTrackHover(isOverTrack = true);
-        boolean hover = myThumbBounds.contains(x, y);
+        boolean hover = isThumbContains(x, y);
         if (isOverThumb != hover) onThumbHover(isOverThumb = hover);
       }
       else {
@@ -377,9 +382,22 @@ class DefaultScrollBarUI extends ScrollBarUI {
       if (isOverTrack) onTrackHover(isOverTrack = false);
     }
 
+    private boolean redispatchIfTrackNotClickable(MouseEvent event) {
+      if (isTrackClickable()) return false;
+      // redispatch current event to the view
+      Container parent = myScrollBar.getParent();
+      if (parent instanceof JScrollPane) {
+        JScrollPane pane = (JScrollPane)parent;
+        Component view = pane.getViewport().getView();
+        if (view != null) view.dispatchEvent(MouseEventAdapter.convert(event, view));
+      }
+      return true;
+    }
+
     @Override
     public void mousePressed(MouseEvent event) {
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
+      if (redispatchIfTrackNotClickable(event)) return;
       if (SwingUtilities.isRightMouseButton(event)) return;
 
       isValueCached = true;
@@ -390,12 +408,12 @@ class DefaultScrollBarUI extends ScrollBarUI {
       myMouseY = event.getY();
 
       boolean vertical = VERTICAL == myScrollBar.getOrientation();
-      if (myThumbBounds.contains(myMouseX, myMouseY)) {
+      if (isThumbContains(myMouseX, myMouseY)) {
         // pressed on the thumb
         myOffset = vertical ? (myMouseY - myThumbBounds.y) : (myMouseX - myThumbBounds.x);
         isDragging = true;
       }
-      else if (isTrackClickable() && myTrackBounds.contains(myMouseX, myMouseY)) {
+      else if (isTrackContains(myMouseX, myMouseY)) {
         // pressed on the track
         if (isAbsolutePositioning(event)) {
           myOffset = (vertical ? myThumbBounds.height : myThumbBounds.width) / 2;
@@ -426,6 +444,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     public void mouseReleased(MouseEvent event) {
       if (isDragging) updateMouse(event.getX(), event.getY());
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
+      if (redispatchIfTrackNotClickable(event)) return;
       if (SwingUtilities.isRightMouseButton(event)) return;
       isDragging = false;
       myOffset = 0;
@@ -455,6 +474,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     public void mouseMoved(MouseEvent event) {
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
       if (!isDragging) updateMouse(event.getX(), event.getY());
+      redispatchIfTrackNotClickable(event);
     }
 
     @Override
@@ -564,7 +584,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
                          ? thumbPos - thumbMin
                          : thumbMax - thumbPos;
         isValueCached = true;
-        myCachedValue = valueMin + valueRange * thumbValue / thumbRange;
+        myCachedValue = valueMin + convert(valueRange, thumbValue, thumbRange);
         myScrollBar.setValue(myCachedValue);
       }
       if (!isDragging) updateMouse(x, y);
@@ -626,43 +646,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
       if (oldValue != newValue) {
         myScrollBar.setValue(newValue);
       }
-    }
-  }
-
-  static boolean isDark(JComponent c) {
-    if (c instanceof JScrollBar) {
-      Container parent = c.getParent();
-      if (parent instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)parent;
-        Object property = c.getClientProperty(BRIGHTNESS_FROM_VIEW);
-        if (property == null) {
-          property = pane.getClientProperty(BRIGHTNESS_FROM_VIEW);
-        }
-        if (property instanceof Boolean && (Boolean)property) {
-          Color color = JBScrollPane.getViewBackground(pane);
-          if (color != null) return ColorUtil.isDark(color);
-        }
-      }
-    }
-    return UIUtil.isUnderDarcula();
-  }
-
-  private static final class ColorProducer implements NotNullProducer<Color> {
-    private final JComponent myComponent;
-    private final Color myBrightColor;
-    private final Color myDarkColor;
-
-    @SuppressWarnings("UseJBColor")
-    private ColorProducer(JComponent component, int bright, int dark) {
-      myComponent = component;
-      myBrightColor = new Color(bright);
-      myDarkColor = new Color(dark);
-    }
-
-    @NotNull
-    @Override
-    public Color produce() {
-      return isDark(myComponent) ? myDarkColor : myBrightColor;
     }
   }
 }

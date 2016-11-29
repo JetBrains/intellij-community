@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,13 @@ import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.xerces.util.SecurityManager;
 import org.intellij.lang.annotations.Flow;
 import org.iq80.snappy.Snappy;
 import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.PicoContainer;
 
 import java.io.*;
 import java.net.URL;
@@ -321,7 +321,7 @@ public class PathManager {
     String resultPath = null;
     String protocol = resourceURL.getProtocol();
     if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
-      String path = resourceURL.getFile();
+      String path = URLUtil.urlToFile(resourceURL).getPath();
       String testPath = path.replace('\\', '/');
       String testResourcePath = resourcePath.replace('\\', '/');
       if (StringUtil.endsWithIgnoreCase(testPath, testResourcePath)) {
@@ -340,13 +340,7 @@ public class PathManager {
       return null;
     }
 
-    if (SystemInfo.isWindows && resultPath.startsWith("/")) {
-      resultPath = resultPath.substring(1);
-    }
-    resultPath = StringUtil.trimEnd(resultPath, File.separator);
-    resultPath = URLUtil.unescapePercentSequences(resultPath);
-
-    return resultPath;
+    return StringUtil.trimEnd(resultPath, File.separator);
   }
 
   public static void loadProperties() {
@@ -461,11 +455,11 @@ public class PathManager {
       Document.class,               // jDOM
       Appender.class,               // log4j
       THashSet.class,               // trove4j
-      PicoContainer.class,          // PicoContainer
       TypeMapper.class,             // JNA
       FileUtils.class,              // JNA (jna-platform)
-      PatternMatcher.class,          // OROMatcher
-      Snappy.class                   // Snappy
+      PatternMatcher.class,         // OROMatcher
+      Snappy.class,                 // Snappy
+      SecurityManager.class         // xercesImpl
     };
 
     final Set<String> classPath = new HashSet<String>();
@@ -501,7 +495,7 @@ public class PathManager {
     System.err.println(x);
   }
 
-  private static String getAbsolutePath(String path) {
+  public static String getAbsolutePath(String path) {
     path = FileUtil.expandUserHome(path);
     return FileUtil.toCanonicalPath(new File(path).getAbsolutePath());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.*;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -117,7 +117,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myToolWindow.getComponent().addHierarchyListener(new HierarchyListener() {
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+        if (BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
           scheduleRebuild();
         }
       }
@@ -219,16 +219,13 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     // this is dirty hack since some bright minds decided to used different TreeUi every time, so selection may be followed
     // by rebuild on completely different instance of TreeUi
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!Comparing.equal(myFileEditor, fileEditor)) {
-          myFile = file;
-          rebuild();
-        }
-        if (myStructureView != null) {
-          myStructureView.navigateToSelectedElement(requestFocus);
-        }
+    Runnable runnable = () -> {
+      if (!Comparing.equal(myFileEditor, fileEditor)) {
+        myFile = file;
+        rebuild();
+      }
+      if (myStructureView != null) {
+        myStructureView.navigateToSelectedElement(requestFocus);
       }
     };
 
@@ -257,7 +254,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   public void rebuild() {
     if (myProject.isDisposed()) return;
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
     Dimension referenceSize = null;
 
     if (myStructureView != null) {

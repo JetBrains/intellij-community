@@ -16,11 +16,11 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -28,8 +28,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.FList;
 import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -50,18 +49,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private final DfaValueFactory myFactory;
   private ControlFlow myCurrentFlow;
-  private Stack<CatchDescriptor> myCatchStack;
-  private final DfaValue myRuntimeException;
-  private final DfaValue myError;
-  private final DfaValue myString;
+  private FList<Trap> myTrapStack = FList.emptyList();
+  private final ExceptionTransfer myRuntimeException;
+  private final ExceptionTransfer myError;
   private final PsiType myNpe;
   private final PsiType myAssertionError;
-  private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
-
-  /**
-   * Variables for try-related control transfers. Contain exceptions or an (Throwable-inconvertible) string to indicate return inside finally
-   */
-  private FactoryMap<PsiTryStatement, DfaVariableValue> myExceptionHolders;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions) {
     myFactory = valueFactory;
@@ -69,26 +61,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myProject = codeFragment.getProject();
     myIgnoreAssertions = ignoreAssertions;
     GlobalSearchScope scope = codeFragment.getResolveScope();
-    myRuntimeException = myFactory.createTypeValue(createClassType(scope, JAVA_LANG_RUNTIME_EXCEPTION), Nullness.NOT_NULL);
-    myError = myFactory.createTypeValue(createClassType(scope, JAVA_LANG_ERROR), Nullness.NOT_NULL);
+    myRuntimeException = new ExceptionTransfer(myFactory.createTypeValue(createClassType(scope, JAVA_LANG_RUNTIME_EXCEPTION), Nullness.NOT_NULL));
+    myError = new ExceptionTransfer(myFactory.createTypeValue(createClassType(scope, JAVA_LANG_ERROR), Nullness.NOT_NULL));
     myNpe = createClassType(scope, JAVA_LANG_NULL_POINTER_EXCEPTION);
     myAssertionError = createClassType(scope, JAVA_LANG_ASSERTION_ERROR);
-    myString = myFactory.createTypeValue(createClassType(scope, JAVA_LANG_STRING), Nullness.NOT_NULL);
-
-    myExceptionHolders = new FactoryMap<PsiTryStatement, DfaVariableValue>() {
-      @Nullable
-      @Override
-      protected DfaVariableValue create(PsiTryStatement key) {
-        String text = "java.lang.Object $exception" + myExceptionHolders.size() + "$";
-        PsiParameter mockVar = JavaPsiFacade.getElementFactory(myProject).createParameterFromText(text, null);
-        return myFactory.getVarFactory().createVariableValue(mockVar, false);
-      }
-    };
   }
 
   @Nullable
   public ControlFlow buildControlFlow() {
-    myCatchStack = new Stack<CatchDescriptor>();
     myCurrentFlow = new ControlFlow(myFactory);
     try {
       myCodeFragment.accept(this);
@@ -104,7 +84,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new CheckReturnValueInstruction(myCodeFragment));
     }
 
-    addInstruction(new ReturnInstruction(false, null));
+    addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
 
     if (Registry.is("idea.dfa.live.variables.analysis")) {
       new LiveVariablesAnalyzer(myCurrentFlow, myFactory).flushDeadVariablesOnStatementFinish();
@@ -135,15 +115,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void startElement(PsiElement element) {
     myCurrentFlow.startElement(element);
-    myElementStack.push(element);
   }
 
   private void finishElement(PsiElement element) {
     myCurrentFlow.finishElement(element);
-    PsiElement popped = myElementStack.pop();
-    if (element != popped) {
-      throw new AssertionError("Expected " + element + ", popped " + popped);
-    }
     if (element instanceof PsiStatement && !(element instanceof PsiReturnStatement)) {
       addInstruction(new FinishElementInstruction(element));
     }
@@ -250,9 +225,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         description.accept(this);
       }
 
-      CatchDescriptor cd = findNextCatch(false);
-      initException(myAssertionError, cd);
-      addThrowCode(cd, statement);
+      throwException(myAssertionError, statement);
     }
     finishElement(statement);
   }
@@ -369,11 +342,27 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement exitedStatement = statement.findExitedStatement();
 
     if (exitedStatement != null) {
-      flushVariablesOnControlTransfer(exitedStatement);
-      addInstruction(new GotoInstruction(getEndOffset(exitedStatement)));
+      controlTransfer(new InstructionTransfer(getEndOffset(exitedStatement), getVariablesInside(exitedStatement)),
+                      getTrapsInsideStatement(exitedStatement));
     }
 
     finishElement(statement);
+  }
+
+  private void controlTransfer(InstructionTransfer target, FList<Trap> traps) {
+    addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
+  }
+
+  @NotNull
+  private FList<Trap> getTrapsInsideStatement(PsiStatement statement) {
+    return FList.createFromReversed(ContainerUtil.reverse(
+      ContainerUtil.findAll(myTrapStack, cd -> PsiTreeUtil.isAncestor(statement, cd.getAnchor(), true))));
+  }
+
+  @NotNull
+  private List<DfaVariableValue> getVariablesInside(PsiElement exitedStatement) {
+    return ContainerUtil.map(PsiTreeUtil.findChildrenOfType(exitedStatement, PsiVariable.class),
+                             var -> myFactory.getVarFactory().createVariableValue(var, false));
   }
 
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
@@ -381,8 +370,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement continuedStatement = statement.findContinuedStatement();
     if (continuedStatement instanceof PsiLoopStatement) {
       PsiStatement body = ((PsiLoopStatement)continuedStatement).getBody();
-      flushVariablesOnControlTransfer(body);
-      addInstruction(new GotoInstruction(getEndOffset(body)));
+      controlTransfer(new InstructionTransfer(getEndOffset(body), getVariablesInside(body)), getTrapsInsideStatement(body));
+
     } else {
       addInstruction(new EmptyInstruction(null));
     }
@@ -459,7 +448,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitForStatement(PsiForStatement statement) {
     startElement(statement);
-    final ArrayList<PsiElement> declaredVariables = new ArrayList<PsiElement>();
+    final ArrayList<PsiElement> declaredVariables = new ArrayList<>();
 
     PsiStatement initialization = statement.getInitialization();
     if (initialization != null) {
@@ -590,22 +579,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new CheckReturnValueInstruction(returnValue));
     }
 
-    returnCheckingFinally(false, statement);
+    addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, myTrapStack), statement));
     finishElement(statement);
-  }
-
-  private void returnCheckingFinally(boolean viaException, @NotNull PsiElement anchor) {
-    CatchDescriptor finallyDescriptor = findFinally();
-    if (finallyDescriptor != null) {
-      addInstruction(new PushInstruction(getExceptionHolder(finallyDescriptor), null));
-      addInstruction(new PushInstruction(myString, null));
-      addInstruction(new AssignInstruction(null, null));
-      addInstruction(new PopInstruction());
-      
-      addInstruction(new GotoInstruction(finallyDescriptor.getJumpOffset(this)));
-    } else {
-      addInstruction(new ReturnInstruction(viaException, anchor));
-    }
   }
 
   @Override public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
@@ -625,7 +600,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (psiClass != null) {
         addInstruction(new FieldReferenceInstruction(caseExpression, "switch statement expression"));
         if (psiClass.isEnum()) {
-          enumValues = new HashSet<PsiEnumConstant>();
+          enumValues = new HashSet<>();
           for (PsiField f : psiClass.getFields()) {
             if (f instanceof PsiEnumConstant) {
               enumValues.add((PsiEnumConstant)f);
@@ -737,118 +712,39 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (exception != null) {
       exception.accept(this);
-      CatchDescriptor cd = findNextCatch(false);
-      if (cd == null) {
-        addInstruction(new ReturnInstruction(true, statement));
-        finishElement(statement);
-        return;
-      }
-      
+
       addConditionalRuntimeThrow();
       addInstruction(new DupInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, myProject));
       ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, true, null);
       addInstruction(gotoInstruction);
-      
-      addInstruction(new PopInstruction());
-      initException(myNpe, cd);
-      addThrowCode(cd, statement);
+
+      addInstruction(new FieldReferenceInstruction(exception, "thrown exception"));
+      throwException(myNpe, statement);
 
       gotoInstruction.setOffset(myCurrentFlow.getInstructionCount());
-      addInstruction(new PushInstruction(getExceptionHolder(cd), null));
-      addInstruction(new SwapInstruction());
-      addInstruction(new AssignInstruction(null, null));
-      addInstruction(new PopInstruction());
-      addThrowCode(cd, statement);
+      throwException(exception.getType(), statement);
     }
 
     finishElement(statement);
   }
 
   private void addConditionalRuntimeThrow() {
-    CatchDescriptor cd = findNextCatch(false);
-    if (cd == null) {
+    if (myTrapStack.isEmpty()) {
       return;
     }
     
     pushUnknown();
     final ConditionalGotoInstruction ifNoException = addInstruction(new ConditionalGotoInstruction(null, false, null));
-    addInstruction(new EmptyStackInstruction());
-
-    addInstruction(new PushInstruction(getExceptionHolder(cd), null));
 
     pushUnknown();
     final ConditionalGotoInstruction ifError = addInstruction(new ConditionalGotoInstruction(null, false, null));
-    addInstruction(new PushInstruction(myRuntimeException, null));
-    GotoInstruction ifRuntime = addInstruction(new GotoInstruction(null));
+    throwException(myRuntimeException, null);
     ifError.setOffset(myCurrentFlow.getInstructionCount());
-    addInstruction(new PushInstruction(myError, null));
-    ifRuntime.setOffset(myCurrentFlow.getInstructionCount());
-
-    addInstruction(new AssignInstruction(null, null));
-    addInstruction(new PopInstruction());
-    
-    addThrowCode(cd, null);
+    throwException(myError, null);
 
     ifNoException.setOffset(myCurrentFlow.getInstructionCount());
-  }
-
-  private void flushVariablesOnControlTransfer(PsiElement stopWhenAncestorOf) {
-    for (int i = myElementStack.size() - 1; i >= 0; i--) {
-      PsiElement scope = myElementStack.get(i);
-      if (PsiTreeUtil.isAncestor(scope, stopWhenAncestorOf, true)) {
-        break;
-      }
-      if (scope instanceof PsiCodeBlock) {
-        flushCodeBlockVariables((PsiCodeBlock)scope);
-      }
-    }
-  }
-
-  // the exception object should be in $exception$ variable
-  private void addThrowCode(@Nullable CatchDescriptor cd, @Nullable PsiElement explicitThrower) {
-    if (cd == null) {
-      addInstruction(new ReturnInstruction(true, explicitThrower));
-      return;
-    }
-    
-    flushVariablesOnControlTransfer(cd.getBlock());
-    addInstruction(new GotoInstruction(cd.getJumpOffset(this)));
-  }
-
-  @Nullable
-  private CatchDescriptor findNextCatch(boolean catchRethrow) {
-    if (myCatchStack.isEmpty()) {
-      return null;
-    }
-
-    PsiElement currentElement = myElementStack.peek();
-
-    CatchDescriptor cd = myCatchStack.get(myCatchStack.size() - 1);
-    if (!cd.isFinally() && PsiTreeUtil.isAncestor(cd.getBlock().getParent(), currentElement, false)) {
-      int i = myCatchStack.size() - 2;
-      while (!catchRethrow && i >= 0 && !myCatchStack.get(i).isFinally() && myCatchStack.get(i).getTryStatement() == cd.getTryStatement()) {
-        i--;
-      }
-      if (i < 0) {
-        return null;
-      }
-      cd = myCatchStack.get(i);
-    }
-
-    return cd;
-  }
-
-
-  @Nullable
-  private CatchDescriptor findFinally() {
-    for (int i = myCatchStack.size() - 1; i >= 0; i--) {
-      CatchDescriptor cd = myCatchStack.get(i);
-      if (cd.isFinally()) return cd;
-    }
-
-    return null;
   }
 
   private static class ApplyNotNullInstruction extends Instruction {
@@ -873,50 +769,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private static class CatchDescriptor {
-    private final PsiType myType;
-    private final PsiParameter myParameter;
-    private final PsiCodeBlock myBlock;
-    private final boolean myIsFinally;
-
-    public CatchDescriptor(PsiCodeBlock finallyBlock) {
-      myType = null;
-      myParameter = null;
-      myBlock = finallyBlock;
-      myIsFinally = true;
-    }
-
-    public CatchDescriptor(PsiParameter parameter, PsiCodeBlock catchBlock) {
-      myType = parameter.getType();
-      myParameter = parameter;
-      myBlock = catchBlock;
-      myIsFinally = false;
-    }
-
-    public PsiCodeBlock getBlock() {
-      return myBlock;
-    }
-    public PsiTryStatement getTryStatement() {
-      return (PsiTryStatement) (isFinally() ? myBlock.getParent() : myBlock.getParent().getParent());
-    }
-
-    public PsiType getType() {
-      return myType;
-    }
-
-    public boolean isFinally() {
-      return myIsFinally;
-    }
-
-    public ControlFlow.ControlFlowOffset getJumpOffset(ControlFlowAnalyzer analyzer) {
-      return analyzer.getStartOffset(isFinally() ? myBlock : myBlock.getParent());
-    }
-
-    public PsiParameter getParameter() {
-      return myParameter;
-    }
-  }
-
   @Override
   public void visitTryStatement(PsiTryStatement statement) {
     startElement(statement);
@@ -925,26 +777,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiCodeBlock tryBlock = statement.getTryBlock();
     PsiCodeBlock finallyBlock = statement.getFinallyBlock();
 
-    if (finallyBlock != null) {
-      myCatchStack.push(new CatchDescriptor(finallyBlock));
+    Trap.TryFinally finallyDescriptor = finallyBlock != null ? new Trap.TryFinally(finallyBlock, getStartOffset(finallyBlock)) : null;
+    if (finallyDescriptor != null) {
+      myTrapStack = myTrapStack.prepend(finallyDescriptor);
     }
 
     PsiCatchSection[] sections = statement.getCatchSections();
-    for (int i = sections.length - 1; i >= 0; i--) {
-      PsiCatchSection section = sections[i];
-      PsiCodeBlock catchBlock = section.getCatchBlock();
-      PsiParameter parameter = section.getParameter();
-      if (parameter != null && catchBlock != null) {
-        PsiType type = parameter.getType();
-        if (type instanceof PsiClassType || type instanceof PsiDisjunctionType) {
-          myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
-          continue;
+    if (sections.length > 0) {
+      LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset> clauses = new LinkedHashMap<>();
+      for (PsiCatchSection section : sections) {
+        PsiCodeBlock catchBlock = section.getCatchBlock();
+        if (catchBlock != null) {
+          clauses.put(section, getStartOffset(catchBlock));
         }
       }
-      throw new CannotAnalyzeException();
+      myTrapStack = myTrapStack.prepend(new Trap.TryCatch(statement, clauses));
     }
-
-    ControlFlow.ControlFlowOffset endOffset = finallyBlock == null ? getEndOffset(statement) : getStartOffset(finallyBlock);
 
     if (resourceList != null) {
       resourceList.accept(this);
@@ -954,77 +802,35 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       tryBlock.accept(this);
     }
 
-    addInstruction(new GotoInstruction(endOffset));
+    InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(statement), getVariablesInside(tryBlock));
+    FList<Trap> singleFinally = FList.createFromReversed(ContainerUtil.createMaybeSingletonList(finallyDescriptor));
+    controlTransfer(gotoEnd, singleFinally);
+
+    if (sections.length > 0) {
+      assert myTrapStack.getHead() instanceof Trap.TryCatch;
+      myTrapStack = myTrapStack.getTail();
+    }
 
     for (PsiCatchSection section : sections) {
-      section.accept(this);
-      addInstruction(new GotoInstruction(endOffset));
-      myCatchStack.pop();
+      PsiCodeBlock catchBlock = section.getCatchBlock();
+      if (catchBlock != null) {
+        visitCodeBlock(catchBlock);
+      }
+      controlTransfer(gotoEnd, singleFinally);
     }
 
     if (finallyBlock != null) {
-      CatchDescriptor finallyDescriptor = myCatchStack.pop();
+      assert myTrapStack.getHead() instanceof Trap.TryFinally;
+      myTrapStack = myTrapStack.getTail().prepend(new Trap.InsideFinally(finallyBlock));
+
       finallyBlock.accept(this);
-      
-      //if $exception$==null => continue normal execution
-      addInstruction(new PushInstruction(getExceptionHolder(finallyDescriptor), null));
-      addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
-      addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, myProject));
-      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
-      
-      // else throw $exception$
-      rethrowException(finallyDescriptor, false);
+      addInstruction(new ControlTransferInstruction(null)); // DfaControlTransferValue is on stack
+
+      assert myTrapStack.getHead() instanceof Trap.InsideFinally;
+      myTrapStack = myTrapStack.getTail();
     }
 
     finishElement(statement);
-  }
-
-  @Override
-  public void visitCatchSection(PsiCatchSection section) {
-    startElement(section);
-    PsiCodeBlock catchBlock = section.getCatchBlock();
-    if (catchBlock != null) {
-      CatchDescriptor currentDescriptor = new CatchDescriptor(section.getParameter(), catchBlock);
-      DfaVariableValue exceptionHolder = getExceptionHolder(currentDescriptor);
-
-      // exception is in exceptionHolder mock variable
-      // check if it's assignable to catch parameter type
-      PsiType declaredType = section.getCatchType();
-      List<PsiType> flattened = declaredType instanceof PsiDisjunctionType ?
-                                ((PsiDisjunctionType)declaredType).getDisjunctions() :
-                                ContainerUtil.createMaybeSingletonList(declaredType);
-      for (PsiType catchType : flattened) {
-        addInstruction(new PushInstruction(exceptionHolder, null));
-        addInstruction(new PushInstruction(myFactory.createTypeValue(catchType, Nullness.UNKNOWN), null));
-        addInstruction(new BinopInstruction(JavaTokenType.INSTANCEOF_KEYWORD, null, myProject));
-        addInstruction(new ConditionalGotoInstruction(ControlFlow.deltaOffset(getStartOffset(catchBlock), -5), false, null));
-      }
-      
-      // not assignable => rethrow 
-      rethrowException(currentDescriptor, true);
-
-      // e = $exception$
-      addInstruction(new PushInstruction(myFactory.getVarFactory().createVariableValue(section.getParameter(), false), null));
-      addInstruction(new PushInstruction(exceptionHolder, null));
-      addInstruction(new AssignInstruction(null, null));
-      addInstruction(new PopInstruction());
-      
-      addInstruction(new FlushVariableInstruction(exceptionHolder));
-      
-      catchBlock.accept(this);
-    }
-    finishElement(section);
-  }
-
-  private void rethrowException(CatchDescriptor currentDescriptor, boolean catchRethrow) {
-    CatchDescriptor nextCatch = findNextCatch(catchRethrow);
-    if (nextCatch != null) {
-      addInstruction(new PushInstruction(getExceptionHolder(nextCatch), null, false));
-      addInstruction(new PushInstruction(getExceptionHolder(currentDescriptor), null, true));
-      addInstruction(new AssignInstruction(null, null));
-      addInstruction(new PopInstruction());
-    }
-    addThrowCode(nextCatch, null);
   }
 
   @Override
@@ -1041,9 +847,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         ((PsiResourceExpression)resource).getExpression().accept(this);
       }
 
-      PsiMethod closer = PsiUtil.getResourceCloserMethod(resource);
-      if (closer != null) {
-        addMethodThrows(closer, null);
+      final List<PsiClassType> closerExceptions = ExceptionUtil.getCloserExceptions(resource);
+      if (!closerExceptions.isEmpty()) {
+        addThrows(null, closerExceptions.toArray(new PsiClassType[closerExceptions.size()]));
       }
     }
   }
@@ -1309,7 +1115,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateAndExpression(PsiExpression[] operands, final PsiType exprType, boolean shortCircuit) {
-    List<ConditionalGotoInstruction> branchToFail = new ArrayList<ConditionalGotoInstruction>();
+    List<ConditionalGotoInstruction> branchToFail = new ArrayList<>();
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       operand.accept(this);
@@ -1408,31 +1214,28 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void addMethodThrows(PsiMethod method, @Nullable PsiElement explicitCall) {
-    CatchDescriptor cd = findNextCatch(false);
     if (method != null) {
-      PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
-      for (PsiClassType ref : refs) {
-        pushUnknown();
-        ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
-        addInstruction(cond);
-        addInstruction(new EmptyStackInstruction());
-        initException(ref, cd);
-        addThrowCode(cd, explicitCall);
-        cond.setOffset(myCurrentFlow.getInstructionCount());
-      }
+      addThrows(explicitCall, method.getThrowsList().getReferencedTypes());
     }
   }
 
-  private void initException(PsiType ref, @Nullable CatchDescriptor cd) {
-    if (cd == null) return;
-    addInstruction(new PushInstruction(getExceptionHolder(cd), null));
-    addInstruction(new PushInstruction(myFactory.createTypeValue(ref, Nullness.NOT_NULL), null));
-    addInstruction(new AssignInstruction(null, null));
-    addInstruction(new PopInstruction());
+  private void addThrows(@Nullable PsiElement explicitCall, PsiClassType[] refs) {
+    for (PsiClassType ref : refs) {
+      pushUnknown();
+      ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
+      addInstruction(cond);
+      throwException(ref, explicitCall);
+      cond.setOffset(myCurrentFlow.getInstructionCount());
+    }
   }
 
-  private DfaVariableValue getExceptionHolder(CatchDescriptor cd) {
-    return myExceptionHolders.get(cd.getTryStatement());
+  private void throwException(PsiType ref, @Nullable PsiElement anchor) {
+    throwException(new ExceptionTransfer(myFactory.createTypeValue(ref, Nullness.NOT_NULL)), anchor);
+  }
+
+  private void throwException(ExceptionTransfer kind, @Nullable PsiElement anchor) {
+    addInstruction(new EmptyStackInstruction());
+    addInstruction(new ReturnInstruction(myFactory.controlTransfer(kind, myTrapStack), anchor));
   }
 
   @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -1449,7 +1252,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     PsiExpression[] expressions = expression.getArgumentList().getExpressions();
-    PsiElement method = methodExpression.resolve();
+    JavaResolveResult result = methodExpression.advancedResolve(false);
+    PsiElement method = result.getElement();
     PsiParameter[] parameters = method instanceof PsiMethod ? ((PsiMethod)method).getParameterList().getParameters() : null;
     boolean isEqualsCall = expressions.length == 1 && method instanceof PsiMethod &&
                            "equals".equals(((PsiMethod)method).getName()) && parameters.length == 1 &&
@@ -1460,7 +1264,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression paramExpr = expressions[i];
       paramExpr.accept(this);
       if (parameters != null && i < parameters.length) {
-        generateBoxingUnboxingInstructionFor(paramExpr, parameters[i].getType());
+        generateBoxingUnboxingInstructionFor(paramExpr, result.getSubstitutor().substitute(parameters[i].getType()));
       }
       if (i == 0 && isEqualsCall) {
         // stack: .., qualifier, arg1
@@ -1474,7 +1278,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     addConditionalRuntimeThrow();
-    List<MethodContract> contracts = method instanceof PsiMethod ? getMethodCallContracts((PsiMethod)method, expression) : Collections.<MethodContract>emptyList();
+    List<MethodContract> contracts = method instanceof PsiMethod ? getMethodCallContracts((PsiMethod)method, expression) : Collections.emptyList();
     addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
     if (!contracts.isEmpty()) {
       // if a contract resulted in 'fail', handle it
@@ -1483,11 +1287,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, myProject));
       ConditionalGotoInstruction ifNotFail = new ConditionalGotoInstruction(null, true, null);
       addInstruction(ifNotFail);
-      returnCheckingFinally(true, expression);
+      addInstruction(new EmptyStackInstruction());
+      addInstruction(new ReturnInstruction(myFactory.controlTransfer(new ExceptionTransfer(DfaUnknownValue.getInstance()), myTrapStack), expression));
+
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
     }
 
-    if (!myCatchStack.isEmpty()) {
+    if (!myTrapStack.isEmpty()) {
       addMethodThrows(expression.resolveMethod(), expression);
     }
 
@@ -1515,30 +1321,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
-    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<List<MethodContract>>() {
-      @Nullable
-      @Override
-      public Result<List<MethodContract>> compute() {
-        final PsiAnnotation contractAnno = findContractAnnotation(method);
-        if (contractAnno != null) {
-          String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
-          if (text != null) {
-            try {
-              final int paramCount = method.getParameterList().getParametersCount();
-              List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text), new Condition<MethodContract>() {
-                @Override
-                public boolean value(MethodContract contract) {
-                  return contract.arguments.length == paramCount;
-                }
-              });
-              return Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-            }
-            catch (Exception ignored) {
-            }
+    return CachedValuesManager.getCachedValue(method, () -> {
+      final PsiAnnotation contractAnno = findContractAnnotation(method);
+      if (contractAnno != null) {
+        String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
+        if (text != null) {
+          try {
+            final int paramCount = method.getParameterList().getParametersCount();
+            List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text),
+                                                                   contract -> contract.arguments.length == paramCount);
+            return CachedValueProvider.Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          }
+          catch (Exception ignored) {
           }
         }
-        return Result.create(Collections.<MethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
+      return CachedValueProvider.Result.create(Collections.<MethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
@@ -1550,6 +1348,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   public static boolean isPure(@NotNull PsiMethod method) {
     PsiAnnotation anno = findContractAnnotation(method);
     return anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"));
+  }
+
+  @Override
+  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    if (enumConstant.getArgumentList() == null) return;
+
+    pushUnknown();
+    pushConstructorArguments(enumConstant);
+    addInstruction(new MethodCallInstruction(enumConstant, null, Collections.emptyList()));
+    addInstruction(new PopInstruction());
   }
 
   @Override public void visitNewExpression(PsiNewExpression expression) {
@@ -1573,33 +1381,39 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
       addConditionalRuntimeThrow();
-      addInstruction(new MethodCallInstruction(expression, null, Collections.<MethodContract>emptyList()));
+      addInstruction(new MethodCallInstruction(expression, null, Collections.emptyList()));
     }
     else {
-      final PsiExpressionList args = expression.getArgumentList();
-      PsiMethod ctr = expression.resolveConstructor();
-      if (args != null) {
-        PsiExpression[] params = args.getExpressions();
-        PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
-        for (int i = 0; i < params.length; i++) {
-          PsiExpression param = params[i];
-          param.accept(this);
-          if (parameters != null && i < parameters.length) {
-            generateBoxingUnboxingInstructionFor(param, parameters[i].getType());
-          }
-        }
-      }
+      PsiMethod constructor = pushConstructorArguments(expression);
 
       addConditionalRuntimeThrow();
-      addInstruction(new MethodCallInstruction(expression, null, Collections.<MethodContract>emptyList()));
+      addInstruction(new MethodCallInstruction(expression, null, constructor == null ? Collections.emptyList() : getMethodContracts(constructor)));
 
-      if (!myCatchStack.isEmpty()) {
-        addMethodThrows(ctr, expression);
+      if (!myTrapStack.isEmpty()) {
+        addMethodThrows(constructor, expression);
       }
 
     }
 
     finishElement(expression);
+  }
+
+  @Nullable
+  private PsiMethod pushConstructorArguments(PsiConstructorCall call) {
+    PsiExpressionList args = call.getArgumentList();
+    PsiMethod ctr = call.resolveConstructor();
+    if (args != null) {
+      PsiExpression[] params = args.getExpressions();
+      PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
+      for (int i = 0; i < params.length; i++) {
+        PsiExpression param = params[i];
+        param.accept(this);
+        if (parameters != null && i < parameters.length) {
+          generateBoxingUnboxingInstructionFor(param, parameters[i].getType());
+        }
+      }
+    }
+    return ctr;
   }
 
   @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {

@@ -47,8 +47,8 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
 
   private void createMap() throws IOException {
     try {
-      myPersistentMap = new PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState,OutputState>>(myCacheFile, new SourceItemDataDescriptor(myCompiler.getItemKeyDescriptor()),
-                                                                    new PersistentStateDataExternalizer(myCompiler));
+      myPersistentMap = new PersistentHashMap<>(myCacheFile, new SourceItemDataDescriptor(myCompiler.getItemKeyDescriptor()),
+                                                new PersistentStateDataExternalizer(myCompiler));
     }
     catch (PersistentEnumerator.CorruptedException e) {
       FileUtil.delete(myCacheFile);
@@ -57,7 +57,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   }
 
   private KeyAndTargetData<Key> getKeyAndTargetData(Key key, int target) {
-    return new KeyAndTargetData<Key>(target, key);
+    return new KeyAndTargetData<>(target, key);
   }
 
   public void wipe() throws IOException {
@@ -88,16 +88,11 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   }
 
   public void processSources(final int targetId, final Processor<Key> processor) throws IOException {
-    myPersistentMap.processKeysWithExistingMapping(new Processor<KeyAndTargetData<Key>>() {
-      @Override
-      public boolean process(KeyAndTargetData<Key> data) {
-        return targetId == data.myTarget ? processor.process(data.myKey) : true;
-      }
-    });
+    myPersistentMap.processKeysWithExistingMapping(data -> targetId == data.myTarget ? processor.process(data.myKey) : true);
   }
 
   public void putState(int targetId, @NotNull Key key, @NotNull SourceState sourceState, @NotNull OutputState outputState) throws IOException {
-    myPersistentMap.put(getKeyAndTargetData(key, targetId), new PersistentStateData<SourceState,OutputState>(sourceState, outputState));
+    myPersistentMap.put(getKeyAndTargetData(key, targetId), new PersistentStateData<>(sourceState, outputState));
   }
 
 
@@ -172,7 +167,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     public PersistentStateData<SourceState, OutputState> read(@NotNull DataInput in) throws IOException {
       SourceState sourceState = mySourceStateExternalizer.read(in);
       OutputState outputState = myOutputStateExternalizer.read(in);
-      return new PersistentStateData<SourceState,OutputState>(sourceState, outputState);
+      return new PersistentStateData<>(sourceState, outputState);
     }
   }
 }

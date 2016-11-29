@@ -205,12 +205,7 @@ public class XValueHint extends AbstractValueHint {
                             SimpleTextAttributes.GRAYED_ATTRIBUTES);
               }
 
-              JComponent component = createExpandableHintComponent(text, new Runnable() {
-                @Override
-                public void run() {
-                  showTree(result);
-                }
-              });
+              JComponent component = createExpandableHintComponent(text, () -> showTree(result));
               showHint(component);
             }
             myShown = true;
@@ -231,12 +226,7 @@ public class XValueHint extends AbstractValueHint {
       @Override
       public void errorOccurred(@NotNull final String errorMessage) {
         if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              showHint(HintUtil.createErrorLabel(errorMessage));
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> showHint(HintUtil.createErrorLabel(errorMessage)));
         }
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }

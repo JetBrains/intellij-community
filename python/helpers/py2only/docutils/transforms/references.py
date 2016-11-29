@@ -1,4 +1,4 @@
-# $Id: references.py 6167 2009-10-11 14:51:42Z grubert $
+# $Id: references.py 7624 2013-03-07 14:10:26Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,8 +8,10 @@ Transforms for resolving references.
 
 __docformat__ = 'reStructuredText'
 
+import sys
+import re
 from docutils import nodes, utils
-from docutils.transforms import Transform
+from docutils.transforms import TransformError, Transform
 
 
 class PropagateTargets(Transform):
@@ -45,7 +47,7 @@ class PropagateTargets(Transform):
                  target.hasattr('refname'))):
                 continue
             assert len(target) == 0, 'error: block-level target has children'
-            next_node = target.next_node(ascend=1)
+            next_node = target.next_node(ascend=True)
             # Do not move names and ids into Invisibles (we'd lose the
             # attributes) or different Targetables (e.g. footnotes).
             if (next_node is not None and
@@ -134,7 +136,7 @@ class AnonymousHyperlinks(Transform):
             return
         for ref, target in zip(anonymous_refs, anonymous_targets):
             target.referenced = 1
-            while 1:
+            while True:
                 if target.hasattr('refuri'):
                     ref['refuri'] = target['refuri']
                     ref.resolved = 1
@@ -273,7 +275,8 @@ class IndirectHyperlinks(Transform):
             reflist.extend(self.document.refnames.get(name, []))
         for id in target['ids']:
             reflist.extend(self.document.refids.get(id, []))
-        naming += '(id="%s")' % target['ids'][0]
+        if target['ids']:
+            naming += '(id="%s")' % target['ids'][0]
         msg = self.document.reporter.error(
               'Indirect hyperlink target %s refers to target "%s", %s.'
               % (naming, target['refname'], explanation), base_node=target)
@@ -389,15 +392,16 @@ class InternalTargets(Transform):
             <target id="id1" name="direct internal">
         """
         for name in target['names']:
-            refid = self.document.nameids[name]
+            refid = self.document.nameids.get(name)
             reflist = self.document.refnames.get(name, [])
             if reflist:
                 target.note_referenced_by(name=name)
             for ref in reflist:
                 if ref.resolved:
                     continue
-                del ref['refname']
-                ref['refid'] = refid
+                if refid:
+                    del ref['refname']
+                    ref['refid'] = refid
                 ref.resolved = 1
 
 
@@ -500,7 +504,7 @@ class Footnotes(Transform):
         corresponding footnote references.
         """
         for footnote in self.document.autofootnotes:
-            while 1:
+            while True:
                 label = str(startnum)
                 startnum += 1
                 if label not in self.document.nameids:
@@ -806,8 +810,7 @@ class TargetNotes(Transform):
         for ref in refs:
             if isinstance(ref, nodes.target):
                 continue
-            refnode = nodes.footnote_reference(
-                refname=footnote_name, auto=1)
+            refnode = nodes.footnote_reference(refname=footnote_name, auto=1)
             refnode['classes'] += self.classes
             self.document.note_autofootnote_ref(refnode)
             self.document.note_footnote_ref(refnode)

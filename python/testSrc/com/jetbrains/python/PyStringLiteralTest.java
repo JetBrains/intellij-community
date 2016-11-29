@@ -150,7 +150,7 @@ public class PyStringLiteralTest extends PyTestCase {
   private List<String> getCharacterRanges(String text) {
     final PyStringLiteralExpression expr = createLiteralFromText(text);
     assertNotNull(expr);
-    final List<String> characters = new ArrayList<String>();
+    final List<String> characters = new ArrayList<>();
     for (Pair<TextRange, String> fragment : expr.getDecodedFragments()) {
       characters.add(fragment.getSecond());
     }

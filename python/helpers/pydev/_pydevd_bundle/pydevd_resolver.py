@@ -96,13 +96,14 @@ class DefaultResolver:
     '''
         DefaultResolver is the class that'll actually resolve how to show some variable.
     '''
+    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         return getattr(var, attribute)
 
-    def get_dictionary(self, var):
+    def get_dictionary(self, var, names=None):
         if MethodWrapperType:
-            return self._getPyDictionary(var)
+            return self._getPyDictionary(var, names)
         else:
             return self._getJyDictionary(var)
 
@@ -162,15 +163,20 @@ class DefaultResolver:
 
         return ret
 
-    def _getPyDictionary(self, var):
+    def get_names(self, var):
+        names = dir(var)
+        if not names and hasattr(var, '__members__'):
+            names = var.__members__
+        return names
+
+    def _getPyDictionary(self, var, names=None):
         filterPrivate = False
         filterSpecial = True
         filterFunction = True
         filterBuiltIn = True
 
-        names = dir(var)
-        if not names and hasattr(var, '__members__'):
-            names = var.__members__
+        if not names:
+            names = self.get_names(var)
         d = {}
 
         #Be aware that the order in which the filters are applied attempts to
@@ -214,6 +220,7 @@ class DefaultResolver:
 # DictResolver
 #=======================================================================================================================
 class DictResolver:
+    use_value_repr_instead_of_str = False
 
     def resolve(self, dict, key):
         if key in ('__len__', TOO_LARGE_ATTR):
@@ -269,6 +276,7 @@ class DictResolver:
 # TupleResolver
 #=======================================================================================================================
 class TupleResolver: #to enumerate tuples and lists
+    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         '''
@@ -312,6 +320,7 @@ class SetResolver:
     '''
         Resolves a set as dict id(object)->object
     '''
+    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         if attribute in ('__len__', TOO_LARGE_ATTR):
@@ -351,6 +360,7 @@ class SetResolver:
 # InstanceResolver
 #=======================================================================================================================
 class InstanceResolver:
+    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         field = var.__class__.getDeclaredField(attribute)
@@ -379,6 +389,7 @@ class JyArrayResolver:
     '''
         This resolves a regular Object[] array from java
     '''
+    use_value_repr_instead_of_str = False
 
     def resolve(self, var, attribute):
         if attribute == '__len__':
@@ -402,6 +413,7 @@ class NdArrayResolver:
     '''
         This resolves a numpy ndarray returning some metadata about the NDArray
     '''
+    use_value_repr_instead_of_str = False
 
     def is_numeric(self, obj):
         if not hasattr(obj, 'dtype'):
@@ -467,6 +479,7 @@ class NdArrayItemsContainer: pass
 # MultiValueDictResolver
 #=======================================================================================================================
 class MultiValueDictResolver(DictResolver):
+    use_value_repr_instead_of_str = False
 
     def resolve(self, dict, key):
         if key in ('__len__', TOO_LARGE_ATTR):
@@ -482,27 +495,42 @@ class MultiValueDictResolver(DictResolver):
 
         raise UnableToResolveVariableException()
 
-    def get_dictionary(self, dict):
-        ret = {}
-        i = 0
-        for key in dict_keys(dict):
-            val = dict.getlist(key)
-            i += 1
-            #we need to add the id because otherwise we cannot find the real object to get its contents later on.
-            key = '%s (%s)' % (self.key_to_str(key), id(key))
-            ret[key] = val
-            if i > MAX_ITEMS_TO_HANDLE:
-                ret[TOO_LARGE_ATTR] = TOO_LARGE_MSG
-                break
 
-        ret['__len__'] = len(dict)
-        return ret
+
+#=======================================================================================================================
+# DjangoFormResolver
+#=======================================================================================================================
+class DjangoFormResolver(DefaultResolver):
+    has_errors_attr = False
+    use_value_repr_instead_of_str = True
+
+    def get_names(self, var):
+        names = dir(var)
+        if not names and hasattr(var, '__members__'):
+            names = var.__members__
+
+        if "errors" in names:
+            self.has_errors_attr = True
+            names.remove("errors")
+        return names
+
+    def get_dictionary(self, var, names=None):
+        # Do not call self.errors because it is property and has side effects
+        d = defaultResolver.get_dictionary(var, self.get_names(var))
+        if self.has_errors_attr:
+            try:
+                errors_attr = getattr(var, "_errors")
+            except:
+                errors_attr = None
+            d["errors"] = errors_attr
+        return d
 
 
 #=======================================================================================================================
 # DequeResolver
 #=======================================================================================================================
 class DequeResolver(TupleResolver):
+    use_value_repr_instead_of_str = False
     def get_dictionary(self, var):
         d = TupleResolver.get_dictionary(self, var)
         d['maxlen'] = getattr(var, 'maxlen', None)
@@ -516,6 +544,7 @@ class FrameResolver:
     '''
     This resolves a frame.
     '''
+    use_value_repr_instead_of_str = False
 
     def resolve(self, obj, attribute):
         if attribute == '__internals__':
@@ -567,5 +596,6 @@ jyArrayResolver = JyArrayResolver()
 setResolver = SetResolver()
 ndarrayResolver = NdArrayResolver()
 multiValueDictResolver = MultiValueDictResolver()
+djangoFormResolver = DjangoFormResolver()
 dequeResolver = DequeResolver()
 frameResolver = FrameResolver()

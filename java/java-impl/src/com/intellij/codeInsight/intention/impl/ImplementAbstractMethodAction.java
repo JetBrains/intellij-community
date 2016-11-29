@@ -33,6 +33,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +75,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
           }
         }
       }
-      ClassInheritorsSearch.search(containingClass, false).forEach(new PsiElementProcessorAdapter<PsiClass>(
+      ClassInheritorsSearch.search(containingClass, false).forEach(new PsiElementProcessorAdapter<>(
         processor));
       return isAvailable(processor);
     }
@@ -120,7 +121,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     public boolean execute(@NotNull PsiElement element) {
       if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass) element;
-        if (aClass.isInterface()) return true;
+        if (aClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(aClass)) return true;
         final PsiMethod existingImplementation = findExistingImplementation(aClass, myMethod);
         if (existingImplementation != null && !existingImplementation.hasModifierProperty(PsiModifier.ABSTRACT)) {
           myHasExistingImplementations = true;

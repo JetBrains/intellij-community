@@ -15,126 +15,143 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A service managing model transactions.<p/>
  *
  * A transaction ensures that IntelliJ model (PSI, documents, VFS, project roots etc.) isn't modified in an unexpected way
- * while working with it, with either read or write access. The main property of transactions is isolation: at most one transaction
+ * while working with it, with either read or write access. The main property of transactions is mutual exclusion: at most one transaction
  * can be running at any given time. The code inside transaction can perform read or write actions and, more importantly, show dialogs
  * and process UI events in other ways: it's guaranteed that no one will be able to sneak in with an unexpected model change using
  * {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or analogs.<p/>
  *
- * Transactions are run on UI thread. They have read access by default. All write actions should be performed inside a transaction.<p/>
+ * Transactions are run on UI thread and have read access. Write actions that modify model are only allowed inside write-safe contexts. These are:
+ * <ul>
+ *   <li>Transactions</li>
+ *   <li>Direct user activity processing (key/mouse presses, actions)</li>
+ *   <li>{@link Application#invokeLater(Runnable, ModalityState)} calls with a modality state that's either non-modal
+ *   or was started inside a write-safe context (for example, a dialog shown from an action wrapped into a transaction)</li>
+ * </ul>
  *
- * The recommended way to perform a transaction is to invoke {@link #submitTransaction(Runnable)}. It either runs the transaction immediately
- * (if on UI thread and there's no other transaction running) or queues it to invoke at some later moment, when it becomes possible.<p/>
+ * All other contexts are considered write-unsafe, and model modifications are not allowed from them.
+ * Even if user activity happens in such context
+ * (e.g. someone clicks a button in a dialog shown from {@link javax.swing.SwingUtilities#invokeLater(Runnable)}),
+ * this will result in an assertion.
+ * Synchronous transactions ({@link #submitTransactionAndWait(Runnable)} are also not allowed from such invokeLater calls.
  *
- * Sometimes transactions need to be processed immediately, even if another transaction is already running. Example:
- * outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document)
- * should be allowed. For such cases, the framework should be notified which transaction kinds are allowed to merged into
- * the main transaction and executed immediately. Use {@link #acceptNestedTransactions(TransactionKind...)} for that. Inner transactions
- * should be given some kind in such circumstances: {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+ * The recommended way to perform a transaction is to invoke {@link #submitTransaction(Disposable, Runnable)}. It either runs the transaction immediately
+ * (if in write-safe context on UI thread) or queues it to invoke at some later moment, when it becomes possible.<p/>
+ *
+ * Sometimes transactions need to be processed as soon as possible, even if another transaction is already running. Example:
+ * outer transaction has shown a dialog with a modal progress that performs a write action inside (which requires a transaction)
+ * and waits for it to be finished. For such cases, a context transaction id
+ * should be supplied to the nested transaction via {@link #submitTransaction(Disposable, TransactionId, Runnable)}.
  *
  * <p><h1>FAQ</h1></p>
  *
- * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
- * A: Add a transaction somewhere into the call stack, to the outermost callee where having read/write model consistency is needed.
- * If it's a user action, transaction should be synchronous (see {@link #startSynchronousTransaction(TransactionKind)}. For AnAction
- * inheritors, {@link WrapInTransaction} annotation might be handy. Note that not all actions need to be wrapped into transactions, only
- * those that require the model to be consistent. For example, actions that display settings dialogs or VCS actions are most likely exempt.
+ * Q: When should transactions be used?
+ * A: Whenever the code inside isn't prepared to model being modified from the outside world. Which is, almost always. Well known base AnAction
+ * classes that work with PSI are wrapped into transactions by default. It only makes sense to opt out (by overriding AnAction#startInTransaction), if your actions
+ * don't modify the PSI/document/VFS model in any way, and can be invoked in a dialog that's shown from invokeLater.
  * <p/>
  *
- * If the exception occurs not inside a user action, it's probably from some kind of "invokeLater".
- * Then, replace "invokeLater" with {@link #submitTransaction(Runnable)} or
- * {@link #submitMergeableTransaction(TransactionKind, Runnable)} call.<p/>
- *
- * Q: I've got <b>"Nested transactions are not allowed"</b> exception, what do I do?<br/>
- * A: First, find the place in the stack where the outer transaction is started. Then, see if there is any Swing event pumping
- * in between two transactions (e.g. a dialog is shown). If not, one of two transactions is superfluous, remove it. If there
- * is event pumping, check if the client code (e.g. the one showing the dialog) is prepared to the nested model modifications
- * of the specified kinds. For example, refactoring dialogs might be prepared to {@link TransactionKind#TEXT_EDITING} kind
- * (for text field editing inside the dialogs) but not
- * other model changes, e.g. root changes. The outer transaction code might then specify which kinds it's prepared to (by using
- * {@link #acceptNestedTransactions(TransactionKind...)}), and the inner transaction code should have the very same transaction kind
- * (by using {@link #submitMergeableTransaction(TransactionKind, Runnable)} or {@link #startSynchronousTransaction(TransactionKind)}).
- * If the nested transaction is not expected by the outer code, it must be made asynchronous by using either {@link #submitTransaction(Runnable)}
- * or {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
+ * Q: I've got <b>"Write access is allowed from model transactions only"</b>
+ *    or <b>"Cannot run synchronous submitTransactionAndWait"</b> exception, what do I do?<br/>
+ * A: You're likely inside an "invokeLater" or "invokeAndWait"-like call.
+ * <ul>
+ * <li/> If this code is showing a dialog that requires model consistency during its lifetime,
+ * consider replacing invokeLater with {@link #submitTransaction(Disposable, Runnable)} or
+ * {@link #submitTransaction(Disposable, TransactionId, Runnable)}.<br/>
+ * <li/> Consider simplifying the code. For example, if the outer code is known to be run on EDT, "invokeLater(AndWait)IfNeeded" call can be removed. If it's in a pooled thread, the "IfNeeded" part can be removed. "invokeAndWaitIfNeeded" can be safely unwrapped, if already on EDT.
+ * <li/> Consider making the code synchronous. "invokeLater" from EDT rarely makes sense and can often be replaced with synchronous execution (which will likely be inside a user activity: a write-safe context).
+ * <li/> If you get the assertion from synchronous document commit or VFS refresh, consider making them asynchronous. For documents, use {@link com.intellij.psi.PsiDocumentManager#performLaterWhenAllCommitted(Runnable)}.
+ * You can also try to get rid of them at all, by making your code work only with VFS and PSI and assuming
+ * they're refreshed/committed often enough by some other code.
+ * <li/> If you still have "invokeAndWaitIfNeeded" call with model-changing activity inside, replace it with {@link #submitTransactionAndWait(Runnable)} or {@link Application#invokeAndWait}.
+ * You might still get assertions after that, that would mean that some caller down the stack is also using "invokeLater"-like call and needs to be fixed as well.
+ * <li/> If you still absolutely need "invokeLater" use {@link Application#invokeLater} (or GuiUtils for "invokeLaterIfNeeded"),
+ * and pass a modality state that appeared in a write-safe context (e.g. a background progress started in an action).
+ * Most likely {@link ModalityState#defaultModalityState()} will do.
+ * Don't forget to check inside the "later" runnable that it's still actual, that the model haven't been changed by someone else since its scheduling.
+ * </ul>
  * <p/>
  *
  * Q: What's the difference between transactions and read/write actions and commands ({@link com.intellij.openapi.command.CommandProcessor})?<br/>
- * A: Transactions are more abstract and can contain several write actions and even commands inside. Read/write actions guarantee that no
- * one else will modify the model, while transactions allow for some modification, but in a way controlled by transaction kinds. Commands
- * are used for tracking document changes for undo/redo functionality, so they're orthogonal to transactions.
+ * A: Read actions in background threads ensure that no one will modify the model while you're working with it.<br/>
+ * Write actions (in Swing thread only) allow to modify the model, but ensure that no background thread is reading it in the meantime.<br/>
+ * Read action in Swing thread is special: it allows to perform a write action inside. This can lead to troubles
+ * if some foreign invokeLater call modifies the model while you're showing a modal progress that's not supposed to change anything.
+ * Transactions (in Swing thread only) allow for interactive model processing with read and write actions inside,
+ * with modal dialogs and progresses, with a guarantee that only you may modify the model, and not random invokeLater's.<br/>
+ * Commands are used for tracking document changes for undo/redo functionality, so they're orthogonal to transactions.
  *
  * @see Application#runReadAction(Runnable)
  * @see Application#runWriteAction(Runnable)
- * @since 146.*
+ * @since 2016.2
  * @author peter
  */
 public abstract class TransactionGuard {
+  private static volatile TransactionGuard ourInstance;
 
   public static TransactionGuard getInstance() {
-    return ServiceManager.getService(TransactionGuard.class);
+    TransactionGuard instance = ourInstance;
+    if (instance == null) {
+      ourInstance = instance = ServiceManager.getService(TransactionGuard.class);
+    }
+    return instance;
   }
 
   /**
-   * Ensures that some code will be run in a transaction. It's guaranteed that no other transactions are run at the same time.
-   * The code will be run on Swing thread immediately or after all other queued transactions (if any) have been completed.<p/>
+   * Ensures that some code will be run in a transaction. It's guaranteed that no other transactions can run at the same time,
+   * except for the ones started from within this runnable. The code will be run on Swing thread immediately
+   * or after other queued transactions (if any) have been completed.<p/>
    *
-   * For more advanced version, see {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
-   * Transactions submitted via this method use {@link TransactionKind#NO_MERGE} kind.
+   * For more advanced version, see {@link #submitTransaction(Disposable, TransactionId, Runnable)}.
    *
+   * @param parentDisposable an object whose disposing (via {@link com.intellij.openapi.util.Disposer} makes this transaction invalid,
+   *                         and so it won't be run after it has been disposed
    * @param transaction code to execute inside a transaction.
    */
-  public static void submitTransaction(@NotNull Runnable transaction) {
-    getInstance().submitMergeableTransaction(TransactionKind.NO_MERGE, transaction);
+  public static void submitTransaction(@NotNull Disposable parentDisposable, @NotNull Runnable transaction) {
+    TransactionGuard guard = getInstance();
+    guard.submitTransaction(parentDisposable, guard.getContextTransaction(), transaction);
   }
 
   /**
-   * Schedules a transaction and waits for it to be completed. Only allowed to be invoked on non-UI thread and outside read action.
-   * @see #submitMergeableTransaction(TransactionKind, Runnable)
-   * @param kind
-   * @param transaction
+   * Schedules a given runnable to be executed inside a transaction later on Swing thread.
+   * Same as {@link #submitTransaction(Disposable, Runnable)}, but the runnable is never executed immediately.
+   */
+  public abstract void submitTransactionLater(@NotNull Disposable parentDisposable, @NotNull Runnable transaction);
+
+  /**
+   * Schedules a transaction and waits for it to be completed. Logs an error if invoked on UI thread inside an incompatible transaction,
+   * throws {@link IllegalStateException} inside a read action on non-UI thread.
+   * @see #submitTransaction(Disposable, TransactionId, Runnable)
    * @throws ProcessCanceledException if current thread is interrupted
    */
-  public abstract void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull Runnable transaction) throws ProcessCanceledException;
+  public abstract void submitTransactionAndWait(@NotNull Runnable transaction) throws ProcessCanceledException;
 
   /**
-   * A synchronous version of {@link #submitMergeableTransaction(TransactionKind, Runnable)}.
-   * @return a token object for this transaction. Call {@link AccessToken#finish()} (inside finally) when the transaction is complete.
-   */
-  @NotNull
-  public abstract AccessToken startSynchronousTransaction(@NotNull TransactionKind kind);
-
-  /**
-   * @return whether there's a transaction currently running
-   */
-  public abstract boolean isInsideTransaction();
-
-  /**
-   * When on UI thread and there's no other transaction running, executes the given runnable. If there is a transaction running,
-   * but the given {@code kind} is allowed via {@link #acceptNestedTransactions(TransactionKind...)}, merges two transactions
-   * and executes the provided code immediately. Otherwise
-   * adds the runnable to a queue. When all transactions scheduled before this one are finished, executes the given
-   * runnable under a transaction.
-   * @param kind a kind object to enable transaction merging or {@link TransactionKind#NO_MERGE}, if no merging is required.
+   * Executes the given runnable inside a transaction as soon as possible on the UI thread. The runnable is executed either when there's
+   * no active transaction running, or when the running transaction has the same (or compatible) id as {@code expectedContext}. If the id of
+   * the current transaction is passed, the transaction is executed immediately. Otherwise adds the runnable to a queue,
+   * to execute after all transactions scheduled before this one are finished.
+   * @param parentDisposable an object whose disposing (via {@link com.intellij.openapi.util.Disposer} makes this transaction invalid,
+   *                         and so it won't be run after it has been disposed.
+   * @param expectedContext an optional id of another transaction, to allow execution inside that transaction if it's still running
    * @param transaction code to execute inside a transaction.
+   * @see #getContextTransaction()
    */
-  public abstract void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction);
+  public abstract void submitTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId expectedContext, @NotNull Runnable transaction);
 
   /**
-   * Allow incoming transactions of the specified kinds to be executed immediately, instead of being queued until the current transaction is finished.<p/>
-   *
-   * Example: outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document)
-   * should be allowed.
-   * @param kinds kinds of transactions to allow
-   * @return a token object for this session. Please call {@link AccessToken#finish()} (inside finally clause) when you don't want
-   * nested transactions anymore.
+   * @return the id of the currently running transaction for using in {@link #submitTransaction(Disposable, TransactionId, Runnable)},
+   * or null if there's no transaction running or transaction nesting is not allowed in the callee context (e.g. from invokeLater).
    */
-  @NotNull
-  public abstract AccessToken acceptNestedTransactions(TransactionKind... kinds);
+  public abstract TransactionId getContextTransaction();
 }

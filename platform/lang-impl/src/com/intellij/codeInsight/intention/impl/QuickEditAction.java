@@ -76,12 +76,8 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     final List<Pair<PsiElement, TextRange>> injections = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
     if (injections == null || injections.isEmpty()) return null;
     final int offsetInElement = offset - host.getTextRange().getStartOffset();
-    final Pair<PsiElement, TextRange> rangePair = ContainerUtil.find(injections, new Condition<Pair<PsiElement, TextRange>>() {
-      @Override
-      public boolean value(final Pair<PsiElement, TextRange> pair) {
-        return pair.second.containsRange(offsetInElement, offsetInElement);
-      }
-    });
+    final Pair<PsiElement, TextRange> rangePair = ContainerUtil.find(injections,
+                                                                     pair -> pair.second.containsRange(offsetInElement, offsetInElement));
     if (rangePair != null) {
       final Language language = rangePair.first.getContainingFile().getLanguage();
       final Object action = language.getUserData(EDIT_ACTION_AVAILABLE);

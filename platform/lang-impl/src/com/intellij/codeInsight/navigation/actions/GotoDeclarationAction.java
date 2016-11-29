@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,21 @@ import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -52,7 +56,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -63,10 +70,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import sun.security.action.OpenFileInputStreamAction;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -99,11 +102,17 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (elements.length != 1) {
         if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-          if (element != null && !ApplicationManager.getApplication().isOnAir()) { // not implemented for onair yet
-            ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
-            RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-            showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+          if (startFindUsages(editor, element)) {
             return;
+          }
+
+          //disable 'no declaration found' notification for keywords
+          final PsiElement elementAtCaret = file.findElementAt(offset);
+          if (elementAtCaret != null) {
+            final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
+            if (namesValidator != null && namesValidator.isKeyword(elementAtCaret.getText(), project)) {
+              return;
+            }
           }
         }
         chooseAmbiguousTarget(editor, offset, elements, file);
@@ -111,6 +120,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
 
       PsiElement element = elements[0];
+      if (element == findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset()) &&
+          startFindUsages(editor, element)) {
+        return;
+      }
+
       PsiElement navElement = element.getNavigationElement();
       navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
       if (navElement != null) {
@@ -123,6 +137,16 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     finally {
       DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
+  }
+
+  private static boolean startFindUsages(@NotNull Editor editor, PsiElement element) {
+    if (element != null) {
+      ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
+      RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+      showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+      return true;
+    }
+    return false;
   }
 
   public static <T> T underModalProgress(@NotNull Project project,
@@ -139,12 +163,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }, progressTitle, true, project);
   }
 
-  public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
-    PsiElement elementAt = TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
-    if (elementAt instanceof PsiNameIdentifierOwner) {
-      return (PsiNameIdentifierOwner)elementAt;
-    }
-    return null;
+  public static PsiElement findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
+    return TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
   }
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
@@ -159,7 +179,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+  private static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
     if (element.getContainingFile() == currentFile) {
       int offset = element.getTextOffset();
       PsiElement leaf = currentFile.findElementAt(offset);
@@ -167,20 +187,26 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       // there are fake elements with custom navigation (e.g. opening URL in browser) that override getContainingFile for various reasons
       if (leaf != null && PsiTreeUtil.isAncestor(element, leaf, false)) {
         Project project = element.getProject();
-        IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-        Navigatable n = PsiNavigationSupport.getInstance().getDescriptor(element);
-        if (n instanceof OpenFileDescriptor) {
-          ((OpenFileDescriptor)n).navigateIn(currentEditor);
-        }
-        else if (n != null) {
-          n.navigate(true);
-        }
-        else {
-          new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
-        }
-        return;
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+          Navigatable n = PsiNavigationSupport.getInstance().getDescriptor(element);
+          if (n instanceof OpenFileDescriptor) {
+            ((OpenFileDescriptor)n).navigateIn(currentEditor);
+          }
+          else if (n != null) {
+            n.navigate(true);
+          }
+          else {
+            new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
+          }
+        }, "", null);
       }
     }
+    return false;
+  }
+
+  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+    if (navigateInCurrentEditor(element, currentFile, currentEditor)) return;
 
     Navigatable navigatable =
       element instanceof Navigatable ? (Navigatable)element : PsiNavigationSupport.getInstance().getDescriptor(element);
@@ -268,14 +294,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Nullable
   public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
-    final Document document = editor.getDocument();
+    Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
-
-    if (file instanceof PsiCompiledFile) {
-      PsiFile decompiled = ((PsiCompiledFile)file).getDecompiledPsiFile();
-      if (decompiled != null) file = decompiled;
-    }
 
     PsiElement elementAt = file.findElementAt(TargetElementUtil.adjustOffset(file, document, offset));
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
@@ -316,31 +337,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Override
   public void update(final AnActionEvent event) {
-    InputEvent inputEvent = event.getInputEvent();
-    if (inputEvent instanceof MouseEvent) {
-      Component component = inputEvent.getComponent();
-      if (component != null) {
-        Point point = ((MouseEvent)inputEvent).getPoint();
-        Component componentAt = SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
-        Project project = event.getProject();
-        if (project == null) {
-          event.getPresentation().setEnabled(false);
-          return;
-        }
-
-        Editor editor = getBaseEditor(event.getDataContext(), project);
-        if (componentAt instanceof EditorGutterComponentEx) {
-          event.getPresentation().setEnabled(false);
-          return;
-        }
-        else if (editor != null && componentAt == editor.getContentComponent()) {
-          LogicalPosition pos = editor.xyToLogicalPosition(SwingUtilities.convertPoint(component, point, componentAt));
-          if (EditorUtil.inVirtualSpace(editor, pos)) {
-            event.getPresentation().setEnabled(false);
-            return;
-          }
-        }
-      }
+    if (event.getProject() == null ||
+        event.getData(EditorGutter.KEY) != null ||
+        Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
+      event.getPresentation().setEnabled(false);
+      return;
     }
 
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {

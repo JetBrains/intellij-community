@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,12 +45,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyTestCase {
 
   // PY-1408
   public void testUnboundExceptAs() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
   }
 
   // PY-1434
@@ -90,12 +85,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyTestCase {
 
   // PY-3603
   public void testUnboundNonLocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
   }
 
   // PY-3671
@@ -190,6 +180,15 @@ public class PyUnboundLocalVariableInspectionTest extends PyTestCase {
 
   // PY-6114
   public void testUnboundUnreachable() {
+    doTest();
+  }
+
+  // PY-1177
+  public void testWhileTrueBreak() {
+    doTest();
+  }
+
+  public void testWhileOneBreak() {
     doTest();
   }
 

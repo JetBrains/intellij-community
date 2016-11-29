@@ -53,15 +53,15 @@ public class CvsEntriesManager extends VirtualFileAdapter {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.application.CvsEntriesManager");
 
-  private final Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new THashMap<VirtualFile, CvsInfo>();
+  private final Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new THashMap<>();
 
   private static final String CVS_ADMIN_DIRECTORY_NAME = CvsUtil.CVS;
 
   private final Collection<CvsEntriesListener> myEntriesListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myIsActive = 0;
-  private final Collection<String> myFilesToRefresh = new THashSet<String>();
+  private final Collection<String> myFilesToRefresh = new THashSet<>();
 
-  private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new THashMap<String, CvsConnectionSettings>();
+  private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new THashMap<>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
   private final MyVirtualFileManagerListener myVirtualFileManagerListener = new MyVirtualFileManagerListener();
   private final CvsApplicationLevelConfiguration myApplicationLevelConfiguration;
@@ -225,11 +225,9 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     cvsInfo.clearFilter();
     if (cvsInfo.isLoaded()) {
       cvsInfo.clearAll();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (parent.isValid()) {
-            onEntriesChanged(parent);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (parent.isValid()) {
+          onEntriesChanged(parent);
         }
       });
     }
@@ -254,12 +252,10 @@ public class CvsEntriesManager extends VirtualFileAdapter {
 
     cvsInfo.setEntryAndReturnReplacedEntry(entry);
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        final VirtualFile file = CvsVfsUtil.findChild(parent, entry.getFileName());
-        if (file != null) {
-          onEntryChanged(file);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final VirtualFile file = CvsVfsUtil.findChild(parent, entry.getFileName());
+      if (file != null) {
+        onEntryChanged(file);
       }
     });
   }
@@ -272,16 +268,12 @@ public class CvsEntriesManager extends VirtualFileAdapter {
 
     final VirtualFile[] file = new VirtualFile[1];
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            file[0] = LocalFileSystem.getInstance().findFileByIoFile(new File(parent, fileName));
-          }
-        });
-        if (file[0] != null) {
-          onEntryChanged(file[0]);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ApplicationManager.getApplication().runReadAction(() -> {
+        file[0] = LocalFileSystem.getInstance().findFileByIoFile(new File(parent, fileName));
+      });
+      if (file[0] != null) {
+        onEntryChanged(file[0]);
       }
     });
   }

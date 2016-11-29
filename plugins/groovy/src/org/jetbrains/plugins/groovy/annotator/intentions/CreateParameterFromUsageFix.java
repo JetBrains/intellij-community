@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -29,12 +28,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -79,7 +76,7 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     if (element instanceof GrReferenceExpression) {
       findScope((GrReferenceExpression)element, editor, project);
     }
@@ -103,7 +100,7 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
 
   private void findScope(@NotNull final GrReferenceExpression ref, @NotNull final Editor editor, final Project project) {
     PsiElement place = ref;
-    final List<GrMethod> scopes = new ArrayList<GrMethod>();
+    final List<GrMethod> scopes = new ArrayList<>();
     while (true) {
       final GrMethod parent = PsiTreeUtil.getParentOfType(place, GrMethod.class);
       if (parent == null) break;
@@ -119,53 +116,43 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
       showDialog(toSearchFor, ref, project);
     }
     else if (scopes.size() > 1) {
-      myEnclosingMethodsPopup = MethodOrClosureScopeChooser.create(scopes, editor, this, new PairFunction<GrParametersOwner, PsiElement, Object>() {
-        @Override
-        public Object fun(GrParametersOwner owner, PsiElement element) {
-          showDialog((PsiMethod)owner, ref, project);
-          return null;
-        }
+      myEnclosingMethodsPopup = MethodOrClosureScopeChooser.create(scopes, editor, this, (owner, element) -> {
+        showDialog((PsiMethod)owner, ref, project);
+        return null;
       });
       myEnclosingMethodsPopup.showInBestPositionFor(editor);
     }
   }
 
   private static void showDialog(final PsiMethod method, final GrReferenceExpression ref, final Project project) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) return;
+    final String name = ref.getReferenceName();
+    final List<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(ref);
 
-        final String name = ref.getReferenceName();
-        final List<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(ref);
+    PsiType unboxed = types.isEmpty() ? null : TypesUtil.unboxPrimitiveTypeWrapper(types.get(0));
+    @NotNull final PsiType type = unboxed != null ? unboxed : PsiType.getJavaLangObject(ref.getManager(), ref.getResolveScope());
 
-        PsiType unboxed = types.isEmpty() ? null : TypesUtil.unboxPrimitiveTypeWrapper(types.get(0));
-        @NotNull final PsiType type = unboxed != null ? unboxed : PsiType.getJavaLangObject(ref.getManager(), ref.getResolveScope());
+    if (method instanceof GrMethod) {
+      GrMethodDescriptor descriptor = new GrMethodDescriptor((GrMethod)method);
+      GrChangeSignatureDialog dialog = new GrChangeSignatureDialog(project, descriptor, true, ref);
 
-        if (method instanceof GrMethod) {
-          GrMethodDescriptor descriptor = new GrMethodDescriptor((GrMethod)method);
-          GrChangeSignatureDialog dialog = new GrChangeSignatureDialog(project, descriptor, true, ref);
-
-          List<GrParameterInfo> parameters = dialog.getParameters();
-          parameters.add(createParameterInfo(name, type));
-          dialog.setParameterInfos(parameters);
-          dialog.show();
-        }
-        else if (method != null) {
-          JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, false, ref);
-          final List<ParameterInfoImpl> parameterInfos = new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
-          ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, name, type, PsiTypesUtil.getDefaultValueOfType(type), false);
-          if (!method.isVarArgs()) {
-            parameterInfos.add(parameterInfo);
-          }
-          else {
-            parameterInfos.add(parameterInfos.size() - 1, parameterInfo);
-          }
-          dialog.setParameterInfos(parameterInfos);
-          dialog.show();
-        }
+      List<GrParameterInfo> parameters = dialog.getParameters();
+      parameters.add(createParameterInfo(name, type));
+      dialog.setParameterInfos(parameters);
+      dialog.show();
+    }
+    else if (method != null) {
+      JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, false, ref);
+      final List<ParameterInfoImpl> parameterInfos = new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
+      ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, name, type, PsiTypesUtil.getDefaultValueOfType(type), false);
+      if (!method.isVarArgs()) {
+        parameterInfos.add(parameterInfo);
       }
-    });
+      else {
+        parameterInfos.add(parameterInfos.size() - 1, parameterInfo);
+      }
+      dialog.setParameterInfos(parameterInfos);
+      dialog.show();
+    }
   }
 
   private static GrParameterInfo createParameterInfo(String name, PsiType type) {
@@ -176,6 +163,6 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

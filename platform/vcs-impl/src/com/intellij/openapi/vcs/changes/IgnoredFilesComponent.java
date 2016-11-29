@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,16 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -38,10 +40,12 @@ public class IgnoredFilesComponent {
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
   private final Lock myReadLock = myLock.readLock();
   private final Lock myWriteLock = myLock.writeLock();
+  private final Project myProject;
 
-  public IgnoredFilesComponent(final Project project, final boolean registerListener) {
-    myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>();
-    myFilesMap = new HashMap<String, IgnoredFileBean>();
+  public IgnoredFilesComponent(@NotNull Project project, final boolean registerListener) {
+    myProject = project;
+    myFilesToIgnore = new LinkedHashSet<>();
+    myFilesMap = new THashMap<>();
 
     if (registerListener) {
       project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
@@ -53,22 +57,18 @@ public class IgnoredFilesComponent {
         }
 
         private <T extends VFileEvent> boolean hasSignificantChanges(List<T> events) {
-          return ContainerUtil.exists(events, new Condition<T>() {
-            @Override
-            public boolean value(VFileEvent event) {
-              return !(event instanceof VFileContentChangeEvent);
-            }
-          });
+          return ContainerUtil.exists(events, event -> !(event instanceof VFileContentChangeEvent));
         }
       });
     }
-    myDirectoriesManuallyRemovedFromIgnored = new HashSet<String>();
+    myDirectoriesManuallyRemovedFromIgnored = new THashSet<>();
   }
 
-  public IgnoredFilesComponent(final IgnoredFilesComponent other) {
-    myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>(other.myFilesToIgnore);
-    myFilesMap = new HashMap<String, IgnoredFileBean>(other.myFilesMap);
-    myDirectoriesManuallyRemovedFromIgnored = new HashSet<String>(other.myDirectoriesManuallyRemovedFromIgnored);
+  public IgnoredFilesComponent(@NotNull IgnoredFilesComponent other) {
+    myProject = other.myProject;
+    myFilesToIgnore = new LinkedHashSet<>(other.myFilesToIgnore);
+    myFilesMap = new HashMap<>(other.myFilesMap);
+    myDirectoriesManuallyRemovedFromIgnored = new HashSet<>(other.myDirectoriesManuallyRemovedFromIgnored);
   }
 
   public void add(final IgnoredFileBean... filesToIgnore) {
@@ -102,22 +102,36 @@ public class IgnoredFilesComponent {
           return;
         }
       }
-      List<IgnoredFileBean> toRemove = new ArrayList<IgnoredFileBean>();
-      for (IgnoredFileBean bean : myFilesToIgnore) {
-        if ((bean.getType() == IgnoreSettingsType.UNDER_DIR || bean.getType() == IgnoreSettingsType.FILE) &&
-            FileUtil.isAncestor(path, bean.getPath(), false)) {
-          toRemove.add(bean);
-        }
-      }
-      myFilesToIgnore.removeAll(toRemove);
+      doRemoveFilesToIgnore(path, true);
       myFilesToIgnore.add(IgnoredBeanFactory.ignoreUnderDirectory(path, project));
     }
     finally {
       myWriteLock.unlock();
     }
   }
+  
+  public void removeImplicitlyIgnoredDirectory(@NotNull String path, @NotNull Project project) {
+    myWriteLock.lock();
+    try {
+      doRemoveFilesToIgnore(path, false);
+    }
+    finally {
+      myWriteLock.unlock();
+    }
+  }
 
-  private void addIgnoredFiles(final IgnoredFileBean... filesToIgnore) {
+  private void doRemoveFilesToIgnore(@NotNull String path, boolean includingSubpaths) {
+    List<IgnoredFileBean> toRemove = new ArrayList<>();
+    for (IgnoredFileBean bean : myFilesToIgnore) {
+      if ((bean.getType() == IgnoreSettingsType.UNDER_DIR || bean.getType() == IgnoreSettingsType.FILE) &&
+          includingSubpaths ? FileUtil.isAncestor(path, bean.getPath(), false) : FileUtil.pathsEqual(path, bean.getPath())) {
+        toRemove.add(bean);
+      }
+    }
+    myFilesToIgnore.removeAll(toRemove);
+  }
+
+  private void addIgnoredFiles(@NotNull IgnoredFileBean[] filesToIgnore) {
     for (IgnoredFileBean bean : filesToIgnore) {
       if (IgnoreSettingsType.FILE.equals(bean.getType())) {
         final Project project = bean.getProject();
@@ -164,6 +178,7 @@ public class IgnoredFilesComponent {
     }
   }
 
+  @NotNull
   public IgnoredFileBean[] getFilesToIgnore() {
     myReadLock.lock();
     try {
@@ -186,13 +201,19 @@ public class IgnoredFilesComponent {
     }
   }
 
-  public boolean isIgnoredFile(@NotNull VirtualFile file) {
+  boolean isIgnoredFile(@NotNull FilePath filePath) {
     myReadLock.lock();
     try {
-      if (myFilesToIgnore.size() == 0) return false;
+      if (myFilesToIgnore.isEmpty()) return false;
 
-      final String path = FilePathsHelper.convertPath(file);
+      final String path = FilePathsHelper.convertPath(filePath);
       final IgnoredFileBean fileBean = myFilesMap.get(path);
+
+      VirtualFile file = filePath.getVirtualFile();
+      if (file == null) {
+        return false;
+      }
+
       if (fileBean != null && fileBean.matchesFile(file)) return true;
 
       for (IgnoredFileBean bean : myFilesToIgnore) {

@@ -94,7 +94,7 @@ public class SvnKitAdminAreaFactorySelector implements ISVNAdminAreaFactorySelec
   }
 
   private static Collection<SVNAdminAreaFactory> factoriesFor14(final Collection factories) {
-    final Collection<SVNAdminAreaFactory> result = new ArrayList<SVNAdminAreaFactory>(2);
+    final Collection<SVNAdminAreaFactory> result = new ArrayList<>(2);
     for (Object item : factories) {
       final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)item;
       final int supportedVersion = factory.getSupportedVersion();
@@ -107,7 +107,7 @@ public class SvnKitAdminAreaFactorySelector implements ISVNAdminAreaFactorySelec
   }
 
   private static Collection<SVNAdminAreaFactory> factoriesFor15(final Collection factories) {
-    final Collection<SVNAdminAreaFactory> result = new ArrayList<SVNAdminAreaFactory>(2);
+    final Collection<SVNAdminAreaFactory> result = new ArrayList<>(2);
     for (Object item : factories) {
       final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)item;
       final int supportedVersion = factory.getSupportedVersion();
@@ -121,7 +121,7 @@ public class SvnKitAdminAreaFactorySelector implements ISVNAdminAreaFactorySelec
   }
 
   private static Collection<SVNAdminAreaFactory> factoriesFor16(final Collection factories) {
-    final Collection<SVNAdminAreaFactory> result = new ArrayList<SVNAdminAreaFactory>(2);
+    final Collection<SVNAdminAreaFactory> result = new ArrayList<>(2);
     for (Object item : factories) {
       final SVNAdminAreaFactory factory = (SVNAdminAreaFactory)item;
       final int supportedVersion = factory.getSupportedVersion();

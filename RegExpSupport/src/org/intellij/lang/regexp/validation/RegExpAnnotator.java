@@ -30,6 +30,7 @@ import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -46,6 +47,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     myLanguageHosts = RegExpLanguageHosts.getInstance();
   }
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     assert myHolder == null : "unsupported concurrent annotator invocation";
     try {
@@ -57,6 +59,28 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
+  public void visitRegExpOptions(RegExpOptions options) {
+    checkValidFlag(options.getOptionsOn(), options);
+    checkValidFlag(options.getOptionsOff(), options);
+  }
+
+  private void checkValidFlag(@Nullable ASTNode optionsNode, @NotNull RegExpOptions context) {
+    if (optionsNode == null) {
+      return;
+    }
+    final String text = optionsNode.getText();
+    final int start = (optionsNode.getElementType() == RegExpTT.OPTIONS_OFF) ? 1 : 0; // skip '-' if necessary
+    for (int i = start, length = text.length(); i < length; i++) {
+      final int c = text.codePointAt(i);
+      if (!Character.isBmpCodePoint(c) || !myLanguageHosts.supportsInlineOptionFlag((char)c, context)) {
+        final int offset = optionsNode.getStartOffset() + i;
+        myHolder.createErrorAnnotation(new TextRange(offset, offset + 1), "Unknown inline option flag");
+      }
+    }
+  }
+
+  @Override
   public void visitRegExpCharRange(RegExpCharRange range) {
     final RegExpCharRange.Endpoint from = range.getFrom();
     final RegExpCharRange.Endpoint to = range.getTo();
@@ -107,23 +131,52 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
+  public void visitRegExpBoundary(RegExpBoundary boundary) {
+    if (!myLanguageHosts.supportsBoundary(boundary)) {
+      myHolder.createErrorAnnotation(boundary, "Unsupported boundary");
+    }
+  }
+
+  @Override
+  public void visitSimpleClass(RegExpSimpleClass simpleClass) {
+    if (!myLanguageHosts.supportsSimpleClass(simpleClass)) {
+      myHolder.createErrorAnnotation(simpleClass, "Illegal/unsupported escape sequence");
+    }
+  }
+
+  @Override
   public void visitRegExpClass(RegExpClass regExpClass) {
-    final HashSet<Character> seen = new HashSet<Character>();
-    for (RegExpClassElement element : regExpClass.getElements()) {
-      if (!(element instanceof RegExpChar)) {
-        continue;
-      }
+    if (!(regExpClass.getParent() instanceof RegExpClass)) {
+      checkForDuplicates(regExpClass, new HashSet<>());
+    }
+  }
+
+  private void checkForDuplicates(RegExpClassElement element, Set<Character> seen) {
+    if (element instanceof RegExpChar) {
       final RegExpChar regExpChar = (RegExpChar)element;
       final Character value = regExpChar.getValue();
       if (value != null && !seen.add(value)) {
         myHolder.createWarningAnnotation(regExpChar, "Duplicate character '" + regExpChar.getText() + "' in character class");
       }
     }
+    else if (element instanceof RegExpClass) {
+      final RegExpClass regExpClass = (RegExpClass)element;
+      for (RegExpClassElement classElement : regExpClass.getElements()) {
+        checkForDuplicates(classElement, seen);
+      }
+    }
+    else if (element instanceof RegExpUnion) {
+      final RegExpUnion union = (RegExpUnion)element;
+      for (RegExpClassElement classElement : union.getElements()) {
+        checkForDuplicates(classElement, seen);
+      }
+    }
   }
 
+  @Override
   public void visitRegExpChar(final RegExpChar ch) {
     final Character value = ch.getValue();
-    if (value == null) {
+    if (value == null || (value == '\b' && !myLanguageHosts.supportsLiteralBackspace(ch))) {
       switch (ch.getType()) {
         case CHAR:
           myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
@@ -161,6 +214,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
   public void visitRegExpProperty(RegExpProperty property) {
     final ASTNode category = property.getCategoryNode();
     if (category == null) {
@@ -168,27 +222,44 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     if(!myLanguageHosts.isValidCategory(category.getPsi(), category.getText())) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
-      if (a != null) {
-        // IDEA-9381
+      a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+    }
+  }
+
+  @Override
+  public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
+    if (!myLanguageHosts.supportsNamedCharacters(namedCharacter)) {
+      myHolder.createErrorAnnotation(namedCharacter, "Named Unicode characters are not allowed in this regular expression dialect");
+    }
+    else if (!myLanguageHosts.isValidNamedCharacter(namedCharacter)) {
+      final ASTNode node = namedCharacter.getNameNode();
+      if (node != null) {
+        final Annotation a = myHolder.createErrorAnnotation(node, "Unknown character name");
         a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }
   }
 
+  @Override
   public void visitRegExpBackref(final RegExpBackref backref) {
     final RegExpGroup group = backref.resolve();
     if (group == null) {
       final Annotation a = myHolder.createErrorAnnotation(backref, "Unresolved back reference");
-      if (a != null) {
-        // IDEA-9381
-        a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-      }
+      a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     }
     else if (PsiTreeUtil.isAncestor(group, backref, true)) {
       myHolder.createWarningAnnotation(backref, "Back reference is nested into the capturing group it refers to");
     }
   }
 
+  @Override
+  public void visitRegExpIntersection(RegExpIntersection intersection) {
+    if (intersection.getOperands().length == 0) {
+      myHolder.createErrorAnnotation(intersection, "Illegal empty intersection");
+    }
+  }
+
+  @Override
   public void visitRegExpGroup(RegExpGroup group) {
     final RegExpPattern pattern = group.getPattern();
     if (pattern != null) {
@@ -214,6 +285,11 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         myHolder.createErrorAnnotation(group, "This named group syntax is not supported");
       }
     }
+    final String name = group.getName();
+    if (name != null && !myLanguageHosts.isValidGroupName(name, group)) {
+      final ASTNode node = group.getNode().findChildByType(RegExpTT.NAME);
+      if (node != null) myHolder.createErrorAnnotation(node, "Invalid group name");
+    }
   }
 
   @Override
@@ -227,9 +303,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     final RegExpGroup group = groupRef.resolve();
     if (group == null) {
-      final Annotation a = myHolder.createErrorAnnotation(groupRef, "Unresolved named group reference");
-      if (a != null) {
-        // IDEA-9381
+      final ASTNode node = groupRef.getNode().findChildByType(RegExpTT.NAME);
+      if (node != null) {
+        final Annotation a = myHolder.createErrorAnnotation(node, "Unresolved named group reference");
         a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }
@@ -263,6 +339,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     return true;
   }
 
+  @Override
   public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
     final RegExpQuantifier.Count count = quantifier.getCount();
     if (!(count instanceof RegExpQuantifier.SimpleCount)) {
@@ -317,8 +394,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
     final String className = posixBracketExpression.getClassName();
     if (!POSIX_CHARACTER_CLASSES.contains(className)) {
-      final Annotation annotation = myHolder.createErrorAnnotation(posixBracketExpression, "Unknown POSIX character class");
-      if (annotation != null) {
+      final ASTNode node = posixBracketExpression.getNode().findChildByType(RegExpTT.NAME);
+      if (node != null) {
+        final Annotation annotation = myHolder.createErrorAnnotation(node, "Unknown POSIX character class");
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }

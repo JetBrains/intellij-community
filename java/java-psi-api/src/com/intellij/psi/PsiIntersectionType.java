@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class PsiIntersectionType extends PsiType.Stub {
   private final PsiType[] myConjuncts;
 
   private PsiIntersectionType(@NotNull PsiType[] conjuncts) {
-    super(PsiAnnotation.EMPTY_ARRAY);
+    super(TypeAnnotationProvider.EMPTY);
     myConjuncts = conjuncts;
   }
 
@@ -116,11 +116,11 @@ public class PsiIntersectionType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
+  public String getPresentableText(final boolean annotated) {
     return StringUtil.join(myConjuncts, new Function<PsiType, String>() {
       @Override
       public String fun(PsiType psiType) {
-        return psiType.getPresentableText();
+        return psiType.getPresentableText(annotated);
       }
     }, " & ");
   }
@@ -176,6 +176,7 @@ public class PsiIntersectionType extends PsiType.Stub {
     return myConjuncts[0];
   }
 
+  @Override
   public boolean equals(final Object obj) {
     if (this == obj) return true;
     if (!(obj instanceof PsiIntersectionType)) return false;
@@ -190,6 +191,7 @@ public class PsiIntersectionType extends PsiType.Stub {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myConjuncts[0].hashCode();
   }

@@ -27,7 +27,7 @@ import java.util.LinkedHashMap;
 
 public class Place implements ComparableObject {
 
-  private LinkedHashMap<String, Object> myPath = new LinkedHashMap<String, Object>();
+  private LinkedHashMap<String, Object> myPath = new LinkedHashMap<>();
 
   @Override
   @NotNull

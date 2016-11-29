@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,8 @@ import java.util.List;
 /**
  * Describes a single block in the {@link FormattingModel}.
  *
- * @see com.intellij.formatting.FormattingModel#getRootBlock()
+ * @see FormattingModel#getRootBlock()
  */
-
 public interface Block {
   /**
    * Returns the text range covered by the block.
@@ -64,7 +63,7 @@ public interface Block {
    * to its parent block.
    *
    * @return the indent object, or null if the default indent ("continuation without first") should be used.
-   * @see com.intellij.formatting.Indent#getContinuationWithoutFirstIndent()
+   * @see Indent#getContinuationWithoutFirstIndent()
    */
   @Nullable
   Indent getIndent();

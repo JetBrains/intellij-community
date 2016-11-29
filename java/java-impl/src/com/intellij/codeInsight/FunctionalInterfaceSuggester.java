@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,13 +67,7 @@ public class FunctionalInterfaceSuggester {
   public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiFunctionalExpression expression) {
     final PsiType qualifierType = expression instanceof PsiMethodReferenceExpression 
                                   ? PsiMethodReferenceUtil.getQualifierType((PsiMethodReferenceExpression)expression) : null;
-    return suggestFunctionalInterfaces(expression, new NullableFunction<PsiClass, PsiType>() {
-      @Nullable
-      @Override
-      public PsiType fun(PsiClass aClass) {
-        return composeAcceptableType(aClass, expression, qualifierType);
-      }
-    });
+    return suggestFunctionalInterfaces(expression, aClass -> composeAcceptableType(aClass, expression, qualifierType));
   }
 
   public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiMethod method) {
@@ -81,89 +75,82 @@ public class FunctionalInterfaceSuggester {
       return Collections.emptyList();
     }
 
-    return suggestFunctionalInterfaces(method, new NullableFunction<PsiClass, PsiType>() {
-      @Nullable
-      @Override
-      public PsiType fun(PsiClass aClass) {
-        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
-        if (interfaceMethod != null) {
-          final PsiParameter[] parameters = method.getParameterList().getParameters();
-          final PsiParameter[] interfaceMethodParameters = interfaceMethod.getParameterList().getParameters();
-          if (parameters.length != interfaceMethodParameters.length) {
-            return null;
-          }
-
-          final PsiType[] left = new PsiType[parameters.length + 1];
-          final PsiType[] right = new PsiType[parameters.length + 1];
-
-          for (int i = 0; i < parameters.length; i++) {
-            left[i]  = interfaceMethodParameters[i].getType();
-            right[i] = parameters[i].getType();
-          }
-
-          left[parameters.length] = method.getReturnType();
-          right[parameters.length] = interfaceMethod.getReturnType();
-
-          final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
-          final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(aClass.getProject())
-            .inferTypeArguments(typeParameters, left, right, PsiUtil.getLanguageLevel(method));
-          if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
-            return null;
-          }
-
-          for (int i = 0; i < interfaceMethodParameters.length; i++) {
-            if (!TypeConversionUtil.isAssignable(parameters[i].getType(), substitutor.substitute(interfaceMethodParameters[i].getType()))) {
-              return null;
-            }
-          }
-
-          final PsiType returnType = method.getReturnType();
-          PsiType interfaceMethodReturnType = interfaceMethod.getReturnType();
-          if (returnType != null && !TypeConversionUtil.isAssignable(returnType, substitutor.substitute(interfaceMethodReturnType))) {
-            return null;
-          }
-          
-          if (PsiType.VOID.equals(returnType) && !PsiType.VOID.equals(interfaceMethodReturnType)) {
-            return null;
-          }
-
-          final PsiClassType[] interfaceThrownTypes = interfaceMethod.getThrowsList().getReferencedTypes();
-          final PsiClassType[] thrownTypes = method.getThrowsList().getReferencedTypes();
-          for (PsiClassType thrownType : thrownTypes) {
-            if (!ExceptionUtil.isHandledBy(thrownType, interfaceThrownTypes, substitutor)) {
-              return null;
-            }
-          }
-
-          for (PsiClassType thrownType : interfaceThrownTypes) {
-            final PsiCodeBlock codeBlock = PsiTreeUtil.getContextOfType(method, PsiCodeBlock.class);
-            if (codeBlock == null || !ExceptionUtil.isHandled(thrownType, codeBlock)) {
-              return null;
-            }
-          }
-
-          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
-          return elementFactory.createType(aClass, substitutor);
+    return suggestFunctionalInterfaces(method, aClass -> {
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
+      if (interfaceMethod != null) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        final PsiParameter[] interfaceMethodParameters = interfaceMethod.getParameterList().getParameters();
+        if (parameters.length != interfaceMethodParameters.length) {
+          return null;
         }
-        return null;
+
+        final PsiType[] left = new PsiType[parameters.length + 1];
+        final PsiType[] right = new PsiType[parameters.length + 1];
+
+        for (int i = 0; i < parameters.length; i++) {
+          left[i]  = interfaceMethodParameters[i].getType();
+          right[i] = parameters[i].getType();
+        }
+
+        left[parameters.length] = method.getReturnType();
+        right[parameters.length] = interfaceMethod.getReturnType();
+
+        final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+        final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(aClass.getProject())
+          .inferTypeArguments(typeParameters, left, right, PsiUtil.getLanguageLevel(method));
+        if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
+          return null;
+        }
+
+        for (int i = 0; i < interfaceMethodParameters.length; i++) {
+          if (!TypeConversionUtil.isAssignable(parameters[i].getType(), substitutor.substitute(interfaceMethodParameters[i].getType()))) {
+            return null;
+          }
+        }
+
+        final PsiType returnType = method.getReturnType();
+        PsiType interfaceMethodReturnType = interfaceMethod.getReturnType();
+        if (returnType != null && !TypeConversionUtil.isAssignable(returnType, substitutor.substitute(interfaceMethodReturnType))) {
+          return null;
+        }
+
+        if (PsiType.VOID.equals(returnType) && !PsiType.VOID.equals(interfaceMethodReturnType)) {
+          return null;
+        }
+
+        final PsiClassType[] interfaceThrownTypes = interfaceMethod.getThrowsList().getReferencedTypes();
+        final PsiClassType[] thrownTypes = method.getThrowsList().getReferencedTypes();
+        for (PsiClassType thrownType : thrownTypes) {
+          if (!ExceptionUtil.isHandledBy(thrownType, interfaceThrownTypes, substitutor)) {
+            return null;
+          }
+        }
+
+        for (PsiClassType thrownType : interfaceThrownTypes) {
+          final PsiCodeBlock codeBlock = PsiTreeUtil.getContextOfType(method, PsiCodeBlock.class);
+          if (codeBlock == null || !ExceptionUtil.isHandled(thrownType, codeBlock)) {
+            return null;
+          }
+        }
+
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
+        return elementFactory.createType(aClass, substitutor);
       }
+      return null;
     });
   }
 
   private static <T extends PsiElement> Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull T element, final NullableFunction<PsiClass, PsiType> acceptanceChecker) {
     final Project project = element.getProject();
-    final Set<PsiType> types = new HashSet<PsiType>();
-    final Processor<PsiMember> consumer = new Processor<PsiMember>() {
-      @Override
-      public boolean process(PsiMember member) {
-        if (member instanceof PsiClass && !Java15APIUsageInspectionBase.isForbiddenApiUsage(member, PsiUtil.getLanguageLevel(element))) {
-          if (!JavaResolveUtil.isAccessible(member, null, member.getModifierList(), element, null, null)) {
-            return true;
-          }
-          ContainerUtil.addIfNotNull(types, acceptanceChecker.fun((PsiClass)member));
+    final Set<PsiType> types = new HashSet<>();
+    final Processor<PsiMember> consumer = member -> {
+      if (member instanceof PsiClass && !Java15APIUsageInspectionBase.isForbiddenApiUsage(member, PsiUtil.getLanguageLevel(element))) {
+        if (!JavaResolveUtil.isAccessible(member, null, member.getModifierList(), element, null, null)) {
+          return true;
         }
-        return true;
+        ContainerUtil.addIfNotNull(types, acceptanceChecker.fun((PsiClass)member));
       }
+      return true;
     };
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
@@ -179,13 +166,8 @@ public class FunctionalInterfaceSuggester {
       }
     }
 
-    final ArrayList<PsiType> typesToSuggest = new ArrayList<PsiType>(types);
-    Collections.sort(typesToSuggest, new Comparator<PsiType>() {
-      @Override
-      public int compare(PsiType o1, PsiType o2) {
-        return o1.getCanonicalText().compareTo(o2.getCanonicalText());
-      }
-    });
+    final ArrayList<PsiType> typesToSuggest = new ArrayList<>(types);
+    Collections.sort(typesToSuggest, Comparator.comparing(PsiType::getCanonicalText));
     return typesToSuggest;
   }
 

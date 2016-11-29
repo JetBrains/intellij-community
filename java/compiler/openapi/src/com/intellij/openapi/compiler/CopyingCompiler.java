@@ -64,7 +64,7 @@ public abstract class CopyingCompiler implements PackagingCompiler{
   }
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
-    final List<ProcessingItem> successfullyProcessed = new ArrayList<ProcessingItem>(items.length);
+    final List<ProcessingItem> successfullyProcessed = new ArrayList<>(items.length);
     for (ProcessingItem item : items) {
       final CopyItem copyItem = (CopyItem)item;
       final String fromPath = copyItem.getSourcePath();

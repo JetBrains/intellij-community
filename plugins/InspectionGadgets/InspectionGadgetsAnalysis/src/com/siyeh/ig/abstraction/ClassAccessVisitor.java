@@ -29,9 +29,9 @@ import java.util.*;
 class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final Map<PsiClass, Integer> m_accessCounts =
-    new HashMap<PsiClass, Integer>(2);
+    new HashMap<>(2);
   private final Set<PsiClass> m_overAccessedClasses =
-    new HashSet<PsiClass>(2);
+    new HashSet<>(2);
   private final PsiClass currentClass;
 
   ClassAccessVisitor(PsiClass currentClass) {

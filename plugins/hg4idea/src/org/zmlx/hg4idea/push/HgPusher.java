@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgPushCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.List;
@@ -70,35 +69,31 @@ public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
       else {
         pushCommand.setBranchName(branchName);
       }
-      push(project, pushCommand);
+      pushSynchronously(project, pushCommand);
     }
   }
 
-  public static void push(@NotNull final Project project, @NotNull HgPushCommand command) {
+  public static void pushSynchronously(@NotNull final Project project, @NotNull HgPushCommand command) {
     final VirtualFile repo = command.getRepo();
-    command.execute(new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        if (result == null) {
-          return;
-        }
+    HgCommandResult result = command.executeInCurrentThread();
+    if (result == null) {
+      return;
+    }
 
-        if (result.getExitValue() == PUSH_SUCCEEDED_EXIT_VALUE) {
-          int commitsNum = getNumberOfPushedCommits(result);
-          String successTitle = "Pushed successfully";
-          String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
-                                                    repo.getPresentableName());
-          VcsNotifier.getInstance(project).notifySuccess(successTitle, successDescription);
-        }
-        else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
-          VcsNotifier.getInstance(project).notifySuccess("Nothing to push");
-        }
-        else {
-          new HgCommandResultNotifier(project).notifyError(result, "Push failed",
-                                                           "Failed to push to [" + repo.getPresentableName() + "]");
-        }
-      }
-    });
+    if (result.getExitValue() == PUSH_SUCCEEDED_EXIT_VALUE) {
+      int commitsNum = getNumberOfPushedCommits(result);
+      String successTitle = "Pushed successfully";
+      String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
+                                                repo.getPresentableName());
+      VcsNotifier.getInstance(project).notifySuccess(successTitle, successDescription);
+    }
+    else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
+      VcsNotifier.getInstance(project).notifySuccess("Nothing to push");
+    }
+    else {
+      new HgCommandResultNotifier(project).notifyError(result, "Push failed",
+                                                       "Failed to push to [" + repo.getPresentableName() + "]");
+    }
   }
 
   static int getNumberOfPushedCommits(@NotNull HgCommandResult result) {

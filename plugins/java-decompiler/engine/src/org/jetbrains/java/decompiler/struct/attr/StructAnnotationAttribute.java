@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class StructAnnotationAttribute extends StructGeneralAttribute {
-
   private List<AnnotationExprent> annotations;
 
   @Override
@@ -40,7 +39,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
   public static List<AnnotationExprent> parseAnnotations(ConstantPool pool, DataInputStream data) throws IOException {
     int len = data.readUnsignedShort();
     if (len > 0) {
-      List<AnnotationExprent> annotations = new ArrayList<AnnotationExprent>(len);
+      List<AnnotationExprent> annotations = new ArrayList<>(len);
       for (int i = 0; i < len; i++) {
         annotations.add(parseAnnotation(data, pool));
       }
@@ -58,8 +57,8 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
     List<Exprent> values;
     int len = data.readUnsignedShort();
     if (len > 0) {
-      names = new ArrayList<String>(len);
-      values = new ArrayList<Exprent>(len);
+      names = new ArrayList<>(len);
+      values = new ArrayList<>(len);
       for (int i = 0; i < len; i++) {
         names.add(pool.getPrimitiveConstant(data.readUnsignedShort()).getString());
         values.add(parseAnnotationElement(data, pool));
@@ -128,7 +127,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
         List<Exprent> elements = Collections.emptyList();
         int len = data.readUnsignedShort();
         if (len > 0) {
-          elements = new ArrayList<Exprent>(len);
+          elements = new ArrayList<>(len);
           for (int i = 0; i < len; i++) {
             elements.add(parseAnnotationElement(data, pool));
           }
@@ -143,7 +142,7 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
           newType = new VarType(elementType.type, 1, elementType.value);
         }
 
-        NewExprent newExpr = new NewExprent(newType, Collections.<Exprent>emptyList(), null);
+        NewExprent newExpr = new NewExprent(newType, Collections.emptyList(), null);
         newExpr.setDirectArrayInit(true);
         newExpr.setLstArrayElements(elements);
         return newExpr;

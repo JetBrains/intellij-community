@@ -51,8 +51,8 @@ public class TestCaseLoader {
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
   public static final String SKIP_COMMUNITY_TESTS = "idea.skip.community.tests";
 
-  private final List<Class> myClassList = new ArrayList<Class>();
-  private final List<Throwable> myClassLoadingErrors = new ArrayList<Throwable>();
+  private final List<Class> myClassList = new ArrayList<>();
+  private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
   private Class myFirstTestClass;
   private Class myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
@@ -182,6 +182,11 @@ public class TestCaseLoader {
   private static final List<String> ourRankList = getTeamCityRankList();
 
   private static List<String> getTeamCityRankList() {
+    if (TestAll.isPerformanceTestsRun()) {
+      // let performance test order be stable to decrease the variation in their timings
+      return Collections.emptyList();
+    }
+
     String filePath = System.getProperty("teamcity.tests.recentlyFailedTests.file", null);
     if (filePath != null) {
       try {
@@ -205,7 +210,7 @@ public class TestCaseLoader {
   }
 
   public List<Class> getClasses() {
-    List<Class> result = new ArrayList<Class>(myClassList.size());
+    List<Class> result = new ArrayList<>(myClassList.size());
     if (myFirstTestClass != null) {
       result.add(myFirstTestClass);
     }
@@ -215,12 +220,7 @@ public class TestCaseLoader {
     }
 
     if (!ourRankList.isEmpty()) {
-      Collections.sort(result, new Comparator<Class>() {
-        @Override
-        public int compare(final Class o1, final Class o2) {
-          return getRank(o1) - getRank(o2);
-        }
-      });
+      Collections.sort(result, (o1, o2) -> getRank(o1) - getRank(o2));
     }
 
     return result;

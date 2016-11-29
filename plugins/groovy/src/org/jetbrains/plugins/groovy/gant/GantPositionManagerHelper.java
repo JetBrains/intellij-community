@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,21 +39,15 @@ public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
   }
 
   @Override
-  public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
+  public boolean isAppropriateScriptFile(@NotNull final GroovyFile scriptFile) {
     return GroovyScriptUtil.isSpecificScriptFile(scriptFile, GantScriptType.INSTANCE);
   }
 
   @Override
-  @NotNull
-  public String getRuntimeScriptName(@NotNull final String originalName, GroovyFile groovyFile) {
-    return originalName;
-  }
-
-  @Override
-  public PsiFile getExtraScriptIfNotFound(ReferenceType refType,
+  public PsiFile getExtraScriptIfNotFound(@NotNull ReferenceType refType,
                                           @NotNull final String runtimeName,
-                                          final Project project,
-                                          GlobalSearchScope scope) {
+                                          @NotNull final Project project,
+                                          @NotNull GlobalSearchScope scope) {
     try {
       final String fileName = StringUtil.getShortName(runtimeName);
       PsiFile[] files = FilenameIndex.getFilesByName(project, fileName + "." + GantScriptType.DEFAULT_EXTENSION, scope);

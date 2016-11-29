@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,15 +71,8 @@ public class InterruptThreadAction extends DebuggerAction{
             }
             if (unsupported) {
               final Project project = debugProcess.getProject();
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  if (!project.isDisposed()) {
-                    XDebugSessionImpl.NOTIFICATION_GROUP
-                      .createNotification("Thread operation 'interrupt' is not supported by VM", MessageType.INFO).notify(project);
-                  }
-                }
-              });
+              XDebugSessionImpl.NOTIFICATION_GROUP
+                .createNotification("Thread operation 'interrupt' is not supported by VM", MessageType.INFO).notify(project);
             }
           }
         });

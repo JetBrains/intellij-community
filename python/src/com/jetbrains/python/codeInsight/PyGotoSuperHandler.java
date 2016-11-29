@@ -84,7 +84,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
     if (name == null) {
       return Collections.emptyList();
     }
-    final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
+    final List<PyTargetExpression> result = new ArrayList<>();
     for (PyClass aClass: pyClass.getAncestorClasses(null)) {
       final PyTargetExpression superAttr = aClass.findClassAttribute(name, false, null);
       if (superAttr != null) {
@@ -99,7 +99,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
     if (name == null) {
       return Collections.emptyList();
     }
-    final List<PyFunction> result = new ArrayList<PyFunction>();
+    final List<PyFunction> result = new ArrayList<>();
     for (PyClass aClass: pyClass.getAncestorClasses(null)) {
       final PyFunction byName = aClass.findMethodByName(name, false, null);
       if (byName != null) {

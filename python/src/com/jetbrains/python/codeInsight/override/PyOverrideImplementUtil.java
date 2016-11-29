@@ -24,14 +24,12 @@ import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -54,15 +52,9 @@ import java.util.*;
  * @author Alexey.Ivanov
  */
 public class PyOverrideImplementUtil {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil");
-
-  private PyOverrideImplementUtil() {
-  }
 
   @Nullable
-  public static PyClass getContextClass(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
+  public static PyClass getContextClass(@NotNull final Editor editor, @NotNull final PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) {
@@ -92,10 +84,10 @@ public class PyOverrideImplementUtil {
   private static void chooseAndOverrideOrImplementMethods(final Project project,
                                                           @NotNull final Editor editor,
                                                           @NotNull final PyClass pyClass) {
-    LOG.assertTrue(pyClass.isValid());
+    PyPsiUtils.assertValid(pyClass);
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    final Set<PyFunction> result = new HashSet<PyFunction>();
+    final Set<PyFunction> result = new HashSet<>();
     TypeEvalContext context = TypeEvalContext.codeCompletion(project, null);
     final Collection<PyFunction> superFunctions = getAllSuperFunctions(pyClass, context);
 
@@ -109,7 +101,7 @@ public class PyOverrideImplementUtil {
                                                          @NotNull final PyClass pyClass,
                                                          @NotNull final Collection<PyFunction> superFunctions,
                                                          @NotNull final String title, final boolean implement) {
-    List<PyMethodMember> elements = new ArrayList<PyMethodMember>();
+    List<PyMethodMember> elements = new ArrayList<>();
     for (PyFunction function : superFunctions) {
       final String name = function.getName();
       if (name == null || PyUtil.isClassPrivateName(name)) {
@@ -227,7 +219,7 @@ public class PyOverrideImplementUtil {
     StringBuilder statementBody = new StringBuilder();
 
     boolean hadStar = false;
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
     for (PyParameter parameter : baseParams) {
       final PyNamedParameter pyNamedParameter = parameter.getAsNamed();
       if (pyNamedParameter != null) {

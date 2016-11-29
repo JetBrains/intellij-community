@@ -18,24 +18,18 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
-import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author dsl
@@ -87,7 +81,7 @@ public class JSafeDeleteDialog extends SafeDeleteDialog {
     final String promptKey = isDelete() ? "prompt.delete.elements" : "search.for.usages.and.delete.elements";
     final String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message(promptKey), myElements);
 
-    gbc.insets = new Insets(4, 8, 4, 8);
+    gbc.insets = JBUI.insets(4, 8);
     gbc.weighty = 1;
     gbc.weightx = 1;
     gbc.gridx = 0;
@@ -102,15 +96,12 @@ public class JSafeDeleteDialog extends SafeDeleteDialog {
       gbc.gridx = 0;
       gbc.weightx = 0.0;
       gbc.gridwidth = 1;
-      gbc.insets = new Insets(4, 8, 0, 8);
+      gbc.insets = JBUI.insets(4, 8, 0, 8);
       myCbSafeDelete = new JCheckBox(IdeBundle.message("checkbox.safe.delete.with.usage.search"));
       panel.add(myCbSafeDelete, gbc);
-      myCbSafeDelete.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          updateControls(myCbSearchInComments);
-          updateControls(myCbSearchTextOccurrences);
-        }
+      myCbSafeDelete.addActionListener(e -> {
+        updateControls(myCbSearchInComments);
+        updateControls(myCbSearchTextOccurrences);
       });
     }
 
@@ -133,11 +124,9 @@ public class JSafeDeleteDialog extends SafeDeleteDialog {
     if (myCbSafeDelete != null) {
       myCbSafeDelete.setSelected(refactoringSettings.SAFE_DELETE_WHEN_DELETE);
     }
-    myCbSearchInComments.setSelected(
-      myDelegate != null ? myDelegate.isToSearchInComments(myElements[0]) : refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS);
+    myCbSearchInComments.setSelected(myDelegate != null ? myDelegate.isToSearchInComments(myElements[0]) : refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS);
     if (myCbSearchTextOccurrences != null) {
-      myCbSearchTextOccurrences.setSelected(
-        myDelegate != null ? myDelegate.isToSearchForTextOccurrences(myElements[0]) : refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA);
+      myCbSearchTextOccurrences.setSelected(myDelegate != null ? myDelegate.isToSearchForTextOccurrences(myElements[0]) : refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA);
     }
     updateControls(myCbSearchTextOccurrences);
     updateControls(myCbSearchInComments);

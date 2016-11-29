@@ -295,6 +295,16 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     }
   }
 
+  public void testSameSignatureExistConflict() throws Exception {
+    try {
+      doTest(false);
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Method doTest() is already defined in the class <b><code>Test</code></b>", e.getMessage());
+    }
+  }
+
   private void doTest(final boolean createLocal) throws Exception {
     getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS,createLocal);
 

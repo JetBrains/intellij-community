@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class TestIconMapper implements PoolOfTestIcons {
 
-  private final static Map<Integer, TestStateInfo.Magnitude> magnitudes = new HashMap<Integer, TestStateInfo.Magnitude>();
+  private final static Map<Integer, TestStateInfo.Magnitude> magnitudes = new HashMap<>();
 
   static {
     for (TestStateInfo.Magnitude value : TestStateInfo.Magnitude.values()) {

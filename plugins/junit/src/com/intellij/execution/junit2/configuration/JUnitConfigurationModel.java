@@ -43,6 +43,8 @@ public class JUnitConfigurationModel {
   public static final int PATTERN = 3;
   public static final int DIR = 4;
   public static final int CATEGORY = 5;
+  public static final int BY_SOURCE_POSITION = 6;
+  public static final int BY_SOURCE_CHANGES = 7;
 
   private static final List<String> ourTestObjects;
 
@@ -52,7 +54,9 @@ public class JUnitConfigurationModel {
                                    JUnitConfiguration.TEST_METHOD,
                                    JUnitConfiguration.TEST_PATTERN,
                                    JUnitConfiguration.TEST_DIRECTORY,
-                                   JUnitConfiguration.TEST_CATEGORY);
+                                   JUnitConfiguration.TEST_CATEGORY,
+                                   JUnitConfiguration.BY_SOURCE_POSITION,
+                                   JUnitConfiguration.BY_SOURCE_CHANGES);
   }
 
 
@@ -104,7 +108,8 @@ public class JUnitConfigurationModel {
     if (testObject != JUnitConfiguration.TEST_PACKAGE &&
         testObject != JUnitConfiguration.TEST_PATTERN &&
         testObject != JUnitConfiguration.TEST_DIRECTORY &&
-        testObject != JUnitConfiguration.TEST_CATEGORY) {
+        testObject != JUnitConfiguration.TEST_CATEGORY  &&
+        testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
       try {
         data.METHOD_NAME = getJUnitTextValue(METHOD);
         final PsiClass testClass = !myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, myProject) : null;
@@ -122,7 +127,7 @@ public class JUnitConfigurationModel {
         data.MAIN_CLASS_NAME = className;
       }
     }
-    else {
+    else if (testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
       if (testObject == JUnitConfiguration.TEST_PACKAGE) {
         data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
       }
@@ -133,7 +138,7 @@ public class JUnitConfigurationModel {
         data.setCategoryName(getJUnitTextValue(CATEGORY));
       }
       else {
-        final LinkedHashSet<String> set = new LinkedHashSet<String>();
+        final LinkedHashSet<String> set = new LinkedHashSet<>();
         final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
         for (String pattern : patterns) {
           if (pattern.length() > 0) {
@@ -195,11 +200,7 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
-        public void run() {
-          ((Document)document).replaceString(0, ((Document)document).getTextLength(), text);
-        }
-      });
+      WriteCommandAction.runWriteCommandAction(myProject, () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
     }
   }
 

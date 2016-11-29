@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.psi.search;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -23,12 +24,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
-import com.intellij.util.indexing.*;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,66 +39,33 @@ import java.util.*;
 /**
  * @author yole
  */
-public class FilenameIndex extends ScalarIndexExtension<String> {
-  @NonNls public static final ID<String, Void> NAME = ID.create("FilenameIndex");
-  private final MyDataIndexer myDataIndexer = new MyDataIndexer();
-  private final MyInputFilter myInputFilter = new MyInputFilter();
-  private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
-
-  @NotNull
-  @Override
-  public ID<String,Void> getName() {
-    return NAME;
-  }
-
-  @NotNull
-  @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
-    return myDataIndexer;
-  }
-
-  @NotNull
-  @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
-  }
-
-  @NotNull
-  @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
-  }
-
-  @Override
-  public boolean dependsOnFileContent() {
-    return false;
-  }
-
-  @Override
-  public boolean indexDirectories() {
-    return true;
-  }
-
-  @Override
-  public int getVersion() {
-    return 1 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 1 : 0);
-  }
+public class FilenameIndex {
+  @Deprecated
+  public @NonNls static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
   public static String[] getAllFilenames(Project project) {
-    final Collection<String> allKeys = FileBasedIndex.getInstance().getAllKeys(NAME, project);
-    return ArrayUtil.toStringArray(allKeys);
+    Set<String> names = new THashSet<>();
+    getService().processAllFileNames((String s) -> {
+      names.add(s);
+      return true;
+    }, project == null ? new EverythingGlobalScope() : GlobalSearchScope.allScope(project), null);
+    return ArrayUtil.toStringArray(names);
+  }
+
+  public static void processAllFileNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    getService().processAllFileNames(processor, scope, filter);
   }
 
   public static Collection<VirtualFile> getVirtualFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
+    return getService().getVirtualFilesByName(project, name, scope, null);
   }
 
-  public static Collection<VirtualFile> getVirtualFilesByName(final Project project, 
-                                                              final String name, 
+  public static Collection<VirtualFile> getVirtualFilesByName(final Project project,
+                                                              final String name,
                                                               boolean caseSensitively,
                                                               final GlobalSearchScope scope) {
     if (caseSensitively) return getVirtualFilesByName(project, name, scope);
-    return getVirtualFilesByNameIgnoringCase(name, scope, null);
+    return getVirtualFilesByNameIgnoringCase(name, scope, project, null);
   }
 
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
@@ -113,7 +80,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                            @Nullable IdFilter idFilter) {
     return processFilesByName(name, includeDirs, true, processor, scope, project, idFilter);
   }
-  
+
   public static boolean processFilesByName(@NotNull final String name,
                                            boolean includeDirs,
                                            boolean caseSensitively,
@@ -121,20 +88,13 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                            @NotNull final GlobalSearchScope scope,
                                            @NotNull final Project project,
                                            @Nullable IdFilter idFilter) {
-    final Set<VirtualFile> files;
+    final Collection<VirtualFile> files;
 
     if (caseSensitively) {
-      files = new THashSet<VirtualFile>();
-      FileBasedIndex.getInstance().processValues(NAME, name, null, new FileBasedIndex.ValueProcessor<Void>() {
-        @Override
-        public boolean process(final VirtualFile file, final Void value) {
-          files.add(file);
-          return true;
-        }
-      }, scope, idFilter);
+      files = getService().getVirtualFilesByName(project, name, scope, idFilter);
     }
     else {
-      files = getVirtualFilesByNameIgnoringCase(name, scope, idFilter);
+      files = getVirtualFilesByNameIgnoringCase(name, scope, project, idFilter);
     }
 
     if (files.isEmpty()) return false;
@@ -163,54 +123,38 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   @NotNull
   private static Set<VirtualFile> getVirtualFilesByNameIgnoringCase(@NotNull final String name,
                                                                     @NotNull final GlobalSearchScope scope,
+                                                                    @NotNull Project project,
                                                                     @Nullable final IdFilter idFilter) {
-    final Set<String> keys = new THashSet<String>();
-    final FileBasedIndex index = FileBasedIndex.getInstance();
-    index.processAllKeys(NAME, new Processor<String>() {
-      @Override
-      public boolean process(String value) {
-        if (name.equalsIgnoreCase(value)) {
-          keys.add(value);
-        }
-        return true;
+    final Set<String> keys = new THashSet<>();
+    FileNameIndexService fileNameIndexService = getService();
+    fileNameIndexService.processAllFileNames(value -> {
+      if (name.equalsIgnoreCase(value)) {
+        keys.add(value);
       }
+      return true;
     }, scope, idFilter);
 
-    // values accessed outside of provessAllKeys 
-    final Set<VirtualFile> files = new THashSet<VirtualFile>();
+    // values accessed outside of provessAllKeys
+    final Set<VirtualFile> files = new THashSet<>();
     for (String each : keys) {
-      files.addAll(index.getContainingFiles(NAME, each, scope));
+      files.addAll(fileNameIndexService.getVirtualFilesByName(project, each, scope, idFilter));
     }
     return files;
   }
 
   public static PsiFileSystemItem[] getFilesByName(final Project project,
-                                         final String name,
-                                         @NotNull final GlobalSearchScope scope,
-                                         boolean includeDirs) {
-    SmartList<PsiFileSystemItem> result = new SmartList<PsiFileSystemItem>();
-    processFilesByName(name, includeDirs, new CommonProcessors.CollectProcessor<PsiFileSystemItem>(result), scope, project, null);
+                                                   final String name,
+                                                   @NotNull final GlobalSearchScope scope,
+                                                   boolean includeDirs) {
+    SmartList<PsiFileSystemItem> result = new SmartList<>();
+    Processor<PsiFileSystemItem> processor = Processors.cancelableCollectProcessor(result);
+    processFilesByName(name, includeDirs, processor, scope, project, null);
 
     if (includeDirs) {
       return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);
     }
     //noinspection SuspiciousToArrayCall
     return result.toArray(new PsiFile[result.size()]);
-  }
-
-  private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
-    @Override
-    @NotNull
-    public Map<String, Void> map(@NotNull final FileContent inputData) {
-      return Collections.singletonMap(inputData.getFileName(), null);
-    }
-  }
-
-  private static class MyInputFilter implements FileBasedIndex.InputFilter {
-    @Override
-    public boolean acceptInput(@NotNull final VirtualFile file) {
-      return true;
-    }
   }
 
   /**
@@ -223,7 +167,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
    */
   @NotNull
   public static Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext) {
-      return getAllFilesByExt(project, ext, GlobalSearchScope.allScope(project));
+    return getAllFilesByExt(project, ext, GlobalSearchScope.allScope(project));
   }
 
   @NotNull
@@ -235,7 +179,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     ext = "." + ext;
     len++;
 
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     for (String name : getAllFilenames(project)) {
       final int length = name.length();
       if (length > len && name.substring(length - len).equalsIgnoreCase(ext)) {
@@ -245,8 +189,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return files;
   }
 
-  @Override
-  public boolean traceKeyHashToVirtualFileMapping() {
-    return FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+  static FileNameIndexService getService() {
+    return ServiceManager.getService(FileNameIndexService.class);
   }
 }

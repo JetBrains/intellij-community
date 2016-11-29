@@ -66,12 +66,8 @@ class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
                                          final StructureConfigurableContext context,
                                          final JButton contextButton, @NotNull final LibraryCreatedCallback callback) {
     if (LibraryEditingUtil.hasSuitableTypes(classpathPanel)) {
-      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(LibraryEditingUtil.createChooseTypeStep(classpathPanel, new ParameterizedRunnable<LibraryType>() {
-        @Override
-        public void run(LibraryType libraryType) {
-          doCreateLibrary(classpathPanel, context, callback, contextButton, libraryType);
-        }
-      }));
+      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(LibraryEditingUtil.createChooseTypeStep(classpathPanel,
+                                                                                                                   libraryType -> doCreateLibrary(classpathPanel, context, callback, contextButton, libraryType)));
       popup.showUnderneathOf(contextButton);
     }
     else {

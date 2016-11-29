@@ -66,7 +66,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     try {
       processParameter(project, myParameter,
-                       !(ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()));
+                       !(ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isOnAir()));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -93,7 +93,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     String[] names = suggestedNameInfo.names;
 
     if (isInteractive) {
-      List<String> namesList = new ArrayList<String>();
+      List<String> namesList = new ArrayList<>();
       ContainerUtil.addAll(namesList, names);
       String defaultName = styleManager.propertyNameToVariableName(propertyName, kind);
       if (namesList.contains(defaultName)) {
@@ -126,15 +126,12 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
 
     final boolean isFinal = isFinalToCalc;
     final String fieldName = fieldNameToCalc;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          performRefactoring(project, targetClass, method, myParameter, type, fieldName, isMethodStatic, isFinal);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        performRefactoring(project, targetClass, method, myParameter, type, fieldName, isMethodStatic, isFinal);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
   }

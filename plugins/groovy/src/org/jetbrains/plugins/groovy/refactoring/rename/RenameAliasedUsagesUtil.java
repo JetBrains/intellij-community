@@ -41,9 +41,9 @@ public class RenameAliasedUsagesUtil {
   }
 
   public static Collection<PsiReference> filterAliasedRefs(Collection<PsiReference> refs, PsiElement element) {
-    Map<GroovyFile, String> aliases = new HashMap<GroovyFile, String>();
+    Map<GroovyFile, String> aliases = new HashMap<>();
 
-    ArrayList<PsiReference> result = new ArrayList<PsiReference>();
+    ArrayList<PsiReference> result = new ArrayList<>();
 
     for (PsiReference ref : refs) {
       final PsiElement e = ref.getElement();

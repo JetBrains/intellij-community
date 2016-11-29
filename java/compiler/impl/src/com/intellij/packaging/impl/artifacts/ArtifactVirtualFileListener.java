@@ -43,16 +43,14 @@ public class ArtifactVirtualFileListener extends VirtualFileAdapter {
   public ArtifactVirtualFileListener(Project project, final ArtifactManagerImpl artifactManager) {
     myArtifactManager = artifactManager;
     myParentPathsToArtifacts =
-      CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<MultiValuesMap<String, Artifact>>() {
-        public Result<MultiValuesMap<String, Artifact>> compute() {
-          MultiValuesMap<String, Artifact> result = computeParentPathToArtifactMap();
-          return Result.createSingleDependency(result, artifactManager.getModificationTracker());
-        }
+      CachedValuesManager.getManager(project).createCachedValue(() -> {
+        MultiValuesMap<String, Artifact> result = computeParentPathToArtifactMap();
+        return CachedValueProvider.Result.createSingleDependency(result, artifactManager.getModificationTracker());
       }, false);
   }
 
   private MultiValuesMap<String, Artifact> computeParentPathToArtifactMap() {
-    final MultiValuesMap<String, Artifact> result = new MultiValuesMap<String, Artifact>();
+    final MultiValuesMap<String, Artifact> result = new MultiValuesMap<>();
     for (final Artifact artifact : myArtifactManager.getArtifacts()) {
       ArtifactUtil.processFileOrDirectoryCopyElements(artifact, new PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>>() {
         @Override

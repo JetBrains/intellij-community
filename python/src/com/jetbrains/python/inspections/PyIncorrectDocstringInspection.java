@@ -88,7 +88,7 @@ public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
 
   @NotNull
   private static List<PyNamedParameter> getMissingParams(@NotNull StructuredDocString docString, @NotNull PyParameter[] realParams) {
-    final List<PyNamedParameter> missing = new ArrayList<PyNamedParameter>();
+    final List<PyNamedParameter> missing = new ArrayList<>();
     final List<String> docStringParameters = docString.getParameters();
     if (docStringParameters.isEmpty()) {
       return Collections.emptyList();

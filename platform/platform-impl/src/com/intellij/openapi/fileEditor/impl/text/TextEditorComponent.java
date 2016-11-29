@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -50,6 +49,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,6 +120,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     });
   }
 
+  private volatile boolean myDisposed;
   /**
    * Disposes all resources allocated be the TextEditorComponent. It disposes all created
    * editors, unregisters listeners. The behaviour of the splitter after disposing is
@@ -134,14 +135,19 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     myConnection.disconnect();
 
     myFile.getFileSystem().removeVirtualFileListener(myVirtualFileListener);
+    myDisposed = true;
     //myFocusWatcher.deinstall(this);
     //removePropertyChangeListener(mySplitterPropertyChangeListener);
 
     //super.dispose();
   }
 
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
   /**
-   * Should be invoked when the corresponding <code>TextEditorImpl</code>
+   * Should be invoked when the corresponding {@code TextEditorImpl}
    * is selected. Updates the status bar.
    */
   void selectNotify(){
@@ -153,7 +159,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   }
 
   /**
-   * @return most recently used editor. This method never returns <code>null</code>.
+   * @return most recently used editor. This method never returns {@code null}.
    */
   @NotNull
   Editor getEditor(){
@@ -166,8 +172,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
     ((EditorEx) editor).getGutterComponentEx().setForceShowRightFreePaintersArea(true);
 
-    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
-    ((EditorEx) editor).setHighlighter(highlighter);
     ((EditorEx) editor).setFile(myFile);
 
     ((EditorEx)editor).setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP);
@@ -201,14 +205,14 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
    * Updates "modified" property and fires event if necessary
    */
   void updateModifiedProperty(){
-    Boolean oldModified=Boolean.valueOf(myModified);
+    Boolean oldModified= myModified;
     myModified = isModifiedImpl();
-    myTextEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, Boolean.valueOf(myModified));
+    myTextEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, myModified);
   }
 
   /**
-   * Name <code>isValid</code> is in use in <code>java.awt.Component</code>
-   * so we change the name of method to <code>isEditorValid</code>
+   * Name {@code isValid} is in use in {@code java.awt.Component}
+   * so we change the name of method to {@code isEditorValid}
    *
    * @return whether the editor is valid or not
    */
@@ -224,9 +228,9 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   }
 
   private void updateValidProperty(){
-    Boolean oldValid = Boolean.valueOf(myValid);
+    Boolean oldValid = myValid;
     myValid = isEditorValidImpl();
-    myTextEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, Boolean.valueOf(myValid));
+    myTextEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, myValid);
   }
 
   /**
@@ -288,20 +292,22 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
      * We can reuse this runnable to decrease number of allocated object.
      */
     private final Runnable myUpdateRunnable;
+    private boolean myUpdateScheduled;
 
     public MyDocumentListener() {
-      myUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-          updateModifiedProperty();
-        }
+      myUpdateRunnable = () -> {
+        myUpdateScheduled = false;
+        updateModifiedProperty();
       };
     }
 
     @Override
     public void documentChanged(DocumentEvent e) {
-      // document's timestamp is changed later on undo or PSI changes
-      ApplicationManager.getApplication().invokeLater(myUpdateRunnable);
+      if (!myUpdateScheduled) {
+        // document's timestamp is changed later on undo or PSI changes
+        ApplicationManager.getApplication().invokeLater(myUpdateRunnable);
+        myUpdateScheduled = true;
+      }
     }
   }
 
@@ -309,7 +315,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
    * Listen changes of file types. When type of the file changes we need
    * to also change highlighter.
    */
-  private final class MyFileTypeListener extends FileTypeListener.Adapter {
+  private final class MyFileTypeListener implements FileTypeListener {
     @Override
     public void fileTypesChanged(@NotNull final FileTypeEvent event) {
       assertThread();
@@ -354,5 +360,16 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   @NotNull
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  @Override
+  public Color getBackground() {
+    //noinspection ConstantConditions
+    return myEditor == null ? super.getBackground() : myEditor.getContentComponent().getBackground();
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics g) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
   }
 }

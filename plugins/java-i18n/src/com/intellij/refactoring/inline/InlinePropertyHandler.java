@@ -66,19 +66,17 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     final Collection<PsiFile> containingFiles = Collections.synchronizedSet(new HashSet<PsiFile>());
     containingFiles.add(psiElement.getContainingFile());
     boolean result = ReferencesSearch.search(psiElement).forEach(
-      new Processor<PsiReference>() {
-        public boolean process(final PsiReference psiReference) {
-          PsiElement element = psiReference.getElement();
-          PsiElement parent = element.getParent();
-          if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
-            if (((PsiExpressionList)parent).getExpressions().length == 1) {
-              occurrences.add(parent.getParent());
-              containingFiles.add(element.getContainingFile());
-              return true;
-            }
+      psiReference -> {
+        PsiElement element = psiReference.getElement();
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
+          if (((PsiExpressionList)parent).getExpressions().length == 1) {
+            occurrences.add(parent.getParent());
+            containingFiles.add(element.getContainingFile());
+            return true;
           }
-          return false;
         }
+        return false;
       }
     );
 

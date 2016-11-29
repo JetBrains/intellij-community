@@ -76,7 +76,7 @@ public final class FieldFromParameterUtils {
     final PsiClass psiClass = result.getElement();
     if (psiClass == null) return type;
 
-    final Set<PsiTypeParameter> usedTypeParameters = new HashSet<PsiTypeParameter>();
+    final Set<PsiTypeParameter> usedTypeParameters = new HashSet<>();
     RefactoringUtil.collectTypeParameters(usedTypeParameters, parameter);
     for (Iterator<PsiTypeParameter> iterator = usedTypeParameters.iterator(); iterator.hasNext(); ) {
       PsiTypeParameter usedTypeParameter = iterator.next();
@@ -145,19 +145,25 @@ public final class FieldFromParameterUtils {
         else if (expression instanceof PsiAssignmentExpression) {
           PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
           PsiExpression lExpression = assignmentExpression.getLExpression();
-          PsiExpression rExpression = assignmentExpression.getRExpression();
 
           if (!(lExpression instanceof PsiReferenceExpression)) break;
-          if (!(rExpression instanceof PsiReferenceExpression)) break;
 
-          PsiReferenceExpression lReference = (PsiReferenceExpression)lExpression;
-          PsiReferenceExpression rReference = (PsiReferenceExpression)rExpression;
-
-          PsiElement lElement = lReference.resolve();
-          PsiElement rElement = rReference.resolve();
-
+          PsiElement lElement = ((PsiReferenceExpression)lExpression).resolve();
           if (!(lElement instanceof PsiField) || ((PsiField)lElement).getContainingClass() != targetClass) break;
-          if (!(rElement instanceof PsiParameter)) break;
+
+          final Set<PsiParameter> parameters = new HashSet<>();
+          SyntaxTraverser.psiTraverser().withRoot(assignmentExpression.getRExpression())
+            .filter(PsiReferenceExpression.class)
+            .forEach(expr -> {
+              final PsiElement resolve = expr.resolve();
+              if (resolve instanceof PsiParameter && ((PsiParameter)resolve).getDeclarationScope() == myParameter.getDeclarationScope()) {
+                parameters.add((PsiParameter)resolve);
+              }
+            });
+
+          if (parameters.size() != 1) break;
+
+          PsiElement rElement = parameters.iterator().next();
 
           if (myParameter.getTextRange().getStartOffset() < rElement.getTextRange().getStartOffset()) {
             if (anchorRef != null) {
@@ -187,7 +193,8 @@ public final class FieldFromParameterUtils {
                                                  final boolean isStatic,
                                                  final boolean isFinal) throws IncorrectOperationException {
     PsiManager psiManager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
+    PsiElementFactory factory = psiFacade.getElementFactory();
 
     PsiField field = factory.createField(fieldName, fieldType);
 
@@ -205,12 +212,14 @@ public final class FieldFromParameterUtils {
     if (methodBody == null) return;
     PsiStatement[] statements = methodBody.getStatements();
 
-    Ref<Pair<PsiField, Boolean>> anchorRef = new Ref<Pair<PsiField, Boolean>>();
+    Ref<Pair<PsiField, Boolean>> anchorRef = new Ref<>();
     int i = findFieldAssignmentAnchor(statements, anchorRef, targetClass, parameter);
     Pair<PsiField, Boolean> fieldAnchor = anchorRef.get();
 
     String stmtText = fieldName + " = " + parameter.getName() + ";";
-    if (fieldName.equals(parameter.getName())) {
+
+    final PsiVariable variable = psiFacade.getResolveHelper().resolveReferencedVariable(fieldName, methodBody);
+    if (variable != null && !(variable instanceof PsiField)) {
       String prefix = isStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
       stmtText = prefix + stmtText;
     }

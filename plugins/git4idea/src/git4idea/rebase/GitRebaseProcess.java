@@ -38,7 +38,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
@@ -81,7 +80,6 @@ public class GitRebaseProcess {
   @NotNull private final Git myGit;
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final VcsNotifier myNotifier;
-  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final GitRepositoryManager myRepositoryManager;
 
   @NotNull private final GitRebaseSpec myRebaseSpec;
@@ -98,13 +96,12 @@ public class GitRebaseProcess {
     myGit = ServiceManager.getService(Git.class);
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myNotifier = VcsNotifier.getInstance(myProject);
-    myFacade = ServiceManager.getService(GitPlatformFacade.class);
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myProgressManager = ProgressManager.getInstance();
   }
 
   public void rebase() {
-    new GitFreezingProcess(myProject, myFacade, "rebase", new Runnable() {
+    new GitFreezingProcess(myProject, "rebase", new Runnable() {
       public void run() {
         doRebase();
       }
@@ -400,8 +397,7 @@ public class GitRebaseProcess {
   @NotNull
   private ResolveConflictResult showConflictResolver(@NotNull GitRepository conflicting, boolean calledFromNotification) {
     GitConflictResolver.Params params = new GitConflictResolver.Params().setReverse(true);
-    RebaseConflictResolver conflictResolver = new RebaseConflictResolver(myProject, myGit, myFacade, conflicting, params,
-                                                                         calledFromNotification);
+    RebaseConflictResolver conflictResolver = new RebaseConflictResolver(myProject, myGit, conflicting, params, calledFromNotification);
     boolean allResolved = conflictResolver.merge();
     if (conflictResolver.myWasNothingToMerge) return ResolveConflictResult.NOTHING_TO_MERGE;
     if (allResolved) return ResolveConflictResult.ALL_RESOLVED;
@@ -494,10 +490,9 @@ public class GitRebaseProcess {
 
     RebaseConflictResolver(@NotNull Project project,
                            @NotNull Git git,
-                           @NotNull GitPlatformFacade platformFacade,
                            @NotNull GitRepository repository,
                            @NotNull Params params, boolean calledFromNotification) {
-      super(project, git, platformFacade, singleton(repository.getRoot()), params);
+      super(project, git, singleton(repository.getRoot()), params);
       myCalledFromNotification = calledFromNotification;
     }
 

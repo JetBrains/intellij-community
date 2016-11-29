@@ -22,8 +22,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
@@ -77,17 +75,13 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
         modifyRoots(file, entry);
       }
     }
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            model.commit();
-            module.getProject().save();
-          }
-        });
-      }
+    commitModel(module, model);
+  }
+
+  static void commitModel(@NotNull Module module, ModifiableRootModel model) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      model.commit();
+      module.getProject().save();
     });
   }
 
@@ -108,7 +102,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     RootsSelection selection = getSelection(e);
-    doUpdate(e, e.getData(LangDataKeys.MODULE), selection);
+    doUpdate(e, selection.myModule, selection);
   }
 
   protected void doUpdate(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
@@ -124,21 +118,16 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     Module module = getModule(e, files);
     if (module == null) return RootsSelection.EMPTY;
 
-    RootsSelection selection = new RootsSelection();
+    RootsSelection selection = new RootsSelection(module);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     for (VirtualFile file : files) {
       if (!file.isDirectory()) {
         return RootsSelection.EMPTY;
       }
-      if (!fileIndex.isInContent(file)) {
-        ExcludeFolder excludeFolder = ProjectRootsUtil.findExcludeFolder(module, file);
-        if (excludeFolder != null) {
-          selection.mySelectedExcludeRoots.add(excludeFolder);
-          continue;
-        }
-        else {
-          return RootsSelection.EMPTY;
-        }
+      ExcludeFolder excludeFolder = ProjectRootsUtil.findExcludeFolder(module, file);
+      if (excludeFolder != null) {
+        selection.mySelectedExcludeRoots.add(excludeFolder);
+        continue;
       }
       SourceFolder folder = ProjectRootsUtil.findSourceFolder(module, file);
       if (folder != null) {
@@ -155,7 +144,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   @Nullable
-  private static Module getModule(@NotNull AnActionEvent e, @Nullable VirtualFile[] files) {
+  static Module getModule(@NotNull AnActionEvent e, @Nullable VirtualFile[] files) {
     if (files == null) return null;
     Module module = e.getData(LangDataKeys.MODULE);
     if (module == null) {
@@ -183,11 +172,16 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   public static class RootsSelection {
-    public static final RootsSelection EMPTY = new RootsSelection();
+    public static final RootsSelection EMPTY = new RootsSelection(null);
+    public final Module myModule;
 
-    public List<SourceFolder> mySelectedRoots = new ArrayList<SourceFolder>();
-    public List<ExcludeFolder> mySelectedExcludeRoots = new ArrayList<ExcludeFolder>();
-    public List<VirtualFile> mySelectedDirectories = new ArrayList<VirtualFile>();
+    public RootsSelection(Module module) {
+      myModule = module;
+    }
+
+    public List<SourceFolder> mySelectedRoots = new ArrayList<>();
+    public List<ExcludeFolder> mySelectedExcludeRoots = new ArrayList<>();
+    public List<VirtualFile> mySelectedDirectories = new ArrayList<>();
     public boolean myHaveSelectedFilesUnderSourceRoots;
   }
 }

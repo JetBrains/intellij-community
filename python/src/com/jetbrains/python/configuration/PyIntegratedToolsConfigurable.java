@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myProject = myModule.getProject();
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
     //noinspection unchecked
-    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<DocStringFormat>(Arrays.asList(DocStringFormat.values()),
-                                                                                    myDocumentationSettings.getFormat()));
+    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<>(Arrays.asList(DocStringFormat.values()),
+                                                                     myDocumentationSettings.getFormat()));
     myDocstringFormatComboBox.setRenderer(new ListCellRendererWrapper<DocStringFormat>() {
       @Override
       public void customize(JList list, DocStringFormat value, int index, boolean selected, boolean hasFocus) {
@@ -113,7 +113,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   @NotNull
   private String getRequirementsPath() {
     final String path = PyPackageRequirementsSettings.getInstance(myModule).getRequirementsPath();
-    if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && PyPackageUtil.findRequirementsTxt(myModule) == null) {
+    if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && !PyPackageUtil.hasRequirementsTxt(myModule)) {
       return "";
     }
     else {
@@ -169,7 +169,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
           @Override
           public void finished(List<ExecutionException> exceptions) {
             if (exceptions.isEmpty()) {
-              VFSTestFrameworkListener.getInstance().testInstalled(true, sdk.getHomePath(), name);
+              VFSTestFrameworkListener.getInstance().setTestFrameworkInstalled(true, sdk.getHomePath(), name);
               facetErrorPanel.getValidatorsManager().validate();
             }
           }
@@ -299,11 +299,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   @Override
   public String getId() {
     return "PyIntegratedToolsConfigurable";
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }
 

@@ -47,7 +47,7 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
   }
 
   private static boolean isTestNGClass(PsiClass psiClass) {
-    return psiClass != null && PsiClassUtil.isRunnableClass(psiClass, true, false) && TestNGUtil.hasTest(psiClass);
+    return psiClass != null && TestNGUtil.hasTest(psiClass);
   }
 
   @Override
@@ -88,12 +88,8 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
           super.runForClass(aClass, psiMethod, context, performRunnable);
         }
       };
-      if (inheritorChooser.runMethodInAbstractClass(fromContext, performRunnable, psiMethod, containingClass, new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass aClass) {
-          return aClass.hasModifierProperty(PsiModifier.ABSTRACT) && TestNGUtil.hasTest(aClass);
-        }
-      })) return;
+      if (inheritorChooser.runMethodInAbstractClass(fromContext, performRunnable, psiMethod, containingClass,
+                                                    aClass -> aClass.hasModifierProperty(PsiModifier.ABSTRACT) && TestNGUtil.hasTest(aClass))) return;
     }
     super.onFirstRun(configuration, fromContext, performRunnable);
   }

@@ -42,7 +42,7 @@ public class PropertyFileGeneratorImpl extends PropertyFileGenerator {
   /**
    * List of the properties
    */
-  private final List<Couple<String>> myProperties = new ArrayList<Couple<String>>();
+  private final List<Couple<String>> myProperties = new ArrayList<>();
 
   /**
    * A constctor that extracts all neeed properties for ant build from the project.

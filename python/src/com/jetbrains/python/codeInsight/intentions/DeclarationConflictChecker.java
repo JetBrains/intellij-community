@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.usages.UsageViewPresentation;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,14 +55,12 @@ public class DeclarationConflictChecker {
   public static List<Pair<PsiElement, PsiElement>> findDefinitions(@NotNull String name,
                                                                    @NotNull Collection<PsiReference> references,
                                                                    @NotNull Set<PsiElement> ignored) {
-    List<Pair<PsiElement, PsiElement>> conflicts = new ArrayList<Pair<PsiElement, PsiElement>>();
+    final List<Pair<PsiElement, PsiElement>> conflicts = new ArrayList<>();
     for (PsiReference ref : references) {
       final PsiElement refElement = ref.getElement();
       final ScopeOwner owner = ScopeUtil.getScopeOwner(refElement);
-      final PyResolveProcessor processor = new PyResolveProcessor(name, true);
       if (owner != null) {
-        PyResolveUtil.scopeCrawlUp(processor, owner, name, null);
-        for (PsiElement element : processor.getElements()) {
+        for (PsiElement element : PyResolveUtil.resolveLocally(owner, name)) {
           if (!ignored.contains(element)) {
             conflicts.add(Pair.create(refElement, element));
           }

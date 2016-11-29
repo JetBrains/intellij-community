@@ -63,11 +63,15 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   @Nullable
   protected abstract T editItem(T o);
 
+  public boolean isUpDownSupported() {
+    return false;
+  }
+
   @Override
   protected void initPanel() {
     setLayout(new BorderLayout());
 
-    final JPanel panel = ToolbarDecorator.createDecorator(myTable)
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -89,10 +93,27 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
           }
           doEdit();
         }
-      })
-      .disableUpAction()
-      .disableDownAction()
-      .createPanel();
+      });
+
+    if (isUpDownSupported()) {
+      decorator
+        .setMoveUpAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            doUp();
+          }})
+        .setMoveDownAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            doDown();
+          }
+        });
+    }
+    else {
+      decorator.disableUpAction().disableDownAction();
+    }
+
+    final JPanel panel = decorator.createPanel();
     add(panel, BorderLayout.CENTER);
     final String label = getLabelText();
     if (label != null) {
@@ -217,6 +238,14 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     if (selection >= 0) {
       myTable.setRowSelectionInterval(selection, selection);
     }
+  }
+  
+  protected void doUp() {
+    TableUtil.moveSelectedItemsUp(myTable);
+  }
+
+  protected void doDown() {
+    TableUtil.moveSelectedItemsDown(myTable);
   }
 
   public void setData(List<T> data) {

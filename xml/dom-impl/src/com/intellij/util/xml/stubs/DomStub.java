@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     myLocalName = localName;
   }
 
+  @NotNull
   @Override
   public abstract List<DomStub> getChildrenStubs();
 
@@ -70,7 +71,7 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     }
 
     final String s = nsKey == null ? "" : nsKey;
-    final List<DomStub> result = new SmartList<DomStub>();
+    final List<DomStub> result = new SmartList<>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = stubs.size(); i < size; i++) {
       final DomStub stub = stubs.get(i);

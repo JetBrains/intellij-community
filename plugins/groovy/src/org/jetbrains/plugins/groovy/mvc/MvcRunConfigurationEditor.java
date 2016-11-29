@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package org.jetbrains.plugins.groovy.mvc;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PanelWithAnchor;
@@ -58,7 +58,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
   }
 
   @Override
-  protected void resetEditorFrom(T configuration) {
+  protected void resetEditorFrom(@NotNull T configuration) {
     myFramework = configuration.getFramework();
     myVMParameters.setDialogCaption("VM Options");
     myVMParameters.setText(configuration.vmParams);
@@ -71,7 +71,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
 
     commandLineChanged(getCommandLine());
 
-    myEnvVariablesComponent.setEnvs(new HashMap<String, String>(configuration.envs));
+    myEnvVariablesComponent.setEnvs(new HashMap<>(configuration.envs));
     myEnvVariablesComponent.setPassParentEnvs(configuration.passParentEnv);
 
     if (myDepsClasspath.isEnabled()) {
@@ -120,7 +120,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
   }
 
   @Override
-  protected void applyEditorTo(T configuration) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull T configuration) throws ConfigurationException {
     configuration.setModule(getSelectedModule());
     configuration.vmParams = myVMParameters.getText().trim();
     configuration.cmdLine = getCommandLine();

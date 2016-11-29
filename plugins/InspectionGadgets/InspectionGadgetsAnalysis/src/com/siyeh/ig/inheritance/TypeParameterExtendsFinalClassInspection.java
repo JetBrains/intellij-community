@@ -62,15 +62,10 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
   }
 
   private static class TypeParameterExtendsFinalClassFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("type.parameter.extends.final.class.quickfix");
     }
 
@@ -202,7 +197,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
             return true;
           }
           final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)type;
-          final PsiType upperBound = capturedWildcardType.getUpperBound();
+          final PsiType upperBound = capturedWildcardType.getUpperBound(false);
           if (iterationType.equals(upperBound)) {
             return false;
           }

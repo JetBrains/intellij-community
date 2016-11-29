@@ -1,4 +1,4 @@
-# $Id: body.py 5618 2008-07-28 08:37:32Z strank $
+# $Id: body.py 7267 2011-12-20 14:14:21Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -10,18 +10,21 @@ See `docutils.parsers.rst.directives` for API details.
 
 __docformat__ = 'reStructuredText'
 
+
+import sys
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.roles import set_classes
-
+from docutils.utils.code_analyzer import Lexer, LexerError, NumberLines
 
 class BasePseudoSection(Directive):
 
     required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = True
-    option_spec = {'class': directives.class_option}
+    option_spec = {'class': directives.class_option,
+                   'name': directives.unchanged}
     has_content = True
 
     node_class = None
@@ -46,6 +49,7 @@ class BasePseudoSection(Directive):
         text = '\n'.join(self.content)
         node = self.node_class(text, *(titles + messages))
         node['classes'] += self.options.get('class', [])
+        self.add_name(node)
         if text:
             self.state.nested_parse(self.content, self.content_offset, node)
         return [node]
@@ -72,12 +76,14 @@ class Sidebar(BasePseudoSection):
 
 class LineBlock(Directive):
 
-    option_spec = {'class': directives.class_option}
+    option_spec = {'class': directives.class_option,
+                   'name': directives.unchanged}
     has_content = True
 
     def run(self):
         self.assert_has_content()
         block = nodes.line_block(classes=self.options.get('class', []))
+        self.add_name(block)
         node_list = [block]
         for line_text in self.content:
             text_nodes, messages = self.state.inline_text(
@@ -94,7 +100,8 @@ class LineBlock(Directive):
 
 class ParsedLiteral(Directive):
 
-    option_spec = {'class': directives.class_option}
+    option_spec = {'class': directives.class_option,
+                   'name': directives.unchanged}
     has_content = True
 
     def run(self):
@@ -104,7 +111,94 @@ class ParsedLiteral(Directive):
         text_nodes, messages = self.state.inline_text(text, self.lineno)
         node = nodes.literal_block(text, '', *text_nodes, **self.options)
         node.line = self.content_offset + 1
+        self.add_name(node)
         return [node] + messages
+
+
+class CodeBlock(Directive):
+    """Parse and mark up content of a code block.
+
+    Configuration setting: syntax_highlight
+       Highlight Code content with Pygments?
+       Possible values: ('long', 'short', 'none')
+
+    """
+    optional_arguments = 1
+    option_spec = {'class': directives.class_option,
+                   'name': directives.unchanged,
+                   'number-lines': directives.unchanged # integer or None
+                  }
+    has_content = True
+
+    def run(self):
+        self.assert_has_content()
+        if self.arguments:
+            language = self.arguments[0]
+        else:
+            language = ''
+        set_classes(self.options)
+        classes = ['code']
+        if language:
+            classes.append(language)
+        if 'classes' in self.options:
+            classes.extend(self.options['classes'])
+
+        # set up lexical analyzer
+        try:
+            tokens = Lexer(u'\n'.join(self.content), language,
+                           self.state.document.settings.syntax_highlight)
+        except LexerError, error:
+            raise self.warning(error)
+
+        if 'number-lines' in self.options:
+            # optional argument `startline`, defaults to 1
+            try:
+                startline = int(self.options['number-lines'] or 1)
+            except ValueError:
+                raise self.error(':number-lines: with non-integer start value')
+            endline = startline + len(self.content)
+            # add linenumber filter:
+            tokens = NumberLines(tokens, startline, endline)
+
+        node = nodes.literal_block('\n'.join(self.content), classes=classes)
+        self.add_name(node)
+        # if called from "include", set the source
+        if 'source' in self.options:
+            node.attributes['source'] = self.options['source']
+        # analyze content and add nodes for every token
+        for classes, value in tokens:
+            # print (classes, value)
+            if classes:
+                node += nodes.inline(value, value, classes=classes)
+            else:
+                # insert as Text to decrease the verbosity of the output
+                node += nodes.Text(value, value)
+
+        return [node]
+
+
+class MathBlock(Directive):
+
+    option_spec = {'class': directives.class_option,
+                   'name': directives.unchanged}
+                   ## TODO: Add Sphinx' ``mathbase.py`` option 'nowrap'?
+                   # 'nowrap': directives.flag,
+    has_content = True
+
+    def run(self):
+        set_classes(self.options)
+        self.assert_has_content()
+        # join lines, separate blocks
+        content = '\n'.join(self.content).split('\n\n')
+        _nodes = []
+        for block in content:
+            if not block:
+                continue
+            node = nodes.math_block(self.block_text, block, **self.options)
+            node.line = self.content_offset + 1
+            self.add_name(node)
+            _nodes.append(node)
+        return _nodes
 
 
 class Rubric(Directive):
@@ -112,13 +206,15 @@ class Rubric(Directive):
     required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = True
-    option_spec = {'class': directives.class_option}
+    option_spec = {'class': directives.class_option,
+                   'name': directives.unchanged}
 
     def run(self):
         set_classes(self.options)
         rubric_text = self.arguments[0]
         textnodes, messages = self.state.inline_text(rubric_text, self.lineno)
         rubric = nodes.rubric(rubric_text, '', *textnodes, **self.options)
+        self.add_name(rubric)
         return [rubric] + messages
 
 
@@ -153,7 +249,8 @@ class PullQuote(BlockQuote):
 
 class Compound(Directive):
 
-    option_spec = {'class': directives.class_option}
+    option_spec = {'class': directives.class_option,
+                   'name': directives.unchanged}
     has_content = True
 
     def run(self):
@@ -161,15 +258,16 @@ class Compound(Directive):
         text = '\n'.join(self.content)
         node = nodes.compound(text)
         node['classes'] += self.options.get('class', [])
+        self.add_name(node)
         self.state.nested_parse(self.content, self.content_offset, node)
         return [node]
 
 
 class Container(Directive):
 
-    required_arguments = 0
     optional_arguments = 1
     final_argument_whitespace = True
+    option_spec = {'name': directives.unchanged}
     has_content = True
 
     def run(self):
@@ -186,5 +284,6 @@ class Container(Directive):
                 % (self.name, self.arguments[0]))
         node = nodes.container(text)
         node['classes'].extend(classes)
+        self.add_name(node)
         self.state.nested_parse(self.content, self.content_offset, node)
         return [node]

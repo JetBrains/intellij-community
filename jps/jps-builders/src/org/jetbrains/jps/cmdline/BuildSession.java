@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,13 +197,14 @@ final class BuildSession implements Runnable, CanceledStatus {
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " + myProjectPath));
       return;
     }
-    if (!dataStorageRoot.exists()) {
+    final boolean storageFilesAbsent = !dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists();
+    if (storageFilesAbsent) {
       // invoked the very first time for this project
       myBuildRunner.setForceCleanCaches(true);
     }
     final ProjectDescriptor preloadedProject = myPreloadedData != null? myPreloadedData.getProjectDescriptor() : null;
     final DataInputStream fsStateStream = 
-      preloadedProject != null || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
+      storageFilesAbsent || preloadedProject != null || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
 
     if (fsStateStream != null || myPreloadedData != null) {
       // optimization: check whether we can skip the build
@@ -595,7 +596,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (!trace.isEmpty()) {
           messageText.append("\n").append(trace);
         }
-        if (error instanceof RebuildRequestedException) {
+        if (error instanceof RebuildRequestedException || cause instanceof IOException) {
           messageText.append("\n").append("Please perform full project rebuild (Build | Rebuild Project)");
         }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure(messageText.toString(), cause));
@@ -649,7 +650,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     private final Semaphore myProcessingEnabled = new Semaphore();
 
     private EventsProcessor() {
-      super(SharedThreadPool.getInstance());
+      super("BuildSession.EventsProcessor.EventsProcessor pool", SharedThreadPool.getInstance());
       myProcessingEnabled.down();
       execute(new Runnable() {
         @Override

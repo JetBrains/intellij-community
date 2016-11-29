@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -42,7 +43,7 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
 
   private static byte[] createContent(Properties properties) {
     StringBuilder builder = new StringBuilder();
-    TreeSet<String> sortedKeys = new TreeSet<String>((Set)properties.keySet());
+    TreeSet<String> sortedKeys = new TreeSet<>((Set)properties.keySet());
     for (String each : sortedKeys) {
       builder.append(StringUtil.escapeProperty(each, true));
       builder.append("=");
@@ -109,7 +110,7 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
 
   @Override
   public long getModificationStamp() {
-    return myContent.hashCode();
+    return Arrays.hashCode(myContent);
   }
 
   @Override

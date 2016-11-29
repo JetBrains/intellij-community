@@ -104,22 +104,20 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
       return;
     }
     final PsiFile initPy = pyPackage.findFile(PyNames.INIT_DOT_PY);
-    WriteCommandAction.runWriteCommandAction(pyPackage.getProject(), new Runnable() {
-      public void run() {
-        try {
-          if (initPy != null) {
-            final VirtualFile initPyVFile = initPy.getVirtualFile();
-            initPyVFile.rename(PyConvertPackageToModuleAction.this, moduleName);
-            initPyVFile.move(PyConvertPackageToModuleAction.this, parentDirVFile);
-          }
-          else {
-            PyUtil.getOrCreateFile(parentDirVFile.getPath() + "/" + moduleName, pyPackage.getProject());
-          }
-          pyPackage.getVirtualFile().delete(PyConvertPackageToModuleAction.this);
+    WriteCommandAction.runWriteCommandAction(pyPackage.getProject(), () -> {
+      try {
+        if (initPy != null) {
+          final VirtualFile initPyVFile = initPy.getVirtualFile();
+          initPyVFile.rename(this, moduleName);
+          initPyVFile.move(this, parentDirVFile);
         }
-        catch (IOException e) {
-          LOG.error(e);
+        else {
+          PyUtil.getOrCreateFile(parentDirVFile.getPath() + "/" + moduleName, pyPackage.getProject());
         }
+        pyPackage.getVirtualFile().delete(this);
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     });
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.statistic.updater;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
@@ -31,12 +32,11 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.util.Alarm;
-import com.intellij.util.Time;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Window;
+import java.awt.*;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 public class SendStatisticsComponent implements ApplicationComponent {
 
@@ -44,13 +44,9 @@ public class SendStatisticsComponent implements ApplicationComponent {
 
   private static final int DELAY_IN_MIN = 10;
 
-  private final Alarm myAlarm;
-
   private final FrameStateManager myFrameStateManager;
 
   public SendStatisticsComponent(@NotNull FrameStateManager frameStateManager) {
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
-
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
     NotificationsConfiguration.getNotificationsConfiguration().register(
       StatisticsNotificationManager.GROUP_DISPLAY_ID,
@@ -79,12 +75,7 @@ public class SendStatisticsComponent implements ApplicationComponent {
         @Override
         public void onFrameActivated() {
           if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                StatisticsNotificationManager.showNotification(statisticsService);
-              }
-            });
+            ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
             myFrameStateManager.removeListener(this);
           }
         }
@@ -106,13 +97,8 @@ public class SendStatisticsComponent implements ApplicationComponent {
     }
   }
 
-  private void runWithDelay(final @NotNull StatisticsService statisticsService) {
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        statisticsService.send();
-      }
-    }, Time.MINUTE * DELAY_IN_MIN);
+  private static void runWithDelay(@NotNull final StatisticsService statisticsService) {
+    JobScheduler.getScheduler().schedule(statisticsService::send, DELAY_IN_MIN, TimeUnit.MINUTES);
   }
 
   @Override

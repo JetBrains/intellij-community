@@ -22,13 +22,10 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodObjectTest extends LightRefactoringTestCase {
@@ -57,10 +54,7 @@ public class ExtractMethodObjectTest extends LightRefactoringTestCase {
     extractProcessor.prepare();
     extractProcessor.testPrepare();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
-    });
-
+    ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
 
     checkResultByFile("/refactoring/extractMethodObject/" + testName + ".java" + ".after");
   }
@@ -141,12 +135,11 @@ public class ExtractMethodObjectTest extends LightRefactoringTestCase {
     doTest();
   }
 
-  public void testWithPrivateMethodWhichCantBeMoved() throws Exception {
-    doTest();
+  public void testThisAndSuperAnon() throws Exception {
+    doTest(false);
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
+  public void testWithPrivateMethodWhichCantBeMoved() throws Exception {
+    doTest();
   }
 }

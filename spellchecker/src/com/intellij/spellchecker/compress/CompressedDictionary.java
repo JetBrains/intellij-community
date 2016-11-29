@@ -37,13 +37,8 @@ public final class CompressedDictionary implements Dictionary {
   private final Encoder encoder;
   private final String name;
 
-  private TIntObjectHashMap<SortedSet<byte[]>> rawData = new TIntObjectHashMap<SortedSet<byte[]>>();
-  private static final Comparator<byte[]> COMPARATOR = new Comparator<byte[]>() {
-    @Override
-    public int compare(byte[] o1, byte[] o2) {
-      return compareArrays(o1, o2);
-    }
-  };
+  private TIntObjectHashMap<SortedSet<byte[]>> rawData = new TIntObjectHashMap<>();
+  private static final Comparator<byte[]> COMPARATOR = (o1, o2) -> compareArrays(o1, o2);
 
   private CompressedDictionary(@NotNull Alphabet alphabet, @NotNull Encoder encoder, @NotNull String name) {
     this.alphabet = alphabet;
@@ -86,21 +81,19 @@ public final class CompressedDictionary implements Dictionary {
 
   @NotNull
   private static SortedSet<byte[]> createSet() {
-    return new TreeSet<byte[]>(COMPARATOR);
+    return new TreeSet<>(COMPARATOR);
   }
 
   /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public List<String> getWords(char first, int minLength, int maxLength) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     getWords(first, minLength, maxLength, result);
     return result;
   }
 
   /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public List<String> getWords(char first) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     getWords(first, 0, Integer.MAX_VALUE, result);
     return result;
   }
@@ -155,7 +148,7 @@ public final class CompressedDictionary implements Dictionary {
 
   @Override
   public Set<String> getWords() {
-    Set<String> words = new THashSet<String>();
+    Set<String> words = new THashSet<>();
     for (int i = 0; i <= alphabet.getLastIndexUsed(); i++) {
       char letter = alphabet.getLetter(i);
       getWords(letter, 0, Integer.MAX_VALUE, words);
@@ -179,16 +172,13 @@ public final class CompressedDictionary implements Dictionary {
     Alphabet alphabet = new Alphabet();
     final Encoder encoder = new Encoder(alphabet);
     final CompressedDictionary dictionary = new CompressedDictionary(alphabet, encoder, loader.getName());
-    final List<UnitBitSet> bss = new ArrayList<UnitBitSet>();
-    loader.load(new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        String transformed = transform.transform(s);
-        if (transformed != null) {
-          UnitBitSet bs = encoder.encode(transformed, true);
-          if (bs == null) return;
-          bss.add(bs);
-        }
+    final List<UnitBitSet> bss = new ArrayList<>();
+    loader.load(s -> {
+      String transformed = transform.transform(s);
+      if (transformed != null) {
+        UnitBitSet bs = encoder.encode(transformed, true);
+        if (bs == null) return;
+        bss.add(bs);
       }
     });
     for (UnitBitSet bs : bss) {

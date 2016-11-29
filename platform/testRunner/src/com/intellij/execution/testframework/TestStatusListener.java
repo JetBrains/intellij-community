@@ -30,7 +30,6 @@ public abstract class TestStatusListener {
   }
 
   @Deprecated
-  @SuppressWarnings("UnusedDeclaration")
   public static void notifySuiteFinished(AbstractTestProxy root) {
     for (TestStatusListener statusListener : Extensions.getExtensions(EP_NAME)) {
       statusListener.testSuiteFinished(root);

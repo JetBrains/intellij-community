@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,18 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -34,7 +38,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.PyNames;
@@ -79,7 +82,7 @@ public class PyPep8NamingInspection extends PyInspection {
     .put("N814", "CamelCase variable imported as constant")
     .build();
 
-  public final List<String> ignoredErrors = new ArrayList<String>();
+  public final List<String> ignoredErrors = new ArrayList<>();
 
   public boolean ignoreOverriddenFunctions = true;
   public final List<String> ignoredBaseClasses = Lists.newArrayList("unittest.TestCase", "unittest.case.TestCase");
@@ -116,18 +119,24 @@ public class PyPep8NamingInspection extends PyInspection {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, true, PyClass.class);
       if (function == null) return;
       final Scope scope = ControlFlowCache.getScope(function);
-      for (PyExpression expression : node.getTargets()) {
-        final String name = expression.getName();
+      for (Pair<PyExpression, PyExpression> pair : node.getTargetsToValuesMapping()) {
+        final String name = pair.getFirst().getName();
         if (name == null || scope.isGlobal(name)) continue;
-        if (expression instanceof PyTargetExpression) {
-          final PyExpression qualifier = ((PyTargetExpression)expression).getQualifier();
+        if (pair.getFirst() instanceof PyTargetExpression) {
+          final PyExpression qualifier = ((PyTargetExpression)pair.getFirst()).getQualifier();
           if (qualifier != null) {
             return;
           }
         }
+        
+        final PyCallExpression assignedValue = PyUtil.as(pair.getSecond(), PyCallExpression.class);
+        if (assignedValue != null
+            && assignedValue.getCallee() != null && PyNames.NAMEDTUPLE.equals(assignedValue.getCallee().getName())) {
+          return;
+        }
         final String errorCode = "N806";
         if (!LOWERCASE_REGEX.matcher(name).matches() && !name.startsWith("_") && !ignoredErrors.contains(errorCode)) {
-          registerAndAddRenameAndIgnoreErrorQuickFixes(expression, errorCode);
+          registerAndAddRenameAndIgnoreErrorQuickFixes(pair.getFirst(), errorCode);
         }
       }
     }
@@ -200,19 +209,14 @@ public class PyPep8NamingInspection extends PyInspection {
     public void visitPyClass(PyClass node) {
       final String name = node.getName();
       if (name == null) return;
-      if (isContextManager(node)) {
-        if (!LOWERCASE_REGEX.matcher(name).matches()) {
+      final String errorCode = "N801";
+      if (!ignoredErrors.contains(errorCode)) {
+        final boolean isLowercaseContextManagerClass = isContextManager(node) && LOWERCASE_REGEX.matcher(name).matches();
+        if (!isLowercaseContextManagerClass && !MIXEDCASE_REGEX.matcher(name).matches()) {
           final ASTNode nameNode = node.getNameNode();
           if (nameNode != null) {
-            registerProblem(nameNode.getPsi(), "Context manager class name should be lowercase", new PyRenameElementQuickFix());
+            registerAndAddRenameAndIgnoreErrorQuickFixes(nameNode.getPsi(), errorCode);
           }
-        }
-      }
-      else if ((!MIXEDCASE_REGEX.matcher(name).matches())) {
-        final String errorCode = "N801";
-        final ASTNode nameNode = node.getNameNode();
-        if (nameNode != null && !ignoredErrors.contains(errorCode)) {
-          registerAndAddRenameAndIgnoreErrorQuickFixes(nameNode.getPsi(), errorCode);
         }
       }
     }
@@ -266,7 +270,7 @@ public class PyPep8NamingInspection extends PyInspection {
     private final List<String> myBaseClassNames;
 
     public IgnoreBaseClassQuickFix(@NotNull PyClass baseClass, @NotNull TypeEvalContext context) {
-      myBaseClassNames = new ArrayList<String>();
+      myBaseClassNames = new ArrayList<>();
       ContainerUtil.addIfNotNull(getBaseClassNames(), baseClass.getQualifiedName());
       for (PyClass ancestor : baseClass.getAncestorClasses(context)) {
         ContainerUtil.addIfNotNull(getBaseClassNames(), ancestor.getQualifiedName());
@@ -275,49 +279,23 @@ public class PyPep8NamingInspection extends PyInspection {
 
     @NotNull
     @Override
-    public String getName() {
-      return "Ignore method names for descendants of class";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Ignore method names for descendants of class";
     }
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final JBList list = new JBList(getBaseClassNames());
-      final Runnable updateBlackList = new Runnable() {
-        @Override
-        public void run() {
-          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-          profile.modifyProfile(new Consumer<ModifiableModel>() {
-            @Override
-            public void consume(ModifiableModel model) {
-              final PyPep8NamingInspection inspection = (PyPep8NamingInspection)model
-                .getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());
-              addIfNotNull(inspection.ignoredBaseClasses, (String)list.getSelectedValue());
-            }
-          });
-        }
-      };
-      DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-        @Override
-        public void consume(DataContext dataContext) {
-          new PopupChooserBuilder(list)
-            .setTitle("Ignore base class")
-            .setItemChoosenCallback(updateBlackList)
-            .setFilteringEnabled(new Function<Object, String>() {
-              @Override
-              public String fun(Object o) {
-                return (String)o;
-              }
-            })
-            .createPopup()
-            .showInBestPositionFor(dataContext);
-        }
-      });
+      DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> new PopupChooserBuilder(list)
+        .setTitle("Ignore base class")
+        .setItemChoosenCallback(() -> InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
+          PyPep8NamingInspection inspection =
+            (PyPep8NamingInspection)it.getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());
+          addIfNotNull(inspection.ignoredBaseClasses, (String)list.getSelectedValue());
+        }))
+        .setFilteringEnabled(o -> (String)o)
+        .createPopup()
+        .showInBestPositionFor(dataContext));
     }
 
     public List<String> getBaseClassNames() {
@@ -336,13 +314,6 @@ public class PyPep8NamingInspection extends PyInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return  myText;
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return myText;
     }
@@ -350,13 +321,10 @@ public class PyPep8NamingInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiFile file = descriptor.getStartElement().getContainingFile();
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(new Consumer<ModifiableModel>() {
-        @Override
-        public void consume(ModifiableModel model) {
-          PyPep8NamingInspection tool = (PyPep8NamingInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME, file);
-          if (!tool.ignoredErrors.contains(myCode)) {
-            tool.ignoredErrors.add(myCode);
-          }
+      InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
+        PyPep8NamingInspection tool = (PyPep8NamingInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME, file);
+        if (!tool.ignoredErrors.contains(myCode)) {
+          tool.ignoredErrors.add(myCode);
         }
       });
     }

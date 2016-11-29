@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,6 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.StringTokenizer;
-
 public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   @Override
   public boolean acceptElement(@NotNull final PsiElement e) {
@@ -50,28 +48,8 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
   @NotNull
   public String getElementInfo(@NotNull final PsiElement e) {
     final XmlTag tag = (XmlTag)e;
-    final StringBuilder sb = new StringBuilder();
-
-    sb.append(tag.getName());
-
     final boolean addHtmlInfo = e.getContainingFile().getLanguage() != XMLLanguage.INSTANCE;
-
-    if (addHtmlInfo) {
-      final String id_value = tag.getAttributeValue(HtmlUtil.ID_ATTRIBUTE_NAME);
-      if (null != id_value) {
-        sb.append("#").append(id_value);
-      }
-
-      final String class_value = tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME);
-      if (null != class_value) {
-        final StringTokenizer tokenizer = new StringTokenizer(class_value, " ");
-        while (tokenizer.hasMoreTokens()) {
-          sb.append(".").append(tokenizer.nextToken());
-        }
-      }
-    }
-
-    return sb.toString();
+    return addHtmlInfo ? HtmlUtil.getTagPresentation(tag) : tag.getName();
   }
 
   @Override

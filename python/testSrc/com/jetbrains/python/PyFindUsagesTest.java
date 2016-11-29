@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,13 +94,9 @@ public class PyFindUsagesTest extends PyTestCase {
 
   private void assertUsages(Collection<UsageInfo> usages, String... usageTexts) {
     assertEquals(usageTexts.length, usages.size());
-    List<UsageInfo> sortedUsages = new ArrayList<UsageInfo>(usages);
-    Collections.sort(sortedUsages, new Comparator<UsageInfo>() {
-      @Override
-      public int compare(UsageInfo o1, UsageInfo o2) {
-        return o1.getElement().getTextRange().getStartOffset() - o2.getElement().getTextRange().getStartOffset();
-      }
-    });
+    List<UsageInfo> sortedUsages = new ArrayList<>(usages);
+    Collections.sort(sortedUsages,
+                     (o1, o2) -> o1.getElement().getTextRange().getStartOffset() - o2.getElement().getTextRange().getStartOffset());
     for (int i = 0; i < usageTexts.length; i++) {
       assertSameUsage(usageTexts[i], sortedUsages.get(i));
     }
@@ -150,6 +146,58 @@ public class PyFindUsagesTest extends PyTestCase {
   public void testConditionalFunctions() {  // PY-1448
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/ConditionalFunctions.py");
     assertEquals(3, usages.size());
+  }
+
+  // PY-8604
+  public void testOuterVariableInGeneratorPy2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27,
+                         () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInGenerator.py").size()));
+  }
+
+  // PY-8604
+  public void testOuterVariableInGeneratorPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30,
+                         () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInGenerator.py").size()));
+  }
+
+  // PY-18808
+  public void testOuterVariableInListComprehensionPy2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27,
+                         () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInListComprehension.py").size()));
+  }
+
+  // PY-18808
+  public void testOuterVariableInListComprehensionPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30,
+                         () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInListComprehension.py").size()));
+  }
+
+  public void testOverrideVariableByTupleInComprehensionPy2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension1.py").size());
+      assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension2.py").size());
+    });
+  }
+
+  public void testOverrideVariableByTupleInComprehensionPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      assertEquals(1, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension1.py").size());
+      assertEquals(2, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension2.py").size());
+    });
+  }
+
+  public void testOverrideVariableInComprehensionPy2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension1.py").size());
+      assertEquals(3, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension2.py").size());
+    });
+  }
+
+  public void testOverrideVariableInComprehensionPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      assertEquals(1, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension1.py").size());
+      assertEquals(2, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension2.py").size());
+    });
   }
 
   private Collection<UsageInfo> findMultiFileUsages(String filename) {

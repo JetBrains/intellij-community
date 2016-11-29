@@ -33,8 +33,8 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.DefaultXmlExtension;
 import com.intellij.xml.XmlBundle;
-import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.XmlRefCountHolder;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
@@ -295,7 +295,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
     protected void doRemove(Project project, XmlAttribute attribute, XmlTag parent) {
       if (!attribute.isNamespaceDeclaration()) {
-        SchemaPrefix schemaPrefix = XmlExtension.DEFAULT_EXTENSION.getPrefixDeclaration(parent, myPrefix);
+        SchemaPrefix schemaPrefix = DefaultXmlExtension.DEFAULT_EXTENSION.getPrefixDeclaration(parent, myPrefix);
         if (schemaPrefix != null) {
           attribute = schemaPrefix.getDeclaration();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ var c = "test test test";\
     doTest(initial, expected, action, TestFileType.JS)
   }
 
-  def void doTest(initial, expected, action, fileType = TestFileType.JAVA) {
+  void doTest(initial, expected, action, fileType = TestFileType.JAVA) {
     configureFromFileText("${getTestName(false)}.$fileType.extension", initial)
     def settings = CodeInsightSettings.getInstance()
     def old = settings.SURROUND_SELECTION_ON_QUOTE_TYPED

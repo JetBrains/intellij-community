@@ -90,7 +90,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
    */
   @NotNull
   private static List<PyExpression> getExpressionsBySuperClass(@NotNull final PyClass from, @NotNull final Collection<PyClass> classes) {
-    final List<PyExpression> expressionsToDelete = new ArrayList<PyExpression>(classes.size());
+    final List<PyExpression> expressionsToDelete = new ArrayList<>(classes.size());
 
     for (final PyExpression expression : from.getSuperClassExpressions()) {
       // Remove all superclass expressions that point to class from memberinfo
@@ -112,7 +112,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
   public PyMemberInfo<PyClass> apply(@NotNull final PyClass input) {
     final String name = RefactoringBundle.message("member.info.extends.0", PyClassCellRenderer.getClassText(input));
     //TODO: Check for "overrides"
-    return new PyMemberInfo<PyClass>(input, false, name, false, this, false);
+    return new PyMemberInfo<>(input, false, name, false, this, false);
   }
 
   private static class NoFakeSuperClasses extends NotNullPredicate<PyClass> {

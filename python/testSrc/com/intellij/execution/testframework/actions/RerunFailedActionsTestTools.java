@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -11,7 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Ref;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.python.testing.PyRerunFailedTestsAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +52,8 @@ public final class RerunFailedActionsTestTools {
     if (profile == null) {
       return null;
     }
-    final Ref<ExecutionEnvironment> stateRef = new Ref<ExecutionEnvironment>();
-    UsefulTestCase.edt(new Runnable() {
-      @Override
-      public void run() {
-        stateRef.set(ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), profile).build());
-      }
-    });
+    final Ref<ExecutionEnvironment> stateRef = new Ref<>();
+    EdtTestUtil.runInEdtAndWait((() -> stateRef.set(ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), profile).build())));
     return stateRef.get();
   }
 
@@ -60,16 +70,13 @@ public final class RerunFailedActionsTestTools {
     if (action == null) {
       return null;
     }
-    final Ref<RunProfileState> stateRef = new Ref<RunProfileState>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          stateRef.set(action.getState());
-        }
-        catch (final ExecutionException e) {
-          throw new IllegalStateException("Error obtaining execution state", e);
-        }
+    final Ref<RunProfileState> stateRef = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        stateRef.set(action.getState());
+      }
+      catch (final ExecutionException e) {
+        throw new IllegalStateException("Error obtaining execution state", e);
       }
     }, ModalityState.NON_MODAL);
 

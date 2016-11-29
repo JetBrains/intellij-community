@@ -35,5 +35,4 @@ public class Anonymous2MethodReferenceInspectionTest extends LightQuickFixParame
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/anonymous2methodReference";
   }
-
 }

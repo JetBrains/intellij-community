@@ -31,9 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 public class LocalDescriptorsUtil {
-  private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement> CONVERT = new TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement>() {
-    @Override
-    public RefElement fun(LocalInspectionTool tool, PsiElement element, GlobalInspectionContext context) {
+  private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement> CONVERT =
+    (tool, element, context) -> {
       final PsiNamedElement problemElement = tool.getProblemElement(element);
 
       RefElement refElement = context.getRefManager().getReference(problemElement);
@@ -41,8 +40,7 @@ public class LocalDescriptorsUtil {
         refElement = GlobalInspectionContextUtil.retrieveRefElement(element, context);
       }
       return refElement;
-    }
-  };
+    };
 
   static void addProblemDescriptors(@NotNull List<ProblemDescriptor> descriptors,
                                     boolean filterSuppressed,
@@ -52,7 +50,7 @@ public class LocalDescriptorsUtil {
                                     @NotNull InspectionToolPresentation dpi) {
     if (descriptors.isEmpty()) return;
 
-    Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<RefElement, List<ProblemDescriptor>>();
+    Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<>();
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
     for (ProblemDescriptor descriptor : descriptors) {
       final PsiElement element = descriptor.getPsiElement();
@@ -75,7 +73,7 @@ public class LocalDescriptorsUtil {
 
       List<ProblemDescriptor> elementProblems = problems.get(refElement);
       if (elementProblems == null) {
-        elementProblems = new ArrayList<ProblemDescriptor>();
+        elementProblems = new ArrayList<>();
         problems.put(refElement, elementProblems);
       }
       elementProblems.add(descriptor);

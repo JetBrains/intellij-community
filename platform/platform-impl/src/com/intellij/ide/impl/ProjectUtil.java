@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -38,14 +36,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
+import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -109,8 +111,7 @@ public class ProjectUtil {
       return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
     }
 
-    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        virtualFile.isDirectory() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) {
+    if (ProjectKt.isValidProjectPath(path)) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 
@@ -128,14 +129,11 @@ public class ProjectUtil {
       final Project project = provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
 
       if (project != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (!project.isDisposed()) {
-              final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
-              if (toolWindow != null) {
-                toolWindow.activate(null);
-              }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!project.isDisposed()) {
+            final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+            if (toolWindow != null) {
+              toolWindow.activate(null);
             }
           }
         }, ModalityState.NON_MODAL);
@@ -155,10 +153,13 @@ public class ProjectUtil {
       return null;
     }
 
-    if (file.isDirectory() && !new File(file, Project.DIRECTORY_STORE_FOLDER).exists()) {
-      String message = IdeBundle.message("error.project.file.does.not.exist", new File(file, Project.DIRECTORY_STORE_FOLDER).getPath());
-      Messages.showErrorDialog(message, CommonBundle.getErrorTitle());
-      return null;
+    if (file.isDirectory()) {
+      File dir = new File(file, Project.DIRECTORY_STORE_FOLDER);
+      if (!dir.exists()) {
+        String message = IdeBundle.message("error.project.file.does.not.exist", dir.getPath());
+        Messages.showErrorDialog(message, CommonBundle.getErrorTitle());
+        return null;
+      }
     }
 
     Project existing = findAndFocusExistingProjectForPath(path);
@@ -172,6 +173,12 @@ public class ProjectUtil {
         if (!closeAndDispose(toClose)) return null;
       }
       else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
+        return null;
+      }
+    }
+
+    if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
+      if (!confirmLoadingFromRemotePath(path, "warning.load.project.from.share", "title.load.project.from.share")) {
         return null;
       }
     }
@@ -196,6 +203,37 @@ public class ProjectUtil {
                                  Messages.getErrorIcon());
     }
     return project;
+  }
+
+  public static boolean confirmLoadingFromRemotePath(@NotNull String path,
+                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String msgKey,
+                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
+    return showYesNoDialog(IdeBundle.message(msgKey, path), titleKey);
+  }
+
+  public static boolean showYesNoDialog(@NotNull String message, @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
+    final Window window = getActiveFrameOrWelcomeScreen();
+    final Icon icon = Messages.getWarningIcon();
+    String title = IdeBundle.message(titleKey);
+    final int answer = window == null ? Messages.showYesNoDialog(message, title, icon) : Messages.showYesNoDialog(window, message, title, icon);
+    return answer == Messages.YES;
+  }
+
+  public static Window getActiveFrameOrWelcomeScreen() {
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    if (window != null)  return window;
+
+    for (Frame frame : Frame.getFrames()) {
+      if (frame instanceof IdeFrame && frame.isVisible()) {
+        return frame;
+      }
+    }
+
+    return null;
+  }
+
+  public static boolean isRemotePath(@NotNull String path) {
+    return path.contains("://") || path.contains("\\\\");
   }
 
   @Nullable
@@ -244,28 +282,30 @@ public class ProjectUtil {
     return confirmOpenNewProject;
   }
 
-  public static boolean isSameProject(String path, @NotNull Project project) {
-    IProjectStore projectStore = (IProjectStore)ServiceKt.getStateStore(project);
+  public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
+    if (projectFilePath == null) return false;
 
-    String toOpen = FileUtil.toSystemIndependentName(path);
-    String existing = projectStore.getProjectFilePath();
-
-    String existingBaseDir = projectStore.getProjectBasePath();
-    if (existingBaseDir == null) {
+    IProjectStore projectStore = ProjectKt.getStateStore(project);
+    String existingBaseDirPath = projectStore.getProjectBasePath();
+    if (existingBaseDirPath == null) {
       // could be null if not yet initialized
       return false;
     }
 
-    final File openFile = new File(toOpen);
-    if (openFile.isDirectory()) {
-      return FileUtil.pathsEqual(toOpen, existingBaseDir);
-    }
-    if (StorageScheme.DIRECTORY_BASED == projectStore.getStorageScheme()) {
-      // todo: check if IPR is located not under the project base dir
-      return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(openFile.getParentFile().getPath()), existingBaseDir);
+    final File projectFile = new File(projectFilePath);
+    if (projectFile.isDirectory()) {
+      return FileUtil.pathsEqual(projectFilePath, existingBaseDirPath);
     }
 
-    return FileUtil.pathsEqual(toOpen, existing);
+    if (projectStore.getStorageScheme() == StorageScheme.DEFAULT) {
+      return FileUtil.pathsEqual(projectFilePath, projectStore.getProjectFilePath());
+    }
+
+    File parent = projectFile.getParentFile();
+    if (parent.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
+      parent = parent.getParentFile();
+    }
+    return parent != null && FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath);
   }
 
   public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
@@ -296,13 +336,12 @@ public class ProjectUtil {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
     final String userHome = SystemProperties.getUserHome();
+    String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    if (PlatformUtils.isCLion()) {
+      productName = ApplicationNamesInfo.getInstance().getProductName();
+    }
     //noinspection HardCodedStringLiteral
-    return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
+    return userHome.replace('/', File.separatorChar) + File.separator + productName +
            "Projects";
-  }
-
-  public static boolean isDirectoryBased(@NotNull Project project) {
-    IComponentStore store = ServiceKt.getStateStore(project);
-    return store instanceof IProjectStore && StorageScheme.DIRECTORY_BASED.equals(((IProjectStore)store).getStorageScheme());
   }
 }

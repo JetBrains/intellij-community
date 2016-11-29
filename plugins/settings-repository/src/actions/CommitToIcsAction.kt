@@ -17,8 +17,6 @@ package org.jetbrains.settingsRepository.actions
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.StorageScheme
-import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.DialogWrapper
@@ -38,6 +36,7 @@ import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.stateStore
 import com.intellij.util.SmartList
 import org.jetbrains.settingsRepository.CommitToIcsDialog
 import org.jetbrains.settingsRepository.ProjectId
@@ -71,7 +70,7 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
 
   override fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean {
     val project = dataContext.project
-    return project is ProjectEx && (project.stateStore as IProjectStore).storageScheme == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory && isProjectConfigFile(file, dataContext.project!!)
+    return project is ProjectEx && project.stateStore.storageScheme == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory && isProjectConfigFile(file, dataContext.project!!)
   }
 
   override fun prepareRootsForCommit(roots: Array<FilePath>, project: Project) = roots
@@ -116,17 +115,14 @@ private class ProjectChangeCollectConsumer(private val project: Project) {
 private fun getProjectId(project: Project): String? {
   val projectId = ServiceManager.getService<ProjectId>(project, ProjectId::class.java)!!
   if (projectId.uid == null) {
-    if (MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(object : DialogWrapper.PropertyDoNotAskOption("") {
-      override fun setToBeShown(value: Boolean, exitCode: Int) {
-        icsManager.settings.doNoAskMapProject = !value
-      }
-
-      override fun isToBeShown(): Boolean {
-        return !icsManager.settings.doNoAskMapProject
-      }
-
-      override fun canBeHidden(): Boolean {
+    if (icsManager.settings.doNoAskMapProject ||
+        MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(object : DialogWrapper.DoNotAskOption.Adapter() {
+      override fun isSelectedByDefault(): Boolean {
         return true
+      }
+
+      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+        icsManager.settings.doNoAskMapProject = isSelected
       }
     }).show() == Messages.YES) {
       projectId.uid = UUID.randomUUID().toString()

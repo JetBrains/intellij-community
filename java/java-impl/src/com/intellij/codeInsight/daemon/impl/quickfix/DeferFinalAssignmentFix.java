@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Nov 19, 2002
- * Time: 12:03:39 PM
- * To change this template use Options | File Templates.
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -107,7 +100,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
 
   private void deferVariable(PsiElement outerCodeBlock, PsiVariable variable, PsiElement tempDeclarationAnchor) throws IncorrectOperationException {
     if (outerCodeBlock == null) return;
-    List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
+    List<PsiReferenceExpression> outerReferences = new ArrayList<>();
     collectReferences(outerCodeBlock, variable, outerReferences);
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
@@ -161,7 +154,10 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     PsiElement element = null; //controlFlow.getEndOffset(codeBlock) == offset ? getEnclosingStatement(controlFlow.getElement(offset)) : null;
     while (offset < controlFlow.getSize()) {
       element = controlFlow.getElement(offset);
-      if (element != null) element = PsiUtil.getEnclosingStatement(element);
+      while (element != null) {
+        if (element.getParent() == codeBlock) break;
+        element = element.getParent();
+      }
       int startOffset = controlFlow.getStartOffset(element);
       if (startOffset != -1 && startOffset >= minOffset && element instanceof PsiStatement) break;
       offset++;

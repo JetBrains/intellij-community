@@ -25,11 +25,9 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -43,61 +41,51 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   private static final Logger LOG = Logger.getInstance(UnshelvePatchDefaultExecutor.class);
 
   @NotNull private final ShelvedChangeList myCurrentShelveChangeList;
-  @NotNull private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
 
   public UnshelvePatchDefaultExecutor(@NotNull Project project,
-                                      @NotNull ShelvedChangeList changeList,
-                                      @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches) {
+                                      @NotNull ShelvedChangeList changeList) {
     super(project);
     myCurrentShelveChangeList = changeList;
-    myBinaryShelvedPatches = binaryShelvedPatches;
   }
 
   @Override
-  public void apply(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
+  public void apply(@NotNull List<FilePatch> remaining,
+                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
-    final Collection<PatchApplier> appliers = getPatchAppliers(patchGroups, localList, commitContext);
+    final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
     final ApplyPatchStatus patchStatus = executeAndApplyAdditionalInfo(localList, additionalInfo, commitContext, appliers);
     if (patchStatus != ApplyPatchStatus.ABORT && patchStatus != ApplyPatchStatus.FAILURE) {
-      removeAppliedAndSaveRemainedIfNeeded(appliers, commitContext); // remove only if partly applied or successful
+      removeAppliedAndSaveRemainedIfNeeded(remaining, appliers, commitContext); // remove only if partly applied or successful
     }
   }
 
-  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull Collection<PatchApplier> appliers, @NotNull CommitContext commitContext) {
+  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<FilePatch> remaining,
+                                                    @NotNull Collection<PatchApplier> appliers,
+                                                    @NotNull CommitContext commitContext) {
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
     if (!shelveChangesManager.isRemoveFilesFromShelf()) return;
     try {
-      List<FilePatch> textPatches =
-        ContainerUtil.<FilePatch>newArrayList(ShelveChangesManager.loadPatches(myProject, myCurrentShelveChangeList.PATH, commitContext));
-      List<FilePatch> remainingBinaries = ContainerUtil.<FilePatch>newArrayList(myBinaryShelvedPatches);
+      List<FilePatch> patches = ContainerUtil.newArrayList(remaining);
       for (PatchApplier applier : appliers) {
-        textPatches.removeAll(applier.getPatches());
-        textPatches.addAll(applier.getRemainingPatches());
-        remainingBinaries.removeAll(applier.getBinaryPatches());
+        patches.addAll(applier.getRemainingPatches());
       }
-      if (textPatches.isEmpty() && remainingBinaries.isEmpty()) {
+      if (patches.isEmpty()) {
         shelveChangesManager.recycleChangeList(myCurrentShelveChangeList);
       }
       else {
-        shelveChangesManager.saveRemainingPatches(myCurrentShelveChangeList, textPatches,
-                                                  ContainerUtil.mapNotNull(remainingBinaries, new Function<FilePatch, ShelvedBinaryFile>() {
-                                                    @Override
-                                                    public ShelvedBinaryFile fun(FilePatch patch) {
-                                                      return patch instanceof ShelvedBinaryFilePatch
-                                                             ? ((ShelvedBinaryFilePatch)patch)
-                                                               .getShelvedBinaryFile()
-                                                             : null;
-                                                    }
-                                                  }), commitContext);
+        shelveChangesManager.saveRemainingPatches(myCurrentShelveChangeList, patches,
+                                                  ContainerUtil.mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
+                                                                                             ? ((ShelvedBinaryFilePatch)patch)
+                                                                                               .getShelvedBinaryFile()
+                                                                                             : null), commitContext);
       }
     }
     catch (Exception e) {
       LOG.error("Couldn't update and store remaining patches", e);
     }
-
   }
 }

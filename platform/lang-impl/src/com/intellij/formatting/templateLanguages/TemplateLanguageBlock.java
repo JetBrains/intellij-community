@@ -61,7 +61,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     if (isLeaf()) {
       return EMPTY;
     }
-    final ArrayList<TemplateLanguageBlock> tlChildren = new ArrayList<TemplateLanguageBlock>(5);
+    final ArrayList<TemplateLanguageBlock> tlChildren = new ArrayList<>(5);
     for (ASTNode childNode = getNode().getFirstChildNode(); childNode != null; childNode = childNode.getTreeNext()) {
       if (FormatterUtil.containsWhiteSpacesOnly(childNode)) continue;
       if (shouldBuildBlockFor(childNode)) {
@@ -97,7 +97,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   private void initForeignChildren() {
     assert !myChildrenBuilt;
     if (myForeignChildren == null) {
-      myForeignChildren = new ArrayList<DataLanguageBlockWrapper>(5);
+      myForeignChildren = new ArrayList<>(5);
     }
   }
 

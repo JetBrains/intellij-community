@@ -30,7 +30,7 @@ public abstract class QuicklyDisposableProxy<T> implements Disposable {
   private final AtomicReference<T> myRef;
 
   protected QuicklyDisposableProxy(final T t) {
-    myRef = new AtomicReference<T>(t);
+    myRef = new AtomicReference<>(t);
   }
 
   @Override

@@ -78,12 +78,9 @@ public class PyFillParagraphTest extends PyTestCase {
     try {
       String baseName = "/fillParagraph/" + getTestName(true);
       myFixture.configureByFile(baseName + ".py");
-      CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          FillParagraphAction action = new FillParagraphAction();
-          action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
-        }
+      CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> {
+        FillParagraphAction action = new FillParagraphAction();
+        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
       }, "", null);
       myFixture.checkResultByFile(baseName + "_after.py", true);
     }

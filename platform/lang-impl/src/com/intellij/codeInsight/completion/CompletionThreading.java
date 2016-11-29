@@ -51,7 +51,7 @@ class SyncCompletion implements CompletionThreading {
   public Future<?> startThread(final ProgressIndicator progressIndicator, Runnable runnable) {
     ProgressManager.getInstance().runProcess(runnable, progressIndicator);
 
-    FutureResult<Object> result = new FutureResult<Object>();
+    FutureResult<Object> result = new FutureResult<>();
     result.set(true);
     return result;
   }
@@ -79,35 +79,24 @@ class AsyncCompletion implements CompletionThreading {
   public Future<?> startThread(final ProgressIndicator progressIndicator, final Runnable runnable) {
     final Semaphore startSemaphore = new Semaphore();
     startSemaphore.down();
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().runProcess(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  startSemaphore.up();
-                  ProgressManager.checkCanceled();
-                  runnable.run();
-                }
-              });
-            }
-            catch (ProcessCanceledException ignored) {
-            }
-          }
-        }, progressIndicator);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
+      try {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          startSemaphore.up();
+          ProgressManager.checkCanceled();
+          runnable.run();
+        });
       }
-    });
+      catch (ProcessCanceledException ignored) {
+      }
+    }, progressIndicator));
     startSemaphore.waitFor();
     return future;
   }
 
   @Override
   public WeighingDelegate delegateWeighing(final CompletionProgressIndicator indicator) {
-    final LinkedBlockingQueue<Computable<Boolean>> queue = new LinkedBlockingQueue<Computable<Boolean>>();
+    final LinkedBlockingQueue<Computable<Boolean>> queue = new LinkedBlockingQueue<>();
 
     class WeighItems implements Runnable {
       @Override
@@ -132,7 +121,7 @@ class AsyncCompletion implements CompletionThreading {
     return new WeighingDelegate() {
       @Override
       public void waitFor() {
-        queue.offer(new Computable.PredefinedValueComputable<Boolean>(false));
+        queue.offer(new Computable.PredefinedValueComputable<>(false));
         try {
           future.get();
         }
@@ -146,12 +135,9 @@ class AsyncCompletion implements CompletionThreading {
 
       @Override
       public void consume(final CompletionResult result) {
-        queue.offer(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            indicator.addItem(result);
-            return true;
-          }
+        queue.offer(() -> {
+          indicator.addItem(result);
+          return true;
         });
       }
     };

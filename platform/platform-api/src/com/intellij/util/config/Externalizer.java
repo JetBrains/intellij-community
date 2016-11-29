@@ -93,7 +93,7 @@ public interface Externalizer<T> {
     }
 
     public static <T extends JDOMExternalizable> FactoryBased<T> create(Factory<T> factory) {
-      return new FactoryBased<T>(factory);
+      return new FactoryBased<>(factory);
     }
   }
 

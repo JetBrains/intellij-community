@@ -36,7 +36,6 @@ import com.intellij.psi.xml.XmlProlog;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.script.ScriptEngine;
@@ -59,7 +58,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     final List<ScriptEngineFactory> engineFactories = new ScriptEngineManager(composeUserClassLoader(project)).getEngineFactories();
 
     if (engineFactories != null) {
-      final Set<String> availableNames = new TreeSet<String>();
+      final Set<String> availableNames = new TreeSet<>();
       for (ScriptEngineFactory factory : engineFactories) {
         final String engineName = (String)factory.getParameter(ScriptEngine.NAME);
         availableNames.add(engineName);
@@ -71,7 +70,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   }
 
   private static ClassLoader composeUserClassLoader(Project project) {
-    final List<URL> urls = new ArrayList<URL>();
+    final List<URL> urls = new ArrayList<>();
     final List<String> list = OrderEnumerator.orderEntries(project).recursively().librariesOnly().runtimeOnly().getPathsList().getPathList();
     for (String path : list) {
       try {
@@ -97,12 +96,8 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     } else {
       final JBList list = new JBList(availableLanguages);
       JBPopupFactory.getInstance().createListPopupBuilder(list)
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            registerPageLanguage(project, containingFile, (String)list.getSelectedValue());
-          }
-        }).createPopup().showInBestPositionFor(editor);
+        .setItemChoosenCallback(
+          () -> registerPageLanguage(project, containingFile, (String)list.getSelectedValue())).createPopup().showInBestPositionFor(editor);
     }
   }
 

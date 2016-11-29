@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,13 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.actions.MoveCaretLeftAction;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 
 /**
@@ -165,5 +169,19 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
     EditorFactory.getInstance().releaseEditor(editor);
     type("v");
     myFixture.checkResult("<divv></divv>");
+  }
+  
+  public void testDoNotFireDocumentChangeEventIfTagWasNotChanged() {
+    myFixture.configureByText(XmlFileType.INSTANCE, "<di<caret>></di>");
+    type("v");
+    Ref<Boolean> eventSent = Ref.create(false);
+    myFixture.getEditor().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        eventSent.set(true);
+      }
+    }, getTestRootDisposable());
+    myFixture.testAction(new MoveCaretLeftAction());
+    assertFalse(eventSent.get());
   }
 }

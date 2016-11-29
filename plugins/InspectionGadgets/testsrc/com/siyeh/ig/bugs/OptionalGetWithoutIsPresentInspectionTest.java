@@ -17,12 +17,12 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings({"OptionalGetWithoutIsPresent", "OptionalUsedAsFieldOrParameterType"})
 public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
@@ -55,6 +55,80 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
            "}");
   }
 
+  public void testWhile1() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  void m() {" +
+           "    Optional<String> o = Optional.empty();" +
+           "    while (!o.isPresent()){" +
+           "      o = Optional.of(\"\");" +
+           "    }" +
+           "    o.get();" +
+           "  }" +
+           "}");
+  }
+
+  public void testWhile2() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  void m() {" +
+           "    Optional<String> o = Optional.empty();" +
+           "    while (o.isPresent()) {" +
+           "      o.get();" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
+  public void testPolyadicExpression1() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  public void demo(Optional<String> value) {\n" +
+           "    boolean flag = value.isPresent() && \"Yes\".equals(value.get());\n" +
+           "  }" +
+           "}");
+  }
+
+  public void testPolyadicExpression2() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  boolean m(Optional<String> o) {" +
+           "    return !o.isPresent() || o.get().equals(\"j\");" +
+           "  }" +
+           "}");
+  }
+
+  public void testPolyadicExpression3() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  String g() {" +
+           "    Optional<String> o = Optional.empty();" +
+           "    if(o == null || !o.isPresent()) {" +
+           "      return \"\";" +
+           "    }" +
+           "    return o.get();" +
+           "  }" +
+           "}");
+  }
+
+  public void testNested() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  void test(Optional<String> opt, String action) {" +
+           "    if(!opt.isPresent()) {" +
+           "      throw new IllegalArgumentException();" +
+           "    }" +
+           "    switch(action) {" +
+           "      case \"case\":" +
+           "        System.out.println(opt.get());" +
+           "        break;" +
+           "      default:" +
+           "        System.err.println(opt.get());" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
   public void testOptionalGetWithoutIsPresent() {
     doTest();
   }
@@ -69,12 +143,17 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
   protected String[] getEnvironmentClasses() {
     return new String[] {
       "package java.util;" +
+      "import java.util.function.Consumer;" +
       "public final class Optional<T> {" +
+      "  private final T value;" +
       "  public T get() {" +
-      "    return null;" +
+      "    if (value == null) {" +
+      "      throw new NoSuchElementException(\"No value present\");" +
+      "    }" +
+      "    return value;" +
       "  }" +
       "  public boolean isPresent() {" +
-      "    return true;" +
+      "    return value != null;" +
       "  }" +
       "  public static<T> Optional<T> empty() {" +
       "    return new Optional<>();" +

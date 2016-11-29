@@ -36,10 +36,6 @@ import java.util.Collections;
 
 @SuppressWarnings({"ConstantConditions"})
 public class MavenExecutionTest extends MavenImportingTestCase {
-  @Override
-  protected boolean runInWriteAction() {
-    return false;
-  }
 
   @Override
   protected boolean runInDispatchThread() {
@@ -91,10 +87,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
     MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), Collections.<String>emptyList());
     execute(params);
 
-    SwingUtilities.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-      }
+    SwingUtilities.invokeAndWait(() -> {
     });
 
     assertSources("project",
@@ -112,31 +105,21 @@ public class MavenExecutionTest extends MavenImportingTestCase {
   private void execute(final MavenRunnerParameters params) {
     final Semaphore sema = new Semaphore();
     sema.down();
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        MavenRunConfigurationType.runConfiguration(
-          myProject, params, getMavenGeneralSettings(),
-          new MavenRunnerSettings(),
-          new ProgramRunner.Callback() {
+    UIUtil.invokeLaterIfNeeded(() -> MavenRunConfigurationType.runConfiguration(
+      myProject, params, getMavenGeneralSettings(),
+      new MavenRunnerSettings(),
+      new ProgramRunner.Callback() {
+        @Override
+        public void processStarted(final RunContentDescriptor descriptor) {
+          descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
             @Override
-            public void processStarted(final RunContentDescriptor descriptor) {
-              descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
-                @Override
-                public void processTerminated(ProcessEvent event) {
-                  sema.up();
-                  UIUtil.invokeLaterIfNeeded(new Runnable() {
-                    @Override
-                    public void run() {
-                      Disposer.dispose(descriptor);
-                    }
-                  });
-                }
-              });
+            public void processTerminated(ProcessEvent event) {
+              sema.up();
+              UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(descriptor));
             }
           });
-      }
-    });
+        }
+      }));
     sema.waitFor();
   }
 }

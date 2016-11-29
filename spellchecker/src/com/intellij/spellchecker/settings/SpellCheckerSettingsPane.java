@@ -53,9 +53,9 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JPanel panelForFolderChooser;
   private OptionalChooserComponent<String> optionalChooserComponent;
   private PathsChooserComponent pathsChooserComponent;
-  private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<Pair<String, Boolean>>();
-  private final List<String> dictionariesFolders = new ArrayList<String>();
-  private final List<String> removedDictionaries = new ArrayList<String>();
+  private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<>();
+  private final List<String> dictionariesFolders = new ArrayList<>();
+  private final List<String> removedDictionaries = new ArrayList<>();
   private final WordsPanel wordsPanel;
   private final SpellCheckerManager manager;
   private final SpellCheckerSettings settings;
@@ -71,11 +71,8 @@ public class SpellCheckerSettingsPane implements Disposable {
           if (allSettings != null) {
             final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
             if (errorsConfigurable != null) {
-              allSettings.select(errorsConfigurable).doWhenDone(new Runnable() {
-                public void run() {
-                  errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
-                }
-              });
+              allSettings.select(errorsConfigurable).doWhenDone(
+                () -> errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME));
             }
           }
         }
@@ -99,18 +96,14 @@ public class SpellCheckerSettingsPane implements Disposable {
         paths.add(path);
 
         final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getCurrentModel();
-        SPFileUtil.processFilesRecursively(path, new Consumer<String>() {
-          public void consume(final String s) {
-            currentDictionaries.add(Pair.create(s, true));
-          }
-        });
+        SPFileUtil.processFilesRecursively(path, s -> currentDictionaries.add(Pair.create(s, true)));
         optionalChooserComponent.refresh();
         return true;
       }
 
       public boolean removePath(List<String> paths, String path) {
         if (paths.remove(path)) {
-          final ArrayList<Pair<String, Boolean>> result = new ArrayList<Pair<String, Boolean>>();
+          final ArrayList<Pair<String, Boolean>> result = new ArrayList<>();
           final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getCurrentModel();
           for (Pair<String, Boolean> pair : currentDictionaries) {
             if (!pair.first.startsWith(FileUtil.toSystemDependentName(path))) {
@@ -177,8 +170,8 @@ public class SpellCheckerSettingsPane implements Disposable {
     pathsChooserComponent.apply();
     settings.setDictionaryFoldersPaths(pathsChooserComponent.getValues());
 
-    final HashSet<String> disabledDictionaries = new HashSet<String>();
-    final HashSet<String> bundledDisabledDictionaries = new HashSet<String>();
+    final HashSet<String> disabledDictionaries = new HashSet<>();
+    final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
     for (Pair<String, Boolean> pair : allDictionaries) {
       if (!pair.second) {
         final String scriptPath = pair.first;
@@ -229,11 +222,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     //todo [shkate]: refactoring  - SpellCheckerManager contains the same code withing reloadConfiguration()
     final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
     for (String folder : dictionariesFolders) {
-      SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
-        public void consume(final String s) {
-          allDictionaries.add(Pair.create(s, !disabledDictionaries.contains(s)));
-        }
-      });
+      SPFileUtil.processFilesRecursively(folder, s -> allDictionaries.add(Pair.create(s, !disabledDictionaries.contains(s))));
     }
   }
 
@@ -254,13 +243,13 @@ public class SpellCheckerSettingsPane implements Disposable {
     @NotNull
     public List<String> process() {
       if (this.dictionary == null) {
-        return new ArrayList<String>();
+        return new ArrayList<>();
       }
       Set<String> words = this.dictionary.getEditableWords();
       if (words == null) {
-        return new ArrayList<String>();
+        return new ArrayList<>();
       }
-      List<String> result = new ArrayList<String>();
+      List<String> result = new ArrayList<>();
       for (String word : words) {
         result.add(word);
       }
@@ -313,7 +302,7 @@ public class SpellCheckerSettingsPane implements Disposable {
       if (pairs == null) {
         return null;
       }
-      List<String> words = new ArrayList<String>();
+      List<String> words = new ArrayList<>();
       for (Object pair : pairs) {
         words.add(pair.toString());
       }

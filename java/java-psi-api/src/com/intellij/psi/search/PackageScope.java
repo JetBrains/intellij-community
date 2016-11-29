@@ -22,19 +22,18 @@ package com.intellij.psi.search;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.Set;
 
 public class PackageScope extends GlobalSearchScope {
-  private final Collection<VirtualFile> myDirs;
+  private final Set<VirtualFile> myDirs;
   private final PsiPackage myPackage;
   private final boolean myIncludeSubpackages;
   private final boolean myIncludeLibraries;
@@ -49,7 +48,8 @@ public class PackageScope extends GlobalSearchScope {
 
     Project project = myPackage.getProject();
     myPackageQualifiedName = myPackage.getQualifiedName();
-    myDirs = PackageIndex.getInstance(project).getDirsByPackageName(myPackageQualifiedName, true).findAll();
+    myDirs = ContainerUtil.newHashSet(
+      PackageIndex.getInstance(project).getDirsByPackageName(myPackageQualifiedName, true).findAll());
     myIncludeLibraries = includeLibraries;
 
     myPartOfPackagePrefix = JavaPsiFacade.getInstance(getProject()).isPartOfPackagePrefix(myPackageQualifiedName);
@@ -58,12 +58,16 @@ public class PackageScope extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    for (VirtualFile scopeDir : myDirs) {
-      boolean inDir = myIncludeSubpackages
-                      ? VfsUtilCore.isAncestor(scopeDir, file, false)
-                      : Comparing.equal(file.getParent(), scopeDir);
-      if (inDir) return true;
+    VirtualFile parent = file.getParent();
+    if (!myIncludeSubpackages) {
+      if (myDirs.contains(parent)) return true;
+    } else {
+      while (parent != null) {
+        if (myDirs.contains(parent)) return true;
+        parent = parent.getParent();
+      }
     }
+
     if (myPartOfPackagePrefix && myIncludeSubpackages) {
       final PsiFile psiFile = myPackage.getManager().findFile(file);
       if (psiFile instanceof PsiClassOwner) {

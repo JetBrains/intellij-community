@@ -65,6 +65,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +129,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.setDefaultRenderer(ClasspathTableItem.class, new TableItemRenderer(getStructureConfigurableContext()));
     myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer(myEntryTable.getDefaultRenderer(Boolean.class)));
 
-    JComboBox scopeEditor = new ComboBox(new EnumComboBoxModel<DependencyScope>(DependencyScope.class));
+    JComboBox scopeEditor = new ComboBox(new EnumComboBoxModel<>(DependencyScope.class));
     myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
     myEntryTable.setDefaultRenderer(DependencyScope.class, new ComboBoxTableRenderer<DependencyScope>(DependencyScope.values()) {
         @Override
@@ -194,8 +195,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
-    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN);
-    setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN);  // leave space for combobox border
+    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.EXPORT_COLUMN_NAME);
+    setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
+    myEntryTable.getTableHeader().getColumnModel().getColumn(ClasspathTableModel.ITEM_COLUMN).setPreferredWidth(10000); // consume all available space
 
     myEntryTable.registerKeyboardAction(
       new ActionListener() {
@@ -320,10 +322,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     return getItemAt(myEntryTable.getSelectedRow());
   }
 
-  private void setFixedColumnWidth(final int columnIndex) {
+  private void setFixedColumnWidth(final int columnIndex, String sampleText) {
     final TableColumn column = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
+    final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
+    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + JBUI.scale(4);
+    column.setPreferredWidth(width);
+    column.setMinWidth(width);
     column.setResizable(false);
-    column.setMaxWidth(column.getPreferredWidth());
   }
 
   @Override
@@ -413,12 +418,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               if (selectedValue.hasSubStep()) {
                 return selectedValue.createSubStep();
               }
-              return doFinalStep(new Runnable() {
-                @Override
-                public void run() {
-                  selectedValue.execute();
-                }
-              });
+              return doFinalStep(() -> selectedValue.execute());
             }
 
             @Override
@@ -586,7 +586,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private void initPopupActions() {
     if (myPopupActions == null) {
       int actionIndex = 1;
-      final List<AddItemPopupAction<?>> actions = new ArrayList<AddItemPopupAction<?>>();
+      final List<AddItemPopupAction<?>> actions = new ArrayList<>();
       final StructureConfigurableContext context = getStructureConfigurableContext();
       actions.add(new AddNewModuleLibraryAction(this, actionIndex++, context));
       actions.add(new AddLibraryDependencyAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
@@ -670,9 +670,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   public void forceInitFromModel() {
-    Set<ClasspathTableItem<?>> oldSelection = new HashSet<ClasspathTableItem<?>>();
+    Set<ClasspathTableItem<?>> oldSelection = new HashSet<>();
     for (int i : myEntryTable.getSelectedRows()) {
-      ContainerUtil.addIfNotNull(getItemAt(i), oldSelection);
+      ContainerUtil.addIfNotNull(oldSelection, getItemAt(i));
     }
     myModel.clear();
     myModel.init();

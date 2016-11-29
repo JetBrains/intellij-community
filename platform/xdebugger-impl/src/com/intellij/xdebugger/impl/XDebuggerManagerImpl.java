@@ -26,7 +26,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
@@ -52,7 +51,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
-import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,13 +75,13 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   private final XDebuggerWatchesManager myWatchesManager;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
-  private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<XDebugSessionImpl>();
+  private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
     myWatchesManager = new XDebuggerWatchesManager();
-    mySessions = new LinkedHashMap<ProcessHandler, XDebugSessionImpl>();
+    mySessions = new LinkedHashMap<>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
     MessageBusConnection messageBusConnection = messageBus.connect();
@@ -203,8 +201,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager
                                               @Nullable RunContentDescriptor contentToReuse,
                                               boolean showToolWindowOnSuspendOnly,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
-    XDebugSessionImpl session = startSession(contentToReuse, starter, new XDebugSessionImpl(null, this, sessionName,
-                                                                                            icon, showToolWindowOnSuspendOnly));
+    XDebugSessionImpl session = startSession(contentToReuse, starter,
+      new XDebugSessionImpl(null, this, sessionName, icon, showToolWindowOnSuspendOnly, contentToReuse));
+
     if (!showToolWindowOnSuspendOnly) {
       session.showSessionTab();
     }
@@ -218,16 +217,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager
                                          @NotNull XDebugSessionImpl session) throws ExecutionException {
     XDebugProcess process = processStarter.start(session);
     myProject.getMessageBus().syncPublisher(TOPIC).processStarted(process);
-
-    XDebugSessionData oldSessionData = null;
-    if (contentToReuse != null) {
-      JComponent component = contentToReuse.getComponent();
-      if (component != null) {
-        oldSessionData = XDebugSessionData.DATA_KEY.getData(DataManager.getInstance().getDataContext(component));
-      }
-    }
-
-    session.initSessionData(oldSessionData);
 
     // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes
     if (processStarter instanceof XDebugProcessConfiguratorStarter) {
@@ -262,9 +251,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     }
   }
 
-  void updateExecutionPoint(@Nullable XSourcePosition position, boolean useSelection, @Nullable GutterIconRenderer gutterIconRenderer) {
+  void updateExecutionPoint(@Nullable XSourcePosition position, boolean nonTopFrame, @Nullable GutterIconRenderer gutterIconRenderer) {
     if (position != null) {
-      myExecutionPointHighlighter.show(position, useSelection, gutterIconRenderer);
+      myExecutionPointHighlighter.show(position, nonTopFrame, gutterIconRenderer);
     }
     else {
       myExecutionPointHighlighter.hide();
@@ -305,7 +294,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       final XDebugProcess process = session.getDebugProcess();
       if (processClass.isInstance(process)) {
         if (list == null) {
-          list = new SmartList<T>();
+          list = new SmartList<>();
         }
         list.add(processClass.cast(process));
       }

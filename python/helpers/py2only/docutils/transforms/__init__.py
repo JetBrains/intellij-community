@@ -1,4 +1,4 @@
-# $Id: __init__.py 4975 2007-03-01 18:08:32Z wiemann $
+# $Id: __init__.py 6433 2010-09-28 08:21:25Z milde $
 # Authors: David Goodger <goodger@python.org>; Ueli Schlaepfer
 # Copyright: This module has been placed in the public domain.
 
@@ -53,7 +53,7 @@ class Transform:
         value is `None`)."""
 
         self.language = languages.get_language(
-            document.settings.language_code)
+            document.settings.language_code, document.reporter)
         """Language module local to this document."""
 
     def apply(self, **kwargs):

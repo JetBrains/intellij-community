@@ -15,18 +15,17 @@
  */
 package com.jetbrains.python.debugger.array;
 
+import com.google.common.base.Strings;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -39,59 +38,47 @@ public class JBTableWithRowHeaders extends JBTable {
   private final JBScrollPane myScrollPane;
   private RowHeaderTable myRowHeaderTable;
 
-  public JBScrollPane getScrollPane() {
-    return myScrollPane;
-  }
-
   public JBTableWithRowHeaders() {
     setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     setRowSelectionAllowed(false);
     setMaxItemsForSizeCalculation(50);
     setTableHeader(new CustomTableHeader(this));
-    getTableHeader().setDefaultRenderer(new ArrayTableForm.ColumnHeaderRenderer());
+    getTableHeader().setDefaultRenderer(new ColumnHeaderRenderer());
     getTableHeader().setReorderingAllowed(false);
 
     myScrollPane = new JBScrollPane(this);
-    JBTableWithRowHeaders.RowHeaderTable rowTable = new JBTableWithRowHeaders.RowHeaderTable(this);
-    myScrollPane.setRowHeaderView(rowTable);
+    myRowHeaderTable = new JBTableWithRowHeaders.RowHeaderTable(this);
+    myScrollPane.setRowHeaderView(myRowHeaderTable);
     myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
-                           rowTable.getTableHeader());
+                           myRowHeaderTable.getTableHeader());
+  }
 
-    setRowHeaderTable(rowTable);
+  public JBScrollPane getScrollPane() {
+    return myScrollPane;
   }
 
   public boolean getScrollableTracksViewportWidth() {
     return getPreferredSize().width < getParent().getWidth();
   }
 
-  public RowHeaderTable getRowHeaderTable() {
-    return myRowHeaderTable;
-  }
 
-  public void setRowHeaderTable(RowHeaderTable rowHeaderTable) {
-    myRowHeaderTable = rowHeaderTable;
+  @Override
+  public void setModel(@NotNull TableModel model) {
+
+    super.setModel(model);
+    if (model instanceof AsyncArrayTableModel) {
+      myRowHeaderTable.setModel(((AsyncArrayTableModel)model).getRowHeaderModel());
+    }
   }
 
   public static class RowHeaderTable extends JBTable implements PropertyChangeListener, TableModelListener {
     private JTable myMainTable;
-    private int myRowShift = 0;
 
     public RowHeaderTable(JTable table) {
       myMainTable = table;
-      myMainTable.getModel().addTableModelListener(this);
-
       setFocusable(false);
-      setAutoCreateColumnsFromModel(false);
       setSelectionModel(myMainTable.getSelectionModel());
       setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-      TableColumn column = new TableColumn();
-      column.setHeaderValue(" ");
-      addColumn(column);
-      column.setCellRenderer(new RowNumberRenderer());
-
-      getColumnModel().getColumn(0).setPreferredWidth(50);
-      setPreferredScrollableViewportSize(getPreferredSize());
       setRowHeight(myMainTable.getRowHeight());
       MouseListener[] listeners = getMouseListeners();
       for (MouseListener l : listeners) {
@@ -101,39 +88,39 @@ public class JBTableWithRowHeaders extends JBTable {
 
     @Override
     protected void paintComponent(@NotNull Graphics g) {
-      getEmptyText().setText("");
+      if (!Strings.isNullOrEmpty(getEmptyText().getText())) {
+        getEmptyText().setText("");
+      }
       super.paintComponent(g);
     }
 
+
     @Override
-    public int getRowCount() {
-      return myMainTable.getRowCount();
+    public void setModel(@NotNull TableModel model) {
+      setAutoCreateColumnsFromModel(true);
+      super.setModel(model);
+      if (getColumnModel().getColumnCount() > 0) {
+        getColumnModel().getColumn(0).setPreferredWidth(50);
+        getColumnModel().getColumn(0).setCellRenderer(new RowNumberRenderer());
+        setPreferredScrollableViewportSize(getPreferredSize());
+      }
     }
 
     @Override
     public int getRowHeight(int row) {
-      setRowHeight(myMainTable.getRowHeight());
+      int height = super.getRowHeight();
+      if (height != myMainTable.getRowHeight()) {
+        setRowHeight(myMainTable.getRowHeight());
+      }
       return super.getRowHeight(row);
     }
 
-    @Override
-    public Object getValueAt(int row, int column) {
-      return Integer.toString(row + myRowShift);
-    }
-
-    public void setRowShift(int shift) {
-      myRowShift = shift;
-    }
 
     @Override
     public boolean isCellEditable(int row, int column) {
       return false;
     }
 
-
-    @Override
-    public void setValueAt(Object value, int row, int column) {
-    }
 
     public void propertyChange(PropertyChangeEvent e) {
       if ("selectionModel".equals(e.getPropertyName())) {
@@ -145,17 +132,12 @@ public class JBTableWithRowHeaders extends JBTable {
       }
 
       if ("model".equals(e.getPropertyName())) {
-        myMainTable.getModel().addTableModelListener(this);
         revalidate();
       }
     }
 
-    @Override
-    public void tableChanged(TableModelEvent e) {
-      revalidate();
-    }
 
-    private class RowNumberRenderer extends DefaultTableCellRenderer {
+    private static class RowNumberRenderer extends DefaultTableCellRenderer {
       public RowNumberRenderer() {
         setHorizontalAlignment(SwingConstants.CENTER);
       }
@@ -189,17 +171,47 @@ public class JBTableWithRowHeaders extends JBTable {
     public CustomTableHeader(JTable table) {
       super();
       setColumnModel(table.getColumnModel());
-      table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          repaint();
-        }
-      });
+      table.getColumnModel().getSelectionModel().addListSelectionListener(e -> repaint());
     }
 
     @Override
     public void columnSelectionChanged(ListSelectionEvent e) {
       repaint();
+    }
+  }
+
+  public static class ColumnHeaderRenderer extends DefaultTableHeaderCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
+      super.getTableCellRendererComponent(table, value, selected, focused, row, column);
+      int selectedColumn = table.getSelectedColumn();
+      if (selectedColumn == column) {
+        setFont(getFont().deriveFont(Font.BOLD));
+      }
+      return this;
+    }
+  }
+
+  public static class DefaultTableHeaderCellRenderer extends DefaultTableCellRenderer {
+
+    public DefaultTableHeaderCellRenderer() {
+      setHorizontalAlignment(CENTER);
+      setHorizontalTextPosition(LEFT);
+      setVerticalAlignment(BOTTOM);
+      setOpaque(false);
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value,
+                                                   boolean isSelected, boolean hasFocus, int row, int column) {
+      super.getTableCellRendererComponent(table, value,
+                                          isSelected, hasFocus, row, column);
+      JTableHeader tableHeader = table.getTableHeader();
+      if (tableHeader != null) {
+        setForeground(tableHeader.getForeground());
+      }
+      setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+      return this;
     }
   }
 }

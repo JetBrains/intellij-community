@@ -59,20 +59,18 @@ public class PythonSourceRootConfigurator implements DirectoryProjectConfigurato
   private static void addSourceRoot(Project project, final VirtualFile baseDir, final VirtualFile root, final boolean unique) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     if (modules.length > 0 && root != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(modules[0]).getModifiableModel();
-          final ContentEntry[] contentEntries = model.getContentEntries();
-          for (ContentEntry contentEntry : contentEntries) {
-            if (Comparing.equal(contentEntry.getFile(), baseDir)) {
-              final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-              if (!unique || sourceFolders.length == 0) {
-                contentEntry.addSourceFolder(root, false);
-              }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(modules[0]).getModifiableModel();
+        final ContentEntry[] contentEntries = model.getContentEntries();
+        for (ContentEntry contentEntry : contentEntries) {
+          if (Comparing.equal(contentEntry.getFile(), baseDir)) {
+            final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+            if (!unique || sourceFolders.length == 0) {
+              contentEntry.addSourceFolder(root, false);
             }
           }
-          model.commit();
         }
+        model.commit();
       });
     }
   }

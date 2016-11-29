@@ -18,12 +18,13 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.diagnostic.LogEventException;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,6 +38,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -95,9 +97,13 @@ class CompletionAssertions {
   }
 
   static void checkEditorValid(Editor editor) {
-    if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
+    if (!isEditorValid(editor)) {
       throw new AssertionError();
     }
+  }
+
+  static boolean isEditorValid(Editor editor) {
+    return !(editor instanceof EditorWindow) || ((EditorWindow)editor).isValid();
   }
 
   private static Attachment createAstAttachment(PsiFile fileCopy, final PsiFile originalFile) {
@@ -215,12 +221,31 @@ class CompletionAssertions {
 
     @Override
     public int getTailOffset() {
+      if (!getOffsetMap().containsOffset(TAIL_OFFSET) && invalidateTrace != null) {
+        throw new TailInvalidException(invalidateTrace);
+      }
+
       int offset = super.getTailOffset();
       if (tailWatcher.getStartOffset() != tailWatcher.getEndOffset() && offset > 0) {
         watchTail(offset);
       }
 
       return offset;
+    }
+  }
+
+  private static class TailInvalidException extends IllegalStateException implements ExceptionWithAttachments {
+    private final String myInvalidationTrace;
+
+    TailInvalidException(@NotNull String invalidationTrace) {
+      super("Tail offset invalid");
+      myInvalidationTrace = invalidationTrace;
+    }
+
+    @NotNull
+    @Override
+    public Attachment[] getAttachments() {
+      return new Attachment[]{new Attachment("invalidated.trace", myInvalidationTrace)};
     }
   }
 }

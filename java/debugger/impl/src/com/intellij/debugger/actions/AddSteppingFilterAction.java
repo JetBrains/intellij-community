@@ -51,14 +51,11 @@ public class AddSteppingFilterAction extends DebuggerAction {
         }
 
         final Project project = e.getData(CommonDataKeys.PROJECT);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            String filter = Messages.showInputDialog(project, "", "Add Stepping Filter", null, name, null);
-            if (filter != null) {
-              ClassFilter[] newFilters = ArrayUtil.append(DebuggerSettings.getInstance().getSteppingFilters(), new ClassFilter(filter));
-              DebuggerSettings.getInstance().setSteppingFilters(newFilters);
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String filter = Messages.showInputDialog(project, "", "Add Stepping Filter", null, name, null);
+          if (filter != null) {
+            ClassFilter[] newFilters = ArrayUtil.append(DebuggerSettings.getInstance().getSteppingFilters(), new ClassFilter(filter));
+            DebuggerSettings.getInstance().setSteppingFilters(newFilters);
           }
         });
       }

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -160,13 +159,8 @@ class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementWalkingVisi
         if (aClass == null || LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {
           return;
         }
-        final List<HierarchicalMethodSignature> candidates = LambdaUtil.findFunctionCandidates(aClass);
-        if (candidates == null || candidates.size() != 1) {
-          return;
-        }
-        final HierarchicalMethodSignature signature = candidates.get(0);
-        final PsiMethod functionalMethod = signature.getMethod();
-        if (PsiType.VOID.equals(functionalMethod.getReturnType())) {
+        PsiMethod functionalMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
+        if (functionalMethod == null || PsiType.VOID.equals(functionalMethod.getReturnType())) {
           return;
         }
       }

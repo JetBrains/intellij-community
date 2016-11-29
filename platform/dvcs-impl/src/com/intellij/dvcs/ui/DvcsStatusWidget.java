@@ -185,6 +185,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   }
 
   @Nullable
+  @CalledInAwt
   private String getToolTip(@NotNull Project project) {
     T currentRepository = guessCurrentRepository(project);
     if (currentRepository == null) return null;

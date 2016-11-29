@@ -23,22 +23,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
-import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.SystemProperties
-import com.intellij.util.exists
-import com.intellij.util.move
-import org.jetbrains.keychain.CredentialsStore
-import org.jetbrains.keychain.FileCredentialsStore
-import org.jetbrains.keychain.OsXCredentialsStore
-import org.jetbrains.keychain.isOSXCredentialsStoreSupported
+import com.intellij.util.io.exists
+import com.intellij.util.io.move
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
@@ -47,41 +40,29 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.properties.Delegates
 
-internal const val PLUGIN_NAME: String = "Settings Repository"
+internal const val PLUGIN_NAME = "Settings Repository"
 
-internal val LOG: Logger = Logger.getInstance(IcsManager::class.java)
+internal val LOG = logger<IcsManager>()
 
 val icsManager by lazy(LazyThreadSafetyMode.NONE) {
   ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
 }
 
 class IcsManager(dir: Path) {
-  val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
-    override fun compute(): CredentialsStore {
-      if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
-        try {
-          return OsXCredentialsStore("IntelliJ Platform Settings Repository")
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
-      }
-      return FileCredentialsStore(dir.resolve(".git_auth"))
-    }
-  }
+  val credentialsStore = lazy { IcsCredentialsStore() }
 
-  val settingsFile = dir.resolve("config.json")
+  val settingsFile: Path = dir.resolve("config.json")
 
   val settings: IcsSettings
   val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
 
   init {
-    try {
-      settings = loadSettings(settingsFile)
+    settings = try {
+      loadSettings(settingsFile)
     }
     catch (e: Exception) {
-      settings = IcsSettings()
       LOG.error(e)
+      IcsSettings()
     }
   }
 
@@ -90,16 +71,14 @@ class IcsManager(dir: Path) {
   val repositoryService: RepositoryService = GitRepositoryService()
 
   private val commitAlarm = SingleAlarm(Runnable {
-    ProgressManager.getInstance().run(object : Task.Backgroundable(null, icsMessage("task.commit.title")) {
-      override fun run(indicator: ProgressIndicator) {
-        try {
-          repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
+    runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
+      try {
+        repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
       }
-    })
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
   }, settings.commitDelay)
 
   private @Volatile var autoCommitEnabled = true
@@ -121,8 +100,9 @@ class IcsManager(dir: Path) {
         throw IllegalStateException("Delete is prohibited now")
       }
 
-      repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))
-      scheduleCommit()
+      if (repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))) {
+        scheduleCommit()
+      }
     }
   }
 
@@ -158,14 +138,22 @@ class IcsManager(dir: Path) {
     }
   }
 
+  fun newStreamProvider() {
+    val application = ApplicationManager.getApplication()
+    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+  }
+
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+    val storage = application.stateStore.stateStorageManager as StateStorageManagerImpl
+    if (storage.streamProvider == null || !storage.streamProvider!!.enabled) {
+      storage.streamProvider = ApplicationLevelProvider()
+    }
 
     autoSyncManager.registerListeners(application)
 
-    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
+    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
       override fun beforeProjectLoaded(project: Project) {
         if (project.isDefault) {
           return
@@ -185,15 +173,17 @@ class IcsManager(dir: Path) {
     override val enabled: Boolean
       get() = repositoryActive
 
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = enabled
+
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
       val fullPath = toRepositoryPath(path, roamingType, null)
 
       // first of all we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
       for (repository in readOnlySourcesManager.repositories) {
-        repository.processChildren(fullPath, filter, { name, input -> processor(name, input, true) })
+        repository.processChildren(fullPath, filter) { name, input -> processor(name, input, true) }
       }
 
-      repositoryManager.processChildren(fullPath, filter, { name, input -> processor(name, input, false) })
+      repositoryManager.processChildren(fullPath, filter) { name, input -> processor(name, input, false) }
     }
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
@@ -208,11 +198,9 @@ class IcsManager(dir: Path) {
 
     fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
 
-    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
+    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = true
 
-    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-      return repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
-    }
+    override fun read(fileSpec: String, roamingType: RoamingType) = repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
     }
@@ -224,45 +212,37 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     private set
 
   override fun beforeApplicationLoaded(application: Application, configPath: String) {
-    if (application.isUnitTestMode) {
-      return
-    }
-
     val customPath = System.getProperty("ics.settingsRepository")
     val pluginSystemDir = if (customPath == null) Paths.get(configPath, "settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
     icsManager = IcsManager(pluginSystemDir)
 
     if (!pluginSystemDir.exists()) {
-      try {
+      LOG.catchAndLog {
         val oldPluginDir = Paths.get(PathManager.getSystemPath(), "settingsRepository")
         if (oldPluginDir.exists()) {
           oldPluginDir.move(pluginSystemDir)
         }
       }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
     }
 
     val repositoryManager = icsManager.repositoryManager
     if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {
-      if (repositoryManager.renameDirectory(linkedMapOf(
-        Pair("\$ROOT_CONFIG$", null),
-        Pair("_mac/\$ROOT_CONFIG$", "_mac"),
-        Pair("_windows/\$ROOT_CONFIG$", "_windows"),
-        Pair("_linux/\$ROOT_CONFIG$", "_linux"),
-        Pair("_freebsd/\$ROOT_CONFIG$", "_freebsd"),
-        Pair("_unix/\$ROOT_CONFIG$", "_unix"),
-        Pair("_unknown/\$ROOT_CONFIG$", "_unknown"),
+      val osFolderName = getOsFolderName()
 
-        Pair("\$APP_CONFIG$", null),
-        Pair("_mac/\$APP_CONFIG$", "_mac"),
-        Pair("_windows/\$APP_CONFIG$", "_windows"),
-        Pair("_linux/\$APP_CONFIG$", "_linux"),
-        Pair("_freebsd/\$APP_CONFIG$", "_freebsd"),
-        Pair("_unix/\$APP_CONFIG$", "_unix"),
-        Pair("_unknown/\$APP_CONFIG$", "_unknown")
-      ))) {
+      val migrateSchemes = repositoryManager.renameDirectory(linkedMapOf(
+          Pair("\$ROOT_CONFIG$", null),
+          Pair("$osFolderName/\$ROOT_CONFIG$", osFolderName),
+
+          Pair("\$APP_CONFIG$", null),
+          Pair("$osFolderName/\$APP_CONFIG$", osFolderName)
+      ), "Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG")
+
+      val migrateKeyMaps = repositoryManager.renameDirectory(linkedMapOf(
+          Pair("$osFolderName/keymaps", "keymaps")
+      ), "Move keymaps to root")
+
+      val removeOtherXml = repositoryManager.delete("other.xml")
+      if (migrateSchemes || migrateKeyMaps || removeOtherXml) {
         // schedule push to avoid merge conflicts
         application.invokeLater({ icsManager.autoSyncManager.autoSync(force = true) })
       }

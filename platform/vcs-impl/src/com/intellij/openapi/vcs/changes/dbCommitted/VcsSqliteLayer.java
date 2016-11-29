@@ -20,7 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.ReceivedChangeList;
@@ -28,6 +31,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -86,11 +90,11 @@ public class VcsSqliteLayer {
   public void checkVcsRootsAreTracked(final MultiMap<String, String> vcses) throws VcsException {
     if (vcses.isEmpty()) return;
 
-    final MultiMap<String, String> copy = new MultiMap<String, String>();
+    final MultiMap<String, String> copy = new MultiMap<>();
     copy.putAllValues(vcses);
     if (! checkForInMemory(copy)) return;
 
-    final HashSet<String> vcsNamesSet = new HashSet<String>(vcses.keySet());
+    final HashSet<String> vcsNamesSet = new HashSet<>(vcses.keySet());
     for (Iterator<String> iterator = vcsNamesSet.iterator(); iterator.hasNext(); ) {
       final String key = iterator.next();
       if (myKnownRepositoryLocations.exists(key)) {
@@ -167,7 +171,7 @@ public class VcsSqliteLayer {
   }
 
   private Set<Long> ensurePathsAreInDB(final MultiMap<String, String> copy) throws VcsException {
-    final Set<Long> idsToCheck = new HashSet<Long>();
+    final Set<Long> idsToCheck = new HashSet<>();
     final PreparedStatement select = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_ROOTS,
       new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
         @Override
@@ -297,11 +301,10 @@ public class VcsSqliteLayer {
     final RevisionId lastRevData = myKnownRepositoryLocations.getLastRevision(locationId);
     final Long lastRevision = lastRevData == null ? null : lastRevData.getNumber();
 
-    final List<List<CommittedChangeList>> split = new CollectionSplitter<CommittedChangeList>(20).split(lists);
-    final Map<String, Long> knowPaths = new HashMap<String, Long>();
-    for (List<CommittedChangeList> changeLists : split) {
-      final Set<String> names = new HashSet<String>();
-      final Set<String> paths = new HashSet<String>();
+    final Map<String, Long> knowPaths = new HashMap<>();
+    for (List<CommittedChangeList> changeLists : JBIterable.from(lists).split(20, false)) {
+      final Set<String> names = new HashSet<>();
+      final Set<String> paths = new HashSet<>();
       for (Iterator<CommittedChangeList> iterator = changeLists.iterator(); iterator.hasNext(); ) {
         final CommittedChangeList list = iterator.next();
         final long number = list.getNumber();
@@ -362,7 +365,7 @@ public class VcsSqliteLayer {
             ") VALUES (?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
         }
       });
-    final Map<Long, CommittedChangeList> result = new HashMap<Long, CommittedChangeList>();
+    final Map<Long, CommittedChangeList> result = new HashMap<>();
     final CachingCommittedChangesProvider provider = (CachingCommittedChangesProvider)vcs.getCommittedChangesProvider();
     try {
       statement.setLong(1, locationId);
@@ -408,7 +411,7 @@ public class VcsSqliteLayer {
     try {
       insert.setLong(2, listId);
       final Collection<Change> withMoved = list.getChangesWithMovedTrees();
-      final Set<Change> simple = new HashSet<Change>(list.getChanges());
+      final Set<Change> simple = new HashSet<>(list.getChanges());
       for (Change change : withMoved) {
         insertOneChange(paths, insert, change, simple.contains(change));
       }
@@ -563,8 +566,8 @@ public class VcsSqliteLayer {
 
   // alternatively, we can use usual lists + a map marking incoming
   public List<ReceivedChangeList> selectIncoming(final AbstractVcs vcs, final RepositoryLocation location) throws VcsException {
-    final Map<Long, CommittedChangeList> full = new HashMap<Long, CommittedChangeList>();
-    final TreeMap<Long, Set<String>> incomingPaths = new TreeMap<Long, Set<String>>();
+    final Map<Long, CommittedChangeList> full = new HashMap<>();
+    final TreeMap<Long, Set<String>> incomingPaths = new TreeMap<>();
     final long locationId = getLocationId(vcs, location);
 
     final PreparedStatement select = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_INCOMING,
@@ -594,7 +597,7 @@ public class VcsSqliteLayer {
             final byte[] bytes = set.getBytes("R." + SqliteTables.REVISION.RAW_DATA);
             final CommittedChangeList nativeList = readListByProvider(bytes, provider, location);
             full.put(revNum, nativeList);
-            paths = new HashSet<String>();
+            paths = new HashSet<>();
             incomingPaths.put(revNum, paths);
           }
           final String path = set.getString("P." + SqliteTables.PATHS.PATH);
@@ -605,7 +608,7 @@ public class VcsSqliteLayer {
     catch (SQLException e) {
       throw new VcsException(e);
     }
-    final List<ReceivedChangeList> result = new ArrayList<ReceivedChangeList>();
+    final List<ReceivedChangeList> result = new ArrayList<>();
     for (Map.Entry<Long, Set<String>> entry : incomingPaths.entrySet()) {
       final Long revNum = entry.getKey();
 
@@ -718,12 +721,12 @@ public class VcsSqliteLayer {
 
     final SelectListsQueryHelper helper =
       new SelectListsQueryHelper(myConnection, lastExisitngData, firstExistingData, last, old, getLocationId(vcs, location), subfolder);
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> result = new ArrayList<>();
     try {
       final PreparedStatement statement = helper.createStatement();
       final CachingCommittedChangesProvider provider = (CachingCommittedChangesProvider)vcs.getCommittedChangesProvider();
       final ResultSet set = statement.executeQuery();
-      final Set<Long> controlSet = new HashSet<Long>();
+      final Set<Long> controlSet = new HashSet<>();
       SqliteUtil.readSelectResults(set, new ThrowableRunnable<SQLException>() {
         @Override
         public void run() throws SQLException {
@@ -773,7 +776,7 @@ public class VcsSqliteLayer {
           + " DESC");
         }
       });
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> result = new ArrayList<>();
     try {
 
       statement.setLong(1, operatingFirst);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsoleViewImplTest extends LightPlatformTestCase {
   private ConsoleViewImpl myConsole;
@@ -66,7 +69,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testConsolePrintsSomethingAfterDoubleClear() throws Exception {
     ConsoleViewImpl console = myConsole;
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,getTestRootDisposable());
     CountDownLatch latch = new CountDownLatch(1);
     alarm.addRequest(() -> {
       console.clear();
@@ -105,7 +108,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testClearAndPrintWhileAnotherClearExecution() throws Exception {
     ConsoleViewImpl console = myConsole;
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,getTestRootDisposable());
     for (int i = 0; i < 100; i++) {
       // To speed up test execution, set -Dconsole.flush.delay.ms=5 to reduce ConsoleViewImpl.DEFAULT_FLUSH_DELAY
       //System.out.println("Attempt #" + i);
@@ -117,11 +120,11 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         latch.countDown();
       }, 0);
       UIUtil.dispatchAllInvocationEvents(); // flush 1-st clear request
-      latch.await();
+      assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
       UIUtil.dispatchAllInvocationEvents(); // flush 2-nd clear request
       while (console.hasDeferredOutput()) {
         UIUtil.dispatchAllInvocationEvents();
-        TimeoutUtil.sleep(5);
+        TimeoutUtil.sleep(1);
       }
       assertEquals("Test", console.getText());
     }
@@ -155,7 +158,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   @NotNull
-  private static ConsoleViewImpl createConsole() {
+  static ConsoleViewImpl createConsole() {
     Project project = getProject();
     ConsoleViewImpl console = new ConsoleViewImpl(project,
                                                   GlobalSearchScope.allScope(project),
@@ -168,7 +171,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     return console;
   }
 
-  private static class MyProcessHandler extends ProcessHandler {
+  static class MyProcessHandler extends ProcessHandler {
     @Override
     protected void destroyProcessImpl() {
       notifyProcessTerminated(0);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
    * @param filePath path to .ipr file or directory where .idea directory is located
    */
   @Nullable
-  public abstract Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
+  public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
   @Nullable
   public abstract Project loadProject(@NotNull String filePath) throws IOException;
@@ -54,12 +54,12 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @TestOnly
   public abstract void openTestProject(@NotNull Project project);
 
-  @TestOnly
-  @NotNull
   /**
    * Without save and "check can close".
    * Returns remaining open test projects.
    */
+  @TestOnly
+  @NotNull
   public abstract Collection<Project> closeTestProject(@NotNull Project project);
 
   // returns true on success
@@ -67,7 +67,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @Nullable
   @Override
-  public Project createProject(String name, String path) {
+  public Project createProject(@Nullable String name, @NotNull String path) {
     return newProject(name, path, true, false);
   }
 

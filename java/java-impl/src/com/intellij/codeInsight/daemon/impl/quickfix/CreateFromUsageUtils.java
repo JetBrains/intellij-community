@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,8 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +119,7 @@ public class CreateFromUsageUtils {
     }
   }
 
-  public static void setupMethodBody(PsiMethod method) throws IncorrectOperationException {
+  public static void setupMethodBody(@NotNull PsiMethod method) throws IncorrectOperationException {
     PsiClass aClass = method.getContainingClass();
     setupMethodBody(method, aClass);
   }
@@ -171,13 +171,9 @@ public class CreateFromUsageUtils {
         m = factory.createMethodFromText(methodText, aClass);
       }
       catch (IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
-                                         QuickFixBundle.message("new.method.body.template.error.title"));
-              }
-            });
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
+                                   QuickFixBundle.message("new.method.body.template.error.title")));
         return;
       }
       PsiCodeBlock oldBody = method.getBody();
@@ -231,7 +227,7 @@ public class CreateFromUsageUtils {
 
   public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
                                            final PsiSubstitutor substitutor, final PsiExpression[] arguments) {
-    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map2List(arguments, Pair.<PsiExpression, PsiType>createFunction(null)));
+    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map2List(arguments, Pair.createFunction(null)));
   }
 
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
@@ -261,10 +257,7 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      if (argType == null || PsiType.NULL.equals(argType) ||
-          argType instanceof PsiLambdaExpressionType ||
-          argType instanceof PsiLambdaParameterType ||
-          argType instanceof PsiMethodReferenceType) {
+      if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
         argType = PsiType.getJavaLangObject(psiManager, resolveScope);
       } else if (argType instanceof PsiDisjunctionType) {
         argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
@@ -460,12 +453,7 @@ public class CreateFromUsageUtils {
             }
 
             if (superClassName != null && (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM))) {
-              final PsiClass superClass =
-                facade.findClass(superClassName, targetClass.getResolveScope());
-              final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
-              final PsiReferenceList list = classKind == CreateClassKind.INTERFACE || superClass == null || !superClass.isInterface() ?
-                targetClass.getExtendsList() : targetClass.getImplementsList();
-              list.add(superClassReference);
+              setupSuperClassReference(targetClass, superClassName);
             }
             if (contextElement instanceof PsiJavaCodeReferenceElement) {
               CreateFromUsageBaseFix.setupGenericParameters(targetClass, (PsiJavaCodeReferenceElement)contextElement);
@@ -480,23 +468,31 @@ public class CreateFromUsageUtils {
       });
   }
 
-  public static void scheduleFileOrPackageCreationFailedMessageBox(final IncorrectOperationException e, final String name, final PsiDirectory directory,
-                                                      final boolean isPackage) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showErrorDialog(QuickFixBundle.message(
-          isPackage ? "cannot.create.java.package.error.text" : "cannot.create.java.file.error.text", name, directory.getVirtualFile().getName(), e.getLocalizedMessage()),
-                                 QuickFixBundle.message(
-                                   isPackage ? "cannot.create.java.package.error.title" : "cannot.create.java.file.error.title"));
-      }
-    });
+  public static void setupSuperClassReference(PsiClass targetClass, String superClassName) {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(targetClass.getProject());
+    PsiElementFactory factory = facade.getElementFactory();
+    final PsiClass superClass =
+      facade.findClass(superClassName, targetClass.getResolveScope());
+    final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
+    final PsiReferenceList list = targetClass.isInterface() || superClass == null || !superClass.isInterface() ?
+                                  targetClass.getExtendsList() : targetClass.getImplementsList();
+    list.add(superClassReference);
   }
 
-  public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, Class<? extends PsiElement>... scopes) {
+  public static void scheduleFileOrPackageCreationFailedMessageBox(final IncorrectOperationException e, final String name, final PsiDirectory directory,
+                                                      final boolean isPackage) {
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(QuickFixBundle.message(
+      isPackage ? "cannot.create.java.package.error.text" : "cannot.create.java.file.error.text", name, directory.getVirtualFile().getName(), e.getLocalizedMessage()),
+                                                                               QuickFixBundle.message(
+                               isPackage ? "cannot.create.java.package.error.title" : "cannot.create.java.file.error.title")));
+  }
+
+  @SafeVarargs
+  @NotNull
+  public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, @NotNull Class<? extends PsiElement>... scopes) {
     PsiElement parent = PsiTreeUtil.getParentOfType(expression, scopes);
 
-    final List<PsiReferenceExpression> result = new ArrayList<PsiReferenceExpression>();
+    final List<PsiReferenceExpression> result = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression) {
@@ -525,13 +521,13 @@ public class CreateFromUsageUtils {
   }
 
   static PsiVariable[] guessMatchingVariables(final PsiExpression expression) {
-    List<ExpectedTypeInfo[]> typesList = new ArrayList<ExpectedTypeInfo[]>();
-    List<String> expectedMethodNames = new ArrayList<String>();
-    List<String> expectedFieldNames  = new ArrayList<String>();
+    List<ExpectedTypeInfo[]> typesList = new ArrayList<>();
+    List<String> expectedMethodNames = new ArrayList<>();
+    List<String> expectedFieldNames  = new ArrayList<>();
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
 
-    final List<PsiVariable> list = new ArrayList<PsiVariable>();
+    final List<PsiVariable> list = new ArrayList<>();
     VariablesProcessor varproc = new VariablesProcessor("", true, list){
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -547,7 +543,7 @@ public class CreateFromUsageUtils {
 
     ExpectedTypeInfo[] infos = ExpectedTypeUtil.intersect(typesList);
 
-    List<PsiVariable> result = new ArrayList<PsiVariable>();
+    List<PsiVariable> result = new ArrayList<>();
     nextVar:
     for (PsiVariable variable : allVars) {
       PsiType varType = variable.getType();
@@ -591,12 +587,7 @@ public class CreateFromUsageUtils {
       if (!(parent instanceof PsiReferenceExpression)) {
         ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, PsiUtil.skipParenthesizedExprUp(parent) instanceof PsiExpressionList);
         if (someExpectedTypes.length > 0) {
-          Arrays.sort(someExpectedTypes, new Comparator<ExpectedTypeInfo>() {
-            @Override
-            public int compare(ExpectedTypeInfo o1, ExpectedTypeInfo o2) {
-              return compareExpectedTypes(o1, o2, expression);
-            }
-          });
+          Arrays.sort(someExpectedTypes, (o1, o2) -> compareExpectedTypes(o1, o2, expression));
           types.add(someExpectedTypes);
         }
         continue;
@@ -613,12 +604,7 @@ public class CreateFromUsageUtils {
         if (refName.equals("equals")) {
           ExpectedTypeInfo[] someExpectedTypes = equalsExpectedTypes((PsiMethodCallExpression)pparent);
           if (someExpectedTypes.length > 0) {
-            Arrays.sort(someExpectedTypes, new Comparator<ExpectedTypeInfo>() {
-              @Override
-              public int compare(ExpectedTypeInfo o1, ExpectedTypeInfo o2) {
-                return compareExpectedTypes(o1, o2, expression);
-              }
-            });
+            Arrays.sort(someExpectedTypes, (o1, o2) -> compareExpectedTypes(o1, o2, expression));
             types.add(someExpectedTypes);
           }
         }
@@ -654,13 +640,14 @@ public class CreateFromUsageUtils {
     return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE)};
   }
 
-  static ExpectedTypeInfo[] guessExpectedTypes(PsiExpression expression, boolean allowVoidType) {
-        PsiManager manager = expression.getManager();
+  @NotNull
+  static ExpectedTypeInfo[] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
+    PsiManager manager = expression.getManager();
     GlobalSearchScope resolveScope = expression.getResolveScope();
 
-    List<ExpectedTypeInfo[]> typesList = new ArrayList<ExpectedTypeInfo[]>();
-    List<String> expectedMethodNames = new ArrayList<String>();
-    List<String> expectedFieldNames  = new ArrayList<String>();
+    List<ExpectedTypeInfo[]> typesList = new ArrayList<>();
+    List<String> expectedMethodNames = new ArrayList<>();
+    List<String> expectedFieldNames  = new ArrayList<>();
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
 
@@ -683,14 +670,16 @@ public class CreateFromUsageUtils {
       }
 
       for (String methodName : expectedMethodNames) {
-        PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(methodName, resolveScope, MAX_RAW_GUESSED_MEMBERS_COUNT);
+        PsiMethod[] projectMethods = cache.getMethodsByNameIfNotMoreThan(methodName, resolveScope.intersectWith(GlobalSearchScope.projectScope(manager.getProject())), MAX_RAW_GUESSED_MEMBERS_COUNT);
+        PsiMethod[] libraryMethods = cache.getMethodsByNameIfNotMoreThan(methodName, resolveScope.intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.projectScope(manager.getProject()))), MAX_RAW_GUESSED_MEMBERS_COUNT);
+        PsiMethod[] methods = ArrayUtil.mergeArrays(projectMethods, libraryMethods);
         addMemberInfo(methods, expression, typesList, factory);
       }
     }
 
     ExpectedTypeInfo[] expectedTypes = ExpectedTypeUtil.intersect(typesList);
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
-      List<ExpectedTypeInfo> union = new ArrayList<ExpectedTypeInfo>();
+      List<ExpectedTypeInfo> union = new ArrayList<>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
@@ -711,9 +700,9 @@ public class CreateFromUsageUtils {
     final PsiManager manager = expression.getManager();
     final GlobalSearchScope resolveScope = expression.getResolveScope();
 
-    List<ExpectedTypeInfo[]> typesList = new ArrayList<ExpectedTypeInfo[]>();
-    final List<String> expectedMethodNames = new ArrayList<String>();
-    final List<String> expectedFieldNames  = new ArrayList<String>();
+    List<ExpectedTypeInfo[]> typesList = new ArrayList<>();
+    final List<String> expectedMethodNames = new ArrayList<>();
+    final List<String> expectedFieldNames  = new ArrayList<>();
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
 
@@ -742,7 +731,7 @@ public class CreateFromUsageUtils {
 
     ExpectedTypeInfo[] expectedTypes = ExpectedTypeUtil.intersect(typesList);
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
-      List<ExpectedTypeInfo> union = new ArrayList<ExpectedTypeInfo>();
+      List<ExpectedTypeInfo> union = new ArrayList<>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
@@ -754,16 +743,13 @@ public class CreateFromUsageUtils {
     }
     else {
       //Double check to avoid expensive operations on PsiClassTypes
-      final Set<PsiType> typesSet = new HashSet<PsiType>();
+      final Set<PsiType> typesSet = new HashSet<>();
 
       PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
         @Override
         @Nullable
         public PsiType visitType(PsiType type) {
-          if (PsiType.NULL.equals(type)) {
-            type = PsiType.getJavaLangObject(manager, resolveScope);
-          }
-          else if (PsiType.VOID.equals(type) && !allowVoidType) {
+          if (PsiType.NULL.equals(type) || PsiType.VOID.equals(type) && !allowVoidType) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
           }
 
@@ -810,14 +796,9 @@ public class CreateFromUsageUtils {
                                     final PsiExpression expression,
                                     List<ExpectedTypeInfo[]> types,
                                     PsiElementFactory factory) {
-    Arrays.sort(members, new Comparator<PsiMember>() {
-      @Override
-      public int compare(final PsiMember m1, final PsiMember m2) {
-        return compareMembers(m1, m2, expression);
-      }
-    });
+    Arrays.sort(members, (m1, m2) -> compareMembers(m1, m2, expression));
 
-    List<ExpectedTypeInfo> l = new ArrayList<ExpectedTypeInfo>();
+    List<ExpectedTypeInfo> l = new ArrayList<>();
     PsiManager manager = expression.getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     for (PsiMember member : members) {
@@ -931,12 +912,9 @@ public class CreateFromUsageUtils {
           final String qName = getQualifiedName(containingClass);
           if (qName == null) continue;
 
-          ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).forEach(new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass psiClass) {
-              ContainerUtil.addIfNotNull(getQualifiedName(psiClass), possibleClassNames);
-              return true;
-            }
+          ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).forEach(psiClass -> {
+            ContainerUtil.addIfNotNull(possibleClassNames, getQualifiedName(psiClass));
+            return true;
           });
 
           possibleClassNames.add(qName);
@@ -949,19 +927,16 @@ public class CreateFromUsageUtils {
   private static boolean handleObjectMethod(Set<String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(facade.getProject());
     final boolean[] allClasses = {false};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        final PsiClass objectClass = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, searchScope);
-        if (objectClass != null) {
-          if (method && objectClass.findMethodsByName(memberName, false).length > 0) {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiClass objectClass = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, searchScope);
+      if (objectClass != null) {
+        if (method && objectClass.findMethodsByName(memberName, false).length > 0) {
+          allClasses[0] = true;
+        }
+        else if (!method) {
+          final PsiField field = objectClass.findFieldByName(memberName, false);
+          if (hasCorrectModifiers(field, staticAccess)) {
             allClasses[0] = true;
-          }
-          else if (!method) {
-            final PsiField field = objectClass.findFieldByName(memberName, false);
-            if (hasCorrectModifiers(field, staticAccess)) {
-              allClasses[0] = true;
-            }
           }
         }
       }
@@ -988,7 +963,7 @@ public class CreateFromUsageUtils {
         });
         for (final PsiClass aClass : classes) {
           final String qname = getQualifiedName(aClass);
-          ContainerUtil.addIfNotNull(qname, possibleClassNames);
+          ContainerUtil.addIfNotNull(possibleClassNames, qname);
         }
       }
       return true;
@@ -1063,13 +1038,13 @@ public class CreateFromUsageUtils {
 
       PsiParameter parameter = PsiTreeUtil.getParentOfType(elementAt, PsiParameter.class);
 
-      Set<String> parameterNames = new HashSet<String>();
+      Set<String> parameterNames = new HashSet<>();
       for (PsiParameter psiParameter : parameterList.getParameters()) {
         if (psiParameter == parameter) continue;
         parameterNames.add(psiParameter.getName());
       }
 
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      Set<LookupElement> set = new LinkedHashSet<>();
 
       for (String name : myNames) {
         if (parameterNames.contains(name)) {

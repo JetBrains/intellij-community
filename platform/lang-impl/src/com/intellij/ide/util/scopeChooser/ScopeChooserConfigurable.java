@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,18 +92,15 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   @Override
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
-    final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    final ArrayList<AnAction> result = new ArrayList<>();
     result.add(new MyAddAction(fromPopup));
-    result.add(new MyDeleteAction(forAll(new Condition<Object>() {
-      @Override
-      public boolean value(final Object o) {
-        if (o instanceof MyNode) {
-          final NamedConfigurable namedConfigurable = ((MyNode)o).getConfigurable();
-          final Object editableObject = namedConfigurable != null ? namedConfigurable.getEditableObject() : null;
-          return editableObject instanceof NamedScope;
-        }
-        return false;
+    result.add(new MyDeleteAction(forAll(o -> {
+      if (o instanceof MyNode) {
+        final NamedConfigurable namedConfigurable = ((MyNode)o).getConfigurable();
+        final Object editableObject = namedConfigurable != null ? namedConfigurable.getEditableObject() : null;
+        return editableObject instanceof NamedScope;
       }
+      return false;
     })));
     result.add(new MyCopyAction());
     result.add(new MySaveAsAction());
@@ -150,9 +147,9 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void checkForPredefinedNames() throws ConfigurationException {
-    final Set<String> predefinedScopes = new HashSet<String>();
+    final Set<String> predefinedScopes = new HashSet<>();
     for (CustomScopesProvider scopesProvider : myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER)) {
-      for (NamedScope namedScope : scopesProvider.getCustomScopes()) {
+      for (NamedScope namedScope : scopesProvider.getFilteredScopes()) {
         predefinedScopes.add(namedScope.getName());
       }
     }
@@ -193,8 +190,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void processScopes() {
-    final List<NamedScope> localScopes = new ArrayList<NamedScope>();
-    final List<NamedScope> sharedScopes = new ArrayList<NamedScope>();
+    final List<NamedScope> localScopes = new ArrayList<>();
+    final List<NamedScope> sharedScopes = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
       final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)node.getConfigurable();
@@ -231,7 +228,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private static Collection<NamedScope> getPredefinedScopes(Project project) {
-    final Collection<NamedScope> result = new ArrayList<NamedScope>();
+    final Collection<NamedScope> result = new ArrayList<>();
     result.addAll(NamedScopeManager.getInstance(project).getPredefinedScopes());
     result.addAll(DependencyValidationManager.getInstance(project).getPredefinedScopes());
     return result;
@@ -308,7 +305,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private String createUniqueName() {
     String str = InspectionsBundle.message("inspection.profile.unnamed");
-    final HashSet<String> treeScopes = new HashSet<String>();
+    final HashSet<String> treeScopes = new HashSet<>();
     obtainCurrentScopes(treeScopes);
     if (!treeScopes.contains(str)) return str;
     int i = 1;
@@ -363,12 +360,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   @NonNls
   public String getId() {
     return getHelpTopic();
-  }
-
-  @Override
-  @Nullable
-  public Runnable enableSearch(final String option) {
-    return null;
   }
 
   private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection {
@@ -539,6 +530,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   public static class ScopeChooserConfigurableState extends MasterDetailsState {
     @Tag("order")
     @AbstractCollection(surroundWithTag = false, elementTag = "scope", elementValueAttribute = "name")
-    public List<String> myOrder = new ArrayList<String>();
+    public List<String> myOrder = new ArrayList<>();
   }
 }

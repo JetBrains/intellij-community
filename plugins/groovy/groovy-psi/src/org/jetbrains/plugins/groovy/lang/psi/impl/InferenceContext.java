@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,19 +54,13 @@ public interface InferenceContext {
     public <T> T getCachedValue(@NotNull GroovyPsiElement element, @NotNull final Computable<T> computable) {
       CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
       Key<CachedValue<T>> key = manager.getKeyForClass(computable.getClass());
-      return manager.getCachedValue(element, key, new CachedValueProvider<T>() {
-        @Nullable
-        @Override
-        public Result<T> compute() {
-          return Result.create(computable.compute(), PsiModificationTracker.MODIFICATION_COUNT);
-        }
-      }, false);
+      return manager.getCachedValue(element, key, () -> CachedValueProvider.Result.create(computable.compute(), PsiModificationTracker.MODIFICATION_COUNT), false);
     }
 
     @Override
     public <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref,
                                                                                   boolean incomplete,
-                                                                                  ResolveCache.PolyVariantResolver<T> resolver) {
+                                                                                  @NotNull ResolveCache.PolyVariantResolver<T> resolver) {
       ResolveResult[] results = ResolveCache.getInstance(ref.getElement().getProject()).resolveWithCaching(ref, resolver, true, incomplete);
       return results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY : (GroovyResolveResult[])results;
     }
@@ -83,7 +77,7 @@ public interface InferenceContext {
 
   <T> T getCachedValue(@NotNull GroovyPsiElement element, @NotNull Computable<T> computable);
 
-  <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, ResolveCache.PolyVariantResolver<T> resolver);
+  <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, @NotNull ResolveCache.PolyVariantResolver<T> resolver);
 
   @Nullable
   <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull T element, @NotNull Function<T, PsiType> calculator);
@@ -127,30 +121,18 @@ public interface InferenceContext {
     public <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull final T ref,
                                                                                   final boolean incomplete,
                                                                                   @NotNull final ResolveCache.PolyVariantResolver<T> resolver) {
-      return _getCachedValue(ref.getElement(), new Computable<GroovyResolveResult[]>() {
-        @Override
-        public GroovyResolveResult[] compute() {
-          final Pair<T, Boolean> key = Pair.create(ref, incomplete);
-          final GroovyResolveResult[] results = RecursionManager.doPreventingRecursion(key, true, new Computable<GroovyResolveResult[]>() {
-            @Override
-            public GroovyResolveResult[] compute() {
-              return (GroovyResolveResult[])resolver.resolve(ref, incomplete);
-            }
-          });
-          return results == null ? GroovyResolveResult.EMPTY_ARRAY : results;
-        }
+      return _getCachedValue(ref.getElement(), () -> {
+        final Pair<T, Boolean> key = Pair.create(ref, incomplete);
+        final GroovyResolveResult[] results = RecursionManager.doPreventingRecursion(key, true,
+                                                                                     () -> (GroovyResolveResult[])resolver.resolve(ref, incomplete));
+        return results == null ? GroovyResolveResult.EMPTY_ARRAY : results;
       }, Pair.create(incomplete, resolver.getClass()));
     }
 
     @Nullable
     @Override
     public <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull final T element, @NotNull final Function<T, PsiType> calculator) {
-      return _getCachedValue(element, new Computable<PsiType>() {
-        @Override
-        public PsiType compute() {
-          return calculator.fun(element);
-        }
-      }, "type");
+      return _getCachedValue(element, () -> calculator.fun(element), "type");
     }
   }
 }

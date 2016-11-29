@@ -36,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PropertiesParserDefinition implements ParserDefinition {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.PropertiesParserDefinition");
-
   @NotNull
   public Lexer createLexer(Project project) {
     return new PropertiesLexer();

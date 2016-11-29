@@ -43,13 +43,13 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   public static <T extends DomElement> DomAnchor<T> createAnchor(@NotNull T t, boolean usePsi) {
     DomInvocationHandler handler = DomManagerImpl.getNotNullHandler(t);
     if (handler.getStub() != null) {
-      return new StubAnchor<T>(handler);
+      return new StubAnchor<>(handler);
     }
 
     if (usePsi) {
       final XmlElement element = t.getXmlElement();
       if (element != null) {
-        return new PsiBasedDomAnchor<T>(PsiAnchor.create(element), element.getProject());
+        return new PsiBasedDomAnchor<>(PsiAnchor.create(element), element.getProject());
       }
     }
 
@@ -62,7 +62,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     if (parent instanceof DomFileElementImpl) {
       final DomFileElementImpl fileElement = (DomFileElementImpl)parent;
       //noinspection unchecked
-      return new RootAnchor<T>(fileElement.getFile(), fileElement.getRootElementClass());
+      return new RootAnchor<>(fileElement.getFile(), fileElement.getRootElementClass());
     }
 
     final DomAnchor<DomElement> parentAnchor = createAnchor(parent);
@@ -73,7 +73,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       int i = 0;
       for (DomElement value : values) {
         if (value.equals(t)) {
-          return new NamedAnchor<T>(parentAnchor, description, name, i);
+          return new NamedAnchor<>(parentAnchor, description, name, i);
         }
         if (name.equals(value.getGenericInfo().getElementName(value))) {
           i++;
@@ -85,7 +85,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     if (index < 0) {
       diagnoseNegativeIndex2(t, parent, description, values);
     }
-    return new IndexedAnchor<T>(parentAnchor, description, index);
+    return new IndexedAnchor<>(parentAnchor, description, index);
   }
 
   private static <T extends DomElement> void diagnoseNegativeIndex2(T t,

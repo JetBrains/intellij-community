@@ -15,11 +15,18 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author gregsh
@@ -57,5 +64,28 @@ public class JBSwingUtilities {
    */
   public static boolean isRightMouseButton(MouseEvent anEvent) {
     return LEGACY_JDK ? (anEvent.getModifiersEx() & InputEvent.BUTTON3_DOWN_MASK) > 0 : SwingUtilities.isRightMouseButton(anEvent);
+  }
+
+
+  private static final List<PairFunction<JComponent, Graphics2D, Graphics2D>> ourGlobalTransform =
+    ContainerUtil.createEmptyCOWList();
+
+  public static Disposable addGlobalCGTransform(final PairFunction<JComponent, Graphics2D, Graphics2D> fun) {
+    ourGlobalTransform.add(fun);
+    return new Disposable() {
+      @Override
+      public void dispose() {
+        ourGlobalTransform.remove(fun);
+      }
+    };
+  }
+
+  @NotNull
+  public static Graphics2D runGlobalCGTransform(@NotNull JComponent c, @NotNull Graphics g) {
+    Graphics2D gg = (Graphics2D)g;
+    for (PairFunction<JComponent, Graphics2D, Graphics2D> transform : ourGlobalTransform) {
+      gg = ObjectUtils.notNull(transform.fun(c, gg));
+    }
+    return gg;
   }
 }

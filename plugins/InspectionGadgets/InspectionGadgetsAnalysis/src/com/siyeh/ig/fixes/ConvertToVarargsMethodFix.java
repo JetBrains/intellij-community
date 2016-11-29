@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
@@ -34,34 +33,27 @@ import java.util.Collection;
  */
 public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
 
-  @Override
   @NotNull
+  @Override
   public String getFamilyName() {
-    return getName();
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
     return InspectionGadgetsBundle.message("convert.to.variable.arity.method.quickfix");
   }
 
   @Override
-  protected boolean prepareForWriting() {
+  public boolean startInWriteAction() {
     return false;
   }
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiMethod)) {
+    if (!(element instanceof PsiMethod)) {
       return;
     }
-    final PsiMethod method = (PsiMethod)parent;
-    final Collection<PsiElement> writtenElements = new ArrayList<PsiElement>();
-    final Collection<PsiReferenceExpression> methodCalls = new ArrayList<PsiReferenceExpression>();
+    final PsiMethod method = (PsiMethod)element;
+    final Collection<PsiElement> writtenElements = new ArrayList<>();
     writtenElements.add(method);
+    final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
     for (final PsiReference reference : ReferencesSearch.search(method, method.getUseScope(), false)) {
       final PsiElement referenceElement = reference.getElement();
       if (referenceElement instanceof PsiReferenceExpression) {
@@ -72,8 +64,10 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(writtenElements)) {
       return;
     }
-    makeMethodVarargs(method);
-    makeMethodCallsVarargs(methodCalls);
+    WriteAction.run(() -> {
+      makeMethodVarargs(method);
+      makeMethodCallsVarargs(methodCalls);
+    });
   }
 
   private static void makeMethodVarargs(PsiMethod method) {
@@ -83,6 +77,7 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
     }
     final PsiParameter[] parameters = parameterList.getParameters();
     final PsiParameter lastParameter = parameters[parameters.length - 1];
+    lastParameter.normalizeDeclaration();
     final PsiType type = lastParameter.getType();
     if (!(type instanceof PsiArrayType)) {
       return;
@@ -90,7 +85,7 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
     final PsiArrayType arrayType = (PsiArrayType)type;
     final PsiType componentType = arrayType.getComponentType();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-    final PsiType ellipsisType = PsiEllipsisType.createEllipsis(componentType, type.getAnnotations());
+    final PsiType ellipsisType = new PsiEllipsisType(componentType, TypeAnnotationProvider.Static.create(type.getAnnotations()));
     final PsiTypeElement newTypeElement = factory.createTypeElement(ellipsisType);
     final PsiTypeElement typeElement = lastParameter.getTypeElement();
     if (typeElement != null) {

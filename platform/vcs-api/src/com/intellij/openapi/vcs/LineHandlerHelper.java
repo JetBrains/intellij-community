@@ -38,7 +38,7 @@ public class LineHandlerHelper {
     int startLine = 0;
     int i = 0;
     int n = text.length();
-    ArrayList<String> rc = new ArrayList<String>();
+    ArrayList<String> rc = new ArrayList<>();
     while (i < n) {
       switch (text.charAt(i)) {
         case '\n':

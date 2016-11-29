@@ -28,7 +28,7 @@ public class RepositoryLocationGroup implements RepositoryLocation {
 
   public RepositoryLocationGroup(final String presentableString) {
     myPresentableString = presentableString;
-    myLocations = new ArrayList<RepositoryLocation>();
+    myLocations = new ArrayList<>();
   }
 
   public String toPresentableString() {

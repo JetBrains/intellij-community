@@ -151,7 +151,7 @@ final class BrowserSettingsPanel {
     alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR);
     defaultBrowserPanel.setBorder(TitledSeparator.EMPTY_BORDER);
 
-    ArrayList<DefaultBrowserPolicy> defaultBrowserPolicies = new ArrayList<DefaultBrowserPolicy>();
+    ArrayList<DefaultBrowserPolicy> defaultBrowserPolicies = new ArrayList<>();
     if (BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
       defaultBrowserPolicies.add(DefaultBrowserPolicy.SYSTEM);
     }
@@ -159,7 +159,7 @@ final class BrowserSettingsPanel {
     defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE);
 
     //noinspection Since15,unchecked
-    defaultBrowserPolicyComboBox.setModel(new ListComboBoxModel<DefaultBrowserPolicy>(defaultBrowserPolicies));
+    defaultBrowserPolicyComboBox.setModel(new ListComboBoxModel<>(defaultBrowserPolicies));
     defaultBrowserPolicyComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
@@ -266,7 +266,7 @@ final class BrowserSettingsPanel {
         return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
       }
     };
-    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(COLUMNS, itemEditor, "No web browsers configured")
+    browsersEditor = new TableModelEditor<>(COLUMNS, itemEditor, "No web browsers configured")
       .modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
         @Override
         public void tableChanged(@NotNull TableModelEvent event) {

@@ -19,6 +19,10 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * An additional interface to be implemented by {@link IElementType} instances that allows to customize AST node creation. Useful for cases when one needs to override
+ * various {@link ASTNode} methods. If not implemented AST nodes of type CompositeElement are created.
+ *
+ * @see ILeafElementType
  * @author peter
  */
 public interface ICompositeElementType {

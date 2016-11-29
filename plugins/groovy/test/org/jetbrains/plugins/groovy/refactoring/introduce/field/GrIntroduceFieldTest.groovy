@@ -34,65 +34,65 @@ import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntrodu
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceFieldTest extends LightGroovyTestCase {
+class GrIntroduceFieldTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    "${TestUtils.testDataPath}refactoring/introduceField/";
+    "${TestUtils.testDataPath}refactoring/introduceField/"
   }
 
-  public void testSimple() {
-    doTest(false, false, false, CUR_METHOD, false, null);
+  void testSimple() {
+    doTest(false, false, false, CUR_METHOD, false, null)
   }
 
-  public void testDeclareFinal() {
-    doTest(false, false, true, FIELD_DECLARATION, false, null);
+  void testDeclareFinal() {
+    doTest(false, false, true, FIELD_DECLARATION, false, null)
   }
 
-  public void testCreateConstructor() {
-    doTest(false, false, true, CONSTRUCTOR, true, null);
+  void testCreateConstructor() {
+    doTest(false, false, true, CONSTRUCTOR, true, null)
   }
 
-  public void testManyConstructors() {
-    doTest(false, false, true, CONSTRUCTOR, true, null);
+  void testManyConstructors() {
+    doTest(false, false, true, CONSTRUCTOR, true, null)
   }
 
-  public void testDontReplaceStaticOccurrences() {
-    doTest(false, false, true, FIELD_DECLARATION, true, null);
+  void testDontReplaceStaticOccurrences() {
+    doTest(false, false, true, FIELD_DECLARATION, true, null)
   }
 
-  public void testQualifyUsages() {
-    doTest(false, false, true, FIELD_DECLARATION, true, null);
+  void testQualifyUsages() {
+    doTest(false, false, true, FIELD_DECLARATION, true, null)
   }
 
-  public void testReplaceLocalVar() {
-    doTest(false, true, false, CUR_METHOD, true, null);
+  void testReplaceLocalVar() {
+    doTest(false, true, false, CUR_METHOD, true, null)
   }
 
-  public void testIntroduceLocalVarByDeclaration() {
-    doTest(false, true, false, FIELD_DECLARATION, true, null);
+  void testIntroduceLocalVarByDeclaration() {
+    doTest(false, true, false, FIELD_DECLARATION, true, null)
   }
 
-  public void testReplaceExpressionWithAssignment() {
-    doTest(false, false, false, CUR_METHOD, false, null);
+  void testReplaceExpressionWithAssignment() {
+    doTest(false, false, false, CUR_METHOD, false, null)
   }
 
-  public void testAnonymousClass() {
-    doTest(false, false, false, CUR_METHOD, false, null);
+  void testAnonymousClass() {
+    doTest(false, false, false, CUR_METHOD, false, null)
   }
 
-  public void testAnonymous2() {
-    doTest(false, false, false, CONSTRUCTOR, false, null);
+  void testAnonymous2() {
+    doTest(false, false, false, CONSTRUCTOR, false, null)
   }
 
-  public void testAnonymous3() {
-    doTest(false, false, false, CONSTRUCTOR, false, null);
+  void testAnonymous3() {
+    doTest(false, false, false, CONSTRUCTOR, false, null)
   }
 
-  public void testInitializeInCurrentMethod() {
-    doTest(false, true, true, CUR_METHOD, false, null);
+  void testInitializeInCurrentMethod() {
+    doTest(false, true, true, CUR_METHOD, false, null)
   }
 
-  public void testScriptBody() {
+  void testScriptBody() {
     addGroovyTransformField()
     doTest('''\
 print <selection>'abc'</selection>
@@ -104,7 +104,7 @@ print f<caret>
 ''', false, false, false, FIELD_DECLARATION)
   }
 
-  public void testScriptMethod() {
+  void testScriptMethod() {
     addGroovyTransformField()
     doTest('''\
 def foo() {
@@ -121,7 +121,7 @@ def foo() {
 ''', false, false, true, FIELD_DECLARATION)
   }
 
-  public void testStaticScriptMethod() {
+  void testStaticScriptMethod() {
     addGroovyTransformField()
     doTest('''\
 static def foo() {
@@ -138,7 +138,7 @@ static def foo() {
 ''', true, false, false, FIELD_DECLARATION)
   }
 
-  public void testScriptMethod2() {
+  void testScriptMethod2() {
     addGroovyTransformField()
     doTest('''\
 def foo() {
@@ -156,7 +156,7 @@ def foo() {
 ''', false, false, false, CUR_METHOD)
   }
 
-  public void testSetUp1() throws Exception {
+  void testSetUp1() throws Exception {
     addTestCase()
     doTest('''\
 class MyTest extends GroovyTestCase {
@@ -181,7 +181,7 @@ class MyTest extends GroovyTestCase {
 false, false, false, SETUP_METHOD)
   }
 
-  public void testSetUp2() throws Exception {
+  void testSetUp2() throws Exception {
     addTestCase()
 
     doTest('''\
@@ -642,6 +642,26 @@ println(<selection>a + b</selection>)
 ''', EnumSet.of(CUR_METHOD), ReplaceChoice.NO
   }
 
+  void 'test introduce field from this'() {
+    doTest '''\
+class A {
+    def bar 
+    def foo() {
+        th<caret>is.bar
+    }
+}
+''', '''\
+class A {
+    def bar
+    def f = this
+
+    def foo() {
+        f.bar
+    }
+}
+''', false, false, false, FIELD_DECLARATION
+  }
+
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,
                       final boolean declareFinal,
@@ -650,7 +670,7 @@ println(<selection>a + b</selection>)
                       @Nullable final String selectedType = null) {
     myFixture.configureByFile("${getTestName(false)}.groovy")
     performRefactoring(selectedType, isStatic, removeLocal, declareFinal, initIn, replaceAll)
-    myFixture.checkResultByFile("${getTestName(false)}_after.groovy");
+    myFixture.checkResultByFile("${getTestName(false)}_after.groovy")
   }
 
   private void doTest(@NotNull final String textBefore,
@@ -663,19 +683,15 @@ println(<selection>a + b</selection>)
                       @Nullable final String selectedType = null) {
     myFixture.configureByText("_.groovy", textBefore)
     performRefactoring(selectedType, isStatic, removeLocal, declareFinal, initIn, replaceAll)
-    myFixture.checkResult(textAfter);
+    myFixture.checkResult(textAfter)
   }
 
   private void performRefactoring(String selectedType, boolean isStatic, boolean removeLocal, boolean declareFinal, GrIntroduceFieldSettings.Init initIn, boolean replaceAll) {
     final PsiType type = selectedType == null ? null : JavaPsiFacade.getElementFactory(project).createTypeFromText(selectedType, myFixture.file)
-    def accessToken = WriteAction.start()
-    try {
+    WriteAction.run {
       final IntroduceFieldTestHandler handler = new IntroduceFieldTestHandler(isStatic, removeLocal, declareFinal, initIn, replaceAll, type)
-      handler.invoke(project, myFixture.editor, myFixture.file, null);
-      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-    }
-    finally {
-      accessToken.finish()
+      handler.invoke(project, myFixture.editor, myFixture.file, null)
+      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     }
   }
 

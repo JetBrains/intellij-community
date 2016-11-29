@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,12 +52,7 @@ public class GotoResourceBundleLocalizationsProvider extends GotoRelatedProvider
     if (bundlePropertiesFiles.size() != 1) {
       final ArrayList<PropertiesFile> propertiesFilesWithoutCurrent = ContainerUtil.newArrayList(bundlePropertiesFiles);
       propertiesFilesWithoutCurrent.remove(psiFile);
-      return ContainerUtil.map(propertiesFilesWithoutCurrent, new Function<PropertiesFile, GotoRelatedItem>() {
-        @Override
-        public GotoRelatedItem fun(final PropertiesFile propertiesFile) {
-          return new GotoRelatedItem((PsiElement) propertiesFile, "Other Localizations");
-        }
-      });
+      return ContainerUtil.map(propertiesFilesWithoutCurrent, propertiesFile -> new GotoRelatedItem((PsiElement) propertiesFile, "Other Localizations"));
     } else {
       return Collections.emptyList();
     }

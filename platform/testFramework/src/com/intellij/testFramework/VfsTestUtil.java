@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Key;
@@ -30,7 +29,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -48,30 +46,23 @@ public class VfsTestUtil {
 
   private VfsTestUtil() { }
 
-  public static VirtualFile createFile(final VirtualFile root, final String relativePath) {
+  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath) {
     return createFile(root, relativePath, "");
   }
 
-  public static VirtualFile createFile(final VirtualFile root, final String relativePath, final String text) {
+  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, @NotNull String text) {
     return createFileOrDir(root, relativePath, text, false);
   }
 
-  public static VirtualFile createDir(final VirtualFile root, final String relativePath) {
+  public static VirtualFile createDir(@NotNull VirtualFile root, @NotNull String relativePath) {
     return createFileOrDir(root, relativePath, "", true);
   }
 
-  private static VirtualFile createFileOrDir(final VirtualFile root,
-                                             final String relativePath,
-                                             final String text,
-                                             final boolean dir) {
+  private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, String text, boolean dir) {
     try {
-      AccessToken token = WriteAction.start();
-      try {
+      return WriteAction.compute(() -> {
         VirtualFile parent = root;
-        Assert.assertNotNull(parent);
-        StringTokenizer parents = new StringTokenizer(PathUtil.getParentPath(relativePath), "/");
-        while (parents.hasMoreTokens()) {
-          final String name = parents.nextToken();
+        for (String name : StringUtil.tokenize(PathUtil.getParentPath(relativePath), "/")) {
           VirtualFile child = parent.findChild(name);
           if (child == null || !child.isValid()) {
             child = parent.createChildDirectory(VfsTestUtil.class, name);
@@ -79,23 +70,22 @@ public class VfsTestUtil {
           parent = child;
         }
 
-        VirtualFile file;
         parent.getChildren();//need this to ensure that fileCreated event is fired
+
+        String name = PathUtil.getFileName(relativePath);
+        VirtualFile file;
         if (dir) {
-          file = parent.createChildDirectory(VfsTestUtil.class, PathUtil.getFileName(relativePath));
+          file = parent.createChildDirectory(VfsTestUtil.class, name);
         }
         else {
-          file = parent.findFileByRelativePath(relativePath);
+          file = parent.findChild(name);
           if (file == null) {
-            file = parent.createChildData(VfsTestUtil.class, PathUtil.getFileName(relativePath));
+            file = parent.createChildData(VfsTestUtil.class, name);
           }
           VfsUtil.saveText(file, text);
         }
         return file;
-      }
-      finally {
-        token.finish();
-      }
+      });
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -107,20 +97,16 @@ public class VfsTestUtil {
   }
 
   public static void clearContent(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          VfsUtil.saveText(file, "");
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        VfsUtil.saveText(file, "");
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   public static void overwriteTestData(String filePath, String actual) {
     try {
       FileUtil.writeToFile(new File(filePath), actual);

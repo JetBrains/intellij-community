@@ -48,25 +48,16 @@ public class ChangeFieldTypeFix extends QuickFix {
     final PsiFile psiFile = myField.getContainingFile();
     if (psiFile == null) return;
     if (!FileModificationService.getInstance().preparePsiElementForWrite(psiFile)) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(myField.getProject(), new Runnable() {
-          public void run() {
-            try {
-              final PsiManager manager = myField.getManager();
-              myField.getTypeElement().replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(myNewType));
-            }
-            catch (final IncorrectOperationException e) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showErrorDialog(myEditor, UIDesignerBundle.message("error.cannot.change.field.type", myField.getName(), e.getMessage()),
-                                           CommonBundle.getErrorTitle());
-                }
-              });
-            }
-          }
-        }, getName(), null);
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myField.getProject(), () -> {
+      try {
+        final PsiManager manager = myField.getManager();
+        myField.getTypeElement().replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(myNewType));
       }
-    });
+      catch (final IncorrectOperationException e) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showErrorDialog(myEditor, UIDesignerBundle.message("error.cannot.change.field.type", myField.getName(), e.getMessage()),
+                                       CommonBundle.getErrorTitle()));
+      }
+    }, getName(), null));
   }
 }

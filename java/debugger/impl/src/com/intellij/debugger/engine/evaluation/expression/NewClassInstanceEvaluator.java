@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * class NewArrayInstanceEvaluator
- * created Jun 27, 2001
- * @author Jeka
- */
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -29,20 +24,22 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
+import com.sun.jdi.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 class NewClassInstanceEvaluator implements Evaluator {
-  private final Evaluator myClassTypeEvaluator;
+  private static final Logger LOG = Logger.getInstance(NewClassInstanceEvaluator.class);
+
+  private final TypeEvaluator myClassTypeEvaluator;
   private final JVMName myConstructorSignature;
   private final Evaluator[] myParamsEvaluators;
 
-  public NewClassInstanceEvaluator(Evaluator classTypeEvaluator, JVMName constructorSignature, Evaluator[] argumentEvaluators) {
+  public NewClassInstanceEvaluator(TypeEvaluator classTypeEvaluator, JVMName constructorSignature, Evaluator[] argumentEvaluators) {
     myClassTypeEvaluator = classTypeEvaluator;
     myConstructorSignature = constructorSignature;
     myParamsEvaluators = argumentEvaluators;
@@ -62,11 +59,16 @@ class NewClassInstanceEvaluator implements Evaluator {
         DebuggerBundle.message("evaluation.error.cannot.resolve.constructor", myConstructorSignature.getDisplayName(debugProcess)));
     }
     // evaluate arguments
-    List<Object> arguments;
-    if (myParamsEvaluators != null) {
+    List<Value> arguments;
+    if (!ArrayUtil.isEmpty(myParamsEvaluators)) {
       arguments = new ArrayList<>(myParamsEvaluators.length);
       for (Evaluator evaluator : myParamsEvaluators) {
-        arguments.add(evaluator.evaluate(context));
+        Object res = evaluator.evaluate(context);
+        if (!(res instanceof Value) && res != null) {
+          LOG.error("Unable to call newInstance, evaluator " + evaluator + " result is not Value, but " + res);
+        }
+        //noinspection ConstantConditions
+        arguments.add((Value)res);
       }
     }
     else {
@@ -80,9 +82,5 @@ class NewClassInstanceEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
     return objRef;
-  }
-
-  public Modifier getModifier() {
-    return null;
   }
 }

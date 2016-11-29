@@ -22,6 +22,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,9 @@ public class RunContextAction extends BaseRunConfigurationAction {
       }
       runManager.setTemporaryConfiguration(configuration);
     }
-    runManager.setSelectedConfiguration(configuration);
+    if (Registry.is("select.run.configuration.from.context")) {
+      runManager.setSelectedConfiguration(configuration);
+    }
 
     ExecutionUtil.runConfiguration(configuration, myExecutor);
   }

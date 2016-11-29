@@ -42,4 +42,16 @@ class TryWithResources {
       System.out.println(r);
     }
   }
+
+  static class Resource implements AutoCloseable {
+    static Resource create() {
+      return new Resource();
+    }
+    @Override public void close() { }
+  }
+
+  void testMoreUsefulParseForIncorrectExpression() {
+    try (<error descr="Declaration, final or effectively final variable expected">new Resource()</error>) {}
+    try (<error descr="Declaration, final or effectively final variable expected">Resource.create()</error>) {}
+  }
 }

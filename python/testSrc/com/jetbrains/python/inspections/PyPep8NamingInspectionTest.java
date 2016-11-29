@@ -98,11 +98,21 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     doIgnoredErrorsTest("N806");
   }
 
+  // PY-17429
   public void testContextManager() {
     doTest();
   }
 
   public void testClassNameWithTwoUnderscores() {
+    doTest();
+  }
+  
+  // PY-19096
+  public void testContentManagerWithCamelCaseName() {
+    doTest();
+  }
+
+  public void testNamedTupleInsideFunction() {
     doTest();
   }
 

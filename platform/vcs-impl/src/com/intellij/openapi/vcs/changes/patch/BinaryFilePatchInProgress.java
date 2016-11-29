@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,70 +15,56 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryContentRevision;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.shelf.SimpleBinaryContentRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 
-public class BinaryFilePatchInProgress extends AbstractFilePatchInProgress<ShelvedBinaryFilePatch> {
-
-  protected BinaryFilePatchInProgress(ShelvedBinaryFilePatch patch,
-                                      Collection<VirtualFile> autoBases,
-                                      VirtualFile baseDir) {
-    super(ShelvedBinaryFilePatch.patchCopy(patch), autoBases, baseDir);
-  }
-
-  @Override
-  public ContentRevision getNewContentRevision() {
-    if (FilePatchStatus.DELETED.equals(myStatus)) return null;
-
-    if (myNewContentRevision != null) return myNewContentRevision;
-    if (myPatch.getAfterFileName() != null) {
-      final FilePath newFilePath = FilePatchStatus.ADDED.equals(myStatus) ? VcsUtil.getFilePath(myIoCurrentBase, false)
-                                                                          : detectNewFilePathForMovedOrModified();
-      myNewContentRevision = new ShelvedBinaryContentRevision(newFilePath, myPatch.getShelvedBinaryFile().SHELVED_PATH);
-    }
-    return myNewContentRevision;
+public class BinaryFilePatchInProgress extends CommonBinaryFilePatchInProgress<BinaryFilePatch> {
+  protected BinaryFilePatchInProgress(@NotNull BinaryFilePatch patch,
+                                      @Nullable Collection<VirtualFile> autoBases,
+                                      @NotNull VirtualFile baseDir) {
+    super(patch.copy(), autoBases, baseDir);
   }
 
   @NotNull
   @Override
-  public DiffRequestProducer getDiffRequestProducers(final Project project, final PatchReader baseContents) {
-    final ShelvedBinaryFile file = getPatch().getShelvedBinaryFile();
-    return new DiffRequestProducer() {
-      @NotNull
+  protected BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath) {
+    return new SimpleBinaryContentRevision(newFilePath) {
+      @Nullable
       @Override
-      public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-        throws DiffRequestProducerException, ProcessCanceledException {
-        Change change = file.createChange(project);
-        return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);
-      }
-
-      @NotNull
-      @Override
-      public String getName() {
-        final File file1 = new File(VfsUtilCore.virtualToIoFile(getBase()),
-                                    file.AFTER_PATH == null ? file.BEFORE_PATH : file.AFTER_PATH);
-        return FileUtil.toSystemDependentName(file1.getPath());
+      public byte[] getBinaryContent() throws VcsException {
+        return myPatch.getAfterContent();
       }
     };
+  }
+
+  @NotNull
+  @Override
+  protected Change createChange(Project project) {
+    ContentRevision before = null;
+    ContentRevision after = null;
+    if (!myPatch.isNewFile()) {
+      before = new CurrentBinaryContentRevision(getFilePath()) {
+        @NotNull
+        @Override
+        public VcsRevisionNumber getRevisionNumber() {
+          return new TextRevisionNumber(VcsBundle.message("local.version.title"));
+        }
+      };
+    }
+    if (!myPatch.isDeletedFile()) {
+      after = createNewContentRevision(getFilePath());
+    }
+    return new Change(before, after);
   }
 }

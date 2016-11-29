@@ -29,13 +29,7 @@ public class InjectionPlace {
 
   public static final InjectionPlace[] EMPTY_ARRAY = new InjectionPlace[0];
 
-  public static final ArrayFactory<InjectionPlace> ARRAY_FACTORY = new ArrayFactory<InjectionPlace>() {
-    @NotNull
-    @Override
-    public InjectionPlace[] create(int count) {
-      return count == 0? EMPTY_ARRAY : new InjectionPlace[count];
-    }
-  };
+  public static final ArrayFactory<InjectionPlace> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new InjectionPlace[count];
 
   private final boolean myEnabled;
   private final ElementPattern<PsiElement> myElementPattern;

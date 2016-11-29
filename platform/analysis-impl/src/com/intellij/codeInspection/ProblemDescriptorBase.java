@@ -67,7 +67,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     LOG.assertTrue(endElementRange != null, endElement);
     if (startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
       if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
-        LOG.error("Empty PSI elements should not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement);
+        LOG.error("Empty PSI elements should not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement + ", startContainingFile: " + startContainingFile);
       }
     }
 
@@ -135,7 +135,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       final int startOffset = textRange.getStartOffset();
       final int textLength = document.getTextLength();
       LOG.assertTrue(startOffset <= textLength, getDescriptionTemplate() + " at " + startOffset + ", " + textLength);
-      myLineNumber =  document.getLineNumber(startOffset) + 1;
+      myLineNumber =  document.getLineNumber(startOffset);
     }
     return myLineNumber;
   }

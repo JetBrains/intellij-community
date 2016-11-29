@@ -35,6 +35,7 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.*;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,7 +145,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
         return;
       }
 
-      List<PsiElement> queue = new ArrayList<PsiElement>();
+      List<PsiElement> queue = new ArrayList<>();
       collectAllElements(statementAtCaret, queue, true);
       queue.add(statementAtCaret);
 
@@ -154,6 +155,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
           if (LookupManager.getInstance(project).getActiveLookup() != null) {
             return;
           }
+          PyPsiUtils.assertValid(element);
           if (isUncommited(project) || !element.isValid()) {
             process(project, editor, psiFile, attempt + 1);
             return;

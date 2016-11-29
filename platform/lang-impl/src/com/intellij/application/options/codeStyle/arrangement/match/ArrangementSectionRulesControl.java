@@ -183,7 +183,7 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
 
   @NotNull
   public ArrangementRuleAliasDialog createRuleAliasEditDialog() {
-    final Set<String> tokenIds = new THashSet<String>();
+    final Set<String> tokenIds = new THashSet<>();
     final List<ArrangementSectionRule> sections = getSections();
     for (ArrangementSectionRule section : sections) {
       for (StdArrangementMatchRule rule : section.getMatchRules()) {

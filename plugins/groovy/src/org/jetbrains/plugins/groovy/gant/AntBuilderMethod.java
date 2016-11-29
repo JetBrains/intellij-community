@@ -48,12 +48,7 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
     setBaseIcon(JetgroovyIcons.Groovy.Ant_task);
     addParameter(new GrLightParameter("singleArg", stringType, this).setOptional(true));
     addParameter(new GrLightParameter("body", closureType, this).setOptional(true));
-    setMethodReturnType(new Computable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        return PsiType.getJavaLangObject(getManager(), getResolveScope());
-      }
-    });
+    setMethodReturnType(() -> PsiType.getJavaLangObject(getManager(), getResolveScope()));
   }
 
   @NotNull

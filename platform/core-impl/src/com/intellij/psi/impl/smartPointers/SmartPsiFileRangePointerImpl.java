@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> implements SmartPsiFileRange {
   SmartPsiFileRangePointerImpl(@NotNull PsiFile containingFile, @NotNull ProperTextRange range, boolean forInjected) {
-    super(containingFile, createElementInfo(containingFile, range, forInjected), PsiFile.class);
+    super(containingFile, createElementInfo(containingFile, range, forInjected));
   }
 
   @NotNull
@@ -41,8 +41,8 @@ class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> i
         return new InjectedSelfElementInfo(project, containingFile, range, containingFile, hostPointer);
       }
     }
-    if (range.equals(containingFile.getTextRange())) return new FileElementInfo(containingFile);
-    return new SelfElementInfo(project, range, AnchorTypeInfo.obtainInfo(PsiElement.class, null, LanguageUtil.getRootLanguage(containingFile)), containingFile, forInjected);
+    if (!forInjected && range.equals(containingFile.getTextRange())) return new FileElementInfo(containingFile);
+    return new SelfElementInfo(project, range, Identikit.fromTypes(PsiElement.class, null, LanguageUtil.getRootLanguage(containingFile)), containingFile, forInjected);
   }
 
   @Override

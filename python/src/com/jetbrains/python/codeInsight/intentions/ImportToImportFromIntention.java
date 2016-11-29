@@ -16,7 +16,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -49,7 +48,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <small>User: dcheryasov
  * Date: Sep 22, 2009 1:42:52 AM</small>
  */
-public class ImportToImportFromIntention implements IntentionAction {
+public class ImportToImportFromIntention extends PyBaseIntentionAction {
 
   private static class IntentionState {
     private String myModuleName = null;
@@ -73,6 +72,7 @@ public class ImportToImportFromIntention implements IntentionAction {
         else if (parent instanceof PyFromImportStatement) {
           final PyFromImportStatement fromImport = (PyFromImportStatement)parent;
           final int relativeLevel = fromImport.getRelativeLevel();
+          PyPsiUtils.assertValid(fromImport);
           if (fromImport.isValid() && relativeLevel > 0 && fromImport.getImportSource() == null) {
             myRelativeLevel = relativeLevel;
             available = true;
@@ -100,7 +100,7 @@ public class ImportToImportFromIntention implements IntentionAction {
         myReferee = importReference.getReference().resolve();
         myHasModuleReference = false;
         if (myReferee != null && myModuleName != null && myQualifierName != null) {
-          final Collection<PsiReference> references = new ArrayList<PsiReference>();
+          final Collection<PsiReference> references = new ArrayList<>();
           PsiTreeUtil.processElements(file, new PsiElementProcessor() {
             public boolean execute(@NotNull PsiElement element) {
               if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
@@ -135,7 +135,7 @@ public class ImportToImportFromIntention implements IntentionAction {
       // usages of imported name are qualifiers; what they refer to?
       try {
         // remember names and make them drop qualifiers
-        final Set<String> usedNames = new HashSet<String>();
+        final Set<String> usedNames = new HashSet<>();
         for (PsiReference ref : myReferences) {
           final PsiElement elt = ref.getElement();
           final PsiElement parentElt = elt.getParent();
@@ -220,13 +220,6 @@ public class ImportToImportFromIntention implements IntentionAction {
     }
   }
 
-  private String myText;
-
-  @NotNull
-  public String getText() {
-    return myText;
-  }
-
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.Family.convert.import.unqualify");
@@ -236,6 +229,7 @@ public class ImportToImportFromIntention implements IntentionAction {
   private static PyImportElement findImportElement(@NotNull Editor editor, @NotNull PsiFile file) {
     final PsiElement elementAtCaret = file.findElementAt(editor.getCaretModel().getOffset());
     final PyImportElement importElement = PsiTreeUtil.getParentOfType(elementAtCaret, PyImportElement.class);
+    PyPsiUtils.assertValid(importElement);
     if (importElement != null && importElement.isValid()) {
       return importElement;
     }
@@ -251,18 +245,15 @@ public class ImportToImportFromIntention implements IntentionAction {
 
     final IntentionState state = new IntentionState(editor, file);
     if (state.isAvailable()) {
-      myText = state.getText();
+      setText(state.getText());
       return true;
     }
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final IntentionState state = new IntentionState(editor, file);
     state.invoke();
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

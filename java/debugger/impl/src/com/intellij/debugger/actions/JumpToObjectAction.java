@@ -21,6 +21,8 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -85,35 +87,37 @@ public class JumpToObjectAction extends DebuggerAction{
   }
 
   private static SourcePosition calcPosition(final ValueDescriptor descriptor, final DebugProcessImpl debugProcess) throws ClassNotLoadedException {
-    final Value value = descriptor.getValue();
-    if(value == null) {
-      return null;
-    }
-
-    Type type = value.type();
-    if(type == null) {
+    Type type = descriptor.getType();
+    if (type == null) {
       return null;
     }
 
     try {
-      if(type instanceof ArrayType) {
+      if (type instanceof ArrayType) {
         type = ((ArrayType)type).componentType();
       }
-      if(type instanceof ClassType) {
-        final ClassType clsType = (ClassType)type;
-        final Location location = ContainerUtil.getFirstItem(clsType.allLineLocations());
+      if (type instanceof ClassType) {
+        ClassType clsType = (ClassType)type;
+
+        Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(clsType, debugProcess.getVirtualMachineProxy());
+        Location location = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
+
+        if (location == null) {
+          location = ContainerUtil.getFirstItem(clsType.allLineLocations());
+        }
+
         if (location != null) {
+          SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
           return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
             @Override
             public SourcePosition compute() {
-              SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
               // adjust position for non-anonymous classes
               if (clsType.name().indexOf('$') < 0) {
-                final PsiClass classAt = JVMNameUtil.getClassAt(position);
+                PsiClass classAt = JVMNameUtil.getClassAt(position);
                 if (classAt != null) {
-                  final SourcePosition classPosition = SourcePosition.createFromElement(classAt);
+                  SourcePosition classPosition = SourcePosition.createFromElement(classAt);
                   if (classPosition != null) {
-                    position = classPosition;
+                    return classPosition;
                   }
                 }
               }
@@ -123,10 +127,7 @@ public class JumpToObjectAction extends DebuggerAction{
         }
       }
     }
-    catch (ClassNotPreparedException e) {
-      LOG.debug(e);
-    }
-    catch (AbsentInformationException e) {
+    catch (ClassNotPreparedException | AbsentInformationException e) {
       LOG.debug(e);
     }
     return null;

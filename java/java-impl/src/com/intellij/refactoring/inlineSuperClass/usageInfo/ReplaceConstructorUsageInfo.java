@@ -38,8 +38,10 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     final PsiMethod[] constructors = targetClasses[0].getConstructors();
     final PsiMethod constructor = element.resolveConstructor();
     if (constructor == null) {
-      if (constructors.length == 1 && constructors[0].getParameterList().getParametersCount() > 0 || constructors.length > 1) {
-        myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
+      if (element.getArgumentList() != null) {
+        if (constructors.length == 1 && constructors[0].getParameterList().getParametersCount() > 0 || constructors.length > 1) {
+          myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
+        }
       }
     } else {
       final PsiParameter[] superParameters = constructor.getParameterList().getParameters();
@@ -78,11 +80,8 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     }
 
     if (targetClasses.length > 1) {
-      final String conflict = "Constructor " + element.getText() + " can be replaced with any of " + StringUtil.join(targetClasses, new Function<PsiClass, String>() {
-        public String fun(final PsiClass psiClass) {
-          return psiClass.getQualifiedName();
-        }
-      }, ", ");
+      final String conflict = "Constructor " + element.getText() + " can be replaced with any of " + StringUtil.join(targetClasses,
+                                                                                                                     psiClass -> psiClass.getQualifiedName(), ", ");
       appendConflict(conflict);
     }
   }
@@ -115,11 +114,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
         final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
         if (arrayDimensions.length > 0) {
           buf.append("[");
-          buf.append(StringUtil.join(arrayDimensions, new Function<PsiExpression, String>() {
-            public String fun(PsiExpression psiExpression) {
-              return psiExpression.getText();
-            }
-          }, "]["));
+          buf.append(StringUtil.join(arrayDimensions, psiExpression -> psiExpression.getText(), "]["));
           buf.append("]");
           for (int i = 0; i < newExpressionType.getArrayDimensions() - arrayDimensions.length; i++) {
             buf.append("[]");

@@ -27,7 +27,7 @@ public interface MarkupModelListener extends EventListener {
 
   void beforeRemoved(@NotNull RangeHighlighterEx highlighter);
 
-  void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged);
+  void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged);
 
   abstract class Adapter implements MarkupModelListener {
     @Override
@@ -39,7 +39,7 @@ public interface MarkupModelListener extends EventListener {
     }
 
     @Override
-    public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
+    public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
     }
   }
 }

@@ -36,9 +36,11 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.util.concurrent.Semaphore;
 
@@ -48,21 +50,18 @@ import java.util.concurrent.Semaphore;
 public class PyDebuggerTask extends PyBaseDebuggerTask {
 
   private boolean myMultiprocessDebug = false;
-  private PythonRunConfiguration myRunConfiguration;
+  protected PythonRunConfiguration myRunConfiguration;
 
-  public PyDebuggerTask() {
-    init();
-  }
 
-  public PyDebuggerTask(String workingFolder, String scriptName, String scriptParameters) {
-    setWorkingFolder(getTestDataPath() + workingFolder);
+  public PyDebuggerTask(@Nullable final String relativeTestDataPath, String scriptName, String scriptParameters) {
+    super(relativeTestDataPath);
     setScriptName(scriptName);
     setScriptParameters(scriptParameters);
     init();
   }
 
-  public PyDebuggerTask(String workingFolder, String scriptName) {
-    this(workingFolder, scriptName, null);
+  public PyDebuggerTask(@Nullable final String relativeTestDataPath, String scriptName) {
+    this(relativeTestDataPath, scriptName, null);
   }
 
   protected void init() {
@@ -81,8 +80,8 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     myRunConfiguration = (PythonRunConfiguration)settings.getConfiguration();
 
     myRunConfiguration.setSdkHome(sdkHome);
-    myRunConfiguration.setScriptName(getScriptPath());
-    myRunConfiguration.setWorkingDirectory(getWorkingFolder());
+    myRunConfiguration.setScriptName(getScriptName());
+    myRunConfiguration.setWorkingDirectory(myFixture.getTempDirPath());
     myRunConfiguration.setScriptParameters(getScriptParameters());
 
     new WriteAction() {
@@ -139,17 +138,21 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
               myDebugProcess =
                 new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(), isMultiprocessDebug());
 
+
+              StringBuilder output = new StringBuilder();
+
               myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
 
                 @Override
                 public void onTextAvailable(ProcessEvent event, Key outputType) {
+                  output.append(event.getText());
                 }
 
                 @Override
                 public void processTerminated(ProcessEvent event) {
                   myTerminateSemaphore.release();
                   if (event.getExitCode() != 0 && !myProcessCanTerminate) {
-                    Assert.fail("Process terminated unexpectedly\n" + output());
+                    Assert.fail("Process terminated unexpectedly\n" + output.toString());
                   }
                 }
               });
@@ -174,7 +177,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     myPausedSemaphore = new Semaphore(0);
     
 
-    mySession.addSessionListener(new XDebugSessionAdapter() {
+    mySession.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
         if (myPausedSemaphore != null) {
@@ -200,6 +203,21 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
   public void setMultiprocessDebug(boolean multiprocessDebug) {
     myMultiprocessDebug = multiprocessDebug;
+  }
+
+  protected void waitForAllThreadsPause() throws InterruptedException, InvocationTargetException {
+    waitForPause();
+    Assert.assertTrue(String.format("All threads didn't stop within timeout\n" +
+                                    "Output: %s", output()), waitForAllThreads());
+    XDebuggerTestUtil.waitForSwing();
+  }
+
+  protected boolean waitForAllThreads() throws InterruptedException {
+    long until = System.currentTimeMillis() + NORMAL_TIMEOUT;
+    while (System.currentTimeMillis() < until && getRunningThread() != null) {
+      Thread.sleep(1000);
+    }
+    return getRunningThread() == null;
   }
 
   @Override

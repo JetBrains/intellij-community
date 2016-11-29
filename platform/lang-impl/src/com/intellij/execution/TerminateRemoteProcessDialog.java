@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,67 +14,66 @@
  * limitations under the License.
  */
 
-/**
- * created at Dec 14, 2001
- * @author Jeka
- */
 package com.intellij.execution;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ArrayUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TerminateRemoteProcessDialog {
-  public static int show(final Project project,
+  public static GeneralSettings.ProcessCloseConfirmation show(final Project project,
                          final String sessionName,
-                         final TerminateOption option) {
-    final String message = option.myAlwaysUseDefault && !option.myDetach ?
-                           ExecutionBundle.message("terminate.process.confirmation.text", sessionName) :
-                           ExecutionBundle.message("disconnect.process.confirmation.text", sessionName);
-    final String okButtonText = option.myAlwaysUseDefault && !option.myDetach ?
-                                ExecutionBundle.message("button.terminate") :
-                                ExecutionBundle.message("button.disconnect");
-    final String[] options = new String[] {okButtonText, CommonBundle.getCancelButtonText()};
-    return Messages.showDialog(project, message, ExecutionBundle.message("process.is.running.dialog.title", sessionName),
-                        options, 0, Messages.getWarningIcon(),
-                        option);
+                         boolean canDisconnect,
+                         boolean defaultDisconnect) {
+    GeneralSettings.ProcessCloseConfirmation confirmation = GeneralSettings.getInstance().getProcessCloseConfirmation();
+    if (confirmation != GeneralSettings.ProcessCloseConfirmation.ASK) {
+      if (confirmation == GeneralSettings.ProcessCloseConfirmation.DISCONNECT && !canDisconnect) {
+        confirmation = GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+      }
+      return confirmation;
+    }
+    List<String> options = new ArrayList<>(3);
+    options.add(ExecutionBundle.message("button.terminate"));
+    if (canDisconnect) {
+      options.add(ExecutionBundle.message("button.disconnect"));
+    }
+    options.add(CommonBundle.getCancelButtonText());
+    DialogWrapper.DoNotAskOption.Adapter doNotAskOption = new DialogWrapper.DoNotAskOption.Adapter() {
+      @Override
+      public void rememberChoice(boolean isSelected, int exitCode) {
+        if (isSelected) {
+          GeneralSettings.ProcessCloseConfirmation confirmation = getConfirmation(exitCode, canDisconnect);
+          if (confirmation != null) {
+            GeneralSettings.getInstance().setProcessCloseConfirmation(confirmation);
+          }
+        }
+      }
+    };
+    return getConfirmation(Messages.showDialog(project,
+                               ExecutionBundle.message("terminate.process.confirmation.text", sessionName),
+                               ExecutionBundle.message("process.is.running.dialog.title", sessionName),
+                               ArrayUtil.toStringArray(options),
+                               canDisconnect && defaultDisconnect ? 1 : 0,
+                               Messages.getWarningIcon(),
+                               doNotAskOption), canDisconnect);
   }
 
-  public static class TerminateOption implements DialogWrapper.DoNotAskOption {
-    private boolean myDetach;
-    private final boolean myAlwaysUseDefault;
-
-    public TerminateOption(boolean detachIsDefault, boolean alwaysUseDefault) {
-      myDetach = detachIsDefault;
-      myAlwaysUseDefault = alwaysUseDefault;
-    }
-
-    @Override
-    public boolean isToBeShown() {
-      return myDetach;
-    }
-
-    @Override
-    public void setToBeShown(boolean value, int exitCode) {
-      myDetach = value;
-    }
-
-    @Override
-    public boolean canBeHidden() {
-      return !myAlwaysUseDefault;
-    }
-
-    @Override
-    public boolean shouldSaveOptionsOnCancel() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public String getDoNotShowMessage() {
-      return ExecutionBundle.message("terminate.after.disconnect.checkbox");
+  private static GeneralSettings.ProcessCloseConfirmation getConfirmation(int button, boolean withDisconnect) {
+    switch (button) {
+      case 0:
+        return GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+      case 1:
+        if (withDisconnect) {
+          return GeneralSettings.ProcessCloseConfirmation.DISCONNECT;
+        }
+      default:
+          return null;
     }
   }
 }

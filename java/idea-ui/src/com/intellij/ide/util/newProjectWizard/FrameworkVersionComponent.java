@@ -76,7 +76,7 @@ public class FrameworkVersionComponent {
   }
 
   private List<FrameworkVersion> computeAvailableVersions() {
-    List<FrameworkVersion> versions = new ArrayList<FrameworkVersion>();
+    List<FrameworkVersion> versions = new ArrayList<>();
     for (FrameworkVersion version : myAllVersions) {
       if (version.getAvailabilityCondition().isAvailableFor(myModel)) {
         versions.add(version);

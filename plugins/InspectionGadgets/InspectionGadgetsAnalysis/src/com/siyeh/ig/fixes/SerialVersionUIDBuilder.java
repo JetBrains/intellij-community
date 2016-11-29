@@ -48,56 +48,50 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   private final Set<MemberSignature> nonPrivateFields;
   private final List<MemberSignature> staticInitializers;
   private boolean assertStatement = false;
-  private final Map<PsiElement, String> memberMap = new HashMap<PsiElement, String>();
+  private final Map<PsiElement, String> memberMap = new HashMap<>();
 
   private static final Comparator<PsiClass> INTERFACE_COMPARATOR =
-    new Comparator<PsiClass>() {
-      @Override
-      public int compare(PsiClass object1, PsiClass object2) {
-        if (object1 == null && object2 == null) {
-          return 0;
-        }
-        if (object1 == null) {
-          return 1;
-        }
-        if (object2 == null) {
-          return -1;
-        }
-        final String name1 = object1.getQualifiedName();
-        final String name2 = object2.getQualifiedName();
-        if (name1 == null && name2 == null) {
-          return 0;
-        }
-        if (name1 == null) {
-          return 1;
-        }
-        if (name2 == null) {
-          return -1;
-        }
-        return name1.compareTo(name2);
+    (object1, object2) -> {
+      if (object1 == null && object2 == null) {
+        return 0;
       }
+      if (object1 == null) {
+        return 1;
+      }
+      if (object2 == null) {
+        return -1;
+      }
+      final String name1 = object1.getQualifiedName();
+      final String name2 = object2.getQualifiedName();
+      if (name1 == null && name2 == null) {
+        return 0;
+      }
+      if (name1 == null) {
+        return 1;
+      }
+      if (name2 == null) {
+        return -1;
+      }
+      return name1.compareTo(name2);
     };
 
   private SerialVersionUIDBuilder(PsiClass clazz) {
     this.clazz = clazz;
-    nonPrivateMethods = new HashSet<MemberSignature>();
+    nonPrivateMethods = new HashSet<>();
     final PsiMethod[] methods = clazz.getMethods();
     for (final PsiMethod method : methods) {
       if (!method.isConstructor() && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         final MemberSignature methodSignature = new MemberSignature(method);
         nonPrivateMethods.add(methodSignature);
-        SuperMethodsSearch.search(method, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-          @Override
-          public boolean process(MethodSignatureBackedByPsiMethod method) {
-            final MemberSignature superSignature = new MemberSignature(methodSignature.getName(), methodSignature.getModifiers(),
-                                                                       MemberSignature.createMethodSignature(method.getMethod()));
-            nonPrivateMethods.add(superSignature);
-            return true;
-          }
+        SuperMethodsSearch.search(method, null, true, false).forEach(method1 -> {
+          final MemberSignature superSignature = new MemberSignature(methodSignature.getName(), methodSignature.getModifiers(),
+                                                                     MemberSignature.createMethodSignature(method1.getMethod()));
+          nonPrivateMethods.add(superSignature);
+          return true;
         });
       }
     }
-    nonPrivateFields = new HashSet<MemberSignature>();
+    nonPrivateFields = new HashSet<>();
     final PsiField[] fields = clazz.getFields();
     for (final PsiField field : fields) {
       if (!field.hasModifierProperty(PsiModifier.PRIVATE) ||
@@ -109,7 +103,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       }
     }
 
-    staticInitializers = new ArrayList<MemberSignature>(1);
+    staticInitializers = new ArrayList<>(1);
     final PsiClassInitializer[] initializers = clazz.getInitializers();
     if (initializers.length > 0) {
       for (final PsiClassInitializer initializer : initializers) {
@@ -137,7 +131,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
     }
 
     final PsiMethod[] constructors = clazz.getConstructors();
-    nonPrivateConstructors = new HashSet<MemberSignature>(constructors.length);
+    nonPrivateConstructors = new HashSet<>(constructors.length);
     if (constructors.length == 0 && !clazz.isInterface()) {
       // generated empty constructor if no constructor is defined in the source
       final MemberSignature constructorSignature;

@@ -15,76 +15,38 @@
  */
 package org.jetbrains.settingsRepository.test
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
-import com.intellij.util.exists
-import com.intellij.util.isFile
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.exists
+import com.intellij.util.io.isFile
 import gnu.trove.THashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants
-import org.junit.rules.ExternalResource
-import org.junit.runner.Description
-import org.junit.runners.model.Statement
-import java.net.URLEncoder
-import java.nio.file.FileSystem
-import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.properties.Delegates
-
-class InMemoryFsRule : ExternalResource() {
-  private var _fs: FileSystem? = null
-
-  private var sanitizedName: String by Delegates.notNull()
-
-  override fun apply(base: Statement, description: Description): Statement {
-    sanitizedName = URLEncoder.encode(description.methodName, Charsets.UTF_8.name())
-    return super.apply(base, description)
-  }
-
-  val fs: FileSystem
-    get() {
-      var r = _fs
-      if (r == null) {
-        r = MemoryFileSystemBuilder
-          .newLinux()
-          .setCurrentWorkingDirectory("/")
-          .build(sanitizedName)
-        _fs = r
-      }
-      return r!!
-    }
-
-  override fun after() {
-    _fs?.close()
-    _fs = null
-  }
-}
-
-private fun getChildrenStream(path: Path, excludes: Array<out String>? = null) = Files.list(path)
-  .filter { !it.endsWith(Constants.DOT_GIT) && (excludes == null || !excludes.contains(it.fileName.toString())) }
-  .sorted()
 
 fun compareFiles(path1: Path, path2: Path, vararg localExcludes: String) {
   assertThat(path1).isDirectory()
   assertThat(path2).isDirectory()
 
   val notFound = THashSet<Path>()
-  for (path in getChildrenStream(path1, localExcludes)) {
-    notFound.add(path)
+  path1.directoryStreamIfExists({ !it.endsWith(Constants.DOT_GIT) && !localExcludes.contains(it.fileName.toString()) }) {
+    notFound.addAll(it)
   }
 
-  for (child2 in getChildrenStream(path2)) {
-    val childName = child2.fileName.toString()
-    val child1 = path1.resolve(childName)
-    if (child1.isFile()) {
-      assertThat(child2).hasSameContentAs(child1)
+  path2.directoryStreamIfExists({ !it.endsWith(Constants.DOT_GIT) }) {
+    for (child2 in it) {
+      val childName = child2.fileName.toString()
+      val child1 = path1.resolve(childName)
+      if (child1.isFile()) {
+        assertThat(child2).hasSameContentAs(child1)
+      }
+      else if (!child1.exists()) {
+        throw AssertionError("Path '$path2' must not contain '$childName'")
+      }
+      else {
+        compareFiles(child1, child2, *localExcludes)
+      }
+      notFound.remove(child1)
     }
-    else if (!child1.exists()) {
-      throw AssertionError("Path '$path2' must not contain '$childName'")
-    }
-    else {
-      compareFiles(child1, child2, *localExcludes)
-    }
-    notFound.remove(child1)
   }
 
   if (notFound.isNotEmpty()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -24,21 +25,27 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.TestDataPath;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
+import com.jetbrains.python.psi.stubs.PySuperClassIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -429,5 +436,177 @@ public class PyStubsTest extends PyTestCase {
     final String annotation = func.getTypeCommentAnnotation();
     assertEquals("(str) -> int", annotation);
     assertNotParsed(file);
+  }
+
+  public void testFullyQualifiedNamedTuple() {
+    doTestNamedTuple(
+      QualifiedName.fromDottedString("collections.namedtuple")
+    );
+  }
+
+  public void testFullyQualifiedNamedTupleWithAs() {
+    doTestNamedTuple(
+      QualifiedName.fromDottedString("C.namedtuple")
+    );
+  }
+
+  public void testImportedNamedTuple() {
+    doTestNamedTuple(
+      QualifiedName.fromComponents("namedtuple")
+    );
+  }
+
+  public void testImportedNamedTupleWithAs() {
+    doTestNamedTuple(
+      QualifiedName.fromComponents("NT")
+    );
+  }
+
+  public void testNamedTupleFieldsSequence() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testNamedTupleNameReference() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testNamedTupleFieldsReference() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testNamedTupleNameChain() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testNamedTupleFieldsChain() {
+    doTestNamedTupleArguments();
+  }
+
+  public void testImportedNamedTupleName() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  public void testImportedNamedTupleFields() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  private void doTestNamedTuple(@NotNull QualifiedName expectedCalleeName) {
+    doTestNamedTuple("name", Collections.singletonList("field"), expectedCalleeName);
+  }
+
+  private void doTestNamedTupleArguments() {
+    doTestNamedTuple("name", Arrays.asList("x", "y"), QualifiedName.fromComponents("namedtuple"));
+  }
+
+  private void doTestNamedTuple(@NotNull String expectedName,
+                                @NotNull List<String> expectedFields,
+                                @NotNull QualifiedName expectedCalleeName) {
+    final PyFile file = getTestFile();
+
+    final PyTargetExpression attribute = file.findTopLevelAttribute("nt");
+    assertNotNull(attribute);
+
+    final PyNamedTupleStub stub = attribute.getStub().getCustomStub(PyNamedTupleStub.class);
+    assertNotNull(stub);
+    assertEquals(expectedCalleeName, stub.getCalleeName());
+
+    final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
+    doTestNamedTuple(expectedName, expectedFields, typeFromStub);
+    assertNotParsed(file);
+
+    final FileASTNode astNode = file.getNode();
+    assertNotNull(astNode);
+
+    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
+    doTestNamedTuple(expectedName, expectedFields, typeFromAst);
+  }
+
+  private void doTestUnsupportedNamedTuple() {
+    final PyFile file = getTestFile();
+
+    final PyTargetExpression attribute = file.findTopLevelAttribute("nt");
+    assertNotNull(attribute);
+
+    final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
+    assertNull(typeFromStub);
+    assertNotParsed(file);
+
+    final FileASTNode astNode = file.getNode();
+    assertNotNull(astNode);
+
+    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
+    assertNull(typeFromAst);
+  }
+
+  private static void doTestNamedTuple(@NotNull String expectedName,
+                                       @NotNull List<String> expectedFields,
+                                       @Nullable PyType type) {
+    assertInstanceOf(type, PyNamedTupleType.class);
+
+    final PyNamedTupleType namedTupleType = (PyNamedTupleType)type;
+
+    assertEquals(expectedName, namedTupleType.getName());
+    assertEquals(expectedFields, namedTupleType.getElementNames());
+  }
+
+  // PY-19461
+  public void testInheritorsWhenSuperClassImportedWithAs() {
+    final PyFile file1 = getTestFile("inheritorsWhenSuperClassImportedWithAs/a.py");
+    final PyFile file2 = getTestFile("inheritorsWhenSuperClassImportedWithAs/b.py");
+
+    final Project project = myFixture.getProject();
+
+    final Collection<PyClass> classes =
+      StubIndex.getElements(PySuperClassIndex.KEY, "C", project, ProjectScope.getAllScope(project), PyClass.class);
+
+    assertEquals(1, classes.size());
+    assertEquals("D", classes.iterator().next().getName());
+
+    assertNotParsed(file1);
+    assertNotParsed(file2);
+  }
+
+  // PY-19461
+  public void testAncestorsWhenSuperClassImportedWithAs() {
+    final PyFile file1 = getTestFile("inheritorsWhenSuperClassImportedWithAs/a.py");
+    final PyFile file2 = getTestFile("inheritorsWhenSuperClassImportedWithAs/b.py");
+
+    final PyClass pyClass = file2.findTopLevelClass("D");
+    assertNotNull(pyClass);
+
+    final Map<QualifiedName, QualifiedName> superClasses = pyClass.getStub().getSuperClasses();
+    assertEquals(1, superClasses.size());
+    assertEquals(QualifiedName.fromComponents("C"), superClasses.get(QualifiedName.fromComponents("C2")));
+
+    assertNotParsed(file1);
+    assertNotParsed(file2);
+  }
+
+  public void testAncestorsWhenSuperClassImportedWithQName() {
+    final PyFile file1 = getTestFile("ancestorsWhenSuperClassImportedWithQName/a.py");
+    final PyFile file2 = getTestFile("ancestorsWhenSuperClassImportedWithQName/b.py");
+
+    final PyClass pyClass = file2.findTopLevelClass("B");
+    assertNotNull(pyClass);
+
+    final Map<QualifiedName, QualifiedName> superClasses = pyClass.getStub().getSuperClasses();
+    assertEquals(1, superClasses.size());
+    assertEquals(QualifiedName.fromDottedString("A.A"), superClasses.get(QualifiedName.fromDottedString("A.A")));
+
+    assertNotParsed(file1);
+    assertNotParsed(file2);
+  }
+
+  public void testVariableAnnotationsInExternalFiles() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile current = getTestFile(getTestName(true) + "/main.py");
+      final PyFile external = getTestFile(getTestName(true) + "/lib.py");
+      final PyTargetExpression attr = current.findTopLevelAttribute("x");
+      assertNotNull(attr);
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), current);
+      // Will turn into concrete type when we start saving annotations in stubs 
+      assertNull(context.getType(attr));
+      assertNotParsed(external);
+    });
   }
 }

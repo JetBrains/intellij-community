@@ -26,6 +26,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -43,15 +44,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
-import java.io.IOException;
 import java.util.List;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable,
@@ -68,6 +66,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ActivateStructureToolWindow",
     "ActivateHierarchyToolWindow",
     "ActivateVersionControlToolWindow",
+    "HideAllWindows",
 
     "ShowBookmarks",
     "GotoBookmark0",
@@ -86,9 +85,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "GotoClass",
     "GotoSymbol",
     
-    "ShowSettings"
+    "ShowSettings",
+    "RecentFiles",
+    "Switcher"
   };
-
 
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
 
@@ -240,11 +240,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   @Override
-  protected String getClipboardContent() throws IOException, UnsupportedFlavorException {
-    return CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-  }
-
-  @Override
   protected BufferedImage createBufferedImage(int width, int height) {
     return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
   }
@@ -255,12 +250,12 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     installKeyDispatcher();
 
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
+      TransactionGuard.submitTransaction(this, () -> FileDocumentManager.getInstance().saveAllDocuments());
     }
   }
 
   private void installKeyDispatcher() {
-    if (TerminalOptionsProvider.getInstance().overrideIdeShortcuts()) {
+    if (TerminalOptionsProvider.Companion.getInstance().overrideIdeShortcuts()) {
       myActionsToSkip = setupActionsToSkip();
       IdeEventQueue.getInstance().addDispatcher(this, this);
     }
@@ -308,6 +303,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   public void dispose() {
+    super.dispose();
     mySettingsProvider.removeListener(this);
   }
 }

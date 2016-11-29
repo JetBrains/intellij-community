@@ -100,7 +100,7 @@ public class RecentProjectPanel extends JPanel {
 
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseGroups());
 
-    myPathShortener = new UniqueNameBuilder<ReopenProjectAction>(SystemProperties.getUserHome(), File.separator, 40);
+    myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator, 40);
     for (AnAction action : recentProjectActions) {
       if (action instanceof ReopenProjectAction) {
         final ReopenProjectAction item = (ReopenProjectAction)action;
@@ -154,12 +154,7 @@ public class RecentProjectPanel extends JPanel {
 
         if (selection != null && selection.length > 0) {
           final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
-                                                     "Remove '" + StringUtil.join(selection, new Function<Object, String>() {
-                                                       @Override
-                                                       public String fun(Object action) {
-                                                         return ((AnAction)action).getTemplatePresentation().getText();
-                                                       }
-                                                     }, "'\n'") +
+                                                     "Remove '" + StringUtil.join(selection, action -> ((AnAction)action).getTemplatePresentation().getText(), "'\n'") +
                                                      "' from recent projects list?",
                                                      "Remove Recent Project",
                                                      Messages.getQuestionIcon());
@@ -188,22 +183,19 @@ public class RecentProjectPanel extends JPanel {
 
     JComponent list = recentProjectActions.length == 0
                       ? myList
-                      : ListWithFilter.wrap(myList, scroll, new Function<Object, String>() {
-                        @Override
-                        public String fun(Object o) {
-                          if (o instanceof ReopenProjectAction) {
-                            ReopenProjectAction item = (ReopenProjectAction)o;
-                            String home = SystemProperties.getUserHome();
-                            String path = item.getProjectPath();
-                            if (FileUtil.startsWith(path, home)) {
-                              path = path.substring(home.length());
-                            }
-                            return item.getProjectName() + " " + path;
-                          } else if (o instanceof ProjectGroupActionGroup) {
-                            return ((ProjectGroupActionGroup)o).getGroup().getName();
+                      : ListWithFilter.wrap(myList, scroll, o -> {
+                        if (o instanceof ReopenProjectAction) {
+                          ReopenProjectAction item = (ReopenProjectAction)o;
+                          String home = SystemProperties.getUserHome();
+                          String path = item.getProjectPath();
+                          if (FileUtil.startsWith(path, home)) {
+                            path = path.substring(home.length());
                           }
-                          return o.toString();
+                          return item.getProjectName() + " " + path;
+                        } else if (o instanceof ProjectGroupActionGroup) {
+                          return ((ProjectGroupActionGroup)o).getGroup().getName();
                         }
+                        return o.toString();
                       });
     add(list, BorderLayout.CENTER);
 

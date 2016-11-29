@@ -18,7 +18,6 @@ package git4idea.actions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -28,7 +27,6 @@ import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 public class GitFetch extends GitRepositoryAction {
   @Override
@@ -39,9 +37,7 @@ public class GitFetch extends GitRepositoryAction {
 
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
-                         @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots,
-                         final List<VcsException> exceptions) throws VcsException {
+                         @NotNull final VirtualFile defaultRoot) {
     GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -50,10 +46,5 @@ public class GitFetch extends GitRepositoryAction {
                                                                      null, true);
       }
     });
-  }
-
-  @Override
-  protected boolean executeFinalTasksSynchronously() {
-    return false;
   }
 }

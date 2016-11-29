@@ -37,12 +37,8 @@ import java.util.List;
  * @author nik
  */
 public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetDescription, F extends DownloadableFileDescription> implements DownloadableFileSetVersions<FS> {
-  private static final Comparator<DownloadableFileSetDescription> VERSIONS_COMPARATOR = new Comparator<DownloadableFileSetDescription>() {
-    @Override
-    public int compare(DownloadableFileSetDescription o1, DownloadableFileSetDescription o2) {
-      return -StringUtil.compareVersionNumbers(o1.getVersionString(), o2.getVersionString());
-    }
-  };
+  private static final Comparator<DownloadableFileSetDescription> VERSIONS_COMPARATOR =
+    (o1, o2) -> -StringUtil.compareVersionNumbers(o1.getVersionString(), o2.getVersionString());
   protected final String myGroupId;
   private final URL[] myLocalUrls;
 
@@ -53,12 +49,7 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
 
   @Override
   public void fetchVersions(@NotNull final FileSetVersionsCallback<FS> callback) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        callback.onSuccess(fetchVersions());
-      }
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> callback.onSuccess(fetchVersions()));
   }
 
   @NotNull
@@ -72,10 +63,10 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
     else {
       versions = LibrariesDownloadAssistant.getVersions(myLocalUrls);
     }
-    final List<FS> result = new ArrayList<FS>();
+    final List<FS> result = new ArrayList<>();
     for (Artifact version : versions) {
       final ArtifactItem[] items = version.getItems();
-      final List<F> files = new ArrayList<F>();
+      final List<F> files = new ArrayList<>();
       for (ArtifactItem item : items) {
         String url = item.getUrl();
         final String prefix = version.getUrlPrefix();

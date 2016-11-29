@@ -40,7 +40,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends Base
   public boolean ignoreForSplitOptimization = true;
 
   @NonNls
-  protected static final Collection<String> regexMethodNames = new HashSet<String>(4);
+  protected static final Collection<String> regexMethodNames = new HashSet<>(4);
   static {
     regexMethodNames.add("matches");
     regexMethodNames.add("replace");

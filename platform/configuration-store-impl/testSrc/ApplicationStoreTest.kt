@@ -15,19 +15,19 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.ide.actions.ExportableItem
-import com.intellij.ide.actions.exportSettings
-import com.intellij.ide.actions.getExportableComponentsMap
-import com.intellij.ide.actions.getPaths
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.*
+import com.intellij.util.SmartList
+import com.intellij.util.io.lastModified
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.writeChild
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import gnu.trove.THashMap
@@ -128,14 +128,16 @@ internal class ApplicationStoreTest {
     assertThat(map).isNotEmpty
 
     fun test(item: ExportableItem) {
-      val file = item.files.first()
-      assertThat(map[file]).containsExactly(item)
+      val file = item.file
+      assertThat(map.get(file)).containsExactly(item)
       assertThat(file).doesNotExist()
     }
 
-    test(ExportableItem(listOf(Paths.get(optionsPath, "filetypes.xml"), Paths.get(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(Paths.get(optionsPath, "customization.xml")), "Menus and toolbars customization", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(Paths.get(optionsPath, "templates.xml"), Paths.get(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(optionsPath, "filetypes.xml"), "File types", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(rootConfigPath, "filetypes"), "File types (schemes)", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(optionsPath, "customization.xml"), "Menus and toolbars customization", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(optionsPath, "templates.xml"), "Live templates", RoamingType.DEFAULT))
+    test(ExportableItem(Paths.get(rootConfigPath, "templates"), "Live templates (schemes)", RoamingType.DEFAULT))
   }
 
   @Test fun `import settings`() {
@@ -166,7 +168,6 @@ internal class ApplicationStoreTest {
 
     val relativePaths = getPaths(ByteArrayInputStream(exportedData.internalBuffer, 0, exportedData.size()))
     assertThat(relativePaths).containsOnly("a.xml", "foo/", "foo/bar.icls", "IntelliJ IDEA Global Settings")
-    val list = listOf(ExportableItem(listOf(componentFile, additionalFile), ""))
 
     fun <B> Path.to(that: B) = MapEntry.entry(this, that)
 
@@ -174,7 +175,7 @@ internal class ApplicationStoreTest {
     val componentKey = A::class.java.name
     picoContainer.registerComponent(InstanceComponentAdapter(componentKey, component))
     try {
-      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile.to(list), additionalFile.to(list))
+      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile.to(listOf(ExportableItem(componentFile, ""))), additionalFile.to(listOf(ExportableItem(additionalFile, " (schemes)"))))
     }
     finally {
       picoContainer.unregisterComponent(componentKey)

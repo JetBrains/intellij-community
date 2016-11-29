@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -26,7 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -34,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
@@ -43,40 +41,36 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
-
-
 public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
-  public void setUpProject(@NotNull final Project project, @NotNull final SetupHandler handler) throws Exception {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Module module = createMainModule(project);
-        handler.moduleCreated(module);
-        VirtualFile sourceRoot = createSourcesRoot(module);
-        if (sourceRoot != null) {
-          handler.sourceRootCreated(sourceRoot);
-          createContentEntry(module, sourceRoot);
-        }
+  protected static final String TEST_MODULE_NAME = "light_idea_test_case";
+
+  public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
+    WriteAction.run(() -> {
+      Module module = createMainModule(project);
+      handler.moduleCreated(module);
+      VirtualFile sourceRoot = createSourcesRoot(module);
+      if (sourceRoot != null) {
+        handler.sourceRootCreated(sourceRoot);
+        createContentEntry(module, sourceRoot);
       }
     });
   }
 
   @NotNull
-  public Module createMainModule(@NotNull final Project project) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
-      @Override
-      public Module compute() {
-        String moduleFilePath = "light_idea_test_case.iml";
-        File imlFile = new File(moduleFilePath);
-        if (imlFile.exists()) {
-          //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
-          FileUtil.delete(imlFile);
-        }
-        return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleType().getId());
+  public Module createMainModule(@NotNull Project project) {
+    return createModule(project, FileUtil.join(FileUtil.getTempDirectory(), TEST_MODULE_NAME + ".iml"));
+  }
+
+  protected Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
+    return WriteAction.compute(() -> {
+      File imlFile = new File(moduleFilePath);
+      if (imlFile.exists()) {
+        //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
+        FileUtil.delete(imlFile);
       }
+      return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleType().getId());
     });
   }
 
@@ -86,29 +80,32 @@ public class LightProjectDescriptor {
   }
 
   @Nullable
-  public VirtualFile createSourcesRoot(@NotNull final Module module) {
+  public VirtualFile createSourcesRoot(@NotNull Module module) {
+    return createSourceRoot(module, "src");
+  }
+
+  protected VirtualFile createSourceRoot(@NotNull Module module, String srcPath) {
     VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
     assert dummyRoot != null;
     dummyRoot.refresh(false, false);
 
-    final VirtualFile srcRoot;
+    VirtualFile srcRoot;
     try {
-      srcRoot = dummyRoot.createChildDirectory(this, "src");
+      srcRoot = dummyRoot.createChildDirectory(this, srcPath);
       cleanSourceRoot(srcRoot);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
 
-    final IndexableFileSet indexableFileSet = new IndexableFileSet() {
+    IndexableFileSet indexableFileSet = new IndexableFileSet() {
       @Override
-      public boolean isInSet(@NotNull final VirtualFile file) {
-        return file.getFileSystem() == srcRoot.getFileSystem() &&
-               module.getProject().isOpen();
+      public boolean isInSet(@NotNull VirtualFile file) {
+        return file.getFileSystem() == srcRoot.getFileSystem() && module.getProject().isOpen();
       }
 
       @Override
-      public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
+      public void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
         VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
           @Override
           public boolean visitFile(@NotNull VirtualFile file) {
@@ -119,30 +116,22 @@ public class LightProjectDescriptor {
       }
     };
     FileBasedIndex.getInstance().registerIndexableSet(indexableFileSet, null);
-    Disposer.register(module.getProject(), new Disposable() {
-      @Override
-      public void dispose() {
-        FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet);
-      }
-    });
+    Disposer.register(module.getProject(), () -> FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet));
 
     return srcRoot;
   }
 
-  protected void createContentEntry(@NotNull final Module module, @NotNull final VirtualFile srcRoot) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        Sdk sdk = getSdk();
-        if (sdk != null) {
-          model.setSdk(sdk);
-        }
-
-        ContentEntry contentEntry = model.addContentEntry(srcRoot);
-        contentEntry.addSourceFolder(srcRoot, false);
-
-        configureModule(module, model, contentEntry);
+  protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      Sdk sdk = getSdk();
+      if (sdk != null) {
+        model.setSdk(sdk);
       }
+
+      ContentEntry contentEntry = model.addContentEntry(srcRoot);
+      contentEntry.addSourceFolder(srcRoot, false);
+
+      configureModule(module, model, contentEntry);
     });
   }
 
@@ -161,11 +150,12 @@ public class LightProjectDescriptor {
     }
   }
 
-  protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-  }
-  
+  @SuppressWarnings("NullableProblems")
+  protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) { }
+
   public interface SetupHandler {
-    void moduleCreated(@NotNull Module module);
-    void sourceRootCreated(@NotNull VirtualFile sourceRoot); 
-  } 
+    default void moduleCreated(@NotNull Module module) { }
+
+    default void sourceRootCreated(@NotNull VirtualFile sourceRoot) { }
+  }
 }

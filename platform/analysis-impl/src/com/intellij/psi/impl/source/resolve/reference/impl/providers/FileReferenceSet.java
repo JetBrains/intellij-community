@@ -46,30 +46,14 @@ public class FileReferenceSet {
 
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>
     DEFAULT_PATH_EVALUATOR_OPTION =
-    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>(
+    new CustomizableReferenceProvider.CustomizationKey<>(
       PsiBundle.message("default.path.evaluator.option"));
   public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL =
-    new Function<PsiFile, Collection<PsiFileSystemItem>>() {
-      @Override
-      @Nullable
-      public Collection<PsiFileSystemItem> fun(final PsiFile file) {
-        return getAbsoluteTopLevelDirLocations(file);
-      }
-    };
+    file -> getAbsoluteTopLevelDirLocations(file);
 
-  public static final Condition<PsiFileSystemItem> FILE_FILTER = new Condition<PsiFileSystemItem>() {
-    @Override
-    public boolean value(final PsiFileSystemItem item) {
-      return item instanceof PsiFile;
-    }
-  };
+  public static final Condition<PsiFileSystemItem> FILE_FILTER = item -> item instanceof PsiFile;
 
-  public static final Condition<PsiFileSystemItem> DIRECTORY_FILTER = new Condition<PsiFileSystemItem>() {
-    @Override
-    public boolean value(final PsiFileSystemItem item) {
-      return item instanceof PsiDirectory;
-    }
-  };
+  public static final Condition<PsiFileSystemItem> DIRECTORY_FILTER = item -> item instanceof PsiDirectory;
 
   protected FileReference[] myReferences;
   private PsiElement myElement;
@@ -199,12 +183,12 @@ public class FileReferenceSet {
     reparse();
   }
 
-
+  @NotNull
   public PsiElement getElement() {
     return myElement;
   }
 
-  void setElement(final PsiElement element) {
+  void setElement(@NotNull PsiElement element) {
     myElement = element;
   }
 
@@ -368,7 +352,7 @@ public class FileReferenceSet {
         }
         final PsiFile contextFile = contextProvider.getContextFile(file);
         if (contextFile != null) {
-          return Collections.<PsiFileSystemItem>singleton(contextFile.getParent());
+          return Collections.singleton(contextFile.getParent());
         }
       }
     }
@@ -377,11 +361,11 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  protected final Collection<PsiFileSystemItem> getContextByFileSystemItem(@NotNull PsiFileSystemItem file) {
+  protected Collection<PsiFileSystemItem> getContextByFileSystemItem(@NotNull PsiFileSystemItem file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
-      final ArrayList<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
+      final ArrayList<PsiFileSystemItem> list = new ArrayList<>();
       final Project project = file.getProject();
       for (FileReferenceHelper helper : helpers) {
         if (helper.isMine(project, virtualFile)) {
@@ -394,15 +378,18 @@ public class FileReferenceSet {
       if (!list.isEmpty()) {
         return list;
       }
-      final VirtualFile parent = virtualFile.getParent();
-      if (parent != null) {
-        final PsiDirectory directory = file.getManager().findDirectory(parent);
-        if (directory != null) {
-          return Collections.<PsiFileSystemItem>singleton(directory);
-        }
-      }
+      return getParentDirectoryContext();
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  protected Collection<PsiFileSystemItem> getParentDirectoryContext() {
+    PsiFile file = getContainingFile();
+    VirtualFile virtualFile = file == null ? null : file.getOriginalFile().getVirtualFile();
+    final VirtualFile parent = virtualFile == null ? null : virtualFile.getParent();
+    final PsiDirectory directory = parent == null ? null :file.getManager().findDirectory(parent);
+    return directory != null ? Collections.singleton(directory) : Collections.emptyList();
   }
 
   public String getPathString() {
@@ -437,7 +424,7 @@ public class FileReferenceSet {
     final Module module = ModuleUtilCore.findModuleForPsiElement(parent == null ? file : parent);
     if (module == null) return Collections.emptyList();
 
-    final List<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
+    final List<PsiFileSystemItem> list = new ArrayList<>();
     final Project project = file.getProject();
     for (FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
       if (helper.isMine(project, virtualFile)) {
@@ -464,12 +451,7 @@ public class FileReferenceSet {
   @NotNull
   protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
-    return ContainerUtil.mapNotNull(files, new NullableFunction<VirtualFile, PsiFileSystemItem>() {
-      @Override
-      public PsiFileSystemItem fun(VirtualFile file) {
-        return file != null ? manager.findDirectory(file) : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null ? manager.findDirectory(file) : null);
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
@@ -478,7 +460,7 @@ public class FileReferenceSet {
 
   public <Option> void addCustomization(CustomizableReferenceProvider.CustomizationKey<Option> key, Option value) {
     if (myOptions == null) {
-      myOptions = new HashMap<CustomizableReferenceProvider.CustomizationKey, Object>(5);
+      myOptions = new HashMap<>(5);
     }
     myOptions.put(key, value);
   }
@@ -502,5 +484,9 @@ public class FileReferenceSet {
 
   public void setEmptyPathAllowed(boolean emptyPathAllowed) {
     myEmptyPathAllowed = emptyPathAllowed;
+  }
+
+  public boolean supportsExtendedCompletion() {
+    return true;
   }
 }

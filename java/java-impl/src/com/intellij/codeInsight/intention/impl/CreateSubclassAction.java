@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -47,11 +48,15 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -85,7 +90,11 @@ public class CreateSubclassAction extends BaseIntentionAction {
     PsiElement element = file.findElementAt(position);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass ||
-        psiClass.hasModifierProperty(PsiModifier.FINAL) || psiClass.getContainingFile().getContainingDirectory() == null) {
+        psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+      return false;
+    }
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiClass);
+    if (virtualFile == null || virtualFile.getFileType() == ScratchFileType.INSTANCE) {
       return false;
     }
     if (!isSupportedLanguage(psiClass)) return false;
@@ -167,8 +176,8 @@ public class CreateSubclassAction extends BaseIntentionAction {
   @Nullable
   public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass) {
     final PsiDirectory sourceDir = psiClass.getContainingFile().getContainingDirectory();
-
-    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(sourceDir);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
+    final PsiPackage aPackage = sourceDir != null ? JavaDirectoryService.getInstance().getPackage(sourceDir) : null;
     final CreateClassDialog dialog = new CreateClassDialog(
       psiClass.getProject(), getTitle(psiClass),
       psiClass.getName() + IMPL_SUFFIX,
@@ -176,7 +185,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       CreateClassKind.CLASS, true, ModuleUtilCore.findModuleForPsiElement(psiClass)) {
       @Override
       protected PsiDirectory getBaseDir(String packageName) {
-        return sourceDir;
+        return sourceDir != null && fileIndex.getSourceRootForFile(sourceDir.getVirtualFile()) != null ? sourceDir : super.getBaseDir(packageName);
       }
 
       @Override
@@ -206,14 +215,10 @@ public class CreateSubclassAction extends BaseIntentionAction {
           targetClass[0] = JavaDirectoryService.getInstance().createClass(targetDirectory, className);
         }
         catch (final IncorrectOperationException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
-                                                "\n"+e.getLocalizedMessage(),
-                                       CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(
+            () -> Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
+                                                  "\n" + e.getLocalizedMessage(),
+                                         CodeInsightBundle.message("intention.error.cannot.create.class.title")));
           return;
         }
         startTemplate(oldTypeParameterList, project, psiClass, targetClass[0], false);
@@ -317,7 +322,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     }
     if (hasNonTrivialConstructor) {
       final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, targetClass, PsiSubstitutor.EMPTY);
-      final List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
+      final List<PsiMethodMember> baseConstructors = new ArrayList<>();
       for (PsiMethod baseConstr : constructors) {
         if (PsiUtil.isAccessible(project, baseConstr, targetClass, targetClass)) {
           baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));

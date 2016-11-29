@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -75,7 +76,9 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     }
 
     if (matchingTemplates.isEmpty() && customTemplatesLookupElements.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.no.defined"));
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.no.defined"));
+      }
       return;
     }
 
@@ -93,7 +96,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     String prefixWithoutDots = computeDescriptionMatchingPrefix(editor.getDocument(), offset);
     Pattern prefixSearchPattern = Pattern.compile(".*\\b" + prefixWithoutDots + ".*");
 
-    Map<TemplateImpl, String> matchingTemplates = new TreeMap<TemplateImpl, String>(TemplateListPanel.TEMPLATE_COMPARATOR);
+    Map<TemplateImpl, String> matchingTemplates = new TreeMap<>(TemplateListPanel.TEMPLATE_COMPARATOR);
     for (TemplateImpl template : templates) {
       String templateKey = template.getKey();
       if (fullMatch) {
@@ -279,7 +282,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
     @Override
     public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
-      LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
+      LinkedHashSet<LookupElement> result = new LinkedHashSet<>();
       List<LookupElement> items = getMatchingItems();
       for (LookupElement item : items) {
         if (item.getLookupString().startsWith(lookup.itemPattern(item))) {
@@ -287,9 +290,9 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         }
       }
       result.addAll(items);
-      ArrayList<LookupElement> list = new ArrayList<LookupElement>(result);
+      ArrayList<LookupElement> list = new ArrayList<>(result);
       int selected = lookup.isSelectionTouched() ? list.indexOf(lookup.getCurrentItem()) : 0;
-      return new Pair<List<LookupElement>, Integer>(list, selected >= 0 ? selected : 0);
+      return new Pair<>(list, selected >= 0 ? selected : 0);
     }
 
     @Override

@@ -90,7 +90,7 @@ public class SelectCvsConfigurationPanel extends JPanel {
   public void editConfigurations() {
     final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     final CvsConfigurationsListEditor cvsConfigurationsListEditor =
-      new CvsConfigurationsListEditor(new ArrayList<CvsRootConfiguration>(configuration.CONFIGURATIONS), myProject);
+      new CvsConfigurationsListEditor(new ArrayList<>(configuration.CONFIGURATIONS), myProject);
     final CvsRootConfiguration selectedConfiguration = getSelectedConfiguration();
     if (selectedConfiguration != null) {
       cvsConfigurationsListEditor.selectConfiguration(selectedConfiguration);

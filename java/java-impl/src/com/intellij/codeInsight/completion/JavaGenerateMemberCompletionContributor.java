@@ -86,7 +86,7 @@ public class JavaGenerateMemberCompletionContributor {
             public void handleInsert(InsertionContext context, LookupElement item) {
               removeLookupString(context);
 
-              insertGenerationInfos(context, Collections.singletonList(new PsiGenerationInfo<PsiMethod>(prototype)));
+              insertGenerationInfos(context, Collections.singletonList(new PsiGenerationInfo<>(prototype)));
             }
           }));
           
@@ -135,7 +135,7 @@ public class JavaGenerateMemberCompletionContributor {
     List<PsiGenerationInfo<PsiMethod>> newInfos = GenerateMembersUtil
       .insertMembersAtOffset(context.getFile(), context.getStartOffset(), infos);
     if (!newInfos.isEmpty()) {
-      final List<PsiElement> elements = new ArrayList<PsiElement>();
+      final List<PsiElement> elements = new ArrayList<>();
       for (GenerationInfo member : newInfos) {
         if (!(member instanceof TemplateGenerationInfo)) {
           final PsiMember psiMember = member.getPsiMember();
@@ -168,6 +168,9 @@ public class JavaGenerateMemberCompletionContributor {
     LookupElementBuilder element = LookupElementBuilder.create(prototype, signature).withLookupString(methodName).
       withLookupString(signature).withLookupString(overrideSignature).withInsertHandler(insertHandler).
       appendTailText(parameters, false).appendTailText(" {...}", true).withTypeText(typeText).withIcon(icon);
+    if (prototype.isDeprecated()) {
+      element = element.setStrikeout(true);
+    }
     element.putUserData(GENERATE_ELEMENT, true);
     return element;
   }

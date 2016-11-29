@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package git4idea.push;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -127,7 +126,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   public void test_nothing() {
     GitPushNativeResult branchResult = new GitPushNativeResult(UP_TO_DATE, "refs/heads/master");
-    GitPushResultNotification notification = notification(convertFromNative(branchResult, Collections.<GitPushNativeResult>emptyList(),
+    GitPushResultNotification notification = notification(convertFromNative(branchResult, Collections.emptyList(),
                                                                             0, from("master"), to("origin/master")));
     assertNotification(NotificationType.INFORMATION, "Push successful", "Everything is up-to-date", notification);
   }
@@ -185,7 +184,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     String reason = nativeType == REJECTED ? GitPushNativeResult.FETCH_FIRST_REASON : null;
     GitPushNativeResult nr = new GitPushNativeResult(nativeType, from, reason, null);
     return GitPushRepoResult.addUpdateResult(
-      convertFromNative(nr, Collections.<GitPushNativeResult>emptyList(), commits, from(from), to(to)),
+      convertFromNative(nr, Collections.emptyList(), commits, from(from), to(to)),
       updateResult);
   }
 
@@ -207,22 +206,17 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   private static GitRemoteBranch to(String to) {
     int firstSlash = to.indexOf('/');
-    GitRemote remote = new GitRemote(to.substring(0, firstSlash), Collections.<String>emptyList(), Collections.<String>emptyList(),
-                                     Collections.<String>emptyList(), Collections.<String>emptyList());
+    GitRemote remote = new GitRemote(to.substring(0, firstSlash), Collections.emptyList(), Collections.emptyList(),
+                                     Collections.emptyList(), Collections.emptyList());
     return new GitStandardRemoteBranch(remote, to.substring(firstSlash + 1));
   }
 
   private GitPushResultNotification notification(GitPushRepoResult singleResult) {
-    return notification(Collections.<GitRepository, GitPushRepoResult>singletonMap(repo("community"), singleResult));
+    return notification(Collections.singletonMap(repo("community"), singleResult));
   }
 
   private GitPushResultNotification notification(Map<GitRepository, GitPushRepoResult> map) {
-    boolean wasUpdatePerformed = ContainerUtil.exists(map.values(), new Condition<GitPushRepoResult>() {
-      @Override
-      public boolean value(GitPushRepoResult aNew) {
-        return aNew.getUpdateResult() != null;
-      }
-    });
+    boolean wasUpdatePerformed = ContainerUtil.exists(map.values(), aNew -> aNew.getUpdateResult() != null);
     UpdatedFiles updatedFiles = UpdatedFiles.create();
     if (wasUpdatePerformed) {
       updatedFiles.getTopLevelGroups().get(0).add("file.txt", "Git", null);
@@ -232,12 +226,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   private static MockGitRepository repo(final String name) {
     final Ref<VirtualFile> root = Ref.create();
-    EdtTestUtil.runInEdtAndWait(new Runnable() {
-      @Override
-      public void run() {
-        root.set(createChildData(ourProject.getBaseDir(), name));
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> root.set(createChildData(ourProject.getBaseDir(), name)));
     return new MockGitRepository(ourProject, root.get());
   }
 }

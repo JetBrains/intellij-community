@@ -1,21 +1,25 @@
 package com.jetbrains.env.python.testing;
 
-import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyDocTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * User : catherine
  */
 public class PythonDocTestingTest extends PyEnvTestCase {
+  @Test
   public void testUTRunner() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py", 0);
+        return new PyDocTestProcessRunner("test1.py", 0);
       }
 
       @Override
@@ -30,12 +34,13 @@ public class PythonDocTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testClass() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py::FirstGoodTest", 0);
+        return new PyDocTestProcessRunner("test1.py::FirstGoodTest", 0);
       }
 
       @Override
@@ -49,12 +54,13 @@ public class PythonDocTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testMethod() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py::SecondGoodTest::test_passes", 0);
+        return new PyDocTestProcessRunner("test1.py::SecondGoodTest::test_passes", 0);
       }
 
       @Override
@@ -68,12 +74,13 @@ public class PythonDocTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testFunction() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test1.py::factorial", 0);
+        return new PyDocTestProcessRunner("test1.py::factorial", 0);
       }
 
       @Override
@@ -87,12 +94,13 @@ public class PythonDocTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testUTRunner2() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyDocTestProcessRunner createProcessRunner() throws Exception {
-        return new PyDocTestProcessRunner(getTestDataPath() + "/testRunner/env/doc", "test2.py", 0);
+        return new PyDocTestProcessRunner("test2.py", 0);
       }
 
       @Override

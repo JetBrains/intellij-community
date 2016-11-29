@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.*;
@@ -10,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,19 +49,19 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     final PsiFile psiFile = element.getContainingFile();
     if (! (psiFile instanceof JsonFile)) return;
 
-    final JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
+    final JsonProperty firstProp = getFirstProperty(element);
     if (firstProp == null) {
       checkRootObject(holder, element);
       return;
     }
     if (checkIfAlreadyProcessed(holder, firstProp)) return;
 
-    final List<BySchemaChecker> checkers = new ArrayList<BySchemaChecker>();
+    final List<BySchemaChecker> checkers = new ArrayList<>();
     JsonSchemaWalker.findSchemasForAnnotation(firstProp, new JsonSchemaWalker.CompletionSchemesConsumer() {
       @Override
       public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
         final BySchemaChecker checker = new BySchemaChecker();
-        final Set<String> validatedProperties = new HashSet<String>();
+        final Set<String> validatedProperties = new HashSet<>();
         checker.checkByScheme(firstProp.getValue(), schema, validatedProperties);
         checkers.add(checker);
       }
@@ -76,12 +90,25 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     }
   }
 
+  private static JsonProperty getFirstProperty(@NotNull PsiElement element) {
+    JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
+    if (firstProp == null) {
+      final JsonObject firstObject = PsiTreeUtil.getParentOfType(element, JsonObject.class, false);
+      if (firstObject != null && firstObject.getParent() instanceof JsonValue) {
+        final List<JsonProperty> propertyList = firstObject.getPropertyList();
+        if (!propertyList.isEmpty()) firstProp = propertyList.get(0);
+      }
+    }
+    return firstProp;
+  }
+
   private void checkRootObject(@NotNull AnnotationHolder holder, PsiElement property) {
-    final JsonObject object = PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    JsonValue object = PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    if (object == null) object = PsiTreeUtil.getParentOfType(property, JsonArray.class);
     if (object != null) {
       final BySchemaChecker rootChecker = new BySchemaChecker();
 
-      final Set<String> validatedProperties = new HashSet<String>();
+      final Set<String> validatedProperties = new HashSet<>();
       rootChecker.checkByScheme(object, myRootSchema, validatedProperties);
       processCheckerResults(holder, rootChecker);
     }
@@ -91,7 +118,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     final AnnotationSession session = holder.getCurrentAnnotationSession();
     Set<PsiElement> data = session.getUserData(ANNOTATED_PROPERTIES);
     if (data == null) {
-      data = new HashSet<PsiElement>();
+      data = new HashSet<>();
       session.putUserData(ANNOTATED_PROPERTIES, data);
     }
     if (data.contains(property)) return true;
@@ -115,7 +142,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     private boolean myHadTypeError;
 
     public BySchemaChecker() {
-      myErrors = new HashMap<PsiElement, String>();
+      myErrors = new HashMap<>();
     }
 
     public Map<PsiElement, String> getErrors() {
@@ -193,16 +220,23 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       final JsonObject object = ObjectUtils.tryCast(value, JsonObject.class);
       //noinspection ConstantConditions
       final List<JsonProperty> propertyList = object.getPropertyList();
-      final Map<String, JsonProperty> map = new HashMap<String, JsonProperty>();
+      final Map<String, JsonProperty> map = new HashMap<>();
       for (JsonProperty property : propertyList) {
         map.put(property.getName(), property);
         final JsonSchemaObject propertySchema = properties.get(property.getName());
         if (propertySchema != null) {
-          checkByScheme(property.getValue(), propertySchema, new HashSet<String>());
-        } else if (schema.getAdditionalPropertiesSchema() != null) {
-          checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<String>());
-        } else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
-          error("Property '" + property.getName() + "' is not allowed", property);
+          checkByScheme(property.getValue(), propertySchema, new HashSet<>());
+        }
+        else {
+          final JsonSchemaObject patternSchema = schema.getMatchingPatternPropertySchema(property.getName());
+          if (patternSchema != null) {
+            checkByScheme(property.getValue(), patternSchema, new HashSet<>());
+          } else if (schema.getAdditionalPropertiesSchema() != null) {
+            checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<>());
+          }
+          else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
+            error("Property '" + property.getName() + "' is not allowed", property);
+          }
         }
         validatedProperties.add(property.getName());
       }
@@ -238,25 +272,21 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       if (schemaDependencies != null) {
         for (Map.Entry<String, JsonSchemaObject> entry : schemaDependencies.entrySet()) {
           if (map.containsKey(entry.getKey())) {
-            checkByScheme(value, entry.getValue(), new HashSet<String>());
+            checkByScheme(value, entry.getValue(), new HashSet<>());
           }
         }
       }
     }
 
     private boolean checkForEnum(JsonValue value, JsonSchemaObject schema) {
-      if (schema.getEnum() == null) return true;
+      //enum values + pattern -> don't check enum values
+      if (schema.getEnum() == null || schema.getPattern() != null)  return true;
       final String text = value.getText();
       final List<Object> objects = schema.getEnum();
       for (Object object : objects) {
         if (object.toString().equalsIgnoreCase(text)) return true;
       }
-      error("Value should be one of: [" + StringUtil.join(objects, new Function<Object, String>() {
-        @Override
-        public String fun(Object o) {
-          return o.toString();
-        }
-      }, ", ") + "]", value);
+      error("Value should be one of: [" + StringUtil.join(objects, o -> o.toString(), ", ") + "]", value);
       return false;
     }
 
@@ -272,7 +302,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     }
 
     private class ArrayItemsChecker {
-      private final Set<String> myValueTexts = new HashSet<String>();
+      private final Set<String> myValueTexts = new HashSet<>();
       private JsonValue myFirstNonUnique;
       private boolean myCheckUnique;
 
@@ -280,14 +310,14 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         myCheckUnique = schema.isUniqueItems();
         if (schema.getItemsSchema() != null) {
           for (JsonValue arrayValue : list) {
-            checkByScheme(arrayValue, schema.getItemsSchema(), new HashSet<String>());
+            checkByScheme(arrayValue, schema.getItemsSchema(), new HashSet<>());
             checkUnique(arrayValue);
           }
         } else if (schema.getItemsSchemaList() != null) {
           final Iterator<JsonSchemaObject> iterator = schema.getItemsSchemaList().iterator();
           for (JsonValue arrayValue : list) {
             if (iterator.hasNext()) {
-              checkByScheme(arrayValue, iterator.next(), new HashSet<String>());
+              checkByScheme(arrayValue, iterator.next(), new HashSet<>());
             } else {
               if (!Boolean.TRUE.equals(schema.getAdditionalItemsAllowed())) {
                 error("Additional items are not allowed", arrayValue);
@@ -338,12 +368,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         }
       }
       // todo: regular expressions, format
-      if (schema.getPattern() != null) {
+      /*if (schema.getPattern() != null) {
         LOG.info("Unsupported property used: 'pattern'");
       }
       if (schema.getFormat() != null) {
         LOG.info("Unsupported property used: 'format'");
-      }
+      }*/
     }
 
     private void checkNumber(JsonValue propValue, JsonSchemaObject schema, JsonSchemaType schemaType) {
@@ -363,10 +393,13 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           return;
         }
       }
-      if (schema.getMultipleOf() != null) {
-        final double leftOver = value.doubleValue() % schema.getMultipleOf().doubleValue();
+      final Number multipleOf = schema.getMultipleOf();
+      if (multipleOf != null) {
+        final double leftOver = value.doubleValue() % multipleOf.doubleValue();
         if (leftOver > 0.000001) {
-          error("Is not multiple of " + propValue.getText(), propValue);
+          final String multipleOfValue = String.valueOf(Math.abs(multipleOf.doubleValue() - multipleOf.intValue()) < 0.000001 ?
+                                                        multipleOf.intValue() : multipleOf);
+          error("Is not multiple of " + multipleOfValue, propValue);
           return;
         }
       }
@@ -441,12 +474,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
     private void processOneOf(JsonValue value, JsonSchemaObject schema, Set<String> validatedProperties) {
       final List<JsonSchemaObject> oneOf = schema.getOneOf();
-      final Map<PsiElement, String> errors = new HashMap<PsiElement, String>();
+      final Map<PsiElement, String> errors = new HashMap<>();
       int cntCorrect = 0;
       boolean validatedPropertiesAdded = false;
       for (JsonSchemaObject object : oneOf) {
         final BySchemaChecker checker = new BySchemaChecker();
-        final HashSet<String> local = new HashSet<String>();
+        final HashSet<String> local = new HashSet<>();
         checker.checkByScheme(value, object, local);
         if (checker.isCorrect()) {
           if (!validatedPropertiesAdded) {
@@ -455,7 +488,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           }
           ++ cntCorrect;
         } else {
-          if (errors.isEmpty() || !checker.getErrors().containsKey(value)) {
+          if (errors.isEmpty() || notTypeError(value, checker)) {
             errors.clear();
             errors.putAll(checker.getErrors());
           }
@@ -473,18 +506,23 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       }
     }
 
+    private static boolean notTypeError(JsonValue value, BySchemaChecker checker) {
+      if (!checker.isHadTypeError()) return true;
+      return !checker.getErrors().containsKey(value);
+    }
+
     private void processAnyOf(JsonValue value, JsonSchemaObject schema, Set<String> validatedProperties) {
       final List<JsonSchemaObject> anyOf = schema.getAnyOf();
-      final Map<PsiElement, String> errors = new HashMap<PsiElement, String>();
+      final Map<PsiElement, String> errors = new HashMap<>();
       for (JsonSchemaObject object : anyOf) {
         final BySchemaChecker checker = new BySchemaChecker();
-        final HashSet<String> local = new HashSet<String>();
+        final HashSet<String> local = new HashSet<>();
         checker.checkByScheme(value, object, local);
         if (checker.isCorrect()) {
           validatedProperties.addAll(local);
           return;
         }
-        if (errors.isEmpty() && !checker.getErrors().containsKey(value)) {
+        if (errors.isEmpty() && notTypeError(value, checker)) {
           errors.clear();
           errors.putAll(checker.getErrors());
         }

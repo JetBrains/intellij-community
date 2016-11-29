@@ -24,7 +24,7 @@ import java.util.*;
  * @author: db
  * Date: 01.03.11
  */
-abstract class Difference {
+public abstract class Difference {
 
   public static boolean weakerAccess(final int me, final int then) {
     return ((me & Opcodes.ACC_PRIVATE) > 0 && (then & Opcodes.ACC_PRIVATE) == 0) ||
@@ -43,21 +43,22 @@ abstract class Difference {
   public static final int SIGNATURE = 8;
   public static final int SUPERCLASS = 16;
   public static final int USAGES = 32;
+  public static final int ANNOTATIONS = 64;
 
-  public interface Specifier<T> {
+  public interface Specifier<T, D extends Difference> {
     Collection<T> added();
 
     Collection<T> removed();
 
-    Collection<Pair<T, Difference>> changed();
+    Collection<Pair<T, D>> changed();
 
     boolean unchanged();
   }
 
-  public static <T> Specifier<T> make(final Set<T> past, final Set<T> now) {
+  public static <T, D extends Difference> Specifier<T, D> make(final Set<T> past, final Set<T> now) {
     if (past == null) {
       final Collection<T> _now = Collections.unmodifiableCollection(now);
-      return new Specifier<T>() {
+      return new Specifier<T, D>() {
         public Collection<T> added() {
           return _now;
         }
@@ -66,7 +67,7 @@ abstract class Difference {
           return Collections.emptyList();
         }
 
-        public Collection<Pair<T, Difference>> changed() {
+        public Collection<Pair<T, D>> changed() {
           return Collections.emptyList();
         }
 
@@ -84,33 +85,36 @@ abstract class Difference {
 
     removed.removeAll(now);
 
-    final Set<Pair<T, Difference>> changed = new HashSet<Pair<T, Difference>>();
-    final Set<T> intersect = new HashSet<T>(past);
-    final Map<T, T> nowMap = new HashMap<T, T>();
+    final Set<Pair<T, D>> changed;
+    if (canContainChangedElements(past, now)) {
+      changed = new HashSet<Pair<T, D>>();
+      final Set<T> intersect = new HashSet<T>(past);
+      final Map<T, T> nowMap = new HashMap<T, T>();
 
-    for (T s : now) {
-      if (intersect.contains(s)) {
-        nowMap.put(s, s);
+      for (T s : now) {
+        if (intersect.contains(s)) {
+          nowMap.put(s, s);
+        }
       }
-    }
 
-    intersect.retainAll(now);
+      intersect.retainAll(now);
 
-    for (T x : intersect) {
-      final T y = nowMap.get(x);
-
-      if (x instanceof Proto) {
+      for (T x : intersect) {
         final Proto px = (Proto)x;
-        final Proto py = (Proto)y;
-        final Difference diff = py.difference(px);
+        final Proto py = (Proto)nowMap.get(x);
+        //noinspection unchecked
+        final D diff = (D)py.difference(px);
 
         if (!diff.no()) {
           changed.add(Pair.create(x, diff));
         }
       }
     }
+    else {
+      changed = Collections.emptySet();
+    }
 
-    return new Specifier<T>() {
+    return new Specifier<T, D>() {
       public Collection<T> added() {
         return added;
       }
@@ -119,7 +123,7 @@ abstract class Difference {
         return removed;
       }
 
-      public Collection<Pair<T, Difference>> changed() {
+      public Collection<Pair<T, D>> changed() {
         return changed;
       }
 
@@ -127,6 +131,13 @@ abstract class Difference {
         return changed.isEmpty() && added.isEmpty() && removed.isEmpty();
       }
     };
+  }
+
+  private static <T> boolean canContainChangedElements(final Set<T> past, final Set<T> now) {
+    if (past != null && now != null && !past.isEmpty() && !now.isEmpty()) {
+      return past.iterator().next() instanceof Proto;
+    }
+    return false;
   }
 
   public abstract int base();
@@ -142,4 +153,6 @@ abstract class Difference {
   public abstract boolean packageLocalOn();
 
   public abstract boolean hadValue();
+
+  public abstract Specifier<TypeRepr.ClassType, Difference> annotations();
 }

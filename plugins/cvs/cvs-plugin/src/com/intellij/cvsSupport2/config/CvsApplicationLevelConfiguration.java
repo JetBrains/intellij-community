@@ -38,7 +38,7 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration");
 
-  public List<CvsRootConfiguration> CONFIGURATIONS = new ArrayList<CvsRootConfiguration>();
+  public List<CvsRootConfiguration> CONFIGURATIONS = new ArrayList<>();
 
   public ExtConfiguration EXT_CONFIGURATION = new ExtConfiguration();
   public SshSettings SSH_CONFIGURATION = new SshSettings();

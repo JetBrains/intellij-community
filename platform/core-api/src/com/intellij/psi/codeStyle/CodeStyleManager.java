@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -27,10 +28,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Service for reformatting code fragments, getting names for elements
@@ -73,7 +76,7 @@ public abstract class CodeStyleManager  {
    * @return the element in the PSI tree after the reformat operation corresponding to the
    *         original element.
    * @throws IncorrectOperationException if the file to reformat is read-only.
-   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   * @see #reformatText(PsiFile, int, int)
    */
   @NotNull public abstract PsiElement reformat(@NotNull PsiElement element) throws IncorrectOperationException;
 
@@ -87,7 +90,7 @@ public abstract class CodeStyleManager  {
    * @return the element in the PSI tree after the reformat operation corresponding to the
    *         original element.
    * @throws IncorrectOperationException if the file to reformat is read-only.
-   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   * @see #reformatText(PsiFile, int, int)
    */
   @NotNull public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
 
@@ -101,7 +104,7 @@ public abstract class CodeStyleManager  {
    * @return the element in the PSI tree after the reformat operation corresponding to the
    *         original element.
    * @throws IncorrectOperationException if the file to reformat is read-only.
-   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   * @see #reformatText(PsiFile, int, int)
    */
   public abstract PsiElement reformatRange(@NotNull PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException;
 
@@ -117,7 +120,7 @@ public abstract class CodeStyleManager  {
    * @return the element in the PSI tree after the reformat operation corresponding to the
    *         original element.
    * @throws IncorrectOperationException if the file to reformat is read-only.
-   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   * @see #reformatText(PsiFile, int, int)
    */
   public abstract PsiElement reformatRange(@NotNull PsiElement element,
                                            int startOffset,
@@ -136,7 +139,7 @@ public abstract class CodeStyleManager  {
 
   /**
    * Re-formats a ranges of text in the specified file. This method works faster than
-   * {@link #reformatRange(com.intellij.psi.PsiElement, int, int)} but invalidates the
+   * {@link #reformatRange(PsiElement, int, int)} but invalidates the
    * PSI structure for the file.
    *
    * @param file  the file to reformat
@@ -145,15 +148,13 @@ public abstract class CodeStyleManager  {
    */
   public abstract void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
 
-
-  /**
-   * Works as #reformatText, but reformats not only specified ranges, but also some context around to make code look consistent
-   * @param file
-   * @param ranges
-   * @throws IncorrectOperationException
-   */
-  public abstract void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
-
+  public abstract void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException;
+  
+  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+    List<TextRange> rangesList = ContainerUtil.newArrayList(ranges);
+    reformatTextWithContext(file, new ChangedRangesInfo(rangesList, null));
+  }
+  
   /**
    * Re-formats the specified range of a file, modifying only line indents and leaving
    * all other whitespace intact.
@@ -180,9 +181,18 @@ public abstract class CodeStyleManager  {
    *
    * @param document   the document to reformat.
    * @param offset the offset the line at which should be reformatted.
+   * @param mode   the current formatting mode to be used when adjusting line indent.
    * @throws IncorrectOperationException if the file is read-only.
+   * @see FormattingMode
    */
-  public abstract int adjustLineIndent(@NotNull Document document, int offset);
+  public abstract int adjustLineIndent(@NotNull Document document, int offset, FormattingMode mode);
+
+  /**
+   * The same as {@link #adjustLineIndent(Document, int, FormattingMode)} but uses {@link FormattingMode#ADJUST_INDENT} as formatting mode.
+   */
+  public final int adjustLineIndent(@NotNull Document document, int offset) {
+    return adjustLineIndent(document, offset, FormattingMode.ADJUST_INDENT);
+  }
 
   /**
    * @deprecated this method is not intended to be used by plugins.
@@ -259,9 +269,13 @@ public abstract class CodeStyleManager  {
    *
    * @param r the operation to run.
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public abstract void performActionWithFormatterDisabled(Runnable r);
 
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T;
 
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
+
+  public abstract FormattingMode getCurrentFormattingMode();
 }

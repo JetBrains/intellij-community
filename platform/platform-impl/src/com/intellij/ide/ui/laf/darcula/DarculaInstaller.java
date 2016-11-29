@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,43 +16,55 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaInstaller {
+  private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.savedEditorTheme";
+  private static final String DEFAULT_EDITOR_THEME_KEY = "Default.savedEditorTheme";
 
   public static void uninstall() {
-    JBColor.setDark(false);
-    IconLoader.setUseDarkIcons(false);
-    if (DarculaLaf.NAME.equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) {
-      final EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
-      if (scheme != null) {
-        EditorColorsManager.getInstance().setGlobalScheme(scheme);
-      }
-    }
-    update();
+    performImpl(false);
   }
 
   public static void install() {
-    JBColor.setDark(true);
-    IconLoader.setUseDarkIcons(true);
-    if (!DarculaLaf.NAME.equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) {
-      final EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(DarculaLaf.NAME);
+    performImpl(true);
+  }
+
+  private static void performImpl(boolean dark) {
+    JBColor.setDark(dark);
+    IconLoader.setUseDarkIcons(dark);
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    EditorColorsScheme current = colorsManager.getGlobalScheme();
+    if (dark != ColorUtil.isDark(current.getDefaultBackground())) {
+      String targetScheme = dark ? DarculaLaf.NAME : EditorColorsScheme.DEFAULT_SCHEME_NAME;
+      PropertiesComponent properties = PropertiesComponent.getInstance();
+      String savedEditorThemeKey = dark ? DARCULA_EDITOR_THEME_KEY : DEFAULT_EDITOR_THEME_KEY;
+      String toSavedEditorThemeKey = dark ? DEFAULT_EDITOR_THEME_KEY : DARCULA_EDITOR_THEME_KEY;
+      String themeName = properties.getValue(savedEditorThemeKey);
+      if (themeName != null && colorsManager.getScheme(themeName) != null) {
+        targetScheme = themeName;
+      }
+      properties.setValue(toSavedEditorThemeKey, current.getName(), dark ? EditorColorsScheme.DEFAULT_SCHEME_NAME : DarculaLaf.NAME);
+
+      EditorColorsScheme scheme = colorsManager.getScheme(targetScheme);
       if (scheme != null) {
-        EditorColorsManager.getInstance().setGlobalScheme(scheme);
+        colorsManager.setGlobalScheme(scheme);
       }
     }
     update();
   }
 
   protected static void update() {
-    UISettings.getInstance().fireUISettingsChanged();
+    UISettings.getShadowInstance().fireUISettingsChanged();
     ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 }

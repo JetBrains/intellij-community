@@ -27,9 +27,8 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +93,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   protected List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
     List<DiffContent> contents = myRequest.getContents();
 
-    List<T> holders = new ArrayList<T>(2);
+    List<T> holders = new ArrayList<>(2);
     for (int i = 0; i < 2; i++) {
       DiffContent content = contents.get(i);
       holders.add(factory.create(content, myContext));
@@ -152,10 +151,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return DiffUtil.getVirtualFile(myRequest, getCurrentSide());
-    }
-    else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
+    if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
       return getCurrentSide().select(myRequest.getContents());
     }
     return super.getData(dataId);
@@ -167,10 +163,10 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
 
   @Nullable
   @Override
-  protected OpenFileDescriptor getOpenFileDescriptor() {
-    OpenFileDescriptor descriptor1 = getCurrentSide().select(getRequest().getContents()).getOpenFileDescriptor();
-    if (descriptor1 != null) return descriptor1;
-    return getCurrentSide().other().select(getRequest().getContents()).getOpenFileDescriptor();
+  protected Navigatable getNavigatable() {
+    Navigatable navigatable1 = getCurrentSide().select(getRequest().getContents()).getNavigatable();
+    if (navigatable1 != null) return navigatable1;
+    return getCurrentSide().other().select(getRequest().getContents()).getNavigatable();
   }
 
   public static <T extends EditorHolder> boolean canShowRequest(@NotNull DiffContext context,

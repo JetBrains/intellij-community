@@ -38,9 +38,9 @@ import java.util.Iterator;
  * author: lesya
  */
 class AddHandler {
-  private final Collection<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
-  private final Collection<VirtualFile> myAllFiles = new ArrayList<VirtualFile>();
-  private final Collection<File> myIOFiles = new ArrayList<File>();
+  private final Collection<VirtualFile> myAddedFiles = new ArrayList<>();
+  private final Collection<VirtualFile> myAllFiles = new ArrayList<>();
+  private final Collection<File> myIOFiles = new ArrayList<>();
   private final Project myProject;
   private final CvsStorageComponent myCvsStorageComponent;
 
@@ -98,12 +98,10 @@ class AddHandler {
 
     if (!myAddedFiles.isEmpty()) {
       if (CvsVcs2.getInstance(myProject).getAddConfirmation().getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-        final Runnable addRunnable = new Runnable() {
-          public void run() {
-            if (!myCvsStorageComponent.getIsActive()) return;
-            AddFileOrDirectoryAction.createActionToAddNewFileAutomatically()
-              .actionPerformed(createDataContext(myAddedFiles));
-          }
+        final Runnable addRunnable = () -> {
+          if (!myCvsStorageComponent.getIsActive()) return;
+          AddFileOrDirectoryAction.createActionToAddNewFileAutomatically()
+            .actionPerformed(createDataContext(myAddedFiles));
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           addRunnable.run();

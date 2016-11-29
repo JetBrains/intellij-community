@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.terminal;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
@@ -23,11 +24,12 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
@@ -40,7 +42,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -50,6 +55,10 @@ import java.util.concurrent.Future;
  */
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
+  public static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
+  public static final String ZDOTDIR = "ZDOTDIR";
+  public static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
+
 
   private final Charset myDefaultCharset;
 
@@ -66,18 +75,34 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return new File(path).getName();
   }
 
-  private static File findRCFile() {
-    try {
-      final String folder = PtyUtil.getPtyLibFolderPath();
-      if (folder != null) {
-        File rcFile = new File(folder, "jediterm.in");
-        if (rcFile.exists()) {
-          return rcFile;
+  private static String findRCFile(String shellName) {
+    if (shellName != null) {
+      if ("sh".equals(shellName)) {
+        shellName = "bash";
+      }
+      try {
+        String rcfile = "jediterm-" + shellName + ".in";
+        if ("zsh".equals(shellName)) {
+          rcfile = ".zshrc";
+        }
+        else if ("fish".equals(shellName)) {
+          rcfile = "fish/config.fish";
+        }
+        URL resource = LocalTerminalDirectRunner.class.getClassLoader().getResource(rcfile);
+        if (resource != null && "jar".equals(resource.getProtocol())) {
+          File file = new File(new File(PtyUtil.getJarContainingFolderPath(LocalTerminalDirectRunner.class)).getParent(), rcfile);
+          if (file.exists()) {
+            return file.getAbsolutePath();
+          }
+        }
+        if (resource != null) {
+          URI uri = resource.toURI();
+          return uri.getPath();
         }
       }
-    }
-    catch (Exception e) {
-      LOG.warn("Unable to get JAR folder", e);
+      catch (Exception e) {
+        LOG.warn("Unable to find " + "jediterm-" + shellName + ".in configuration file", e);
+      }
     }
     return null;
   }
@@ -89,31 +114,40 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    Map<String, String> envs = new HashMap<String, String>(System.getenv());
-    envs.put("TERM", "xterm-256color");
+    Map<String, String> envs = new HashMap<>(System.getenv());
+    if (!SystemInfo.isWindows) {
+      envs.put("TERM", "xterm-256color");
+    }
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
+
+    String[] command = getCommand(envs);
+
+    for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
+      try {
+        command = customizer.customizeCommandAndEnvironment(myProject, command, envs);
+
+        if (directory == null) {
+          directory = customizer.getDefaultFolder();
+        }
+      }
+      catch (Exception e) {
+        LOG.error("Exception during customization of the terminal session", e);
+      }
+    }
+
     try {
-      return PtyProcess.exec(getCommand(), envs, directory != null ? directory : currentProjectFolder());
+      return PtyProcess.exec(command, envs, directory != null
+                                            ? directory
+                                            : TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
     }
   }
 
-  private String currentProjectFolder() {
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-
-    final VirtualFile[] roots = projectRootManager.getContentRoots();
-    if (roots.length == 1) {
-      roots[0].getCanonicalPath();
-    }
-    final VirtualFile baseDir = myProject.getBaseDir();
-    return baseDir == null ? null : baseDir.getCanonicalPath();
-  }
-
   @Override
   protected ProcessHandler createProcessHandler(final PtyProcess process) {
-    return new PtyProcessHandler(process, getCommand()[0]);
+    return new PtyProcessHandler(process, getShellPath());
   }
 
   @Override
@@ -131,30 +165,107 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return "Local Terminal";
   }
 
-  public String[] getCommand() {
-    String[] command;
-    String shellPath = TerminalOptionsProvider.getInstance().getShellPath();
 
+  public String[] getCommand(Map<String, String> envs) {
+
+    String shellPath = getShellPath();
+
+    return getCommand(shellPath, envs, TerminalOptionsProvider.Companion.getInstance().shellIntegration());
+  }
+
+  private static String getShellPath() {
+    return TerminalOptionsProvider.Companion.getInstance().getShellPath();
+  }
+
+  @NotNull
+  public static String[] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
     if (SystemInfo.isUnix) {
-      File rcFile = findRCFile();
+      List<String> command = Lists.newArrayList(shellPath.split(" "));
 
-      String shellName = getShellName(shellPath);
+      String shellCommand = command.get(0);
+      String shellName = command.size() > 0 ? getShellName(shellCommand) : null;
 
-      if (rcFile != null && (shellName.equals("bash") || shellName.equals("sh"))) {
-        command = new String[]{shellPath, "--rcfile", rcFile.getAbsolutePath(), "-i"};
-      }
-      else if (hasLoginArgument(shellName)) {
-        command = new String[]{shellPath, "--login"};
+
+      if (shellName != null) {
+        command.remove(0);
+
+        List<String> result = Lists.newArrayList(shellCommand);
+
+        String rcFilePath = findRCFile(shellName);
+
+        if (rcFilePath != null &&
+            shellIntegration) {
+          if (shellName.equals("bash") || (SystemInfo.isMac && shellName.equals("sh"))) {
+            addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
+          }
+          else if (shellName.equals("zsh")) {
+            String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
+            if (StringUtil.isNotEmpty(zdotdir)) {
+              File zshRc = new File(FileUtil.expandUserHome(zdotdir), ".zshrc");
+              if (zshRc.exists()) {
+                envs.put(JEDITERM_USER_RCFILE, zshRc.getAbsolutePath());
+              }
+            }
+            envs.put(ZDOTDIR, new File(rcFilePath).getParent());
+          }
+          else if (shellName.equals("fish")) {
+            String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);
+            if (StringUtil.isNotEmpty(xdgConfig)) {
+              File fishConfig = new File(new File(FileUtil.expandUserHome(xdgConfig), "fish"), "config.fish");
+              if (fishConfig.exists()) {
+                envs.put(JEDITERM_USER_RCFILE, fishConfig.getAbsolutePath());
+              }
+            }
+
+            envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());
+          }
+        }
+
+        if (!loginOrInteractive(command)) {
+          if (hasLoginArgument(shellName) && SystemInfo.isMac) {
+            result.add("--login");
+          }
+          result.add("-i");
+        }
+
+        if (isLogin(command)) {
+          envs.put("LOGIN_SHELL", "1");
+        }
+
+        result.addAll(command);
+        return ArrayUtil.toStringArray(result);
       }
       else {
-        command = shellPath.split(" ");
+        return ArrayUtil.toStringArray(command);
       }
     }
     else {
-      command = new String[]{shellPath};
+      return new String[]{shellPath};
     }
+  }
 
-    return command;
+  private static void addRcFileArgument(Map<String, String> envs,
+                                        List<String> command,
+                                        List<String> result,
+                                        String rcFilePath, String rcfileOption) {
+    result.add(rcfileOption);
+    result.add(rcFilePath);
+    int idx = command.indexOf(rcfileOption);
+    if (idx >= 0) {
+      command.remove(idx);
+      if (idx < command.size()) {
+        envs.put(JEDITERM_USER_RCFILE, FileUtil.expandUserHome(command.get(idx)));
+        command.remove(idx);
+      }
+    }
+  }
+
+  private static boolean loginOrInteractive(List<String> command) {
+    return command.contains("-i") || isLogin(command);
+  }
+
+  private static boolean isLogin(List<String> command) {
+    return command.contains("--login") || command.contains("-l");
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {
@@ -173,12 +284,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         @Override
         public void startNotified(ProcessEvent event) {
           try {
-            myWaitFor.setTerminationCallback(new Consumer<Integer>() {
-              @Override
-              public void consume(Integer integer) {
-                notifyProcessTerminated(integer);
-              }
-            });
+            myWaitFor.setTerminationCallback(integer -> notifyProcessTerminated(integer));
           }
           finally {
             removeProcessListener(this);

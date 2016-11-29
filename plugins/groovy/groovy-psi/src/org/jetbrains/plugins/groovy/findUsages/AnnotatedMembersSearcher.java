@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,18 +63,15 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
       return Collections.emptyList();
     }
 
-    final List<PsiModifierListOwner> result = new ArrayList<PsiModifierListOwner>();
+    final List<PsiModifierListOwner> result = new ArrayList<>();
     for (final PsiElement element : members) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          PsiElement e =
-            element instanceof GroovyFile ?
-            ((GroovyFile)element).getPackageDefinition() : element;
+      ApplicationManager.getApplication().runReadAction(() -> {
+        PsiElement e =
+          element instanceof GroovyFile ?
+          ((GroovyFile)element).getPackageDefinition() : element;
 
-          if (e instanceof PsiModifierListOwner) {
-            result.add((PsiModifierListOwner)e);
-          }
+        if (e instanceof PsiModifierListOwner) {
+          result.add((PsiModifierListOwner)e);
         }
       });
     }
@@ -101,24 +98,21 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
       candidates = getAnnotatedMemberCandidates(annClass, ((GlobalSearchScope)scope));
     }
     else {
-      candidates = new ArrayList<PsiModifierListOwner>();
+      candidates = new ArrayList<>();
       for (final PsiElement element : ((LocalSearchScope)scope).getScope()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (element instanceof GroovyPsiElement) {
-              ((GroovyPsiElement)element).accept(new GroovyRecursiveElementVisitor() {
-                @Override
-                public void visitMethod(GrMethod method) {
-                  candidates.add(method);
-                }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          if (element instanceof GroovyPsiElement) {
+            ((GroovyPsiElement)element).accept(new GroovyRecursiveElementVisitor() {
+              @Override
+              public void visitMethod(@NotNull GrMethod method) {
+                candidates.add(method);
+              }
 
-                @Override
-                public void visitField(GrField field) {
-                  candidates.add(field);
-                }
-              });
-            }
+              @Override
+              public void visitField(@NotNull GrField field) {
+                candidates.add(field);
+              }
+            });
           }
         });
       }
@@ -132,7 +126,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
             PsiModifierList list = candidate.getModifierList();
             if (list != null) {
               for (PsiAnnotation annotation : list.getAnnotations()) {
-                if (annotationFQN.equals(annotation.getQualifiedName()) && !consumer.process(candidate)) {
+                if ((p.isApproximate() || annotationFQN.equals(annotation.getQualifiedName())) && !consumer.process(candidate)) {
                   return false;
                 }
               }

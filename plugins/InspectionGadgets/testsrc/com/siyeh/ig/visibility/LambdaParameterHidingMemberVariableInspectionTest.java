@@ -45,4 +45,24 @@ public class LambdaParameterHidingMemberVariableInspectionTest extends LightInsp
            "  }" +
            "}");
   }
+
+  public void testStatic() {
+    doTest("import java.util.function.Function;" +
+           "class X {" +
+           "  private String s;" +
+           "  static Function<String, String> m() {" +
+           "    return s -> null; " +
+           "  }" +
+           "}");
+  }
+
+  public void testStaticStatic() {
+    doTest("import java.util.function.Function;" +
+           "class X {" +
+           "  private static String s;" +
+           "  static Function<String, String> m() {" +
+           "    return /*Lambda parameter 's' hides field in class 'X'*/s/**/ -> null; " +
+           "  }" +
+           "}");
+  }
 }

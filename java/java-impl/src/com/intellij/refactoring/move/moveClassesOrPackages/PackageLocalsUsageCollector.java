@@ -29,7 +29,7 @@ import com.intellij.util.containers.MultiMap;
 import java.util.HashSet;
 
 class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
-  private final HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<PsiElement, HashSet<PsiElement>>();
+  private final HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<>();
   private final PsiElement[] myElementsToMove;
   private final MultiMap<PsiElement, String> myConflicts;
   private final PackageWrapper myTargetPackage;
@@ -53,8 +53,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
 
   private void visitResolvedReference(PsiElement resolved, PsiJavaCodeReferenceElement reference) {
     if (resolved instanceof PsiModifierListOwner) {
-      final PsiModifierList modifierList = ((PsiModifierListOwner)resolved).getModifierList();
-      if (PsiModifier.PACKAGE_LOCAL.equals(VisibilityUtil.getVisibilityModifier(modifierList))) {
+      if (((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         PsiFile aFile = resolved.getContainingFile();
         if (aFile != null && !isInsideMoved(resolved)) {
           final PsiDirectory containingDirectory = aFile.getContainingDirectory();
@@ -63,7 +62,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
             if (aPackage != null && !myTargetPackage.equalToPackage(aPackage)) {
               HashSet<PsiElement> reportedRefs = myReported.get(resolved);
               if (reportedRefs == null) {
-                reportedRefs = new HashSet<PsiElement>();
+                reportedRefs = new HashSet<>();
                 myReported.put(resolved, reportedRefs);
               }
               PsiElement container = ConflictsUtil.getContainer(reference);

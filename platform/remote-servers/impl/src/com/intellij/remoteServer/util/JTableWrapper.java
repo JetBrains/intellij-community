@@ -115,9 +115,9 @@ public class JTableWrapper<T, C extends Column<T>> {
 
   public void setInputRows(List<T> rows) {
     myInputRows = rows;
-    ArrayList<Collection<Object>> input = new ArrayList<Collection<Object>>();
+    ArrayList<Collection<Object>> input = new ArrayList<>();
     for (T row : rows) {
-      ArrayList<Object> rowCellValues = new ArrayList<Object>();
+      ArrayList<Object> rowCellValues = new ArrayList<>();
       for (C column : getColumns()) {
         rowCellValues.add(column.getColumnValue(row));
       }

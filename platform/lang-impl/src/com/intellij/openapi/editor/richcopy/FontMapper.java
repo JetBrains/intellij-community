@@ -33,7 +33,7 @@ public class FontMapper {
   private static final Logger LOG = Logger.getInstance("#" + FontMapper.class.getName());
 
   private static final String[] logicalFontsToMap = {Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SERIF, Font.SANS_SERIF};
-  private static final Map<String, String> logicalToPhysicalMapping = new HashMap<String, String>();
+  private static final Map<String, String> logicalToPhysicalMapping = new HashMap<>();
 
   static {
     try {

@@ -34,7 +34,7 @@ import java.util.Set;
 public class PyGotoClassContributor implements ChooseByNameContributor {
   @NotNull
   public String[] getNames(final Project project, final boolean includeNonProjectItems) {
-    Set<String> results = new HashSet<String>();
+    Set<String> results = new HashSet<>();
     results.addAll(PyClassNameIndex.allKeys(project));
     results.addAll(PyModuleNameIndex.getAllKeys(project));
     return ArrayUtil.toStringArray(results);
@@ -43,7 +43,7 @@ public class PyGotoClassContributor implements ChooseByNameContributor {
   @NotNull
   public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project,
                                          final boolean includeNonProjectItems) {
-    final List<NavigationItem> results = new ArrayList<NavigationItem>();
+    final List<NavigationItem> results = new ArrayList<>();
     results.addAll(PyClassNameIndex.find(name, project, includeNonProjectItems));
     results.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
     return results.toArray(new NavigationItem[results.size()]);

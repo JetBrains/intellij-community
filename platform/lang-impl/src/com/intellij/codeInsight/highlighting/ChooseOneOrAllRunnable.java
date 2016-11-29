@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -41,7 +42,7 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
     myTitle = title;
   }
 
-  protected abstract void selected(T... classes);
+  protected abstract void selected(@NotNull T... classes);
 
   @Override
   public void run() {
@@ -59,7 +60,7 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
         selected(myClasses);
         return;
       }
-      Vector<Object> model = new Vector<Object>(Arrays.asList(myClasses));
+      Vector<Object> model = new Vector<>(Arrays.asList(myClasses));
       model.insertElementAt(CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry"), 0);
 
       myList = new JBList(model);
@@ -69,30 +70,22 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
       final PopupChooserBuilder builder = new PopupChooserBuilder(myList);
       renderer.installSpeedSearch(builder);
 
-      final Runnable callback = new Runnable() {
-        @Override
-        public void run() {
-          int idx = myList.getSelectedIndex();
-          if (idx < 0) return;
-          if (idx > 0) {
-            selected((T[])ArrayUtil.toObjectArray(myClasses[idx-1].getClass(), myClasses[idx-1]));
-          }
-          else {
-            selected(myClasses);
-          }
+      final Runnable callback = () -> {
+        int idx = myList.getSelectedIndex();
+        if (idx < 0) return;
+        if (idx > 0) {
+          selected((T[])ArrayUtil.toObjectArray(myClasses[idx-1].getClass(), myClasses[idx-1]));
+        }
+        else {
+          selected(myClasses);
         }
       };
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          builder.
-            setTitle(myTitle).
-            setItemChoosenCallback(callback).
-            createPopup().
-            showInBestPositionFor(myEditor);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> builder.
+        setTitle(myTitle).
+        setItemChoosenCallback(callback).
+        createPopup().
+        showInBestPositionFor(myEditor));
     }
   }
 

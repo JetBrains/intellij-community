@@ -74,6 +74,11 @@ public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCas
     assertEquals("XML Namespace Prefix \"xs\" (http://www.w3.org/2001/XMLSchema)", context.getQuickNavigateInfo());
   }
 
+  public void testEntityValue() throws Exception {
+    DocumentationTestContext context = new DocumentationTestContext("9.xml");
+    assertEquals("\"&#171;\"", context.getQuickNavigateInfo());
+  }
+
   public void testXmlDoc6() throws Exception {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"car",testName + ".xml", testName + ".xsd");

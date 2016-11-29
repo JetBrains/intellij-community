@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -88,21 +89,17 @@ public class LongLineInspection extends LocalInspectionTool {
     if (document == null) {
       return null;
     }
-    final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
+    final List<ProblemDescriptor> descriptors = new SmartList<>();
     for (int idx = 0; idx < document.getLineCount(); idx++) {
       final int startOffset = document.getLineStartOffset(idx);
       final int endOffset = document.getLineEndOffset(idx);
       if (endOffset - startOffset > codeStyleRightMargin) {
         final int maxOffset = startOffset + codeStyleRightMargin;
-        PsiElement element = file.findElementAt(maxOffset);
-        if (element != null) {
-          descriptors.add(manager
-            .createProblemDescriptor(element,
-                                     String.format("Line is longer than allowed by code style (> %s symbols)", codeStyleRightMargin),
-                                     (LocalQuickFix)null,
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                     isOnTheFly));
-        }
+        descriptors.add(
+          manager.createProblemDescriptor(file, new TextRange(maxOffset, endOffset),
+                                          String.format("Line is longer than allowed by code style (> %s columns)", codeStyleRightMargin),
+                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                          isOnTheFly));
       }
     }
     return descriptors.isEmpty() ? null : descriptors.toArray(new ProblemDescriptor[descriptors.size()]);

@@ -26,21 +26,20 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +55,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider, SwitchProvider {
+public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
   public static final String POPUP_PLACE = "ToolwindowPopup";
   // when client property is put in toolwindow component, hides toolwindow label
   public static final String HIDE_ID_LABEL = "HideIdLabel";
@@ -111,10 +110,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   public JComponent getComponent() {
     return myContent;
-  }
-
-  public boolean isCycleRoot() {
-    return true;
   }
 
   public JComponent getTabComponent() {
@@ -405,8 +400,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Content selectedContent = manager.getSelectedContent();
-        final List<Pair<String, JComponent>> tabs = new ArrayList<Pair<String, JComponent>>();
+        final List<Pair<String, JComponent>> tabs = new ArrayList<>();
         int selectedTab = -1;
+        List<Content> mergedContent = ContainerUtil.newArrayList();
         for (Content content : manager.getContents()) {
           if (tabPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) {
             final String label = content.getTabName().substring(tabPrefix.length() + 2);
@@ -417,7 +413,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             tabs.add(Pair.create(label, component));
             manager.removeContent(content, false);
             content.setComponent(null);
-            Disposer.dispose(content);
+            content.setShouldDisposeContent(false);
+            mergedContent.add(content);
           }
         }
         PropertiesComponent.getInstance().unsetValue(TabbedContent.SPLIT_PROPERTY_PREFIX + tabPrefix);
@@ -425,6 +422,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           final Pair<String, JComponent> tab = tabs.get(i);
           ContentUtilEx.addTabbedContent(manager, tab.second, tabPrefix, tab.first, i == selectedTab);
         }
+        mergedContent.forEach(Disposer::dispose);
       }
     };
   }
@@ -466,10 +464,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     if (CloseAction.CloseTarget.KEY.is(dataId)) {
       return computeCloseTarget();
-    }
-
-    if (SwitchProvider.KEY.is(dataId) && myType == ToolWindowContentUiType.TABBED) {
-      return this;
     }
 
     return null;
@@ -572,73 +566,12 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(actions),
                                                                                 DataManager.getInstance()
                                                                                   .getDataContext(myManager.getComponent()), false, true,
-                                                                                true, null, -1, new Condition<AnAction>() {
-        @Override
-        public boolean value(AnAction action) {
-          return action == selected.get() || action == selectedTab.get();
-        }
-      });
+                                                                                true, null, -1, action -> action == selected.get() || action == selectedTab.get());
 
     getCurrentLayout().showContentPopup(popup);
 
     if (selectedContent instanceof TabbedContent) {
-      new Alarm(Alarm.ThreadToUse.SWING_THREAD, popup).addRequest(new Runnable() {
-        public void run() {
-          popup.handleSelect(true);
-        }
-      }, 30);
-    }
-  }
-
-  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    List<SwitchTarget> result = new ArrayList<SwitchTarget>();
-
-    if (myType == ToolWindowContentUiType.TABBED) {
-      for (int i = 0; i < myManager.getContentCount(); i++) {
-        result.add(new ContentSwitchTarget(myManager.getContent(i)));
-      }
-    }
-
-    return result;
-  }
-
-  public SwitchTarget getCurrentTarget() {
-    return new ContentSwitchTarget(myManager.getSelectedContent());
-  }
-
-  private class ContentSwitchTarget extends ComparableObject.Impl implements SwitchTarget {
-
-    private Content myContent;
-
-    private ContentSwitchTarget(Content content) {
-      myContent = content;
-    }
-
-    public ActionCallback switchTo(boolean requestFocus) {
-      return myManager.setSelectedContentCB(myContent, requestFocus);
-    }
-
-    public boolean isVisible() {
-      return true;
-    }
-
-    public RelativeRectangle getRectangle() {
-      return myTabsLayout.getRectangleFor(myContent);
-    }
-
-    public Component getComponent() {
-      return myManager.getComponent();
-    }
-
-    @Override
-    public String toString() {
-      return myContent.getDisplayName();
-    }
-
-    @NotNull
-    @Override
-    public Object[] getEqualityObjects() {
-      return new Object[] {myContent};
+      new Alarm(Alarm.ThreadToUse.SWING_THREAD, popup).addRequest(() -> popup.handleSelect(true), 30);
     }
   }
 }

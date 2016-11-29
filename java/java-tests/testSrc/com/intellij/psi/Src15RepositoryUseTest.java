@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.AnnotatedPackagesSearch;
@@ -294,12 +294,12 @@ public class Src15RepositoryUseTest extends PsiTestCase {
   }
 
   public void testAnnotationIndex() throws Exception {
-    getJavaFacade().setAssertOnFileLoadingFilter(new VirtualFileFilter() {
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(new VirtualFileFilter() {
       @Override
       public boolean accept(final VirtualFile file) {
         return !"package-info.java".equals(file.getName());
       }
-    }, myTestRootDisposable);
+    }, getTestRootDisposable());
 
     final PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
     assertTrue(annotationTypeClass.isAnnotationType());
@@ -307,7 +307,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     final Collection<PsiMember> all = AnnotatedMembersSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll();
 
     assertEquals(2, all.size());
-    Set<String> correctNames = new HashSet<String>(Arrays.asList("AnnotatedClass", "correctMethod"));
+    Set<String> correctNames = new HashSet<>(Arrays.asList("AnnotatedClass", "correctMethod"));
     for (PsiMember member : all) {
       assertTrue(correctNames.contains(member.getName()));
     }
@@ -321,11 +321,11 @@ public class Src15RepositoryUseTest extends PsiTestCase {
   }
 
   private void setupLoadingFilter() {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
   }
 
   private void tearDownLoadingFilter() {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
   }
 
   @NotNull

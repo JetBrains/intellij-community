@@ -75,7 +75,7 @@ public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
     final XmlElement element = context.getXmlElement();
     if (element instanceof XmlTag) {
       final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent((XmlTag)element);
-      if (simpleContent != null && XmlUtil.collectEnumerationValues(simpleContent, new HashSet<String>())) {
+      if (simpleContent != null && XmlUtil.collectEnumerationValues(simpleContent, new HashSet<>())) {
         return Collections.emptyList();
       }
     }

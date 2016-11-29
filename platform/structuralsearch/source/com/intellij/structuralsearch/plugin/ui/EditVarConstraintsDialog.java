@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -244,7 +245,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
           final Variable var = variables.get(parameterList.getSelectedIndex());
           if (validateParameters()) {
             if (current!=null) copyValuesFromUI(current);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() { copyValuesToUI(var); }});
+            ApplicationManager.getApplication().runWriteAction(() -> copyValuesToUI(var));
             current = var;
           } else {
             rollingBackSelection = true;
@@ -272,8 +273,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     customScriptCode.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(@NotNull final ActionEvent e) {
         final List<String> variableNames = ContainerUtil.newArrayList(myConfiguration.getMatchOptions().getVariableConstraintNames());
-        variableNames.remove(current.getName());
-        variableNames.remove(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
+        variableNames.add(ScriptLog.SCRIPT_LOG_VAR_NAME);
         final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), variableNames);
         dialog.show();
         if (dialog.getExitCode() == OK_EXIT_CODE) {
@@ -465,7 +465,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
     containedInConstraints.setVisible(contextVar);
     textConstraintsPanel.setVisible(!contextVar);
-    expressionConstraints.setVisible(!contextVar);
     partOfSearchResults.setEnabled(!contextVar);
     occurencePanel.setVisible(!contextVar);
   }
@@ -541,7 +540,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     regexp = createRegexComponent();
     regexprForExprType = createRegexComponent();
     formalArgType = createRegexComponent();
-    customScriptCode = new ComponentWithBrowseButton<EditorTextField>(createScriptComponent(), null);
+    customScriptCode = new ComponentWithBrowseButton<>(createScriptComponent(), null);
 
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));

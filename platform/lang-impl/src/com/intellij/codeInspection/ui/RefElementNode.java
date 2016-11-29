@@ -16,45 +16,33 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.ui.ComputableIcon;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 
 /**
  * @author max
  */
-public class RefElementNode extends InspectionTreeNode {
-  private boolean myHasDescriptorsUnder = false;
-  private CommonProblemDescriptor mySingleDescriptor = null;
-  protected final InspectionToolPresentation myToolPresentation;
-  private final ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
-    @Override
-    public Icon compute() {
-      final RefEntity refEntity = getElement();
-      if (refEntity == null) {
-        return null;
-      }
-      return refEntity.getIcon(false);
-    }
-  });
-
-  public RefElementNode(@Nullable Object userObject, @NotNull InspectionToolPresentation presentation) {
-    super(userObject);
-    myToolPresentation = presentation;
-  }
-
-  public RefElementNode(@NotNull RefElement element, @NotNull InspectionToolPresentation presentation) {
-    this((Object)element, presentation);
+public class RefElementNode extends SuppressableInspectionTreeNode {
+  private volatile boolean myHasDescriptorsUnder;
+  private volatile CommonProblemDescriptor mySingleDescriptor;
+  private final Icon myIcon;
+  public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
+    super(userObject, presentation);
+    init(presentation.getContext().getProject());
+    final RefEntity refEntity = getElement();
+    myIcon = refEntity == null ? null : refEntity.getIcon(false);
   }
 
   public boolean hasDescriptorsUnder() {
@@ -69,59 +57,58 @@ public class RefElementNode extends InspectionTreeNode {
   @Override
   @Nullable
   public Icon getIcon(boolean expanded) {
-    return myIcon.getIcon();
+    return myIcon;
   }
 
-  public String toString() {
+  @Override
+  protected String calculatePresentableName() {
     final RefEntity element = getElement();
-    if (element == null || !element.isValid()) {
+    if (element == null) {
       return InspectionsBundle.message("inspection.reference.invalid");
     }
     return element.getRefManager().getRefinedElement(element).getName();
   }
 
   @Override
-  public boolean isValid() {
+  protected boolean calculateIsValid() {
     final RefEntity refEntity = getElement();
     return refEntity != null && refEntity.isValid();
   }
 
   @Override
-  public boolean isResolved() {
-    return myToolPresentation.isElementIgnored(getElement());
-  }
-
-
-  @Override
-  public void ignoreElement() {
-    myToolPresentation.ignoreCurrentElement(getElement());
-    super.ignoreElement();
+  public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
+    super.excludeElement(excludedManager);
   }
 
   @Override
-  public void amnesty() {
-    myToolPresentation.amnesty(getElement());
-    super.amnesty();
+  public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
+    super.amnestyElement(excludedManager);
   }
 
   @Override
   public FileStatus getNodeStatus() {
-    return  myToolPresentation.getElementStatus(getElement());
+    return myPresentation.getElementStatus(getElement());
   }
 
   @Override
   public void add(MutableTreeNode newChild) {
+    checkHasDescriptorUnder(newChild);
     super.add(newChild);
-    if (newChild instanceof ProblemDescriptionNode) {
-      myHasDescriptorsUnder = true;
-    }
   }
 
-  public void setProblem(@NotNull CommonProblemDescriptor descriptor) {
+  @Override
+  public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {
+    checkHasDescriptorUnder(child);
+    return super.insertByOrder(child, allowDuplication);
+  }
+
+  public void setProblem(CommonProblemDescriptor descriptor) {
     mySingleDescriptor = descriptor;
   }
 
-  public CommonProblemDescriptor getProblem() {
+  @Nullable
+  @Override
+  public CommonProblemDescriptor getDescriptor() {
     return mySingleDescriptor;
   }
 
@@ -134,7 +121,47 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
   @Override
-  public int getProblemCount() {
-    return Math.max(1, super.getProblemCount());
+  public int getProblemCount(boolean allowSuppressed) {
+    return isLeaf() ? myPresentation.getIgnoredRefElements().contains(getElement()) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid()) ? 0 : 1 : super.getProblemCount(allowSuppressed);
+  }
+
+  @Override
+  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+    if (isLeaf() && !myPresentation.isElementIgnored(getElement())) {
+      counter.put(HighlightDisplayLevel.WARNING, counter.get(HighlightDisplayLevel.WARNING) + 1);
+      return;
+    }
+    super.visitProblemSeverities(counter);
+  }
+
+  @Override
+  public boolean isQuickFixAppliedFromView() {
+    return false;
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizedTailText() {
+    if (myPresentation.isDummy()) {
+      return "";
+    }
+    final String customizedText = super.getCustomizedTailText();
+    if (customizedText != null) {
+      return customizedText;
+    }
+    return isLeaf() ? "" : null;
+  }
+
+  private void checkHasDescriptorUnder(MutableTreeNode newChild) {
+    if (myHasDescriptorsUnder) return;
+    if (newChild instanceof ProblemDescriptionNode ||
+        newChild instanceof RefElementNode && ((RefElementNode)newChild).hasDescriptorsUnder()) {
+      myHasDescriptorsUnder = true;
+      TreeNode parent = getParent();
+      while (parent instanceof RefElementNode) {
+        ((RefElementNode)parent).myHasDescriptorsUnder = true;
+        parent = parent.getParent();
+      }
+    }
   }
 }

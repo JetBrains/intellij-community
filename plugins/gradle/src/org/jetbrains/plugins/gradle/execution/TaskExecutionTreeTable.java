@@ -28,7 +28,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -105,12 +104,7 @@ public class TaskExecutionTreeTable extends TreeTable {
   private Collection<? extends ExecutionNode> getSelectedNodes() {
     final TreePath[] selectionPaths = getTree().getSelectionPaths();
     if (selectionPaths != null) {
-      return ContainerUtil.map(selectionPaths, new Function<TreePath, ExecutionNode>() {
-        @Override
-        public ExecutionNode fun(TreePath path) {
-          return getNodeFor(path);
-        }
-      });
+      return ContainerUtil.map(selectionPaths, path -> getNodeFor(path));
     }
     return Collections.emptyList();
   }
@@ -135,7 +129,23 @@ public class TaskExecutionTreeTable extends TreeTable {
 
   @Override
   public TableCellRenderer getCellRenderer(int row, int column) {
-    if (column == 1) {
+    if(column == 0) {
+      final TableCellRenderer cellRenderer = super.getCellRenderer(row, column);
+      return new TableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+                                                       Object value,
+                                                       boolean isSelected,
+                                                       boolean hasFocus,
+                                                       int row,
+                                                       int column) {
+          Component component = cellRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          final Color bg = isSelected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+          component.setBackground(bg);
+          return component;
+        }
+      };
+    } else if (column == 1) {
       return new DefaultTableCellRenderer() {
         @Override
         public Component getTableCellRendererComponent(JTable table,
@@ -156,12 +166,10 @@ public class TaskExecutionTreeTable extends TreeTable {
   }
 
   private void handleDoubleClickOrEnter(final TreePath treePath, final InputEvent e) {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        final ExecutionNode executionNode = getNodeFor(treePath);
-        if (executionNode != NULL_NODE) {
-          handleDoubleClickOrEnter(executionNode, e);
-        }
+    Runnable runnable = () -> {
+      final ExecutionNode executionNode = getNodeFor(treePath);
+      if (executionNode != NULL_NODE) {
+        handleDoubleClickOrEnter(executionNode, e);
       }
     };
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));

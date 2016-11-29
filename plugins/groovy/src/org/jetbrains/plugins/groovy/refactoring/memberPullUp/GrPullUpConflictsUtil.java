@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class GrPullUpConflictsUtil {
       }
     }
 
-    final Set<PsiMethod> allAbstractMethods = new HashSet<PsiMethod>(abstractMethods);
+    final Set<PsiMethod> allAbstractMethods = new HashSet<>(abstractMethods);
     if (superClass != null) {
       for (PsiMethod method : subclass.getMethods()) {
         if (!movedMembers.contains(method) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -105,7 +105,7 @@ public class GrPullUpConflictsUtil {
       }
     }
 
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     GrRefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement,
                                                              allAbstractMethods);
@@ -127,7 +127,7 @@ public class GrPullUpConflictsUtil {
       }
     }
     // check if moved methods use other members in the classes between Subclass and Superclass
-    List<PsiElement> checkModuleConflictsList = new ArrayList<PsiElement>();
+    List<PsiElement> checkModuleConflictsList = new ArrayList<>();
     for (PsiMember member : movedMembers) {
       if (member instanceof PsiMethod || member instanceof PsiClass && !(member instanceof PsiCompiledElement)) {
         GrClassMemberReferenceVisitor visitor =
@@ -144,7 +144,7 @@ public class GrPullUpConflictsUtil {
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getReturnTypeElement());
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getTypeParameterList());
     }
-    GrRefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, new UsageInfo[0], targetRepresentativeElement, conflicts);
+    GrRefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, UsageInfo.EMPTY_ARRAY, targetRepresentativeElement, conflicts);
     final String fqName = subclass.getQualifiedName();
     final String packageName;
     if (fqName != null) {

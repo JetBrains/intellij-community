@@ -38,7 +38,6 @@ import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.cli.CommandLineParser;
@@ -152,32 +151,19 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     ParsedCommandLine parsedCommandLine = gradleCmdParser.parse(ParametersListUtil.parse(fullCommandLine, true));
 
     final Map<String, List<String>> optionsMap =
-      commandLineConverter.convert(parsedCommandLine, new HashMap<String, List<String>>());
+      commandLineConverter.convert(parsedCommandLine, new HashMap<>());
 
     final List<String> systemProperties = optionsMap.remove("system-prop");
-    final String vmOptions = systemProperties == null ? "" : StringUtil.join(systemProperties, new Function<String, String>() {
-      @Override
-      public String fun(String entry) {
-        return "-D" + entry;
-      }
-    }, " ");
+    final String vmOptions = systemProperties == null ? "" : StringUtil.join(systemProperties, entry -> "-D" + entry, " ");
 
-    final String scriptParameters = StringUtil.join(optionsMap.entrySet(), new Function<Map.Entry<String, List<String>>, String>() {
-      @Override
-      public String fun(Map.Entry<String, List<String>> entry) {
-        final List<String> values = entry.getValue();
-        final String longOptionName = entry.getKey();
-        if (values != null && !values.isEmpty()) {
-          return StringUtil.join(values, new Function<String, String>() {
-            @Override
-            public String fun(String entry) {
-              return "--" + longOptionName + ' ' + entry;
-            }
-          }, " ");
-        }
-        else {
-          return "--" + longOptionName;
-        }
+    final String scriptParameters = StringUtil.join(optionsMap.entrySet(), entry -> {
+      final List<String> values = entry.getValue();
+      final String longOptionName = entry.getKey();
+      if (values != null && !values.isEmpty()) {
+        return StringUtil.join(values, entry1 -> "--" + longOptionName + ' ' + entry1, " ");
+      }
+      else {
+        return "--" + longOptionName;
       }
     }, " ");
 

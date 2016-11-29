@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Vladimir Kondratyev
- */
 package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -104,23 +101,21 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
 
       if(myComponent != null){
         final boolean forced = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == null;
-        myFocusManager.requestFocus(myComponent, myForced || forced).notifyWhenDone(myDoneCallback).doWhenDone(new Runnable() {
-          public void run() {
-            if (SystemInfo.isLinux && Registry.is("suppress.focus.stealing")) return;
-            // if owner is active window or it has active child window which isn't floating decorator then
-            // don't bring owner window to font. If we will make toFront every time then it's possible
-            // the following situation:
-            // 1. user perform refactoring
-            // 2. "Do not show preview" dialog is popping up.
-            // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
-            // isn't active.
-            if(!owner.isActive()){
-              final Window activeWindow=getActiveWindow(owner.getOwnedWindows());
-              if(activeWindow == null || (activeWindow instanceof FloatingDecorator)){
-                //Thread.dumpStack();
-                //System.out.println("------------------------------------------------------");
-                owner.toFront();
-              }
+        myFocusManager.requestFocus(myComponent, myForced || forced).notifyWhenDone(myDoneCallback).doWhenDone(() -> {
+          if (SystemInfo.isLinux && Registry.is("suppress.focus.stealing")) return;
+          // if owner is active window or it has active child window which isn't floating decorator then
+          // don't bring owner window to font. If we will make toFront every time then it's possible
+          // the following situation:
+          // 1. user perform refactoring
+          // 2. "Do not show preview" dialog is popping up.
+          // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
+          // isn't active.
+          if(!owner.isActive()){
+            final Window activeWindow=getActiveWindow(owner.getOwnedWindows());
+            if(activeWindow == null || (activeWindow instanceof FloatingDecorator)){
+              //Thread.dumpStack();
+              //System.out.println("------------------------------------------------------");
+              owner.toFront();
             }
           }
         });

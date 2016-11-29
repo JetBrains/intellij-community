@@ -203,19 +203,14 @@ public class EJavadocUtil {
   }
 
   static void setupJavadocAttributes(Element orderEntry, LibraryOrderEntry libraryOrderEntry, final ModuleRootModel model) {
-    setupAttributes(orderEntry, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return toEclipseJavadocPath(model, s);
-      }
-    }, JAVADOC_LOCATION, libraryOrderEntry.getRootUrls(JavadocOrderRootType.getInstance()));
+    setupAttributes(orderEntry, s -> toEclipseJavadocPath(model, s), JAVADOC_LOCATION, libraryOrderEntry.getRootUrls(JavadocOrderRootType.getInstance()));
   }
 
   static void setupAttributes(Element orderEntry,
                               Function<String, String> fun,
                               String attributeName, 
                               String[] roots) {
-    final List<String> eclipseUrls = new ArrayList<String>();
+    final List<String> eclipseUrls = new ArrayList<>();
     if (roots.length > 0) {
       eclipseUrls.add(fun.fun(roots[0]));
     }

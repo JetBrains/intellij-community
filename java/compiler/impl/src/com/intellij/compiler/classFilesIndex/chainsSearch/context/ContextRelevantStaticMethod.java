@@ -37,7 +37,7 @@ public class ContextRelevantStaticMethod {
     if (parameters == null) {
       this.parameters = null;
     } else {
-      this.parameters = new TIntObjectHashMap<SubLookupElement>(parameters.size());
+      this.parameters = new TIntObjectHashMap<>(parameters.size());
       parameters.forEachEntry(new TIntObjectProcedure<PsiVariable>() {
         @SuppressWarnings("ConstantConditions")
         @Override

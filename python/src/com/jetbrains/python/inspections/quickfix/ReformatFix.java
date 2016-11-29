@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -39,12 +38,6 @@ public class ReformatFix implements IntentionAction, LocalQuickFix, HighPriority
 
   @NotNull
   @Override
-  public String getName() {
-    return getText();
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
     return getText();
   }
@@ -61,9 +54,6 @@ public class ReformatFix implements IntentionAction, LocalQuickFix, HighPriority
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) {
-      return;
-    }
     CodeStyleManager.getInstance(project).reformat(file);
   }
 

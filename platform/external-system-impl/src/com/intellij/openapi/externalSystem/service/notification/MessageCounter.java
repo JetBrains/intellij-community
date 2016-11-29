@@ -33,7 +33,7 @@ import java.util.Map;
 public class MessageCounter {
 
   private final Map<ProjectSystemId, Map<String/* group */, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>>>
-    map = new HashMap<ProjectSystemId, Map<String, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>>>();
+    map = new HashMap<>();
 
   public synchronized void increment(@NotNull String groupName,
                                      @NotNull NotificationSource source,
@@ -51,7 +51,7 @@ public class MessageCounter {
           ContainerUtil.<NotificationSource, TObjectIntHashMap<NotificationCategory>>newHashMap()
         ),
         source,
-        new MyTObjectIntHashMap<NotificationCategory>()
+        new MyTObjectIntHashMap<>()
       );
     if (!counter.increment(category)) counter.put(category, 1);
   }
@@ -72,7 +72,7 @@ public class MessageCounter {
           ContainerUtil.<NotificationSource, TObjectIntHashMap<NotificationCategory>>newHashMap()
         ),
         notificationSource,
-        new MyTObjectIntHashMap<NotificationCategory>()
+        new MyTObjectIntHashMap<>()
       );
       counter.clear();
     }

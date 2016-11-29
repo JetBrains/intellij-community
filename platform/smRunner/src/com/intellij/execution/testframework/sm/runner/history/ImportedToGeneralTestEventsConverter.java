@@ -49,12 +49,9 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
 
   @Override
   public void onStartTesting() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        parseTestResults();
-        myHandler.detachProcess();
-      }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      parseTestResults();
+      myHandler.detachProcess();
     });
   }
 
@@ -64,12 +61,8 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
     }
     catch (IOException e) {
       final String message = e.getMessage();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(myConsoleProperties.getProject(), message, "Failed to Parse " + myFile.getName());
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> Messages.showErrorDialog(myConsoleProperties.getProject(), message, "Failed to Parse " + myFile.getName()));
     }
   }
 

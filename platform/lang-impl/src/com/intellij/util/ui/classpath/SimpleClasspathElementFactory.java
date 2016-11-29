@@ -56,7 +56,7 @@ public class SimpleClasspathElementFactory {
     if (table != null && LibraryTablesRegistrar.APPLICATION_LEVEL.equals(table.getTableLevel())) {
       return Collections.<SimpleClasspathElement>singletonList(new GlobalLibraryReferenceElement(library.getName()));
     }
-    final List<SimpleClasspathElement> elements = new ArrayList<SimpleClasspathElement>();
+    final List<SimpleClasspathElement> elements = new ArrayList<>();
     for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
       elements.add(new SingleRootClasspathElement(file.getUrl()));
     }
@@ -64,7 +64,7 @@ public class SimpleClasspathElementFactory {
   }
 
   public static List<SimpleClasspathElement> createElements(String... urls) {
-    final List<SimpleClasspathElement> list = new ArrayList<SimpleClasspathElement>();
+    final List<SimpleClasspathElement> list = new ArrayList<>();
     for (String url : urls) {
       list.add(new SingleRootClasspathElement(url));
     }
@@ -74,7 +74,7 @@ public class SimpleClasspathElementFactory {
   public static List<VirtualFile> convertToFiles(Collection<SimpleClasspathElement> cpeList)
   {
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    List<VirtualFile> files = new ArrayList<>();
     for (SimpleClasspathElement cpe : cpeList) {
       for (String fileUrl : cpe.getClassesRootUrls()) {
         VirtualFile file = fileManager.findFileByUrl(fileUrl);

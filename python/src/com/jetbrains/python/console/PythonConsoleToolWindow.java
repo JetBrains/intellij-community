@@ -58,8 +58,6 @@ public class PythonConsoleToolWindow {
 
   private boolean myInitialized = false;
 
-  private ActionCallback myActivation = new ActionCallback();
-
   public PythonConsoleToolWindow(Project project) {
     myProject = project;
   }
@@ -69,7 +67,7 @@ public class PythonConsoleToolWindow {
   }
 
   public List<RunContentDescriptor> getConsoleContentDescriptors() {
-    return FluentIterable.from(Lists.newArrayList(getToolWindow().getContentManager().getContents()))
+    return FluentIterable.from(Lists.newArrayList(getToolWindow(myProject).getContentManager().getContents()))
       .transform(CONTENT_TO_DESCRIPTOR_FUNCTION).filter(
         Predicates.notNull()).toList();
   }
@@ -95,7 +93,7 @@ public class PythonConsoleToolWindow {
 
       @Override
       public void stateChanged() {
-        ToolWindow window = getToolWindow();
+        ToolWindow window = getToolWindow(myProject);
         if (window != null) {
           boolean visible = window.isVisible();
           if (visible && toolWindow.getContentManager().getContentCount() == 0) {
@@ -124,7 +122,15 @@ public class PythonConsoleToolWindow {
   }
 
   public ToolWindow getToolWindow() {
-    return ToolWindowManager.getInstance(myProject).getToolWindow(PythonConsoleToolWindowFactory.ID);
+    return getToolWindow(myProject);
+  }
+
+  public static ToolWindow getToolWindow(Project project) {
+    return ToolWindowManager.getInstance(project).getToolWindow(PythonConsoleToolWindowFactory.Companion.getID());
+  }
+
+  public void setContent(RunContentDescriptor contentDescriptor) {
+    setContent(getToolWindow(myProject), contentDescriptor);
   }
 
   private static Content createContent(final @NotNull RunContentDescriptor contentDescriptor) {
@@ -139,7 +145,8 @@ public class PythonConsoleToolWindow {
   }
 
   private static void resetContent(RunContentDescriptor contentDescriptor, SimpleToolWindowPanel panel, Content content) {
-    RunContentDescriptor oldDescriptor = content.getDisposer() instanceof RunContentDescriptor ? (RunContentDescriptor)content.getDisposer() : null;
+    RunContentDescriptor oldDescriptor =
+      content.getDisposer() instanceof RunContentDescriptor ? (RunContentDescriptor)content.getDisposer() : null;
     if (oldDescriptor != null) Disposer.dispose(oldDescriptor);
 
     panel.setContent(contentDescriptor.getComponent());
@@ -172,17 +179,13 @@ public class PythonConsoleToolWindow {
     return window.getContentManager().getComponent();
   }
 
-  public void initialized() {
-    myActivation.setDone();
-  }
 
   public void activate(@NotNull Runnable runnable) {
-    myActivation.doWhenDone(runnable);
-    getToolWindow().activate(null);
+    getToolWindow(myProject).activate(runnable);
   }
 
   @Nullable
   public RunContentDescriptor getSelectedContentDescriptor() {
-    return CONTENT_TO_DESCRIPTOR_FUNCTION.apply(getToolWindow().getContentManager().getSelectedContent());
+    return CONTENT_TO_DESCRIPTOR_FUNCTION.apply(getToolWindow(myProject).getContentManager().getSelectedContent());
   }
 }

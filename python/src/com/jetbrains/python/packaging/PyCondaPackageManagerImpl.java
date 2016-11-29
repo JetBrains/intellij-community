@@ -33,7 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public static final String PYTHON = "python";
@@ -46,9 +49,8 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public void installManagement() throws ExecutionException {
   }
 
-
   @Override
-  public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
+  public boolean hasManagement() throws ExecutionException {
     final Sdk sdk = getSdk();
     return isCondaVEnv(sdk);
   }
@@ -59,7 +61,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Override
   public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
-    final ArrayList<String> arguments = new ArrayList<String>();
+    final ArrayList<String> arguments = new ArrayList<>();
     for (PyRequirement requirement : requirements) {
       arguments.add(requirement.toString());
     }
@@ -87,17 +89,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final ProcessOutput result;
-    if (indicator != null) {
-      result = handler.runProcessWithProgressIndicator(indicator);
-    }
-    else {
-      result = handler.runProcess();
-    }
-    if (result.isCancelled()) {
-      throw new RunCanceledByUserException();
-    }
+    final ProcessOutput result = handler.runProcess();
     final int exitCode = result.getExitCode();
     if (exitCode != 0) {
       final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
@@ -122,7 +114,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Override
   public void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException {
-    final ArrayList<String> arguments = new ArrayList<String>();
+    final ArrayList<String> arguments = new ArrayList<>();
     for (PyPackage aPackage : packages) {
       arguments.add(aPackage.getName());
     }
@@ -133,17 +125,17 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @NotNull
   @Override
-  protected List<PyPackage> getPackages() throws ExecutionException {
+  protected List<PyPackage> collectPackages() throws ExecutionException {
     final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
     final Set<PyPackage> packages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
-    packages.addAll(super.getPackages());
+    packages.addAll(super.collectPackages());
     return Lists.newArrayList(packages);
   }
 
   @NotNull
   protected static List<PyPackage> parseCondaToolOutput(@NotNull String s) throws ExecutionException {
     final String[] lines = StringUtil.splitByLines(s);
-    final List<PyPackage> packages = new ArrayList<PyPackage>();
+    final List<PyPackage> packages = new ArrayList<>();
     for (String line : lines) {
       if (line.startsWith("#")) continue;
       final List<String> fields = StringUtil.split(line, "=");
@@ -152,11 +144,11 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
-      final List<PyRequirement> requirements = new ArrayList<PyRequirement>();
+      final List<PyRequirement> requirements = new ArrayList<>();
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyRequirement.parse(requiresSpec));
+        requirements.addAll(PyRequirement.fromText(requiresSpec));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, "", requirements));

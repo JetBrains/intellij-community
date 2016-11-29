@@ -77,7 +77,7 @@ public class SshKeyChecker {
                                                                UnnamedConfigurable serverConfigurable,
                                                                C serverConfiguration,
                                                                ServerType<C> serverType) {
-    new ConfigurableHandler<C>(label, serverConfigurable, serverConfiguration, serverType);
+    new ConfigurableHandler<>(label, serverConfigurable, serverConfiguration, serverType);
   }
 
   private class ServerHandler extends HandlerBase {
@@ -264,7 +264,7 @@ public class SshKeyChecker {
         return;
       }
 
-      RemoteServer<C> server = new RemoteServerImpl<C>("<temp server to upload ssh key>", myServerType, myServerConfiguration);
+      RemoteServer<C> server = new RemoteServerImpl<>("<temp server to upload ssh key>", myServerType, myServerConfiguration);
 
       CloudConnectionTask task = new CloudConnectionTask(null, "Uploading SSH key", server) {
 

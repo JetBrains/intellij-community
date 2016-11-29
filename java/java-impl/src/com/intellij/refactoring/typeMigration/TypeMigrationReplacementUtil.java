@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -114,11 +115,16 @@ public class TypeMigrationReplacementUtil {
     return expression;
   }
 
-  static void migratePsiMemberType(final PsiElement element, final Project project, PsiType migratedType) {
+  static PsiType revalidateType(@NotNull PsiType migrationType, @NotNull Project project) {
+    if (!migrationType.isValid()) {
+      migrationType = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(migrationType.getCanonicalText());
+    }
+    return migrationType;
+  }
+
+  static void migrateMemberOrVariableType(final PsiElement element, final Project project, PsiType migratedType) {
     try {
-      if (!migratedType.isValid()) {
-        migratedType = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(migratedType.getCanonicalText());
-      }
+      migratedType = revalidateType(migratedType, project);
       final PsiTypeElement typeElement = JavaPsiFacade.getInstance(project).getElementFactory().createTypeElement(migratedType);
       if (element instanceof PsiMethod) {
         final PsiTypeElement returnTypeElement = ((PsiMethod)element).getReturnTypeElement();

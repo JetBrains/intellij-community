@@ -259,7 +259,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
   private static KeyStroke[] getKeyStrokes(String actionId, KeymapManager keymapManager) {
     final Shortcut[] shortcuts = keymapManager.getActiveKeymap().getShortcuts(actionId);
-    final List<KeyStroke> strokes = new ArrayList<KeyStroke>();
+    final List<KeyStroke> strokes = new ArrayList<>();
     for (final Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
         strokes.add(((KeyboardShortcut)shortcut).getFirstKeyStroke());

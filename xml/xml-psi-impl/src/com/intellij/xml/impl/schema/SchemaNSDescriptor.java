@@ -152,7 +152,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
 
       XmlUtil.doDuplicationCheckForElements(
         attrDeclTags,
-        new HashMap<String, XmlTag>(attrDeclTags.length),
+        new HashMap<>(attrDeclTags.length),
         SCHEMA_ATTR_DUP_INFO_PROVIDER,
         host
       );
@@ -161,7 +161,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
 
       XmlUtil.doDuplicationCheckForElements(
         elementDeclTags,
-        new HashMap<String, XmlTag>(elementDeclTags.length),
+        new HashMap<>(elementDeclTags.length),
         SCHEMA_ATTR_DUP_INFO_PROVIDER,
         host
       );

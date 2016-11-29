@@ -15,28 +15,64 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class BoundedTaskExecutorTest extends TestCase {
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      awaitAppPoolQuiescence("After tear down ");
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    awaitAppPoolQuiescence("Can't start test: ");
+  }
+
+  private static void awaitAppPoolQuiescence(String msg) {
+    long start = System.currentTimeMillis();
+    while (true) {
+      List<Thread> alive = Thread.getAllStackTraces().keySet().stream()
+        .filter(thread -> thread.getName().startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX))
+        .filter(thread -> thread.getState() == Thread.State.RUNNABLE)
+        .filter(thread -> thread.getStackTrace().length != 0) // there can be RUNNABLE zombies with empty stacktrace
+        .collect(Collectors.toList());
+
+      long finish = System.currentTimeMillis();
+      if (alive.isEmpty()) break;
+      if (finish-start > 10000) {
+        System.err.println(ThreadDumper.dumpThreadsToString());
+        throw new RuntimeException(msg+alive.size() +" threads are still alive: "+alive);
+      }
+    }
+  }
+
   public void testReallyBound() throws InterruptedException, ExecutionException {
     for (int maxTasks=1; maxTasks<5;maxTasks++) {
       System.out.println("maxTasks = " + maxTasks);
       ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory("maxTasks = " + maxTasks));
-      BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, maxTasks);
+      BoundedTaskExecutor executor = new BoundedTaskExecutor(getName(), backendExecutor, maxTasks);
       AtomicInteger running = new AtomicInteger();
       AtomicInteger max = new AtomicInteger();
       AtomicInteger executed = new AtomicInteger();
@@ -54,17 +90,9 @@ public class BoundedTaskExecutorTest extends TestCase {
           }
         });
       }
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        try {
-          executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
 
-      assertEquals(0, executor.shutdownNow().size());
-      assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
+      executor.shutdown();
+      assertTrue(executor.awaitTermination(N + 50000, TimeUnit.MILLISECONDS));
       backendExecutor.shutdownNow();
       assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
       assertEquals(maxTasks, max.get());
@@ -74,13 +102,13 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testCallableReallyReturnsValue() throws Exception{
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
-    BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, 1);
+    BoundedTaskExecutor executor = new BoundedTaskExecutor(getName(),backendExecutor, 1);
 
     Future<Integer> f1 = executor.submit(() -> 42);
     Integer result = f1.get();
     assertEquals(42, result.intValue());
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
@@ -88,10 +116,10 @@ public class BoundedTaskExecutorTest extends TestCase {
   public void testEarlyCancelPreventsRunning() throws ExecutionException, InterruptedException {
     AtomicBoolean run = new AtomicBoolean();
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
-    BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, 1);
+    BoundedTaskExecutor executor = new BoundedTaskExecutor(getName(),backendExecutor, 1);
 
     int delay = 1000;
-    Future<?> s1 = executor.submit((Runnable)() -> TimeoutUtil.sleep(delay));
+    Future<?> s1 = executor.submit(() -> TimeoutUtil.sleep(delay));
     Future<Integer> f1 = executor.submit(() -> {
       run.set(true);
       return 42;
@@ -103,7 +131,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertFalse(run.get());
     assertTrue(s1.isDone());
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
@@ -111,54 +139,42 @@ public class BoundedTaskExecutorTest extends TestCase {
   public void testStressWhenSomeTasksCallOtherTasksGet() throws ExecutionException, InterruptedException {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
     for (int maxSimultaneousTasks = 1; maxSimultaneousTasks<20; maxSimultaneousTasks++) {
-      final Disposable myDisposable = Disposer.newDisposable();
-      BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks, myDisposable);
+      BoundedTaskExecutor executor = new BoundedTaskExecutor(getName(),backendExecutor, maxSimultaneousTasks);
       AtomicInteger running = new AtomicInteger();
       AtomicInteger maxThreads = new AtomicInteger();
 
-      try {
-        int N = 5000;
-        Future[] futures = new Future[N];
-        Random random = new Random();
-        for (int i = 0; i < N; i++) {
-          final int finalI = i;
-          final int finalMaxSimultaneousTasks = maxSimultaneousTasks;
-          futures[i] = executor.submit((Runnable)() -> {
-            maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
+      int N = 5000;
+      Future[] futures = new Future[N];
+      Random random = new Random();
+      for (int i = 0; i < N; i++) {
+        final int finalI = i;
+        final int finalMaxSimultaneousTasks = maxSimultaneousTasks;
+        futures[i] = executor.submit(() -> {
+          maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
 
-            try {
-              int r = random.nextInt(finalMaxSimultaneousTasks);
-              int prev = finalI - r;
-              if (prev < finalI && prev >= 0) {
-                try {
-                  futures[prev].get();
-                }
-                catch (Exception e) {
-                  throw new RuntimeException(e);
-                }
-              }
-              TimeoutUtil.sleep(r);
-            }
-            finally {
-              running.decrementAndGet();
-            }
-          });
-        }
-        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
           try {
-            executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
+            int r = random.nextInt(finalMaxSimultaneousTasks);
+            int prev = finalI - r;
+            if (prev < finalI && prev >= 0) {
+              try {
+                futures[prev].get();
+              }
+              catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            }
+            TimeoutUtil.sleep(r);
           }
-          catch (Exception e) {
-            throw new RuntimeException(e);
+          finally {
+            running.decrementAndGet();
           }
         });
-        for (Future future : futures) {
-          assertTrue(future.isDone());
-        }
       }
-      finally {
-        Disposer.dispose(myDisposable);
-        assertTrue(executor.isShutdown());
+
+      executor.shutdown();
+      assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
+      for (Future future : futures) {
+        assertTrue(future.isDone());
       }
 
       assertTrue("Max threads was: "+maxThreads+" but bound was: "+maxSimultaneousTasks, maxThreads.get() <= maxSimultaneousTasks);
@@ -169,15 +185,15 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testSequentialSubmitsMustExecuteSequentially() throws ExecutionException, InterruptedException {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
-    BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, 1);
+    BoundedTaskExecutor executor = new BoundedTaskExecutor(getName(),backendExecutor, 1);
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
     StringBuilder expected = new StringBuilder(N * 4);
 
     Future[] futures = new Future[N];
     for (int i = 0; i < N; i++) {
-      final int finalI = i;
-      futures[i] = executor.submit(() -> log.append(finalI+" "));
+      String text = i + " ";
+      futures[i] = executor.submit(() -> log.append(text));
     }
     for (int i = 0; i < N; i++) {
       expected.append(i).append(" ");
@@ -187,7 +203,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     String logs = log.toString();
     assertEquals(expected.toString(), logs);
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
@@ -196,7 +212,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
     int maxSimultaneousTasks = 1;
     final Disposable myDisposable = Disposer.newDisposable();
-    BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks, myDisposable);
+    BoundedTaskExecutor executor = new BoundedTaskExecutor(getName(), backendExecutor, maxSimultaneousTasks, myDisposable);
     AtomicInteger running = new AtomicInteger();
     AtomicInteger maxThreads = new AtomicInteger();
 
@@ -243,7 +259,7 @@ public class BoundedTaskExecutorTest extends TestCase {
             maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
 
             try {
-              //TimeoutUtil.sleep(1);
+              Thread.yield();
             }
             finally {
               running.decrementAndGet();
@@ -262,7 +278,7 @@ public class BoundedTaskExecutorTest extends TestCase {
             maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
 
             try {
-              //TimeoutUtil.sleep(1);
+              Thread.yield();
             }
             finally {
               running.decrementAndGet();
@@ -297,7 +313,7 @@ public class BoundedTaskExecutorTest extends TestCase {
   }
 
   public void testShutdownNowMustCancel() throws ExecutionException, InterruptedException {
-    ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+    ExecutorService executor = new BoundedTaskExecutor(getName(),PooledThreadExecutor.INSTANCE, 1);
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
 
@@ -333,11 +349,11 @@ public class BoundedTaskExecutorTest extends TestCase {
       assertTrue(futures[i].isDone());
     }
 
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testShutdownMustDisableSubmit() throws ExecutionException, InterruptedException {
-    ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+    ExecutorService executor = new BoundedTaskExecutor(getName(),PooledThreadExecutor.INSTANCE, 1);
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
 
@@ -368,6 +384,110 @@ public class BoundedTaskExecutorTest extends TestCase {
 
     String logs = log.toString();
     assertEquals(StringUtil.repeat(" ",N), logs);
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
+  }
+
+  public void testNoExtraThreadsAreEverCreated() throws ExecutionException, InterruptedException {
+    for (int nMaxThreads=1; nMaxThreads<10; nMaxThreads++) {
+      System.out.println("nMaxThreads = " + nMaxThreads);
+      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),nMaxThreads);
+      int N = 1000000;
+      Set<Thread> workers = ContainerUtil.newConcurrentSet();
+
+      CountDownLatch allStarted = new CountDownLatch(1);
+      List<Future> saturate = ContainerUtil.map(Collections.nCopies(nMaxThreads, null), o -> executor.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            allStarted.await();
+          }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        }
+
+        @Override
+        public String toString() {
+          return "warmup";
+        }
+      }));
+
+
+      List<Future> futures = new ArrayList<>(N);
+      for (int i = 0; i < N; i++) {
+        final int finalI = i;
+        futures.add(executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            workers.add(Thread.currentThread());
+          }
+
+          @Override
+          public String toString() {
+            return "Runnable test "+finalI;
+          }
+        }));
+        //System.out.println("i = " + i+" submitted");
+      }
+
+      allStarted.countDown();
+      saturate.forEach(BoundedTaskExecutorTest::doGet);
+      futures.forEach(BoundedTaskExecutorTest::doGet);
+
+      //System.out.println("workers.size() = " + workers.size());
+      assertTrue("Must create no more than "+nMaxThreads+" workers but got: "+workers,
+                 workers.size() <= nMaxThreads);
+      executor.shutdownNow();
+      assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
+    }
+  }
+
+  private static Object doGet(Future future) {
+    try {
+      return future.get();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void testAwaitTerminationDoesWait() throws InterruptedException {
+    for (int maxTasks=1; maxTasks<10; maxTasks++) {
+      System.out.println("maxTasks = " + maxTasks);
+      ExecutorService executor = new BoundedTaskExecutor(getName(),PooledThreadExecutor.INSTANCE, maxTasks);
+      int N = 1000;
+      StringBuffer log = new StringBuffer(N*4);
+
+      Future[] futures = new Future[N];
+      for (int i = 0; i < N; i++) {
+        int finalI = i;
+        futures[i] = executor.submit(() -> {
+          if (finalI < 100) {
+            TimeoutUtil.sleep(2);
+          }
+          return log.append(" ");
+        });
+      }
+      executor.shutdown();
+      assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
+
+      for (Future future : futures) {
+        assertTrue(future.isDone());
+        assertTrue(!future.isCancelled());
+      }
+      assertEquals(N, log.length());
+    }
+  }
+
+  public void testAwaitTerminationDoesNotCompletePrematurely() throws InterruptedException {
+    ExecutorService executor2 = new BoundedTaskExecutor(getName(),PooledThreadExecutor.INSTANCE, 1);
+    Future<?> future = executor2.submit(() -> TimeoutUtil.sleep(10000));
+    executor2.shutdown();
+    assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
+    assertFalse(future.isDone());
+    assertFalse(future.isCancelled());
+    assertTrue(executor2.awaitTermination(100, TimeUnit.SECONDS));
+    assertTrue(future.isDone());
+    assertFalse(future.isCancelled());
   }
 }

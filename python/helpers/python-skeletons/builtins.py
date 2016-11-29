@@ -1,6 +1,9 @@
 """Skeletons for Python 3 built-in symbols."""
 
 
+import os
+
+
 def abs(number):
     """Return the absolute value of the argument.
 
@@ -195,22 +198,35 @@ def max(*args, key=None, default=None):
     pass
 
 
-def map(function, sequence, *sequence_1):
-    """Return a list of the results of applying the function to the items of
-    the argument sequence(s).
+class map(object):
+    def __init__(self, function, sequence, *sequence_1):
+        """Return an iterable of the results of applying the function to the items of
+        the argument sequence(s).
 
-    :type function: ((T) -> V) | None
-    :type sequence: collections.Iterable[T]
-    :rtype: list[V] | bytes | str
-    """
-    pass
+        :type function: None | (T) -> V
+        :type sequence: collections.Iterable[T]
+        :rtype: map[T, V]
+        """
+        pass
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[V]
+        """
+        return self
+
+    def __next__(self):
+        """
+        :rtype: V
+        """
+        pass
 
 def min(*args, key=None, default=None):
     """Return the smallest item in an iterable or the smallest of two or more
     arguments.
 
-    :rtype: object | unknown
+    :type args: tuple[T]
+    :rtype: T
     """
     pass
 
@@ -237,7 +253,7 @@ def open(name, mode='r', buffering=-1, encoding=None, errors=None, newline=None,
          closefd=None, opener=None):
     """Open a file, returns a file object.
 
-    :type name: str
+    :type name: str | os.PathLike
     :type mode: str
     :type buffering: numbers.Integral
     :type encoding: str | None
@@ -250,7 +266,7 @@ def open(name, mode='r', buffering=-1, encoding=None, errors=None, newline=None,
 def ord(c):
     """Return the integer ordinal of a one-character string.
 
-    :type c: str
+    :type c: bytes | str
     :rtype: int
     """
     return 0
@@ -360,6 +376,14 @@ class type(object):
         subclass of class.
         """
         return False
+
+    @staticmethod
+    def __prepare__(metacls, name, bases):
+        """Used to create the namespace for the class statement.
+
+        :rtype: dict[str, unknown]
+        """
+        return {}
 
 
 class enumerate(object):
@@ -784,6 +808,15 @@ class float(object):
         """
         return 0.0
 
+    @staticmethod
+    def fromhex(string):
+        """Create a floating-point number from a hexadecimal string.
+
+        :type string: str
+        :rtype: float
+        """
+        pass
+
 
 class complex(object):
     """Complex numeric type."""
@@ -977,10 +1010,10 @@ class bytes(object):
         return b''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
-        :rtype: int
+        :type y: numbers.Integral | slice
+        :rtype: int | bytes
         """
         return 0
 
@@ -1351,9 +1384,9 @@ class str(object):
         return ''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
+        :type y: numbers.Integral | slice
         :rtype: str
         """
         return ''
@@ -1730,10 +1763,10 @@ class list(object):
         return []
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or sublist, origin 0.
 
-        :type y: numbers.Integral
-        :rtype: T
+        :type y: numbers.Integral | slice
+        :rtype: T | list[T]
         """
         pass
 
@@ -1823,6 +1856,367 @@ class list(object):
         pass
 
 
+class set(object):
+    """Set object."""
+
+    def __init__(self, iterable=None):
+        """Create a set object.
+
+        :type iterable: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        pass
+
+    def add(self, x):
+        """Add an element x to a set.
+
+        :type x: T
+        :rtype: None
+        """
+        pass
+
+    def discard(self, x):
+        """Remove an element x from the set, do nothing if it's not present.
+
+        :type x: T
+        :rtype: None
+        """
+        pass
+
+    def remove(self, x):
+        """Remove an element x from the set, raise KeyError if it's not present.
+
+        :type x: T
+        :rtype: None
+        """
+        pass
+
+    def pop(self):
+        """Remove and return arbitrary element from the set.
+
+        :rtype: T
+        """
+        pass
+
+    def copy(self):
+        """Return shallow copy of the set.
+
+        :rtype: set[T]
+        """
+        pass
+
+    def clear(self):
+        """Delete all elements from the set.
+
+        :rtype: None
+        """
+        pass
+
+    def union(self, *other):
+        """Return the union of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def __or__(self, other):
+        """Return the union of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def update(self, *other):
+        """Update a set with the union of itself and other collections.
+
+        :type other: collections.Iterable[T]
+        :rtype: None
+        """
+        pass
+
+    def difference(self, *other):
+        """Return the difference of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def __sub__(self, other):
+        """Return the difference of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def difference_update(self, *other):
+        """Remove all elements of other collections from this set.
+
+        :type other: collections.Iterable[T]
+        :rtype: None
+        """
+        pass
+
+    def symmetric_difference(self, other):
+        """Return the symmetric difference of this set and another collection as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def __xor__(self, other):
+        """Return the symmetric difference of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def symmetric_difference_update(self, other):
+        """Update the set with the symmetric difference of itself and another collection.
+
+        :type other: collections.Iterable[T]
+        :rtype: None
+        """
+        pass
+
+    def intersection(self, *other):
+        """Return the intersection of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def __and__(self, other):
+        """Return the intersection of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return set()
+
+    def intersection_update(self, *other):
+        """Update a set with the intersection of itself and other collections.
+
+        :type other: collections.Iterable[T]
+        :rtype: None
+        """
+        pass
+
+    def isdisjoint(self, other):
+        """Return True if this set and another collection have a null intersection.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def issubset(self, other):
+        """Report whether another collection contains this set.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def __le__(self, other):
+        """Report whether another set contains this set.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __lt__(self, other):
+        """Report whether this set is a proper subset of other.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def issuperset(self, other):
+        """Report whether this set contains another collection.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def __ge__(self, other):
+        """Report whether this set contains other set.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __gt__(self, other):
+        """Report whether this set is a proper superset of other.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
+
+class frozenset(object):
+    """frozenset object."""
+
+    def __init__(self, iterable=None):
+        """Create a frozenset object.
+
+        :type iterable: collections.Iterable[T]
+        :rtype: frozenset[T]
+        """
+        pass
+
+    def copy(self):
+        """Return shallow copy of the set.
+
+        :rtype: set[T]
+        """
+        pass
+
+    def union(self, *other):
+        """Return the union of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def __or__(self, other):
+        """Return the union of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def difference(self, *other):
+        """Return the difference of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def __sub__(self, other):
+        """Return the difference of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def symmetric_difference(self, other):
+        """Return the symmetric difference of this set and another collection as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def __xor__(self, other):
+        """Return the symmetric difference of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def intersection(self, *other):
+        """Return the intersection of this set and other collections as a new set.
+
+        :type other: collections.Iterable[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def __and__(self, other):
+        """Return the intersection of two sets as a new set.
+
+        :type other: collections.Set[T]
+        :rtype: set[T]
+        """
+        return frozenset()
+
+    def isdisjoint(self, other):
+        """Return True if this set and another collection have a null intersection.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def issubset(self, other):
+        """Report whether another collection contains this set.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def __le__(self, other):
+        """Report whether another set contains this set.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __lt__(self, other):
+        """Report whether this set is a proper subset of other.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def issuperset(self, other):
+        """Report whether this set contains another collection.
+
+        :type other: collections.Iterable[T]
+        :rtype: bool
+        """
+        return False
+
+    def __ge__(self, other):
+        """Report whether this set contains other set.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __gt__(self, other):
+        """Report whether this set is a proper superset of other.
+
+        :type other: collections.Set[T]
+        :rtype: bool
+        """
+        return False
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
+
+
 class tuple(object):
     """Tuple object."""
 
@@ -1851,10 +2245,10 @@ class tuple(object):
         pass
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or subtuple, origin 0.
 
-        :type y: numbers.Integral
-        :rtype: object | unknown
+        :type y: numbers.Integral | slice
+        :rtype: object | tuple | unknown
         """
         pass
 
@@ -1875,6 +2269,12 @@ class tuple(object):
         :rtype: int
         """
         return 0
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[object | unknown]
+        """
+        pass
 
 
 class dict(object):
@@ -2080,12 +2480,6 @@ class __coroutine(object):
         """
         return []
 
-    def __iter__(self):
-        """
-        :rtype: collections.Iterable[unknown]
-        """
-        return []
-
     def close(self):
         """
         :rtype: None
@@ -2101,6 +2495,59 @@ class __coroutine(object):
     def throw(self, type, value=None, traceback=None):
         """
         :rtype: None
+        """
+        pass
+
+
+class __asyncgenerator(object):
+    """A mock class representing the async generator function type."""
+    def __init__(self):
+        """Create an async generator object.
+
+        :rtype: __asyncgenerator[T, U]
+        """
+        self.__name__ = ''
+        self.__qualname__ = ''
+        self.ag_await = None
+        self.ag_frame = None
+        self.ag_running = False
+        self.ag_code = None
+
+    def __aiter__(self):
+        """Defined to support iteration over container.
+
+        :rtype: collections.AsyncIterator[T]
+        """
+        pass
+
+    def __anext__(self):
+        """Returns an awaitable, that performs one asynchronous generator
+        iteration when awaited.
+
+        :rtype: collections.Awaitable[T]
+        """
+        pass
+
+    def aclose(self):
+        """Returns an awaitable, that throws a GeneratorExit exception
+        into generator.
+
+        :rtype: collections.Awaitable[T]
+        """
+        pass
+
+    def asend(self, value):
+        """Returns an awaitable, that pushes the value object in generator.
+
+        :type value: U
+        :rtype: collections.Awaitable[T]
+        """
+        pass
+
+    def athrow(self, type, value=None, traceback=None):
+        """Returns an awaitable, that throws an exception into generator.
+
+        :rtype: collections.Awaitable[T]
         """
         pass
 
@@ -2130,3 +2577,11 @@ class __method(object):
     def __init__(self):
         self.__func__ = None
         self.__self__ = None
+
+
+def input(prompt=None):
+    """
+    :type prompt: Any
+    :rtype: str
+    """
+    pass

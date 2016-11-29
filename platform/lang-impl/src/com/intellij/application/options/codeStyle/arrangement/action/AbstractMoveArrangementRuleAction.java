@@ -39,7 +39,7 @@ public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangem
       return;
     }
 
-    final List<int[]> mappings = new ArrayList<int[]>();
+    final List<int[]> mappings = new ArrayList<>();
     fillMappings(control, mappings);
     for (int[] mapping : mappings) {
       if (mapping[0] != mapping[1]) {
@@ -59,53 +59,50 @@ public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangem
 
     final int editing = control.getEditingRow() - 1;
 
-    control.runOperationIgnoreSelectionChange(new Runnable() {
-      @Override
-      public void run() {
-        control.hideEditor();
-        final List<int[]> mappings = new ArrayList<int[]>();
-        fillMappings(control, mappings);
+    control.runOperationIgnoreSelectionChange(() -> {
+      control.hideEditor();
+      final List<int[]> mappings = new ArrayList<>();
+      fillMappings(control, mappings);
 
-        if (mappings.isEmpty()) {
-          return;
-        }
+      if (mappings.isEmpty()) {
+        return;
+      }
 
-        int newRowToEdit = editing;
-        ArrangementMatchingRulesModel model = control.getModel();
-        Object value;
-        int from;
-        int to;
-        for (int[] pair : mappings) {
-          from = pair[0];
-          to = pair[1];
-          if (from != to) {
-            value = model.getElementAt(from);
-            model.removeRow(from);
-            model.insert(to, value);
-            if (newRowToEdit == from) {
-              newRowToEdit = to;
-            }
+      int newRowToEdit = editing;
+      ArrangementMatchingRulesModel model = control.getModel();
+      Object value;
+      int from;
+      int to;
+      for (int[] pair : mappings) {
+        from = pair[0];
+        to = pair[1];
+        if (from != to) {
+          value = model.getElementAt(from);
+          model.removeRow(from);
+          model.insert(to, value);
+          if (newRowToEdit == from) {
+            newRowToEdit = to;
           }
         }
+      }
 
-        ListSelectionModel selectionModel = control.getSelectionModel();
-        for (int[] pair : mappings) {
-          selectionModel.addSelectionInterval(pair[1], pair[1]);
-        }
+      ListSelectionModel selectionModel = control.getSelectionModel();
+      for (int[] pair : mappings) {
+        selectionModel.addSelectionInterval(pair[1], pair[1]);
+      }
 
 
-        int visibleRow = -1;
-        if (newRowToEdit >= 0) {
-          control.showEditor(newRowToEdit);
-          visibleRow = newRowToEdit;
-        }
-        else if (!mappings.isEmpty()) {
-          visibleRow = mappings.get(0)[1];
-        }
+      int visibleRow = -1;
+      if (newRowToEdit >= 0) {
+        control.showEditor(newRowToEdit);
+        visibleRow = newRowToEdit;
+      }
+      else if (!mappings.isEmpty()) {
+        visibleRow = mappings.get(0)[1];
+      }
 
-        if (visibleRow != -1) {
-          scrollRowToVisible(control, visibleRow);
-        }
+      if (visibleRow != -1) {
+        scrollRowToVisible(control, visibleRow);
       }
     });
     control.repaintRows(0, control.getModel().getSize() - 1, true);

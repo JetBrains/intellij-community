@@ -53,6 +53,7 @@ public class EnvironmentUtil {
   private static final String LC_CTYPE = "LC_CTYPE";
 
   private static final Future<Map<String, String>> ourEnvGetter;
+
   static {
     if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
       ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
@@ -90,7 +91,8 @@ public class EnvironmentUtil {
     }
   }
 
-  private EnvironmentUtil() { }
+  private EnvironmentUtil() {
+  }
 
   public static boolean isEnvironmentReady() {
     return ourEnvGetter.isDone();
@@ -140,7 +142,7 @@ public class EnvironmentUtil {
     return flattenEnvironment(getEnvironmentMap());
   }
 
-  public static String[] flattenEnvironment(Map<String, String> environment) {
+  public static String[] flattenEnvironment(@NotNull Map<String, String> environment) {
     String[] array = new String[environment.size()];
     int i = 0;
     for (Map.Entry<String, String> entry : environment.entrySet()) {
@@ -149,48 +151,87 @@ public class EnvironmentUtil {
     return array;
   }
 
+  private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
+
   private static Map<String, String> getShellEnv() throws Exception {
-    String shell = System.getenv("SHELL");
-    if (shell == null || !new File(shell).canExecute()) {
-      throw new Exception("shell:" + shell);
+    return new ShellEnvReader().readShellEnv();
+  }
+
+
+  public static class ShellEnvReader {
+
+    public Map<String, String> readShellEnv() throws Exception {
+      String os = SystemInfo.isLinux ? "linux" : "mac";
+      File reader = FileUtil.findFirstThatExist(
+        PathManager.getBinPath() + "/printenv.py",
+        PathManager.getHomePath() + "/community/bin/" + os + "/printenv.py",
+        PathManager.getHomePath() + "/bin/" + os + "/printenv.py");
+      if (reader == null) {
+        throw new Exception("bin:" + PathManager.getBinPath());
+      }
+
+      File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
+      try {
+        List<String> command = getShellProcessCommand();
+
+        int idx = command.indexOf("-c");
+        if (idx>=0) {
+          // if there is already a command append command to the end
+          command.set(idx + 1, command.get(idx+1) + ";" + "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
+        } else {
+          command.add("-c");
+          command.add("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
+        }
+
+        LOG.info("loading shell env: " + StringUtil.join(command, " "));
+
+        return runProcessAndReadEnvs(command, envFile, "\0");
+      }
+      finally {
+        FileUtil.delete(envFile);
+      }
     }
 
-    File reader = FileUtil.findFirstThatExist(
-      PathManager.getBinPath() + "/printenv.py",
-      PathManager.getHomePath() + "/community/bin/mac/printenv.py",
-      PathManager.getHomePath() + "/bin/mac/printenv.py");
-    if (reader == null) {
-      throw new Exception("bin:" + PathManager.getBinPath());
-    }
-
-    File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
-    try {
-      String[] command = {shell, "-l", "-i", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
-      LOG.info("loading shell env: " + StringUtil.join(command, " "));
-
-      Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+    @NotNull
+    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
+      throws Exception {
+      ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+      builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
+      Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
       gobbler.stop();
 
       String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
-        LOG.info("shell process output: " + StringUtil.trimEnd(gobbler.getText(), '\n'));
-        throw new Exception("rv:" + rv + " text:" + lines.length());
+        throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
       }
-      return parseEnv(lines);
+      return parseEnv(lines, lineSeparator);
     }
-    finally {
-      FileUtil.delete(envFile);
+
+    protected List<String> getShellProcessCommand() throws Exception {
+      String shell = getShell();
+
+      if (shell == null || !new File(shell).canExecute()) {
+        throw new Exception("shell:" + shell);
+      }
+
+      return new ArrayList<String>(Arrays.asList(shell, "-l", "-i"));
+    }
+
+    @Nullable
+    protected String getShell() throws Exception {
+      return System.getenv("SHELL");
     }
   }
 
-  private static Map<String, String> parseEnv(String text) throws Exception {
-    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL"));
+  @NotNull
+  private static Map<String, String> parseEnv(String text, String lineSeparator) throws Exception {
+    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
-    String[] lines = text.split("\0");
+    String[] lines = text.split(lineSeparator);
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
@@ -238,7 +279,8 @@ public class EnvironmentUtil {
       try {
         return process.exitValue();
       }
-      catch (IllegalThreadStateException ignore) { }
+      catch (IllegalThreadStateException ignore) {
+      }
     }
     return null;
   }
@@ -291,7 +333,7 @@ public class EnvironmentUtil {
   @TestOnly
   static Map<String, String> testParser(@NotNull String lines) {
     try {
-      return parseEnv(lines);
+      return parseEnv(lines, "\0");
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -299,11 +341,22 @@ public class EnvironmentUtil {
   }
 
   private static class StreamGobbler extends BaseOutputReader {
+    private static final Options OPTIONS = new Options() {
+      @Override
+      public SleepingPolicy policy() {
+        return SleepingPolicy.BLOCKING;
+      }
+
+      @Override
+      public boolean splitToLines() {
+        return false;
+      }
+    };
 
     private final StringBuffer myBuffer;
 
     public StreamGobbler(@NotNull InputStream stream) {
-      super(stream, CharsetToolkit.getDefaultSystemCharset());
+      super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myBuffer = new StringBuffer();
       start("stdout/stderr streams of shell env loading process");
     }

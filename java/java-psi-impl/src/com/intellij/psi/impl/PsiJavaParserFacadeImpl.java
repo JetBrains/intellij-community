@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.DeclarationParser;
-import com.intellij.lang.java.parser.JavaParser;
-import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.lang.java.parser.ReferenceParser;
+import com.intellij.lang.java.parser.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
@@ -144,6 +141,13 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     @Override
     public void parse(final PsiBuilder builder) {
       JavaParser.INSTANCE.getDeclarationParser().parseEnumConstant(builder);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper MODULE = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ModuleParser.parseModule(builder);
     }
   };
 
@@ -383,13 +387,27 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   @NotNull
-  @Override
-  public PsiType createPrimitiveType(@NotNull final String text, @NotNull final PsiAnnotation[] annotations) throws IncorrectOperationException {
-    final PsiPrimitiveType primitiveType = getPrimitiveType(text);
+  public PsiType createPrimitiveTypeFromText(@NotNull String text) throws IncorrectOperationException {
+    PsiPrimitiveType primitiveType = getPrimitiveType(text);
     if (primitiveType == null) {
       throw new IncorrectOperationException("Incorrect primitive type '" + text + "'");
     }
-    return annotations.length == 0 ? primitiveType : new PsiPrimitiveType(text, annotations);
+    return primitiveType;
+  }
+
+  @NotNull
+  @Override
+  public PsiJavaModule createModuleFromText(@NotNull String text) throws IncorrectOperationException {
+    DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, MODULE, LanguageLevel.JDK_1_9), null);
+    PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiJavaModule)) throw new IncorrectOperationException("Incorrect module declaration '" + text + "'");
+    return (PsiJavaModule)element;
+  }
+
+  @NotNull
+  @Override
+  public PsiType createPrimitiveType(@NotNull String text, @NotNull PsiAnnotation[] annotations) throws IncorrectOperationException {
+    return createPrimitiveTypeFromText(text).annotate(TypeAnnotationProvider.Static.create(annotations));
   }
 
   public static PsiPrimitiveType getPrimitiveType(final String text) {

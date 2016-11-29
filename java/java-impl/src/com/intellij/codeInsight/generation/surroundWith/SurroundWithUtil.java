@@ -46,7 +46,7 @@ public class SurroundWithUtil {
     try{
       PsiManager psiManager = block.getManager();
       PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-      ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> array = new ArrayList<>();
       for (PsiElement statement : statements) {
         if (statement instanceof PsiDeclarationStatement) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;

@@ -74,13 +74,8 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     GrReferenceExpression ref = (GrReferenceExpression)parameters.getPosition().getParent();
     if (ref == null) return;
 
-    final Map<String, Boolean> variants = new HashMap<String, Boolean>();
-    collectVariants(new PairConsumer<String, Boolean>() {
-                      @Override
-                      public void consume(String s, Boolean isFinal) {
-                        variants.put(s, isFinal);
-                      }
-                    }, ref, groovyFile);
+    final Map<String, Boolean> variants = new HashMap<>();
+    collectVariants((s, isFinal) -> variants.put(s, isFinal), ref, groovyFile);
 
     if (variants.isEmpty()) return;
 
@@ -91,8 +86,8 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     }
     if (parent == null) return;
 
-    Set<String> processedPrefixes = new HashSet<String>();
-    Set<String> prefixesInMethodCall = new HashSet<String>();
+    Set<String> processedPrefixes = new HashSet<>();
+    Set<String> prefixesInMethodCall = new HashSet<>();
 
     for (PsiElement e = parent.getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof GrAssignmentExpression) {
@@ -186,7 +181,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
 
   @Nullable
   public static List<String> getPrefix(GrReferenceExpression ref) {
-    List<String> res = new ArrayList<String>();
+    List<String> res = new ArrayList<>();
 
     GrExpression qualifier = ref.getQualifierExpression();
 

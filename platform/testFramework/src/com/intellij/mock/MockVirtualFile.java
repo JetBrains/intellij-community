@@ -16,6 +16,7 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +38,7 @@ public class MockVirtualFile extends VirtualFile {
   private VirtualFile myParent;
   private final String myName;
   private final boolean myDirectory;
-  private final List<VirtualFile> myChildren = new SmartList<VirtualFile>();
+  private final List<VirtualFile> myChildren = new SmartList<>();
   private String myText;
   private boolean myIsWritable = true;
   private long myModStamp = LocalTimeCounter.currentTime();
@@ -153,7 +154,7 @@ public class MockVirtualFile extends VirtualFile {
   @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
-    return myText.getBytes();
+    return myText == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myText.getBytes();
   }
 
 
@@ -165,7 +166,7 @@ public class MockVirtualFile extends VirtualFile {
 
   @Override
   public long getLength() {
-    return myText.length();
+    return myText == null ? 0 : myText.length();
   }
 
   @Override

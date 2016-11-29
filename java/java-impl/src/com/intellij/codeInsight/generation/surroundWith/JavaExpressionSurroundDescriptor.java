@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.Collections;
  * @author ven
  */
 public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
-  private Surrounder[] mySurrounders = null;
+  private Surrounder[] mySurrounders;
 
   private static final Surrounder[] SURROUNDERS = {
     new JavaWithParenthesesSurrounder(),
@@ -61,7 +61,7 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
   @Override
   @NotNull public Surrounder[] getSurrounders() {
     if (mySurrounders == null) {
-      final ArrayList<Surrounder> list = new ArrayList<Surrounder>();
+      final ArrayList<Surrounder> list = new ArrayList<>();
       Collections.addAll(list, SURROUNDERS);
       Collections.addAll(list, Extensions.getExtensions(JavaExpressionSurrounder.EP_NAME));
       mySurrounders = list.toArray(new Surrounder[list.size()]);

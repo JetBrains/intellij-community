@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,11 +57,13 @@ public class SvnProcessHandler extends OSProcessHandler {
 
   @NotNull
   @Override
-  protected BaseDataReader createOutputDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
+  protected BaseDataReader createOutputDataReader() {
     if (myForceBinary) {
-      return new SimpleBinaryOutputReader(myProcess.getInputStream(), sleepingPolicy);
+      return new SimpleBinaryOutputReader(myProcess.getInputStream(), readerOptions().policy());
     }
-    return super.createOutputDataReader(sleepingPolicy);
+    else {
+      return super.createOutputDataReader();
+    }
   }
 
   private class SimpleBinaryOutputReader extends BinaryOutputReader {

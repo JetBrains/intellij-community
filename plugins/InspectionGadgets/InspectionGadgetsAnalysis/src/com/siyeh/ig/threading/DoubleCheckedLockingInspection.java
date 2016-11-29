@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -127,12 +128,9 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
       return (PsiField)target;
     }
     else if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
-      final IElementType tokenType =
-        binaryExpression.getOperationTokenType();
-      if (!JavaTokenType.EQEQ.equals(tokenType)
-          && !JavaTokenType.NE.equals(tokenType)) {
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
+      if (!ComparisonUtils.isComparisonOperation(tokenType)) {
         return null;
       }
       final PsiExpression lhs = binaryExpression.getLOperand();
@@ -189,8 +187,8 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
       }
       final PsiIfStatement innerIf = (PsiIfStatement)firstStatement;
       final PsiExpression innerCondition = innerIf.getCondition();
-      if (!EquivalenceChecker.expressionsAreEquivalent(innerCondition,
-                                                       outerCondition)) {
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(innerCondition,
+                                                                                    outerCondition)) {
         return;
       }
       final PsiField field;

@@ -25,7 +25,7 @@ import com.intellij.util.ui.JBInsets;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.awt.*;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -39,7 +39,7 @@ import java.util.Map.Entry;
  * @author Sergey.Malenkov
  */
 public abstract class CardLayoutPanel<K, UI, V extends Component> extends JComponent implements Accessible, Disposable {
-  private final IdentityHashMap<K, V> myContent = new IdentityHashMap<K, V>();
+  private final IdentityHashMap<K, V> myContent = new IdentityHashMap<>();
   private volatile boolean myDisposed;
   private K myKey;
 
@@ -123,24 +123,18 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
   }
 
   private void selectLater(final ActionCallback callback, final K key) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        if (!myDisposed) {
-          final UI ui = prepare(key);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-              if (!myDisposed) {
-                select(callback, key, ui);
-              }
-              else callback.setRejected();
-            }
-          }, ModalityState.any());
-        }
-        else callback.setRejected();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (!myDisposed) {
+        final UI ui1 = prepare(key);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+          if (!myDisposed) {
+            select(callback, key, ui1);
+          }
+          else callback.setRejected();
+        }, ModalityState.stateForComponent(this));
       }
+      else callback.setRejected();
     });
   }
 

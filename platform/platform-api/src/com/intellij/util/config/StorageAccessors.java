@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@ package com.intellij.util.config;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.JBSplitter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("unused")
-@Deprecated
 /**
  * @deprecated Use {@link PropertiesComponent} directly.
- * @see {@link JBSplitter}
+ * @see JBSplitter
  */
+@Deprecated
 public class StorageAccessors {
   private final Storage myStorage;
 

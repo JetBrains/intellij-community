@@ -162,7 +162,7 @@ public class CheckboxTreeHelper {
     });
   }
 
-  private static boolean isToggleEvent(KeyEvent e, JComponent mainComponent) {
+  public static boolean isToggleEvent(KeyEvent e, JComponent mainComponent) {
     return e.getKeyCode() == KeyEvent.VK_SPACE && SpeedSearchSupply.getSupply(mainComponent) == null;
   }
 
@@ -201,7 +201,7 @@ public class CheckboxTreeHelper {
 
   @SuppressWarnings("unchecked")
   public static <T> T[] getCheckedNodes(final Class<T> nodeType, @Nullable final Tree.NodeFilter<T> filter, final TreeModel model) {
-    final ArrayList<T> nodes = new ArrayList<T>();
+    final ArrayList<T> nodes = new ArrayList<>();
     final Object root = model.getRoot();
     if (!(root instanceof CheckedTreeNode)) {
       throw new IllegalStateException(

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -58,11 +59,11 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
         final PsiExpression[] args = argList.getExpressions();
         if (index < args.length) {
           if (!parameter.isVarArgs()) {
-            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[index], parameter, true));
+            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[index], parameter));
           }
           else {
             for (int i = index; i < args.length; i++) {
-              usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[i], parameter, true));
+              usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[i], parameter));
             }
           }
         }
@@ -72,14 +73,9 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
       if (((PsiDocMethodOrFieldRef)element).getSignature() != null) {
         @NonNls final StringBuffer newText = new StringBuffer();
         newText.append("/** @see #").append(method.getName()).append('(');
-        final List<PsiParameter> parameters = new ArrayList<PsiParameter>(Arrays.asList(method.getParameterList().getParameters()));
+        final List<PsiParameter> parameters = new ArrayList<>(Arrays.asList(method.getParameterList().getParameters()));
         parameters.remove(parameter);
-        newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
-          @Override
-          public String fun(PsiParameter psiParameter) {
-            return psiParameter.getType().getCanonicalText();
-          }
-        }, ","));
+        newText.append(StringUtil.join(parameters, psiParameter -> psiParameter.getType().getCanonicalText(), ","));
         newText.append(")*/");
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
           public void deleteElement() throws IncorrectOperationException {

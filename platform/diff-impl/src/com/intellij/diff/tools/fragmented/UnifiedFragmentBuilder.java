@@ -33,10 +33,10 @@ class UnifiedFragmentBuilder {
   @NotNull private final Side myMasterSide;
 
   @NotNull private final StringBuilder myBuilder = new StringBuilder();
-  @NotNull private final List<ChangedBlock> myBlocks = new ArrayList<ChangedBlock>();
-  @NotNull private final List<HighlightRange> myRanges = new ArrayList<HighlightRange>();
+  @NotNull private final List<ChangedBlock> myBlocks = new ArrayList<>();
+  @NotNull private final List<HighlightRange> myRanges = new ArrayList<>();
   @NotNull private final LineNumberConvertor.Builder myConvertor = new LineNumberConvertor.Builder();
-  @NotNull private final List<LineRange> myChangedLines = new ArrayList<LineRange>();
+  @NotNull private final List<LineRange> myChangedLines = new ArrayList<>();
 
   public UnifiedFragmentBuilder(@NotNull List<LineFragment> fragments,
                                 @NotNull Document document1,

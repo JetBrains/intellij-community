@@ -1,23 +1,23 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInTargetBase;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 /**
  * @author Dmitry Krasilschikov
  */
-public class MvcProjectViewSelectInTarget extends SelectInTargetBase implements DumbAware {
+public class MvcProjectViewSelectInTarget implements DumbAware, SelectInTarget {
   @Override
   public boolean canSelect(SelectInContext context) {
     final Project project = context.getProject();
@@ -51,13 +51,10 @@ public class MvcProjectViewSelectInTarget extends SelectInTargetBase implements 
       return;
     }
 
-    final Runnable select = new Runnable() {
-      @Override
-      public void run() {
-        final MvcProjectViewPane view = MvcProjectViewPane.getView(project, framework);
-        if (view != null) {
-          view.selectFile(file, requestFocus);
-        }
+    final Runnable select = () -> {
+      final MvcProjectViewPane view = MvcProjectViewPane.getView(project, framework);
+      if (view != null) {
+        view.selectFile(file, requestFocus);
       }
     };
 
@@ -69,7 +66,7 @@ public class MvcProjectViewSelectInTarget extends SelectInTargetBase implements 
   }
 
   public String toString() {
-    return "Grails/Griffon View";
+    return "Griffon View";
   }
 
   @Override

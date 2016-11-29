@@ -29,7 +29,7 @@ public class DeletedCVSDirectoryStorage {
   private final File myRoot;
   public static final String CVS_ADMIN_DIR = CvsUtil.CVS;
 
-  private final Collection<VirtualFile> myFilesToDelete = new HashSet<VirtualFile>();
+  private final Collection<VirtualFile> myFilesToDelete = new HashSet<>();
 
   public DeletedCVSDirectoryStorage(File root) {
     myRoot = root;

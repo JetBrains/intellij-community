@@ -53,13 +53,13 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
     /** User options for excluded deprecated classes */
     public boolean excludeDeprecated = true; // must be public for JDOMSerialization
     /** User options for excluded enum classes */
-    public boolean excludeEnum = false; // must be public for JDOMSerialization
+    public boolean excludeEnum; // must be public for JDOMSerialization
     /** User options for excluded abstract classes */
-    public boolean excludeAbstract = false; // must be public for JDOMSerialization
+    public boolean excludeAbstract; // must be public for JDOMSerialization
 
-    public boolean excludeTestCode = false;
+    public boolean excludeTestCode;
 
-    public boolean excludeInnerClasses = false;
+    public boolean excludeInnerClasses;
 
   public ClassHasNoToStringMethodInspection() {
     try {

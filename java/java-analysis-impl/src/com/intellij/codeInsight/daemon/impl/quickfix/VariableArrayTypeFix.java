@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,24 +36,30 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
   private final String myName;
   private final String myFamilyName;
 
-  public VariableArrayTypeFix(@NotNull PsiArrayInitializerExpression initializer, @NotNull PsiType componentType) {
-    super(getInitializer(initializer));
+  private VariableArrayTypeFix(@NotNull PsiArrayInitializerExpression initializer,
+                               @NotNull PsiArrayType arrayType,
+                               @NotNull PsiVariable variable) {
+    super(initializer);
+    myTargetType = arrayType;
+    PsiExpression myNewExpression = getNewExpressionLocal(initializer);
+    myName = myTargetType.equals(variable.getType()) && myNewExpression != null
+             ? QuickFixBundle.message("change.new.operator.type.text", getNewText(myNewExpression,initializer), myTargetType.getCanonicalText(), "")
+             : QuickFixBundle.message("fix.variable.type.text", formatType(variable), variable.getName(), myTargetType.getCanonicalText());
+    myFamilyName = QuickFixBundle.message(myTargetType.equals(variable.getType()) && myNewExpression != null ? "change.new.operator.type.family"
+                                                                                                             : "fix.variable.type.family");
+  }
+
+  @Nullable
+  public static VariableArrayTypeFix createFix(PsiArrayInitializerExpression initializer, @NotNull PsiType componentType) {
     PsiArrayType arrayType = new PsiArrayType(componentType);
     PsiArrayInitializerExpression arrayInitializer = initializer;
     while (arrayInitializer.getParent() instanceof PsiArrayInitializerExpression) {
       arrayInitializer = (PsiArrayInitializerExpression)arrayInitializer.getParent();
       arrayType = new PsiArrayType(arrayType);
     }
-    myTargetType = arrayType;
-
-    PsiExpression myNewExpression = getNewExpressionLocal(arrayInitializer);
-    PsiVariable myVariable = getVariableLocal(arrayInitializer);
-    myName = myVariable == null ? null : myTargetType.equals(myVariable.getType()) && myNewExpression != null ?
-             QuickFixBundle.message("change.new.operator.type.text", getNewText(myNewExpression,arrayInitializer), myTargetType.getCanonicalText(), "") :
-             QuickFixBundle.message("fix.variable.type.text", formatType(myVariable), myVariable.getName(), myTargetType.getCanonicalText());
-    myFamilyName = myVariable == null ? null : myTargetType.equals(myVariable.getType()) && myNewExpression != null ?
-                   QuickFixBundle.message("change.new.operator.type.family") :
-                   QuickFixBundle.message("fix.variable.type.family");
+    PsiVariable variable = getVariableLocal(arrayInitializer);
+    if (variable == null) return null;
+    return new VariableArrayTypeFix(arrayInitializer, arrayType, variable);
   }
 
   private static String formatType(@NotNull PsiVariable variable) {
@@ -160,8 +166,8 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
     final PsiArrayInitializerExpression myInitializer = (PsiArrayInitializerExpression)startElement;
     final PsiVariable myVariable = getVariableLocal(myInitializer);
     if (myVariable == null) return;
-    /**
-     * only for the case when in same statement with initialization
+    /*
+      only for the case when in same statement with initialization
      */
     final PsiNewExpression myNewExpression = getNewExpressionLocal(myInitializer);
 

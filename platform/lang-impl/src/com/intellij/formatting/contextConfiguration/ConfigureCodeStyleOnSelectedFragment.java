@@ -15,9 +15,9 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
-import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,12 +28,14 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +49,8 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.Cod
 
 public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
-  
+  private static final String ID = "configure.code.style.on.selected.fragment";
+
   @Nls
   @NotNull
   @Override
@@ -78,6 +81,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    UsageTrigger.trigger(ID);
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
     CodeStyleSettingsToShow settingsToShow = calculateAffectingSettings(editor, file);
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
@@ -117,12 +121,9 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
       myOKAction = new ApplyToSettings();
       myOKAction.setEnabled(false);
-      myTabbedLanguagePanel.setOnSomethingChangedCallback(new Runnable() {
-        @Override
-        public void run() {
-          boolean isModified = myTabbedLanguagePanel.isModified(mySettings);
-          myOKAction.setEnabled(isModified);
-        }
+      myTabbedLanguagePanel.setOnSomethingChangedCallback(() -> {
+        boolean isModified = myTabbedLanguagePanel.isModified(mySettings);
+        myOKAction.setEnabled(isModified);
       });
 
       myEditor = editor;
@@ -132,12 +133,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
       String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
       setTitle(StringUtil.capitalizeWords(title, true) + ": " + language.getDisplayName());
 
-      setInitialLocationCallback(new Computable<Point>() {
-        @Override
-        public Point compute() {
-          return new DialogPositionProvider().calculateLocation();
-        }
-      });
+      setInitialLocationCallback(() -> new DialogPositionProvider().calculateLocation());
 
       init();
     }
@@ -168,22 +164,10 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
     private void applyFromUiToSettings() {
       try {
-        createNewCodeStyleSchemeIfDefault();
         myTabbedLanguagePanel.apply(mySettings);
       }
       catch (ConfigurationException e) {
         LOG.debug("Can not apply code style settings from context menu to project code style settings");
-      }
-    }
-
-    private void createNewCodeStyleSchemeIfDefault() {
-      CodeStyleSchemes schemes = CodeStyleSchemes.getInstance();
-      CodeStyleScheme current = schemes.getCurrentScheme();
-      if (current != null && CodeStyleSchemesModel.cannotBeModified(current)) {
-        CodeStyleScheme newScheme = schemes.createNewScheme(null, current);
-        schemes.addScheme(newScheme);
-        CodeStyleSettingsManager.getInstance(myEditor.getProject()).PREFERRED_PROJECT_CODE_STYLE = newScheme.getName(); 
-        mySettings = newScheme.getCodeStyleSettings();
       }
     }
 

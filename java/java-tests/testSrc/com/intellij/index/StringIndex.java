@@ -15,11 +15,11 @@
  */
 package com.intellij.index;
 
-import com.intellij.openapi.util.Factory;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.IndexStorage;
-import com.intellij.util.indexing.MapReduceIndex;
-import com.intellij.util.indexing.StorageException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,14 +37,46 @@ import java.util.Map;
 public class StringIndex {
   private final MapReduceIndex<String, String, PathContentPair> myIndex;
   
-  public StringIndex(final IndexStorage<String, String> storage, final Factory<PersistentHashMap<Integer, Collection<String>>> factory)
+  public StringIndex(String testName, final IndexStorage<String, String> storage, final PersistentHashMap<Integer, Collection<String>> inputIndex)
     throws IOException {
-    myIndex = new MapReduceIndex<String, String, PathContentPair>(null, new Indexer(), storage);
-    myIndex.setInputIdToDataKeysIndex(factory);
+    myIndex = new MapReduceIndex<String, String, PathContentPair>(new IndexExtension<String, String, PathContentPair>() {
+      @NotNull
+      @Override
+      public ID<String, String> getName() {
+        return new ID<String, String>(testName + "string_index") {};
+      }
+
+      @NotNull
+      @Override
+      public DataIndexer<String, String, PathContentPair> getIndexer() {
+        return new Indexer();
+      }
+
+      @NotNull
+      @Override
+      public KeyDescriptor<String> getKeyDescriptor() {
+        return new EnumeratorStringDescriptor();
+      }
+
+      @NotNull
+      @Override
+      public DataExternalizer<String> getValueExternalizer() {
+        return new EnumeratorStringDescriptor();
+      }
+
+      @Override
+      public int getVersion() {
+        return 0;
+      }
+    }, storage) {
+      protected PersistentHashMap<Integer, Collection<String>> createInputsIndex() throws IOException {
+        return inputIndex;
+      }
+    };
   }
-  
+
   public List<String> getFilesByWord(@NotNull String word) throws StorageException {
-    return myIndex.getData(word).toValueList();
+    return ContainerUtil.collect(myIndex.getData(word).getValueIterator());
   }
   
   public void update(final String path, @Nullable String content, @Nullable String oldContent) throws StorageException {
@@ -68,7 +100,7 @@ public class StringIndex {
     @Override
     @NotNull
     public Map<String,String> map(@NotNull final PathContentPair inputData) {
-      final Map<String,String> _map = new HashMap<String, String>();
+      final Map<String,String> _map = new HashMap<>();
       final StringBuilder builder = new StringBuilder();
       final String content = inputData.content;
       for (int idx = 0; idx < content.length(); idx++) {

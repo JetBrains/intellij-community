@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -62,9 +63,6 @@ class SchedulingWrapper implements ScheduledExecutorService {
     if (!shutdown.compareAndSet(false, true)) {
       throw new IllegalStateException("Already shutdown");
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Shutdown", new Throwable());
-    }
   }
 
   @NotNull
@@ -100,7 +98,23 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-    return isTerminated();
+    if (!isShutdown()) throw new IllegalStateException("must await termination after shutdown() or shutdownNow() only");
+    List<MyScheduledFutureTask> tasks = new ArrayList<MyScheduledFutureTask>(delayQueue);
+    for (MyScheduledFutureTask task : tasks) {
+      if (task.getBackendExecutorService() != backendExecutorService) {
+        continue;
+      }
+      try {
+        task.get(timeout, unit);
+      }
+      catch (ExecutionException ignored) {
+
+      }
+      catch (TimeoutException e) {
+        return false;
+      }
+    }
+    return backendExecutorService.awaitTermination(timeout, unit);
   }
 
   class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V> {
@@ -166,8 +180,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
     @Override
     public int compareTo(@NotNull Delayed other) {
-      if (other == this) // compare zero if same object
-      {
+      if (other == this) {
         return 0;
       }
       if (other instanceof MyScheduledFutureTask) {
@@ -220,10 +233,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
         LOG.trace("Executing " + BoundedTaskExecutor.info(this));
       }
       boolean periodic = isPeriodic();
-      if (backendExecutorService.isShutdown()) {
-        cancel(false);
-      }
-      else if (!periodic) {
+      if (!periodic) {
         super.run();
       }
       else if (runAndReset()) {
@@ -234,7 +244,8 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
     @Override
     public String toString() {
-      return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + BoundedTaskExecutor.info(this);
+      Object info = BoundedTaskExecutor.info(this);
+      return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + (info == this ? super.toString() : info);
     }
 
     @NotNull
@@ -303,6 +314,10 @@ class SchedulingWrapper implements ScheduledExecutorService {
       throw new RejectedExecutionException("Already shutdown");
     }
     delayQueue.add(t);
+    if (t.getDelay(TimeUnit.HOURS) > 24 && !t.isPeriodic()) {
+      // guard against inadvertent queue overflow
+      throw new IllegalArgumentException("Unsupported crazy delay " + t.getDelay(TimeUnit.MINUTES) + " minutes: " + BoundedTaskExecutor.info(t));
+    }
     return t;
   }
 
@@ -321,7 +336,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
                                                 long initialDelay,
                                                 long period,
                                                 @NotNull TimeUnit unit) {
-    throw new IncorrectOperationException("Not supported because it's bad for hibernation; use scheduleWithFixedDelay() instead.");
+    throw new IncorrectOperationException("Not supported because it's bad for hibernation; use scheduleWithFixedDelay() with the same parameters instead.");
   }
 
   @NotNull

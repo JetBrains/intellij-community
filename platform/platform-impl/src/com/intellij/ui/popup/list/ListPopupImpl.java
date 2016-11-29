@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +34,7 @@ import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +45,10 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.list.ListPopupImpl");
 
   protected MyList myList;
 
@@ -384,15 +389,27 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     valuesSelected(selectedValues);
 
+    AtomicBoolean insideOnChosen = new AtomicBoolean(true);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (insideOnChosen.get()) {
+        LOG.error("Showing dialogs from popup onChosen can result in focus issues. Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
+      }
+    }, ModalityState.any());
+
     final PopupStep nextStep;
-    if (listStep instanceof MultiSelectionListPopupStep<?>) {
-      nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
+    try {
+      if (listStep instanceof MultiSelectionListPopupStep<?>) {
+        nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
+      }
+      else if (e != null && listStep instanceof ListPopupStepEx<?>) {
+        nextStep = ((ListPopupStepEx<Object>)listStep).onChosen(selectedValues[0], handleFinalChoices, e.getModifiers());
+      }
+      else {
+        nextStep = listStep.onChosen(selectedValues[0], handleFinalChoices);
+      }
     }
-    else if (e != null && listStep instanceof ListPopupStepEx<?>) {
-      nextStep = ((ListPopupStepEx<Object>)listStep).onChosen(selectedValues[0], handleFinalChoices, e.getModifiers());
-    }
-    else {
-      nextStep = listStep.onChosen(selectedValues[0], handleFinalChoices);
+    finally {
+      insideOnChosen.set(false);
     }
     return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValues[0] : null, e);
   }
@@ -448,9 +465,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
   private class MyMouseMotionListener extends MouseMotionAdapter {
     private int myLastSelectedIndex = -2;
+    private Point myLastMouseLocation;
+
+    private boolean isMouseMoved(Point location) {
+      if (myLastMouseLocation == null) {
+        myLastMouseLocation = location;
+        return false;
+      }
+      return !myLastMouseLocation.equals(location);
+    }
 
     @Override
     public void mouseMoved(MouseEvent e) {
+      if (!isMouseMoved(e.getLocationOnScreen())) return;
+
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
 
@@ -516,13 +544,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     @Override
     public Dimension getPreferredScrollableViewportSize() {
+      Dimension result = super.getPreferredScrollableViewportSize();
       int rowCount = getVisibleRowCount();
       int size = getModel().getSize();
       if (rowCount < size) {
         // Note: labeled separators are not counted in this branch
-        return super.getPreferredScrollableViewportSize();
+        return result;
       }
-      return new Dimension(super.getPreferredScrollableViewportSize().width, getPreferredSize().height);
+      result.height = getPreferredSize().height;
+      return result;
     }
 
     @Override
@@ -558,6 +588,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       }
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)){
          return getSelectedValues();
+      }
+      if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId)) {
+        if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {
+          return mySpeedSearchPatternField;
+        }
       }
       return null;
     }

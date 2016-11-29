@@ -42,13 +42,8 @@ public class DomElementsHighlightingUtil {
   @Nullable
   public static ProblemDescriptor createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
-    return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, ProblemDescriptor>() {
-      @Override
-      public ProblemDescriptor fun(final Pair<TextRange, PsiElement> s) {
-        return manager
-          .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, true, problemDescriptor.getFixes());
-      }
-    });
+    return createProblemDescriptors(problemDescriptor, s -> manager
+      .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, true, problemDescriptor.getFixes()));
   }
 
   // TODO: move it to DomElementProblemDescriptorImpl
@@ -68,27 +63,24 @@ public class DomElementsHighlightingUtil {
   @Nullable
   public static Annotation createAnnotation(final DomElementProblemDescriptor problemDescriptor) {
 
-    return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, Annotation>() {
-      @Override
-      public Annotation fun(final Pair<TextRange, PsiElement> s) {
-        String text = problemDescriptor.getDescriptionTemplate();
-        if (StringUtil.isEmpty(text)) text = null;
-        final HighlightSeverity severity = problemDescriptor.getHighlightSeverity();
+    return createProblemDescriptors(problemDescriptor, s -> {
+      String text = problemDescriptor.getDescriptionTemplate();
+      if (StringUtil.isEmpty(text)) text = null;
+      final HighlightSeverity severity = problemDescriptor.getHighlightSeverity();
 
-        TextRange range = s.first;
-        if (text == null) range = TextRange.from(range.getStartOffset(), 0);
-        range = range.shiftRight(s.second.getTextRange().getStartOffset());
-        final Annotation annotation = createAnnotation(severity, range, text);
+      TextRange range = s.first;
+      if (text == null) range = TextRange.from(range.getStartOffset(), 0);
+      range = range.shiftRight(s.second.getTextRange().getStartOffset());
+      final Annotation annotation = createAnnotation(severity, range, text);
 
-        if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
-          annotation.setTextAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-        }
-
-        for(LocalQuickFix fix:problemDescriptor.getFixes()) {
-          if (fix instanceof IntentionAction) annotation.registerFix((IntentionAction)fix);
-        }
-        return annotation;
+      if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
+        annotation.setTextAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
       }
+
+      for(LocalQuickFix fix:problemDescriptor.getFixes()) {
+        if (fix instanceof IntentionAction) annotation.registerFix((IntentionAction)fix);
+      }
+      return annotation;
     });
   }
 

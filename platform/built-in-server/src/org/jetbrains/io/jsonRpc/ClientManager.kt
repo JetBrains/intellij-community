@@ -5,27 +5,21 @@ import com.intellij.openapi.util.SimpleTimer
 import gnu.trove.THashSet
 import gnu.trove.TObjectProcedure
 import io.netty.buffer.ByteBuf
-import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.Channel
 import io.netty.util.AttributeKey
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.webSocket.WebSocketServerOptions
 
-val CLIENT = AttributeKey.valueOf<Client>("SocketHandler.client")
+internal val CLIENT = AttributeKey.valueOf<Client>("SocketHandler.client")
 
 class ClientManager(private val listener: ClientListener?, val exceptionHandler: ExceptionHandler, options: WebSocketServerOptions? = null) : Disposable {
-  private val heartbeatTimer = SimpleTimer.getInstance().setUp(Runnable {
-    synchronized (clients) {
-      if (clients.isEmpty) {
-        return@Runnable
+  private val heartbeatTimer = SimpleTimer.getInstance().setUp({
+    forEachClient(TObjectProcedure {
+      if (it.channel.isActive) {
+        it.sendHeartbeat()
       }
-
-      clients.forEach { client ->
-        if (client.channel.isActive) {
-          client.sendHeartbeat()
-        }
-        true
-      }
-    }
+      true
+    })
   }, (options ?: WebSocketServerOptions()).heartbeatDelay.toLong())
 
   private val clients = THashSet<Client>()
@@ -70,7 +64,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     })
   }
 
-  fun disconnectClient(context: ChannelHandlerContext, client: Client, closeChannel: Boolean): Boolean {
+  fun disconnectClient(channel: Channel, client: Client, closeChannel: Boolean): Boolean {
     synchronized (clients) {
       if (!clients.remove(client)) {
         return false
@@ -78,10 +72,10 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     }
 
     try {
-      context.attr(CLIENT).remove()
+      channel.attr(CLIENT).remove()
 
       if (closeChannel) {
-        context.channel().close()
+        channel.close()
       }
 
       client.rejectAsyncResults(exceptionHandler)
@@ -94,10 +88,6 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
 
   fun forEachClient(procedure: TObjectProcedure<Client>) {
     synchronized (clients) {
-      if (clients.isEmpty) {
-        return
-      }
-
       clients.forEach(procedure)
     }
   }

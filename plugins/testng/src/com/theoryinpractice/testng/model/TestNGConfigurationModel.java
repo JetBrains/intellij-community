@@ -47,7 +47,7 @@ public class TestNGConfigurationModel
     private final Project project;
 
     public TestNGConfigurationModel(Project project) {
-        type = TestType.INVALID;
+        type = TestType.CLASS;
         for (int i = 3; i < typeDocuments.length; i++)
             typeDocuments[i] = new PlainDocument();
 
@@ -112,11 +112,11 @@ public class TestNGConfigurationModel
             data.MAIN_CLASS_NAME = "";
             data.METHOD_NAME = "";
             data.SUITE_NAME = "";
-        } else if (TestType.METHOD == type || TestType.CLASS == type) {
+        } else if (TestType.METHOD == type || TestType.CLASS == type || TestType.SOURCE == type) {
             String className = getText(TestType.CLASS);
             data.GROUP_NAME = "";
             data.SUITE_NAME = "";
-            if (TestType.METHOD == type)
+            if (TestType.METHOD == type || TestType.SOURCE == type)
                 data.METHOD_NAME = getText(TestType.METHOD);
 
             PsiClass psiClass = !getProject().isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, getProject()) : null;
@@ -133,7 +133,7 @@ public class TestNGConfigurationModel
             data.METHOD_NAME = "";
         }
         else if (TestType.PATTERN == type) {
-          final LinkedHashSet<String> set = new LinkedHashSet<String>();
+          final LinkedHashSet<String> set = new LinkedHashSet<>();
           final String[] patterns = getText(TestType.PATTERN).split("\\|\\|");
           for (String pattern : patterns) {
             if (pattern.length() > 0) {
@@ -205,12 +205,8 @@ public class TestNGConfigurationModel
             throw new RuntimeException(e);
         }
       }  else {
-        WriteCommandAction.runWriteCommandAction(project, new Runnable() {
-          public void run() {
-            ((com.intellij.openapi.editor.Document)document)
-              .replaceString(0, ((com.intellij.openapi.editor.Document)document).getTextLength(), value);
-          }
-        });
+        WriteCommandAction.runWriteCommandAction(project, () -> ((com.intellij.openapi.editor.Document)document)
+          .replaceString(0, ((com.intellij.openapi.editor.Document)document).getTextLength(), value));
       }
 
     }

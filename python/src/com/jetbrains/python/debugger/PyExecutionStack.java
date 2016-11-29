@@ -18,7 +18,9 @@ package com.jetbrains.python.debugger;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +34,12 @@ public class PyExecutionStack extends XExecutionStack {
 
   public PyExecutionStack(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo) {
     super(threadInfo.getName());
+    myDebugProcess = debugProcess;
+    myThreadInfo = threadInfo;
+  }
+
+  public PyExecutionStack(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo, final @Nullable Icon icon) {
+    super(threadInfo.getName(), icon);
     myDebugProcess = debugProcess;
     myThreadInfo = threadInfo;
   }
@@ -56,7 +64,7 @@ public class PyExecutionStack extends XExecutionStack {
 
     final List<PyStackFrameInfo> frames = myThreadInfo.getFrames();
     if (frames != null && firstFrameIndex <= frames.size()) {
-      final List<PyStackFrame> xFrames = new LinkedList<PyStackFrame>();
+      final List<PyStackFrame> xFrames = new LinkedList<>();
       for (int i = firstFrameIndex; i < frames.size(); i++) {
         xFrames.add(convert(myDebugProcess, frames.get(i)));
       }

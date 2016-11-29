@@ -72,7 +72,7 @@ public class OldReferencesResolver {
   private final PsiParameter[] myParameters;
   private final GrClosureSignature mySignature;
   
-  private final Set<PsiParameter> myParamsToNotInline = new HashSet<PsiParameter>();
+  private final Set<PsiParameter> myParamsToNotInline = new HashSet<>();
 
   public OldReferencesResolver(GrCall context,
                                GrExpression expr,
@@ -86,7 +86,7 @@ public class OldReferencesResolver {
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     myParameterInitializer = parameterInitializer;
     myParameters = parameters;
-    myTempVars = new HashMap<GrExpression, String>();
+    myTempVars = new HashMap<>();
     mySignature = signature;
     myActualArgs = actualArgs;
     myToReplaceIn = toReplaceIn;

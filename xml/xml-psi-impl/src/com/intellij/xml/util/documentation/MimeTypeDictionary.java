@@ -39,7 +39,7 @@ public class MimeTypeDictionary {
   }
 
   private static Set<String> loadContentTypes() {
-    final TreeSet<String> result = new TreeSet<String>();
+    final TreeSet<String> result = new TreeSet<>();
     result.add("*/*");
     // IANA Media Types: http://www.iana.org/assignments/media-types/media-types.xhtml
     readMediaTypes(result, "application");

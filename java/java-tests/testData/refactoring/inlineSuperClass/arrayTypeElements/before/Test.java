@@ -1,1 +1,5 @@
-class Test extends Super {}
+class Test extends Super {
+  public Test() {
+    super("");
+  }
+}

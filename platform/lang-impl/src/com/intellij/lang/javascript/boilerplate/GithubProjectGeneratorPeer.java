@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ import java.util.*;
  * @author Sergey Simonchik
  */
 public class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
+
+  public static String getGithubZipballUrl(String ghUserName,String ghRepoName, String branch) {
+    return String.format("https://github.com/%s/%s/zipball/%s", ghUserName, ghRepoName, branch);
+  }
+
   private void createUIComponents() {
     myReloadableComboBoxPanel = new ReloadableComboBoxPanel<GithubTagInfo>() {
 
@@ -124,7 +129,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     String ghRepoName = generator.getGithubRepositoryName();
     myMasterTag = new GithubTagInfo(
       "master",
-      String.format("https://github.com/%s/%s/zipball/master", ghUserName, ghRepoName)
+      getGithubZipballUrl(ghUserName, ghRepoName, "master")
     );
 
     myTagListProvider = new GithubTagListProvider(ghUserName, ghRepoName);
@@ -155,13 +160,10 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   @NotNull
   private static List<GithubTagInfo> createSortedTagList(@NotNull Collection<GithubTagInfo> tags) {
     List<GithubTagInfo> sortedTags = ContainerUtil.newArrayList(tags);
-    Collections.sort(sortedTags, new Comparator<GithubTagInfo>() {
-      @Override
-      public int compare(GithubTagInfo tag1, GithubTagInfo tag2) {
-        GithubTagInfo.Version v1 = tag1.getVersion();
-        GithubTagInfo.Version v2 = tag2.getVersion();
-        return v2.compareTo(v1);
-      }
+    Collections.sort(sortedTags, (tag1, tag2) -> {
+      GithubTagInfo.Version v1 = tag1.getVersion();
+      GithubTagInfo.Version v2 = tag2.getVersion();
+      return v2.compareTo(v1);
     });
     for (GithubTagInfo tag : sortedTags) {
       tag.setRecentTag(false);

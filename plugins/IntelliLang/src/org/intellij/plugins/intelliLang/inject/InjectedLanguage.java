@@ -102,11 +102,11 @@ public final class InjectedLanguage {
   }
 
   private static void initLanguageCache() {
-    ourLanguageCache = new HashMap<String, Language>();
+    ourLanguageCache = new HashMap<>();
 
     Collection<Language> registeredLanguages;
     do {
-      registeredLanguages = new ArrayList<Language>(Language.getRegisteredLanguages());
+      registeredLanguages = new ArrayList<>(Language.getRegisteredLanguages());
       for (Language language : registeredLanguages) {
         if (LanguageUtil.isInjectableLanguage(language)) {
           ourLanguageCache.put(language.getID(), language);

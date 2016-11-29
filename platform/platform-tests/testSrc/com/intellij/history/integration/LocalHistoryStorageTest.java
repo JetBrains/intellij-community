@@ -120,7 +120,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
 
   public void testWritingChangesOfDifferentSize() throws Exception {
     final int MAX = 100;
-    List<Integer> records = new ArrayList<Integer>(MAX);
+    List<Integer> records = new ArrayList<>(MAX);
     for (int i = 0; i < MAX; i++) {
       if (i > MAX / 2) {
         myStorage.deleteRecordsUpTo(records.get(records.size() - MAX / 2));

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -76,7 +75,7 @@ public class WrapExpressionFix implements IntentionAction {
       }
       if (expectedReturnType == null) return null;
       PsiMethod[] methods = aClass.getMethods();
-      final Set<PsiMethod> wrapperMethods = new LinkedHashSet<PsiMethod>();
+      final Set<PsiMethod> wrapperMethods = new LinkedHashSet<>();
       for (PsiMethod method : methods) {
         if (method.hasModifierProperty(PsiModifier.STATIC)
             && method.getParameterList().getParametersCount() == 1
@@ -114,7 +113,6 @@ public class WrapExpressionFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiType type = myExpression.getType();
     assert type != null;
     PsiMethod wrapper = findWrapper(type, myExpectedType, myPrimitiveExpected);

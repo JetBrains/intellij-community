@@ -46,9 +46,11 @@ public class VcsNotifier {
   }
 
   @NotNull
-  private static Notification createNotification(@NotNull NotificationGroup notificationGroup,
-                                                 @NotNull String title, @NotNull String message, @NotNull NotificationType type,
-                                                 @Nullable NotificationListener listener) {
+  public static Notification createNotification(@NotNull NotificationGroup notificationGroup,
+                                                @NotNull String title,
+                                                @NotNull String message,
+                                                @NotNull NotificationType type,
+                                                @Nullable NotificationListener listener) {
     // title can be empty; message can't be neither null, nor empty
     if (StringUtil.isEmptyOrSpaces(message)) {
       message = title;
@@ -59,9 +61,18 @@ public class VcsNotifier {
   }
 
   @NotNull
-  protected Notification notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
-                                @NotNull NotificationType type, @Nullable NotificationListener listener) {
+  public Notification notify(@NotNull NotificationGroup notificationGroup,
+                             @NotNull String title,
+                             @NotNull String message,
+                             @NotNull NotificationType type,
+                             @Nullable NotificationListener listener) {
     Notification notification = createNotification(notificationGroup, title, message, type, listener);
+    notification.notify(myProject);
+    return notification;
+  }
+
+  @NotNull
+  public Notification notify(@NotNull Notification notification) {
     notification.notify(myProject);
     return notification;
   }

@@ -81,6 +81,9 @@ public class FormattingModelDumper {
     if (block instanceof ASTBlock) {
       builder.append(((ASTBlock)block).getNode().getElementType());
     }
+    else {
+      builder.append(block.getClass().getSimpleName());
+    }
     dumpBlockProperties(block, builder);
     builder.append(">\n");
   }

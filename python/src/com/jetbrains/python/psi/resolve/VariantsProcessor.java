@@ -38,7 +38,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
 
   protected boolean myPlainNamesOnly = false; // if true, add insert handlers to known things like functions
   private List<String> myAllowedNames;
-  private final List<String> mySeenNames = new ArrayList<String>();
+  private final List<String> mySeenNames = new ArrayList<>();
 
   public VariantsProcessor(PsiElement context) {
     // empty

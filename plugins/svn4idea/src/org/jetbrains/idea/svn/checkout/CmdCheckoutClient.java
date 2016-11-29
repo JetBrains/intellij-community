@@ -33,7 +33,7 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
                        @Nullable ProgressTracker handler) throws VcsException {
     validateFormat(format, getSupportedFormats());
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, source);
     CommandUtil.put(parameters, destination, false);
@@ -47,7 +47,7 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
 
   @Override
   public List<WorkingCopyFormat> getSupportedFormats() throws VcsException {
-    ArrayList<WorkingCopyFormat> result = new ArrayList<WorkingCopyFormat>();
+    ArrayList<WorkingCopyFormat> result = new ArrayList<>();
 
     Version version = myFactory.createVersionClient().getVersion();
     result.add(WorkingCopyFormat.from(version));

@@ -35,7 +35,7 @@ public abstract class ColorPickerListenerFactory {
       ColorPickerListener listener = factory.createListener(element);
       if (listener != null) {
         if (listeners == null) {
-          listeners = new SmartList<ColorPickerListener>();
+          listeners = new SmartList<>();
         }
         listeners.add(listener);
       }

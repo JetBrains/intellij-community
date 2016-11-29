@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -38,7 +38,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.util.Consumer;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -82,26 +81,20 @@ public class EclipseClasspathTest extends IdeaTestCase {
     }
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
 
-    final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
-      @Override
-      public Module compute() {
-        String imlPath = path + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT;
-        return ModuleManager.getInstance(project).newModule(imlPath, StdModuleTypes.JAVA.getId());
-      }
+    final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> {
+      String imlPath = path + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerImpl.IML_EXTENSION;
+      return ModuleManager.getInstance(project).newModule(imlPath, StdModuleTypes.JAVA.getId());
     });
 
-    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        try {
-          EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
-          classpathReader.init(model);
-          classpathReader.readClasspath(model, classpathElement);
-          new EclipseClasspathStorageProvider().assertCompatible(model);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      try {
+        EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
+        classpathReader.init(model);
+        classpathReader.readClasspath(model, classpathElement);
+        new EclipseClasspathStorageProvider().assertCompatible(model);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
     return module;

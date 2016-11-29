@@ -16,11 +16,13 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
@@ -29,7 +31,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer{
-  private static final Icon LOADING_NODE_ICON = new EmptyIcon(8, 16);
+  private static final Icon LOADING_NODE_ICON = JBUI.scale(EmptyIcon.create(8, 16));
 
   /**
    * Defines whether the tree is selected or not
@@ -64,7 +66,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (UIUtil.isFullRowSelectionLAF()) {
       setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
-    else if (tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
+    else if (WideSelectionTreeUI.isWideSelection(tree)) {
       setPaintFocusBorder(false);
       if (selected) {
         setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
@@ -100,7 +102,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
-    else if (tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
+    else if (WideSelectionTreeUI.isWideSelection(tree)) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
@@ -179,4 +181,15 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
                                              boolean leaf,
                                              int row,
                                              boolean hasFocus);
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleColoredTreeCellRenderer();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleColoredTreeCellRenderer extends AccessibleSimpleColoredComponent {
+  }
 }

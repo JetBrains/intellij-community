@@ -21,15 +21,15 @@ import java.util.Map;
 public final class JsonPathResponseHandler extends SelectorBasedResponseHandler {
 
   private static final Map<Class<?>, String> JSON_TYPES = ContainerUtil.newHashMap(
-    new Pair<Class<?>, String>(Map.class, "JSON object"),
-    new Pair<Class<?>, String>(List.class, "JSON array"),
-    new Pair<Class<?>, String>(String.class, "JSON string"),
-    new Pair<Class<?>, String>(Integer.class, "JSON number"),
-    new Pair<Class<?>, String>(Double.class, "JSON number"),
-    new Pair<Class<?>, String>(Boolean.class, "JSON boolean")
+    new Pair<>(Map.class, "JSON object"),
+    new Pair<>(List.class, "JSON array"),
+    new Pair<>(String.class, "JSON string"),
+    new Pair<>(Integer.class, "JSON number"),
+    new Pair<>(Double.class, "JSON number"),
+    new Pair<>(Boolean.class, "JSON boolean")
   );
 
-  private final Map<String, JsonPath> myCompiledCache = new HashMap<String, JsonPath>();
+  private final Map<String, JsonPath> myCompiledCache = new HashMap<>();
 
   /**
    * Serialization constructor
@@ -85,12 +85,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     if (list == null) {
       return ContainerUtil.emptyList();
     }
-    return ContainerUtil.map2List(list, new Function<Object, Object>() {
-      @Override
-      public Object fun(Object o) {
-        return o.toString();
-      }
-    }).subList(0, Math.min(list.size(), max));
+    return ContainerUtil.map2List(list, (Function<Object, Object>)o -> o.toString()).subList(0, Math.min(list.size(), max));
   }
 
   @Nullable

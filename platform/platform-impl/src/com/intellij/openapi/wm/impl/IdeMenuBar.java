@@ -64,7 +64,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher {
+public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher, UISettingsListener {
   private static final int COLLAPSED_HEIGHT = 2;
 
   private enum State {
@@ -95,8 +95,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
     myActionManager = actionManager;
     myTimerListener = new MyTimerListener();
-    myVisibleActions = new ArrayList<AnAction>();
-    myNewVisibleActions = new ArrayList<AnAction>();
+    myVisibleActions = new ArrayList<>();
+    myNewVisibleActions = new ArrayList<>();
     myPresentationFactory = new MenuItemPresentationFactory();
     myDataManager = dataManager;
 
@@ -192,14 +192,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       revalidate();
       repaint();
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          JMenu menu = getMenu(getSelectionModel().getSelectedIndex());
-          if (menu.isPopupMenuVisible()) {
-            menu.setPopupMenuVisible(false);
-            menu.setPopupMenuVisible(true);
-          }
+      SwingUtilities.invokeLater(() -> {
+        JMenu menu = getMenu(getSelectionModel().getSelectedIndex());
+        if (menu.isPopupMenuVisible()) {
+          menu.setPopupMenuVisible(false);
+          menu.setPopupMenuVisible(true);
         }
       });
     }
@@ -273,13 +270,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
     // Add updater for menus
     myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
-    UISettingsListener UISettingsListener = new UISettingsListener() {
-      public void uiSettingsChanged(final UISettings source) {
-        updateMnemonicsVisibility();
-        myPresentationFactory.reset();
-      }
-    };
-    UISettings.getInstance().addUISettingsListener(UISettingsListener, myDisposable);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
@@ -293,6 +283,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       Disposer.dispose(myDisposable);
     }
     super.removeNotify();
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings uiSettings) {
+    updateMnemonicsVisibility();
+    myPresentationFactory.reset();
   }
 
   @Override
@@ -574,11 +570,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
     if (SystemInfo.isLinux && Registry.is("linux.native.menu") && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          ApplicationMenu.tryInstall(frame);
-        }
-      });
+      SwingUtilities.invokeLater(() -> ApplicationMenu.tryInstall(frame));
     }
   }
 

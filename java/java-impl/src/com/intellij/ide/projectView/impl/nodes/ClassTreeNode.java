@@ -37,10 +37,10 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     PsiClass parent = getValue();
-    final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<AbstractTreeNode>();
+    final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<>();
 
     if (getSettings().isShowMembers()) {
-      ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> result = new ArrayList<>();
       PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
       for (PsiElement psiElement : result) {
         if (!psiElement.isPhysical()) {

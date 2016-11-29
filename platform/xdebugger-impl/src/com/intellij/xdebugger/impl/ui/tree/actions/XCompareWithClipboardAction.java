@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
-import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.requests.DiffRequest;
@@ -30,12 +29,9 @@ public class XCompareWithClipboardAction extends XFetchValueActionBase {
 
   @Override
   protected void handle(final Project project, final String value, XDebuggerTree tree) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        DiffRequest request = DiffRequestFactory.getInstance().createClipboardVsValue(value);
-        DiffManager.getInstance().showDiff(project, request);
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      DiffRequest request = DiffRequestFactory.getInstance().createClipboardVsValue(value);
+      DiffManager.getInstance().showDiff(project, request);
     });
   }
 }

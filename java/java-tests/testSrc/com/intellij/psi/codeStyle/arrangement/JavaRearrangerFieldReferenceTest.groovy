@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class TestRunnable {
 }
 ''',
            rules: defaultFieldsArrangement
-    );
+    )
   }
 
   void "test keep referenced fields before those who has reference through binary expression"() {
@@ -65,7 +65,7 @@ public class javaTest {
 }
 ''',
            rules: defaultFieldsArrangement
-    );
+    )
   }
 
   void "test keep referenced static fields before those who has reference through binary expression"() {
@@ -88,7 +88,7 @@ public class CodeFormatTest {
 }
 ''',
             rules: defaultFieldsArrangement
-    );
+    )
   }
 
   void "test keep referenced static fields before those who has direct reference"() {
@@ -105,7 +105,7 @@ public class CodeFormatTest {
 }
 ''',
             rules: defaultFieldsArrangement
-    );
+    )
   }
 
   void "test keep referenced fields before those who has direct reference"() {
@@ -122,7 +122,7 @@ public class CodeFormatTest {
 }
 ''',
            rules: defaultFieldsArrangement
-    );
+    )
   }
 
   void "test keep referenced fields before those who has reference through polyadic expression"() {
@@ -139,7 +139,7 @@ public class CodeFormatTest {
 }
 ''',
            rules: defaultFieldsArrangement
-    );
+    )
   }
 
   void "test keep referenced field before who has reference through parenthesized nested binary expression"() {
@@ -156,7 +156,7 @@ public class TestRunnable {
 }
 ''',
            rules: defaultFieldsArrangement
-    );
+    )
   }
 
 
@@ -175,7 +175,7 @@ public class TestRunnable {
 }
 ''',
            rules: defaultFieldsArrangement
-    );
+    )
   }
 
 
@@ -197,7 +197,7 @@ public class TestRunnable {
 }
 ''',
            rules: defaultFieldsArrangement
-    );
+    )
   }
 
 
@@ -249,7 +249,7 @@ public class Alfa {
 }
 ''',
            rules: defaultFieldsArrangement
-    );
+    )
   }
 
   void "test field references work ok with enums"() {
@@ -446,7 +446,7 @@ public class TmpTest {
         rule(PUBLIC, METHOD),
         rule(PRIVATE, METHOD)
       ]
-    );
+    )
   }
 
   void "test only dependencies withing same initialization scope"() {

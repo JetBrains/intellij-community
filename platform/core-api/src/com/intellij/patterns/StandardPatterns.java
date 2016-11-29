@@ -36,18 +36,22 @@ public class StandardPatterns {
 
   private static final FalsePattern FALSE_PATTERN = new FalsePattern();
 
+  @NotNull
   public static StringPattern string() {
-    return new StringPattern();
+    return StringPattern.STRING_PATTERN;
   }
-  
+
+  @NotNull
   public static CharPattern character() {
     return new CharPattern();
   }
 
+  @NotNull
   public static <T> ObjectPattern.Capture<T> instanceOf(Class<T> aClass) {
     return new ObjectPattern.Capture<T>(aClass);
   }
 
+  @NotNull
   public static <T> ElementPattern<T> instanceOf(@NotNull Class<T>... classes) {
     ElementPattern[] patterns = ContainerUtil.map(classes, new Function<Class<T>, ElementPattern>() {
       @Override
@@ -58,6 +62,7 @@ public class StandardPatterns {
     return or(patterns);
   }
 
+  @NotNull
   public static <T> ElementPattern save(final Key<T> key) {
     return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
       @Override
@@ -73,19 +78,22 @@ public class StandardPatterns {
     });
   }
 
+  @NotNull
   public static ObjectPattern.Capture<Object> object() {
     return instanceOf(Object.class);
   }
 
+  @NotNull
   public static <T> ObjectPattern.Capture<T> object(@NotNull T value) {
     return instanceOf((Class<T>)value.getClass()).equalTo(value);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @NotNull
   public static <T> CollectionPattern<T> collection(Class<T> aClass) {
     return new CollectionPattern<T>();
   }
 
+  @NotNull
   public static ElementPattern get(@NotNull @NonNls final String key) {
     return new ObjectPattern.Capture(new InitialPatternCondition(Object.class) {
       @Override
@@ -100,11 +108,13 @@ public class StandardPatterns {
     });
   }
 
+  @NotNull
   public static <T> CollectionPattern<T> collection() {
     return new CollectionPattern<T>();
   }
 
-  public static <E> ElementPattern<E> or(final ElementPattern<? extends E>... patterns) {
+  @NotNull
+  public static <E> ElementPattern<E> or(@NotNull final ElementPattern<? extends E>... patterns) {
     return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
@@ -133,6 +143,7 @@ public class StandardPatterns {
     });
   }
 
+  @NotNull
   public static <E> ElementPattern<E> and(final ElementPattern<? extends E>... patterns) {
     final List<InitialPatternCondition> initial = ContainerUtil.newSmartList();
     for (ElementPattern<?> pattern : patterns) {
@@ -172,6 +183,7 @@ public class StandardPatterns {
       });
   }
 
+  @NotNull
   public static <E> ObjectPattern.Capture<E> not(final ElementPattern<E> pattern) {
     return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
       @Override
@@ -192,6 +204,7 @@ public class StandardPatterns {
     });
   }
 
+  @NotNull
   public static <T> ObjectPattern.Capture<T> optional(final ElementPattern<T> pattern) {
     return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
       @Override
@@ -203,6 +216,7 @@ public class StandardPatterns {
   }
 
 
+  @NotNull
   public static <E> ElementPattern<E> alwaysFalse() {
     return FALSE_PATTERN;
   }

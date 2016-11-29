@@ -25,6 +25,8 @@
                      implementationClass="com.intellij.appengine.inspections.AppEngineForbiddenCodeInspection"/>
 
     <remoteServer.type implementation="com.intellij.appengine.cloud.AppEngineCloudType"/>
+
+    <pluginReplacement implementation="com.intellij.appengine.converter.AppEnginePluginReplacement"/>
   </extensions>
 
   <actions>

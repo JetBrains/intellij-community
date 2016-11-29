@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,6 +154,7 @@ public class ControlFlowUtils {
     boolean hasDefaultCase = false;
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiSwitchLabelStatement) {
+        numCases++;
         final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)statement;
         if (switchLabelStatement.isDefaultCase()) {
           hasDefaultCase = true;
@@ -164,7 +166,6 @@ public class ControlFlowUtils {
           return true;
         }
       }
-      numCases++;
     }
     final boolean isEnum = isEnumSwitch(switchStatement);
     if (!hasDefaultCase && !isEnum) {
@@ -297,9 +298,9 @@ public class ControlFlowUtils {
     return continueToAncestorFinder.continueToAncestorFound();
   }
 
-  public static boolean statementContainsReturn(@NotNull PsiStatement statement) {
+  public static boolean containsReturn(@NotNull PsiElement element) {
     final ReturnFinder returnFinder = new ReturnFinder();
-    statement.accept(returnFinder);
+    element.accept(returnFinder);
     return returnFinder.returnFound();
   }
 
@@ -309,9 +310,9 @@ public class ControlFlowUtils {
     return continueFinder.continueFound();
   }
 
-  public static boolean statementContainsSystemExit(@NotNull PsiStatement statement) {
+  public static boolean containsSystemExit(@NotNull PsiElement element) {
     final SystemExitFinder systemExitFinder = new SystemExitFinder();
-    statement.accept(systemExitFinder);
+    element.accept(systemExitFinder);
     return systemExitFinder.exitFound();
   }
 
@@ -362,7 +363,7 @@ public class ControlFlowUtils {
     return PsiTreeUtil.getParentOfType(expression, PsiReturnStatement.class) != null;
   }
 
-  private static boolean isInThrowStatementArgument(@NotNull PsiExpression expression) {
+  public static boolean isInThrowStatementArgument(@NotNull PsiExpression expression) {
     return PsiTreeUtil.getParentOfType(expression, PsiThrowStatement.class) != null;
   }
 
@@ -520,9 +521,19 @@ public class ControlFlowUtils {
     if (body == null) {
       return true;
     }
-    final ReturnFinder returnFinder = new ReturnFinder();
-    body.accept(returnFinder);
-    return !returnFinder.returnFound() && !codeBlockMayCompleteNormally(body);
+    return !containsReturn(body) && !codeBlockMayCompleteNormally(body);
+  }
+
+  public static boolean lambdaExpressionAlwaysThrowsException(PsiLambdaExpression expression) {
+    final PsiElement body = expression.getBody();
+    if (body instanceof PsiExpression) {
+      return false;
+    }
+    if (!(body instanceof PsiCodeBlock)) {
+      return true;
+    }
+    final PsiCodeBlock codeBlock = (PsiCodeBlock)body;
+    return !containsReturn(codeBlock) && !codeBlockMayCompleteNormally(codeBlock);
   }
 
   public static boolean statementContainsNakedBreak(PsiStatement statement) {
@@ -532,6 +543,61 @@ public class ControlFlowUtils {
     final NakedBreakFinder breakFinder = new NakedBreakFinder();
     statement.accept(breakFinder);
     return breakFinder.breakFound();
+  }
+
+  /**
+   * Checks whether the given statement effectively breaks given loop. Returns true
+   * if the statement is {@link PsiBreakStatement} having given loop as a target. Also may return
+   * true in other cases if the statement is semantically equivalent to break like this:
+   *
+   * <pre>{@code
+   * int myMethod(int[] data) {
+   *   for(int val : data) {
+   *     if(val == 5) {
+   *       System.out.println(val);
+   *       return 0; // this statement is semantically equivalent to break.
+   *     }
+   *   }
+   *   return 0;
+   * }}</pre>
+   *
+   * @param statement statement which may break the loop
+   * @param loop a loop to break
+   * @return true if the statement actually breaks the loop
+   */
+  @Contract("null, _ -> false")
+  public static boolean statementBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
+    if(statement instanceof PsiBreakStatement) {
+      return ((PsiBreakStatement)statement).findExitedStatement() == loop;
+    }
+    if(statement instanceof PsiReturnStatement) {
+      PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
+      PsiElement cur = loop;
+      for(PsiElement parent = cur.getParent();;parent = cur.getParent()) {
+        if(parent instanceof PsiLabeledStatement) {
+          cur = parent;
+        } else if(parent instanceof PsiCodeBlock) {
+          PsiCodeBlock block = (PsiCodeBlock)parent;
+          PsiStatement[] statements = block.getStatements();
+          if(block.getParent() instanceof PsiBlockStatement && statements.length > 0 && statements[statements.length-1] == cur) {
+            cur = block.getParent();
+          } else break;
+        } else if(parent instanceof PsiIfStatement) {
+          if(cur == ((PsiIfStatement)parent).getThenBranch() || cur == ((PsiIfStatement)parent).getElseBranch()) {
+            cur = parent;
+          } else break;
+        } else break;
+      }
+      PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(cur, PsiComment.class, PsiWhiteSpace.class);
+      if(nextElement instanceof PsiReturnStatement) {
+        return EquivalenceChecker.getCanonicalPsiEquivalence()
+          .expressionsAreEquivalent(returnValue, ((PsiReturnStatement)nextElement).getReturnValue());
+      }
+      if(nextElement == null && returnValue == null && cur.getParent() instanceof PsiMethod) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class NakedBreakFinder extends JavaRecursiveElementWalkingVisitor {

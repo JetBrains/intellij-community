@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -42,7 +41,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
 
   private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
-  private List<PsiVariable> myCandidates = null;
+  private List<PsiVariable> myCandidates;
 
   public AddMethodQualifierFix(final PsiMethodCallExpression methodCallExpression) {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
@@ -51,8 +50,12 @@ public class AddMethodQualifierFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    String text = QuickFixBundle.message("add.method.qualifier.fix.text", myCandidates.size() > 1 ? "" : myCandidates.get(0).getName());
-    if (myCandidates.size() > 1) {
+    final List<PsiVariable> candidates = getOrFindCandidates();
+    if (candidates.isEmpty()) {
+      return getFamilyName();
+    }
+    String text = QuickFixBundle.message("add.method.qualifier.fix.text", candidates.size() > 1 ? "" : candidates.get(0).getName());
+    if (candidates.size() > 1) {
       text += "...";
     }
     return text;
@@ -61,7 +64,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("add.method.qualifier.fix.family");
   }
 
   @Override
@@ -81,7 +84,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   }
 
   private void findCandidates() {
-    myCandidates = new ArrayList<PsiVariable>();
+    myCandidates = new ArrayList<>();
     final PsiMethodCallExpression methodCallElement = myMethodCall.getElement();
     final String methodName = methodCallElement.getMethodExpression().getReferenceName();
     if (methodName == null) {
@@ -108,7 +111,7 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   @TestOnly
   public List<PsiVariable> getCandidates() {
-    return myCandidates;
+    return getOrFindCandidates();
   }
 
   @Override
@@ -116,8 +119,8 @@ public class AddMethodQualifierFix implements IntentionAction {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(file)) {
       return;
     }
-    if (myCandidates.size() == 1 || UNIT_TEST_MODE) {
-      qualify(myCandidates.get(0), editor);
+    if (getOrFindCandidates().size() == 1 || UNIT_TEST_MODE) {
+      qualify(getOrFindCandidates().get(0), editor);
     }
     else {
       chooseAndQualify(editor);
@@ -126,16 +129,11 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   private void chooseAndQualify(final Editor editor) {
     final BaseListPopupStep<PsiVariable> step =
-      new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), myCandidates) {
+      new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), getOrFindCandidates()) {
         @Override
         public PopupStep onChosen(final PsiVariable selectedValue, final boolean finalChoice) {
           if (selectedValue != null && finalChoice) {
-            WriteCommandAction.runWriteCommandAction(selectedValue.getProject(), new Runnable() {
-              @Override
-              public void run() {
-                qualify(selectedValue, editor);
-              }
-            });
+            WriteCommandAction.runWriteCommandAction(selectedValue.getProject(), () -> qualify(selectedValue, editor));
           }
           return FINAL_CHOICE;
         }

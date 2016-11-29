@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class PyPropertyAccessInspection extends PyInspection {
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    private final HashMap<Pair<PyClass, String>, Property> myPropertyCache = new HashMap<Pair<PyClass, String>, Property>();
+    private final HashMap<Pair<PyClass, String>, Property> myPropertyCache = new HashMap<>();
 
     public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
@@ -64,16 +64,16 @@ public class PyPropertyAccessInspection extends PyInspection {
     @Override
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       super.visitPyReferenceExpression(node);
-      checkExpression(node);
+      checkPropertyExpression(node);
     }
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
       super.visitPyTargetExpression(node);
-      checkExpression(node);
+      checkPropertyExpression(node);
     }
 
-    private void checkExpression(PyQualifiedExpression node) {
+    private void checkPropertyExpression(PyQualifiedExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
         final PyType type = myTypeEvalContext.getType(qualifier);
@@ -121,6 +121,5 @@ public class PyPropertyAccessInspection extends PyInspection {
         registerProblem(node, message, new PyCreatePropertyQuickFix(dir));
       }
     }
-
   }
 }

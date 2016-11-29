@@ -55,7 +55,7 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
 
   @Override
   public void navigate(@NotNull final Project project, @Nullable RelativePoint hyperlinkLocationPoint) {
-    List<PsiFile> currentFiles = new ArrayList<PsiFile>();
+    List<PsiFile> currentFiles = new ArrayList<>();
 
     AccessToken accessToken = ReadAction.start();
     try {
@@ -88,12 +88,9 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
       list.setCellRenderer(new GotoFileCellRenderer(width));
       JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setTitle("Choose Target File")
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            VirtualFile file = ((PsiFile)list.getSelectedValue()).getVirtualFile();
-            new OpenFileHyperlinkInfo(myProject, file, myLineNumber).navigate(project);
-          }
+        .setItemChoosenCallback(() -> {
+          VirtualFile file = ((PsiFile)list.getSelectedValue()).getVirtualFile();
+          new OpenFileHyperlinkInfo(myProject, file, myLineNumber).navigate(project);
         })
         .createPopup();
       if (hyperlinkLocationPoint != null) {

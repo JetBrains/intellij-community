@@ -93,7 +93,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void assertModules(String... expectedNames) {
     Module[] actual = ModuleManager.getInstance(myProject).getModules();
-    List<String> actualNames = new ArrayList<String>();
+    List<String> actualNames = new ArrayList<>();
 
     for (Module m : actual) {
       actualNames.add(m.getName());
@@ -103,7 +103,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
-    List<String> actual = new ArrayList<String>();
+    List<String> actual = new ArrayList<>();
     for (ContentEntry e : getContentRoots(moduleName)) {
       actual.add(e.getUrl());
     }
@@ -121,7 +121,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void assertGeneratedSources(String moduleName, String... expectedSources) {
     ContentEntry contentRoot = getContentRoot(moduleName);
-    List<ContentFolder> folders = new ArrayList<ContentFolder>();
+    List<ContentFolder> folders = new ArrayList<>();
     for (SourceFolder folder : contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
       JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaSourceRootType.SOURCE);
       assertNotNull(properties);
@@ -160,7 +160,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   private static void doAssertContentFolders(ContentEntry e, final List<? extends ContentFolder> folders, String... expected) {
-    List<String> actual = new ArrayList<String>();
+    List<String> actual = new ArrayList<>();
     for (ContentFolder f : folders) {
       String rootUrl = e.getUrl();
       String folderUrl = f.getUrl();
@@ -248,7 +248,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void assertExportedDeps(String moduleName, String... expectedDeps) {
-    final List<String> actual = new ArrayList<String>();
+    final List<String> actual = new ArrayList<>();
 
     getRootManager(moduleName).orderEntries().withoutSdk().withoutModuleSourceEntries().exportedOnly().process(new RootPolicy<Object>() {
       @Override
@@ -285,7 +285,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   private List<String> collectModuleDepsNames(String moduleName, Class clazz) {
-    List<String> actual = new ArrayList<String>();
+    List<String> actual = new ArrayList<>();
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
       if (clazz.isInstance(e)) {
@@ -310,7 +310,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   public void assertProjectLibraries(String... expectedNames) {
-    List<String> actualNames = new ArrayList<String>();
+    List<String> actualNames = new ArrayList<>();
     for (Library each : ProjectLibraryTable.getInstance(myProject).getLibraries()) {
       String name = each.getName();
       actualNames.add(name == null ? "<unnamed>" : name);
@@ -344,7 +344,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   private ContentEntry getContentRoot(String moduleName) {
     ContentEntry[] ee = getContentRoots(moduleName);
-    List<String> roots = new ArrayList<String>();
+    List<String> roots = new ArrayList<>();
     for (ContentEntry e : ee) {
       roots.add(e.getUrl());
     }
@@ -465,7 +465,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void readProjects(VirtualFile... files) {
-    List<MavenProject> projects = new ArrayList<MavenProject>();
+    List<MavenProject> projects = new ArrayList<>();
     for (VirtualFile each : files) {
       projects.add(myProjectsManager.findProject(each));
     }
@@ -506,7 +506,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                                                                      List<MavenArtifact> artifacts) {
     final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
 
-    AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<MavenArtifactDownloader.DownloadResult>();
+    AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<>();
     result.doWhenDone(new Consumer<MavenArtifactDownloader.DownloadResult>() {
       @Override
       public void consume(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {

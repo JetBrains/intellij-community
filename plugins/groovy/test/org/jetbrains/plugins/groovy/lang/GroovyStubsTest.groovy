@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
@@ -37,7 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
  */
 class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
 
-  public void testEnumConstant() {
+  void testEnumConstant() {
     myFixture.tempDirFixture.createFile('A.groovy', 'enum A { MyEnumConstant }')
     GrEnumConstant ec = (GrEnumConstant)PsiShortNamesCache.getInstance(project).getFieldsByName("MyEnumConstant", GlobalSearchScope.allScope(project))[0]
     def file = (PsiFileImpl)ec.containingFile
@@ -50,26 +51,28 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
     assert file.stub
   }
 
-  public void testStubIndexMismatch() {
-    VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy");
-    final Project project = myFixture.getProject();
-    PsiFileImpl fooFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile);
-    final Document fooDocument = fooFile.getViewProvider().getDocument();
+  void testStubIndexMismatch() {
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
+
+    VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy")
+    final Project project = myFixture.getProject()
+    PsiFileImpl fooFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile)
+    final Document fooDocument = fooFile.getViewProvider().getDocument()
     assert !JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
     new WriteCommandAction.Simple(project, fooFile) {
-      public void run() {
-        fooDocument.setText("class Fooxx {}");
+      void run() {
+        fooDocument.setText("class Fooxx {}")
       }
-    }.execute();
-    PsiDocumentManager.getInstance(project).commitDocument(fooDocument);
-    fooFile.setTreeElementPointer(null);
-    DumbServiceImpl.getInstance(project).setDumb(true);
+    }.execute()
+    PsiDocumentManager.getInstance(project).commitDocument(fooDocument)
+    fooFile.setTreeElementPointer(null)
+    DumbServiceImpl.getInstance(project).setDumb(true)
     try {
-      assertOneElement(((GroovyFile) fooFile).classes);
-      assertFalse(fooFile.isContentsLoaded());
+      assertOneElement(((GroovyFile) fooFile).classes)
+      assertFalse(fooFile.isContentsLoaded())
     }
     finally {
-      DumbServiceImpl.getInstance(project).setDumb(false);
+      DumbServiceImpl.getInstance(project).setDumb(false)
     }
     assert JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
   }

@@ -29,7 +29,6 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
-import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
@@ -98,16 +97,14 @@ class VisiblePackBuilderTest {
       4()              +null
     }
 
-    val func = object : Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
-      override fun `fun`(param: VcsLogFilterCollection?): MutableList<TimedVcsCommit>? {
-        return ArrayList(listOf(2, 3, 4).map {
-          val id = it
-          val commit = graph.commits.firstOrNull {
-            it.id == id
-          }
-          commit!!.toVcsCommit(graph.hashMap)
-        })
-      }
+    val func = Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
+      ArrayList(listOf(2, 3, 4).map {
+        val id = it
+        val commit = graph.commits.firstOrNull {
+          it.id == id
+        }
+        commit!!.toVcsCommit(graph.hashMap)
+      })
     }
 
     graph.providers.entries.iterator().next().value.setFilteredCommitsProvider(func)
@@ -117,7 +114,7 @@ class VisiblePackBuilderTest {
     assertDoesNotContain(visibleGraph, 1)
   }
 
-  private fun GraphCommit<Int>.toVcsCommit(map: VcsLogHashMap) = TimedVcsCommitImpl(map.getCommitId(this.id)!!.hash, map.getHashes(this.parents), 1)
+  private fun GraphCommit<Int>.toVcsCommit(map: VcsLogStorage) = TimedVcsCommitImpl(map.getCommitId(this.id)!!.hash, map.getHashes(this.parents), 1)
 
   fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
     assertTrue(null == (1..graph.visibleCommitCount).firstOrNull { graph.getRowInfo(it - 1).commit == id })
@@ -131,26 +128,22 @@ class VisiblePackBuilderTest {
                     val data: HashMap<GraphCommit<Int>, Data>) {
     val root: VirtualFile = MockVirtualFile("root")
     val providers: Map<VirtualFile, TestVcsLogProvider> = mapOf(root to TestVcsLogProvider(root))
-    val hashMap = generateHashMap(commits.maxBy { it.id }!!.id, root)
+    val hashMap = generateHashMap(commits.maxBy { it.id }!!.id, refs, root)
 
     fun build(filters: VcsLogFilterCollection): VisiblePack {
-      val refs = refs.mapTo(HashSet<VcsRef>(), {
-        VcsRefImpl(hashMap.getCommitId(it.commit)!!.hash, it.name, BRANCH_TYPE, root)
-      })
-
-      val dataPack = DataPack.build(commits, mapOf(root to refs), providers, hashMap, true)
-      val detailsCache = data.entries.map {
-        val hash = hashMap.getCommitId(it.key.id)!!.hash
-        val metadata = if (it.value.user == null)
+      val dataPack = DataPack.build(commits, mapOf(root to hashMap.refsReversed.keys).mapValues { CompressedRefs(it.value, hashMap) }, providers, hashMap, true)
+      val detailsCache = TopCommitsCache(hashMap)
+      detailsCache.storeDetails(ArrayList(data.entries.mapNotNull {
+        val hash = hashMap.getCommitId(it.key.id).hash
+        if (it.value.user == null)
           null
         else VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.parents), 1L, root, it.value.subject,
             it.value.user!!, it.value.subject, it.value.user!!, 1L)
-        Pair(it.key.id, metadata)
-      }.toMap()
+      }))
 
       val commitDetailsGetter = object : DataGetter<VcsFullCommitDetails> {
-        override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails? {
-          return null
+        override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails {
+          throw UnsupportedOperationException()
         }
 
         override fun loadCommitsData(hashes: MutableList<Int>, consumer: Consumer<MutableList<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
@@ -160,22 +153,25 @@ class VisiblePackBuilderTest {
           return null
         }
       }
-      val builder = VisiblePackBuilder(providers, hashMap, detailsCache, commitDetailsGetter)
+      val builder = VisiblePackBuilder(providers, hashMap, detailsCache, commitDetailsGetter, EmptyIndex())
 
       return builder.build(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
 
-    fun generateHashMap(num: Int, root: VirtualFile): VcsLogHashMap {
-      val map = HashMap<Hash, Int>()
+    fun generateHashMap(num: Int, refs: Set<VisiblePackBuilderTest.Ref>, root: VirtualFile): ConstantVcsLogStorage {
+      val hashes = HashMap<Int, Hash>()
       for (i in 1..num) {
-        map.put(HashImpl.build(i.toString()), i)
+        hashes.put(i, HashImpl.build(i.toString()))
       }
-      return ConstantVcsLogHashMap(map, root)
+      val vcsRefs = refs.mapTo(ArrayList<VcsRef>(), {
+        VcsRefImpl(hashes[it.commit]!!, it.name, BRANCH_TYPE, root)
+      })
+      return ConstantVcsLogStorage(hashes, vcsRefs.indices.map { Pair(it, vcsRefs[it]) }.toMap(), root)
     }
 
   }
 
-  fun VcsLogHashMap.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
+  fun VcsLogStorage.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
 
   fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionImpl(null, null, null, null, null, null, null)
 
@@ -229,17 +225,23 @@ class VisiblePackBuilderTest {
     fun done() = Graph(commits, refs, data)
   }
 
-  class ConstantVcsLogHashMap(val map: Map<Hash, Int>, val root: VirtualFile) : VcsLogHashMap {
-    val reverseMap = map.entries.map { Pair(it.value, it.key) }.toMap()
+  class ConstantVcsLogStorage(val hashes: Map<Int, Hash>, val refs: Map<Int, VcsRef>, val root: VirtualFile) : VcsLogStorage {
+    val hashesReversed = hashes.entries.map { Pair(it.value, it.key) }.toMap()
+    val refsReversed = refs.entries.map { Pair(it.value, it.key) }.toMap()
 
-    override fun getCommitIndex(hash: Hash, root: VirtualFile) = map[hash]!!
+    override fun getCommitIndex(hash: Hash, root: VirtualFile) = hashesReversed[hash]!!
 
-    override fun getCommitId(commitIndex: Int) = CommitId(reverseMap[commitIndex]!!, root)
+    override fun getCommitId(commitIndex: Int) = CommitId(hashes[commitIndex]!!, root)
+
+    override fun getVcsRef(refIndex: Int): VcsRef = refs[refIndex]!!
+
+    override fun getRefIndex(ref: VcsRef): Int = refsReversed[ref]!!
 
     override fun findCommitId(condition: Condition<CommitId>): CommitId? = throw UnsupportedOperationException()
 
     override fun flush() {
     }
   }
+
 }
 

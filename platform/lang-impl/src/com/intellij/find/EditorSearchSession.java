@@ -16,21 +16,26 @@
 
 package com.intellij.find;
 
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -64,19 +69,22 @@ public class EditorSearchSession implements SearchSession,
   private final FindModel myFindModel;
   private final SearchReplaceComponent myComponent;
 
-  private final LinkLabel<Object> myClickToHighlightLabel = new LinkLabel<Object>("Click to highlight", null, new LinkListener<Object>() {
+  private final LinkLabel<Object> myClickToHighlightLabel = new LinkLabel<>("Click to highlight", null, new LinkListener<Object>() {
     @Override
     public void linkSelected(LinkLabel aSource, Object aLinkData) {
       setMatchesLimit(Integer.MAX_VALUE);
       updateResults(true);
     }
   });
+  private final Disposable myDisposable = Disposer.newDisposable(EditorSearchSession.class.getName());
 
   public EditorSearchSession(@NotNull Editor editor, Project project) {
     this(editor, project, createDefaultFindModel(project, editor));
   }
 
   public EditorSearchSession(@NotNull final Editor editor, Project project, FindModel findModel) {
+    assert !editor.isDisposed();
+
     myClickToHighlightLabel.setVisible(false);
 
     myFindModel = findModel;
@@ -84,7 +92,7 @@ public class EditorSearchSession implements SearchSession,
     myEditor = editor;
 
     mySearchResults = new SearchResults(myEditor, project);
-    myLivePreviewController = new LivePreviewController(mySearchResults, this);
+    myLivePreviewController = new LivePreviewController(mySearchResults, this, myDisposable);
 
     myComponent = SearchReplaceComponent
       .buildFor(project, myEditor.getContentComponent())
@@ -115,24 +123,9 @@ public class EditorSearchSession implements SearchSession,
       .addReplaceFieldActions(new PrevOccurrenceAction(false),
                               new NextOccurrenceAction(false))
       .withDataProvider(this)
-      .withCloseAction(new Runnable() {
-        @Override
-        public void run() {
-          close();
-        }
-      })
-      .withReplaceAction(new Runnable() {
-        @Override
-        public void run() {
-          replaceCurrent();
-        }
-      })
-      .withSecondarySearchActionsIsModifiedGetter(new BooleanGetter() {
-        @Override
-        public boolean get() {
-          return myFindModel.getSearchContext() != FindModel.SearchContext.ANY;
-        }
-      })
+      .withCloseAction(() -> close())
+      .withReplaceAction(() -> replaceCurrent())
+      .withSecondarySearchActionsIsModifiedGetter(() -> myFindModel.getSearchContext() != FindModel.SearchContext.ANY)
       .build();
 
     myComponent.addListener(this);
@@ -162,7 +155,7 @@ public class EditorSearchSession implements SearchSession,
         updateUIWithFindModel();
         mySearchResults.clear();
         updateResults(true);
-        FindUtil.updateFindInFileModel(getProject(), myFindModel);
+        FindUtil.updateFindInFileModel(getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
       }
     });
 
@@ -172,6 +165,16 @@ public class EditorSearchSession implements SearchSession,
       initLivePreview();
     }
     updateMultiLineStateIfNeed();
+
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        if (event.getEditor() == myEditor) {
+          Disposer.dispose(myDisposable);
+          myLivePreviewController.dispose();
+        }
+      }
+    }, myDisposable);
   }
 
   @Nullable
@@ -366,6 +369,8 @@ public class EditorSearchSession implements SearchSession,
   }
 
   private void initLivePreview() {
+    if (myEditor.isDisposed()) return;
+
     myLivePreviewController.on();
 
     myLivePreviewController.setUserActivityDelay(0);

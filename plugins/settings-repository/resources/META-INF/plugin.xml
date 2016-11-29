@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>Settings Repository</name>
   <id>org.jetbrains.settingsRepository</id>
   <description><![CDATA[
@@ -16,7 +16,7 @@
                     serviceImplementation="org.jetbrains.settingsRepository.ProjectId"/>
     <!--<checkinHandlerFactory implementation="org.jetbrains.settingsRepository.actions.CommitToIcsAction$IcsBeforeCommitDialogHandler" order="first"/>-->
 
-    <applicationConfigurable groupId="tools" instance="org.jetbrains.settingsRepository.IcsConfigurable" id="reference.settings.ics"
+    <applicationConfigurable groupId="tools" instance="org.jetbrains.settingsRepository.IcsConfigurable" id="ics"
                              key="ics.settings" bundle="messages.IcsBundle"/>
   </extensions>
 

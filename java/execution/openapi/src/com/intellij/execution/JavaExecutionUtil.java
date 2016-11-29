@@ -28,18 +28,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +68,7 @@ public class JavaExecutionUtil {
   }
 
   public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<PsiClass> isTestMethod) {
-    final Set<Module> modules = new HashSet<Module>();
+    final Set<Module> modules = new HashSet<>();
     for (String className : patterns) {
       final PsiClass psiClass = findMainClass(project,
                                               className.contains(",") ? className.substring(0, className.indexOf(',')) : className,
@@ -88,7 +85,7 @@ public class JavaExecutionUtil {
       }
     }
     if (contextModule != null && modules.size() > 1) {
-      final HashSet<Module> moduleDependencies = new HashSet<Module>();
+      final HashSet<Module> moduleDependencies = new HashSet<>();
       ModuleUtilCore.getDependencies(contextModule, moduleDependencies);
       if (moduleDependencies.containsAll(modules)) {
         return contextModule;
@@ -188,7 +185,6 @@ public class JavaExecutionUtil {
     return name == null || name.startsWith(ExecutionBundle.message("run.configuration.unnamed.name.prefix"));
   }
 
-  @Nullable
   public static Location stepIntoSingleClass(@NotNull final Location location) {
     PsiElement element = location.getPsiElement();
     if (!(element instanceof PsiClassOwner)) {
@@ -196,14 +192,10 @@ public class JavaExecutionUtil {
       element = PsiTreeUtil.getParentOfType(element, PsiClassOwner.class);
       if (element == null) return location;
     }
-    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(location.getProject()).getFileIndex();
-    if (virtualFile == null || !fileIndex.isInSource(virtualFile)) {
-      return null;
-    }
     final PsiClassOwner psiFile = (PsiClassOwner)element;
     final PsiClass[] classes = psiFile.getClasses();
     if (classes.length != 1) return location;
+    if (classes[0].getTextRange() == null) return location;
     return PsiLocation.fromPsiElement(classes[0]);
   }
 

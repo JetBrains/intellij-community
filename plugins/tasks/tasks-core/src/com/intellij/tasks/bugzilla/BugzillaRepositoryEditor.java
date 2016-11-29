@@ -40,12 +40,7 @@ public class BugzillaRepositoryEditor extends BaseRepositoryEditor<BugzillaRepos
     myTestButton.setEnabled(myRepository.isConfigured());
 
     if (myRepository.isConfigured()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          installProductAndComponentCompletion();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> installProductAndComponentCompletion());
     }
   }
 

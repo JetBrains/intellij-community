@@ -21,6 +21,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -52,13 +53,10 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     if (ReadonlyStatusHandler.ensureFilesWritable(project, file)) {
       return true;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
-        if (editor != null && (editor.getComponent().isDisplayable() || ApplicationManager.getApplication().isOnAir())) {
-          HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
+      if (editor != null && (editor.getComponent().isDisplayable() || ApplicationManager.getApplication().isOnAir())) {
+        HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
       }
     }, project.getDisposed());
 
@@ -79,7 +77,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
   @Override
   public boolean preparePsiElementsForWrite(@NotNull Collection<? extends PsiElement> elements) {
     if (elements.isEmpty()) return true;
-    Set<VirtualFile> files = new THashSet<VirtualFile>();
+    Set<VirtualFile> files = new THashSet<>();
     Project project = null;
     for (PsiElement element : elements) {
       if (element == null) continue;
@@ -112,7 +110,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
   }
 
   public static void showReadOnlyViewWarning(Editor editor) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return;
     
     JComponent component = HintUtil.createInformationLabel("This view is read-only");
     final LightweightHint hint = new LightweightHint(component);

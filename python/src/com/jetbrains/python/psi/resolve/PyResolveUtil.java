@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author vlan
@@ -99,5 +102,27 @@ public class PyResolveUtil {
       }
       scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
     }
+  }
+
+  @NotNull
+  public static Collection<PsiElement> resolveLocally(@NotNull PyReferenceExpression referenceExpression) {
+    final String referenceName = referenceExpression.getName();
+
+    if (referenceName == null) {
+      return Collections.emptyList();
+    }
+
+    final PyResolveProcessor processor = new PyResolveProcessor(referenceName, true);
+    scopeCrawlUp(processor, referenceExpression, referenceName, null);
+
+    return processor.getElements();
+  }
+
+  @NotNull
+  public static Collection<PsiElement> resolveLocally(@NotNull ScopeOwner scopeOwner, @NotNull String name) {
+    final PyResolveProcessor processor = new PyResolveProcessor(name, true);
+    scopeCrawlUp(processor, scopeOwner, name, null);
+
+    return processor.getElements();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,6 @@ import javax.net.ssl.SSLEngine;
 import java.security.KeyStore;
 import java.security.Security;
 import java.util.UUID;
-
-import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 
 @ChannelHandler.Sharable
 class PortUnificationServerHandler extends Decoder {
@@ -114,7 +112,7 @@ class PortUnificationServerHandler extends Decoder {
             public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
               if (message instanceof HttpResponse) {
                 HttpResponse response = (HttpResponse)message;
-                logger.debug("OUT HTTP: " + response.status().code() + " " + response.headers().getAsString(CONTENT_TYPE));
+                logger.debug("OUT HTTP: " + response.toString());
               }
               super.write(context, message, promise);
             }

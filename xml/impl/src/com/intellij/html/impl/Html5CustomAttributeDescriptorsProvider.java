@@ -46,34 +46,26 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
     if (tag == null || !HtmlUtil.isHtml5Context(tag)) {
       return XmlAttributeDescriptor.EMPTY;
     }
-    final List<String> currentAttrs = new ArrayList<String>();
+    final List<String> currentAttrs = new ArrayList<>();
     for (XmlAttribute attribute : tag.getAttributes()) {
       currentAttrs.add(attribute.getName());
     }
     final Project project = tag.getProject();
-    final Collection<String> keys = CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Collection<String>>() {
-        @Nullable
-        @Override
-        public Result<Collection<String>> compute() {
-          final Collection<String> keys = FileBasedIndex.getInstance().getAllKeys(Html5CustomAttributesIndex.INDEX_ID, project);
-          final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-          return Result.<Collection<String>>create(ContainerUtil.filter(keys, new Condition<String>() {
-            @Override
-            public boolean value(String key) {
-              return !FileBasedIndex.getInstance().processValues(Html5CustomAttributesIndex.INDEX_ID, key,
-                                                                 null, new FileBasedIndex.ValueProcessor<Void>() {
-                  @Override
-                  public boolean process(VirtualFile file, Void value) {
-                    return false;
-                  }
-                }, scope);
-            }
-          }), PsiModificationTracker.MODIFICATION_COUNT);
-        }
-      });
+    final Collection<String> keys = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      final Collection<String> keys1 = FileBasedIndex.getInstance().getAllKeys(Html5CustomAttributesIndex.INDEX_ID, project);
+      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+      return CachedValueProvider.Result.<Collection<String>>create(ContainerUtil.filter(keys1,
+                                                                    key -> !FileBasedIndex.getInstance().processValues(Html5CustomAttributesIndex.INDEX_ID, key,
+                                                                                                                                                                                 null, new FileBasedIndex.ValueProcessor<Void>() {
+                                                                        @Override
+                                                                        public boolean process(VirtualFile file, Void value) {
+                                                                          return false;
+                                                                        }
+                                                                      }, scope)), PsiModificationTracker.MODIFICATION_COUNT);
+    });
     if (keys.isEmpty()) return XmlAttributeDescriptor.EMPTY;
 
-    final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+    final List<XmlAttributeDescriptor> result = new ArrayList<>();
     for (String key : keys) {
       boolean add = true;
       for (String attr : currentAttrs) {

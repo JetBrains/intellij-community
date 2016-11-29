@@ -49,8 +49,8 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   private String myClassToBind;
   private String myMainComponentBinding;
   private Locale myStringDescriptorLocale;
-  private final List<RadButtonGroup> myButtonGroups = new ArrayList<RadButtonGroup>();
-  private final List<LwInspectionSuppression> myInspectionSuppressions = new ArrayList<LwInspectionSuppression>();
+  private final List<RadButtonGroup> myButtonGroups = new ArrayList<>();
+  private final List<LwInspectionSuppression> myInspectionSuppressions = new ArrayList<>();
 
   public RadRootContainer(final ModuleProvider module, final String id) {
     super(module, JPanel.class, id);
@@ -208,7 +208,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   }
 
   public List<RadComponent> getGroupContents(final RadButtonGroup group) {
-    ArrayList<RadComponent> result = new ArrayList<RadComponent>();
+    ArrayList<RadComponent> result = new ArrayList<>();
     for(String id: group.getComponentIds()) {
       RadComponent component = (RadComponent) FormEditingUtil.findComponent(this, id);
       if (component != null) {

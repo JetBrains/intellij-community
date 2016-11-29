@@ -26,7 +26,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 public class GroovyMethodDescriptorExtension extends GroovyMethodDescriptor implements PluginAware {
 
   public static final ExtensionPointName<GroovyMethodDescriptorExtension> EP_NAME =
-    new ExtensionPointName<GroovyMethodDescriptorExtension>("org.intellij.groovy.methodDescriptor");
+    new ExtensionPointName<>("org.intellij.groovy.methodDescriptor");
 
   @Attribute("class")
   public String className;

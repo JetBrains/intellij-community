@@ -43,11 +43,11 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
   }
 
   public void addElementsMarkListener(ElementsMarkListener<T> listener) {
-    addElementsMarkListener(new ElementsMarkStateListenerAdapter<T>(listener));
+    addElementsMarkListener(new ElementsMarkStateListenerAdapter<>(listener));
   }
 
   public void removeElementsMarkListener(ElementsMarkListener<T> listener) {
-    removeElementsMarkListener(new ElementsMarkStateListenerAdapter<T>(listener));
+    removeElementsMarkListener(new ElementsMarkStateListenerAdapter<>(listener));
   }
 
   public void addElement(T element, final boolean isMarked) {
@@ -89,7 +89,7 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
   @NotNull
   public List<T> getMarkedElements() {
     Map<T, Boolean> elementMarkStates = getElementMarkStates();
-    List<T> elements = new ArrayList<T>();
+    List<T> elements = new ArrayList<>();
     for (Map.Entry<T, Boolean> entry : elementMarkStates.entrySet()) {
       if (entry.getValue()) {
         elements.add(entry.getKey());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.progress;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -28,14 +30,22 @@ import javax.swing.*;
 import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
-  private static class ProgressManagerHolder {
-    private static final ProgressManager ourInstance = ServiceManager.getService(ProgressManager.class);
-  }
+  private static ProgressManager ourInstance = CachedSingletonsRegistry.markCachedField(ProgressManager.class);
 
   @NotNull
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ProgressManager getInstance() {
-    return ProgressManagerHolder.ourInstance;
+    ProgressManager result = ourInstance;
+    if (result == null) {
+      result = ServiceManager.getService(ProgressManager.class);
+      if (result == null) {
+        throw new AssertionError("ProgressManager is null; " + ApplicationManager.getApplication());
+      }
+      else {
+        ourInstance = result;
+      }
+    }
+    return result;
   }
 
   public abstract boolean hasProgressIndicator();
@@ -131,9 +141,9 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
                                                               @Nullable JComponent parentComponent);
 
   /**
-   * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
-   * background button. Upon successful termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
-   * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in
+   * Runs a specified {@code process} in a background thread and shows a progress dialog, which can be made non-modal by pressing
+   * background button. Upon successful termination of the process a {@code successRunnable} will be called in Swing UI thread and
+   * {@code canceledRunnable} will be called if terminated on behalf of the user by pressing either cancel button, while running in
    * a modal state or stop button if running in background.
    *
    * @param project          the project in the context of which the operation is executed.
@@ -149,9 +159,9 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
   /**
-   * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
-   * background button. Upon successful termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
-   * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in
+   * Runs a specified {@code process} in a background thread and shows a progress dialog, which can be made non-modal by pressing
+   * background button. Upon successful termination of the process a {@code successRunnable} will be called in Swing UI thread and
+   * {@code canceledRunnable} will be called if terminated on behalf of the user by pressing either cancel button, while running in
    * a modal state or stop button if running in background.
    *
    * @param project          the project in the context of which the operation is executed.
@@ -170,7 +180,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
                                                             @NotNull PerformInBackgroundOption option);
 
   /**
-   * Runs a specified <code>task</code> in either background/foreground thread and shows a progress dialog.
+   * Runs a specified {@code task} in either background/foreground thread and shows a progress dialog.
    *
    * @param task task to run (either {@link Task.Modal} or {@link Task.Backgroundable}).
    */
@@ -211,4 +221,24 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
       }
     }
   }
+
+  /**
+   * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending,
+   * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or
+   * {@link ProgressIndicator#checkCanceled()} often enough).
+   * It returns {@code true} if action was executed successfully. It returns {@code false} if the action was not
+   * executed successfully, i.e. if:
+   * <ul>
+   * <li>write action was in progress when the method was called</li>
+   * <li>write action was pending when the method was called</li>
+   * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated
+   * write action</li>
+   * </ul>
+   * If unable to run read action because of interfering write action, this method waits for that write action to complete.
+   * So under no circumstances must you call this method from read action or under critical locks.
+   * @since 171.*
+   */
+  public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action);
+
+  public abstract boolean isInNonCancelableSection();
 }

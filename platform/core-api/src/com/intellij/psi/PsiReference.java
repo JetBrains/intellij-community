@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,22 +24,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A reference to a PSI element. For example, the variable name used in an expression.
  * The "Go to Declaration" action can be used to go from a reference to the element it references.
- * Generally returned from {@link PsiElement#getReferences()} and {@link com.intellij.psi.PsiReferenceService#getReferences},
- * but may be contributed to some elements by third party plugins via {@link com.intellij.psi.PsiReferenceContributor}
+ * Generally returned from {@link PsiElement#getReferences()} and {@link PsiReferenceService#getReferences},
+ * but may be contributed to some elements by third party plugins via {@link PsiReferenceContributor}.
  *
  * @see PsiPolyVariantReference
  * @see PsiElement#getReference()
  * @see PsiElement#getReferences()
- * @see com.intellij.psi.PsiReferenceService#getReferences(PsiElement, com.intellij.psi.PsiReferenceService.Hints)
- * @see com.intellij.psi.PsiReferenceBase
- * @see com.intellij.psi.PsiReferenceContributor
- * @see com.intellij.psi.search.searches.ReferencesSearch
+ * @see PsiReferenceService#getReferences(PsiElement, PsiReferenceService.Hints)
+ * @see PsiReferenceBase
+ * @see PsiReferenceContributor
  */
-
 public interface PsiReference {
-  /**
-   * The empty array of PSI references which can be reused to avoid unnecessary allocations.
-   */
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
   ArrayFactory<PsiReference> ARRAY_FACTORY = new ArrayFactory<PsiReference>() {
@@ -69,6 +64,7 @@ public interface PsiReference {
    * Returns the element which is the target of the reference.
    *
    * @return the target element, or null if it was not possible to resolve the reference to a valid target.
+   * @see PsiPolyVariantReference#multiResolve(boolean)
    */
   @Nullable PsiElement resolve();
 

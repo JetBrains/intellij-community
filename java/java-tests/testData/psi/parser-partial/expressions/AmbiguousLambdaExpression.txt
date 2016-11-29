@@ -33,7 +33,7 @@ PsiJavaFile:AmbiguousLambdaExpression.java
         PsiWhiteSpace(' ')
         PsiJavaToken:GT('>')
         PsiWhiteSpace(' ')
-        PsiLambdaExpression:(w) -> v
+        PsiLambdaExpression
           PsiParameterList:(w)
             PsiJavaToken:LPARENTH('(')
             PsiParameter:w

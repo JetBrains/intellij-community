@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 
 public class ArrayExprent extends Exprent {
-
   private Exprent array;
   private Exprent index;
   private final VarType hardType;
@@ -69,7 +68,7 @@ public class ArrayExprent extends Exprent {
   }
 
   public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<Exprent>();
+    List<Exprent> lst = new ArrayList<>();
     lst.add(array);
     lst.add(index);
     return lst;
@@ -91,7 +90,7 @@ public class ArrayExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
-    return res.append("[").append(index.toJava(indent, tracer)).append("]");
+    return res.append('[').append(index.toJava(indent, tracer)).append(']');
   }
 
   @Override

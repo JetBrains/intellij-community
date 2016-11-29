@@ -36,7 +36,8 @@ public final class NextOccurrenceAction extends PrevNextOccurrenceAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    e.getRequiredData(SearchSession.KEY).searchForward();
+    SearchSession session = e.getRequiredData(SearchSession.KEY);
+    if (session.hasMatches()) session.searchForward();
   }
 
   @NotNull

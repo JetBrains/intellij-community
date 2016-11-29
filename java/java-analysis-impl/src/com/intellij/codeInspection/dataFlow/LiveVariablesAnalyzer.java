@@ -27,6 +27,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Queue;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,22 +69,8 @@ public class LiveVariablesAnalyzer {
     myBackwardMap = calcBackwardMap();
   }
 
-  private List<Instruction> getSuccessors(Instruction i) {
-    if (i instanceof GotoInstruction) {
-      return Arrays.asList(myInstructions[((GotoInstruction)i).getOffset()]);
-    }
-
-    int index = i.getIndex();
-    if (i instanceof ConditionalGotoInstruction) {
-      return Arrays.asList(myInstructions[((ConditionalGotoInstruction)i).getOffset()], myInstructions[index + 1]);
-    }
-
-    if (i instanceof ReturnInstruction) {
-      return Collections.emptyList();
-    }
-
-    return Arrays.asList(myInstructions[index + 1]);
-
+  private List<Instruction> getSuccessors(Instruction ins) {
+    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).mapToObj(i -> myInstructions[i]).toList();
   }
 
   private MultiMap<Instruction, Instruction> calcBackwardMap() {
@@ -149,48 +136,45 @@ public class LiveVariablesAnalyzer {
     return instruction instanceof FinishElementInstruction ||
            instruction instanceof GotoInstruction ||
            instruction instanceof ConditionalGotoInstruction ||
-           instruction instanceof ReturnInstruction;
+           instruction instanceof ControlTransferInstruction;
   }
 
   @Nullable
   private Map<FinishElementInstruction, BitSet> findLiveVars() {
     final Map<FinishElementInstruction, BitSet> result = ContainerUtil.newHashMap();
 
-    boolean ok = runDfa(false, new PairFunction<Instruction, BitSet, BitSet>() {
-      @Override
-      public BitSet fun(Instruction instruction, BitSet liveVars) {
-        if (instruction instanceof FinishElementInstruction) {
-          BitSet set = result.get(instruction);
-          if (set != null) {
-            set.or(liveVars);
-            return set;
-          } else {
-            result.put((FinishElementInstruction)instruction, liveVars);
-          }
-        }
-
-        DfaVariableValue written = getWrittenVariable(instruction);
-        if (written != null) {
-          liveVars = (BitSet)liveVars.clone();
-          liveVars.clear(written.getID());
-          for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy(written)) {
-            liveVars.clear(var.getID());
-          }
+    boolean ok = runDfa(false, (instruction, liveVars) -> {
+      if (instruction instanceof FinishElementInstruction) {
+        BitSet set = result.get(instruction);
+        if (set != null) {
+          set.or(liveVars);
+          return set;
         } else {
-          boolean cloned = false;
-          for (DfaVariableValue value : getReadVariables(instruction)) {
-            if (!liveVars.get(value.getID())) {
-              if (!cloned) {
-                liveVars = (BitSet)liveVars.clone();
-                cloned = true;
-              }
-              liveVars.set(value.getID());
+          result.put((FinishElementInstruction)instruction, liveVars);
+        }
+      }
+
+      DfaVariableValue written = getWrittenVariable(instruction);
+      if (written != null) {
+        liveVars = (BitSet)liveVars.clone();
+        liveVars.clear(written.getID());
+        for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy(written)) {
+          liveVars.clear(var.getID());
+        }
+      } else {
+        boolean cloned = false;
+        for (DfaVariableValue value : getReadVariables(instruction)) {
+          if (!liveVars.get(value.getID())) {
+            if (!cloned) {
+              liveVars = (BitSet)liveVars.clone();
+              cloned = true;
             }
+            liveVars.set(value.getID());
           }
         }
-
-        return liveVars;
       }
+
+      return liveVars;
     });
     return ok ? result : null;
   }
@@ -201,29 +185,25 @@ public class LiveVariablesAnalyzer {
 
     final MultiMap<FinishElementInstruction, DfaVariableValue> toFlush = MultiMap.createSet();
 
-    boolean ok = runDfa(true, new PairFunction<Instruction, BitSet, BitSet>() {
-      @Override
-      @NotNull
-      public BitSet fun(Instruction instruction, @NotNull BitSet prevLiveVars) {
-        if (instruction instanceof FinishElementInstruction) {
-          BitSet currentlyLive = liveVars.get(instruction);
-          if (currentlyLive == null) {
-            return new BitSet(); // an instruction unreachable from the end?
-          }
-          int index = 0;
-          while (true) {
-            int setBit = prevLiveVars.nextSetBit(index);
-            if (setBit < 0) break;
-            if (!currentlyLive.get(setBit)) {
-              toFlush.putValue((FinishElementInstruction)instruction, (DfaVariableValue)myFactory.getValue(setBit));
-            }
-            index = setBit + 1;
-          }
-          return currentlyLive;
+    boolean ok = runDfa(true, (instruction, prevLiveVars) -> {
+      if (instruction instanceof FinishElementInstruction) {
+        BitSet currentlyLive = liveVars.get(instruction);
+        if (currentlyLive == null) {
+          return new BitSet(); // an instruction unreachable from the end?
         }
-
-        return prevLiveVars;
+        int index = 0;
+        while (true) {
+          int setBit = prevLiveVars.nextSetBit(index);
+          if (setBit < 0) break;
+          if (!currentlyLive.get(setBit)) {
+            toFlush.putValue((FinishElementInstruction)instruction, (DfaVariableValue)myFactory.getValue(setBit));
+          }
+          index = setBit + 1;
+        }
+        return currentlyLive;
       }
+
+      return prevLiveVars;
     });
 
     if (ok) {
@@ -244,7 +224,7 @@ public class LiveVariablesAnalyzer {
       entryPoints.addAll(ContainerUtil.findAll(myInstructions, FilteringIterator.instanceOf(ReturnInstruction.class)));
     }
 
-    Queue<InstructionState> queue = new Queue<InstructionState>(10);
+    Queue<InstructionState> queue = new Queue<>(10);
     for (Instruction i : entryPoints) {
       queue.addLast(new InstructionState(i, new BitSet()));
     }

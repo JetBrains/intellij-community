@@ -56,12 +56,7 @@ public class TableTabAction extends ToggleAction implements DumbAware {
       myPanel.setCurrentTab(myTab);
     }
     else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          updateState();
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> updateState());
     }
   }
 

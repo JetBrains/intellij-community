@@ -15,16 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,24 +59,13 @@ public class DeleteRepeatedInterfaceFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiTypeCastExpression castExpression = PsiTreeUtil.getParentOfType(myConjunct, PsiTypeCastExpression.class);
     if (castExpression != null) {
       final PsiTypeElement castType = castExpression.getCastType();
       if (castType != null) {
         final PsiType type = castType.getType();
         if (type instanceof PsiIntersectionType) {
-          final String typeText = StringUtil.join(ContainerUtil.filter(myConjList, new Condition<PsiTypeElement>() {
-            @Override
-            public boolean value(PsiTypeElement element) {
-              return element != myConjunct;
-            }
-          }), new Function<PsiTypeElement, String>() {
-            @Override
-            public String fun(PsiTypeElement element) {
-              return element.getText();
-            }
-          }, " & ");
+          final String typeText = StringUtil.join(ContainerUtil.filter(myConjList, element -> element != myConjunct), element -> element.getText(), " & ");
           final PsiTypeCastExpression newCastExpr =
             (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("(" + typeText + ")a", castType);
           CodeStyleManager.getInstance(project).reformat(castType.replace(newCastExpr.getCastType()));

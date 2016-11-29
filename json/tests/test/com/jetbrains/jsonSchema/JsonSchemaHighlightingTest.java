@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -11,13 +26,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +50,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testNumberMultipleWrong() throws Exception {
     testImpl("{ \"properties\": { \"prop\": {\"type\": \"number\", \"multipleOf\": 2}}}",
-             "{ \"prop\": <warning descr=\"Is not multiple of 3\">3</warning>}");
+             "{ \"prop\": <warning descr=\"Is not multiple of 2\">3</warning>}");
   }
 
   public void testNumberMultipleCorrect() throws Exception {
@@ -76,6 +94,27 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     testImpl(schema, "{\"prop\": [101, 102]}");
     testImpl(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18.0\">16</warning>]}");
     testImpl(schema, "{\"prop\": [<warning descr=\"Type is not allowed\">\"test\"</warning>]}");
+  }
+
+  public void testTopLevelArray() throws Exception {
+    final String schema = "{\n" +
+                                 "  \"type\": \"array\",\n" +
+                                 "  \"items\": {\n" +
+                                 "    \"type\": \"number\", \"minimum\": 18" +
+                                 "  }\n" +
+                                 "}";
+    testImpl(schema, "[101, 102]");
+  }
+
+  public void testTopLevelObjectArray() throws Exception {
+    final String schema = "{\n" +
+                                 "  \"type\": \"array\",\n" +
+                                 "  \"items\": {\n" +
+                                 "    \"type\": \"object\", \"properties\": {\"a\": {\"type\": \"number\"}}" +
+                                 "  }\n" +
+                                 "}";
+    testImpl(schema, "[{\"a\": <warning descr=\"Type is not allowed\">true</warning>}]");
+    testImpl(schema, "[{\"a\": 18}]");
   }
 
   public void testArrayTuples1() throws Exception {
@@ -172,7 +211,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   @SuppressWarnings("Duplicates")
   public void testOneOf() throws Exception {
-    final List<String> subSchemas = new ArrayList<String>();
+    final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\"}");
     subSchemas.add("{\"type\": \"boolean\"}");
     final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
@@ -183,7 +222,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   @SuppressWarnings("Duplicates")
   public void testOneOfForTwoMatches() throws Exception {
-    final List<String> subSchemas = new ArrayList<String>();
+    final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"c\"]}");
     final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
@@ -193,8 +232,22 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   @SuppressWarnings("Duplicates")
+  public void testOneOfSelectError() throws Exception {
+    final List<String> subSchemas = new ArrayList<>();
+    subSchemas.add("{\"type\": \"string\",\n" +
+                   "          \"enum\": [\n" +
+                   "            \"off\", \"warn\", \"error\"\n" +
+                   "          ]}");
+    subSchemas.add("{\"type\": \"integer\"}");
+    final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
+    testImpl(schema, "{\"prop\": \"off\"}");
+    testImpl(schema, "{\"prop\": 12}");
+    testImpl(schema, "{\"prop\": <warning descr=\"Value should be one of: [\\\"off\\\", \\\"warn\\\", \\\"error\\\"]\">\"wrong\"</warning>}");
+  }
+
+  @SuppressWarnings("Duplicates")
   public void testAnyOf() throws Exception {
-    final List<String> subSchemas = new ArrayList<String>();
+    final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"c\"]}");
     final String schema = schema("{\"anyOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
@@ -205,7 +258,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   @SuppressWarnings("Duplicates")
   public void testAllOf() throws Exception {
-    final List<String> subSchemas = new ArrayList<String>();
+    final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"c\"]}");
     final String schema = schema("{\"allOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
@@ -263,6 +316,77 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     testImpl(schemaText, inputText);
   }
 
+  public void testPatternPropertiesHighlighting() throws Exception {
+    final String schema = "{\n" +
+                          "  \"patternProperties\": {\n" +
+                          "    \"^A\" : {\n" +
+                          "      \"type\": \"number\"\n" +
+                          "    },\n" +
+                          "    \"B\": {\n" +
+                          "      \"type\": \"boolean\"\n" +
+                          "    },\n" +
+                          "    \"C\": {\n" +
+                          "      \"enum\": [\"test\", \"em\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\n" +
+                     "  \"Abezjana\": 2,\n" +
+                     "  \"Auto\": <warning descr=\"Type is not allowed\">\"no\"</warning>,\n" +
+                     "  \"ABe\": <warning descr=\"Type is not allowed\">22</warning>,\n" +
+                     "  \"Boloto\": <warning descr=\"Type is not allowed\">2</warning>,\n" +
+                     "  \"Cyan\": <warning descr=\"Value should be one of: [\\\"test\\\", \\\"em\\\"]\">\"me\"</warning>\n" +
+                     "}");
+  }
+
+  public void testPatternPropertiesFromIssue() throws Exception {
+    final String schema = "{\n" +
+                          "  \"type\": \"object\",\n" +
+                          "  \"additionalProperties\": false,\n" +
+                          "  \"patternProperties\": {\n" +
+                          "    \"p[0-9]\": {\n" +
+                          "      \"type\": \"string\"\n" +
+                          "    },\n" +
+                          "    \"a[0-9]\": {\n" +
+                          "      \"enum\": [\"auto!\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\n" +
+                     "  \"p1\": <warning descr=\"Type is not allowed\">1</warning>,\n" +
+                     "  \"p2\": \"3\",\n" +
+                     "  \"a2\": \"auto!\",\n" +
+                     "  \"a1\": <warning descr=\"Value should be one of: [\\\"auto!\\\"]\">\"moto!\"</warning>\n" +
+                     "}");
+  }
+
+  public void testRootObjectRedefinedAdditionalPropertiesForbidden() throws Exception {
+    testImpl(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\": true</warning>," +
+                                          "\"r1\": \"allowed!\"}");
+  }
+
+  public static String rootObjectRedefinedSchema() {
+    return "{\n" +
+           "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
+           "  \"type\": \"object\",\n" +
+           "  \"$ref\" : \"#/definitions/root\",\n" +
+           "  \"definitions\": {\n" +
+           "    \"root\" : {\n" +
+           "      \"type\": \"object\",\n" +
+           "      \"additionalProperties\": false,\n" +
+           "      \"properties\": {\n" +
+           "        \"r1\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        },\n" +
+           "        \"r2\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        }\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}\n";
+  }
+
   static String schema(final String s) {
     return "{\"type\": \"object\", \"properties\": {\"prop\": " + s + "}}";
   }
@@ -274,7 +398,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
     registerProvider(getProject(), schema);
     LanguageAnnotators.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, annotator);
-    Disposer.register(myTestRootDisposable, new Disposable() {
+    Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         LanguageAnnotators.INSTANCE.removeExplicitExtension(JsonLanguage.INSTANCE, annotator);
@@ -285,8 +409,13 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(file.getVirtualFile(), true, false);
   }
 
-  public static void registerProvider(Project project, @NotNull String schema) {
-    JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schema));
+  public static void registerProvider(Project project, @NotNull String schema) throws IOException {
+    File dir = PlatformTestCase.createTempDir("json_schema_test", true);
+    File child = new File(dir, "schema.json");
+    child.createNewFile();
+    FileUtil.writeToFile(child, schema);
+    VirtualFile schemaFile = getVirtualFile(child);
+    JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schemaFile));
     AreaPicoContainer container = Extensions.getArea(project).getPicoContainer();
     String key = JsonSchemaService.class.getName();
     container.unregisterComponent(key);

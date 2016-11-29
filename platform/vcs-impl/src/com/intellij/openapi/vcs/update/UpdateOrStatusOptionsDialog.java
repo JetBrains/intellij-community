@@ -33,7 +33,7 @@ import java.util.*;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   private final JComponent myMainPanel;
-  private final Map<AbstractVcs, Configurable> myEnvToConfMap = new HashMap<AbstractVcs, Configurable>();
+  private final Map<AbstractVcs, Configurable> myEnvToConfMap = new HashMap<>();
   protected final Project myProject;
 
 
@@ -49,7 +49,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     }
     else {
       myMainPanel = new JBTabbedPane();
-      final ArrayList<AbstractVcs> vcses = new ArrayList<AbstractVcs>(confs.values());
+      final ArrayList<AbstractVcs> vcses = new ArrayList<>(confs.values());
       Collections.sort(vcses, new Comparator<AbstractVcs>() {
         public int compare(final AbstractVcs o1, final AbstractVcs o2) {
           return o1.getDisplayName().compareTo(o2.getDisplayName());
@@ -69,7 +69,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   }
 
   private static Map<AbstractVcs, Configurable> revertMap(final Map<Configurable, AbstractVcs> confs) {
-    final HashMap<AbstractVcs, Configurable> result = new HashMap<AbstractVcs, Configurable>();
+    final HashMap<AbstractVcs, Configurable> result = new HashMap<>();
     for (Configurable configurable : confs.keySet()) {
       result.put(confs.get(configurable), configurable);
     }

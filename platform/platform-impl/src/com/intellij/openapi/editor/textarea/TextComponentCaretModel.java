@@ -16,14 +16,14 @@
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.JTextComponent;
+import javax.swing.text.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -65,7 +65,19 @@ public class TextComponentCaretModel implements CaretModel {
 
   @Override
   public void moveToOffset(final int offset, boolean locateBeforeSoftWrap) {
-    myTextComponent.setCaretPosition(Math.min(offset, myTextComponent.getText().length()));
+    int targetOffset = Math.min(offset, myTextComponent.getText().length());
+    int currentPosition = myTextComponent.getCaretPosition();
+    // We try to preserve selection, to match EditorImpl behaviour.
+    // It's only possible though, if target offset is located at either end of existing selection.
+    if (targetOffset != currentPosition) {
+      if (targetOffset == myTextComponent.getCaret().getMark()) {
+        myTextComponent.setCaretPosition(currentPosition);
+        myTextComponent.moveCaretPosition(targetOffset);
+      }
+      else {
+        myTextComponent.setCaretPosition(targetOffset);
+      }
+    }
   }
 
   @Override
@@ -170,6 +182,12 @@ public class TextComponentCaretModel implements CaretModel {
   @Nullable
   @Override
   public Caret addCaret(@NotNull VisualPosition pos) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     return null;
   }
 

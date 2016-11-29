@@ -34,6 +34,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.ColorMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
@@ -42,7 +43,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxWrapWithDefineIntention;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInTagDescriptor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,7 +59,8 @@ public class JavaFxAnnotator implements Annotator {
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return;
     if (element instanceof XmlAttributeValue) {
       final PsiReference[] references = element.getReferences();
-      if (!JavaFxPsiUtil.isExpressionBinding(((XmlAttributeValue)element).getValue())) {
+      final String value = ((XmlAttributeValue)element).getValue();
+      if (!JavaFxPsiUtil.isExpressionBinding(value) && !JavaFxPsiUtil.isIncorrectExpressionBinding(value)) {
         for (PsiReference reference : references) {
           final PsiElement resolve = reference.resolve();
           if (resolve instanceof PsiMember) {
@@ -74,22 +76,22 @@ public class JavaFxAnnotator implements Annotator {
         }
       }
       if (references.length == 1 && references[0] instanceof JavaFxColorReference) {
-        attachColorIcon(element, holder, StringUtil.stripQuotesAroundValue(element.getText()));
+        attachColorIcon(element, holder, StringUtil.unquoteString(element.getText()));
       }
     } else if (element instanceof XmlAttribute) {
       final XmlAttribute attribute = (XmlAttribute)element;
       final String attributeName = attribute.getName();
-      if (!FxmlConstants.FX_DEFAULT_PROPERTIES.contains(attributeName) &&
+      if (!FxmlConstants.FX_BUILT_IN_ATTRIBUTES.contains(attributeName) &&
           !attribute.isNamespaceDeclaration() &&
           JavaFxPsiUtil.isReadOnly(attributeName, attribute.getParent())) {
         holder.createErrorAnnotation(element.getNavigationElement(), "Property '" + attributeName + "' is read-only");
       }
-      if (FxmlConstants.FX_ELEMENT_SOURCE.equals(attributeName)) {
+      if (FxmlConstants.SOURCE.equals(attributeName)) {
         final XmlAttributeValue valueElement = attribute.getValueElement();
         if (valueElement != null) {
           final XmlTag xmlTag = attribute.getParent();
           if (xmlTag != null) {
-            final XmlTag referencedTag = JavaFxDefaultPropertyElementDescriptor.getReferencedTag(xmlTag);
+            final XmlTag referencedTag = JavaFxBuiltInTagDescriptor.getReferencedTag(xmlTag);
             if (referencedTag != null) {
               if (referencedTag.getTextOffset() > xmlTag.getTextOffset()) {
                 holder.createErrorAnnotation(valueElement.getValueTextRange(), valueElement.getValue() + " not found");
@@ -130,7 +132,7 @@ public class JavaFxAnnotator implements Annotator {
         }
       }
       if (color != null) {
-        final ColorIcon icon = new ColorIcon(8, color);
+        final ColorIcon icon = JBUI.scale(new ColorIcon(8, color));
         final Annotation annotation = holder.createInfoAnnotation(element, null);
         annotation.setGutterIconRenderer(new ColorIconRenderer(icon, element));
       }

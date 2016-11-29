@@ -97,12 +97,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return !DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR,
                                                    //strictly inside arg list
                                                    argRange.getStartOffset() + 1,
-                                                   argRange.getEndOffset() - 1, new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo info) {
-        return !(info.getActualStartOffset() > argRange.getStartOffset() && info.getActualEndOffset() < argRange.getEndOffset());
-      }
-    });
+                                                   argRange.getEndOffset() - 1,
+                                                   info -> !(info.getActualStartOffset() > argRange.getStartOffset() && info.getActualEndOffset() < argRange.getEndOffset()));
   }
 
   @Override
@@ -116,7 +112,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   @NotNull
   protected List<PsiClass> getTargetClasses(PsiElement element) {
     List<PsiClass> targets = super.getTargetClasses(element);
-    ArrayList<PsiClass> result = new ArrayList<PsiClass>();
+    ArrayList<PsiClass> result = new ArrayList<>();
     PsiMethodCallExpression call = getMethodCall();
     if (call == null) return Collections.emptyList();
     for (PsiClass target : targets) {
@@ -263,22 +259,20 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
         @Override
         public void templateFinished(Template template, boolean brokenOff) {
-          WriteCommandAction.runWriteCommandAction(project, new Runnable() {
-            @Override
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
-              final int offset = newEditor.getCaretModel().getOffset();
-              PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
-              if (method != null) {
-                try {
-                  CreateFromUsageUtils.setupMethodBody(method);
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-
-                CreateFromUsageUtils.setupEditor(method, newEditor);
+          if (brokenOff) return;
+          WriteCommandAction.runWriteCommandAction(project, () -> {
+            PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
+            final int offset = newEditor.getCaretModel().getOffset();
+            PsiMethod method1 = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
+            if (method1 != null) {
+              try {
+                CreateFromUsageUtils.setupMethodBody(method1);
               }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
+
+              CreateFromUsageUtils.setupEditor(method1, newEditor);
             }
           });
         }

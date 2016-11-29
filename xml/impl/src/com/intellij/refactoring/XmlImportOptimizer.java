@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,13 +45,10 @@ import java.util.Map;
 public class XmlImportOptimizer implements ImportOptimizer {
   
   private final XmlUnusedNamespaceInspection myInspection = new XmlUnusedNamespaceInspection();
-  private final Condition<ProblemDescriptor> myCondition = new Condition<ProblemDescriptor>() {
-    @Override
-    public boolean value(ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      PsiElement parent = element.getParent();
-      return parent != null && !myInspection.isSuppressedFor(parent);
-    }
+  private final Condition<ProblemDescriptor> myCondition = descriptor -> {
+    PsiElement element = descriptor.getPsiElement();
+    PsiElement parent = element.getParent();
+    return parent != null && !myInspection.isSuppressedFor(parent);
   };
 
   @Override
@@ -70,7 +67,7 @@ public class XmlImportOptimizer implements ImportOptimizer {
         XmlFile xmlFile = (XmlFile)file;
         Project project = xmlFile.getProject();
         HighlightDisplayKey key = HighlightDisplayKey.find(myInspection.getShortName());
-        if (!InspectionProjectProfileManager.getInstance(project).getInspectionProfile().isToolEnabled(key, xmlFile)) return;
+        if (!InspectionProjectProfileManager.getInstance(project).getCurrentProfile().isToolEnabled(key, xmlFile)) return;
         ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), xmlFile, false);
         final XmlElementVisitor visitor = (XmlElementVisitor)myInspection.buildVisitor(holder, false);
         new PsiRecursiveElementVisitor() {
@@ -88,7 +85,7 @@ public class XmlImportOptimizer implements ImportOptimizer {
         ArrayUtil.reverseArray(results);
         List<ProblemDescriptor> list = ContainerUtil.filter(results, myCondition);
 
-        Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor>();
+        Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<>();
         for (ProblemDescriptor result : list) {
           for (QuickFix fix : result.getFixes()) {
             if (fix instanceof XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix) {

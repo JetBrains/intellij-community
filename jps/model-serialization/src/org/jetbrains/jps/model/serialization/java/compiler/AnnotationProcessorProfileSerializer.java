@@ -16,7 +16,6 @@
 package org.jetbrains.jps.model.serialization.java.compiler;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +103,7 @@ public class AnnotationProcessorProfileSerializer {
 
   public static void writeExternal(@NotNull ProcessorConfigProfile profile, @NotNull Element element) {
     element.setAttribute(NAME, profile.getName());
-    if (!Registry.is("saving.state.in.new.format.is.allowed", false) || profile.isEnabled()) {
+    if (profile.isEnabled()) {
       element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
     }
 
@@ -141,7 +140,7 @@ public class AnnotationProcessorProfileSerializer {
 
 
     Element pathElement = null;
-    if (!Registry.is("saving.state.in.new.format.is.allowed", false) || !profile.isObtainProcessorsFromClasspath()) {
+    if (!profile.isObtainProcessorsFromClasspath()) {
       pathElement = addChild(element, "processorPath");
       pathElement.setAttribute("useClasspath", Boolean.toString(profile.isObtainProcessorsFromClasspath()));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +31,7 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -90,7 +95,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     final GrLightModifierList myModifierList = ((GrLightModifierList)getModifierList());
 
     for (String modifier : GrModifier.GROOVY_MODIFIERS) {
-      if (baseMethod.hasModifierProperty(modifier)) {
+      if (baseMethod.getModifierList().hasExplicitModifier(modifier)) {
         myModifierList.addModifier(modifier);
       }
     }
@@ -108,12 +113,16 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     if (isCategoryMethod) {
       myModifierList.addModifier(PsiModifier.STATIC);
     }
+
+    if (mySkippedParameters.length != 0) {
+      myModifierList.removeModifier(GrModifierFlags.ABSTRACT_MASK);
+    }
   }
 
   private void initParameterList(GrParameter[] parameters, int optionalParams, PsiClassType categoryType) {
     final GrLightParameterListBuilder parameterList = (GrLightParameterListBuilder)getParameterList();
 
-    List<GrParameter> skipped = new ArrayList<GrParameter>();
+    List<GrParameter> skipped = new ArrayList<>();
 
     if (categoryType != null) {
       parameterList.addParameter(new GrLightParameter(CATEGORY_PARAMETER_NAME, categoryType, this));
@@ -235,7 +244,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
 
   @Override
   public String toString() {
-    return "reflected method";
+    return getName() + " (" + StringUtil.join(getParameters(), f -> f.getType().getPresentableText() + " " + f.getName(), ", ") + ")";
   }
 
   @NotNull
@@ -261,14 +270,13 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
 
   @NotNull
   public static GrReflectedMethod[] createReflectedMethods(GrMethod method) {
-    final PsiClassType categoryType = method.hasModifierProperty(PsiModifier.STATIC) ? null : getCategoryType(method);
-
-    final GrParameter[] parameters = method.getParameters();
-    return doCreateReflectedMethods(method, categoryType, parameters);
+    return CachedValuesManager.getCachedValue(method, () -> CachedValueProvider.Result.create(
+      doCreateReflectedMethods(method, null, method.getParameters()), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+    ));
   }
 
   @NotNull
-  private static GrReflectedMethod[] doCreateReflectedMethods(@NotNull GrMethod targetMethod,
+  public static GrReflectedMethod[] doCreateReflectedMethods(@NotNull GrMethod targetMethod,
                                                               @Nullable PsiClassType categoryType,
                                                               @NotNull GrParameter[] parameters) {
     int count = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,19 +32,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-class AddLibraryToDependenciesFix extends OrderEntryFix {
+class AddLibraryToDependenciesFix extends AddOrderEntryFix {
   private final Library myLibrary;
   private final Module myCurrentModule;
-  private final PsiReference myReference;
   private final String myQualifiedClassName;
 
   public AddLibraryToDependenciesFix(@NotNull Module currentModule,
                                      @NotNull Library library,
                                      @NotNull PsiReference reference,
                                      @Nullable String qualifiedClassName) {
+    super(reference);
     myLibrary = library;
     myCurrentModule = currentModule;
-    myReference = reference;
     myQualifiedClassName = qualifiedClassName;
   }
 
@@ -66,10 +65,10 @@ class AddLibraryToDependenciesFix extends OrderEntryFix {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @Nullable final Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
     DependencyScope scope = suggestScopeByLocation(myCurrentModule, myReference.getElement());
     JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibrary, scope);
-    if (editor != null) {
+    if (myQualifiedClassName != null && editor != null) {
       importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
     }
   }

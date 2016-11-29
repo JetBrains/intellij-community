@@ -38,7 +38,7 @@ import java.util.List;
 public class RunContentExecutor implements Disposable {
   private final Project myProject;
   private final ProcessHandler myProcess;
-  private final List<Filter> myFilterList = new ArrayList<Filter>();
+  private final List<Filter> myFilterList = new ArrayList<>();
   private Runnable myRerunAction;
   private Runnable myStopAction;
   private Runnable myAfterCompletion;
@@ -140,12 +140,8 @@ public class RunContentExecutor implements Disposable {
   }
 
   public void activateToolWindow() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.RUN).activate(null);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.RUN).activate(null));
   }
 
   private static JComponent createConsolePanel(ConsoleView view, ActionGroup actions) {

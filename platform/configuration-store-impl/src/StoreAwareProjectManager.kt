@@ -19,10 +19,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.runBatchUpdate
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.impl.stores.StateStorageManager
+import com.intellij.openapi.components.impl.stores.StorageManagerListener
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.Module
@@ -44,53 +46,53 @@ import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
+private val CHANGED_FILES_KEY = Key.create<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
+
 /**
  * Should be a separate service, not closely related to ProjectManager, but it requires some cleanup/investigation.
  */
 class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressManager: ProgressManager) : ProjectManagerImpl(progressManager) {
-  companion object {
-    private val CHANGED_FILES_KEY = Key.create<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
-  }
-
   private val reloadBlockCount = AtomicInteger()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
 
   private val restartApplicationOrReloadProjectTask = Runnable {
-    if (isReloadUnblocked() && tryToReloadApplication()) {
-      val projectsToReload = THashSet<Project>()
-      for (project in openProjects) {
-        if (project.isDisposed) {
-          continue
-        }
+    if (!isReloadUnblocked() || !tryToReloadApplication()) {
+      return@Runnable
+    }
 
-        val changes = CHANGED_FILES_KEY.get(project) ?: continue
-        CHANGED_FILES_KEY.set(project, null)
-        if (!changes.isEmpty) {
-          runBatchUpdate(project.messageBus) {
-            for ((store, storages) in changes.entrySet()) {
-              if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed ?: false) {
-                continue
-              }
+    val projectsToReload = THashSet<Project>()
+    for (project in openProjects) {
+      if (project.isDisposed) {
+        continue
+      }
 
-              @Suppress("UNCHECKED_CAST")
-              if (reloadStore(storages as Set<StateStorage>, store, false) == ReloadComponentStoreStatus.RESTART_AGREED) {
-                projectsToReload.add(project)
-              }
+      val changes = CHANGED_FILES_KEY.get(project) ?: continue
+      CHANGED_FILES_KEY.set(project, null)
+      if (!changes.isEmpty) {
+        runBatchUpdate(project.messageBus) {
+          for ((store, storages) in changes.entrySet()) {
+            if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed ?: false) {
+              continue
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            if (reloadStore(storages as Set<StateStorage>, store) == ReloadComponentStoreStatus.RESTART_AGREED) {
+              projectsToReload.add(project)
             }
           }
         }
       }
+    }
 
-      for (project in projectsToReload) {
-        ProjectManagerImpl.doReloadProject(project)
-      }
+    for (project in projectsToReload) {
+      ProjectManagerImpl.doReloadProject(project)
     }
   }
 
   private val changedFilesAlarm = SingleAlarm(restartApplicationOrReloadProjectTask, 300, this)
 
   init {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(StateStorageManager.STORAGE_TOPIC, object : StorageManagerListener() {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(StateStorageManager.STORAGE_TOPIC, object : StorageManagerListener {
       override fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager) {
         if (event is VFilePropertyChangeEvent) {
           // ignore because doesn't affect content
@@ -206,18 +208,22 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     val changes = LinkedHashSet<StateStorage>(changedApplicationFiles)
     changedApplicationFiles.clear()
 
-    val status = reloadStore(changes, ApplicationManager.getApplication().stateStore as ComponentStoreImpl, true)
-    if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
-      ApplicationManagerEx.getApplicationEx().restart(true)
-      return false
-    }
-    else {
-      return status == ReloadComponentStoreStatus.SUCCESS || status == ReloadComponentStoreStatus.RESTART_CANCELLED
-    }
+    return reloadAppStore(changes)
   }
 }
 
-private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl, isApp: Boolean): ReloadComponentStoreStatus {
+fun reloadAppStore(changes: Set<StateStorage>): Boolean {
+  val status = reloadStore(changes, ApplicationManager.getApplication().stateStore as ComponentStoreImpl)
+  if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
+    ApplicationManagerEx.getApplicationEx().restart(true)
+    return false
+  }
+  else {
+    return status == ReloadComponentStoreStatus.SUCCESS || status == ReloadComponentStoreStatus.RESTART_CANCELLED
+  }
+}
+
+fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
   val notReloadableComponents: Collection<String>?
   var willBeReloaded = false
   try {
@@ -234,7 +240,7 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
       return ReloadComponentStoreStatus.SUCCESS
     }
 
-    willBeReloaded = askToRestart(store, notReloadableComponents, changedStorages, isApp)
+    willBeReloaded = askToRestart(store, notReloadableComponents, changedStorages, store.project == null)
     return if (willBeReloaded) ReloadComponentStoreStatus.RESTART_AGREED else ReloadComponentStoreStatus.RESTART_CANCELLED
   }
   finally {

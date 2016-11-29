@@ -50,7 +50,7 @@ import java.util.Map;
 public class CloudAccountSelectionEditor {
 
   private static final Map<ServerType<?>, Key<RemoteServer<?>>> ourCloudType2AccountKey
-    = new HashMap<ServerType<?>, Key<RemoteServer<?>>>();
+    = new HashMap<>();
 
 
   private JButton myNewButton;
@@ -117,7 +117,7 @@ public class CloudAccountSelectionEditor {
   private void createAccount(ServerType<?> cloudType) {
     RemoteServer<?> newAccount = RemoteServersManager.getInstance().createServer(cloudType, generateServerName(cloudType));
 
-    final Ref<Consumer<String>> errorConsumerRef = new Ref<Consumer<String>>();
+    final Ref<Consumer<String>> errorConsumerRef = new Ref<>();
 
     SingleRemoteServerConfigurable configurable = new SingleRemoteServerConfigurable(newAccount, null, true) {
 
@@ -130,12 +130,7 @@ public class CloudAccountSelectionEditor {
 
     if (!new SingleConfigurableEditor(myMainPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false) {
       {
-        errorConsumerRef.set(new Consumer<String>() {
-          @Override
-          public void consume(String s) {
-            setErrorText(s);
-          }
-        });
+        errorConsumerRef.set(s -> setErrorText(s));
       }
     }.showAndGet()) {
       return;
@@ -160,17 +155,13 @@ public class CloudAccountSelectionEditor {
   }
 
   private static String generateServerName(ServerType<?> cloudType) {
-    return UniqueNameGenerator.generateUniqueName(cloudType.getPresentableName(), new Condition<String>() {
-
-      @Override
-      public boolean value(String s) {
-        for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
-          if (server.getName().equals(s)) {
-            return false;
-          }
+    return UniqueNameGenerator.generateUniqueName(cloudType.getPresentableName(), s -> {
+      for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
+        if (server.getName().equals(s)) {
+          return false;
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -195,7 +186,7 @@ public class CloudAccountSelectionEditor {
   private static Key<RemoteServer<?>> getKey(ServerType<?> cloudType) {
     Key<RemoteServer<?>> result = ourCloudType2AccountKey.get(cloudType);
     if (result == null) {
-      result = new Key<RemoteServer<?>>("cloud-account-" + cloudType.getId());
+      result = new Key<>("cloud-account-" + cloudType.getId());
       ourCloudType2AccountKey.put(cloudType, result);
     }
     return result;

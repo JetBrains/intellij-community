@@ -214,31 +214,25 @@ public class XsltCommandLineState extends CommandLineState {
         public void processTerminated(final ProcessEvent event) {
 
             if (myXsltRunConfiguration.isSaveToFile()) {
-                Runnable runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        Runnable runnable = new Runnable() {
-                            @Override
-                            public void run() {
-                                if (event.getExitCode() == 0) {
-                                    if (myXsltRunConfiguration.myOpenInBrowser) {
-                                      BrowserUtil.browse(myXsltRunConfiguration.myOutputFile);
-                                    }
-                                    if (myXsltRunConfiguration.myOpenOutputFile) {
-                                        final String url = VfsUtilCore.pathToUrl(myXsltRunConfiguration.myOutputFile);
-                                        final VirtualFile fileByUrl = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url.replace(File.separatorChar, '/'));
-                                        if (fileByUrl != null) {
-                                            fileByUrl.refresh(false, false);
-                                            new OpenFileDescriptor(myXsltRunConfiguration.getProject(), fileByUrl).navigate(true);
-                                            return;
-                                        }
-                                    }
-                                  VirtualFileManager.getInstance().asyncRefresh(null);
+                Runnable runnable = () -> {
+                    Runnable runnable1 = () -> {
+                        if (event.getExitCode() == 0) {
+                            if (myXsltRunConfiguration.myOpenInBrowser) {
+                              BrowserUtil.browse(myXsltRunConfiguration.myOutputFile);
+                            }
+                            if (myXsltRunConfiguration.myOpenOutputFile) {
+                                final String url = VfsUtilCore.pathToUrl(myXsltRunConfiguration.myOutputFile);
+                                final VirtualFile fileByUrl = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url.replace(File.separatorChar, '/'));
+                                if (fileByUrl != null) {
+                                    fileByUrl.refresh(false, false);
+                                    new OpenFileDescriptor(myXsltRunConfiguration.getProject(), fileByUrl).navigate(true);
+                                    return;
                                 }
                             }
-                        };
-                        ApplicationManager.getApplication().runWriteAction(runnable);
-                    }
+                          VirtualFileManager.getInstance().asyncRefresh(null);
+                        }
+                    };
+                    ApplicationManager.getApplication().runWriteAction(runnable1);
                 };
                 SwingUtilities.invokeLater(runnable);
             }

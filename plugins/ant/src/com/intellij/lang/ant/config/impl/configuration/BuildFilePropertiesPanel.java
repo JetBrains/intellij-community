@@ -248,7 +248,7 @@ public class BuildFilePropertiesPanel {
             }
             BuildFileProperty item = new BuildFileProperty();
             ListTableModel<BuildFileProperty> model = (ListTableModel<BuildFileProperty>)myPropertiesTable.getModel();
-            ArrayList<BuildFileProperty> items = new ArrayList<BuildFileProperty>(model.getItems());
+            ArrayList<BuildFileProperty> items = new ArrayList<>(model.getItems());
             items.add(item);
             model.setItems(items);
             int newIndex = model.indexOf(item);
@@ -310,14 +310,12 @@ public class BuildFilePropertiesPanel {
       }
     };
 
-    private static final Comparator<TargetFilter> NAME_COMPARATOR = new Comparator<TargetFilter>() {
-      public int compare(TargetFilter o1, TargetFilter o2) {
-        final String name1 = o1.getTargetName();
-        if (name1 == null) return -1;
-        final String name2 = o2.getTargetName();
-        if (name2 == null) return 1;
-        return name1.compareToIgnoreCase(name2);
-      }
+    private static final Comparator<TargetFilter> NAME_COMPARATOR = (o1, o2) -> {
+      final String name1 = o1.getTargetName();
+      if (name1 == null) return -1;
+      final String name2 = o2.getTargetName();
+      if (name2 == null) return 1;
+      return name1.compareToIgnoreCase(name2);
     };
     private static final ColumnInfo<TargetFilter, String> NAME_COLUMN = new ColumnInfo<TargetFilter, String>(
       AntBundle.message("ant.target")) {
@@ -330,18 +328,16 @@ public class BuildFilePropertiesPanel {
       }
     };
 
-    private static final Comparator<TargetFilter> DESCRIPTION_COMPARATOR = new Comparator<TargetFilter>() {
-      public int compare(TargetFilter o1, TargetFilter o2) {
-        String description1 = o1.getDescription();
-        if (description1 == null) {
-          description1 = "";
-        }
-        String description2 = o2.getDescription();
-        if (description2 == null) {
-          description2 = "";
-        }
-        return description1.compareToIgnoreCase(description2);
+    private static final Comparator<TargetFilter> DESCRIPTION_COMPARATOR = (o1, o2) -> {
+      String description1 = o1.getDescription();
+      if (description1 == null) {
+        description1 = "";
       }
+      String description2 = o2.getDescription();
+      if (description2 == null) {
+        description2 = "";
+      }
+      return description1.compareToIgnoreCase(description2);
     };
     private static final ColumnInfo<TargetFilter, String> DESCRIPTION = new ColumnInfo<TargetFilter, String>(
       AntBundle.message("edit.ant.properties.description.column.name")) {
@@ -415,7 +411,7 @@ public class BuildFilePropertiesPanel {
           if (application == null) {
             return Collections.singletonList((Sdk)null).iterator();
           }
-          ArrayList<Sdk> allJdks = new ArrayList<Sdk>(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
+          ArrayList<Sdk> allJdks = new ArrayList<>(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
           allJdks.add(0, null);
           return allJdks.iterator();
         }

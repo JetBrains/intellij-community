@@ -88,7 +88,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   }
 
   private CompileScope createArtifactsScope(String[] artifactNames) {
-    List<Artifact> artifacts = new ArrayList<Artifact>();
+    List<Artifact> artifacts = new ArrayList<>();
     for (String name : artifactNames) {
       artifacts.add(ArtifactsTestUtil.findArtifact(myProject, name));
     }
@@ -96,7 +96,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   }
 
   private CompileScope createModulesCompileScope(final String[] moduleNames) {
-    final List<Module> modules = new ArrayList<Module>();
+    final List<Module> modules = new ArrayList<>();
     for (String name : moduleNames) {
       modules.add(getModule(name));
     }

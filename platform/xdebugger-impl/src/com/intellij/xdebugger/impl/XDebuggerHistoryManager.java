@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public class XDebuggerHistoryManager {
   public static final int MAX_RECENT_EXPRESSIONS = 10;
-  private final Map<String, LinkedList<XExpression>> myRecentExpressions = new HashMap<String, LinkedList<XExpression>>();
+  private final Map<String, LinkedList<XExpression>> myRecentExpressions = new HashMap<>();
 
   public static XDebuggerHistoryManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, XDebuggerHistoryManager.class);
@@ -45,11 +45,7 @@ public class XDebuggerHistoryManager {
       return false;
     }
 
-    LinkedList<XExpression> list = myRecentExpressions.get(id);
-    if (list == null) {
-      list = new LinkedList<XExpression>();
-      myRecentExpressions.put(id, list);
-    }
+    LinkedList<XExpression> list = myRecentExpressions.computeIfAbsent(id, k -> new LinkedList<>());
     if (list.size() == MAX_RECENT_EXPRESSIONS) {
       list.removeLast();
     }

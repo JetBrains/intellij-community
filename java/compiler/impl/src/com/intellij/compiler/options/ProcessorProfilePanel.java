@@ -298,7 +298,7 @@ public class ProcessorProfilePanel extends JPanel {
   }
 
   private static class OptionsTableModel extends AbstractTableModel implements EditableModel {
-    private final java.util.List<KeyValuePair> myRows = new ArrayList<KeyValuePair>();
+    private final java.util.List<KeyValuePair> myRows = new ArrayList<>();
 
     public String getColumnName(int column) {
       switch (column) {
@@ -371,12 +371,7 @@ public class ProcessorProfilePanel extends JPanel {
         for (Map.Entry<String, String> entry : options.entrySet()) {
           myRows.add(new KeyValuePair(entry.getKey(), entry.getValue()));
         }
-        Collections.sort(myRows, new Comparator<KeyValuePair>() {
-          @Override
-          public int compare(KeyValuePair o1, KeyValuePair o2) {
-            return o1.key.compareToIgnoreCase(o2.key);
-          }
-        });
+        Collections.sort(myRows, (o1, o2) -> o1.key.compareToIgnoreCase(o2.key));
         fireTableRowsInserted(0, options.size()-1);
       }
     }
@@ -390,7 +385,7 @@ public class ProcessorProfilePanel extends JPanel {
     }
 
     public Map<String, String> getOptions() {
-      final Map<String, String> map = new java.util.HashMap<String, String>();
+      final Map<String, String> map = new java.util.HashMap<>();
       for (KeyValuePair pair : myRows) {
         map.put(pair.key.trim(), pair.value.trim());
       }
@@ -414,7 +409,7 @@ public class ProcessorProfilePanel extends JPanel {
   }
 
   private static class ProcessorTableModel extends AbstractTableModel implements EditableModel {
-    private final List<String> myRows = new ArrayList<String>();
+    private final List<String> myRows = new ArrayList<>();
 
     public String getColumnName(int column) {
       switch (column) {
@@ -482,11 +477,7 @@ public class ProcessorProfilePanel extends JPanel {
         for (String processor : processors) {
           myRows.add(processor);
         }
-        Collections.sort(myRows, new Comparator<String>() {
-          public int compare(String o1, String o2) {
-            return o1.compareToIgnoreCase(o2);
-          }
-        });
+        Collections.sort(myRows, (o1, o2) -> o1.compareToIgnoreCase(o2));
         fireTableRowsInserted(0, processors.size()-1);
       }
     }
@@ -500,7 +491,7 @@ public class ProcessorProfilePanel extends JPanel {
     }
 
     public Collection<String> getProcessors() {
-      final Set<String> set = new HashSet<String>();
+      final Set<String> set = new HashSet<>();
       for (String row : myRows) {
         if (row != null) {
           set.add(row.trim());

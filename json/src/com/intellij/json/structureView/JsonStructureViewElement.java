@@ -66,26 +66,18 @@ public class JsonStructureViewElement implements StructureViewTreeElement {
     }
     if (value instanceof JsonObject) {
       final JsonObject object = ((JsonObject)value);
-      return ContainerUtil.map2Array(object.getPropertyList(), TreeElement.class, new Function<JsonProperty, TreeElement>() {
-        @Override
-        public TreeElement fun(JsonProperty property) {
-          return new JsonStructureViewElement(property);
-        }
-      });
+      return ContainerUtil.map2Array(object.getPropertyList(), TreeElement.class, (Function<JsonProperty, TreeElement>)property -> new JsonStructureViewElement(property));
     }
     else if (value instanceof JsonArray) {
       final JsonArray array = (JsonArray)value;
-      final List<TreeElement> childObjects = ContainerUtil.mapNotNull(array.getValueList(), new Function<JsonValue, TreeElement>() {
-        @Override
-        public TreeElement fun(JsonValue value) {
-          if (value instanceof JsonObject && !((JsonObject)value).getPropertyList().isEmpty()) {
-            return new JsonStructureViewElement(value);
-          }
-          else if (value instanceof JsonArray && PsiTreeUtil.findChildOfType(value, JsonProperty.class) != null) {
-            return new JsonStructureViewElement(value);
-          }
-          return null;
+      final List<TreeElement> childObjects = ContainerUtil.mapNotNull(array.getValueList(), value1 -> {
+        if (value1 instanceof JsonObject && !((JsonObject)value1).getPropertyList().isEmpty()) {
+          return new JsonStructureViewElement(value1);
         }
+        else if (value1 instanceof JsonArray && PsiTreeUtil.findChildOfType(value1, JsonProperty.class) != null) {
+          return new JsonStructureViewElement(value1);
+        }
+        return null;
       });
       return ArrayUtil.toObjectArray(childObjects, TreeElement.class);
     }

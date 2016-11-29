@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TokenizerBase<T extends PsiElement> extends Tokenizer<T> {
   public static <T extends PsiElement> TokenizerBase<T> create(Splitter splitter) {
-    return new TokenizerBase<T>(splitter);
+    return new TokenizerBase<>(splitter);
   }
   
   private final Splitter mySplitter;

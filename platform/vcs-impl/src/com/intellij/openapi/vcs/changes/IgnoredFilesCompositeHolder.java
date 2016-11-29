@@ -15,56 +15,58 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author irengrig
- *         Date: 2/10/11
- *         Time: 3:57 PM
- */
 public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
-  private final Map<AbstractVcs, IgnoredFilesHolder> myHolderMap;
+  private final Map<AbstractVcs, IgnoredFilesHolder> myVcsIgnoredHolderMap;
+  private IgnoredFilesHolder myIdeIgnoredFilesHolder;
   private final Project myProject;
   private AbstractVcs myCurrentVcs;
   private final ProjectLevelVcsManager myVcsManager;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.IgnoredFilesCompositeHolder");
 
   public IgnoredFilesCompositeHolder(final Project project) {
     super();
     myProject = project;
-    myHolderMap = new HashMap<AbstractVcs, IgnoredFilesHolder>();
+    myVcsIgnoredHolderMap = new HashMap<>();
+    myIdeIgnoredFilesHolder = new RecursiveFileHolder<>(myProject, HolderType.IGNORED);
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
   @Override
   public void cleanAll() {
-    myHolderMap.clear();
+    myVcsIgnoredHolderMap.values().forEach(IgnoredFilesHolder::cleanAll);
+    myVcsIgnoredHolderMap.clear();
+    myIdeIgnoredFilesHolder.cleanAll();
   }
 
   @Override
   public void cleanAndAdjustScope(VcsModifiableDirtyScope scope) {
     final AbstractVcs vcs = scope.getVcs();
-    if (myHolderMap.containsKey(vcs)) {
-      myHolderMap.get(vcs).cleanAndAdjustScope(scope);
+    if (myVcsIgnoredHolderMap.containsKey(vcs)) {
+      myVcsIgnoredHolderMap.get(vcs).cleanAndAdjustScope(scope);
     }
+    myIdeIgnoredFilesHolder.cleanAndAdjustScope(scope);
   }
 
   @Override
   public FileHolder copy() {
     final IgnoredFilesCompositeHolder result = new IgnoredFilesCompositeHolder(myProject);
-    for (Map.Entry<AbstractVcs, IgnoredFilesHolder> entry : myHolderMap.entrySet()) {
-      result.myHolderMap.put(entry.getKey(), (IgnoredFilesHolder) entry.getValue().copy());
+    for (Map.Entry<AbstractVcs, IgnoredFilesHolder> entry : myVcsIgnoredHolderMap.entrySet()) {
+      result.myVcsIgnoredHolderMap.put(entry.getKey(), (IgnoredFilesHolder)entry.getValue().copy());
     }
+    result.myIdeIgnoredFilesHolder = (IgnoredFilesHolder)myIdeIgnoredFilesHolder.copy();
     return result;
   }
 
@@ -73,48 +75,74 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
     return HolderType.IGNORED;
   }
 
-  @Nullable
-  public IgnoredFilesHolder getAppropriateIgnoredHolder() {
-    if (!myHolderMap.containsKey(myCurrentVcs)) {
-      LOG.error("current vcs: " + myCurrentVcs);
-      return null;
-    }
-    return myHolderMap.get(myCurrentVcs);
-  }
-
   @Override
   public void addFile(VirtualFile file) {
-    if (!myHolderMap.containsKey(myCurrentVcs)) {
-      LOG.error("current vcs: " + myCurrentVcs + " file: " + file.getPath());
-    }
-    myHolderMap.get(myCurrentVcs).addFile(file);
+    myIdeIgnoredFilesHolder.addFile(file);
+  }
+
+  public boolean isInUpdatingMode() {
+    return myVcsIgnoredHolderMap.values().stream()
+      .anyMatch((holder) -> (holder instanceof VcsIgnoredFilesHolder) && ((VcsIgnoredFilesHolder)holder).isInUpdatingMode());
   }
 
   @Override
   public boolean containsFile(VirtualFile file) {
+    if (myIdeIgnoredFilesHolder.containsFile(file)) return true;
     final AbstractVcs vcs = myVcsManager.getVcsFor(file);
     if (vcs == null) return false;
-    final IgnoredFilesHolder ignoredFilesHolder = myHolderMap.get(vcs);
-    return ignoredFilesHolder == null ? false : ignoredFilesHolder.containsFile(file);
+    final IgnoredFilesHolder ignoredFilesHolder = myVcsIgnoredHolderMap.get(vcs);
+    return ignoredFilesHolder != null && ignoredFilesHolder.containsFile(file);
   }
 
   @Override
   public Collection<VirtualFile> values() {
-    if (myHolderMap.size() == 1) return myHolderMap.values().iterator().next().values();
-    final HashSet<VirtualFile> result = new HashSet<VirtualFile>();
-    for (IgnoredFilesHolder holder : myHolderMap.values()) {
-      result.addAll(holder.values());
-    }
+    final HashSet<VirtualFile> result = ContainerUtil.newHashSet();
+    result.addAll(myIdeIgnoredFilesHolder.values());
+    result.addAll(
+      myVcsIgnoredHolderMap.values().stream().map(IgnoredFilesHolder::values).flatMap(set -> set.stream()).collect(Collectors.toSet()));
     return result;
+  }
+
+  @Override
+  public int getDirNum() {
+    return myIdeIgnoredFilesHolder.getDirNum() + myVcsIgnoredHolderMap.values().stream().mapToInt(IgnoredFilesHolder::getDirNum).sum();
+  }
+
+  @Override
+  public int getFilesNum() {
+    return myIdeIgnoredFilesHolder.getFilesNum() + myVcsIgnoredHolderMap.values().stream().mapToInt(IgnoredFilesHolder::getFilesNum).sum();
   }
 
   @Override
   public void notifyVcsStarted(AbstractVcs vcs) {
     myCurrentVcs = vcs;
-    if (! myHolderMap.containsKey(vcs)) {
-      myHolderMap.put(vcs, vcs.reportsIgnoredDirectories() ? new RecursiveFileHolder(myProject, HolderType.IGNORED) :
-        new MapIgnoredFilesHolder(myProject));
-    }
+    if (myVcsIgnoredHolderMap.containsKey(vcs)) return;
+
+    IgnoredFilesHolder ignoredFilesHolder =
+      ObjectUtils.chooseNotNull(getHolderFromEP(vcs, myProject), new RecursiveFileHolder<>(myProject, HolderType.IGNORED));
+    ignoredFilesHolder.notifyVcsStarted(vcs);
+    myVcsIgnoredHolderMap.put(vcs, ignoredFilesHolder);
+  }
+
+  @Nullable
+  public IgnoredFilesHolder getActiveVcsHolder() {
+    return getIgnoredHolderByVcs(myCurrentVcs);
+  }
+
+  @Nullable
+  private IgnoredFilesHolder getIgnoredHolderByVcs(AbstractVcs vcs) {
+    if (!myVcsIgnoredHolderMap.containsKey(vcs)) return null;
+    return myVcsIgnoredHolderMap.get(vcs);
+  }
+
+
+  @Nullable
+  private static VcsIgnoredFilesHolder getHolderFromEP(AbstractVcs vcs, @NotNull Project project) {
+    Optional<VcsIgnoredFilesHolder> ignoredFilesHolder =
+      Stream.of(Extensions.getExtensions(VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP, project))
+        .filter(holder -> holder.getVcs().equals(vcs))
+        .findFirst();
+    return ignoredFilesHolder.isPresent() ? ignoredFilesHolder.get() : null;
   }
 
   @Override
@@ -125,13 +153,12 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
     if (!(obj instanceof IgnoredFilesCompositeHolder)) {
       return false;
     }
-    IgnoredFilesCompositeHolder other = (IgnoredFilesCompositeHolder) obj;
-    return myHolderMap.equals(other.myHolderMap);
+    IgnoredFilesCompositeHolder other = (IgnoredFilesCompositeHolder)obj;
+    return myVcsIgnoredHolderMap.equals(other.myVcsIgnoredHolderMap) && myIdeIgnoredFilesHolder.equals(other.myIdeIgnoredFilesHolder);
   }
 
   @Override
   public int hashCode() {
-    return myHolderMap.hashCode();
+    return Objects.hash(myVcsIgnoredHolderMap, myIdeIgnoredFilesHolder);
   }
-
 }

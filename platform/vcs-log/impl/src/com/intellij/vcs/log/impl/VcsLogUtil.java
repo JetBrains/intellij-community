@@ -15,8 +15,11 @@
  */
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.util.Condition;
+import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,41 +33,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
-    return groupByRoot(refs, new Function<VcsRef, VirtualFile>() {
-      @NotNull
-      @Override
-      public VirtualFile fun(@NotNull VcsRef ref) {
-        return ref.getRoot();
-      }
-    });
-  }
-
-  @NotNull
-  public static <T extends VcsShortCommitDetails> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> commits) {
-    return groupByRoot(commits, new Function<T, VirtualFile>() {
-      @NotNull
-      @Override
-      public VirtualFile fun(@NotNull T commit) {
-        return commit.getRoot();
-      }
-    });
+    return groupByRoot(refs, VcsRef::getRoot);
   }
 
   @NotNull
   private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
-    Map<VirtualFile, Set<T>> map =
-      new TreeMap<VirtualFile, Set<T>>(new Comparator<VirtualFile>() { // TODO some common VCS root sorting method
-        @Override
-        public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
-          return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-        }
-      });
+    Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
       Set<T> set = map.get(root);
@@ -98,14 +80,9 @@ public class VcsLogUtil {
 
   @NotNull
   private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
-    Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> selectedRoots = new HashSet<>();
 
-    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile root1, VirtualFile root2) {
-        return root1.getPath().compareTo(root2.getPath());
-      }
-    });
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
 
     for (FilePath filePath : files) {
       VirtualFile virtualFile = filePath.getVirtualFile();
@@ -146,7 +123,7 @@ public class VcsLogUtil {
   public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
                                                     @Nullable VcsLogRootFilter rootFilter,
                                                     @Nullable VcsLogStructureFilter structureFilter) {
-    if (rootFilter == null && structureFilter == null) return new HashSet<VirtualFile>(roots);
+    if (rootFilter == null && structureFilter == null) return new HashSet<>(roots);
 
     Collection<VirtualFile> fromRootFilter;
     if (rootFilter != null) {
@@ -158,13 +135,13 @@ public class VcsLogUtil {
 
     Collection<VirtualFile> fromStructureFilter;
     if (structureFilter != null) {
-      fromStructureFilter = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
+      fromStructureFilter = collectRoots(structureFilter.getFiles(), new HashSet<>(roots));
     }
     else {
       fromStructureFilter = roots;
     }
 
-    return new HashSet<VirtualFile>(ContainerUtil.intersection(fromRootFilter, fromStructureFilter));
+    return new HashSet<>(ContainerUtil.intersection(fromRootFilter, fromStructureFilter));
   }
 
   // for given root returns files that are selected in it
@@ -176,12 +153,9 @@ public class VcsLogUtil {
     if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
     Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
 
-    return new HashSet<FilePath>(ContainerUtil.filter(files, new Condition<FilePath>() {
-      @Override
-      public boolean value(FilePath filePath) {
-        VirtualFile virtualFile = filePath.getVirtualFile();
-        return root.equals(virtualFile) || FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false);
-      }
+    return new HashSet<>(ContainerUtil.filter(files, filePath -> {
+      VirtualFile virtualFile = filePath.getVirtualFile();
+      return root.equals(virtualFile) || FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false);
     }));
   }
 
@@ -206,16 +180,6 @@ public class VcsLogUtil {
   @NotNull
   public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
     return list.subList(0, Math.min(list.size(), max));
-  }
-
-  @NotNull
-  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, @NotNull final Set<VirtualFile> visibleRoots) {
-    return ContainerUtil.filter(log.getAllReferences(), new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return visibleRoots.contains(ref.getRoot());
-      }
-    });
   }
 
   @NotNull
@@ -244,5 +208,30 @@ public class VcsLogUtil {
     }
 
     return branchName;
+  }
+
+  public static void triggerUsage(@NotNull AnActionEvent e) {
+    String text = e.getPresentation().getText();
+    if (text != null) {
+      triggerUsage(text);
+    }
+  }
+
+  public static void triggerUsage(@NotNull String text) {
+    UsageTrigger.trigger("vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
+  }
+
+  public static boolean isRegexp(@NotNull String text) {
+    if (!StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|")) {
+      return false;
+    }
+    try {
+      //noinspection ResultOfMethodCallIgnored
+      Pattern.compile(text);
+      return true;
+    }
+    catch (PatternSyntaxException ignored) {
+    }
+    return false;
   }
 }

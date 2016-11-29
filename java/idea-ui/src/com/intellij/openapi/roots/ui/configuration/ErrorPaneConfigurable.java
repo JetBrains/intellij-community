@@ -50,7 +50,7 @@ import java.util.List;
  */
 public class ErrorPaneConfigurable extends JPanel implements Configurable, Disposable, ConfigurationErrors {
   private final Alarm myAlarm;
-  private final List<ConfigurationError> myErrors = new ArrayList<ConfigurationError>();
+  private final List<ConfigurationError> myErrors = new ArrayList<>();
   private int myComputedErrorsStamp;
   private int myShownErrorsStamp;
   private final Object myLock = new Object();
@@ -125,72 +125,69 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
 
   public void refresh() {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        final String header = "<html>" +
-                            "<header><style type='text/css'>" +
-                            "body {" +
-                            "  color: #" + ColorUtil.toHex(new JBColor(Gray.x33, UIUtil.getLabelForeground())) + ";" +
-                            "  font-family: '" + UIUtil.getLabelFont().getName() + ",serif';" +
-                            "  font-size: " + UIUtil.getLabelFont().getSize() + ";" +
-                            "}" +
-                            "li {" +
-                            "  margin-bottom: 5;" +
-                            "}" +
-                            "ol {" +
-                            "}" +
-                            "a {" +
-                            " text-decoration: none;" +
-                            "}" +
-                            "</style>" +
-                            "</header>" +
-                            "<body>";
-        final StringBuilder html = new StringBuilder(header);
-        int i = 0;
-        html.append("<ol>");
-        ConfigurationError[] errors;
-        int currentStamp;
-        synchronized (myLock) {
-          errors = myErrors.toArray(new ConfigurationError[0]);
-          currentStamp = myComputedErrorsStamp;
-        }
+    myAlarm.addRequest(() -> {
+      final String header = "<html>" +
+                          "<header><style type='text/css'>" +
+                          "body {" +
+                          "  color: #" + ColorUtil.toHex(new JBColor(Gray.x33, UIUtil.getLabelForeground())) + ";" +
+                          "  font-family: '" + UIUtil.getLabelFont().getName() + ",serif';" +
+                          "  font-size: " + UIUtil.getLabelFont().getSize() + ";" +
+                          "}" +
+                          "li {" +
+                          "  margin-bottom: 5;" +
+                          "}" +
+                          "ol {" +
+                          "}" +
+                          "a {" +
+                          " text-decoration: none;" +
+                          "}" +
+                          "</style>" +
+                          "</header>" +
+                          "<body>";
+      final StringBuilder html = new StringBuilder(header);
+      int i = 0;
+      html.append("<ol>");
+      ConfigurationError[] errors;
+      int currentStamp;
+      synchronized (myLock) {
+        errors = myErrors.toArray(new ConfigurationError[0]);
+        currentStamp = myComputedErrorsStamp;
+      }
 
-        for (ConfigurationError error : errors) {
-          i++;
-          if (i > 100) break;
-          html.append("<li>");
-          String description;
-          if (error instanceof ProjectConfigurationProblem) {
-            //todo[nik] pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
-            ProjectStructureProblemDescription problemDescription = ((ProjectConfigurationProblem)error).getProblemDescription();
-            description = problemDescription.getDescription();
-            if (description == null) {
-              ProjectStructureElement place = problemDescription.getPlace().getContainingElement();
-              description = XmlStringUtil.convertToHtmlContent(problemDescription.getMessage(false));
-              if (problemDescription.canShowPlace()) {
-                description = place.getTypeName() + " <a href='http://navigate/" + i + "'>"
-                              + XmlStringUtil.convertToHtmlContent(place.getPresentableName()) + "</a>: "
-                              + StringUtil.decapitalize(description);
-              }
-            }
-            else {
-              description = XmlStringUtil.convertToHtmlContent(description);
+      for (ConfigurationError error : errors) {
+        i++;
+        if (i > 100) break;
+        html.append("<li>");
+        String description;
+        if (error instanceof ProjectConfigurationProblem) {
+          //todo[nik] pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
+          ProjectStructureProblemDescription problemDescription = ((ProjectConfigurationProblem)error).getProblemDescription();
+          description = problemDescription.getDescription();
+          if (description == null) {
+            ProjectStructureElement place = problemDescription.getPlace().getContainingElement();
+            description = XmlStringUtil.convertToHtmlContent(problemDescription.getMessage(false));
+            if (problemDescription.canShowPlace()) {
+              description = place.getTypeName() + " <a href='http://navigate/" + i + "'>"
+                            + XmlStringUtil.convertToHtmlContent(place.getPresentableName()) + "</a>: "
+                            + StringUtil.decapitalize(description);
             }
           }
           else {
-            description = XmlStringUtil.convertToHtmlContent(error.getDescription());
+            description = XmlStringUtil.convertToHtmlContent(description);
           }
-          if (error.canBeFixed()) {
-            description += " <a href='http://fix/" + i + "'>[Fix]</a>";
-          }
-          html.append(description).append("</li>");
         }
-        html.append("</ol></body></html>");
-        myContentUpdateQueue.queue(new ShowErrorsUpdate(currentStamp, html.toString()));
-        if (myOnErrorsChanged != null) {
-          myOnErrorsChanged.run();
+        else {
+          description = XmlStringUtil.convertToHtmlContent(error.getDescription());
         }
+        if (error.canBeFixed()) {
+          description += " <a href='http://fix/" + i + "'>[Fix]</a>";
+        }
+        html.append(description).append("</li>");
+      }
+      html.append("</ol></body></html>");
+      myContentUpdateQueue.queue(new ShowErrorsUpdate(currentStamp, html.toString()));
+      if (myOnErrorsChanged != null) {
+        myOnErrorsChanged.run();
       }
     }, 100);
   }

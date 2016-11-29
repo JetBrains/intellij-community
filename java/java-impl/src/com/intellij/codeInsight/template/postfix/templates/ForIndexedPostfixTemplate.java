@@ -29,12 +29,8 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 
 public abstract class ForIndexedPostfixTemplate extends StringBasedPostfixTemplate {
 
-  public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      return IS_ITERABLE_OR_ARRAY.value(element) || IS_NUMBER.value(element);
-    }
-  };
+  public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
+    element -> IS_ITERABLE_OR_ARRAY.value(element) || IS_NUMBER.value(element);
 
   protected ForIndexedPostfixTemplate(@NotNull String key, @NotNull String example) {
     super(key, example, selectorTopmost(IS_NUMBER_OR_ARRAY_OR_ITERABLE));

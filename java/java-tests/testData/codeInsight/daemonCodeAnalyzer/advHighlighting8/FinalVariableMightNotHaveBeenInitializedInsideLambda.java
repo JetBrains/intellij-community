@@ -64,3 +64,38 @@ abstract class TestInnerAnonymous {
   }
 }
 
+interface Fun<A, B> {
+  B m(A a);
+}
+
+class TestAnonymousWithRefToTheTopLevelUninitializedField {
+  private final int myId;
+
+  private Runnable r = new Runnable() {
+    final int localId;
+    {
+      localId = 0;
+    }
+
+    Fun<Integer, Integer> ff = (a) -> <error descr="Variable 'myId' might not have been initialized">myId</error>;
+    Fun<Integer, Integer> ffLocal = (a) -> localId;
+    public void run() {
+    }
+  };
+
+  public TestAnonymousWithRefToTheTopLevelUninitializedField(int id) {
+    myId = id;
+  }
+
+}
+
+class TestThisQualified {
+  final String s;
+
+  final Runnable r = () -> System.out.println(<error descr="Variable 'this.s' might not have been initialized">this.s</error>.length());
+  final Runnable r2 = () -> System.out.println(this.r2);
+
+  public TestThisQualified() {
+    s = "";
+  }
+}

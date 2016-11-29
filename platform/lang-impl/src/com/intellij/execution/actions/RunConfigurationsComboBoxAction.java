@@ -29,7 +29,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -38,6 +37,7 @@ import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +49,8 @@ import java.util.Map;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
 
-  public static final Icon CHECKED_ICON = new SizedIcon(AllIcons.Actions.Checked, 16, 16);
-  public static final Icon CHECKED_SELECTED_ICON = new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16);
+  public static final Icon CHECKED_ICON = JBUI.scale(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
+  public static final Icon CHECKED_SELECTED_ICON = JBUI.scale(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   @Override
@@ -118,12 +118,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     try {
       Icon icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings);
       ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
-      List<RunContentDescriptor> runningDescriptors = executionManager.getRunningDescriptors(new Condition<RunnerAndConfigurationSettings>() {
-          @Override
-          public boolean value(RunnerAndConfigurationSettings s) {
-            return s == settings;
-          }
-        });
+      List<RunContentDescriptor> runningDescriptors = executionManager.getRunningDescriptors(s -> s == settings);
       if (runningDescriptors.size() == 1) {
         icon = ExecutionUtil.getLiveIndicator(icon);
       }
@@ -199,7 +194,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     public SaveTemporaryAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(AllIcons.Actions.Menu_saveall);
+      presentation.setIcon(AllIcons.RunConfigurations.SaveTempConfig);
     }
 
     @Override

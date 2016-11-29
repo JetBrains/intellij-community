@@ -119,7 +119,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     myParentClass = getParentClass(selectedExpr);
-    final List<PsiClass> classes = new ArrayList<PsiClass>();
+    final List<PsiClass> classes = new ArrayList<>();
     PsiClass aClass = myParentClass;
     while (aClass != null) {
       classes.add(aClass);
@@ -135,7 +135,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
     else {
       PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
+      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), PsiClassListCellRenderer.INSTANCE,
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
                                           @Override
@@ -637,7 +637,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiDirectory psiDirectory;
       if (psiPackage != null) {
         final PsiDirectory[] directories = psiPackage.getDirectories(GlobalSearchScope.allScope(myProject));
-        psiDirectory = directories.length > 1 ? DirectoryChooserUtil.chooseDirectory(directories, null, myProject, new HashMap<PsiDirectory, String>()) : directories[0];
+        psiDirectory = directories.length > 1 ? DirectoryChooserUtil.chooseDirectory(directories, null, myProject, new HashMap<>()) : directories[0];
       } else {
         psiDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myParentClass.getContainingFile().getContainingDirectory(), false);
       }
@@ -713,7 +713,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           initializer = mySelectedExpr;
         }
 
-        initializer = IntroduceVariableBase.replaceExplicitWithDiamondWhenApplicable(initializer, myType);
+        final SmartTypePointer type = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myType);
+        initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, myType);
 
         final PsiMethod enclosingConstructor = getEnclosingConstructor(myParentClass, myAnchorElement);
         PsiClass destClass = mySettings.getDestinationClass() == null ? myParentClass : mySettings.getDestinationClass();
@@ -723,8 +724,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         ChangeContextUtil.encodeContextInfo(destClass, true);
 
         myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer) :
-                         createField(myFieldName, myType, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
-                                     myParentClass);
+                  createField(myFieldName, type.getType(), initializer,
+                              initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
+                              myParentClass);
 
         setModifiers(myField, mySettings);
         PsiElement finalAnchorElement = null;
@@ -736,7 +738,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
         PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
 
-        if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass()) {
+        if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass() &&
+            PsiTreeUtil.isAncestor(((PsiEnumConstant)anchorMember).getArgumentList(), initializer, false)) {
           final String initialName = "Constants";
           String constantsClassName = initialName;
 
@@ -810,7 +813,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
 
         if (myReplaceAll) {
-          List<PsiElement> array = new ArrayList<PsiElement>();
+          List<PsiElement> array = new ArrayList<>();
           for (PsiExpression occurrence : myOccurrences) {
             if (occurrence instanceof PsiExpression) {
               occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);

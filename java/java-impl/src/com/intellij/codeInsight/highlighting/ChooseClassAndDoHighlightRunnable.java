@@ -34,7 +34,7 @@ public abstract class ChooseClassAndDoHighlightRunnable extends ChooseOneOrAllRu
   }
 
   public static List<PsiClass> resolveClasses(final PsiClassType[] classTypes) {
-    List<PsiClass> classes = new ArrayList<PsiClass>();
+    List<PsiClass> classes = new ArrayList<>();
     for (PsiClassType classType : classTypes) {
       PsiClass aClass = classType.resolve();
       if (aClass != null) classes.add(aClass);
@@ -44,6 +44,6 @@ public abstract class ChooseClassAndDoHighlightRunnable extends ChooseOneOrAllRu
 
   @Override
   protected PsiElementListCellRenderer<PsiClass> createRenderer() {
-    return new PsiClassListCellRenderer();
+    return PsiClassListCellRenderer.INSTANCE;
   }
 }

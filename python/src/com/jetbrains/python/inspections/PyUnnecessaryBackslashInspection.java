@@ -74,7 +74,7 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
 
     @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression expression) {
-      final Stack<PsiElement> stack = new Stack<PsiElement>();
+      final Stack<PsiElement> stack = new Stack<>();
       stack.push(expression);
       while (!stack.isEmpty()) {
         PsiElement element = stack.pop();

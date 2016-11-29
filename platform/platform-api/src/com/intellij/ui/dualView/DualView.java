@@ -15,15 +15,11 @@
  */
 package com.intellij.ui.dualView;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.BaseTableView;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.SelectionProvider;
@@ -31,8 +27,8 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.config.Storage;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
@@ -53,21 +49,22 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
 import java.util.List;
 
 public class DualView extends JPanel {
+  private static final String TREE = "TREE";
+  private static final String FLAT = "FLAT";
+
   private final CardLayout myCardLayout;
+
   private TreeTableView myTreeView;
 
-  private JTable myCurrentView = null;
-
+  private JBTable myCurrentView;
   private TableView myFlatView;
-  @NonNls private static final String TREE = "TREE";
-  @NonNls private static final String FLAT = "FLAT";
-  private TreeCellRenderer myTreeCellRenderer;
   private boolean myRootVisible;
-  private boolean myTableRefreshingIsLocked = false;
   private CellWrapper myCellWrapper;
 
   private final Storage.PropertiesComponentStorage myFlatStorage;
@@ -75,6 +72,7 @@ public class DualView extends JPanel {
   private final PropertyChangeListener myPropertyChangeListener;
 
   private boolean myZipByHeight;
+  private boolean mySuppressStore;
 
   public DualView(Object root, DualViewColumnInfo[] columns, @NonNls String columnServiceKey, Project project) {
     super(new CardLayout());
@@ -90,7 +88,7 @@ public class DualView extends JPanel {
 
     add(createFlatComponent(columns), FLAT);
 
-    (myTreeView.getTreeViewModel()).addTreeModelListener(new TreeModelListener() {
+    myTreeView.getTreeViewModel().addTreeModelListener(new TreeModelListener() {
       public void treeNodesInserted(TreeModelEvent e) {
         refreshFlatModel();
       }
@@ -116,6 +114,7 @@ public class DualView extends JPanel {
 
     myPropertyChangeListener = new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
+        if (mySuppressStore) return;
         saveState();
       }
     };
@@ -137,22 +136,12 @@ public class DualView extends JPanel {
     BaseTableView.restore(myTreeStorage, myTreeView);
   }
 
-  public void lockTableRefreshing() {
-    myTableRefreshingIsLocked = true;
-  }
-
-  public void unlockTableRefreshingAndRefresh() {
-    myTableRefreshingIsLocked = false;
-    refreshFlatModel();
-  }
-
   private void refreshFlatModel() {
-    if (myTableRefreshingIsLocked) return;
     ((ListTableModel)myFlatView.getModel()).setItems(myTreeView.getFlattenItems());
   }
 
-  private ColumnInfo[] createTreeColumns(DualViewColumnInfo[] columns) {
-    Collection<ColumnInfo> result = new ArrayList<ColumnInfo>();
+  private static ColumnInfo[] createTreeColumns(DualViewColumnInfo[] columns) {
+    Collection<ColumnInfo> result = new ArrayList<>();
 
     final ColumnInfo firstColumn = columns[0];
     ColumnInfo firstTreeColumn = new ColumnInfo(firstColumn.getName()) {
@@ -184,12 +173,12 @@ public class DualView extends JPanel {
     myCardLayout.show(this, FLAT);
   }
 
-  private void changeViewTo(JTable view) {
+  private void changeViewTo(JBTable view) {
     myCurrentView = view;
     if (myCurrentView != null) {
       myCurrentView.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
       if (myCurrentView instanceof JBTable) {
-        ((JBTable)myCurrentView).setStriped(true);
+        myCurrentView.setStriped(true);
       }
       final int row = myCurrentView.getSelectedRow();
       myCurrentView.scrollRectToVisible(myCurrentView.getCellRect(row, 0, true));
@@ -198,11 +187,8 @@ public class DualView extends JPanel {
 
   private static void copySelection(SelectionProvider from, SelectionProvider to) {
     to.clearSelection();
-
-    Collection selection = from.getSelection();
-
-    for (Iterator each = selection.iterator(); each.hasNext();) {
-      to.addSelection(each.next());
+    for (Object aSelection : from.getSelection()) {
+      to.addSelection(aSelection);
     }
   }
 
@@ -218,6 +204,17 @@ public class DualView extends JPanel {
       public TableCellRenderer getCellRenderer(int row, int column) {
         return createWrappedRenderer(super.getCellRenderer(row, column));
       }
+
+      @Override
+      public void doLayout() {
+        try {
+          mySuppressStore = true;
+          super.doLayout();
+        }
+        finally {
+          mySuppressStore = false;
+        }
+      }
     };
     myTreeView.getTree().getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     JPanel result = new JPanel(new BorderLayout());
@@ -227,14 +224,16 @@ public class DualView extends JPanel {
 
   private Component createFlatComponent(DualViewColumnInfo[] columns) {
 
-    ArrayList<ColumnInfo> shownColumns = new ArrayList<ColumnInfo>();
+    ArrayList<ColumnInfo> shownColumns = new ArrayList<>();
 
-    for (int i = 0; i < columns.length; i++) {
-      DualViewColumnInfo column = columns[i];
-      if (column.shouldBeShownIsTheTable()) shownColumns.add(column);
+    for (DualViewColumnInfo column : columns) {
+      if (column.shouldBeShownIsTheTable()) {
+        shownColumns.add(column);
+      }
     }
 
     ListTableModel flatModel = new ListTableModel(shownColumns.toArray(new ColumnInfo[shownColumns.size()]));
+    //noinspection unchecked
     myFlatView = new TableView(flatModel) {
       public TableCellRenderer getCellRenderer(int row, int column) {
         return createWrappedRenderer(super.getCellRenderer(row, column));
@@ -248,6 +247,22 @@ public class DualView extends JPanel {
           ((JComponent)c).setBorder(null);
         }
         return c;
+      }
+
+      @Override
+      public void doLayout() {
+        try {
+          mySuppressStore = true;
+          super.doLayout();
+        }
+        finally {
+          mySuppressStore = false;
+        }
+      }
+
+      @Override
+      public void updateColumnSizes() {
+        // suppress automatic layout, use stored values instead
       }
     };
     myFlatView.setCellSelectionEnabled(false);
@@ -278,7 +293,7 @@ public class DualView extends JPanel {
     collapsePath(myTreeView.getTree(), new TreePath(myTreeView.getTree().getModel().getRoot()));
   }
 
-  private void expandPath(JTree tree, TreePath path) {
+  private static void expandPath(JTree tree, TreePath path) {
     tree.expandPath(path);
 
     final TreeNode node = ((TreeNode)path.getLastPathComponent());
@@ -304,11 +319,10 @@ public class DualView extends JPanel {
   }
 
   public List getSelection() {
-    ArrayList result = new ArrayList();
+    List<Object> result = ContainerUtil.newArrayList();
     SelectionProvider visibleTable = (SelectionProvider)getVisibleTable();
-    Collection selection = visibleTable.getSelection();
-    for (Iterator each = selection.iterator(); each.hasNext();) {
-      result.add(each.next());
+    for (Object aSelection : visibleTable.getSelection()) {
+      result.add(aSelection);
     }
     return result;
   }
@@ -340,19 +354,6 @@ public class DualView extends JPanel {
     myFlatView.getSelectionModel().addListSelectionListener(listSelectionListener);
   }
 
-  public void changeColumnSet(DualViewColumnInfo[] columns) {
-    myTreeView.setTableModel(new ListTreeTableModelOnColumns((TreeNode)myTreeView.getTreeViewModel().getRoot(),
-                                                             createTreeColumns(columns)));
-    myFlatView.setModelAndUpdateColumns(new ListTableModel(columns));
-    if (myTreeCellRenderer != null) myTreeView.setTreeCellRenderer(myTreeCellRenderer);
-    setRootVisible(myRootVisible);
-
-    refreshFlatModel();
-
-    addWidthListenersTo(myTreeView);
-    addWidthListenersTo(myFlatView);
-  }
-
   public Tree getTree() {
     return myTreeView.getTree();
   }
@@ -376,45 +377,11 @@ public class DualView extends JPanel {
   }
 
   public void setTreeCellRenderer(TreeCellRenderer cellRenderer) {
-    myTreeCellRenderer = cellRenderer;
     myTreeView.setTreeCellRenderer(cellRenderer);
-  }
-
-  public AnAction getExpandAllAction() {
-    return new AnAction(UIBundle.message("tree.view.expand.all.action.name"), null, AllIcons.Actions.Expandall) {
-      public void update(AnActionEvent e) {
-        Presentation presentation = e.getPresentation();
-        presentation.setVisible(true);
-        presentation.setEnabled(myCurrentView == myTreeView);
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        expandAll();
-      }
-    };
-  }
-
-  public AnAction getCollapseAllAction() {
-    return new AnAction(UIBundle.message("tree.view.collapse.all.action.name"), null, AllIcons.Actions.Collapseall) {
-      public void update(AnActionEvent e) {
-        Presentation presentation = e.getPresentation();
-        presentation.setVisible(true);
-        presentation.setEnabled(myCurrentView == myTreeView);
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        collapseAll();
-      }
-    };
   }
 
   public void setCellWrapper(CellWrapper wrapper) {
     myCellWrapper = wrapper;
-  }
-
-  public void installEditSourceOnDoubleClickHandler() {
-    EditSourceOnDoubleClickHandler.install(myTreeView);
-    EditSourceOnDoubleClickHandler.install(myFlatView);
   }
 
   public void installDoubleClickHandler(AnAction action) {
@@ -432,9 +399,8 @@ public class DualView extends JPanel {
   }
 
   public void setRoot(final TreeNode node, final List<Object> selection) {
-    final List<Object> currentlySelected = myFlatView.getSelectedObjects();
-    final List<Object> targetSelection = (currentlySelected != null && (! currentlySelected.isEmpty())) ? currentlySelected : selection;
-    //final Object obj = myFlatView.getSelectedObject() != null ? myFlatView.getSelectedObject() : selection;
+    final List<?> currentlySelected = myFlatView.getSelectedObjects();
+    final List<?> targetSelection = !currentlySelected.isEmpty() ? currentlySelected : selection;
 
     myTreeView.getTreeViewModel().setRoot(node);
 

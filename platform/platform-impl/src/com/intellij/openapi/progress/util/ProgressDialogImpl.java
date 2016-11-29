@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.FocusTrackbackProvider;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
@@ -35,6 +34,7 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,12 +89,7 @@ class ProgressDialogImpl implements ProgressDialog {
     return fullText;
   }
 
-  private final Runnable myUpdateRequest = new Runnable() {
-    @Override
-    public void run() {
-      update();
-    }
-  };
+  private final Runnable myUpdateRequest = () -> update();
   JPanel myPanel;
 
   private JLabel myTextLabel;
@@ -130,33 +125,22 @@ class ProgressDialogImpl implements ProgressDialog {
 
   @Override
   public void prepareShowDialog(int delay) {
-    Timer timer = UIUtil.createNamedTimer("Progress window timer", delay, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProgressWindow.isRunning()) {
-              final DialogWrapper popup = myPopup;
-              if (popup != null) {
-                myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
-                  @Override
-                  public Component getComponent() {
-                    return popup.getPreferredFocusedComponent();
-                  }
-                });
-              }
-              myProgressWindow.showDialog();
-            }
-            else {
-              Disposer.dispose(myProgressWindow);
-            }
-          }
-        }, myProgressWindow.getModalityState());
+    Timer timer = UIUtil.createNamedTimer("Progress window timer", delay, e -> ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProgressWindow.isRunning()) {
+        final DialogWrapper popup = myPopup;
+        if (popup != null) {
+          myFocusTrackback.registerFocusComponent(() -> popup.getPreferredFocusedComponent());
+        }
+        myProgressWindow.showDialog();
       }
-    });
+      else {
+        Disposer.dispose(myProgressWindow);
+      }
+    }, myProgressWindow.getModalityState()));
     timer.setRepeats(false);
     timer.start();
+
+
   }
 
   private void initDialog(boolean shouldShowBackground, String cancelText) {
@@ -165,21 +149,13 @@ class ProgressDialogImpl implements ProgressDialog {
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
-    myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : 450, -1));
+    myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : JBUI.scale(450), -1));
 
-    myCancelButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
+    myCancelButton.addActionListener(e -> doCancelAction());
+
+    myCancelButton.registerKeyboardAction(e -> {
+      if (myCancelButton.isEnabled()) {
         doCancelAction();
-      }
-    });
-
-    myCancelButton.registerKeyboardAction(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        if (myCancelButton.isEnabled()) {
-          doCancelAction();
-        }
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
@@ -233,12 +209,9 @@ class ProgressDialogImpl implements ProgressDialog {
   @Override
   public void setShouldShowBackground(final boolean shouldShowBackground) {
     myShouldShowBackground = shouldShowBackground;
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myBackgroundButton.setVisible(shouldShowBackground);
-        myPanel.revalidate();
-      }
+    SwingUtilities.invokeLater(() -> {
+      myBackgroundButton.setVisible(shouldShowBackground);
+      myPanel.revalidate();
     });
   }
 
@@ -260,12 +233,7 @@ class ProgressDialogImpl implements ProgressDialog {
   @Override
   public void enableCancelButtonIfNeeded(final boolean enable) {
     if (myProgressWindow.myShouldShowCancel) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myCancelButton.setEnabled(enable);
-        }
-      }, ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> myCancelButton.setEnabled(enable), ModalityState.any());
     }
   }
 
@@ -278,12 +246,9 @@ class ProgressDialogImpl implements ProgressDialog {
     myCancelButton.setVisible(myProgressWindow.myShouldShowCancel);
 
     myBackgroundButton.setVisible(myShouldShowBackground);
-    myBackgroundButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        if (myShouldShowBackground) {
-          myProgressWindow.background();
-        }
+    myBackgroundButton.addActionListener(e -> {
+      if (myShouldShowBackground) {
+        myProgressWindow.background();
       }
     });
   }
@@ -300,12 +265,9 @@ class ProgressDialogImpl implements ProgressDialog {
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-                myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
-              }
+          SwingUtilities.invokeLater(() -> {
+            if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
+              myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
             }
           });
         }
@@ -338,23 +300,29 @@ class ProgressDialogImpl implements ProgressDialog {
 
   @Override
   public void startBlocking(final boolean shouldShowCancel) {
-    IdeEventQueue.getInstance().pumpEventsForHierarchy(getPanel(), new Condition<AWTEvent>() {
-      @Override
-      public boolean value(final AWTEvent object) {
-        if (shouldShowCancel &&
-            object instanceof KeyEvent &&
-            object.getID() == KeyEvent.KEY_PRESSED &&
-            ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
-            ((KeyEvent)object).getModifiers() == 0) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              cancel();
-            }
-          });
-        }
-        return myProgressWindow.isStarted() && !myProgressWindow.isRunning();
+    myProgressWindow.enterModality();
+    IdeEventQueue.getInstance().pumpEventsForHierarchy(myPanel, object -> {
+      if (shouldShowCancel &&
+          object instanceof KeyEvent &&
+          object.getID() == KeyEvent.KEY_PRESSED &&
+          ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
+          ((KeyEvent)object).getModifiers() == 0) {
+        SwingUtilities.invokeLater(() -> cancel());
       }
+      return myProgressWindow.isStarted() && !myProgressWindow.isRunning();
+    });
+
+    myProgressWindow.exitModality();
+
+    IdeEventQueue.getInstance().pumpEventsForHierarchy(getPanel(), object -> {
+      if (shouldShowCancel &&
+          object instanceof KeyEvent &&
+          object.getID() == KeyEvent.KEY_PRESSED &&
+          ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
+          ((KeyEvent)object).getModifiers() == 0) {
+        SwingUtilities.invokeLater(() -> cancel());
+      }
+      return myProgressWindow.isStarted() && !myProgressWindow.isRunning();
     });
   }
 
@@ -365,13 +333,10 @@ class ProgressDialogImpl implements ProgressDialog {
 
   @Override
   public void hide() {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myPopup != null) {
-          myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
-          myPopup = null;
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (myPopup != null) {
+        myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
+        myPopup = null;
       }
     });
 
@@ -407,19 +372,16 @@ class ProgressDialogImpl implements ProgressDialog {
     }
     myPopup.pack();
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myPopup != null) {
-          if (myPopup.getPeer() instanceof FocusTrackbackProvider) {
-            final FocusTrackback focusTrackback = ((FocusTrackbackProvider)myPopup.getPeer()).getFocusTrackback();
-            if (focusTrackback != null) {
-              focusTrackback.consume();
-            }
+    SwingUtilities.invokeLater(() -> {
+      if (myPopup != null) {
+        if (myPopup.getPeer() instanceof FocusTrackbackProvider) {
+          final FocusTrackback focusTrackback = ((FocusTrackbackProvider)myPopup.getPeer()).getFocusTrackback();
+          if (focusTrackback != null) {
+            focusTrackback.consume();
           }
-
-          myProgressWindow.getFocusManager().requestFocus(myCancelButton, true).doWhenDone(myRepaintRunnable);
         }
+
+        myProgressWindow.getFocusManager().requestFocus(myCancelButton, true).doWhenDone(myRepaintRunnable);
       }
     });
 
@@ -514,7 +476,10 @@ class ProgressDialogImpl implements ProgressDialog {
     protected void init() {
       super.init();
       setUndecorated(true);
-      myPanel.setBorder(PopupBorder.Factory.create(true, true));
+      getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+      if (!UIUtil.isUnderWin10LookAndFeel()) {
+        myPanel.setBorder(PopupBorder.Factory.create(true, true));
+      }
     }
 
     @Override

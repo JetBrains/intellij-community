@@ -32,7 +32,7 @@ import java.util.List;
  * @author mike
  */
 class CompositeProjectRoot implements ProjectRoot {
-  private final List<ProjectRoot> myRoots = new ArrayList<ProjectRoot>();
+  private final List<ProjectRoot> myRoots = new ArrayList<>();
 
   @NotNull 
   ProjectRoot[] getProjectRoots() {
@@ -48,7 +48,7 @@ class CompositeProjectRoot implements ProjectRoot {
   @Override
   @NotNull
   public VirtualFile[] getVirtualFiles() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     for (ProjectRoot root : myRoots) {
       ContainerUtil.addAll(result, root.getVirtualFiles());
     }
@@ -59,7 +59,7 @@ class CompositeProjectRoot implements ProjectRoot {
   @Override
   @NotNull
   public String[] getUrls() {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     for (ProjectRoot root : myRoots) {
       ContainerUtil.addAll(result, root.getUrls());
     }

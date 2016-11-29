@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -121,58 +120,60 @@ class UndoableGroup {
     final boolean wrapInBulkUpdate = myActions.size() > 50;
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
-    final Set<DocumentEx> bulkDocuments = new THashSet<DocumentEx>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
-            if (wrapInBulkUpdate) {
-              Collection<DocumentEx> newDocuments = new THashSet<DocumentEx>();
-              Set<DocumentEx> documentsToRemoveFromBulk = new THashSet<DocumentEx>(bulkDocuments);
-              DocumentReference[] affectedDocuments = action.getAffectedDocuments();
-              if (affectedDocuments != null) {
-                for (DocumentReference affectedDocument : affectedDocuments) {
-                  VirtualFile file = affectedDocument.getFile();
-                  if (file != null && !file.isValid()) continue;
-                  DocumentEx document = (DocumentEx)affectedDocument.getDocument();
-                  if (document == null) continue;
-                  documentsToRemoveFromBulk.remove(document);
-                  if (bulkDocuments.contains(document)) continue;
-                  newDocuments.add(document);
-                  document.setInBulkUpdate(true);
-                }
-              }
-              for (DocumentEx document : documentsToRemoveFromBulk) {
+    final Set<DocumentEx> bulkDocuments = new THashSet<>();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      UnexpectedUndoException exception = null;
+      try {
+        for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
+          if (wrapInBulkUpdate) {
+            DocumentEx newDocument = getDocumentToSetBulkMode(action);
+            if (newDocument == null) {
+              for (DocumentEx document : bulkDocuments) {
                 document.setInBulkUpdate(false);
               }
-              bulkDocuments.removeAll(documentsToRemoveFromBulk);
-              bulkDocuments.addAll(newDocuments);
+              bulkDocuments.clear();
             }
-
-            if (isUndo) {
-              action.undo();
-            }
-            else {
-              action.redo();
+            else if (bulkDocuments.add(newDocument)) {
+              newDocument.setInBulkUpdate(true);
             }
           }
-        }
-        catch (UnexpectedUndoException e) {
-          reportUndoProblem(e, isUndo);
-        }
-        finally {
-          for (DocumentEx bulkDocument : bulkDocuments) {
-            bulkDocument.setInBulkUpdate(false);
+
+          if (isUndo) {
+            action.undo();
+          }
+          else {
+            action.redo();
           }
         }
       }
+      catch (UnexpectedUndoException e) {
+        exception = e;
+      }
+      finally {
+        for (DocumentEx bulkDocument : bulkDocuments) {
+          bulkDocument.setInBulkUpdate(false);
+        }
+      }
+      if (exception != null) reportUndoProblem(exception, isUndo);
     });
     commitAllDocuments();
   }
 
+  private static DocumentEx getDocumentToSetBulkMode(UndoableAction action) {
+    // We use bulk update only for EditorChangeAction, cause we know that it only changes document. Other actions can do things
+    // not allowed in bulk update.
+    if (!(action instanceof EditorChangeAction)) return null;
+    //noinspection ConstantConditions
+    DocumentReference newDocumentRef = action.getAffectedDocuments()[0];
+    if (newDocumentRef == null) return null;
+    VirtualFile file = newDocumentRef.getFile();
+    if (file != null && !file.isValid()) return null;
+    return  (DocumentEx)newDocumentRef.getDocument();
+  }
+
   boolean isInsideStartFinishGroup(boolean isUndo, boolean isInsideStartFinishGroup) {
-    final List<FinishMarkAction> finishMarks = new ArrayList<FinishMarkAction>();
-    final List<StartMarkAction> startMarks = new ArrayList<StartMarkAction>();
+    final List<FinishMarkAction> finishMarks = new ArrayList<>();
+    final List<StartMarkAction> startMarks = new ArrayList<>();
     for (UndoableAction action : myActions) {
       if (action instanceof StartMarkAction) {
         startMarks.add((StartMarkAction)action);
@@ -273,9 +274,13 @@ class UndoableGroup {
     }
   }
 
+  public List<UndoableAction> getActions() {
+    return myActions;
+  }
+
   @NotNull
   public Collection<DocumentReference> getAffectedDocuments() {
-    Set<DocumentReference> result = new THashSet<DocumentReference>();
+    Set<DocumentReference> result = new THashSet<>();
     for (UndoableAction action : myActions) {
       DocumentReference[] refs = action.getAffectedDocuments();
       if (refs != null) Collections.addAll(result, refs);
@@ -354,12 +359,7 @@ class UndoableGroup {
 
     if (multiline) result.append("\n");
 
-    result.append(StringUtil.join(myActions, new Function<UndoableAction, String>() {
-      @Override
-      public String fun(UndoableAction each) {
-        return (multiline ? "  " : "") + each.toString();
-      }
-    }, ",\n"));
+    result.append(StringUtil.join(myActions, each -> (multiline ? "  " : "") + each.toString(), ",\n"));
 
     if (multiline) result.append("\n");
     result.append("]");

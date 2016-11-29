@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class PreviewPanelProvider<V, C> implements Disposable {
-  public static final ExtensionPointName<PreviewPanelProvider> EP_NAME = new ExtensionPointName<PreviewPanelProvider>("com.intellij.previewPanelProvider");
+  public static final ExtensionPointName<PreviewPanelProvider> EP_NAME = new ExtensionPointName<>("com.intellij.previewPanelProvider");
   private final PreviewProviderId<V, C> myId;
 
   public PreviewPanelProvider(PreviewProviderId<V, C> id) {

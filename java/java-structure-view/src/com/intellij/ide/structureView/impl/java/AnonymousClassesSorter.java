@@ -28,19 +28,16 @@ import java.util.Comparator;
 public class AnonymousClassesSorter implements Sorter {
   public static Sorter INSTANCE = new AnonymousClassesSorter();
 
-  private final Comparator myComparator = new Comparator() {
-    @Override
-    public int compare(Object o1, Object o2) {
-      String s1 = SorterUtil.getStringPresentation(o1);
-      String s2 = SorterUtil.getStringPresentation(o2);
-      if (s1.startsWith("$") && s2.startsWith("$")) {
-        try {
-          return Integer.parseInt(s1.substring(1)) - Integer.parseInt(s2.substring(1));
-        } catch (NumberFormatException e) {//
-        }
+  private final Comparator myComparator = (o1, o2) -> {
+    String s1 = SorterUtil.getStringPresentation(o1);
+    String s2 = SorterUtil.getStringPresentation(o2);
+    if (s1.startsWith("$") && s2.startsWith("$")) {
+      try {
+        return Integer.parseInt(s1.substring(1)) - Integer.parseInt(s2.substring(1));
+      } catch (NumberFormatException e) {//
       }
-      return 0;
     }
+    return 0;
   };
   
   @NotNull

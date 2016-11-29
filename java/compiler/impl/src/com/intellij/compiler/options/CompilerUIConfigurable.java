@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,23 @@
  */
 package com.intellij.compiler.options;
 
+import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.MalformedPatternException;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.Gray;
@@ -44,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -80,6 +85,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JLabel               myResourcePatternsLabel;
   private JLabel               myEnableAutomakeLegendLabel;
   private JLabel               myParallelCompilationLegendLabel;
+  private JButton              myConfigureAnnotations;
 
   public CompilerUIConfigurable(@NotNull final Project project) {
     myProject = project;
@@ -95,12 +101,16 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myVMOptionsField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         mySharedVMOptionsField.setEnabled(e.getDocument().getLength() == 0);
-        myHeapSizeField.setEnabled(ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()), new Condition<String>() {
-          @Override
-          public boolean value(String s) {
-            return StringUtil.startsWithIgnoreCase(s, "-Xmx");
-          }
-        }) == null);
+        myHeapSizeField.setEnabled(ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()),
+                                                      s -> StringUtil.startsWithIgnoreCase(s, "-Xmx")) == null);
+      }
+    });
+    myConfigureAnnotations.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        new NullableNotNullDialog(project).show();
       }
     });
   }
@@ -248,7 +258,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)
     throws ConfigurationException {
     StringTokenizer tokenizer = new StringTokenizer(extensionString, ";", false);
-    List<String[]> errors = new ArrayList<String[]>();
+    List<String[]> errors = new ArrayList<>();
 
     while (tokenizer.hasMoreTokens()) {
       String namePattern = tokenizer.nextToken();
@@ -317,10 +327,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   @NotNull
   public String getId() {
     return "compiler.general";
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   public JComponent createComponent() {

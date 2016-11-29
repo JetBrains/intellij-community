@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +31,12 @@ import java.util.Set;
  */
 public abstract class InspectionsFilter {
 
-  private final Set<HighlightSeverity> mySuitableSeverities = new HashSet<HighlightSeverity>();
-  private final Set<String> mySuitableLanguageIds = new HashSet<String>();
+  private final Set<HighlightSeverity> mySuitableSeverities = new HashSet<>();
+  private final Set<String> mySuitableLanguageIds = new HashSet<>();
   private Boolean mySuitableInspectionsStates;
   private boolean myAvailableOnlyForAnalyze;
   private boolean myShowOnlyCleanupInspections;
+  private boolean myShowOnlyModifiedInspections;
 
   public boolean isAvailableOnlyForAnalyze() {
     return myAvailableOnlyForAnalyze;
@@ -58,6 +60,11 @@ public abstract class InspectionsFilter {
 
   public void setShowOnlyCleanupInspections(final boolean showOnlyCleanupInspections) {
     myShowOnlyCleanupInspections = showOnlyCleanupInspections;
+    filterChanged();
+  }
+
+  public void setShowOnlyModifiedInspections(boolean showOnlyModifiedInspections) {
+    myShowOnlyModifiedInspections = showOnlyModifiedInspections;
     filterChanged();
   }
 
@@ -95,6 +102,7 @@ public abstract class InspectionsFilter {
     mySuitableInspectionsStates = null;
     myAvailableOnlyForAnalyze = false;
     myShowOnlyCleanupInspections = false;
+    myShowOnlyModifiedInspections = false;
     mySuitableSeverities.clear();
     mySuitableLanguageIds.clear();
     filterChanged();
@@ -104,11 +112,12 @@ public abstract class InspectionsFilter {
     return mySuitableInspectionsStates == null
            && !myAvailableOnlyForAnalyze
            && !myShowOnlyCleanupInspections
+           && !myShowOnlyModifiedInspections
            && mySuitableSeverities.isEmpty()
            && mySuitableLanguageIds.isEmpty();
   }
 
-  public boolean matches(final Tools tools) {
+  public boolean matches(final Tools tools, final InspectionConfigTreeNode node) {
     if (myShowOnlyCleanupInspections && !tools.getTool().isCleanupTool()) {
       return false;
     }
@@ -138,7 +147,12 @@ public abstract class InspectionsFilter {
     }
 
     final String languageId = tools.getDefaultState().getTool().getLanguage();
-    return mySuitableLanguageIds.isEmpty() || mySuitableLanguageIds.contains(languageId);
+    final boolean containsInSuitableLanguages = mySuitableLanguageIds.isEmpty() || mySuitableLanguageIds.contains(languageId);
+    if (!containsInSuitableLanguages) {
+      return false;
+    }
+
+    return !myShowOnlyModifiedInspections || node.isProperSetting();
   }
 
   protected abstract void filterChanged();
@@ -146,5 +160,9 @@ public abstract class InspectionsFilter {
   private static boolean isAvailableOnlyForAnalyze(final Tools tools) {
     final InspectionToolWrapper tool = tools.getTool();
     return tool instanceof GlobalInspectionToolWrapper && ((GlobalInspectionToolWrapper)tool).worksInBatchModeOnly();
+  }
+
+  public boolean isShowOnlyModifiedInspections() {
+    return myShowOnlyModifiedInspections;
   }
 }

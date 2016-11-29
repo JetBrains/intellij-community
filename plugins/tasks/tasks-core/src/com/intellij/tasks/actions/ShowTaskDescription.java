@@ -50,11 +50,8 @@ public class ShowTaskDescription extends BaseTaskAction {
     assert project != null;
     final LocalTask task = getActiveTask(e);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        DocumentationManager.getInstance(project).showJavaDocInfo(new TaskPsiElement(PsiManager.getInstance(project), task), null);
-      }
-    }, getCommandName(), null);
+    CommandProcessor.getInstance().executeCommand(project,
+                                                  () -> DocumentationManager.getInstance(project).showJavaDocInfo(new TaskPsiElement(PsiManager.getInstance(project), task), null), getCommandName(), null);
   }
 
   protected String getCommandName() {

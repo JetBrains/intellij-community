@@ -36,7 +36,7 @@ import java.util.HashSet;
  */
 public abstract class CollectionsListSettings {
   @NonNls
-  public static final SortedSet<String> DEFAULT_COLLECTION_LIST = new TreeSet<String>();
+  public static final SortedSet<String> DEFAULT_COLLECTION_LIST = new TreeSet<>();
 
   static {
     DEFAULT_COLLECTION_LIST.add("java.util.concurrent.ConcurrentHashMap");
@@ -57,7 +57,7 @@ public abstract class CollectionsListSettings {
   private final List<String> myCollectionClassesRequiringCapacity;
 
   public CollectionsListSettings() {
-    myCollectionClassesRequiringCapacity = new SmartList<String>(getDefaultSettings());
+    myCollectionClassesRequiringCapacity = new SmartList<>(getDefaultSettings());
   }
 
   public void readSettings(@NotNull Element node) throws InvalidDataException {
@@ -75,10 +75,10 @@ public abstract class CollectionsListSettings {
   }
 
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    final Collection<String> defaultToRemoveSettings = new HashSet<String>(getDefaultSettings());
+    final Collection<String> defaultToRemoveSettings = new HashSet<>(getDefaultSettings());
     defaultToRemoveSettings.removeAll(myCollectionClassesRequiringCapacity);
 
-    final Set<String> toAdd = new HashSet<String>(myCollectionClassesRequiringCapacity);
+    final Set<String> toAdd = new HashSet<>(myCollectionClassesRequiringCapacity);
     toAdd.removeAll(getDefaultSettings());
 
     for (String className : defaultToRemoveSettings) {

@@ -1,0 +1,13 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>annotationtype</title>
+  <g>
+    <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.5">
+      <circle cx="8" cy="8" r="7" fill="#62b543"/>
+    </g>
+    <g opacity="0.6">
+      <path d="M8,6.0938A1.9063,1.9063,0,1,0,9.9062,8,1.90637,1.90637,0,0,0,8,6.0938ZM8,9.0625A1.0625,1.0625,0,1,1,9.0626,8,1.06229,1.06229,0,0,1,8,9.0625Z" fill="#231f20"/>
+      <path d="M10,10H9V6h1v4Z" fill="#231f20"/>
+      <path d="M9.0112,11a3.20385,3.20385,0,1,1,1.4419-1h0.9923a4.035,4.035,0,1,0-.8252,1H9.0112Z" fill="#231f20"/>
+    </g>
+  </g>
+</svg>

@@ -72,7 +72,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
                                @NotNull VirtualFileFilter filter,
                                boolean showProjectNode,
                                boolean showContentFilesOnly) {
-    super(new MyModel<T>(project, valueClass, valueTitle, showContentFilesOnly ? new ProjectContentFileFilter(project, filter) : filter));
+    super(new MyModel<>(project, valueClass, valueTitle, showContentFilesOnly ? new ProjectContentFileFilter(project, filter) : filter));
     myProject = project;
 
     //noinspection unchecked
@@ -174,7 +174,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
 
   public boolean clearSubdirectoriesOnDemandOrCancel(final VirtualFile parent, final String message, final String title) {
     Map<VirtualFile, T> mappings = myModel.myCurrentMapping;
-    Map<VirtualFile, T> subdirectoryMappings = new THashMap<VirtualFile, T>();
+    Map<VirtualFile, T> subdirectoryMappings = new THashMap<>();
     for (VirtualFile file : mappings.keySet()) {
       if (file != null && (parent == null || VfsUtilCore.isAncestor(parent, file, true))) {
         subdirectoryMappings.put(file, mappings.get(file));
@@ -242,7 +242,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
   }
 
   private static class MyModel<T> extends DefaultTreeModel implements TreeTableModel {
-    private final Map<VirtualFile, T> myCurrentMapping = new HashMap<VirtualFile, T>();
+    private final Map<VirtualFile, T> myCurrentMapping = new HashMap<>();
     private final Class<T> myValueClass;
     private final String myValueTitle;
     private AbstractFileTreeTable<T> myTreeTable;
@@ -254,7 +254,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
 
     private Map<VirtualFile, T> getValues() {
-      return new HashMap<VirtualFile, T>(myCurrentMapping);
+      return new HashMap<>(myCurrentMapping);
     }
 
     @Override
@@ -418,23 +418,20 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     private void init() {
       if (getUserObject() == null) {
         setUserObject(myObject);
-        final List<ConvenientNode> children = new ArrayList<ConvenientNode>();
+        final List<ConvenientNode> children = new ArrayList<>();
         appendChildrenTo(children);
-        Collections.sort(children, new Comparator<ConvenientNode>() {
-          @Override
-          public int compare(final ConvenientNode node1, final ConvenientNode node2) {
-            Object o1 = node1.getObject();
-            Object o2 = node2.getObject();
-            if (o1 == o2) return 0;
-            if (o1 instanceof Project) return -1;
-            if (o2 instanceof Project) return 1;
-            VirtualFile file1 = (VirtualFile)o1;
-            VirtualFile file2 = (VirtualFile)o2;
-            if (file1.isDirectory() != file2.isDirectory()) {
-              return file1.isDirectory() ? -1 : 1;
-            }
-            return file1.getName().compareTo(file2.getName());
+        Collections.sort(children, (node1, node2) -> {
+          Object o1 = node1.getObject();
+          Object o2 = node2.getObject();
+          if (o1 == o2) return 0;
+          if (o1 instanceof Project) return -1;
+          if (o2 instanceof Project) return 1;
+          VirtualFile file1 = (VirtualFile)o1;
+          VirtualFile file2 = (VirtualFile)o2;
+          if (file1.isDirectory() != file2.isDirectory()) {
+            return file1.isDirectory() ? -1 : 1;
           }
+          return file1.getName().compareTo(file2.getName());
         });
         int i = 0;
         for (ConvenientNode child : children) {

@@ -164,24 +164,21 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
     PsiElement context = getFile().findElementAt(offset);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
     assert psiClass != null;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (toImplement == null) {
-          PsiClassType[] implement = psiClass.getImplementsListTypes();
-          final PsiClass superClass = implement.length == 0 ? psiClass.getSuperClass() : implement[0].resolve();
-          assert superClass != null;
-          PsiMethod method = superClass.getMethods()[0];
-          final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
-          final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method,
-                                                                                                 OverrideImplementExploreUtil
-                                                                                                   .correctSubstitutor(method,
-                                                                                                                       substitutor)));
-          OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
-        }
-        else {
-          OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (toImplement == null) {
+        PsiClassType[] implement = psiClass.getImplementsListTypes();
+        final PsiClass superClass = implement.length == 0 ? psiClass.getSuperClass() : implement[0].resolve();
+        assert superClass != null;
+        PsiMethod method = superClass.getMethods()[0];
+        final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
+        final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method,
+                                                                                               OverrideImplementExploreUtil
+                                                                                                 .correctSubstitutor(method,
+                                                                                                                     substitutor)));
+        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
+      }
+      else {
+        OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
       }
     });
 

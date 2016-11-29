@@ -61,12 +61,9 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
   private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("mockTemplate-xxx", "mockTemplateGroup-yyy");
   public static final String ABBREVIATION = "<abbreviation>";
-  public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<TemplateImpl>() {
-    @Override
-    public int compare(@NotNull final TemplateImpl o1, @NotNull final TemplateImpl o2) {
-      int compareKey = o1.getKey().compareToIgnoreCase(o2.getKey());
-      return compareKey != 0 ? compareKey : o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
-    }
+  public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = (o1, o2) -> {
+    int compareKey = o1.getKey().compareToIgnoreCase(o2.getKey());
+    return compareKey != 0 ? compareKey : o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
   };
 
   static {
@@ -74,7 +71,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private CheckboxTree myTree;
-  private final List<TemplateGroup> myTemplateGroups = new ArrayList<TemplateGroup>();
+  private final List<TemplateGroup> myTemplateGroups = new ArrayList<>();
   private final TemplateExpandShortcutPanel myExpandByDefaultPanel = new TemplateExpandShortcutPanel(CodeInsightBundle.message("templates.dialog.shortcut.chooser.label"));
 
   private CheckedTreeNode myTreeRoot = new CheckedTreeNode(null);
@@ -90,7 +87,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private LiveTemplateSettingsEditor myCurrentTemplateEditor;
   private final JLabel myEmptyCardLabel = new JLabel();
 
-  private final CompoundScheme.MutatorHelper<TemplateGroup, TemplateImpl> mutatorHelper = new CompoundScheme.MutatorHelper<TemplateGroup, TemplateImpl>();
+  private final CompoundScheme.MutatorHelper<TemplateGroup, TemplateImpl> mutatorHelper = new CompoundScheme.MutatorHelper<>();
 
   public TemplateListPanel() {
     super(new BorderLayout());
@@ -125,26 +122,16 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     initTemplates(groups, templateSettings.getLastSelectedTemplateGroup(), templateSettings.getLastSelectedTemplateKey());
     myExpandByDefaultPanel.setSelectedChar(templateSettings.getDefaultShortcutChar());
-    UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
-      @Override
-      public void run() {
-        updateTemplateDetails(false, false);
-      }
-    });
+    UiNotifyConnector.doWhenFirstShown(this, () -> updateTemplateDetails(false, false));
 
     myUpdateNeeded = true;
   }
 
   @NotNull
   private static List<TemplateGroup> getSortedGroups(TemplateSettings templateSettings) {
-    List<TemplateGroup> groups = new ArrayList<TemplateGroup>(templateSettings.getTemplateGroups());
+    List<TemplateGroup> groups = new ArrayList<>(templateSettings.getTemplateGroups());
 
-    Collections.sort(groups, new Comparator<TemplateGroup>() {
-      @Override
-      public int compare(@NotNull TemplateGroup o1, @NotNull TemplateGroup o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    Collections.sort(groups, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     return groups;
   }
 
@@ -227,19 +214,16 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private static List<TemplateImpl> collectTemplates(@NotNull List<TemplateGroup> groups) {
-    List<TemplateImpl> result = new ArrayList<TemplateImpl>();
+    List<TemplateImpl> result = new ArrayList<>();
     for (TemplateGroup group : groups) {
       result.addAll(group.getElements());
     }
-    Collections.sort(result, new Comparator<TemplateImpl>(){
-      @Override
-      public int compare(@NotNull final TemplateImpl o1, @NotNull final TemplateImpl o2) {
-        final int groupsEqual = o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
-        if (groupsEqual != 0) {
-          return groupsEqual;
-        }
-        return o1.getKey().compareToIgnoreCase(o2.getKey());
+    Collections.sort(result, (o1, o2) -> {
+      final int groupsEqual = o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
+      if (groupsEqual != 0) {
+        return groupsEqual;
       }
+      return o1.getKey().compareToIgnoreCase(o2.getKey());
     });
     return result;
   }
@@ -290,14 +274,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
                                     String shortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
                                     TemplateContext context) {
-    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(template, shortcut, options, context, new Runnable() {
-      @Override
-      public void run() {
-        DefaultMutableTreeNode node = getNode(getSingleSelectedIndex());
-        if (node != null) {
-          ((DefaultTreeModel)myTree.getModel()).nodeChanged(node);
-          TemplateSettings.getInstance().setLastSelectedTemplate(template.getGroupName(), template.getKey());
-        }
+    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(template, shortcut, options, context, () -> {
+      DefaultMutableTreeNode node = getNode(getSingleSelectedIndex());
+      if (node != null) {
+        ((DefaultTreeModel)myTree.getModel()).nodeChanged(node);
+        TemplateSettings.getInstance().setLastSelectedTemplate(template.getGroupName(), template.getKey());
       }
     }, TemplateSettings.getInstance().getTemplate(template.getKey(), template.getGroupName()) != null);
     for (Component component : myDetailsPanel.getComponents()) {
@@ -337,7 +318,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void moveTemplates(Map<TemplateImpl, DefaultMutableTreeNode> map, @NotNull String newGroupName) {
-    List<TreePath> toSelect = new ArrayList<TreePath>();
+    List<TreePath> toSelect = new ArrayList<>();
     for (TemplateImpl template : map.keySet()) {
       DefaultMutableTreeNode oldTemplateNode = map.get(template);
 
@@ -415,7 +396,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     LOG.assertTrue(orTemplate != null);
     TemplateImpl template = orTemplate.copy();
     template.setKey(ABBREVIATION);
-    myTemplateOptions.put(template, new HashMap<TemplateOptionalProcessor, Boolean>(getTemplateOptions(orTemplate)));
+    myTemplateOptions.put(template, new HashMap<>(getTemplateOptions(orTemplate)));
     myTemplateContext.put(template, getTemplateContext(orTemplate).createCopy());
     registerTemplate(template);
 
@@ -503,12 +484,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         }
         if (myUpdateNeeded) {
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              updateTemplateDetails(false, false);
-            }
-          }, 100);
+          myAlarm.addRequest(() -> updateTemplateDetails(false, false), 100);
         }
       }
     });
@@ -524,16 +500,13 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
 
     DnDSupport.createBuilder(myTree)
-      .setBeanProvider(new NullableFunction<DnDActionInfo, DnDDragStartBean>() {
-        @Override
-        public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
-          Point point = dnDActionInfo.getPoint();
-          if (myTree.getPathForLocation(point.x, point.y) == null) return null;
+      .setBeanProvider((NullableFunction<DnDActionInfo, DnDDragStartBean>)dnDActionInfo -> {
+        Point point = dnDActionInfo.getPoint();
+        if (myTree.getPathForLocation(point.x, point.y) == null) return null;
 
-          Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
+        Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
 
-          return !templates.isEmpty() ? new DnDDragStartBean(templates) : null;
-        }
+        return !templates.isEmpty() ? new DnDDragStartBean(templates) : null;
       }).
       setDisposableParent(this)
       .setTargetChecker(new DnDTargetChecker() {
@@ -554,13 +527,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
                         ObjectUtils.assertNotNull(getDropGroup(event)).getName());
         }
       })
-      .setImageProvider(new NullableFunction<DnDActionInfo, DnDImage>() {
-        @Override
-        public DnDImage fun(DnDActionInfo dnDActionInfo) {
-          Point point = dnDActionInfo.getPoint();
-          TreePath path = myTree.getPathForLocation(point.x, point.y);
-          return path == null ? null : new DnDImage(DnDAwareTree.getDragImage(myTree, path, point).first);
-        }
+      .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)dnDActionInfo -> {
+        Point point = dnDActionInfo.getPoint();
+        TreePath path = myTree.getPathForLocation(point.x, point.y);
+        return path == null ? null : new DnDImage(DnDAwareTree.getDragImage(myTree, path, point).first);
       })
       .install();
 
@@ -585,7 +555,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return !template.equals(defaultTemplate) ||
            !template.getVariables().equals(defaultTemplate.getVariables()) ||
            !areOptionsEqual(template, defaultTemplate) ||
-           !getTemplateContext(template).getDifference(defaultTemplate.getTemplateContext()).isEmpty();
+           getTemplateContext(template).getDifference(defaultTemplate.getTemplateContext()) != null;
   }
 
   private ToolbarDecorator initToolbar() {
@@ -798,7 +768,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private static Set<String> getAllGroups(Map<TemplateImpl, DefaultMutableTreeNode> templates) {
-    Set<String> oldGroups = new HashSet<String>();
+    Set<String> oldGroups = new HashSet<>();
     for (TemplateImpl template : templates.keySet()) {
       oldGroups.add(template.getGroupName());
     }
@@ -810,7 +780,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     if (paths == null) {
       return Collections.emptyMap();
     }
-    Map<TemplateImpl, DefaultMutableTreeNode> templates = new LinkedHashMap<TemplateImpl, DefaultMutableTreeNode>();
+    Map<TemplateImpl, DefaultMutableTreeNode> templates = new LinkedHashMap<>();
     for (TreePath path : paths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object o = node.getUserObject();
@@ -948,18 +918,15 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void selectTemplate(@Nullable final String groupName, @Nullable final String templateKey) {
-    TreeUtil.traverseDepth(myTreeRoot, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        Object o = ((DefaultMutableTreeNode)node).getUserObject();
-        if (templateKey == null && o instanceof TemplateGroup && Comparing.equal(groupName, ((TemplateGroup)o).getName()) ||
-            o instanceof TemplateImpl && Comparing.equal(templateKey, ((TemplateImpl)o).getKey()) && Comparing.equal(groupName, ((TemplateImpl)o).getGroupName())) {
-          setSelectedNode((DefaultMutableTreeNode)node);
-          return false;
-        }
-
-        return true;
+    TreeUtil.traverseDepth(myTreeRoot, node -> {
+      Object o = ((DefaultMutableTreeNode)node).getUserObject();
+      if (templateKey == null && o instanceof TemplateGroup && Comparing.equal(groupName, ((TemplateGroup)o).getName()) ||
+          o instanceof TemplateImpl && Comparing.equal(templateKey, ((TemplateImpl)o).getKey()) && Comparing.equal(groupName, ((TemplateImpl)o).getGroupName())) {
+        setSelectedNode((DefaultMutableTreeNode)node);
+        return false;
       }
+
+      return true;
     });
   }
 
@@ -968,7 +935,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void addTemplateNodes(TemplateGroup group, CheckedTreeNode groupNode) {
-    List<TemplateImpl> templates = new ArrayList<TemplateImpl>(group.getElements());
+    List<TemplateImpl> templates = new ArrayList<>(group.getElements());
     Collections.sort(templates, TEMPLATE_COMPARATOR);
     for (final TemplateImpl template : templates) {
       myTemplateOptions.put(template, template.createOptions());

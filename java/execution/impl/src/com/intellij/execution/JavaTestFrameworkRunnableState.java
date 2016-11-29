@@ -17,13 +17,18 @@ package com.intellij.execution;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
+import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.autotest.AbstractAutoTestManager;
+import com.intellij.execution.testframework.autotest.ToggleAutoTestAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -43,9 +48,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.JavaPsiFacade;
@@ -67,11 +70,31 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState {
+public abstract class JavaTestFrameworkRunnableState<T extends
+  ModuleBasedConfiguration<JavaRunConfigurationModule>
+  & CommonJavaRunConfigurationParameters
+  & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
   protected ServerSocket myServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
+
+  private RemoteConnectionCreator remoteConnectionCreator;
+
+  public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
+    this.remoteConnectionCreator = remoteConnectionCreator;
+  }
+
+  @Nullable
+  @Override
+  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+    return remoteConnectionCreator == null ? null : remoteConnectionCreator.createRemoteConnection(environment);
+  }
+
+  @Override
+  public boolean isPollConnection() {
+    return remoteConnectionCreator != null && remoteConnectionCreator.isPollConnection();
+  }
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
     super(environment);
@@ -99,12 +122,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     return module != null;
   }
 
-  protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
-    if (!isSmRunnerUsed()) {
-      return null;
-    }
-    getJavaParameters().getVMParametersList().addProperty("idea." + getFrameworkId() + ".sm_runner");
+  @NotNull
+  @Override
+  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+    return startSMRunner(executor);
+  }
 
+  /**
+   * to be removed in 2017.1, compatibility with jtreg plugin
+   */
+  @Deprecated
+  protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
@@ -115,6 +143,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
+
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
     if (root instanceof TestProxyRoot) {
@@ -124,18 +153,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       @Override
       public void startNotified(ProcessEvent event) {
         if (getConfiguration().isSaveOutputToFile()) {
-          root.setOutputFilePath(getConfiguration().getOutputFilePath());
+          final File file = OutputFileUtil.getOutputFile(getConfiguration());
+          root.setOutputFilePath(file != null ? file.getAbsolutePath() : null);
         }
       }
 
       @Override
       public void processTerminated(ProcessEvent event) {
-        Runnable runnable = new Runnable() {
-          public void run() {
-            root.flush();
-            deleteTempFiles();
-            clear();
-          }
+        Runnable runnable = () -> {
+          root.flushOutputFile();
+          deleteTempFiles();
+          clear();
         };
         UIUtil.invokeLaterIfNeeded(runnable);
         handler.removeProcessListener(this);
@@ -144,22 +172,23 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(consoleView);
     LOG.assertTrue(rerunFailedTestsAction != null);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
+    rerunFailedTestsAction.setModelProvider(() -> viewer);
+
+    final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
+    result.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction() {
       @Override
-      public TestFrameworkRunningModel get() {
-        return viewer;
+      public boolean isDelayApplicable() {
+        return false;
+      }
+
+      @Override
+      public AbstractAutoTestManager getAutoTestManager(Project project) {
+        return JavaAutoRunManager.getInstance(project);
       }
     });
 
-    final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
-    result.setRestartActions(rerunFailedTestsAction);
-
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     return result;
-  }
-
-  protected boolean isSmRunnerUsed() {
-    return Registry.is(getFrameworkId() + "_sm");
   }
 
   protected abstract void configureRTClasspath(JavaParameters javaParameters);
@@ -354,12 +383,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
-      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp");
-      myWorkingDirsFile.deleteOnExit();
+      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
       javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
       
-      myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp");
-      myTempFile.deleteOnExit();
+      myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp", true);
       passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
     }
     catch (Exception e) {
@@ -369,7 +396,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   protected void writeClassesPerModule(String packageName, JavaParameters javaParameters, Map<Module, List<String>> perModule)
     throws FileNotFoundException, UnsupportedEncodingException, CantRunException {
-    if (perModule != null && perModule.size() > 1) {
+    if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
 

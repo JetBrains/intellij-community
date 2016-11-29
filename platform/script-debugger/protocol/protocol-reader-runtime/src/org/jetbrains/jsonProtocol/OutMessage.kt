@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package org.jetbrains.jsonProtocol
 import com.google.gson.stream.JsonWriter
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.containers.isNullOrEmpty
+import com.intellij.util.io.writeUtf8
 import gnu.trove.TIntArrayList
 import gnu.trove.TIntHashSet
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtf8Writer
-import io.netty.buffer.ByteBufUtilEx
 import org.jetbrains.io.JsonUtil
-import java.io.IOException
 
 open class OutMessage() {
   val buffer: ByteBuf = ByteBufAllocator.DEFAULT.heapBuffer()
@@ -46,8 +45,8 @@ open class OutMessage() {
     beginArguments()
     writer.name(name)
     writer.beginObject()
-    for (entry in value.entries) {
-      writer.name(entry.key).value(entry.value)
+    for ((key, value1) in value) {
+      writer.name(key).value(value1)
     }
     writer.endObject()
   }
@@ -153,7 +152,8 @@ open class OutMessage() {
     writer.endArray()
   }
 
-  fun writeStringList(name: String, value: Collection<String>) {
+  fun writeStringList(name: String, value: Collection<String>?) {
+    if (value == null) return
     beginArguments()
     JsonWriters.writeStringList(writer, name, value)
   }
@@ -201,21 +201,18 @@ open class OutMessage() {
 
   fun writeNullableString(name: String, value: CharSequence?) {
     beginArguments()
-    writer.name(name).value(value!!.toString())
+    writer.name(name).value(value?.toString() ?: null)
   }
+}
 
-  companion object {
-    @Throws(IOException::class)
-    fun prepareWriteRaw(message: OutMessage, name: String) {
-      message.writer.name(name).nullValue()
-      val itemBuffer = message.buffer
-      itemBuffer.writerIndex(itemBuffer.writerIndex() - "null".length)
-    }
+fun prepareWriteRaw(message: OutMessage, name: String) {
+  message.writer.name(name).nullValue()
+  val itemBuffer = message.buffer
+  itemBuffer.writerIndex(itemBuffer.writerIndex() - "null".length)
+}
 
-    fun doWriteRaw(message: OutMessage, rawValue: String) {
-      ByteBufUtilEx.writeUtf8(message.buffer, rawValue)
-    }
-  }
+fun doWriteRaw(message: OutMessage, rawValue: String) {
+  message.buffer.writeUtf8(rawValue)
 }
 
 fun OutMessage.writeEnum(name: String, value: Enum<*>?, defaultValue: Enum<*>?) {
@@ -237,7 +234,7 @@ fun OutMessage.writeString(name: String, value: CharSequence?, defaultValue: Cha
 
 fun OutMessage.writeString(name: String, value: CharSequence) {
   beginArguments()
-  OutMessage.prepareWriteRaw(this, name)
+  prepareWriteRaw(this, name)
   JsonUtil.escape(value, buffer)
 }
 

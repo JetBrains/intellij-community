@@ -34,7 +34,7 @@ public class IntegerDivisionInFloatingPointContextInspection
    * @noinspection StaticCollection
    */
   @NonNls
-  private static final Set<String> s_integralTypes = new HashSet<String>(10);
+  private static final Set<String> s_integralTypes = new HashSet<>(10);
 
   static {
     s_integralTypes.add("int");

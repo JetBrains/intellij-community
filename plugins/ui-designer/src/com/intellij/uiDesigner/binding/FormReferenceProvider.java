@@ -157,11 +157,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     }
 
     final PsiReference finalClassReference = classReference;
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        processReferences(rootTag, finalClassReference, file, processor);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> processReferences(rootTag, finalClassReference, file, processor));
   }
 
   private static TextRange getValueRange(final XmlAttribute classToBind) {
@@ -347,7 +343,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
     if(data == null) {
       data = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<CachedFormData>() {
-        final Map<String, Pair<PsiType, TextRange>> map = new HashMap<String, Pair<PsiType, TextRange>>();
+        final Map<String, Pair<PsiType, TextRange>> map = new HashMap<>();
         public Result<CachedFormData> compute() {
           final PsiReferenceProcessor.CollectElements processor = new PsiReferenceProcessor.CollectElements() {
             public boolean execute(PsiReference ref) {
@@ -357,7 +353,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
                 if (componentClassName != null) {
                   final PsiClassType type = JavaPsiFacade.getInstance(element.getProject()).getElementFactory()
                     .createTypeByFQClassName(componentClassName, element.getResolveScope());
-                  map.put(fieldRef.getRangeText(), new Pair<PsiType, TextRange>(type, fieldRef.getComponentClassNameTextRange()));
+                  map.put(fieldRef.getRangeText(), new Pair<>(type, fieldRef.getComponentClassNameTextRange()));
                 }
               }
               return super.execute(ref);
@@ -365,7 +361,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
           };
           processReferences(element, processor);
           final PsiReference[] refs = processor.toArray(PsiReference.EMPTY_ARRAY);
-          return new Result<CachedFormData>(new CachedFormData(refs, map), element);
+          return new Result<>(new CachedFormData(refs, map), element);
         }
       }, false);
       element.putUserData(CACHED_DATA, data);

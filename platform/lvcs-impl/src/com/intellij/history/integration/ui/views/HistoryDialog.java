@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -126,19 +127,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   protected void scheduleRevisionsUpdate(@Nullable final Consumer<T> configRunnable) {
-    doScheduleUpdate(UPDATE_REVS, new Computable<Runnable>() {
-      public Runnable compute() {
-        synchronized (myModel) {
-          if (configRunnable != null) configRunnable.consume(myModel);
-          myModel.clearRevisions();
-          myModel.getRevisions();// force load
-        }
-        return new Runnable() {
-          public void run() {
-            myRevisionsList.updateData(myModel);
-          }
-        };
+    doScheduleUpdate(UPDATE_REVS, () -> {
+      synchronized (myModel) {
+        if (configRunnable != null) configRunnable.consume(myModel);
+        myModel.clearRevisions();
+        myModel.getRevisions();// force load
       }
+      return () -> myRevisionsList.updateData(myModel);
     });
   }
 
@@ -245,17 +240,15 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private void scheduleDiffUpdate(@Nullable final Couple<Integer> toSelect) {
-    doScheduleUpdate(UPDATE_DIFFS, new Computable<Runnable>() {
-      public Runnable compute() {
-        synchronized (myModel) {
-          if (toSelect == null) {
-            myModel.resetSelection();
-          }
-          else {
-            myModel.selectRevisions(toSelect.first, toSelect.second);
-          }
-          return doUpdateDiffs(myModel);
+    doScheduleUpdate(UPDATE_DIFFS, () -> {
+      synchronized (myModel) {
+        if (toSelect == null) {
+          myModel.resetSelection();
         }
+        else {
+          myModel.selectRevisions(toSelect.first, toSelect.second);
+        }
+        return doUpdateDiffs(myModel);
       }
     });
   }
@@ -270,14 +263,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       public void run() {
         if (isDisposed() || myProject.isDisposed()) return;
 
-        invokeAndWait(new Runnable() {
-          public void run() {
-            if (isDisposed() || myProject.isDisposed()) return;
+        invokeAndWait(() -> {
+          if (isDisposed() || myProject.isDisposed()) return;
 
-            isUpdating = true;
-            updateActions();
-            myDiffView.startUpdating();
-          }
+          isUpdating = true;
+          updateActions();
+          myDiffView.startUpdating();
         });
 
         Runnable apply = null;
@@ -289,22 +280,20 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         }
 
         final Runnable finalApply = apply;
-        invokeAndWait(new Runnable() {
-          public void run() {
-            if (isDisposed() || myProject.isDisposed()) return;
+        invokeAndWait(() -> {
+          if (isDisposed() || myProject.isDisposed()) return;
 
-            isUpdating = false;
-            if (finalApply != null) {
-              try {
-                finalApply.run();
-              }
-              catch (Exception e) {
-                LocalHistoryLog.LOG.error(e);
-              }
+          isUpdating = false;
+          if (finalApply != null) {
+            try {
+              finalApply.run();
             }
-            updateActions();
-            myDiffView.finishUpdating();
+            catch (Exception e) {
+              LocalHistoryLog.LOG.error(e);
+            }
           }
+          updateActions();
+          myDiffView.finishUpdating();
         });
       }
     });
@@ -336,22 +325,19 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected abstract Runnable doUpdateDiffs(T model);
 
   protected ContentDiffRequest createDifference(final FileDifferenceModel m) {
-    final Ref<ContentDiffRequest> requestRef = new Ref<ContentDiffRequest>();
+    final Ref<ContentDiffRequest> requestRef = new Ref<>();
 
     new Task.Modal(myProject, message("message.processing.revisions"), false) {
       public void run(@NotNull final ProgressIndicator i) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
-            p.processingLeftRevision();
-            DiffContent left = m.getLeftDiffContent(p);
+        ApplicationManager.getApplication().runReadAction(() -> {
+          RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
+          p.processingLeftRevision();
+          DiffContent left = m.getLeftDiffContent(p);
 
-            p.processingRightRevision();
-            DiffContent right = m.getRightDiffContent(p);
+          p.processingRightRevision();
+          DiffContent right = m.getRightDiffContent(p);
 
-            requestRef.set(new SimpleDiffRequest(m.getTitle(), left, right, m.getLeftTitle(p), m.getRightTitle(p)));
-          }
+          requestRef.set(new SimpleDiffRequest(m.getTitle(), left, right, m.getLeftTitle(p), m.getRightTitle(p)));
         });
       }
     }.queue();
@@ -434,18 +420,16 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private void showNotification(final String title) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        final Balloon b =
-          JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(title, null, MessageType.INFO.getPopupBackground(), null)
-            .setFadeoutTime(3000)
-            .setShowCallout(false)
-            .createBalloon();
+    SwingUtilities.invokeLater(() -> {
+      final Balloon b =
+        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(title, null, MessageType.INFO.getPopupBackground(), null)
+          .setFadeoutTime(3000)
+          .setShowCallout(false)
+          .createBalloon();
 
-        Dimension size = myDiffView.getSize();
-        RelativePoint point = new RelativePoint(myDiffView, new Point(size.width / 2, size.height / 2));
-        b.show(point, Balloon.Position.above);
-      }
+      Dimension size = myDiffView.getSize();
+      RelativePoint point = new RelativePoint(myDiffView, new Point(size.width / 2, size.height / 2));
+      b.show(point, Balloon.Position.above);
     });
   }
 
@@ -472,8 +456,9 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
       CreatePatchConfigurationPanel p = new CreatePatchConfigurationPanel(myProject);
       p.setFileName(getDefaultPatchFile());
+      p.setCommonParentPath(ChangesUtil.findCommonAncestor(myModel.getChanges()));
       if (!showAsDialog(p)) return;
-      myModel.createPatch(p.getFileName(), p.isReversePatch());
+      myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch(), p.getEncoding());
 
       showNotification(LocalHistoryBundle.message("message.patch.created"));
       ShowFilePathAction.openFile(new File(p.getFileName()));
@@ -491,17 +476,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
-    final DialogBuilder b = new DialogBuilder(myProject);
-    JComponent createPatchPanel = p.getPanel();
-    b.setPreferredFocusComponent(IdeFocusTraversalPolicy.getPreferredFocusedComponent(createPatchPanel));
-    b.setTitle(message("create.patch.dialog.title"));
-    b.setCenterPanel(createPatchPanel);
-    p.installOkEnabledListener(new Consumer<Boolean>() {
-      public void consume(final Boolean aBoolean) {
-        b.setOkActionEnabled(aBoolean);
-      }
-    });
-    return b.show() == DialogWrapper.OK_EXIT_CODE;
+    final DialogWrapper dialogWrapper = new MyDialogWrapper(myProject, p);
+    dialogWrapper.setTitle(message("create.patch.dialog.title"));
+    dialogWrapper.setModal(true);
+    dialogWrapper.show();
+    return dialogWrapper.getExitCode() == DialogWrapper.OK_EXIT_CODE;
   }
 
 
@@ -647,6 +626,35 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       public Dimension preferredLayoutSize(Container parent) {
         return myContent.getPreferredSize();
       }
+    }
+  }
+
+  private static class MyDialogWrapper extends DialogWrapper {
+    @NotNull private final CreatePatchConfigurationPanel myPanel;
+
+    protected MyDialogWrapper(@Nullable Project project, @NotNull CreatePatchConfigurationPanel centralPanel) {
+      super(project, true);
+      myPanel = centralPanel;
+      init();
+      initValidation();
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      return myPanel.getPanel();
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myPanel.getPanel());
+    }
+
+    @Nullable
+    @Override
+    protected ValidationInfo doValidate() {
+      return myPanel.validateFields();
     }
   }
 }

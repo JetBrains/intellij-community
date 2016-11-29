@@ -40,7 +40,7 @@ public class FunctionalInterfaceTypeConversionDescriptor extends TypeConversionD
   }
 
   @Override
-  public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+  public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
     if (expression.getParent() instanceof PsiMethodReferenceExpression) {
       expression = (PsiExpression)expression.getParent();
     }

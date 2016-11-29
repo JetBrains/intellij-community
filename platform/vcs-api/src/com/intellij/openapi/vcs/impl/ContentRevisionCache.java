@@ -60,16 +60,16 @@ public class ContentRevisionCache {
 
   public ContentRevisionCache() {
     myLock = new Object();
-    myCache = new SLRUMap<Key, SoftReference<byte[]>>(100, 50);
-    myCurrentRevisionsCache = new SLRUMap<CurrentKey, VcsRevisionNumber>(200, 50);
-    myCustom = new SLRUMap<Pair<FilePath, VcsRevisionNumber>, Object>(30,30);
+    myCache = new SLRUMap<>(100, 50);
+    myCurrentRevisionsCache = new SLRUMap<>(200, 50);
+    myCustom = new SLRUMap<>(30, 30);
     myCounter = 0;
   }
 
   private void put(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type, @Nullable final byte[] bytes) {
     if (bytes == null) return;
     synchronized (myLock) {
-      myCache.put(new Key(path, number, vcsKey, type), new SoftReference<byte[]>(bytes));
+      myCache.put(new Key(path, number, vcsKey, type), new SoftReference<>(bytes));
     }
   }
 
@@ -113,7 +113,7 @@ public class ContentRevisionCache {
         synchronized (myLock) {
           ++myCounter;
           for (final VcsDirtyScope scope : scopes) {
-            final Set<CurrentKey> toRemove = new HashSet<CurrentKey>();
+            final Set<CurrentKey> toRemove = new HashSet<>();
             myCurrentRevisionsCache.iterateKeys(new Consumer<CurrentKey>() {
               @Override
               public void consume(CurrentKey currentKey) {
@@ -132,12 +132,12 @@ public class ContentRevisionCache {
   }
 
   public void clearCurrent(Set<String> paths) {
-    final HashSet<String> converted = new HashSet<String>();
+    final HashSet<String> converted = new HashSet<>();
     for (String path : paths) {
       converted.add(FilePathsHelper.convertPath(path));
     }
     synchronized (myLock) {
-      final Set<CurrentKey> toRemove = new HashSet<CurrentKey>();
+      final Set<CurrentKey> toRemove = new HashSet<>();
       myCurrentRevisionsCache.iterateKeys(new Consumer<CurrentKey>() {
         @Override
         public void consume(CurrentKey currentKey) {
@@ -220,7 +220,7 @@ public class ContentRevisionCache {
 
   private Pair<VcsRevisionNumber, Long> getCurrent(final FilePath path, final VcsKey vcsKey) {
     synchronized (myLock) {
-      return new Pair<VcsRevisionNumber, Long>(myCurrentRevisionsCache.get(new CurrentKey(path, vcsKey)), myCounter);
+      return new Pair<>(myCurrentRevisionsCache.get(new CurrentKey(path, vcsKey)), myCounter);
     }
   }
 

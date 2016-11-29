@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.VersionComparatorUtil
 import groovyjarjarasm.asm.AnnotationVisitor
 import groovyjarjarasm.asm.ClassReader
@@ -26,12 +27,12 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
-String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_Rc_Idea142branch150versionNoTests"
+String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_105_CompilerAndPlugin_NoTests"
 
 target('default': 'Ensures that build/kotlinc directory contains JARs from Kotlin plugin compatible with current IDEA sources. These JARs are used by build scripts.') {
   def communityHome = guessHome(this)
   def classVersionOfCompiledClasses = readKotlinClassVersionOfCompiledClasses()
-  def reasonToUpdate = getReasonToUpdate(communityHome, new File(communityHome, "build/kotlinc"), classVersionOfCompiledClasses)
+  def reasonToUpdate = getReasonToUpdate(communityHome, new File(communityHome, "build/kotlinc/plugin/Kotlin"), classVersionOfCompiledClasses)
   if (reasonToUpdate == null) {
     if (isDefined("workIdeaHome")) {
       def workKotlinVersionFile = new File(workIdeaHome, "plugins/Kotlin/kotlinc/build.txt")
@@ -81,7 +82,7 @@ private boolean updatePluginFromWorkIdeaInstallation(String communityHome, Strin
     return false
   }
 
-  def reasonToUpdate = getReasonToUpdate(communityHome, new File(kotlinPluginFromWorkIdea, "kotlinc"), classVersionOfCompiledClasses)
+  def reasonToUpdate = getReasonToUpdate(communityHome, kotlinPluginFromWorkIdea, classVersionOfCompiledClasses)
   if (reasonToUpdate != null) {
     projectBuilder.info("Cannot use Kotlin from $workIdeaHome: $reasonToUpdate")
     return false
@@ -101,7 +102,8 @@ private boolean updatePluginFromWorkIdeaInstallation(String communityHome, Strin
   return true
 }
 
-private String getReasonToUpdate(String communityHome, File kotlincHome, String classVersionOfCompiledClasses) {
+private String getReasonToUpdate(String communityHome, File kotlinPluginHome, String classVersionOfCompiledClasses) {
+  def kotlincHome = new File(kotlinPluginHome, "kotlinc")
   def buildTxt = new File(kotlincHome, "build.txt")
   if (!buildTxt.exists()) {
     return "Kotlin binaries aren't found at $kotlincHome"
@@ -144,6 +146,41 @@ private String getReasonToUpdate(String communityHome, File kotlincHome, String 
   }
   if (VersionComparatorUtil.compare(currentKotlinVersion, maxVersion) > 0) {
     return "Kotlin version is $currentKotlinVersion, but at most $maxVersion is required";
+  }
+
+  String ideVersion
+  def ideVersionFile = new File(communityHome, "build.txt")
+  try {
+    ideVersion = ideVersionFile.text
+  }
+  catch (IOException e) {
+    return "cannot read IDE version from $ideVersionFile: $e"
+  }
+  def pluginJar = new File(kotlinPluginHome, "lib/kotlin-plugin.jar")
+  String pluginUntilBuild
+  try {
+    def jarFile = new JarFile(pluginJar)
+    try {
+      def pluginXmlEntry = jarFile.getEntry("META-INF/plugin.xml")
+      if (pluginXmlEntry == null) {
+        return "cannot check Kotlin plugin compatibility (META-INF/plugin.xml not found in $pluginJar)"
+      }
+      def pluginXml = new XmlParser().parse(jarFile.getInputStream(pluginXmlEntry))
+      pluginUntilBuild = pluginXml."idea-version"?.first()?."@until-build"
+      if (pluginUntilBuild != null) {
+        String ideVersionBaseLine = StringUtil.substringBefore(ideVersion, ".")
+        String pluginUntilBuildBaseLine = StringUtil.substringBefore(pluginUntilBuild, ".")
+        if (ideVersionBaseLine > pluginUntilBuildBaseLine) {
+          return "Kotlin plugin isn't compatible with $ideVersion (its 'until-build' is $pluginUntilBuild)"
+        }
+      }
+    }
+    finally {
+      jarFile.close()
+    }
+  }
+  catch (Exception e) {
+    return "cannot check Kotlin plugin compatibility: $e"
   }
   return null
 }
@@ -190,7 +227,7 @@ private String readKotlinClassVersionOfCompiledClasses() {
   }
 }
 
-private String readKotlinClassFileVersion(InputStream classFileStream) {
+private static String readKotlinClassFileVersion(InputStream classFileStream) {
   def reader = new ClassReader(classFileStream)
   String kotlinBytecodeVersion = null
   String kotlinMetaDataVersion = null
@@ -209,7 +246,8 @@ private String readKotlinClassFileVersion(InputStream classFileStream) {
         return new AnnotationVisitor(Opcodes.ASM5) {
           void visit(String name, Object value) {
             if (name == "mv") {
-              kotlinMetaDataVersion = (value as Integer[]).join(".")
+              //strip patch number of metadata version because changes in patch updates are forward and backward compatible
+              kotlinMetaDataVersion = (value as Integer[]).toList().dropRight(1).join(".")
             }
             else if (name == "bv") {
               kotlinBytecodeVersion = (value as Integer[]).join(".")
@@ -259,7 +297,7 @@ private boolean downloadAndExtract(TeamCityBuildLocator buildLocator, String com
     ant.patternset(includes: "Kotlin/lib/jps/**")
     ant.globmapper(from: "Kotlin/lib/jps/*", to: "*")
   }
-  def reasonToUpdate = getReasonToUpdate(communityHome, new File(kotlincDir), classVersionOfCompiledClasses)
+  def reasonToUpdate = getReasonToUpdate(communityHome, new File(kotlincDir, "plugin/Kotlin"), classVersionOfCompiledClasses)
   if (reasonToUpdate != null) {
     projectBuilder.warning("Cannot use the downloaded Kotlin plugin: $reasonToUpdate")
   }
@@ -283,6 +321,6 @@ class TeamCityBuildLocator {
 
   String getDownloadUrl(String buildNumber) {
     String encodedBuildNumber = URLEncoder.encode(buildNumber, "UTF-8")
-    return "$host/guestAuth/repository/download/$buildTypeId/$encodedBuildNumber/kotlin-plugin-${encodedBuildNumber}.zip"
+    return "$host/guestAuth/repository/download/$buildTypeId/$encodedBuildNumber/kotlin-plugin-1.0.5-release-IJ2016.3-2.zip"
   }
 }

@@ -41,13 +41,10 @@ public class InjectedReferenceSelectioner extends AbstractWordSelectioner {
     PsiReference ref = e.findReferenceAt(cursorOffset - e.getTextRange().getStartOffset());
     if (ref == null) return Collections.emptyList();
     JBIterable<PsiReference> it = ref instanceof PsiMultiReference ? JBIterable.of(((PsiMultiReference)ref).getReferences()) : JBIterable.of(ref);
-    return it.transform(new Function<PsiReference, TextRange>() {
-      @Override
-      public TextRange fun(PsiReference ref) {
-        TextRange base = ref.getElement().getTextRange();
-        TextRange r = ref.getRangeInElement().shiftRight(base.getStartOffset());
-        return r.containsOffset(cursorOffset) ? r : null;
-      }
+    return it.transform(ref1 -> {
+      TextRange base = ref1.getElement().getTextRange();
+      TextRange r = ref1.getRangeInElement().shiftRight(base.getStartOffset());
+      return r.containsOffset(cursorOffset) ? r : null;
     }).filter(Conditions.notNull()).toList();
   }
 

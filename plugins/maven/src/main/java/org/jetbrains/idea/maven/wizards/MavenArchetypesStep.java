@@ -27,6 +27,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -173,27 +174,25 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   }
 
   private static TreeNode groupAndSortArchetypes(Set<MavenArchetype> archetypes) {
-    List<MavenArchetype> list = new ArrayList<MavenArchetype>(archetypes);
+    List<MavenArchetype> list = new ArrayList<>(archetypes);
 
-    Collections.sort(list, new Comparator<MavenArchetype>() {
-      public int compare(MavenArchetype o1, MavenArchetype o2) {
-        String key1 = o1.groupId + ":" + o1.artifactId;
-        String key2 = o2.groupId + ":" + o2.artifactId;
+    Collections.sort(list, (o1, o2) -> {
+      String key1 = o1.groupId + ":" + o1.artifactId;
+      String key2 = o2.groupId + ":" + o2.artifactId;
 
-        int result = key1.compareToIgnoreCase(key2);
-        if (result != 0) return result;
+      int result = key1.compareToIgnoreCase(key2);
+      if (result != 0) return result;
 
-        return o2.version.compareToIgnoreCase(o1.version);
-      }
+      return o2.version.compareToIgnoreCase(o1.version);
     });
 
-    Map<String, List<MavenArchetype>> map = new TreeMap<String, List<MavenArchetype>>();
+    Map<String, List<MavenArchetype>> map = new TreeMap<>();
 
     for (MavenArchetype each : list) {
       String key = each.groupId + ":" + each.artifactId;
       List<MavenArchetype> versions = map.get(key);
       if (versions == null) {
-        versions = new ArrayList<MavenArchetype>();
+        versions = new ArrayList<>();
         map.put(key, versions);
       }
       versions.add(each);
@@ -234,33 +233,29 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     final Object currentUpdaterMarker = new Object();
     myCurrentUpdaterMarker = currentUpdaterMarker;
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        final Set<MavenArchetype> archetypes = MavenIndicesManager.getInstance().getArchetypes();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final Set<MavenArchetype> archetypes = MavenIndicesManager.getInstance().getArchetypes();
 
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Other updater has been run.
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
+        if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Other updater has been run.
 
-            ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
+        ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
 
-            TreeNode root = groupAndSortArchetypes(archetypes);
-            TreeModel model = new DefaultTreeModel(root);
-            myArchetypesTree.setModel(model);
+        TreeNode root = groupAndSortArchetypes(archetypes);
+        TreeModel model = new DefaultTreeModel(root);
+        myArchetypesTree.setModel(model);
 
-            if (selected != null) {
-              TreePath path = findNodePath(selected, model, model.getRoot());
-              if (path != null) {
-                myArchetypesTree.expandPath(path.getParentPath());
-                TreeUtil.selectPath(myArchetypesTree, path, true);
-              }
-            }
-
-            updateArchetypeDescription();
+        if (selected != null) {
+          TreePath path = findNodePath(selected, model, model.getRoot());
+          if (path != null) {
+            myArchetypesTree.expandPath(path.getParentPath());
+            TreeUtil.selectPath(myArchetypesTree, path, true);
           }
-        });
-      }
+        }
+
+        updateArchetypeDescription();
+      });
     });
   }
 
@@ -312,7 +307,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   }
 
   private static class MyRenderer extends ColoredTreeCellRenderer {
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,

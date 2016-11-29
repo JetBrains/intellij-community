@@ -37,7 +37,7 @@ public class OptionGroup implements PanelWithAnchor {
   public OptionGroup(@Nullable String title) {
     myTitle = title;
     myOptions = new ArrayList();
-    myIsShifted = new ArrayList<Boolean>();
+    myIsShifted = new ArrayList<>();
   }
 
   /**
@@ -132,7 +132,7 @@ public class OptionGroup implements PanelWithAnchor {
   }
 
   public JComponent[] getComponents() {
-    ArrayList<JComponent> components = new ArrayList<JComponent>();
+    ArrayList<JComponent> components = new ArrayList<>();
     for (Object o : myOptions) {
       if (o instanceof Pair) {
         components.add((JComponent)((Pair)o).first);

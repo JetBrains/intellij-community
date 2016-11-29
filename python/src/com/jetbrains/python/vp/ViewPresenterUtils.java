@@ -47,8 +47,8 @@ public final class ViewPresenterUtils {
     Preconditions.checkArgument(viewInterface.isInterface(), "View is not interface");
 
     //TODO: Use cglib?
-    PresenterHandler<P> presenterHandler = new PresenterHandler<P>();
-    ViewHandler<V> viewHandler = new ViewHandler<V>();
+    PresenterHandler<P> presenterHandler = new PresenterHandler<>();
+    ViewHandler<V> viewHandler = new ViewHandler<>();
     V viewProxy = createProxy(viewInterface, viewHandler);
     P presenterProxy = createProxy(presenterInterface, presenterHandler);
 

@@ -52,7 +52,7 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
 
   @Override
   protected String getInlineThisText() {
-    return "Inline this occurrence and leave the variable";
+    return RefactoringBundle.message("this.reference.only.and.keep.the.variable");
   }
 
   @Override
@@ -78,5 +78,10 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
   @Override
   protected boolean isInlineThis() {
     return JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS;
+  }
+
+  @Override
+  protected boolean hasPreviewButton() {
+    return false;
   }
 }

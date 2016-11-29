@@ -45,18 +45,15 @@ public class FileStructureTestFixture implements Disposable {
 
   @Nullable
   public FilteringTreeStructure.FilteringNode update() {
-    final Ref<FilteringTreeStructure.FilteringNode> nodeRef = new Ref<FilteringTreeStructure.FilteringNode>();
+    final Ref<FilteringTreeStructure.FilteringNode> nodeRef = new Ref<>();
     final FileStructurePopup popup = getPopup();
-    popup.getTreeBuilder().refilter().doWhenProcessed(new Runnable() {
-      @Override
-      public void run() {
-        getStructure().rebuild();
-        updateTree();
-        getBuilder().updateFromRoot();
-        TreeUtil.expandAll(getTree());
-        nodeRef.set(popup.selectPsiElement(popup.getCurrentElement(myFile)));
-        getBuilder().getUi().select(nodeRef.get(), null);
-      }
+    popup.getTreeBuilder().refilter().doWhenProcessed(() -> {
+      getStructure().rebuild();
+      updateTree();
+      getBuilder().updateFromRoot();
+      TreeUtil.expandAll(getTree());
+      nodeRef.set(popup.selectPsiElement(popup.getCurrentElement(myFile)));
+      getBuilder().getUi().select(nodeRef.get(), null);
     });
     return nodeRef.get();
   }

@@ -30,7 +30,9 @@ public abstract class AbstractCommand<T> {
   public static final int LOAD_SOURCE = 124;
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
-  
+  public static final int GET_DESCRIPTION = 148;
+
+
   public static final int CALL_SIGNATURE_TRACE = 130;
 
   public static final int CMD_SET_PY_EXCEPTION = 131;
@@ -49,6 +51,10 @@ public abstract class AbstractCommand<T> {
   public static final int GET_ARRAY = 143;
   public static final int STEP_INTO_MY_CODE = 144;
   public static final int LOG_CONCURRENCY_EVENT = 145;
+  public static final int SHOW_RETURN_VALUES = 146;
+  public static final int INPUT_REQUESTED = 147;
+
+  public static final int PROCESS_CREATED = 149;
 
   public static final int ERROR = 901;
 
@@ -148,22 +154,19 @@ public abstract class AbstractCommand<T> {
       return;
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ProtocolFrame frame = myDebugger.waitForResponse(sequence);
-          if (frame == null) {
-            if (!myDebugger.isConnected()) {
-              throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
-            }
-            throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        ProtocolFrame frame = myDebugger.waitForResponse(sequence);
+        if (frame == null) {
+          if (!myDebugger.isConnected()) {
+            throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
           }
-          callback.ok(processor.processResponse(frame));
+          throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
         }
-        catch (PyDebuggerException e) {
-          callback.error(e);
-        }
+        callback.ok(processor.processResponse(frame));
+      }
+      catch (PyDebuggerException e) {
+        callback.error(e);
       }
     });
   }
@@ -197,6 +200,10 @@ public abstract class AbstractCommand<T> {
 
   public static boolean isWriteToConsole(final int command) {
     return command == WRITE_TO_CONSOLE;
+  }
+
+  public static boolean isInputRequested(final int command) {
+    return command == INPUT_REQUESTED;
   }
 
   public static boolean isExitEvent(final int command) {

@@ -16,24 +16,19 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
@@ -53,7 +48,6 @@ import java.util.concurrent.CountDownLatch;
 public class ChangesViewContentManager extends AbstractProjectComponent implements ChangesViewContentI {
   public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
-  private static final Logger LOG = Logger.getInstance(ChangesViewContentManager.class);
 
   private MyContentManagerListener myContentManagerListener;
   private final ProjectLevelVcsManager myVcsManager;
@@ -63,74 +57,45 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   private ContentManager myContentManager;
-  private ToolWindow myToolWindow;
   private final VcsListener myVcsListener = new MyVcsListener();
   private final Alarm myVcsChangeAlarm;
-  private final List<Content> myAddedContents = new ArrayList<Content>();
+  private final List<Content> myAddedContents = new ArrayList<>();
   @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
 
-  public ChangesViewContentManager(final Project project, final ProjectLevelVcsManager vcsManager) {
+  public ChangesViewContentManager(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
     super(project);
     myVcsManager = vcsManager;
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
   }
 
-  public void projectOpened() {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-      public void run() {
-        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        if (toolWindowManager != null) {
-          myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject, true);
-          myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowChanges);
+  public void setUp(ToolWindow toolWindow) {
 
-          updateToolWindowAvailability();
-          final ContentManager contentManager = myToolWindow.getContentManager();
-          myContentManagerListener = new MyContentManagerListener();
-          contentManager.addContentManagerListener(myContentManagerListener);
+    final ContentManager contentManager = toolWindow.getContentManager();
+    myContentManagerListener = new MyContentManagerListener();
+    contentManager.addContentManagerListener(myContentManagerListener);
 
-          myVcsManager.addVcsListener(myVcsListener);
-
-          Disposer.register(myProject, new Disposable(){
-            public void dispose() {
-              contentManager.removeContentManagerListener(myContentManagerListener);
-
-              myVcsManager.removeVcsListener(myVcsListener);
-            }
-          });
-
-          loadExtensionTabs();
-          myContentManager = contentManager;
-          final List<Content> ordered = doPresetOrdering(myAddedContents);
-          for(Content content: ordered) {
-            myContentManager.addContent(content);
-          }
-          myAddedContents.clear();
-          if (contentManager.getContentCount() > 0) {
-            contentManager.setSelectedContent(contentManager.getContent(0));
-          }
-          myInitializationWaiter.countDown();
-        }
+    Disposer.register(myProject, new Disposable(){
+      public void dispose() {
+        contentManager.removeContentManagerListener(myContentManagerListener);
       }
     });
-  }
 
-  /**
-   * Makes the current thread wait until the ChangesViewContentManager is initialized.
-   * When it initializes, executes the given runnable.
-   */
-  public void executeWhenInitialized(@NotNull final Runnable runnable) {
-    try {
-      myInitializationWaiter.await();
-      runnable.run();
+    loadExtensionTabs();
+    myContentManager = contentManager;
+    final List<Content> ordered = doPresetOrdering(myAddedContents);
+    for(Content content: ordered) {
+      myContentManager.addContent(content);
     }
-    catch (InterruptedException e) {
-      LOG.error(e);
+    myAddedContents.clear();
+    if (contentManager.getContentCount() > 0) {
+      contentManager.setSelectedContent(contentManager.getContent(0));
     }
+    myInitializationWaiter.countDown();
   }
 
   private void loadExtensionTabs() {
-    final List<Content> contentList = new LinkedList<Content>();
+    final List<Content> contentList = new LinkedList<>();
     final ChangesViewContentEP[] contentEPs = myProject.getExtensions(ChangesViewContentEP.EP_NAME);
     for(ChangesViewContentEP ep: contentEPs) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
@@ -179,12 +144,17 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   private void updateToolWindowAvailability() {
-    final AbstractVcs[] abstractVcses = myVcsManager.getAllActiveVcss();
-    myToolWindow.setAvailable(abstractVcses.length > 0, null);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
+    if (toolWindow != null) {
+      boolean available = isAvailable();
+      toolWindow.setShowStripeButton(available);
+      toolWindow.setAvailable(available, null);
+    }
   }
-  
-  public boolean isToolwindowVisible() {
-    return ! myToolWindow.isDisposed() && myToolWindow.isVisible();
+
+  public boolean isAvailable() {
+    final List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
+    return !mappings.isEmpty() && !StringUtil.isEmpty(mappings.get(0).getVcs());
   }
 
   public void projectClosed() {
@@ -217,6 +187,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
 
   @Nullable
   public <T> T getActiveComponent(final Class<T> aClass) {
+    if (myContentManager == null) return null;
     final Content content = myContentManager.getSelectedContent();
     if (content != null && aClass.isInstance(content.getComponent())) {
       //noinspection unchecked
@@ -251,7 +222,9 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
         public void run() {
           if (myProject.isDisposed()) return;
           updateToolWindowAvailability();
-          updateExtensionTabs();
+          if (myContentManager != null) {
+            updateExtensionTabs();
+          }
         }
       }, 100, ModalityState.NON_MODAL);
     }
@@ -293,7 +266,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   public static final String SHELF = "Shelf";
   private static final String[] ourPresetOrder = {LOCAL_CHANGES, REPOSITORY, INCOMING, SHELF};
   private static List<Content> doPresetOrdering(final List<Content> contents) {
-    final List<Content> result = new ArrayList<Content>(contents.size());
+    final List<Content> result = new ArrayList<>(contents.size());
     for (final String preset : ourPresetOrder) {
       for (Iterator<Content> iterator = contents.iterator(); iterator.hasNext();) {
         final Content current = iterator.next();
@@ -323,7 +296,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
       return;
     }
 
-    final Set<String> existingNames = new HashSet<String>();
+    final Set<String> existingNames = new HashSet<>();
     for (Content existingContent : contents) {
       existingNames.add(existingContent.getTabName());
     }

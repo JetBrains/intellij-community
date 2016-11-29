@@ -10,7 +10,7 @@ def copyfile(src, dst):
 
     :type src: bytes | unicode
     :type dst: bytes | unicode
-    :rtype: None
+    :rtype: bytes | unicode
     """
     pass
 
@@ -41,7 +41,7 @@ def copy(src, dst):
 
     :type src: bytes | unicode
     :type dst: bytes | unicode
-    :rtype: None
+    :rtype: bytes | unicode
     """
     pass
 
@@ -51,7 +51,7 @@ def copy2(src, dst):
 
     :type src: bytes | unicode
     :type dst: bytes | unicode
-    :rtype: None
+    :rtype: bytes | unicode
     """
     pass
 
@@ -74,7 +74,7 @@ def copytree(src, dst, symlinks=False, ignore=None):
     :type dst: bytes | unicode
     :type symlinks: bool
     :type ignore: ((bytes | unicode, list[bytes | unicode]) -> collections.Iterable[bytes | unicode]) | None
-    :rtype: None
+    :rtype: bytes | unicode
     """
     pass
 
@@ -94,6 +94,6 @@ def move(src, dst):
 
     :type src: bytes | unicode
     :type dst: bytes | unicode
-    :rtype: None
+    :rtype: bytes | unicode
     """
     pass

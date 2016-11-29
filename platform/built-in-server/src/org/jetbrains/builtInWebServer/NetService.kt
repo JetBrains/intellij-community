@@ -11,13 +11,11 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
 import com.intellij.util.net.NetUtils
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.AsyncValueLoader
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.isRejected
+import org.jetbrains.concurrency.*
 import javax.swing.Icon
 
 abstract class NetService @JvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
@@ -44,10 +42,10 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
 
       promise.rejected {
         processHandler.destroyProcess()
-        Promise.logError(LOG, it)
+        LOG.errorIfNotMessage(it)
       }
 
-      val processListener = MyProcessAdapter()
+      val processListener = MyProcessAdapter(processHandler)
       processHandler.addProcessListener(processListener)
       processHandler.startNotify()
 
@@ -102,7 +100,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
 
   open fun getConsoleToolWindowActions(): ActionGroup = DefaultActionGroup()
 
-  private inner class MyProcessAdapter : ProcessAdapter(), Consumer<String> {
+  private inner class MyProcessAdapter(private val osProcessHandler: OSProcessHandler?) : ProcessAdapter(), Consumer<String> {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
       print(event.text, ConsoleViewContentType.getConsoleViewType(outputType))
     }
@@ -112,7 +110,9 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
     }
 
     override fun processTerminated(event: ProcessEvent) {
-      processHandler.reset()
+      if (processHandler.has() && (processHandler.get(false) as Getter<*>).get() == osProcessHandler) {
+        processHandler.reset()
+      }
       print("${getConsoleToolWindowId()} terminated\n", ConsoleViewContentType.SYSTEM_OUTPUT)
     }
 

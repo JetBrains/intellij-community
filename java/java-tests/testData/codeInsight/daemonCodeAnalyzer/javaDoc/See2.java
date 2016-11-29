@@ -1,6 +1,6 @@
 class Test {
     /**
-     *  @see A#<EOLWarning/>
+     *  @see A#<EOLWarning descr="Name expected"></EOLWarning>
      */
      public void i() {}
 

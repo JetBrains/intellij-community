@@ -1,4 +1,5 @@
-import static InlineIssue.ClassToMove.F1;
+package p;
+import static p.InlineIssue.ClassToMove.F1;
 abstract class InlineIssue {
   public enum ClassToMove { F1 }
 

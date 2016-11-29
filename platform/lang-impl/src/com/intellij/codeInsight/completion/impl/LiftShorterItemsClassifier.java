@@ -18,26 +18,25 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.containers.FlatteningIterator;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.newIdentityHashMap;
-import static com.intellij.util.containers.ContainerUtil.newIdentityTroveSet;
-import static com.intellij.util.containers.ContainerUtil.newTroveMap;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 /**
 * @author peter
 */
 public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
-  private final TreeSet<String> mySortedStrings = new TreeSet<String>();
+  private final TreeSet<String> mySortedStrings = new TreeSet<>();
   private final MultiMap<String, LookupElement> myElements = createMultiMap(false);
   private final MultiMap<LookupElement, LookupElement> myToLift = createMultiMap(true);
   private final MultiMap<LookupElement, LookupElement> myReversedToLift = createMultiMap(true);
@@ -119,12 +118,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull ProcessingContext context) {
     final THashSet<LookupElement> lifted = newIdentityTroveSet();
     Iterable<LookupElement> iterable = liftShorterElements(ContainerUtil.newArrayList(items), lifted, context);
-    return ContainerUtil.map(iterable, new Function<LookupElement, Pair<LookupElement, Object>>() {
-      @Override
-      public Pair<LookupElement, Object> fun(LookupElement element) {
-        return new Pair<LookupElement, Object>(element, lifted.contains(element));
-      }
-    });
+    return ContainerUtil.map(iterable, element -> new Pair<LookupElement, Object>(element, lifted.contains(element)));
   }
 
   @Override
@@ -181,12 +175,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       final Set<Collection<LookupElement>> arraysProcessed = newIdentityTroveSet();
 
       final Iterable<LookupElement> next = myNext.classify(mySource, myContext);
-      Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), new Condition<LookupElement>() {
-        @Override
-        public boolean value(LookupElement element) {
-          return processed.add(element);
-        }
-      });
+      Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), element -> processed.add(element));
       return new FlatteningIterator<LookupElement, LookupElement>(base) {
         @Override
         protected Iterator<LookupElement> createValueIterator(LookupElement element) {
@@ -213,7 +202,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
             for (LookupElement shorterElement : from) {
               if (mySrcSet.contains(shorterElement) && processed.add(shorterElement)) {
                 if (toLift == null) {
-                  toLift = new ArrayList<LookupElement>();
+                  toLift = new ArrayList<>();
                 }
                 toLift.add(shorterElement);
               }

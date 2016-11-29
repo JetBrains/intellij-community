@@ -27,7 +27,7 @@ public class RemoteAgentReflectiveProxyFactory extends RemoteAgentProxyFactoryBa
 
   @Override
   protected ClassLoader createAgentClassLoader(URL[] agentLibraryUrls) throws Exception {
-    Set<URL> urls = new HashSet<URL>();
+    Set<URL> urls = new HashSet<>();
     urls.addAll(Arrays.asList(agentLibraryUrls));
     return myClassLoaderCache == null
            ? new URLClassLoader(urls.toArray(new URL[urls.size()]), null)

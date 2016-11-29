@@ -27,7 +27,7 @@ import java.util.Collection;
  */
 
 class SelectedFiles extends AnyProcessedFiles {
-  private final Collection<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+  private final Collection<VirtualFile> myFiles = new ArrayList<>();
 
   public SelectedFiles(FilePath[] files) {
     for (int i = 0; i < files.length; i++) {

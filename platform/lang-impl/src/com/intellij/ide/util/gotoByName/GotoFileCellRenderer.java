@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.FilePathSplittingPolicy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -76,19 +77,18 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
   }
 
   @Nullable
-  static String getRelativePath(final VirtualFile virtualFile, final Project project) {
-    String url = virtualFile.getPresentableUrl();
+  public static String getRelativePath(final VirtualFile virtualFile, final Project project) {
     if (project == null) {
-      return url;
+      return virtualFile.getPresentableUrl();
     }
     VirtualFile root = ProjectFileIndex.SERVICE.getInstance(project).getContentRootForFile(virtualFile);
     if (root != null) {
-      return root.getName() + File.separatorChar + VfsUtilCore.getRelativePath(virtualFile, root, File.separatorChar);
+      return getRelativePathFromRoot(virtualFile, root);
     }
 
+    String url = virtualFile.getPresentableUrl();
     final VirtualFile baseDir = project.getBaseDir();
     if (baseDir != null) {
-      //noinspection ConstantConditions
       final String projectHomeUrl = baseDir.getPresentableUrl();
       if (url.startsWith(projectHomeUrl)) {
         final String cont = url.substring(projectHomeUrl.length());
@@ -97,6 +97,11 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
       }
     }
     return url;
+  }
+
+  @NotNull
+  static String getRelativePathFromRoot(@NotNull VirtualFile file, @NotNull VirtualFile root) {
+    return root.getName() + File.separatorChar + VfsUtilCore.getRelativePath(file, root, File.separatorChar);
   }
 
   @Override
@@ -115,7 +120,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
     Color color = list.getForeground();
-    if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+    if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
     renderer.append(item + " ", nameAttributes);
     ItemPresentation itemPresentation = item.getPresentation();
@@ -124,7 +129,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
 
     String locationString = itemPresentation.getLocationString();
     if (!StringUtil.isEmpty(locationString)) {
-      renderer.append(locationString, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+      renderer.append(locationString, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
     }
     return true;
   }

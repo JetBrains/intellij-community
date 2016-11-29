@@ -40,7 +40,7 @@ public class DocCommentBlock extends AbstractJavaBlock{
 
   @Override
   protected List<Block> buildChildren() {
-    final ArrayList<Block> result = new ArrayList<Block>();
+    final ArrayList<Block> result = new ArrayList<>();
 
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {

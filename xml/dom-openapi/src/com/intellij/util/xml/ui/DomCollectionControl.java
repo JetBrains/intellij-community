@@ -63,7 +63,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   private final DomElement myParentDomElement;
   private final DomCollectionChildDescription myChildDescription;
-  private List<T> myCollectionElements = new ArrayList<T>();
+  private List<T> myCollectionElements = new ArrayList<>();
   private ColumnInfo<T, ?>[] myColumnInfos;
   private boolean myEditable = false;
   public static final Icon ADD_ICON = IconUtil.getAddIcon();
@@ -202,11 +202,11 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   protected void doRemove(final List<T> toDelete) {
-    Set<PsiFile> files = new HashSet<PsiFile>();
+    Set<PsiFile> files = new HashSet<>();
     for (final T t : toDelete) {
       final XmlElement element = t.getXmlElement();
       if (element != null) {
-        ContainerUtil.addIfNotNull(element.getContainingFile(), files);
+        ContainerUtil.addIfNotNull(files, element.getContainingFile());
       }
     }
 
@@ -223,25 +223,22 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   protected final void doRemove() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final int[] selected = myCollectionPanel.getTable().getSelectedRows();
-        if (selected == null || selected.length == 0) return;
-        final List<T> selectedElements = new ArrayList<T>(selected.length);
-        for (final int i : selected) {
-          selectedElements.add(myCollectionElements.get(sortAdjustedIndex(i)));
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final int[] selected = myCollectionPanel.getTable().getSelectedRows();
+      if (selected == null || selected.length == 0) return;
+      final List<T> selectedElements = new ArrayList<>(selected.length);
+      for (final int i : selected) {
+        selectedElements.add(myCollectionElements.get(sortAdjustedIndex(i)));
+      }
 
-        doRemove(selectedElements);
-        reset();
-        int selection = selected[0];
-        if (selection >= myCollectionElements.size()) {
-          selection = myCollectionElements.size() - 1;
-        }
-        if (selection >= 0) {
-          myCollectionPanel.getTable().setRowSelectionInterval(selection, selection);
-        }
+      doRemove(selectedElements);
+      reset();
+      int selection = selected[0];
+      if (selection >= myCollectionElements.size()) {
+        selection = myCollectionElements.size() - 1;
+      }
+      if (selection >= 0) {
+        myCollectionPanel.getTable().setRowSelectionInterval(selection, selection);
       }
     });
   }
@@ -258,7 +255,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     DomElement domElement = getDomElement();
     final List<DomElementProblemDescriptor> list =
       DomElementAnnotationsManager.getInstance(getProject()).getCachedProblemHolder(domElement).getProblems(domElement);
-    final List<String> messages = new ArrayList<String>();
+    final List<String> messages = new ArrayList<>();
     for (final DomElementProblemDescriptor descriptor : list) {
       if (descriptor instanceof DomCollectionProblemDescriptor
           && myChildDescription.equals(((DomCollectionProblemDescriptor)descriptor).getChildDescription())) {
@@ -298,7 +295,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   @Override
   public final void reset() {
-    myCollectionElements = new ArrayList<T>(getCollectionElements());
+    myCollectionElements = new ArrayList<>(getCollectionElements());
     myCollectionPanel.reset(createColumnInfos(myParentDomElement), myCollectionElements);
     validate();
   }

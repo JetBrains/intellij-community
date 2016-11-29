@@ -139,7 +139,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private Set<OrderRootType> getAllRootTypes() {
-    Set<OrderRootType> rootTypes = new HashSet<OrderRootType>();
+    Set<OrderRootType> rootTypes = new HashSet<>();
     rootTypes.addAll(Arrays.asList(OrderRootType.getAllTypes()));
     if (myKind != null) {
       rootTypes.addAll(Arrays.asList(myKind.getAdditionalRootTypes()));
@@ -190,7 +190,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       return VirtualFile.EMPTY_ARRAY;
     }
 
-    List<VirtualFile> expanded = new SmartList<VirtualFile>();
+    List<VirtualFile> expanded = new SmartList<>();
     for (VirtualFile file : container.getFiles()) {
       if (file.isDirectory()) {
         if (myJarDirectories.contains(rootType, file.getUrl())) {
@@ -247,7 +247,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     for (VirtualFilePointer pointer : pointers) {
       if (!pointer.isValid()) {
         if (invalidPaths == null) {
-          invalidPaths = new SmartList<String>();
+          invalidPaths = new SmartList<>();
         }
         invalidPaths.add(pointer.getUrl());
       }
@@ -270,7 +270,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private Map<OrderRootType, VirtualFilePointerContainer> initRoots() {
     Disposer.register(this, myPointersDisposable);
 
-    Map<OrderRootType, VirtualFilePointerContainer> result = new HashMap<OrderRootType, VirtualFilePointerContainer>(4);
+    Map<OrderRootType, VirtualFilePointerContainer> result = new HashMap<>(4);
 
     for (OrderRootType rootType : getAllRootTypes()) {
       result.put(rootType, VirtualFilePointerManager.getInstance().createContainer(myPointersDisposable));
@@ -331,7 +331,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   //TODO<rv> Remove the next two methods as a temporary solution. Sort in OrderRootType.
   //
   public static List<OrderRootType> sortRootTypes(Collection<OrderRootType> rootTypes) {
-    List<OrderRootType> allTypes = new ArrayList<OrderRootType>(rootTypes);
+    List<OrderRootType> allTypes = new ArrayList<>(rootTypes);
     Collections.sort(allTypes, (o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
     return allTypes;
   }
@@ -346,6 +346,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     }
     if (myKind != null) {
       element.setAttribute(LIBRARY_TYPE_ATTR, myKind.getKindId());
+      LOG.assertTrue(myProperties != null, "Properties is 'null' in library with kind " + myKind);
       final Object state = myProperties.getState();
       if (state != null) {
         final Element propertiesElement = XmlSerializer.serializeIfNotDefault(state, SERIALIZATION_FILTERS);
@@ -354,7 +355,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
         }
       }
     }
-    ArrayList<OrderRootType> storableRootTypes = new ArrayList<OrderRootType>();
+    ArrayList<OrderRootType> storableRootTypes = new ArrayList<>();
     storableRootTypes.addAll(Arrays.asList(OrderRootType.getAllTypes()));
     if (myKind != null) {
       storableRootTypes.addAll(Arrays.asList(myKind.getAdditionalRootTypes()));
@@ -431,6 +432,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     LOG.assertTrue(isWritable());
     LOG.assertTrue(myKind == null || myKind == kind, "Library kind cannot be changed from " + myKind + " to " + kind);
     myKind = kind;
+    myProperties = kind.createDefaultProperties();
   }
 
   @Override
@@ -631,7 +633,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void disposeMyPointers() {
-    for (VirtualFilePointerContainer container : new THashSet<VirtualFilePointerContainer>(myRoots.values())) {
+    for (VirtualFilePointerContainer container : new THashSet<>(myRoots.values())) {
       container.killAll();
     }
     if (myExcludedRoots != null) {
@@ -645,7 +647,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     @Override
     @NotNull
     public String[] getUrls(@NotNull OrderRootType rootType) {
-      Set<String> originalUrls = new LinkedHashSet<String>(Arrays.asList(LibraryImpl.this.getUrls(rootType)));
+      Set<String> originalUrls = new LinkedHashSet<>(Arrays.asList(LibraryImpl.this.getUrls(rootType)));
       for (VirtualFile file : getFiles(rootType)) { // Add those expanded with jar directories.
         originalUrls.add(file.getUrl());
       }

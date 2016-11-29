@@ -76,7 +76,7 @@ public class CommandCvsHandler extends CvsHandler {
 
   protected final CvsOperation myCvsOperation;
 
-  private final List<CvsOperation> myPostActivities = new ArrayList<CvsOperation>();
+  private final List<CvsOperation> myPostActivities = new ArrayList<>();
 
   private final boolean myCanBeCanceled;
   protected boolean myIsCanceled = false;
@@ -199,15 +199,12 @@ public class CommandCvsHandler extends CvsHandler {
       }
     }
     if (!dirsToPrune.isEmpty()) {
-      operation.addFinishAction(new Runnable() {
-        @Override
-        public void run() {
-          final IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(null);
-          for(File dir: dirsToPrune) {
-            pruner.addFile(dir);
-          }
-          pruner.execute();
+      operation.addFinishAction(() -> {
+        final IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(null);
+        for(File dir: dirsToPrune) {
+          pruner.addFile(dir);
         }
+        pruner.execute();
       });
     }
 
@@ -223,13 +220,13 @@ public class CommandCvsHandler extends CvsHandler {
 
   public static CvsHandler createAddFilesHandler(final Project project, Collection<AddedFileInfo> addedRoots) {
     final AddFilesOperation operation = new AddFilesOperation();
-    final ArrayList<AddedFileInfo> addedFileInfo = new ArrayList<AddedFileInfo>();
+    final ArrayList<AddedFileInfo> addedFileInfo = new ArrayList<>();
     for (final AddedFileInfo info : addedRoots) {
       info.clearAllCvsAdminDirectoriesInIncludedDirectories();
       addedFileInfo.addAll(info.collectAllIncludedFiles());
     }
 
-    final ArrayList<VirtualFile> addedFiles = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> addedFiles = new ArrayList<>();
 
     for (AddedFileInfo info : addedFileInfo) {
       addedFiles.add(info.getFile());
@@ -251,7 +248,7 @@ public class CommandCvsHandler extends CvsHandler {
   }
 
   private static VirtualFile[] getAdminDirectoriesFor(Collection<File> files) {
-    final Collection<VirtualFile> result = new HashSet<VirtualFile>();
+    final Collection<VirtualFile> result = new HashSet<>();
     for (File file : files) {
       final File parentFile = file.getParentFile();
       final VirtualFile cvsAdminDirectory = CvsVfsUtil.findFileByIoFile(new File(parentFile, CvsUtil.CVS));
@@ -274,25 +271,22 @@ public class CommandCvsHandler extends CvsHandler {
     final CommandCvsHandler cvsHandler =
       new CommandCvsHandler(CvsBundle.message("operation.name.restore"), operation, FileSetToBeUpdated.EMPTY);
 
-    operation.addFinishAction(new Runnable() {
-      @Override
-      public void run() {
-        final List<VcsException> errors = cvsHandler.getErrors();
-        if (errors != null && !errors.isEmpty()) return;
-        
-        if (entry != null) {
-          entry.setRevision(revision);
-          entry.setConflict(CvsUtil.formatDate(new Date(ioFile.lastModified())));
-          try {
-            CvsUtil.saveEntryForFile(ioFile, entry);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-          CvsEntriesManager.getInstance().clearCachedEntriesFor(parent);
-        }
+    operation.addFinishAction(() -> {
+      final List<VcsException> errors = cvsHandler.getErrors();
+      if (errors != null && !errors.isEmpty()) return;
 
+      if (entry != null) {
+        entry.setRevision(revision);
+        entry.setConflict(CvsUtil.formatDate(new Date(ioFile.lastModified())));
+        try {
+          CvsUtil.saveEntryForFile(ioFile, entry);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+        CvsEntriesManager.getInstance().clearCachedEntriesFor(parent);
       }
+
     });
 
     return cvsHandler;
@@ -332,7 +326,7 @@ public class CommandCvsHandler extends CvsHandler {
   }
 
   private boolean loginAll(Project project) {
-    final Set<CvsEnvironment> allRoots = new HashSet<CvsEnvironment>();
+    final Set<CvsEnvironment> allRoots = new HashSet<>();
     try {
       myCvsOperation.appendSelfCvsRootProvider(allRoots);
       for (CvsOperation postActivity : myPostActivities) {
@@ -344,12 +338,7 @@ public class CommandCvsHandler extends CvsHandler {
       return false;
     }
 
-    final LoginPerformer performer = new LoginPerformer(project, allRoots, new Consumer<VcsException>() {
-      @Override
-      public void consume(VcsException e) {
-        myErrorMessageProcessor.addError(e);
-      }
-    });
+    final LoginPerformer performer = new LoginPerformer(project, allRoots, e -> myErrorMessageProcessor.addError(e));
     performer.setForceCheck(true);
     return performer.loginAll();
   }

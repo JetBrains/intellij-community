@@ -200,7 +200,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
         }
         final Collection<File> files = item.selectGeneratedFiles(children);
         if (!files.isEmpty()) {
-          final Collection<String> sources = Collections.singleton(item.compiledClass.getSourceFile().getPath());
+          final Collection<String> sources = item.compiledClass.getSourceFilesPaths();
           for (File generated : files) {
             try {
               outputConsumer.registerOutputFile(target, generated, sources);

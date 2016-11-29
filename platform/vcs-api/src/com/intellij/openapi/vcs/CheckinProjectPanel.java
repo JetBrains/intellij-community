@@ -84,8 +84,6 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
    */
   Collection<VirtualFile> getRoots();
 
-  void setWarning(final String s);
-
   /**
    * Gets the description for the check-in.
    *

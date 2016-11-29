@@ -69,20 +69,12 @@ public class ZipUtil {
   {
     final Outcome<Boolean> outcome = DownloadUtil.provideDataWithProgressSynchronously(
       project, progressTitle, "Unpacking ...",
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws IOException {
-          ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-          unzip(progress, extractToDir, zipArchive, pathConvertor, null, unwrapSingleTopLevelFolder);
-          return true;
-        }
+      () -> {
+        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        unzip(progress, extractToDir, zipArchive, pathConvertor, null, unwrapSingleTopLevelFolder);
+        return true;
       },
-      new Producer<Boolean>() {
-        @Override
-        public Boolean produce() {
-          return false;
-        }
-      }
+      () -> false
     );
     Boolean result = outcome.get();
     if (result == null) {

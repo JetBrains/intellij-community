@@ -47,9 +47,9 @@ import java.util.Map;
  * @author nik
  */
 public class FacetPointersManagerImpl extends FacetPointersManager implements ProjectComponent {
-  private final Map<String, FacetPointerImpl> myPointers = new HashMap<String, FacetPointerImpl>();
+  private final Map<String, FacetPointerImpl> myPointers = new HashMap<>();
   private final Map<Class<? extends Facet>, EventDispatcher<FacetPointerListener>> myDispatchers =
-    new HashMap<Class<? extends Facet>, EventDispatcher<FacetPointerListener>>();
+    new HashMap<>();
 
   public FacetPointersManagerImpl(final Project project) {
     super(project);
@@ -64,7 +64,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
       if (!FacetUtil.isRegistered(facet)) {
         return create(id);
       }
-      pointer = new FacetPointerImpl<F>(this, facet);
+      pointer = new FacetPointerImpl<>(this, facet);
       myPointers.put(id, pointer);
     }
     return pointer;
@@ -75,7 +75,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
     //noinspection unchecked
     FacetPointerImpl<F> pointer = myPointers.get(id);
     if (pointer == null) {
-      pointer = new FacetPointerImpl<F>(this, id);
+      pointer = new FacetPointerImpl<>(this, id);
       myPointers.put(id, pointer);
     }
     return pointer;
@@ -134,7 +134,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
 
   private void refreshPointers(@NotNull final Module module) {
     //todo[nik] refresh only pointers related to renamed module/facet?
-    List<Pair<FacetPointerImpl, String>> changed = new ArrayList<Pair<FacetPointerImpl, String>>();
+    List<Pair<FacetPointerImpl, String>> changed = new ArrayList<>();
 
     for (FacetPointerImpl pointer : myPointers.values()) {
       final String oldId = pointer.getId();

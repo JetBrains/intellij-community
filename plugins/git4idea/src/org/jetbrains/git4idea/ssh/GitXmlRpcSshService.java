@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import git4idea.commands.GitSSHGUIHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 
+import java.util.UUID;
 import java.util.Vector;
 
 /**
@@ -49,37 +50,37 @@ public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandle
   public class InternalRequestHandler implements GitSSHHandler {
 
     @Override
-    public boolean verifyServerHostKey(int handler, String hostname, int port, String serverHostKeyAlgorithm, String serverHostKey,
+    public boolean verifyServerHostKey(String handler, String hostname, int port, String serverHostKeyAlgorithm, String serverHostKey,
                                        boolean isNew) {
-      return getHandler(handler).verifyServerHostKey(hostname, port, serverHostKeyAlgorithm, serverHostKey, isNew);
+      return getHandler(UUID.fromString(handler)).verifyServerHostKey(hostname, port, serverHostKeyAlgorithm, serverHostKey, isNew);
     }
 
     @Override
-    public String askPassphrase(int handler, String username, String keyPath, boolean resetPassword, String lastError) {
-      return adjustNull(getHandler(handler).askPassphrase(username, keyPath, resetPassword, lastError));
+    public String askPassphrase(String handler, String username, String keyPath, boolean resetPassword, String lastError) {
+      return adjustNull(getHandler(UUID.fromString(handler)).askPassphrase(username, keyPath, resetPassword, lastError));
     }
 
     @Override
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
-    public Vector<String> replyToChallenge(int handlerNo, String username, String name, String instruction, int numPrompts,
+    public Vector<String> replyToChallenge(String token, String username, String name, String instruction, int numPrompts,
                                            Vector<String> prompt, Vector<Boolean> echo, String lastError) {
-      return adjustNull(getHandler(handlerNo).replyToChallenge(username, name, instruction, numPrompts, prompt, echo, lastError));
+      return adjustNull(getHandler(UUID.fromString(token)).replyToChallenge(username, name, instruction, numPrompts, prompt, echo, lastError));
     }
 
     @Override
-    public String askPassword(int handlerNo, String username, boolean resetPassword, String lastError) {
-      return adjustNull(getHandler(handlerNo).askPassword(username, resetPassword, lastError));
+    public String askPassword(String token, String username, boolean resetPassword, String lastError) {
+      return adjustNull(getHandler(UUID.fromString(token)).askPassword(username, resetPassword, lastError));
     }
 
     @Override
-    public String setLastSuccessful(int handlerNo, String userName, String method, String error) {
-      getHandler(handlerNo).setLastSuccessful(userName, method, error);
+    public String setLastSuccessful(String token, String userName, String method, String error) {
+      getHandler(UUID.fromString(token)).setLastSuccessful(userName, method, error);
       return "";
     }
 
     @Override
-    public String getLastSuccessful(int handlerNo, String userName) {
-      return getHandler(handlerNo).getLastSuccessful(userName);
+    public String getLastSuccessful(String token, String userName) {
+      return getHandler(UUID.fromString(token)).getLastSuccessful(userName);
     }
 
     /**
@@ -100,7 +101,7 @@ public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandle
      */
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
     private <T> Vector<T> adjustNull(final Vector<T> s) {
-      return s == null ? new Vector<T>() : s;
+      return s == null ? new Vector<>() : s;
     }
   }
 }

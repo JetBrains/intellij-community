@@ -94,7 +94,7 @@ public final class FormEditingUtil {
       return;
     }
     final RadRootContainer rootContainer = (RadRootContainer)getRoot(selection.iterator().next());
-    final Set<String> deletedComponentIds = new HashSet<String>();
+    final Set<String> deletedComponentIds = new HashSet<>();
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();
       final RadContainer parent = component.getParent();
@@ -267,7 +267,7 @@ public final class FormEditingUtil {
    */
   @Nullable
   public static RadComponent getDraggerHost(@NotNull final GuiEditor editor) {
-    final Ref<RadComponent> result = new Ref<RadComponent>();
+    final Ref<RadComponent> result = new Ref<>();
     iterate(
       editor.getRootContainer(),
       new ComponentVisitor<RadComponent>() {
@@ -320,7 +320,7 @@ public final class FormEditingUtil {
    */
   @NotNull
   public static ArrayList<RadComponent> getSelectedComponents(@NotNull final GuiEditor editor) {
-    final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
+    final ArrayList<RadComponent> result = new ArrayList<>();
     calcSelectedComponentsImpl(result, editor.getRootContainer());
     return result;
   }
@@ -351,7 +351,7 @@ public final class FormEditingUtil {
    */
   @NotNull
   public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor) {
-    final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
+    final ArrayList<RadComponent> result = new ArrayList<>();
     iterate(
       editor.getRootContainer(),
       new ComponentVisitor<RadComponent>() {
@@ -400,7 +400,7 @@ public final class FormEditingUtil {
                                                     final String binding,
                                                     @Nullable final IComponent exceptComponent) {
     // Check that binding is unique
-    final Ref<IComponent> boundComponent = new Ref<IComponent>();
+    final Ref<IComponent> boundComponent = new Ref<>();
     iterate(
       component,
       new ComponentVisitor() {
@@ -496,7 +496,7 @@ public final class FormEditingUtil {
   }
 
   public static Set<String> collectUsedBundleNames(final IRootContainer rootContainer) {
-    final Set<String> bundleNames = new HashSet<String>();
+    final Set<String> bundleNames = new HashSet<>();
     iterateStringDescriptors(rootContainer, new StringDescriptorVisitor<IComponent>() {
       public boolean visit(final IComponent component, final StringDescriptor descriptor) {
         if (descriptor.getBundleName() != null && !bundleNames.contains(descriptor.getBundleName())) {
@@ -509,7 +509,7 @@ public final class FormEditingUtil {
   }
 
   public static Locale[] collectUsedLocales(final Module module, final IRootContainer rootContainer) {
-    final Set<Locale> locales = new HashSet<Locale>();
+    final Set<Locale> locales = new HashSet<>();
     final PropertiesReferenceManager propManager = PropertiesReferenceManager.getInstance(module.getProject());
     for (String bundleName : collectUsedBundleNames(rootContainer)) {
       List<PropertiesFile> propFiles = propManager.findPropertiesFiles(module, bundleName.replace('/', '.'));
@@ -528,41 +528,39 @@ public final class FormEditingUtil {
       return;
     }
 
-    Runnable runnable = new Runnable() {
-      public void run() {
-        if (!GridChangeUtil.canDeleteCells(container, cells, isRow)) {
-          Set<RadComponent> componentsInColumn = new HashSet<RadComponent>();
-          for (RadComponent component : container.getComponents()) {
-            GridConstraints c = component.getConstraints();
-            for (int cell : cells) {
-              if (c.contains(isRow, cell)) {
-                componentsInColumn.add(component);
-                break;
-              }
+    Runnable runnable = () -> {
+      if (!GridChangeUtil.canDeleteCells(container, cells, isRow)) {
+        Set<RadComponent> componentsInColumn = new HashSet<>();
+        for (RadComponent component : container.getComponents()) {
+          GridConstraints c = component.getConstraints();
+          for (int cell : cells) {
+            if (c.contains(isRow, cell)) {
+              componentsInColumn.add(component);
+              break;
             }
-          }
-
-          if (componentsInColumn.size() > 0) {
-            String message = isRow
-                             ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size(), cells.length)
-                             : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size(), cells.length);
-
-            final int rc = Messages.showYesNoDialog(editor, message,
-                                                    isRow ? UIDesignerBundle.message("delete.row.title")
-                                                          : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
-            if (rc != Messages.YES) {
-              return;
-            }
-
-            deleteComponents(componentsInColumn, false);
           }
         }
 
-        for (int cell : cells) {
-          container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
+        if (componentsInColumn.size() > 0) {
+          String message = isRow
+                           ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size(), cells.length)
+                           : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size(), cells.length);
+
+          final int rc = Messages.showYesNoDialog(editor, message,
+                                                  isRow ? UIDesignerBundle.message("delete.row.title")
+                                                        : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
+          if (rc != Messages.YES) {
+            return;
+          }
+
+          deleteComponents(componentsInColumn, false);
         }
-        editor.refreshAndSave(true);
       }
+
+      for (int cell : cells) {
+        container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
+      }
+      editor.refreshAndSave(true);
     };
     CommandProcessor.getInstance().executeCommand(editor.getProject(), runnable,
                                                   isRow ? UIDesignerBundle.message("command.delete.row")

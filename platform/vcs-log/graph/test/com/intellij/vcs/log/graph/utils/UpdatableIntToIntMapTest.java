@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 public abstract class UpdatableIntToIntMapTest {
 
   private static Set<Integer> parseSet(String visibility) {
-    Set<Integer> visibleNodes = new HashSet<Integer>();
+    Set<Integer> visibleNodes = new HashSet<>();
     if (visibility.length() == 0) return visibleNodes;
 
     for (String number : visibility.split("\\|")) {

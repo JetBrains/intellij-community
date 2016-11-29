@@ -15,14 +15,20 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
 /**
  * User: anna
@@ -33,25 +39,44 @@ public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
   public PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
+    if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+
     return new XmlElementVisitor() {
       @Override
       public void visitXmlTag(XmlTag tag) {
         super.visitXmlTag(tag);
         final XmlElementDescriptor descriptor = tag.getDescriptor();
-        if (descriptor instanceof JavaFxPropertyElementDescriptor) {
-          final XmlTag parentTag = tag.getParentTag();
-          if (parentTag != null) {
-            final String propertyName = JavaFxPsiUtil.getDefaultPropertyName(JavaFxPsiUtil.getTagClass(parentTag));
+        if (descriptor instanceof JavaFxPropertyTagDescriptor) {
+          final PsiClass parentTagClass = JavaFxPsiUtil.getTagClass(tag.getParentTag());
+          if (parentTagClass != null) {
+            final String propertyName = JavaFxPsiUtil.getDefaultPropertyName(parentTagClass);
             final String tagName = tag.getName();
-            if (Comparing.strEqual(tagName, propertyName)) {
-              holder.registerProblem(tag.getFirstChild(), 
-                                     "Default property tag could be removed", 
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                     new UnwrapTagFix(tagName));
+            if (Comparing.strEqual(tagName, propertyName) && !isCollectionAssignment(parentTagClass, propertyName, tag)) {
+              final TextRange startTagRange = XmlTagUtil.getStartTagRange(tag);
+              final TextRange rangeInElement = startTagRange != null ? startTagRange.shiftRight(-tag.getTextOffset()) : null;
+              holder.registerProblem(tag, rangeInElement, "Default property tag could be removed", new UnwrapTagFix(tagName));
             }
           }
         }
       }
     };
+  }
+
+  private static boolean isCollectionAssignment(@NotNull PsiClass parentTagClass, @NotNull String propertyName, @NotNull XmlTag tag) {
+    final XmlTag[] subTags = tag.getSubTags();
+    if (subTags.length != 0) {
+      final PsiClass tagValueClass = JavaFxPsiUtil.getTagValueClass(subTags[subTags.length - 1]);
+      if (JavaFxPsiUtil.isObservableCollection(tagValueClass)) {
+        final PsiMember property = JavaFxPsiUtil.collectWritableProperties(parentTagClass).get(propertyName);
+        if (property != null) {
+          final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(parentTagClass, property);
+          final PsiClass propertyClass = PsiUtil.resolveClassInClassTypeOnly(propertyType);
+          if (JavaFxPsiUtil.isObservableCollection(propertyClass)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 }

@@ -267,7 +267,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     panel.add(new JLabel(), gc);
 
     Collection<String> urls = SvnApplicationSettings.getInstance().getCheckoutURLs();
-    ArrayList<SVNURL> svnURLs = new ArrayList<SVNURL>();
+    ArrayList<SVNURL> svnURLs = new ArrayList<>();
     for (final String url : urls) {
       try {
         svnURLs.add(SVNURL.parseURIEncoded(url));
@@ -798,7 +798,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     private boolean doDelete(final SVNURL url, final String comment) {
-      final Ref<Exception> exception = new Ref<Exception>();
+      final Ref<Exception> exception = new Ref<>();
       final Project project = myBrowserComponent.getProject();
       Runnable command = new Runnable() {
         public void run() {
@@ -969,7 +969,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   protected static void doMkdir(final SVNURL url, final String comment, final Project project) {
-    final Ref<Exception> exception = new Ref<Exception>();
+    final Ref<Exception> exception = new Ref<>();
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -993,7 +993,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   private void doCopy(final SVNURL src, final SVNURL dst, final boolean move, final String comment) {
-    final Ref<Exception> exception = new Ref<Exception>();
+    final Ref<Exception> exception = new Ref<>();
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();

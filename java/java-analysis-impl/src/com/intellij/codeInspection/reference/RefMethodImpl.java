@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -56,24 +57,20 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private RefParameter[] myParameters;
   private String myReturnValueTemplate;
-  protected final RefClass myOwnerClass;
 
   RefMethodImpl(@NotNull RefClass ownerClass, PsiMethod method, RefManager manager) {
     super(method, manager);
 
     ((RefClassImpl)ownerClass).add(this);
-
-    myOwnerClass = ownerClass;
   }
 
   // To be used only from RefImplicitConstructor.
   protected RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
     super(name, ownerClass);
-    myOwnerClass = ownerClass;
     ((RefClassImpl)ownerClass).add(this);
 
-    addOutReference(getOwnerClass());
-    ((RefClassImpl)getOwnerClass()).addInReference(this);
+    addOutReference(ownerClass);
+    ((RefClassImpl)ownerClass).addInReference(this);
 
     setConstructor(true);
   }
@@ -86,13 +83,14 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     super.add(child);
   }
 
+  @NotNull
   @Override
   public List<RefEntity> getChildren() {
     List<RefEntity> superChildren = super.getChildren();
     if (myParameters == null) return superChildren;
-    if (superChildren == null || superChildren.isEmpty()) return Arrays.<RefEntity>asList(myParameters);
+    if (superChildren.isEmpty()) return Arrays.<RefEntity>asList(myParameters);
     
-    List<RefEntity> allChildren = new ArrayList<RefEntity>(superChildren.size() + myParameters.length);
+    List<RefEntity> allChildren = new ArrayList<>(superChildren.size() + myParameters.length);
     allChildren.addAll(superChildren);
     Collections.addAll(allChildren, myParameters);
     return allChildren;
@@ -255,7 +253,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public void addSuperMethod(RefMethodImpl refSuperMethod) {
     if (!getSuperMethods().contains(refSuperMethod) && !refSuperMethod.getSuperMethods().contains(this)) {
       if (mySuperMethods == null){
-        mySuperMethods = new ArrayList<RefMethod>(1);
+        mySuperMethods = new ArrayList<>(1);
       }
       mySuperMethods.add(refSuperMethod);
     }
@@ -264,7 +262,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public void markExtended(RefMethodImpl method) {
     if (!getDerivedMethods().contains(method) && !method.getDerivedMethods().contains(this)) {
       if (myDerivedMethods == null) {
-        myDerivedMethods = new ArrayList<RefMethod>(1);
+        myDerivedMethods = new ArrayList<>(1);
       }
       myDerivedMethods.add(method);
     }
@@ -284,8 +282,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (method == null) return;
     PsiCodeBlock body = method.getBody();
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-    refUtil.addReferences(method, this, body);
-    refUtil.addReferences(method, this, method.getModifierList());
+    refUtil.addReferences(method, this, method);
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
@@ -309,7 +306,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (getSuperMethods().isEmpty()) {
       PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
       if (throwsList.length > 0) {
-        myUnThrownExceptions = throwsList.length == 1 ? new SmartList<String>() : new ArrayList<String>(throwsList.length);
+        myUnThrownExceptions = throwsList.length == 1 ? new SmartList<>() : new ArrayList<>(throwsList.length);
         for (final PsiClassType type : throwsList) {
           PsiClass aClass = type.resolve();
           String fqn = aClass == null ? null : aClass.getQualifiedName();
@@ -338,12 +335,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          ((RefJavaVisitor)visitor).visitMethod(RefMethodImpl.this);
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitMethod(this));
     } else {
       super.accept(visitor);
     }
@@ -351,7 +343,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean isExternalOverride() {
-    return isLibraryOverride(new HashSet<RefMethod>());
+    return isLibraryOverride(new HashSet<>());
   }
 
   private boolean isLibraryOverride(@NotNull Collection<RefMethod> processed) {
@@ -406,8 +398,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     // Class isn't instantiated. Most probably we have problem with class, not method.
     if (!isStatic() && !isConstructor()) {
-      if (((RefClassImpl)getOwnerClass()).isSuspicious()) return true;
-
       // Is an override. Probably called via reference to base class.
       for (RefMethod refSuper : getSuperMethods()) {
         if (((RefMethodImpl)refSuper).isSuspicious()) return true;
@@ -431,27 +421,19 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public String getName() {
     if (isValid()) {
-      final String[] result = new String[1];
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          PsiMethod psiMethod = (PsiMethod) getElement();
-          if (psiMethod instanceof SyntheticElement) {
-            result[0] = psiMethod.getName();
-          }
-          else {
-            result[0] = PsiFormatUtil.formatMethod(psiMethod,
-                                                   PsiSubstitutor.EMPTY,
-                                                   PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                   PsiFormatUtilBase.SHOW_TYPE
-            );
-          }
+      return ReadAction.compute(() -> {
+        PsiMethod psiMethod = (PsiMethod) getElement();
+        if (psiMethod instanceof SyntheticElement) {
+          return psiMethod.getName();
         }
-      };
-
-      ApplicationManager.getApplication().runReadAction(runnable);
-
-      return result[0];
+        else {
+          return PsiFormatUtil.formatMethod(psiMethod,
+                                                 PsiSubstitutor.EMPTY,
+                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                 PsiFormatUtilBase.SHOW_TYPE
+          );
+        }
+      });
     } else {
       return super.getName();
     }
@@ -459,19 +441,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public String getExternalName() {
-    final String[] result = new String[1];
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        final PsiMethod psiMethod = (PsiMethod)getElement();
-        LOG.assertTrue(psiMethod != null);
-        result[0] = PsiFormatUtil.getExternalName(psiMethod, true, Integer.MAX_VALUE);
-      }
-    };
-
-    ApplicationManager.getApplication().runReadAction(runnable);
-
-    return result[0];
+    return ReadAction.compute(() -> {
+      final PsiMethod psiMethod = (PsiMethod)getElement();
+      LOG.assertTrue(psiMethod != null);
+      return PsiFormatUtil.getExternalName(psiMethod, true, Integer.MAX_VALUE);
+    });
   }
 
   @Nullable
@@ -512,7 +486,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       subMethod.getSuperMethods().remove(this);
     }
 
-    ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>();
+    ArrayList<RefElement> deletedRefs = new ArrayList<>();
     for (RefParameter parameter : getParameters()) {
       getRefManager().removeRefElement(parameter, deletedRefs);
     }
@@ -639,7 +613,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
     if (myUnThrownExceptions == null) return null;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
-    List<PsiClass> result = new ArrayList<PsiClass>(myUnThrownExceptions.size());
+    List<PsiClass> result = new ArrayList<>(myUnThrownExceptions.size());
     for (String exception : myUnThrownExceptions) {
       PsiClass element = facade.findClass(exception, GlobalSearchScope.allScope(myManager.getProject()));
       if (element != null) result.add(element);
@@ -697,4 +671,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     setFlag(isCalledOnSubClass, IS_CALLED_ON_SUBCLASS_MASK);
   }
 
+  private static String extractMethodName(String methodSignature) {
+    final String returnTypeAndName = methodSignature.substring(0, methodSignature.indexOf('('));
+    return returnTypeAndName.substring(returnTypeAndName.indexOf(' ') + 1);
+  }
 }

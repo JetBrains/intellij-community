@@ -195,24 +195,21 @@ public class RngParser {
   public static Schema getCachedSchema(final XmlFile descriptorFile) {
     CachedValue<Schema> value = descriptorFile.getUserData(SCHEMA_KEY);
     if (value == null) {
-      final CachedValueProvider<Schema> provider = new CachedValueProvider<Schema>() {
-        @Override
-        public Result<Schema> compute() {
-          final InputSource inputSource = makeInputSource(descriptorFile);
+      final CachedValueProvider<Schema> provider = () -> {
+        final InputSource inputSource = makeInputSource(descriptorFile);
 
-          try {
-            final Schema schema = new MySchemaReader(descriptorFile).createSchema(inputSource, EMPTY_PROPS);
-            final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<XmlFile>();
-            RelaxIncludeIndex.processForwardDependencies(descriptorFile, processor);
-            if (processor.getCollection().size() > 0) {
-              return Result.create(schema, processor.toArray(), descriptorFile);
-            } else {
-              return Result.createSingleDependency(schema, descriptorFile);
-            }
-          } catch (Exception e) {
-            LOG.info(e);
-            return Result.createSingleDependency(null, descriptorFile);
+        try {
+          final Schema schema = new MySchemaReader(descriptorFile).createSchema(inputSource, EMPTY_PROPS);
+          final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<>();
+          RelaxIncludeIndex.processForwardDependencies(descriptorFile, processor);
+          if (processor.getCollection().size() > 0) {
+            return CachedValueProvider.Result.create(schema, processor.toArray(), descriptorFile);
+          } else {
+            return CachedValueProvider.Result.createSingleDependency(schema, descriptorFile);
           }
+        } catch (Exception e) {
+          LOG.info(e);
+          return CachedValueProvider.Result.createSingleDependency(null, descriptorFile);
         }
       };
 

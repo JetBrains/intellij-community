@@ -16,6 +16,7 @@
 package org.jetbrains.jps.gradle.model.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.gradle.model.JpsGradleModuleExtension;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.ex.JpsElementBase;
@@ -28,13 +29,22 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 public class JpsGradleModuleExtensionImpl extends JpsElementBase<JpsGradleModuleExtensionImpl> implements JpsGradleModuleExtension {
   public static final JpsElementChildRole<JpsGradleModuleExtension> ROLE = JpsElementChildRoleBase.create("gradle");
 
-  public JpsGradleModuleExtensionImpl() {
+  private String myModuleType;
+
+  public JpsGradleModuleExtensionImpl(String moduleType) {
+    myModuleType = moduleType;
+  }
+
+  @Nullable
+  @Override
+  public String getModuleType() {
+    return myModuleType;
   }
 
   @NotNull
   @Override
   public JpsGradleModuleExtensionImpl createCopy() {
-    return new JpsGradleModuleExtensionImpl();
+    return new JpsGradleModuleExtensionImpl(myModuleType);
   }
 
   @Override

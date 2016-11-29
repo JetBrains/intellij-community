@@ -17,15 +17,13 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.JavaTestFrameworkDebuggerRunner;
 import com.intellij.execution.configurations.RunProfile;
-import com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 
 public class TestNGDebuggerRunner extends JavaTestFrameworkDebuggerRunner {
   @Override
   protected boolean validForProfile(@NotNull RunProfile profile) {
-    return profile instanceof TestNGConfiguration || 
-           profile instanceof TestNGTestDiscoveryConfiguration;
+    return profile instanceof TestNGConfiguration;
   }
 
   @NotNull

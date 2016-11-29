@@ -44,12 +44,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
   private AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
   private Alarm myUserActivityAlarm = new Alarm(this);
   private Runnable myRunWhenListRebuilt;
-  private Runnable myUserActivityAlarmRunnable = new Runnable() {
-    @Override
-    public void run() {
-      processUserActivity();
-    }
-  };
+  private Runnable myUserActivityAlarmRunnable = () -> processUserActivity();
 
   private NavBarPanel myPanel;
 
@@ -57,12 +52,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     super("NavBar", Registry.intValue("navBar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, panel);
     myPanel = panel;
     setTrackUiActivity(true);
-    IdeEventQueue.getInstance().addActivityListener(new Runnable() {
-        @Override
-        public void run() {
-          restartRebuild();
-        }
-      }, panel);
+    IdeEventQueue.getInstance().addActivityListener(() -> restartRebuild(), panel);
   }
 
   private void requestModelUpdate(@Nullable final DataContext context, final @Nullable Object object, boolean requeue) {
@@ -128,38 +118,35 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     }
 
     final Project project = myPanel.getProject();
-    IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        Window wnd = SwingUtilities.windowForComponent(myPanel);
-        if (wnd == null) return;
+    IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
+      Window wnd = SwingUtilities.windowForComponent(myPanel);
+      if (wnd == null) return;
 
-        Component focus = null;
+      Component focus = null;
 
-        if (!wnd.isActive()) {
-          IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, myPanel);
-          if (frame != null) {
-            focus = IdeFocusManager.getInstance(project).getLastFocusedFor(frame);
+      if (!wnd.isActive()) {
+        IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, myPanel);
+        if (frame != null) {
+          focus = IdeFocusManager.getInstance(project).getLastFocusedFor(frame);
+        }
+      }
+      else {
+        final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        if (window instanceof Dialog) {
+          final Dialog dialog = (Dialog)window;
+          if (dialog.isModal() && !SwingUtilities.isDescendingFrom(myPanel, dialog)) {
+            return;
           }
         }
-        else {
-          final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-          if (window instanceof Dialog) {
-            final Dialog dialog = (Dialog)window;
-            if (dialog.isModal() && !SwingUtilities.isDescendingFrom(myPanel, dialog)) {
-              return;
-            }
-          }
-        }
+      }
 
-        if (focus != null && focus.isShowing()) {
-          if (!myPanel.hasFocus() && !myPanel.isNodePopupShowing()) {
-            requestModelUpdate(DataManager.getInstance().getDataContext(focus), null, false);
-          }
+      if (focus != null && focus.isShowing()) {
+        if (!myPanel.hasFocus() && !myPanel.isNodePopupShowing()) {
+          requestModelUpdate(DataManager.getInstance().getDataContext(focus), null, false);
         }
-        else if (wnd.isActive()) {
-          requestModelUpdate(null, myPanel.getContextObject(), false);
-        }
+      }
+      else if (wnd.isActive()) {
+        requestModelUpdate(null, myPanel.getContextObject(), false);
       }
     });
   }
@@ -224,12 +211,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     myPanel.revalidate();
     myPanel.repaint();
 
-    queueAfterAll(new Runnable() {
-      @Override
-      public void run() {
-        myPanel.scrollSelectionToVisible();
-      }
-    }, ID.SCROLL_TO_VISIBLE);
+    queueAfterAll(() -> myPanel.scrollSelectionToVisible(), ID.SCROLL_TO_VISIBLE);
   }
 
   private void queueRevalidate(@Nullable final Runnable after) {

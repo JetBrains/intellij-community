@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,20 +40,42 @@ import java.util.List;
  * @author ven
  */
 public class LightMethod extends LightElement implements PsiMethod {
-  private final PsiMethod myMethod;
-  private final PsiClass myContainingClass;
+
+  protected final @NotNull PsiMethod myMethod;
+  protected final @NotNull PsiClass myContainingClass;
+  protected final @NotNull PsiSubstitutor mySubstitutor;
+
+  public LightMethod(@NotNull PsiClass containingClass, @NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    this(containingClass.getManager(), method, containingClass, containingClass.getLanguage(), substitutor);
+  }
 
   public LightMethod(@NotNull PsiManager manager, @NotNull PsiMethod method, @NotNull PsiClass containingClass) {
-    this(manager, method, containingClass, JavaLanguage.INSTANCE);
+    this(manager, method, containingClass, PsiSubstitutor.EMPTY);
+  }
+
+  public LightMethod(@NotNull PsiManager manager,
+                     @NotNull PsiMethod method,
+                     @NotNull PsiClass containingClass,
+                     @NotNull PsiSubstitutor substitutor) {
+    this(manager, method, containingClass, JavaLanguage.INSTANCE, substitutor);
   }
 
   public LightMethod(@NotNull PsiManager manager,
                      @NotNull PsiMethod method,
                      @NotNull PsiClass containingClass,
                      @NotNull Language language) {
+    this(manager, method, containingClass, language, PsiSubstitutor.EMPTY);
+  }
+
+  public LightMethod(@NotNull PsiManager manager,
+                     @NotNull PsiMethod method,
+                     @NotNull PsiClass containingClass,
+                     @NotNull Language language,
+                     @NotNull PsiSubstitutor substitutor) {
     super(manager, language);
     myMethod = method;
     myContainingClass = containingClass;
+    mySubstitutor = substitutor;
   }
 
   @Override
@@ -67,7 +89,8 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  @NotNull public PsiTypeParameter[] getTypeParameters() {
+  @NotNull
+  public PsiTypeParameter[] getTypeParameters() {
     return myMethod.getTypeParameters();
   }
 
@@ -121,7 +144,7 @@ public class LightMethod extends LightElement implements PsiMethod {
 
   @Override
   public PsiType getReturnType() {
-    return myMethod.getReturnType();
+    return mySubstitutor.substitute(myMethod.getReturnType());
   }
 
   @Override
@@ -132,7 +155,9 @@ public class LightMethod extends LightElement implements PsiMethod {
   @Override
   @NotNull
   public PsiParameterList getParameterList() {
-    return myMethod.getParameterList();
+    return mySubstitutor == PsiSubstitutor.EMPTY
+           ? myMethod.getParameterList()
+           : new LightParameterListWrapper(myMethod.getParameterList(), mySubstitutor);
   }
 
   @Override
@@ -223,6 +248,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myContainingClass.isValid();
   }
 
+  @NotNull
   @Override
   public PsiClass getContainingClass() {
     return myContainingClass;
@@ -235,7 +261,7 @@ public class LightMethod extends LightElement implements PsiMethod {
 
   @Override
   public String toString() {
-    return "PsiMethod:" + getName();
+    return "Light PSI method wrapper:" + getName();
   }
 
   @Override

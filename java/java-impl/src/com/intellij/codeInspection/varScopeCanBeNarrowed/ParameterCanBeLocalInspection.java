@@ -19,10 +19,14 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.JavaChangeInfo;
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +62,7 @@ public class ParameterCanBeLocalInspection extends ParameterCanBeLocalInspection
         final PsiMethod method = (PsiMethod)scope;
         final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-        final List<ParameterInfoImpl> info = new ArrayList<ParameterInfoImpl>();
+        final List<ParameterInfoImpl> info = new ArrayList<>();
         for (int i = 0; i < parameters.length; i++) {
           PsiParameter psiParameter = parameters[i];
           if (psiParameter == parameter) continue;
@@ -66,8 +70,11 @@ public class ParameterCanBeLocalInspection extends ParameterCanBeLocalInspection
         }
         final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[info.size()]);
         final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-        final ChangeSignatureProcessor cp = new ChangeSignatureProcessor(project, method, false, visibilityModifier,
-                                                                         method.getName(), method.getReturnType(), newParams) {
+        final PsiType returnType = method.getReturnType();
+        final JavaChangeInfo changeInfo = new JavaChangeInfoImpl(visibilityModifier, method, method.getName(),
+                                                                 returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
+                                                                 newParams, null, false, ContainerUtil.newHashSet(), ContainerUtil.newHashSet());
+        final ChangeSignatureProcessor cp = new ChangeSignatureProcessor(project, changeInfo) {
           @Override
           protected void performRefactoring(@NotNull UsageInfo[] usages) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
@@ -79,6 +86,11 @@ public class ParameterCanBeLocalInspection extends ParameterCanBeLocalInspection
         cp.run();
       }
       return null;
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
 
     @NotNull

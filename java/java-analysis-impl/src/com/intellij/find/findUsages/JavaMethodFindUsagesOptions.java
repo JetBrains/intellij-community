@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -25,14 +26,19 @@ import java.util.LinkedHashSet;
  * @author peter
  */
 public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
-  public boolean isOverridingMethods = false;
-  public boolean isImplementingMethods = false;
+  public boolean isOverridingMethods;
+  public boolean isImplementingMethods;
   public boolean isCheckDeepInheritance = true;
-  public boolean isIncludeInherited = false;
-  public boolean isIncludeOverloadUsages = false;
+  public boolean isIncludeInherited;
+  public boolean isIncludeOverloadUsages;
 
   public JavaMethodFindUsagesOptions(@NotNull Project project) {
     super(project);
+    isSearchForTextOccurrences = false;
+  }
+
+  public JavaMethodFindUsagesOptions(@NotNull SearchScope searchScope) {
+    super(searchScope);
     isSearchForTextOccurrences = false;
   }
 

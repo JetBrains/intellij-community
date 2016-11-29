@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.compiler.options;
 
 import com.intellij.ide.util.ElementsChooser;
@@ -59,7 +74,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
       }
     };
 
-    List<VirtualFile> allContentRoots = new ArrayList<VirtualFile>();
+    List<VirtualFile> allContentRoots = new ArrayList<>();
     for (final Module module: ModuleManager.getInstance(project).getModules()) {
       final VirtualFile[] moduleContentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       Collections.addAll(allContentRoots, moduleContentRoots);
@@ -71,10 +86,6 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   @NotNull
   public String getId() {
     return "project.validation";
-  }
-
-  public Runnable enableSearch(final String option) {
-    return null;
   }
 
   public String getDisplayName() {
@@ -98,7 +109,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     if (markedValidators.size() != selectedElements.size()) {
       return true;
     }
-    Set<Compiler> set = new THashSet<Compiler>(selectedElements, new TObjectHashingStrategy<Compiler>() {
+    Set<Compiler> set = new THashSet<>(selectedElements, new TObjectHashingStrategy<Compiler>() {
       public int computeHashCode(Compiler object) {
         return object.getDescription().hashCode();
       }
@@ -124,11 +135,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   public void reset() {
     myValidateBox.setSelected(myConfiguration.VALIDATE_ON_BUILD);
     final List<Compiler> validators = getValidators();
-    Collections.sort(validators, new Comparator<Compiler>() {
-      public int compare(final Compiler o1, final Compiler o2) {
-        return o1.getDescription().compareTo(o2.getDescription());
-      }
-    });
+    Collections.sort(validators, Comparator.comparing(Compiler::getDescription));
     myValidators.setElements(validators, false);
     myValidators.markElements(getMarkedValidators());
     myExcludedConfigurable.reset();
@@ -136,16 +143,12 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
 
   private List<Compiler> getMarkedValidators() {
     final List<Compiler> validators = getValidators();
-    return ContainerUtil.mapNotNull(validators, new NullableFunction<Compiler, Compiler>() {
-      public Compiler fun(final Compiler validator) {
-        return myConfiguration.isSelected(validator) ? validator : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(validators, (NullableFunction<Compiler, Compiler>)validator -> myConfiguration.isSelected(validator) ? validator : null);
   }
 
   private List<Compiler> getValidators() {
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    final List<Compiler> validators = new ArrayList<Compiler>();
+    final List<Compiler> validators = new ArrayList<>();
     validators.addAll(Arrays.asList(compilerManager.getCompilers(Validator.class)));
     for (GenericCompiler compiler : compilerManager.getCompilers(GenericCompiler.class)) {
       if (compiler.getOrderPlace() == GenericCompiler.CompileOrderPlace.VALIDATING) {

@@ -88,12 +88,4 @@ public interface FormattingDocumentModel {
   CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset,
                                            @Nullable ASTNode nodeAfter, boolean changedViaPsi);
 
-  ///**
-  // * Allows to answer if given symbol is treated by the current model as white space symbol during formatting.
-  // *
-  // * @param symbol    symbols to check
-  // * @return          <code>true</code> if given symbol is treated by the current model as white space symbol during formatting;
-  // *                  <code>false</code> otherwise
-  // */
-  //boolean isWhiteSpaceSymbol(char symbol);
 }

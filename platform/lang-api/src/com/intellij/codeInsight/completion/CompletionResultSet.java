@@ -111,15 +111,12 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   }
 
   public LinkedHashSet<CompletionResult> runRemainingContributors(CompletionParameters parameters, final boolean passResult) {
-    final LinkedHashSet<CompletionResult> elements = new LinkedHashSet<CompletionResult>();
-    runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(CompletionResult result) {
-        if (passResult) {
-          passResult(result);
-        }
-        elements.add(result);
+    final LinkedHashSet<CompletionResult> elements = new LinkedHashSet<>();
+    runRemainingContributors(parameters, result -> {
+      if (passResult) {
+        passResult(result);
       }
+      elements.add(result);
     });
     return elements;
   }

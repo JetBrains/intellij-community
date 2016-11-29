@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.List;
 public class SliceRootNode extends SliceNode {
   private final SliceUsage myRootUsage;
 
-  public SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages, final SliceUsage rootUsage) {
+  public SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages, @NotNull SliceUsage rootUsage) {
     super(project,
           LanguageSlicing.getProvider(rootUsage.getElement().getContainingFile()).
             createRootUsage(rootUsage.getElement().getContainingFile(), rootUsage.params),
@@ -40,7 +40,7 @@ public class SliceRootNode extends SliceNode {
     myRootUsage = rootUsage;
   }
 
-  void switchToAllLeavesTogether(SliceUsage rootUsage) {
+  private void switchToAllLeavesTogether(SliceUsage rootUsage) {
     SliceNode node = new SliceNode(getProject(), rootUsage, targetEqualUsages);
     myCachedChildren = Collections.singletonList(node);
   }
@@ -71,11 +71,6 @@ public class SliceRootNode extends SliceNode {
   }
 
   @Override
-  protected boolean shouldUpdateData() {
-    return super.shouldUpdateData();
-  }
-
-  @Override
   protected void update(PresentationData presentation) {
     if (presentation != null) {
       presentation.setChanged(presentation.isChanged() || changed);
@@ -95,7 +90,8 @@ public class SliceRootNode extends SliceNode {
                                     boolean hasFocus) {
   }
 
-  public SliceUsage getRootUsage() {
+  @NotNull
+  SliceUsage getRootUsage() {
     return myRootUsage;
   }
 }

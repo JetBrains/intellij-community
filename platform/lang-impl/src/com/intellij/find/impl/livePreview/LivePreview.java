@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -41,7 +41,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +48,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class LivePreview extends DocumentAdapter implements SearchResults.SearchResultsListener, SelectionListener {
   private static final Key<Object> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
@@ -70,9 +71,9 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
   private String myReplacementPreviewText;
   private static boolean NotFound;
 
-  private final Set<RangeHighlighter> myHighlighters = new HashSet<RangeHighlighter>();
+  private final Set<RangeHighlighter> myHighlighters = new HashSet<>();
   private RangeHighlighter myCursorHighlighter;
-  private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<VisibleAreaListener>();
+  private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<>();
   private Delegate myDelegate;
   private final SearchResults mySearchResults;
   private Balloon myReplacementBalloon;
@@ -97,7 +98,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
   private static TextAttributes strikeout() {
     Color color = EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
-    return new TextAttributes(null, null, color, EffectType.STRIKEOUT, 0);
+    return new TextAttributes(null, null, color, EffectType.STRIKEOUT, Font.PLAIN);
   }
 
   @Override
@@ -137,38 +138,35 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     Editor editor = mySearchResults.getEditor();
 
     RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
-    List<Pair<Integer, Character>> ranges = new ArrayList<Pair<Integer, Character>>();
+    List<Pair<Integer, Character>> ranges = new ArrayList<>();
     for (RangeHighlighter highlighter : highlighters) {
-      ranges.add(new Pair<Integer, Character>(highlighter.getStartOffset(), '['));
-      ranges.add(new Pair<Integer, Character>(highlighter.getEndOffset(), ']'));
+      ranges.add(new Pair<>(highlighter.getStartOffset(), '['));
+      ranges.add(new Pair<>(highlighter.getEndOffset(), ']'));
     }
 
     SelectionModel selectionModel = editor.getSelectionModel();
 
     if (selectionModel.getSelectionStart() != selectionModel.getSelectionEnd()) {
-      ranges.add(new Pair<Integer, Character>(selectionModel.getSelectionStart(), '<'));
-      ranges.add(new Pair<Integer, Character>(selectionModel.getSelectionEnd(), '>'));
+      ranges.add(new Pair<>(selectionModel.getSelectionStart(), '<'));
+      ranges.add(new Pair<>(selectionModel.getSelectionEnd(), '>'));
     }
-    ranges.add(new Pair<Integer, Character>(-1, '\n'));
-    ranges.add(new Pair<Integer, Character>(editor.getDocument().getTextLength()+1, '\n'));
-    ContainerUtil.sort(ranges, new Comparator<Pair<Integer, Character>>() {
-      @Override
-      public int compare(@NotNull Pair<Integer, Character> pair, @NotNull Pair<Integer, Character> pair2) {
-        int res = pair.first - pair2.first;
-        if (res == 0) {
+    ranges.add(new Pair<>(-1, '\n'));
+    ranges.add(new Pair<>(editor.getDocument().getTextLength() + 1, '\n'));
+    ContainerUtil.sort(ranges, (pair, pair2) -> {
+      int res = pair.first - pair2.first;
+      if (res == 0) {
 
-          Character c1 = pair.second;
-          Character c2 = pair2.second;
-          if (c1 == '<' && c2 == '[') {
-            return 1;
-          }
-          else if (c1 == '[' && c2 == '<') {
-            return -1;
-          }
-          return c1.compareTo(c2);
+        Character c1 = pair.second;
+        Character c2 = pair2.second;
+        if (c1 == '<' && c2 == '[') {
+          return 1;
         }
-        return res;
+        else if (c1 == '[' && c2 == '<') {
+          return -1;
+        }
+        return c1.compareTo(c2);
       }
+      return res;
     });
 
     Document document = editor.getDocument();
@@ -192,7 +190,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
   }
 
   private void clearUnusedHightlighters() {
-    Set<RangeHighlighter> unused = new com.intellij.util.containers.HashSet<RangeHighlighter>();
+    Set<RangeHighlighter> unused = new com.intellij.util.containers.HashSet<>();
     for (RangeHighlighter highlighter : myHighlighters) {
       if (highlighter.getUserData(MARKER_USED) == null) {
         unused.add(highlighter);
@@ -231,19 +229,14 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
     if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
-      Set<RangeHighlighter> dummy = new HashSet<RangeHighlighter>();
+      Set<RangeHighlighter> dummy = new HashSet<>();
       Color color = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-      highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, 0), dummy);
+      highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, Font.PLAIN), dummy);
       if (!dummy.isEmpty()) {
         myCursorHighlighter = dummy.iterator().next();
       }
 
-      editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-        @Override
-        public void run() {
-          showReplacementPreview();
-        }
-      });
+      editor.getScrollingModel().runActionOnScrollingFinished(() -> showReplacementPreview());
     }
   }
 
@@ -335,8 +328,8 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
 
-    final HashSet<RangeHighlighter> toRemove = new HashSet<RangeHighlighter>();
-    Set<RangeHighlighter> toAdd = new HashSet<RangeHighlighter>();
+    final HashSet<RangeHighlighter> toRemove = new HashSet<>();
+    Set<RangeHighlighter> toAdd = new HashSet<>();
     for (RangeHighlighter highlighter : myHighlighters) {
       if (!highlighter.isValid()) continue;
       boolean intersectsWithSelection = false;
@@ -363,7 +356,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
         if (cursor != null && highlighter.getStartOffset() == cursor.getStartOffset() &&
             highlighter.getEndOffset() == cursor.getEndOffset()) continue;
         final RangeHighlighter toAnnotate = highlightRange(new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()),
-                                                                 new TextAttributes(null, null, Color.WHITE, EffectType.ROUNDED_BOX, 0), toAdd);
+                                                           new TextAttributes(null, null, Color.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN), toAdd);
         highlighter.putUserData(IN_SELECTION_KEY, IN_SELECTION1);
         toAnnotate.putUserData(IN_SELECTION_KEY, IN_SELECTION2);
       }
@@ -407,7 +400,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     balloonBuilder.setHideOnAction(false);
     balloonBuilder.setCloseButtonEnabled(true);
     myReplacementBalloon = balloonBuilder.createBalloon();
-
+    EditorUtil.disposeWithEditor(editor, myReplacementBalloon);
     myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.below);
   }
 
@@ -454,27 +447,24 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
     boolean notFound = markupModel.processRangeHighlightersOverlappingWith(
       textRange.getStartOffset(), textRange.getEndOffset(),
-      new Processor<RangeHighlighterEx>() {
-        @Override
-        public boolean process(RangeHighlighterEx highlighter) {
-          TextAttributes textAttributes =
-            highlighter.getTextAttributes();
-          if (highlighter.getUserData(SEARCH_MARKER) != null &&
-              textAttributes != null &&
-              textAttributes.equals(attributes) &&
-              highlighter.getStartOffset() == textRange.getStartOffset() &&
-              highlighter.getEndOffset() == textRange.getEndOffset()) {
-            candidate[0] = highlighter;
-            return false;
-          }
-          return true;
+      highlighter -> {
+        TextAttributes textAttributes =
+          highlighter.getTextAttributes();
+        if (highlighter.getUserData(SEARCH_MARKER) != null &&
+            textAttributes != null &&
+            textAttributes.equals(attributes) &&
+            highlighter.getStartOffset() == textRange.getStartOffset() &&
+            highlighter.getEndOffset() == textRange.getEndOffset()) {
+          candidate[0] = highlighter;
+          return false;
         }
+        return true;
       });
 
     if (!notFound && highlighters.contains(candidate[0])) {
       return candidate[0];
     }
-    final ArrayList<RangeHighlighter> dummy = new ArrayList<RangeHighlighter>();
+    final ArrayList<RangeHighlighter> dummy = new ArrayList<>();
     highlightManager.addRangeHighlight(mySearchResults.getEditor(),
                                        textRange.getStartOffset(),
                                        textRange.getEndOffset(),
@@ -541,11 +531,6 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
   }
 
   private static void requestBalloonHiding(final Balloon object) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        object.hide();
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> object.hide());
   }
 }

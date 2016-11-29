@@ -40,7 +40,7 @@ public class DependentSpacingRule {
   public static final DependentSpacingRule DEFAULT =
     new DependentSpacingRule(Trigger.HAS_LINE_FEEDS).registerData(Anchor.MIN_LINE_FEEDS, 1);
 
-  private final TObjectIntHashMap<Anchor> myData = new TObjectIntHashMap<Anchor>();
+  private final TObjectIntHashMap<Anchor> myData = new TObjectIntHashMap<>();
 
   @NotNull private final Trigger myTrigger;
 

@@ -38,7 +38,7 @@ public class ClassFilesIndexerBuilderParametersProvider extends BuildProcessPara
   @NotNull
   @Override
   public List<String> getVMArguments() {
-    final List<String> args = new ArrayList<String>();
+    final List<String> args = new ArrayList<>();
     myIndicesHolder.visitConfigures(new ConfigureVisitor() {
       @Override
       public void visit(ClassFilesIndexConfigure<?, ?> configure, boolean isAvailable) {

@@ -18,8 +18,8 @@ package git4idea;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +38,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
   /**
    * the hash from 40 zeros representing not yet created commit
    */
-  public static final String NOT_COMMITTED_HASH = StringUtil.repeat("0", 40);
+  public static final String NOT_COMMITTED_HASH = BlobIndexUtil.NOT_COMMITTED_HASH;
 
   public static final GitRevisionNumber HEAD = new GitRevisionNumber("HEAD");
 
@@ -210,6 +210,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    * @return a resolved revision number with correct time
    * @throws VcsException if there is a problem with running git
    */
+  @NotNull
   public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, GitCommand.REV_LIST);
     h.setSilent(true);

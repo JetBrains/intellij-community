@@ -25,6 +25,7 @@ import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -32,6 +33,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -68,15 +70,12 @@ public class SuppressExternalTest extends UsefulTestCase {
 
   private void addAnnotationsModuleRoot() throws IOException {
     myFixture.copyDirectoryToProject("content/anno/suppressed", "content/anno/suppressed");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Module module = myFixture.getModule();
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final String url = VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno");
-        model.getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(new String[]{url});
-        model.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Module module = myFixture.getModule();
+      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      final String url = VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno");
+      model.getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(new String[]{url});
+      model.commit();
     });
   }
 
@@ -98,7 +97,15 @@ public class SuppressExternalTest extends UsefulTestCase {
   private void doTest(String testName) throws Exception {
     final IntentionAction action = myFixture.getAvailableIntention("Suppress for method", "src/suppressed/" + testName + ".java");
     assertNotNull(action);
-    myFixture.launchAction(action);
+    Project project = myFixture.getProject();
+    boolean oldUseExternalAnnotations = CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS;
+    try {
+      CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS = true;
+      myFixture.launchAction(action);
+    }
+    finally {
+      CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS = oldUseExternalAnnotations;
+    }
     myFixture.checkResultByFile("content/anno/suppressed/annotations.xml", "content/anno/suppressed/annotations" + testName + "_after.xml", true);
   }
 

@@ -63,14 +63,8 @@ public class VarargParameterInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("variable.argument.method.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("variable.argument.method.quickfix");
     }
 
     @Override

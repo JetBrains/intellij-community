@@ -66,8 +66,8 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
 
     final SchemaPrefix prefix = prefixRef.resolve();
     final String ns = prefixRef.getNamespacePrefix();
-    final ArrayList<XmlTag> tags = new ArrayList<XmlTag>();
-    final ArrayList<XmlAttribute> attrs = new ArrayList<XmlAttribute>();
+    final ArrayList<XmlTag> tags = new ArrayList<>();
+    final ArrayList<XmlAttribute> attrs = new ArrayList<>();
     xmlns.getParent().accept(new XmlRecursiveElementVisitor() {
       @Override
       public void visitXmlTag(XmlTag tag) {
@@ -91,17 +91,11 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
 
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(xmlns.getContainingFile())) return;
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        convertTagsAndAttributes(ns, tags, attrs, project);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            xmlns.setName("xmlns");
-          }
-        });
-      }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      convertTagsAndAttributes(ns, tags, attrs, project);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        xmlns.setName("xmlns");
+      });
     }, NAME, null);
 
     new WriteCommandAction(project, NAME, xmlns.getContainingFile()) {
@@ -133,21 +127,18 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
       @Override
       public boolean iteration() {
         progressTask.getIndicator().setFraction(((double) (tagIndex + attrIndex)) / totalCount);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (tagIndex < tags.size()) {
-              XmlTag tag = tags.get(tagIndex++);
-              final String s = tag.getName().substring(localNameIndex);
-              if (!s.isEmpty()) {
-                tag.setName(s);
-              }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (tagIndex < tags.size()) {
+            XmlTag tag = tags.get(tagIndex++);
+            final String s = tag.getName().substring(localNameIndex);
+            if (!s.isEmpty()) {
+              tag.setName(s);
             }
-            else if (attrIndex < attrs.size()) {
-              XmlAttribute attr = attrs.get(attrIndex++);
-              //noinspection ConstantConditions
-              attr.setValue(attr.getValue().substring(localNameIndex));
-            }
+          }
+          else if (attrIndex < attrs.size()) {
+            XmlAttribute attr = attrs.get(attrIndex++);
+            //noinspection ConstantConditions
+            attr.setValue(attr.getValue().substring(localNameIndex));
           }
         });
 

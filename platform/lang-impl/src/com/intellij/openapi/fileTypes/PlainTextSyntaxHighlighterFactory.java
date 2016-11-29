@@ -56,7 +56,7 @@ public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory 
   }
 
   public static Lexer createPlainTextLexer() {
-    ArrayList<TokenParser> tokenParsers = new ArrayList<TokenParser>();
+    ArrayList<TokenParser> tokenParsers = new ArrayList<>();
     tokenParsers.add(new WhitespaceParser());
 
     tokenParsers.addAll(BraceTokenParser.getBraces());

@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <!-- Components and extensions declared in this file work ONLY in the Python plugin,
        both Community and Professional versions. -->
   <extensions defaultExtensionNs="com.intellij">
@@ -25,10 +25,4 @@
       <implementation-class>com.jetbrains.python.facet.PythonSdkTableListener</implementation-class>
     </component>
   </application-components>
-
-  <module-components>
-    <component>
-      <implementation-class>com.jetbrains.python.facet.PythonFacetListener</implementation-class>
-    </component>
-  </module-components>
 </idea-plugin>

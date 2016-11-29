@@ -21,7 +21,6 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.newProjectWizard.modes.ImportMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -33,7 +32,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Condition;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.Function;
@@ -53,22 +51,6 @@ public class AddModuleWizard extends AbstractProjectWizard {
   /**
    * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
    */
-  public AddModuleWizard(@Nullable final Project project, final @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
-    super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project, defaultPath);
-    myModulesProvider = modulesProvider;
-    initModuleWizard(project, defaultPath);
-  }
-
-  /**
-   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
-   */
-  public AddModuleWizard(Component parent, final Project project, @NotNull ModulesProvider modulesProvider) {
-    super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project, parent);
-    myModulesProvider = modulesProvider;
-    initModuleWizard(project, null);
-  }
-
-  /** Import mode */
   public AddModuleWizard(@Nullable Project project, String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, filePath);
     myImportProviders = importProviders;
@@ -76,7 +58,9 @@ public class AddModuleWizard extends AbstractProjectWizard {
     initModuleWizard(project, filePath);
   }
 
-  /** Import mode */
+  /**
+   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
+   */
   public AddModuleWizard(Project project, Component dialogParent, String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, dialogParent);
     myImportProviders = importProviders;
@@ -104,22 +88,16 @@ public class AddModuleWizard extends AbstractProjectWizard {
       }
     });
 
-    if (myImportProviders == null) {
-      myWizardMode = new CreateFromTemplateMode();
-      appendSteps(myWizardMode.getSteps(myWizardContext, myModulesProvider));
+    myWizardMode = new ImportMode(myImportProviders);
+    StepSequence sequence = myWizardMode.getSteps(myWizardContext, DefaultModulesProvider.createForProject(project));
+    appendSteps(sequence);
+    for (ProjectImportProvider provider : myImportProviders) {
+      provider.getBuilder().setFileToImport(defaultPath);
     }
-    else {
-      myWizardMode = new ImportMode(myImportProviders);
-      StepSequence sequence = myWizardMode.getSteps(myWizardContext, DefaultModulesProvider.createForProject(project));
-      appendSteps(sequence);
-      for (ProjectImportProvider provider : myImportProviders) {
-        provider.getBuilder().setFileToImport(defaultPath);
-      }
-      if (myImportProviders.length == 1) {
-        final ProjectImportBuilder builder = myImportProviders[0].getBuilder();
-        myWizardContext.setProjectBuilder(builder);
-        builder.setUpdate(getWizardContext().getProject() != null);
-      }
+    if (myImportProviders.length == 1) {
+      final ProjectImportBuilder builder = myImportProviders[0].getBuilder();
+      myWizardContext.setProjectBuilder(builder);
+      builder.setUpdate(getWizardContext().getProject() != null);
     }
     init();
   }
@@ -141,11 +119,8 @@ public class AddModuleWizard extends AbstractProjectWizard {
   public static Sdk getMostRecentSuitableSdk(final WizardContext context) {
     if (context.getProject() == null) {
       @Nullable final ProjectBuilder projectBuilder = context.getProjectBuilder();
-      return ProjectJdkTable.getInstance().findMostRecentSdk(new Condition<Sdk>() {
-        public boolean value(Sdk sdk) {
-          return projectBuilder == null || projectBuilder.isSuitableSdkType(sdk.getSdkType());
-        }
-      });
+      return ProjectJdkTable.getInstance().findMostRecentSdk(
+        sdk -> projectBuilder == null || projectBuilder.isSuitableSdkType(sdk.getSdkType()));
     }
     return null;
   }

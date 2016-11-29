@@ -1,53 +1,48 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.SmartList
-import java.io.File
-import java.io.FileInputStream
+import com.intellij.util.io.*
 import java.io.InputStream
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 
-class MockStreamProvider(private val myBaseDir: File) : StreamProvider {
+class MockStreamProvider(private val dir: Path) : StreamProvider {
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-    FileUtil.writeToFile(File(myBaseDir, fileSpec), content, 0, size)
+    dir.resolve(fileSpec).write(content, 0, size)
   }
 
   override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-    val file = File(myBaseDir, fileSpec)
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    return if (file.exists()) FileInputStream(file) else null
+    val file = dir.resolve(fileSpec)
+    try {
+      return file.inputStream()
+    }
+    catch (e: NoSuchFileException) {
+      return null
+    }
   }
 
-  private fun listSubFiles(fileSpec: String, roamingType: RoamingType): Collection<String> {
-    if (roamingType !== RoamingType.DEFAULT) {
-      return emptyList()
-    }
-
-    val files = File(myBaseDir, fileSpec).listFiles() ?: return emptyList()
-    val names = SmartList<String>()
-    for (file in files) {
-      names.add(file.name)
-    }
-    return names
-  }
-
-  /**
-   * You must close passed input stream.
-   */
   override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
-    for (name in listSubFiles(path, roamingType)) {
-      if (!filter(name)) {
-        continue
-      }
+    dir.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) {
+      for (file in it) {
+        val attributes = file.basicAttributesIfExists()
+        if (attributes == null || attributes.isDirectory || file.isHidden()) {
+          continue
+        }
 
-      val input = read("$path/$name", roamingType)
-      if (input != null && !processor(name, input, false)) {
-        break
+        // we ignore empty files as well - delete if corrupted
+        if (attributes.size() == 0L) {
+          file.delete()
+          continue
+        }
+
+        if (!file.inputStream().use { processor(file.fileName.toString(), it, false) }) {
+          break
+        }
       }
     }
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType) {
-    FileUtil.delete(File(myBaseDir, fileSpec))
+    dir.resolve(fileSpec).delete()
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.execution;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedOutputStream;
@@ -29,7 +26,6 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.zip.ZipOutputStream;
 
 public class CommandLineWrapperUtil {
   @NotNull
@@ -38,40 +34,21 @@ public class CommandLineWrapperUtil {
   }
 
   @NotNull
-  public static File createClasspathJarFile(Manifest manifest, List<String> pathList, final boolean notEscape) throws IOException {
-    final Attributes attributes = manifest.getMainAttributes();
-    attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+  @SuppressWarnings({"deprecation", "IOResourceOpenedButNotSafelyClosed"})
+  public static File createClasspathJarFile(Manifest manifest, List<String> pathList, boolean notEscape) throws IOException {
+    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
 
-    final Ref<IOException> ex = new Ref<IOException>();
-    final String classPathAttribute = StringUtil.join(pathList, new Function<String, String>() {
-      @Override
-      public String fun(String path) {
-        final File classpathElement = new File(path);
-        try {
-          return (notEscape ? classpathElement.toURL() : classpathElement.toURI().toURL()).toString();
-        }
-        catch (IOException e) {
-          ex.set(e);
-          return null;
-        }
-      }
-    }, " ");
-    
-    final IOException thrownException = ex.get();
-    if (thrownException != null) {
-      throw thrownException;
+    StringBuilder classPath = new StringBuilder();
+    for (String path : pathList) {
+      if (classPath.length() > 0) classPath.append(' ');
+      File classpathElement = new File(path);
+      String url = (notEscape ? classpathElement.toURL() : classpathElement.toURI().toURL()).toString();
+      classPath.append(url);
     }
-    attributes.put(Attributes.Name.CLASS_PATH, classPathAttribute);
+    manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, classPath.toString());
 
     File jarFile = FileUtil.createTempFile("classpath", ".jar", true);
-    ZipOutputStream jarPlugin = null;
-    try {
-      BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(jarFile));
-      jarPlugin = new JarOutputStream(out, manifest);
-    }
-    finally {
-      if (jarPlugin != null) jarPlugin.close();
-    }
+    new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest).close();
     return jarFile;
   }
 }

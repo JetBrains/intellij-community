@@ -71,7 +71,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
     Map<Variable, VariableValue> oldValues = project.getUserData(CACHE);
     if (oldValues == null) {
-      oldValues = new HashMap<Variable, VariableValue>();
+      oldValues = new HashMap<>();
       project.putUserData(CACHE, oldValues);
     }
     final Long timestamp = timestamps.get(file);
@@ -87,7 +87,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
                                         ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).isFullLineHighlighter()
                                         ? getTopFrameSelectedAttributes() : getNormalAttributes();
 
-      ArrayList<VariableText> result = new ArrayList<VariableText>();
+      ArrayList<VariableText> result = new ArrayList<>();
       for (XValueNodeImpl value : values) {
         SimpleColoredText text = new SimpleColoredText();
         XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
@@ -120,11 +120,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         res.add(new LineExtensionInfo("  " + name + ": ", attributes));
 
         Variable var = new Variable(name, lineNumber);
-        VariableValue variableValue = oldValues.get(var);
-        if (variableValue == null) {
-          variableValue = new VariableValue(text.toString(), null, value.hashCode());
-          oldValues.put(var, variableValue);
-        }
+        VariableValue variableValue = oldValues.computeIfAbsent(var, k -> new VariableValue(text.toString(), null, value.hashCode()));
         if (variableValue.valueNodeHashCode != value.hashCode()) {
           variableValue.old = variableValue.actual;
           variableValue.actual = text.toString();
@@ -140,7 +136,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
           variableValue.produceChangedParts(res.infos);
         }
       }
-      final List<LineExtensionInfo> infos = new ArrayList<LineExtensionInfo>();
+      final List<LineExtensionInfo> infos = new ArrayList<>();
       for (VariableText text : result) {
         infos.addAll(text.infos);
       }
@@ -268,7 +264,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   private static class VariableText {
-    final List<LineExtensionInfo> infos = new ArrayList<LineExtensionInfo>();
+    final List<LineExtensionInfo> infos = new ArrayList<>();
     int length = 0;
 
     void add(LineExtensionInfo info) {

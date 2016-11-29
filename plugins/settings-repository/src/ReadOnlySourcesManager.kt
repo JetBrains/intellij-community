@@ -16,7 +16,7 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.util.SmartList
-import com.intellij.util.exists
+import com.intellij.util.io.exists
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.jetbrains.annotations.TestOnly

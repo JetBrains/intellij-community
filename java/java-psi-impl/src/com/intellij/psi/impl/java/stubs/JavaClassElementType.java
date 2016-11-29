@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
@@ -39,7 +38,6 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -48,7 +46,7 @@ import java.io.IOException;
  * @author max
  */
 public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
-  public JavaClassElementType(@NotNull @NonNls final String id) {
+  public JavaClassElementType(@NotNull String id) {
     super(id);
   }
 
@@ -148,12 +146,11 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public void serialize(@NotNull final PsiClassStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PsiClassStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeByte(((PsiClassStubImpl)stub).getFlags());
     if (!stub.isAnonymous()) {
       dataStream.writeName(stub.getName());
       dataStream.writeName(stub.getQualifiedName());
-      dataStream.writeByte(stub.getLanguageLevel().ordinal());
       dataStream.writeName(stub.getSourceFileName());
     }
     else {
@@ -163,7 +160,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   @NotNull
   @Override
-  public PsiClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiClassStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     byte flags = dataStream.readByte();
     boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
     boolean isEnumConst = PsiClassStubImpl.isEnumConstInitializer(flags);
@@ -172,21 +169,19 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     if (!isAnonymous) {
       StringRef name = dataStream.readName();
       StringRef qname = dataStream.readName();
-      int languageLevelId = dataStream.readByte();
       StringRef sourceFileName = dataStream.readName();
-      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
-      classStub.setLanguageLevel(LanguageLevel.values()[languageLevelId]);
-      classStub.setSourceFileName(sourceFileName);
+      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, StringRef.toString(qname), StringRef.toString(name), null, flags);
+      classStub.setSourceFileName(StringRef.toString(sourceFileName));
       return classStub;
     }
     else {
       StringRef baseRef = dataStream.readName();
-      return new PsiClassStubImpl(type, parentStub, null, null, baseRef, flags);
+      return new PsiClassStubImpl(type, parentStub, null, null, StringRef.toString(baseRef), flags);
     }
   }
 
   @Override
-  public void indexStub(@NotNull final PsiClassStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(@NotNull PsiClassStub stub, @NotNull IndexSink sink) {
     boolean isAnonymous = stub.isAnonymous();
     if (isAnonymous) {
       String baseRef = stub.getBaseClassReferenceText();
@@ -208,7 +203,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public String getId(final PsiClassStub stub) {
+  public String getId(@NotNull final PsiClassStub stub) {
     final String name = stub.getName();
     return name != null ? name : super.getId(stub);
   }

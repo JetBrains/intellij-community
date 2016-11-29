@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -34,6 +36,8 @@ import java.util.List;
  * @see VisualPosition
  */
 class EditorCoordinateMapper {
+  private static final Logger LOG = Logger.getInstance(EditorCoordinateMapper.class);
+
   private final EditorView myView;
   private final Document myDocument;
   private final FoldingModelImpl myFoldingModel;
@@ -92,7 +96,7 @@ class EditorCoordinateMapper {
         }
         maxLogicalColumn = startLogicalLine == endLogicalLine ? Math.max(maxLogicalColumn, endLogicalColumn) : endLogicalColumn;
       }
-      else {
+      else if (fragment.getCurrentInlays() == null) {
         int minColumn = fragment.getMinLogicalColumn();
         int maxColumn = fragment.getMaxLogicalColumn();
         if (line == fragment.getStartLogicalLine() &&
@@ -106,8 +110,17 @@ class EditorCoordinateMapper {
       maxVisualColumn = fragment.getEndVisualColumn();
     }
     int resultColumn = column - maxLogicalColumn + maxVisualColumn;
-    if (resultColumn < 0 && maxVisualColumn > maxLogicalColumn) {
-      resultColumn = Integer.MAX_VALUE; // guarding against overflow
+    if (resultColumn < 0) {
+      if (maxVisualColumn > maxLogicalColumn) {
+        resultColumn = Integer.MAX_VALUE; // guarding against overflow
+      }
+      else {
+        LOG.error("Error converting " + pos + " to visual position",
+                  new Attachment("details.txt", String.format("offset: %d, visual line: %d, max logical column: %d, max visual column: %d",
+                                                              offset, visualLine, maxLogicalColumn, maxVisualColumn)),
+                  new Attachment("dump.txt", myView.getEditor().dumpState()));
+        resultColumn = 0;
+      }
     }
     return new VisualPosition(visualLine, resultColumn, pos.leansForward);
   }
@@ -135,9 +148,10 @@ class EditorCoordinateMapper {
           column == minColumn ||
           column == maxColumn && !pos.leansRight) {
         return new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(), 
-                                   fragment.visualToLogicalColumn(column), fragment.isCollapsedFoldRegion() ? 
-                                                                           column < maxColumn : 
-                                                                           fragment.isRtl() ^ pos.leansRight);
+                                   fragment.visualToLogicalColumn(column),
+                                   fragment.isCollapsedFoldRegion() ? column < maxColumn :
+                                   fragment.getCurrentInlays() != null ? column == maxColumn :
+                                   fragment.isRtl() ^ pos.leansRight);
       }
       maxLogicalColumn = logicalLine == fragment.getEndLogicalLine() ? Math.max(maxLogicalColumn, fragment.getMaxLogicalColumn()) : 
                          fragment.getMaxLogicalColumn();
@@ -293,18 +307,19 @@ class EditorCoordinateMapper {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false)) {
-        if (column < fragment.getStartVisualColumn()) {
+        int startVisualColumn = fragment.getStartVisualColumn();
+        if (column < startVisualColumn || column == startVisualColumn && !pos.leansRight) {
           break;
         }
         int endColumn = fragment.getEndVisualColumn();
-        if (column <= endColumn) {
+        if (column < endColumn || column == endColumn && !pos.leansRight) {
           return new Point((int)fragment.visualColumnToX(column), y);
         }
         x = fragment.getEndX();
         lastColumn = endColumn;
         maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
       }
-      if (myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) != null) {
+      if (column > lastColumn && myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) != null) {
         column--;
         x += myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
       }
@@ -331,9 +346,10 @@ class EditorCoordinateMapper {
         firstFragment = false;
         int minOffset = fragment.getMinOffset();
         int maxOffset = fragment.getMaxOffset();
-        if (offset > minOffset && offset < maxOffset ||
+        if (fragment.getCurrentInlays() == null &&
+            (offset > minOffset && offset < maxOffset ||
             offset == minOffset && leanTowardsLargerOffsets ||
-            offset == maxOffset && !leanTowardsLargerOffsets) {
+            offset == maxOffset && !leanTowardsLargerOffsets)) {
           x = fragment.offsetToX(offset);
           break;
         }

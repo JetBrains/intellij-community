@@ -42,8 +42,7 @@ import java.util.List;
 * @author Konstantin Bulenkov
 */
 @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
-public class InspectionListCellRenderer extends DefaultListCellRenderer implements MatcherHolder {
-  private Matcher myMatcher;
+public class InspectionListCellRenderer extends DefaultListCellRenderer {
   private final SimpleTextAttributes mySelected;
   private final SimpleTextAttributes myPlain;
   private final SimpleTextAttributes myHighlighted;
@@ -81,8 +80,9 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
       final String inspectionName = "  " + toolWrapper.getDisplayName();
       final String groupName = StringUtil.join(toolWrapper.getGroupPath(), " | ");
       final String matchingText = inspectionName + "|" + groupName;
-      List<TextRange> fragments = ((MinusculeMatcher)myMatcher).matchingFragments(matchingText);
-      List<TextRange> adjustedFragments = new ArrayList<TextRange>();
+      Matcher matcher = MatcherHolder.getAssociatedMatcher(list);
+      List<TextRange> fragments = matcher == null ? null : ((MinusculeMatcher)matcher).matchingFragments(matchingText);
+      List<TextRange> adjustedFragments = new ArrayList<>();
       if (fragments != null) {
         adjustedFragments.addAll(fragments);
       }
@@ -158,8 +158,4 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
     return icon;
   }
 
-  @Override
-  public void setPatternMatcher(Matcher matcher) {
-    myMatcher = matcher;
-  }
 }

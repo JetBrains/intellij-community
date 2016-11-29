@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -73,7 +72,6 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     try {
       if (element != null) {
-        if (!FileModificationService.getInstance().prepareFileForWrite(element.getContainingFile())) return;
         final PsiDocCommentOwner commentOwner = PsiTreeUtil.getParentOfType(element, PsiDocCommentOwner.class);
         if (commentOwner != null) {
           final PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
@@ -82,7 +80,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
           } else if (psiElement instanceof PsiDocComment) {
             removeFromJavaDoc((PsiDocComment)psiElement);
           } else { //try to remove from all comments
-            final Set<PsiComment> comments = new HashSet<PsiComment>();
+            final Set<PsiComment> comments = new HashSet<>();
             commentOwner.accept(new PsiRecursiveElementWalkingVisitor() {
               @Override public void visitComment(final PsiComment comment) {
                 super.visitComment(comment);

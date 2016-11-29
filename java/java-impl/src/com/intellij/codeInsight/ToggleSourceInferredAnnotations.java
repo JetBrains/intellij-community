@@ -48,12 +48,8 @@ public class ToggleSourceInferredAnnotations extends BaseIntentionAction {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiModifierListOwner owner = getAnnotationOwner(leaf);
     if (owner != null && isSourceCode(owner)) {
-      boolean hasSrcInferredAnnotation = ContainerUtil.or(findSignatureNonCodeAnnotations(owner, true), new Condition<PsiAnnotation>() {
-        @Override
-        public boolean value(PsiAnnotation annotation) {
-          return AnnotationUtil.isInferredAnnotation(annotation);
-        }
-      });
+      boolean hasSrcInferredAnnotation = ContainerUtil.or(findSignatureNonCodeAnnotations(owner, true),
+                                                          annotation -> AnnotationUtil.isInferredAnnotation(annotation));
       if (hasSrcInferredAnnotation) {
         setText((CodeInsightSettings.getInstance().SHOW_SOURCE_INFERRED_ANNOTATIONS ? "Hide" : "Show") + " annotations inferred from source code");
         return true;

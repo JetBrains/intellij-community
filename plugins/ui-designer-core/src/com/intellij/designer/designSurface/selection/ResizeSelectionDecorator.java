@@ -27,7 +27,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ResizeSelectionDecorator extends NonResizeSelectionDecorator {
-  private final List<ResizePoint> myPoints = new ArrayList<ResizePoint>();
+  private final List<ResizePoint> myPoints = new ArrayList<>();
 
   public ResizeSelectionDecorator(Color color, int lineWidth) {
     super(color, lineWidth);

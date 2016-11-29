@@ -92,6 +92,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         if (node == null) {
           return;
         }
+
         // Extract parser definition from element
         final Language language = element.getLanguage();
         final IElementType elementType = node.getElementType();
@@ -165,7 +166,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     }
     assert textRange.getStartOffset() >= 0;
 
-    final String description = SpellCheckerBundle.message("typo.in.word.ref", wordWithTypo);
+    final String description = SpellCheckerBundle.message("typo.in.word.ref");
     return holder.getManager()
       .createProblemDescriptor(element, textRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly, fixes);
   }
@@ -199,7 +200,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   }
 
   private static class MyTokenConsumer extends TokenConsumer implements Consumer<TextRange> {
-    private final Set<String> myAlreadyChecked = new THashSet<String>();
+    private final Set<String> myAlreadyChecked = new THashSet<>();
     private final SpellCheckerManager myManager;
     private final ProblemsHolder myHolder;
     private final NamesValidator myNamesValidator;

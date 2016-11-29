@@ -95,7 +95,7 @@ public class DiffDividerDrawUtil {
   public static List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
                                                            @NotNull Editor editor2,
                                                            @NotNull DividerPaintable paintable) {
-    final List<DividerPolygon> polygons = new ArrayList<DividerPolygon>();
+    final List<DividerPolygon> polygons = new ArrayList<>();
 
     final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
 
@@ -125,7 +125,7 @@ public class DiffDividerDrawUtil {
   public static List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
                                                                @NotNull Editor editor2,
                                                                @NotNull DividerSeparatorPaintable paintable) {
-    final List<DividerSeparator> separators = new ArrayList<DividerSeparator>();
+    final List<DividerSeparator> separators = new ArrayList<>();
 
     final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
 
@@ -137,15 +137,12 @@ public class DiffDividerDrawUtil {
 
     final EditorColorsScheme scheme = editor1.getColorsScheme();
 
-    paintable.process(new DividerSeparatorPaintable.Handler() {
-      @Override
-      public boolean process(int line1, int line2) {
-        if (leftInterval.start > line1 + 1 && rightInterval.start > line2 + 1) return true;
-        if (leftInterval.end < line1 && rightInterval.end < line2) return false;
+    paintable.process((line1, line2) -> {
+      if (leftInterval.start > line1 + 1 && rightInterval.start > line2 + 1) return true;
+      if (leftInterval.end < line1 && rightInterval.end < line2) return false;
 
-        separators.add(createSeparator(transformations, line1, line2, height1, height2, scheme));
-        return true;
-      }
+      separators.add(createSeparator(transformations, line1, line2, height1, height2, scheme));
+      return true;
     });
 
     return separators;
@@ -153,16 +150,13 @@ public class DiffDividerDrawUtil {
 
   @NotNull
   private static Transformation getTransformation(@NotNull final Editor editor) {
-    return new Transformation() {
-      @Override
-      public int transform(int line) {
-        int yOffset = editor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
+    return (line) -> {
+      int yOffset = editor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
 
-        final JComponent header = editor.getHeaderComponent();
-        int headerOffset = header == null ? 0 : header.getHeight();
+      final JComponent header = editor.getHeaderComponent();
+      int headerOffset = header == null ? 0 : header.getHeight();
 
-        return yOffset - editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
-      }
+      return yOffset - editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
     };
   }
 
@@ -248,14 +242,28 @@ public class DiffDividerDrawUtil {
     }
 
     public void paint(Graphics2D g, int width, boolean paintBorder, boolean curve) {
-      // we need this shift, because editor background highlight is painted in range "Y(line) - 1 .. Y(line + 1) - 1"
-      int startY1 = myStart1 - 1;
-      int endY1 = myEnd1 - 1;
-      int startY2 = myStart2 - 1;
-      int endY2 = myEnd2 - 1;
+      int startY1;
+      int endY1;
+      int startY2;
+      int endY2;
 
-      if (endY1 - startY1 < 2) endY1 = startY1 + 1;
-      if (endY2 - startY2 < 2) endY2 = startY2 + 1;
+      if (myEnd1 - myStart1 < 2) {
+        startY1 = myStart1 - 1;
+        endY1 = myStart1;
+      }
+      else {
+        startY1 = myStart1;
+        endY1 = myEnd1 - 1;
+      }
+
+      if (myEnd2 - myStart2 < 2) {
+        startY2 = myStart2 - 1;
+        endY2 = myStart2;
+      }
+      else {
+        startY2 = myStart2;
+        endY2 = myEnd2 - 1;
+      }
 
       Stroke oldStroke = g.getStroke();
       if (myResolved) {

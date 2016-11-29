@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class PropertiesDocumentationProvider extends AbstractDocumentationProvider {
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof IProperty) {
@@ -57,6 +57,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
     return StringUtil.escapeXml(raw);
   }
 
+  @Override
   public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
     if (element instanceof IProperty) {
       IProperty property = (IProperty)element;
@@ -69,12 +70,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
         if (background != null) {
           info +="<div bgcolor=#"+ GuiUtils.colorToHex(background)+">";
         }
-        String doc = StringUtil.join(ContainerUtil.map(StringUtil.split(text, "\n"), new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return StringUtil.trimStart(StringUtil.trimStart(s, "#"), "!").trim();
-          }
-        }), "<br>");
+        String doc = StringUtil.join(ContainerUtil.map(StringUtil.split(text, "\n"), s -> StringUtil.trimStart(StringUtil.trimStart(s, "#"), "!").trim()), "<br>");
         info += "<font color=#" + GuiUtils.colorToHex(attributes.getForegroundColor()) + ">" + doc + "</font>\n<br>";
         if (background != null) {
           info += "</div>";

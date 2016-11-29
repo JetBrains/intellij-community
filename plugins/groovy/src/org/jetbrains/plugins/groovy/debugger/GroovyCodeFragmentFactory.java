@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -27,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -77,13 +78,8 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     GroovyFile toEval = pair.second;
     final Map<String, String> parameters = pair.first;
 
-    List<String> names = new ArrayList<String>(parameters.keySet());
-    List<String> values = ContainerUtil.map(names, new Function<String, String>() {
-      @Override
-      public String fun(String name) {
-        return parameters.get(name);
-      }
-    });
+    List<String> names = new ArrayList<>(parameters.keySet());
+    List<String> values = ContainerUtil.map(names, name -> parameters.get(name));
 
     String text = toEval.getText();
     final String groovyText = StringUtil.join(names, ", ") + "->" + stripImports(text, toEval);
@@ -194,11 +190,11 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     final GroovyFile toEval = factory.createGroovyFile(text, false, context);
 
     final GrClosableBlock closure = PsiTreeUtil.getParentOfType(context, GrClosableBlock.class);
-    final Map<String, String> parameters = new THashMap<String, String>();
-    final Map<GrExpression, String> replacements = new HashMap<GrExpression, String>();
+    final Map<String, String> parameters = new THashMap<>();
+    final Map<GrExpression, String> replacements = new HashMap<>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+      public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
 
         if (PsiUtil.isThisReference(referenceExpression) || PsiUtil.isSuperReference(referenceExpression)) {
@@ -247,7 +243,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           return;
         }
 
-        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter && !(resolved instanceof GrParameter)) {
           String name = referenceExpression.getReferenceName();
           parameters.put(name, name);
         }
@@ -277,7 +273,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       }
 
       @Override
-      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+      public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
         if (refElement.getQualifier() == null) {
           PsiElement resolved = refElement.resolve();
@@ -334,16 +330,11 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
   @Override
   public boolean isContextAccepted(PsiElement context) {
-    if (context != null) {
-      if (context.getLanguage().equals(GroovyLanguage.INSTANCE)) {
-        return true;
-      }
-      if (JavaPsiFacade.getInstance(context.getProject())
-            .findClass("org.codehaus.groovy.control.CompilationUnit", context.getResolveScope()) != null) {
-        return true;
-      }
-    }
-    return false;
+    if (context == null) return false;
+    if (context.getLanguage().equals(GroovyLanguage.INSTANCE)) return true;
+    Project project = context.getProject();
+    if (DumbService.isDumb(project)) return false;
+    return JavaPsiFacade.getInstance(project).findClass("org.codehaus.groovy.control.CompilationUnit", context.getResolveScope()) != null;
   }
 
   @NotNull

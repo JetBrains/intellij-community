@@ -67,7 +67,7 @@ public class PathMerger {
     if (path == null) {
       return null;
     }
-    final List<String> tail = new ArrayList<String>();
+    final List<String> tail = new ArrayList<>();
     final T file = getFile(merger, path, tail);
     if (tail.isEmpty()) {
       return file;
@@ -173,7 +173,7 @@ public class PathMerger {
 
     public IoFilePathMerger(final File base) {
       myBase = base;
-      myChildPathElements = new LinkedList<String>();
+      myChildPathElements = new LinkedList<>();
     }
 
     public boolean up() {

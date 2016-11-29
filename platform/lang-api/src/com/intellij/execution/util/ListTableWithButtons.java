@@ -60,24 +60,21 @@ public abstract class ListTableWithButtons<T> extends Observable {
               final int row = myTableView.getEditingRow();
               if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
                 e.consume();
-                SwingUtilities.invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    stopEditing();
-                    int nextColumn = column < myTableView.getColumnCount() - 1 ? column + 1 : 0;
-                    int nextRow = nextColumn == 0 ? row + 1 : row;
-                    if (nextRow > myTableView.getRowCount() - 1) {
-                      if (myElements.isEmpty() || !ListTableWithButtons.this.isEmpty(myElements.get(myElements.size() - 1))) {
-                        ToolbarDecorator.findAddButton(myPanel).actionPerformed(null);
-                        return;
-                      }
-                      else {
-                        nextRow = 0;
-                      }
+                SwingUtilities.invokeLater(() -> {
+                  stopEditing();
+                  int nextColumn = column < myTableView.getColumnCount() - 1 ? column + 1 : 0;
+                  int nextRow = nextColumn == 0 ? row + 1 : row;
+                  if (nextRow > myTableView.getRowCount() - 1) {
+                    if (myElements.isEmpty() || !ListTableWithButtons.this.isEmpty(myElements.get(myElements.size() - 1))) {
+                      ToolbarDecorator.findAddButton(myPanel).actionPerformed(null);
+                      return;
                     }
-                    myTableView.scrollRectToVisible(myTableView.getCellRect(nextRow, nextColumn, true));
-                    myTableView.editCellAt(nextRow, nextColumn);
+                    else {
+                      nextRow = 0;
+                    }
                   }
+                  myTableView.scrollRectToVisible(myTableView.getCellRect(nextRow, nextColumn, true));
+                  myTableView.editCellAt(nextRow, nextColumn);
                 });
               }
             }
@@ -97,16 +94,13 @@ public abstract class ListTableWithButtons<T> extends Observable {
         public void run(AnActionButton button) {
           myTableView.stopEditing();
           setModified();
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
-                myElements.add(createElement());
-                myTableView.getTableViewModel().setItems(myElements);
-              }
-              myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
-              myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
+          SwingUtilities.invokeLater(() -> {
+            if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
+              myElements.add(createElement());
+              myTableView.getTableViewModel().setItems(myElements);
             }
+            myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
+            myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
           });
         }
       }).setRemoveAction(new AnActionButtonRunnable() {
@@ -146,12 +140,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
       setModified();
       int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
       myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
-      selected = ContainerUtil.filter(selected, new Condition<T>() {
-        @Override
-        public boolean value(T t) {
-          return canDeleteElement(t);
-        }
-      });
+      selected = ContainerUtil.filter(selected, t -> canDeleteElement(t));
       myElements.removeAll(selected);
       myTableView.getSelectionModel().clearSelection();
       myTableView.getTableViewModel().setItems(myElements);
@@ -239,7 +228,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
       return Collections.emptyList();
     }
     else {
-      List<T> result = new ArrayList<T>(selection.length);
+      List<T> result = new ArrayList<>(selection.length);
       for (int row : selection) {
         result.add(myElements.get(row));
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.lang;
 
+import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
@@ -25,29 +26,33 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.html.HtmlFileImpl;
+import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware {
+public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
   private static final TokenSet XML_ATTRIBUTE_SET = TokenSet.create(XmlElementType.XML_ATTRIBUTE);
   private static final int MIN_TEXT_RANGE_LENGTH = 3;
 
   @Override
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
-    final PsiElement psiElement = node.getPsi();
+  public void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> foldings,
+                                       @NotNull PsiElement psiElement,
+                                       @NotNull Document document,
+                                       boolean quick
+  ) {
     XmlDocument xmlDocument = null;
 
     if (psiElement instanceof XmlFile) {
@@ -62,15 +67,11 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
     if (rootTag == null) {
       rootTag = xmlDocument;
     }
-    List<FoldingDescriptor> foldings = null;
 
     if (rootTag != null) {
-      foldings = new ArrayList<FoldingDescriptor>();
 
       doAddForChildren(xmlDocument, foldings, document);
     }
-
-    return foldings != null ? foldings.toArray(new FoldingDescriptor[foldings.size()]):FoldingDescriptor.EMPTY;
   }
 
   protected void addElementsToFold(List<FoldingDescriptor> foldings, XmlElement tag, Document document) {
@@ -96,12 +97,12 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
         for (PsiElement grandChild : grandChildren) {
           ProgressManager.checkCanceled();
 
-          if (grandChild instanceof XmlComment) {
+          if (grandChild instanceof XmlComment || isEntity(grandChild)) {
             addToFold(foldings, grandChild, document);
           }
         }
       }
-      else if(child instanceof XmlAttribute && isAttributeShouldBeFolded((XmlAttribute)child)) {
+      else if (isEntity(child) || child instanceof XmlAttribute && isAttributeShouldBeFolded((XmlAttribute)child)) {
         addToFold(foldings, child, document);
       }
       else {
@@ -180,6 +181,9 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
       final XmlAttributeValue valueElement = ((XmlAttribute)element).getValueElement();
       return valueElement != null ? valueElement.getValueTextRange() : null;
     }
+    else if (isEntity(element)) {
+      return element.getTextRange();
+    }
     else {
       return null;
     }
@@ -205,8 +209,9 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
 
       int startLine = document.getLineNumber(range.getStartOffset());
       int endLine = document.getLineNumber(range.getEndOffset() - 1);
-      if (startLine < endLine || elementToFold instanceof XmlAttribute) {
-        if (range.getStartOffset() + MIN_TEXT_RANGE_LENGTH < range.getEndOffset()) {
+      final boolean entity = isEntity(elementToFold);
+      if (startLine < endLine || elementToFold instanceof XmlAttribute || entity) {
+        if (range.getStartOffset() + MIN_TEXT_RANGE_LENGTH < range.getEndOffset() || entity) {
           foldings.add(new FoldingDescriptor(elementToFold.getNode(), range));
           return true;
         }
@@ -217,28 +222,85 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
   }
 
   @Override
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  public String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     final PsiElement psi = node.getPsi();
+    if (psi instanceof XmlAttribute && "src".equalsIgnoreCase(((XmlAttribute)psi).getName())) {
+      return "data:";
+    }
     if (psi instanceof XmlTag ||
         psi instanceof XmlComment ||
         psi instanceof XmlAttribute ||
         psi instanceof XmlConditionalSection
       ) return "...";
+    if (isEntity(psi)) {
+      final String value = getEntityPlaceholder(psi);
+      if (value != null) return value;
+    }
+    return null;
+  }
+
+  @Nullable
+  protected String getEntityPlaceholder(PsiElement psi) {
+    String text = psi.getText();
+    String fastPath = StringUtil.unescapeXml(text);
+    if (!StringUtil.equals(fastPath, text)) return fastPath;
+    if (psi.isValid()) {
+      final XmlEntityDecl resolve = XmlEntityRefImpl.resolveEntity((XmlElement)psi, text, psi.getContainingFile());
+      final XmlAttributeValue value = resolve != null ? resolve.getValueElement() : null;
+      if (value != null) {
+        return getEntityValue(value);
+      }
+    }
+    return null;
+  }
+
+  private static String getEntityValue(XmlAttributeValue value) {
+    final String result = value.getValue();
+    final int i = result.indexOf('#');
+    if (i > 0) {
+      final int charNum = StringUtil.parseInt(StringUtil.trimEnd(result.substring(i + 1), ";"), -1);
+      return charNum >= 0 ? String.valueOf((char)charNum) : null;
+    }
     return null;
   }
 
   @Override
-  public boolean isCollapsedByDefault(@NotNull ASTNode node) {
+  public boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
     final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
     return (psi instanceof XmlTag && foldingSettings.isCollapseXmlTags())
-           || (psi instanceof XmlAttribute && foldingSettings.isCollapseHtmlStyleAttribute());
+           || (psi instanceof XmlAttribute && (foldStyle((XmlAttribute)psi, foldingSettings) || foldSrc((XmlAttribute)psi, foldingSettings)))
+           || isEntity(psi) && foldingSettings.isCollapseEntities() && getEntityPlaceholder(psi) != null;
+  }
+
+  private static boolean foldSrc(XmlAttribute psi, XmlCodeFoldingSettings settings) {
+    return settings.isCollapseDataUri() && "src".equals(psi.getName());
+  }
+
+  private static boolean foldStyle(XmlAttribute psi, XmlCodeFoldingSettings settings) {
+    return settings.isCollapseHtmlStyleAttribute() && HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(psi.getName());
+  }
+
+  protected boolean isEntity(PsiElement psi) {
+    return psi instanceof XmlEntityRef ||
+           (psi instanceof XmlTokenImpl && ((XmlTokenImpl)psi).getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF);
   }
 
   private static boolean isAttributeShouldBeFolded(XmlAttribute child) {
-    return child.getContainingFile() instanceof HtmlFileImpl &&
-           HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(child.getName());
+    return HtmlUtil.isHtmlFile(child.getContainingFile()) &&
+           (HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(child.getName()) ||
+            "src".equals(child.getName()) && child.getValue() != null && URLUtil.isDataUri(child.getValue()));
   }
 
   protected abstract XmlCodeFoldingSettings getFoldingSettings();
+
+  @Override
+  protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
+    return node.getElementType() == XmlElementType.XML_TAG;
+  }
+
+  @Override
+  protected boolean isCustomFoldingCandidate(@NotNull ASTNode node) {
+    return node.getElementType() == XmlTokenType.XML_COMMENT_CHARACTERS;
+  }
 }

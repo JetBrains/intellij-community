@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,13 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefElementImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.ProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
 
 public class GlobalInspectionContextUtil {
@@ -39,28 +35,6 @@ public class GlobalInspectionContextUtil {
     }
     return refElement;
   }
-
-
-  public static boolean isToCheckMember(@NotNull RefElement owner, @NotNull InspectionProfileEntry tool, Tools tools, ProfileManager profileManager) {
-    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool, tools, profileManager) && !((RefElementImpl)owner).isSuppressed(tool.getShortName());
-  }
-
-  public static boolean isToCheckFile(PsiFile file, @NotNull InspectionProfileEntry tool, Tools tools, ProfileManager profileManager) {
-    if (tools != null && file != null) {
-      for (ScopeToolState state : tools.getTools()) {
-        final NamedScope namedScope = state.getScope(file.getProject());
-        if (namedScope == null || namedScope.getValue().contains(file, profileManager.getScopesManager())) {
-          if (state.isEnabled()) {
-            InspectionToolWrapper toolWrapper = state.getTool();
-            if (toolWrapper.getTool() == tool) return true;
-          }
-          return false;
-        }
-      }
-    }
-    return false;
-  }
-
 
   public static boolean canRunInspections(@NotNull Project project, final boolean online) {
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {

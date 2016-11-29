@@ -30,12 +30,14 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Functions;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.util.Arrays;
 
 /**
  * @author anna
@@ -62,7 +64,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
       }
 
       @Override
-      public PsiElement victims(PsiClass aClass) {
+      public PsiElement victim(PsiClass aClass) {
         for (PsiLocalVariable variable : PsiTreeUtil.findChildrenOfType(aClass, PsiLocalVariable.class)) {
           if (assignmentVariableName.equals(variable.getName())) {
             final PsiAnonymousClass anonymousClass = PsiTreeUtil.findChildOfType(variable.getInitializer(), PsiAnonymousClass.class);
@@ -82,6 +84,10 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   }
 
   protected void doTestFieldType(@NonNls final String fieldName, String className, final PsiType migrationType) {
+    doTestFieldsType(className, migrationType, fieldName);
+  }
+
+  protected void doTestFieldsType(@NotNull String className, @NotNull final PsiType migrationType, final String... fieldNames) {
     final RulesProvider provider = new RulesProvider() {
       @Override
       public PsiType migrationType(PsiElement context) throws Exception {
@@ -89,10 +95,12 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
       }
 
       @Override
-      public PsiElement victims(PsiClass aClass) {
-        final PsiField field = aClass.findFieldByName(fieldName, false);
-        assert field != null : fieldName + " not found in " + aClass;
-        return field;
+      public PsiElement[] victims(PsiClass aClass) {
+        return Arrays
+          .stream(fieldNames)
+          .map(n -> aClass.findFieldByName(n, false))
+          .peek(TestCase::assertNotNull)
+          .toArray(PsiElement[]::new);
       }
     };
 
@@ -113,7 +121,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
       }
 
       @Override
-      public PsiElement victims(PsiClass aClass) {
+      public PsiElement victim(PsiClass aClass) {
         return aClass.findMethodsByName(methodName, false)[0];
       }
     };
@@ -133,7 +141,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
       }
 
       @Override
-      public PsiElement victims(PsiClass aClass) {
+      public PsiElement victim(PsiClass aClass) {
         return aClass.findMethodsByName(methodName, false)[0].getParameterList().getParameters()[0];
       }
     };
@@ -159,20 +167,16 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
     assertNotNull("Class " + className + " not found", aClass);
 
-    final PsiElement migrationElement = provider.victims(aClass);
-    final PsiType migrationType = provider.migrationType(migrationElement);
+    final PsiElement[] migrationElements = provider.victims(aClass);
+    final PsiType migrationType = provider.migrationType(migrationElements[0]);
     final TypeMigrationRules rules = new TypeMigrationRules();
     rules.setBoundScope(new LocalSearchScope(aClass.getContainingFile()));
-    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), migrationElement, migrationType, rules);
+    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), migrationElements, migrationType, rules);
 
     final UsageInfo[] usages = pr.findUsages();
     final String report = pr.getLabeler().getMigrationReport();
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        pr.performRefactoring(usages);
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> pr.performRefactoring(usages));
 
 
     String itemName = className + ".items";
@@ -213,23 +217,19 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   interface RulesProvider {
     PsiType migrationType(PsiElement context) throws Exception;
 
-    PsiElement victims(PsiClass aClass);
+    default PsiElement victim(PsiClass aClass) {
+      fail("You need to override one of victim(PsiClass) or victims(PsiClass) methods");
+      return null;
+    }
+
+    default PsiElement[] victims(PsiClass aClass) {
+      return new PsiElement[] {victim(aClass)};
+    }
   }
 
   private static class TestTypeMigrationProcessor extends TypeMigrationProcessor {
-    public TestTypeMigrationProcessor(final Project project, final PsiElement root, final PsiType migrationType, final TypeMigrationRules rules) {
-      super(project, new PsiElement[] {root}, Functions.<PsiElement, PsiType>constant(migrationType), rules);
-    }
-
-    @NotNull
-    @Override
-    public UsageInfo[] findUsages() {
-      return super.findUsages();
-    }
-
-    @Override
-    public void performRefactoring(@NotNull final UsageInfo[] usages) {
-      super.performRefactoring(usages);
+    public TestTypeMigrationProcessor(final Project project, final PsiElement[] roots, final PsiType migrationType, final TypeMigrationRules rules) {
+      super(project, roots, Functions.<PsiElement, PsiType>constant(migrationType), rules);
     }
   }
 }

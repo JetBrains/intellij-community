@@ -89,16 +89,16 @@ public class a {
   // local interface
   class cc {
     void f() {
-      <error descr="Modifier 'interface' not allowed here">interface i</error> {}
+      <error descr="Interface not allowed here">interface i</error> {}
     }
     void ff() {
       class inn {
-        <error descr="Inner classes cannot have static declarations">interface i</error> {}
+        <error descr="Interface not allowed here">interface i</error> {}
       }
     }
 
     Object o = new Runnable() {
-      <error descr="Inner classes cannot have static declarations">interface i</error> {}
+      <error descr="Interface not allowed here">interface i</error> {}
       public void run() {}
     };
   }

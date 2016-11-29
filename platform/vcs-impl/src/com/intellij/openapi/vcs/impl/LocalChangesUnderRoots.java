@@ -44,12 +44,12 @@ public class LocalChangesUnderRoots {
   }
 
   public Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<VirtualFile> rootsToSave) {
-    final Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<String, Map<VirtualFile, Collection<Change>>>();
+    final Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<>();
     myRoots = myVcsManager.getAllVcsRoots();
 
     final List<LocalChangeList> changeLists = myChangeManager.getChangeListsCopy();
     for (LocalChangeList list : changeLists) {
-      final HashMap<VirtualFile, Collection<Change>> subMap = new HashMap<VirtualFile, Collection<Change>>();
+      final HashMap<VirtualFile, Collection<Change>> subMap = new HashMap<>();
       addChangesToMap(rootsToSave, subMap, list.getChanges());
       result.put(list.getName(), subMap);
     }
@@ -64,7 +64,7 @@ public class LocalChangesUnderRoots {
    */
   @NotNull
   public Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<VirtualFile> rootsToSave) {
-    Map<VirtualFile, Collection<Change>> result = new HashMap<VirtualFile, Collection<Change>>();
+    Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     final Collection<Change> allChanges = myChangeManager.getAllChanges();
     myRoots = myVcsManager.getAllVcsRoots();
 
@@ -114,7 +114,7 @@ public class LocalChangesUnderRoots {
     }
     Collection<Change> changes = result.get(root);
     if (changes == null) {
-      changes = new HashSet<Change>();
+      changes = new HashSet<>();
       result.put(root, changes);
     }
     changes.add(change);

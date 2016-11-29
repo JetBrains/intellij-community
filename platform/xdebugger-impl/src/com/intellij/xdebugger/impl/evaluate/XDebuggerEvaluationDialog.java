@@ -15,12 +15,14 @@
  */
 package com.intellij.xdebugger.impl.evaluate;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -56,6 +58,10 @@ import java.awt.event.KeyEvent;
  */
 public class XDebuggerEvaluationDialog extends DialogWrapper {
   public static final DataKey<XDebuggerEvaluationDialog> KEY = DataKey.create("DEBUGGER_EVALUATION_DIALOG");
+
+  //can not use new SHIFT_DOWN_MASK etc because in this case ActionEvent modifiers do not match
+  private static final int ADD_WATCH_MODIFIERS = (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK;
+  static KeyStroke ADD_WATCH_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ADD_WATCH_MODIFIERS);
 
   private final JPanel myMainPanel;
   private final JPanel myResultPanel;
@@ -109,11 +115,17 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     new AnAction(){
       @Override
+      public void update(AnActionEvent e) {
+        Project project = e.getProject();
+        e.getPresentation().setEnabled(project != null && LookupManager.getInstance(project).getActiveLookup() == null);
+      }
+
+      @Override
       public void actionPerformed(AnActionEvent e) {
-        doOKAction();
+        //doOKAction(); // do not evaluate on add to watches
         addToWatches();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)), getRootPane(), myDisposable);
+    }.registerCustomShortcutSet(new CustomShortcutSet(ADD_WATCH_KEYSTROKE), getRootPane(), myDisposable);
 
     new AnAction() {
       @Override
@@ -164,7 +176,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
-        if ((e.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK)) == (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK)) {
+        if ((e.getModifiers() & ADD_WATCH_MODIFIERS) == ADD_WATCH_MODIFIERS) {
           addToWatches();
         }
       }
@@ -282,6 +294,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       editor.getCaretModel().moveToOffset(offset);
       editor.getSelectionModel().setSelection(offset, offset);
     }
+  }
+
+  @Override
+  public void doCancelAction() {
+    getInputEditor().saveTextInHistory();
+    super.doCancelAction();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,12 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
   private static final Rectangle ourIconRect=new Rectangle();
   private static final Rectangle ourTextRect=new Rectangle();
   private static final Rectangle ourViewRect=new Rectangle();
-  private static Insets ourViewInsets=new Insets(0,0,0,0);
+  private static Insets ourViewInsets = JBUI.emptyInsets();
 
   private StripeButtonUI(){}
 
   /** Invoked by reflection */
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(final JComponent c){
     return ourInstance;
   }
@@ -55,6 +56,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
 
     final ToolWindowAnchor anchor=button.getAnchor();
     if(ToolWindowAnchor.LEFT==anchor||ToolWindowAnchor.RIGHT==anchor){
+      //noinspection SuspiciousNameCombination
       return new Dimension(dim.height,dim.width);
     } else{
       return dim;
@@ -110,7 +112,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     final Color background = button.getBackground();
     ourIconRect.x -= JBUI.scale(2);
     ourTextRect.x -= JBUI.scale(2);
-    final int off = JBUI.scale(1);
+    final int off = 1;
     if (model.isArmed() && model.isPressed() || model.isSelected() || model.isRollover()) {
       if (anchor == ToolWindowAnchor.LEFT) g2.translate(-off, 0);
       if (anchor.isHorizontal()) g2.translate(0, -off);
@@ -127,12 +129,14 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       tr=g2.getTransform();
       if(ToolWindowAnchor.RIGHT==anchor){
         if(icon != null){ // do not rotate icon
+          //noinspection SuspiciousNameCombination
           icon.paintIcon(c, g2, ourIconRect.y, ourIconRect.x);
         }
         g2.rotate(Math.PI/2);
         g2.translate(0,-c.getWidth());
       } else {
         if(icon != null){ // do not rotate icon
+          //noinspection SuspiciousNameCombination
           icon.paintIcon(c, g2, ourIconRect.y, c.getHeight() - ourIconRect.x - icon.getIconHeight());
         }
         g2.rotate(-Math.PI/2);
@@ -160,11 +164,11 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       }
       /* Draw the Text */
       if(model.isEnabled()){
-        /*** paint the text normally */
+        /* paint the text normally */
         g2.setColor(UIUtil.isUnderDarcula() && model.isSelected() ? button.getForeground().brighter() : button.getForeground());
         BasicGraphicsUtils.drawString(g2,clippedText,button.getMnemonic2(),ourTextRect.x,ourTextRect.y+fm.getAscent());
       } else{
-        /*** paint the text disabled ***/
+        /* paint the text disabled ***/
         if(model.isSelected()){
           g2.setColor(c.getBackground());
         } else{

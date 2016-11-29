@@ -31,8 +31,8 @@ public class ObjectUtils {
   public static final Object NULL = new Object();
 
   @NotNull
-  public static <T> T assertNotNull(@Nullable final T t) {
-    return _assertNotNull(t);
+  public static <T> T assertNotNull(@Nullable T t) {
+    return notNull(t);
   }
 
   public static <T> void assertAllElementsNotNull(@NotNull T[] array) {
@@ -44,14 +44,34 @@ public class ObjectUtils {
     }
   }
 
-  @NotNull
-  private static <T> T _assertNotNull(@NotNull T t) {
-    return t;
-  }
-
   @Contract("null, null -> null")
   public static <T> T chooseNotNull(@Nullable T t1, @Nullable T t2) {
     return t1 == null? t2 : t1;
+  }
+
+  @Contract("null,null->null")
+  public static <T> T coalesce(@Nullable T t1, @Nullable T t2) {
+    return t1 != null ? t1 : t2;
+  }
+
+  @Contract("null,null,null->null")
+  public static <T> T coalesce(@Nullable T t1, @Nullable T t2, @Nullable T t3) {
+    return t1 != null ? t1 : t2 != null ? t2 : t3;
+  }
+
+  @Nullable
+  public static <T> T coalesce(@Nullable Iterable<T> o) {
+    if (o == null) return null;
+    for (T t : o) {
+      if (t != null) return t;
+    }
+    return null;
+  }
+
+  @NotNull
+  public static <T> T notNull(@Nullable T value) {
+    //noinspection ConstantConditions
+    return notNull(value, value);
   }
 
   @NotNull

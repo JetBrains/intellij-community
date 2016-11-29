@@ -29,7 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 /**
  * Supports creating run configurations from context (by right-clicking a code element in the source editor or the project view). Typically,
@@ -85,7 +85,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public ConfigurationFromContext createConfigurationFromContext(ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
-    Ref<PsiElement> ref = new Ref<PsiElement>(context.getPsiLocation());
+    Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
       if (!setupConfigurationFromContext((T)settings.getConfiguration(), context, ref)) {
        return null;
@@ -183,22 +183,11 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
         // replace with existing configuration if any
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = fromContext.getConfigurationType();
-        final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(type);
         final RunnerAndConfigurationSettings settings = findExistingConfiguration(context);
         if (settings != null) {
           fromContext.setConfigurationSettings(settings);
         } else {
-          final ArrayList<String> currentNames = new ArrayList<String>();
-          for (RunnerAndConfigurationSettings configurationSettings : configurations) {
-            currentNames.add(configurationSettings.getName());
-          }
-          RunConfiguration configuration = fromContext.getConfiguration();
-          String name = configuration.getName();
-          if (name == null) {
-            LOG.error(configuration);
-            name = "Unnamed";
-          }
-          configuration.setName(RunManager.suggestUniqueName(name, currentNames));
+          runManager.setUniqueNameIfNeed(fromContext.getConfiguration());
         }
       }
     }
@@ -246,7 +235,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public RunConfiguration createLightConfiguration(@NotNull final ConfigurationContext context) {
     RunConfiguration configuration = myConfigurationFactory.createTemplateConfiguration(context.getProject());
-    final Ref<PsiElement> ref = new Ref<PsiElement>(context.getPsiLocation());
+    final Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
       if (!setupConfigurationFromContext((T)configuration, context, ref)) {
         return null;

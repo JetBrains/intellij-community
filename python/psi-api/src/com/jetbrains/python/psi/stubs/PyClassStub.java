@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,26 @@ package com.jetbrains.python.psi.stubs;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface PyClassStub extends NamedStub<PyClass> {
-  QualifiedName[] getSuperClasses();
-  @Nullable QualifiedName getMetaClass();
+
+  /**
+  * @return a {@code Map} which contains imported class names as keys and their original names as values
+  */
+  @NotNull
+  Map<QualifiedName, QualifiedName> getSuperClasses();
+
+  @Nullable
+  QualifiedName getMetaClass();
+
+  @Nullable
   List<String> getSlots();
+
+  @Nullable
   String getDocString();
 }

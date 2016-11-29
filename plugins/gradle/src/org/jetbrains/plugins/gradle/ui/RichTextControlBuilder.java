@@ -24,9 +24,9 @@ public class RichTextControlBuilder {
   private static final String RICH_TEXT_TOKEN_START = "{@";
   private static final String RICH_TEXT_TOKEN_END = "}";
 
-  private final Map<String, RichTextProcessor> myProcessors = new HashMap<String, RichTextProcessor>();
+  private final Map<String, RichTextProcessor> myProcessors = new HashMap<>();
   private final JPanel                                 myResult     = new JPanel(new GridBagLayout());
-  private final Collection<JComponent>                 myComponents = new ArrayList<JComponent>();
+  private final Collection<JComponent>                 myComponents = new ArrayList<>();
   
   private Color myForegroundColor;
   private Color myBackgroundColor;
@@ -57,7 +57,7 @@ public class RichTextControlBuilder {
   public void setText(@NotNull String text) throws IllegalArgumentException {
     myResult.removeAll();
     myComponents.clear();
-    List<JComponent> rowComponents = new ArrayList<JComponent>();
+    List<JComponent> rowComponents = new ArrayList<>();
     RichTextProcessor metaDataProcessor = null;
     StringBuilder metaTokenData = new StringBuilder();
     boolean ignoreNext = false;

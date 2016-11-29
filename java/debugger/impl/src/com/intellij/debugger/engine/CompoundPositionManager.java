@@ -21,26 +21,30 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.sun.jdi.*;
+import com.sun.jdi.Location;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class CompoundPositionManager extends PositionManagerEx implements MultiRequestPositionManager{
   private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
+
+  public static final CompoundPositionManager EMPTY = new CompoundPositionManager();
 
   private final ArrayList<PositionManager> myPositionManagers = new ArrayList<>();
 
@@ -55,23 +59,39 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   public void appendPositionManager(PositionManager manager) {
     myPositionManagers.remove(manager);
     myPositionManagers.add(0, manager);
+    clearCache();
   }
 
-  private final Cache<Location, SourcePosition> mySourcePositionCache = new Cache<>();
+  public void clearCache() {
+    mySourcePositionCache.clear();
+  }
+
+  private final Map<Location, SourcePosition> mySourcePositionCache = new WeakHashMap<>();
 
   private interface Processor<T> {
     T process(PositionManager positionManager) throws NoDataException;
   }
 
-  private <T> T iterate(Processor<T> processor, T defaultValue) {
+  private <T> T iterate(Processor<T> processor, T defaultValue, SourcePosition position) {
+    return iterate(processor, defaultValue, position, true);
+  }
+
+  private <T> T iterate(Processor<T> processor, T defaultValue, SourcePosition position, boolean ignorePCE) {
     for (PositionManager positionManager : myPositionManagers) {
-      try {
-        return processor.process(positionManager);
+      if (position != null) {
+        Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
+        if (types != null && !types.contains(position.getFile().getFileType())) {
+          continue;
+        }
       }
-      catch (NoDataException | ProcessCanceledException ignored) {}
-      catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
-      catch (InternalException e) {LOG.info(e);}
-      catch (Exception | AssertionError e) {LOG.error(e);}
+      try {
+        if (!ignorePCE) {
+          ProgressManager.checkCanceled();
+        }
+        return DebuggerUtilsImpl.suppressExceptions(() -> processor.process(positionManager), defaultValue, ignorePCE, NoDataException.class);
+      }
+      catch (NoDataException ignored) {
+      }
     }
     return defaultValue;
   }
@@ -83,11 +103,12 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     SourcePosition res = mySourcePositionCache.get(location);
     if (checkCacheEntry(res, location)) return res;
 
-    return iterate(positionManager -> {
-      SourcePosition res1 = positionManager.getSourcePosition(location);
-      mySourcePositionCache.put(location, res1);
-      return res1;
-    }, null);
+    return DebuggerUtilsImpl.runInReadActionWithWriteActionPriorityWithRetries(
+      () -> iterate(positionManager -> {
+        SourcePosition res1 = positionManager.getSourcePosition(location);
+        mySourcePositionCache.put(location, res1);
+        return res1;
+      }, null, null, false));
   }
 
   private static boolean checkCacheEntry(SourcePosition position, Location location) {
@@ -103,7 +124,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   @Override
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) {
-    return iterate(positionManager -> positionManager.getAllClasses(classPosition), Collections.<ReferenceType>emptyList());
+    return iterate(positionManager -> positionManager.getAllClasses(classPosition), Collections.emptyList(), classPosition);
   }
 
   @Override
@@ -121,12 +142,12 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     }
 
     final SourcePosition finalPosition = position;
-    return iterate(positionManager -> positionManager.locationsOfLine(type, finalPosition), Collections.<Location>emptyList());
+    return iterate(positionManager -> positionManager.locationsOfLine(type, finalPosition), Collections.emptyList(), position);
   }
 
   @Override
   public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
-    return iterate(positionManager -> positionManager.createPrepareRequest(requestor, position), null);
+    return iterate(positionManager -> positionManager.createPrepareRequest(requestor, position), null, position);
   }
 
   @NotNull
@@ -139,11 +160,11 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       else {
         ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
         if (prepareRequest == null) {
-          return Collections.<ClassPrepareRequest>emptyList();
+          return Collections.emptyList();
         }
         return Collections.singletonList(prepareRequest);
       }
-    }, Collections.<ClassPrepareRequest>emptyList());
+    }, Collections.emptyList(), position);
   }
 
   @Nullable
@@ -187,22 +208,5 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       }
     }
     return ThreeState.UNSURE;
-  }
-
-  private static class Cache<K,V> {
-    private K myKey;
-    private V myValue;
-
-    public V get(@NotNull K key) {
-      if (key.equals(myKey)) {
-        return myValue;
-      }
-      return null;
-    }
-
-    public void put(@NotNull K key, V value) {
-      myKey = key;
-      myValue = value;
-    }
   }
 }

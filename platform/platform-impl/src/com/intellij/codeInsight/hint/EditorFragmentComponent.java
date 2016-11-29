@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,10 +63,9 @@ public class EditorFragmentComponent extends JPanel {
     boolean newRendering = editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering;
     int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
     final int textImageWidth = Math.min(
-      editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment, 
-      ScreenUtil.getScreenRectangle(1, 1).width
+      editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
+      getWidthLimit(editor)
     );
-    LOG.assertTrue(textImageWidth > 0, "TextWidth: "+textImageWidth+"; startLine:" + startLine + "; endLine:" + endLine + ";");
 
     FoldingModelEx foldingModel = editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
@@ -157,6 +157,14 @@ public class EditorFragmentComponent extends JPanel {
     setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
   }
 
+  private static int getWidthLimit(@NotNull Editor editor) {
+    Component component = editor.getComponent();
+    int screenWidth = ScreenUtil.getScreenRectangle(component).width;
+    if (screenWidth > 0) return screenWidth;
+    Window window = SwingUtilities.getWindowAncestor(component);
+    return window == null ? Integer.MAX_VALUE : window.getWidth();
+  }
+
   /**
    * @param y <code>y</code> coordinate in layered pane coordinate system.
    */
@@ -205,7 +213,7 @@ public class EditorFragmentComponent extends JPanel {
     }
 
     final JComponent c = editor.getComponent();
-    int x = SwingUtilities.convertPoint(c, new Point(-3,0), UIUtil.getRootPane(c)).x; //IDEA-68016
+    int x = SwingUtilities.convertPoint(c, new Point(JBUI.scale(-3),0), UIUtil.getRootPane(c)).x; //IDEA-68016
 
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
@@ -279,12 +287,7 @@ public class EditorFragmentComponent extends JPanel {
       // needed for Alt-Q multiple times
       // Q: not good?
       SwingUtilities.invokeLater(
-        new Runnable() {
-          @Override
-          public void run() {
-            MyComponentHint.super.hide();
-          }
-        }
+        () -> super.hide()
       );
     }
   }

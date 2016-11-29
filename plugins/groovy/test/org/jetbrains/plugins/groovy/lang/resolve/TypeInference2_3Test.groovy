@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,20 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 
 /**
  * Created by Max Medvedev on 10/02/14
  */
 class TypeInference2_3Test extends TypeInferenceTestBase {
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyLightProjectDescriptor.GROOVY_2_3
   }
 
-  public void testContravariantType() throws Exception {
+  void testContravariantType() throws Exception {
     doTest('''\
 import groovy.transform.CompileStatic
 import java.util.concurrent.Callable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.util.Consumer;
-import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.actions.handlers.XEvaluateInConsoleFromEditorActionHandler;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +49,9 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesAction {
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     final ConsoleExecuteAction action = getConsoleExecuteAction(e);
     if (action != null) {
-      node.getValueContainer().calculateEvaluationExpression().done(new Consumer<XExpression>() {
-        @Override
-        public void consume(XExpression expression) {
-          if (expression != null) {
-            action.execute(null, expression.getExpression(), null);
-          }
+      node.getValueContainer().calculateEvaluationExpression().done(expression -> {
+        if (expression != null) {
+          action.execute(null, expression.getExpression(), null);
         }
       });
     }

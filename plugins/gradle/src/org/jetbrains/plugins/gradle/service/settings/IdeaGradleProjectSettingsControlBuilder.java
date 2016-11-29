@@ -26,13 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.gradle.util.GradleVersion;
@@ -48,7 +47,6 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -112,6 +110,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Nullable
   private JBRadioButton myUseBundledDistributionButton;
   private boolean dropUseBundledDistributionButton;
+  @Nullable
+  private JBCheckBox myResolveModulePerSourceSetCheckBox;
+  private boolean dropResolveModulePerSourceSetCheckBox;
 
   public IdeaGradleProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     myInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
@@ -186,6 +187,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
+  public IdeaGradleProjectSettingsControlBuilder dropResolveModulePerSourceSetCheckBox() {
+    dropResolveModulePerSourceSetCheckBox = true;
+    return this;
+  }
+
   @Override
   public void showUi(boolean show) {
     ExternalSystemUiUtil.showUi(this, show);
@@ -203,12 +209,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public void createAndFillControls(PaintAwarePanel content, int indentLevel) {
-    content.setPaintCallback(new Consumer<Graphics>() {
-      @Override
-      public void consume(Graphics graphics) {
-        showBalloonIfNecessary();
-      }
-    });
+    content.setPaintCallback(graphics -> showBalloonIfNecessary());
 
     content.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -226,6 +227,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         }
       }
     });
+
+    if (!dropResolveModulePerSourceSetCheckBox) {
+      myResolveModulePerSourceSetCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.create.module.per.sourceset"));
+      content.add(myResolveModulePerSourceSetCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    }
 
     addGradleChooserComponents(content, indentLevel);
     addGradleHomeComponents(content, indentLevel);
@@ -328,6 +334,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public void apply(GradleProjectSettings settings) {
+    settings.setCompositeParticipants(myInitialSettings.getCompositeParticipants());
     if (myGradleHomePathField != null) {
       String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
       if (StringUtil.isEmpty(gradleHomePath)) {
@@ -342,6 +349,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (myGradleJdkComboBox != null) {
       final String gradleJvm = FileUtil.toCanonicalPath(myGradleJdkComboBox.getSelectedValue());
       settings.setGradleJvm(StringUtil.isEmpty(gradleJvm) ? null : gradleJvm);
+    }
+
+    if (myResolveModulePerSourceSetCheckBox != null) {
+      settings.setResolveModulePerSourceSet(myResolveModulePerSourceSetCheckBox.isSelected());
     }
 
     if (myUseLocalDistributionButton != null && myUseLocalDistributionButton.isSelected()) {
@@ -379,6 +390,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       return true;
     }
 
+    if (myResolveModulePerSourceSetCheckBox != null &&
+        (myResolveModulePerSourceSetCheckBox.isSelected() != myInitialSettings.isResolveModulePerSourceSet())) {
+      return true;
+    }
+
     if (myGradleJdkComboBox != null && !StringUtil.equals(myGradleJdkComboBox.getSelectedValue(), myInitialSettings.getGradleJvm())) {
       return true;
     }
@@ -399,6 +415,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (myGradleHomePathField != null) {
       myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
       myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
+    }
+    if (myResolveModulePerSourceSetCheckBox != null) {
+      myResolveModulePerSourceSetCheckBox.setSelected(settings.isResolveModulePerSourceSet());
     }
 
     resetGradleJdkComboBox(project, settings);
@@ -428,6 +447,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Override
   public void update(String linkedProjectPath, GradleProjectSettings settings, boolean isDefaultModuleCreation) {
     resetWrapperControls(linkedProjectPath, settings, isDefaultModuleCreation);
+    if (myResolveModulePerSourceSetCheckBox != null) {
+      myResolveModulePerSourceSetCheckBox.setSelected(settings.isResolveModulePerSourceSet());
+    }
   }
 
   @Override
@@ -437,14 +459,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     myGradleHomeLabel = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
     myGradleHomePathField = new TextFieldWithBrowseButton();
 
-    myGradleHomePathField.addBrowseFolderListener(
-      "",
-      GradleBundle.message("gradle.settings.text.home.path"),
-      null,
-      GradleUtil.getGradleHomeFileChooserDescriptor(),
-      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-      false
-    );
+    myGradleHomePathField.addBrowseFolderListener("", GradleBundle.message("gradle.settings.text.home.path"), null,
+                                                  GradleUtil.getGradleHomeFileChooserDescriptor(),
+                                                  TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myGradleHomePathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {
@@ -473,12 +490,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     final String gradleJvm = settings.getGradleJvm();
     myGradleJdkComboBox.setProject(project);
 
-    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return (project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s);
-      }
-    });
+    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, s -> (project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s));
 
     myGradleJdkComboBox.refreshData(sdkItem);
   }

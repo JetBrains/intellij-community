@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class FileGroup implements JDOMExternalizable {
 
   public String myUpdateName;
   public String myStatusName;
-  private final Map<String, String> myErrorsMap = new HashMap<String, String>();
+  private final Map<String, String> myErrorsMap = new HashMap<>();
 
-  private final Collection<UpdatedFile> myFiles = new ArrayList<UpdatedFile>();
+  private final Collection<UpdatedFile> myFiles = new ArrayList<>();
   public boolean mySupportsDeletion;
   public boolean myCanBeAbsent;
   public String myId;
@@ -43,7 +41,7 @@ public class FileGroup implements JDOMExternalizable {
   @NonNls private static final String VCS_ATTRIBUTE = "vcs";
   @NonNls private static final String REVISION_ATTRIBUTE = "revision";
 
-  private final List<FileGroup> myChildren = new ArrayList<FileGroup>();
+  private final List<FileGroup> myChildren = new ArrayList<>();
   @NonNls private static final String FILE_GROUP_ELEMENT_NAME = "FILE-GROUP";
 
   @NonNls public static final String MODIFIED_ID = "MODIFIED";
@@ -119,7 +117,7 @@ public class FileGroup implements JDOMExternalizable {
   }
 
   public Collection<String> getFiles() {
-    ArrayList<String> files = new ArrayList<String>();
+    ArrayList<String> files = new ArrayList<>();
     for (UpdatedFile file : myFiles) {
       files.add(file.getPath());
     }
@@ -127,11 +125,11 @@ public class FileGroup implements JDOMExternalizable {
   }
 
   public Collection<UpdatedFile> getUpdatedFiles() {
-    return new ArrayList<UpdatedFile>(myFiles);
+    return new ArrayList<>(myFiles);
   }
 
   public List<Pair<String, VcsRevisionNumber>> getFilesAndRevisions(ProjectLevelVcsManager vcsManager) {
-    ArrayList<Pair<String, VcsRevisionNumber>> files = new ArrayList<Pair<String, VcsRevisionNumber>>();
+    ArrayList<Pair<String, VcsRevisionNumber>> files = new ArrayList<>();
     for (UpdatedFile file : myFiles) {
       VcsRevisionNumber number = getRevision(vcsManager, file);
       files.add(Pair.create(file.getPath(), number));
@@ -149,7 +147,7 @@ public class FileGroup implements JDOMExternalizable {
 
   public SimpleTextAttributes getInvalidAttributes() {
     if (myCanBeAbsent) {
-      return new SimpleTextAttributes(Font.PLAIN, FileStatus.DELETED.getColor());
+      return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.DELETED.getColor());
     }
     else {
       return SimpleTextAttributes.ERROR_ATTRIBUTES;

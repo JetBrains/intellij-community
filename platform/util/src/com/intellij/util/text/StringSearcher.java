@@ -17,6 +17,7 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ public class StringSearcher {
   private final int myPatternLength;
   private final int[] mySearchTable = new int[128];
   private final boolean myCaseSensitive;
+  private final boolean myLowecaseTransform;
   private final boolean myForwardDirection;
   private final boolean myJavaIdentifier;
   private final boolean myHandleEscapeSequences;
@@ -57,7 +59,14 @@ public class StringSearcher {
     myPattern = pattern;
     myCaseSensitive = caseSensitive;
     myForwardDirection = forwardDirection;
-    myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase(Locale.US).toCharArray();
+    char[] chars = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase(Locale.US).toCharArray();
+    if (chars.length != myPattern.length()) {
+      myLowecaseTransform = false;
+      chars = myPattern.toUpperCase(Locale.US).toCharArray();
+    } else {
+      myLowecaseTransform = true;
+    }
+    myPatternArray = chars;
     myPatternLength = myPatternArray.length;
     Arrays.fill(mySearchTable, -1);
     myJavaIdentifier = lookForJavaIdentifiersOnlyIfPossible &&
@@ -95,6 +104,19 @@ public class StringSearcher {
     return scan(text, null, _start, _end);
   }
 
+  @NotNull
+  public int[] findAllOccurrences(@NotNull CharSequence text) {
+    int end = text.length();
+    TIntArrayList result = new TIntArrayList();
+    for (int index = 0; index < end; index++) {
+      //noinspection AssignmentToForLoopParameter
+      index = scan(text, index, end);
+      if (index < 0) break;
+      result.add(index);
+    }
+    return result.toNativeArray();
+  }
+
   public int scan(@NotNull CharSequence text, @Nullable char[] textArray, int _start, int _end) {
     if (_start > _end) {
       throw new AssertionError("start > end, " + _start + ">" + _end);
@@ -113,18 +135,13 @@ public class StringSearcher {
 
       while (start <= end) {
         int i = myPatternLength - 1;
-        char lastChar = textArray != null ? textArray[start + i] : text.charAt(start + i);
-        if (!myCaseSensitive) {
-          lastChar = StringUtil.toLowerCase(lastChar);
-        }
-        if (myPatternArray[i] == lastChar) {
+        char lastChar = normalizedCharAt(text, textArray, start + i);
+
+        if (isSameChar(myPatternArray[i], lastChar)) {
           i--;
           while (i >= 0) {
             char c = textArray != null ? textArray[start + i] : text.charAt(start + i);
-            if (!myCaseSensitive) {
-              c = StringUtil.toLowerCase(c);
-            }
-            if (myPatternArray[i] != c) break;
+            if (!isSameChar(myPatternArray[i], c)) break;
             i--;
           }
           if (i < 0) {
@@ -152,18 +169,13 @@ public class StringSearcher {
       int end = _end + 1;
       while (start <= end - myPatternLength + 1) {
         int i = myPatternLength - 1;
-        char lastChar = textArray != null ? textArray[end - (start + i)] : text.charAt(end - (start + i));
-        if (!myCaseSensitive) {
-          lastChar = StringUtil.toLowerCase(lastChar);
-        }
-        if (myPatternArray[myPatternLength - 1 - i] == lastChar) {
+        char lastChar = normalizedCharAt(text, textArray, end - (start + i));
+
+        if (isSameChar(myPatternArray[myPatternLength - 1 - i], lastChar)) {
           i--;
           while (i >= 0) {
             char c = textArray != null ? textArray[end - (start + i)] : text.charAt(end - (start + i));
-            if (!myCaseSensitive) {
-              c = StringUtil.toLowerCase(c);
-            }
-            if (myPatternArray[myPatternLength - 1 - i] != c) break;
+            if (!isSameChar(myPatternArray[myPatternLength - 1 - i], c)) break;
             i--;
           }
           if (i < 0) return end - start - myPatternLength + 1;
@@ -184,6 +196,22 @@ public class StringSearcher {
       }
       return -1;
     }
+  }
+
+  private char normalizedCharAt(@NotNull CharSequence text, @Nullable char[] textArray, int index) {
+    char lastChar = textArray != null ? textArray[index] : text.charAt(index);
+    if (myCaseSensitive) {
+      return lastChar;
+    }
+    return myLowecaseTransform ? StringUtil.toLowerCase(lastChar) : StringUtil.toUpperCase(lastChar);
+  }
+
+  private boolean isSameChar(char charInPattern, char charInText) {
+    boolean sameChar = charInPattern == charInText;
+    if (!sameChar && !myCaseSensitive) {
+      return StringUtil.charsEqualIgnoreCase(charInPattern, charInText);
+    }
+    return sameChar;
   }
 
   /**
@@ -207,6 +235,7 @@ public class StringSearcher {
     StringSearcher searcher = (StringSearcher)o;
 
     if (myCaseSensitive != searcher.myCaseSensitive) return false;
+    if (myLowecaseTransform != searcher.myLowecaseTransform) return false;
     if (myForwardDirection != searcher.myForwardDirection) return false;
     if (myJavaIdentifier != searcher.myJavaIdentifier) return false;
     if (myHandleEscapeSequences != searcher.myHandleEscapeSequences) return false;
@@ -217,6 +246,7 @@ public class StringSearcher {
   public int hashCode() {
     int result = myPattern.hashCode();
     result = 31 * result + (myCaseSensitive ? 1 : 0);
+    result = 31 * result + (myLowecaseTransform ? 1 : 0);
     result = 31 * result + (myForwardDirection ? 1 : 0);
     result = 31 * result + (myJavaIdentifier ? 1 : 0);
     result = 31 * result + (myHandleEscapeSequences ? 1 : 0);

@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,12 +104,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          ((RefJavaVisitor)visitor).visitField(RefFieldImpl.this);
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitField(this));
     }  else {
       super.accept(visitor);
     }
@@ -127,7 +121,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
         refUtil.addReferences(psiField, this, psiField);
       }
 
-      if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant) {
+      if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant || RefUtil.isImplicitWrite(psiField)) {
         if (!checkFlag(USED_FOR_WRITING_MASK)) {
           setFlag(true, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
           setFlag(true, USED_FOR_WRITING_MASK);
@@ -161,10 +155,10 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   @Nullable
   public static PsiField findPsiField(PsiManager manager, String externalName) {
-    int classNameDelimeter = externalName.lastIndexOf(' ');
-    if (classNameDelimeter > 0 && classNameDelimeter < externalName.length() - 1) {
-      final String className = externalName.substring(0, classNameDelimeter);
-      final String fieldName = externalName.substring(classNameDelimeter + 1);
+    int classNameDelimiter = externalName.lastIndexOf(' ');
+    if (classNameDelimiter > 0 && classNameDelimiter < externalName.length() - 1) {
+      final String className = externalName.substring(0, classNameDelimiter);
+      final String fieldName = externalName.substring(classNameDelimiter + 1);
       final PsiClass psiClass = ClassUtil.findPsiClass(manager, className);
       if (psiClass != null) {
         return psiClass.findFieldByName(fieldName, false);

@@ -44,21 +44,18 @@ public class PyPackageUsagesCollector extends AbstractApplicationUsagesCollector
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
-    final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
+    final Set<UsageDescriptor> result = new HashSet<>();
     for(final Module m: ModuleManager.getInstance(project).getModules()) {
       final Sdk pythonSdk = PythonSdkType.findPythonSdk(m);
       if (pythonSdk != null) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            List<PyRequirement> requirements = PyPackageManager.getInstance(pythonSdk).getRequirements(m);
-            if (requirements != null) {
-              Collection<String> packages = new HashSet<String>(PyPIPackageUtil.INSTANCE.getPackageNames());
-              for (PyRequirement requirement : requirements) {
-                String name = requirement.getName();
-                if (packages.contains(name)) {
-                  result.add(new UsageDescriptor(name, 1));
-                }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          List<PyRequirement> requirements = PyPackageManager.getInstance(pythonSdk).getRequirements(m);
+          if (requirements != null) {
+            Collection<String> packages = new HashSet<>(PyPIPackageUtil.INSTANCE.getPackageNames());
+            for (PyRequirement requirement : requirements) {
+              String name = requirement.getName();
+              if (packages.contains(name)) {
+                result.add(new UsageDescriptor(name, 1));
               }
             }
           }

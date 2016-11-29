@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
@@ -114,12 +113,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   @Override
   @NotNull
-  public String getName() {
-    return getFamilyName();
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
     return getText();
   }
@@ -155,15 +148,13 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       return Collections.singletonList(match);
     }
 
-    List<String> namespaces = new ArrayList<String>(set);
+    List<String> namespaces = new ArrayList<>(set);
     Collections.sort(namespaces);
     return namespaces;
   }
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     final PsiElement element = myElement.retrieve();
     if (element == null) return;
     XmlFile xmlFile = getFile();
@@ -319,36 +310,25 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       final JList list = new JBList(namespacesToChooseFrom);
       list.setCellRenderer(XmlNSRenderer.INSTANCE);
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          final int index = list.getSelectedIndex();
-          if (index < 0) return;
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
+      Runnable runnable = () -> {
+        final int index = list.getSelectedIndex();
+        if (index < 0) return;
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-          CommandProcessor.getInstance().executeCommand(
-            project,
-            new Runnable() {
-              @Override
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(
-                  new Runnable() {
-                    @Override
-                    public void run() {
-                      try {
-                        onSelection.doSomethingWithGivenStringToProduceXmlAttributeNowPlease(namespacesToChooseFrom[index]);
-                      } catch (IncorrectOperationException ex) {
-                        throw new RuntimeException(ex);
-                      }
-                    }
-                  }
-                );
+        CommandProcessor.getInstance().executeCommand(
+          project,
+          () -> ApplicationManager.getApplication().runWriteAction(
+            () -> {
+              try {
+                onSelection.doSomethingWithGivenStringToProduceXmlAttributeNowPlease(namespacesToChooseFrom[index]);
+              } catch (IncorrectOperationException ex) {
+                throw new RuntimeException(ex);
               }
-            },
-            requestor.getText(),
-            requestor.getFamilyName()
-          );
-        }
+            }
+          ),
+          requestor.getText(),
+          requestor.getFamilyName()
+        );
       };
 
       new PopupChooserBuilder(list).
@@ -370,12 +350,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     }
     else {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        new Runnable() {
-          @Override
-          public void run() {
-            processExternalUrisImpl(metaHandler, file, processor);
-          }
-        },
+        () -> processExternalUrisImpl(metaHandler, file, processor),
         XmlErrorMessages.message("finding.acceptable.uri"),
         false,
         file.getProject()

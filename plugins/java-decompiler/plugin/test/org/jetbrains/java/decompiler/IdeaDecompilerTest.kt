@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler
 
+import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.execution.filters.LineNumbersMapping
@@ -46,6 +47,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Alarm
 import com.intellij.util.io.URLUtil
 import java.awt.GraphicsEnvironment
+import java.util.concurrent.atomic.AtomicInteger
 
 class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -67,7 +69,8 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   fun testStubCompatibility() {
     val visitor = MyFileVisitor(psiManager)
     Registry.get("decompiler.dump.original.lines").withValue(true) {
-      VfsUtilCore.visitChildrenRecursively(getTestFile("${PlatformTestUtil.getRtJarPath()}!/java"), visitor)
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${PlatformTestUtil.getRtJarPath()}!/java/lang"), visitor)
     }
   }
 
@@ -142,23 +145,23 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     assertNull(FileDocumentManager.getInstance().getCachedDocument(file))
     assertNull(decompiler.getProgress(file))
 
-    val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, project)
+    val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, testRootDisposable)
+    val counter = AtomicInteger(0)
     alarm.addRequest(object : Runnable {
       override fun run() {
+        counter.incrementAndGet()
         val progress = decompiler.getProgress(file)
-        if (progress != null) {
-          progress.cancel()
-        }
-        else {
-          alarm.addRequest(this, 200, ModalityState.any())
+        when (progress) {
+          null -> alarm.addRequest(this, 100, ModalityState.any())
+          else -> progress.cancel()
         }
       }
-    }, 750, ModalityState.any())
+    }, 500, ModalityState.any())
 
     try {
       FileDocumentManager.getInstance().getDocument(file)
       alarm.cancelAllRequests()
-      fail("should have been cancelled")
+      fail("should have been cancelled; alarm fired ${counter.get()} time(s)")
     }
     catch (ignored: ProcessCanceledException) { }
   }
@@ -212,11 +215,11 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
       if (file.isDirectory) {
         println(file.path)
       }
-      else if (file.fileType === StdFileTypes.CLASS && !file.name.contains("$")) {
+      else if (file.fileType === StdFileTypes.CLASS && !file.name.contains('$')) {
         val clsFile = psiManager.findFile(file)!!
         val mirror = (clsFile as ClsFileImpl).mirror
         val decompiled = mirror.text
-        assertTrue(file.path, decompiled.contains(file.nameWithoutExtension))
+        assertTrue(file.path, decompiled.startsWith("${IdeaDecompiler.BANNER}") || file.name == "package-info.class")
 
         // check that no mapped line number is on an empty line
         val prefix = "// "

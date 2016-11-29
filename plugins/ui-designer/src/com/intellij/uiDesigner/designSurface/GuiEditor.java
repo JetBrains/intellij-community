@@ -76,7 +76,6 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -341,13 +340,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     gbc.weighty = 1.0;
 
     myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
-    myScrollPane.setBackground(new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-      }
-    }));
+    myScrollPane.setBackground(new JBColor(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
     panel.add(myScrollPane, gbc);
     myHorzCaptionPanel.attachToScrollPane(myScrollPane);
     myVertCaptionPanel.attachToScrollPane(myScrollPane);
@@ -379,12 +372,9 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     UsageTrigger.trigger("swing-designer.open");
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        DesignerToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
-        PaletteToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      DesignerToolWindowManager.getInstance(myProject).bind(this);
+      PaletteToolWindowManager.getInstance(myProject).bind(this);
     });
   }
 
@@ -659,38 +649,32 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   private void saveToFile() {
     LOG.debug("GuiEditor.saveToFile(): group ID=" + myNextSaveGroupId);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            myInsideChange = true;
-            try {
-              final XmlWriter writer = new XmlWriter();
-              getRootContainer().write(writer);
-              final String newText = writer.getText();
-              final String oldText = myDocument.getText();
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      myInsideChange = true;
+      try {
+        final XmlWriter writer = new XmlWriter();
+        getRootContainer().write(writer);
+        final String newText = writer.getText();
+        final String oldText = myDocument.getText();
 
-              try {
-                final ReplaceInfo replaceInfo = findFragmentToChange(oldText, newText);
-                if (replaceInfo.getStartOffset() == -1) {
-                  // do nothing - texts are equal
-                }
-                else {
-                  myDocument.replaceString(replaceInfo.getStartOffset(), replaceInfo.getEndOffset(), replaceInfo.getReplacement());
-                }
-              }
-              catch (Exception e) {
-                LOG.error(e);
-                myDocument.replaceString(0, oldText.length(), newText);
-              }
-            }
-            finally {
-              myInsideChange = false;
-            }
+        try {
+          final ReplaceInfo replaceInfo = findFragmentToChange(oldText, newText);
+          if (replaceInfo.getStartOffset() == -1) {
+            // do nothing - texts are equal
           }
-        });
+          else {
+            myDocument.replaceString(replaceInfo.getStartOffset(), replaceInfo.getEndOffset(), replaceInfo.getReplacement());
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          myDocument.replaceString(0, oldText.length(), newText);
+        }
       }
-    }, "UI Designer Save", myNextSaveGroupId);
+      finally {
+        myInsideChange = false;
+      }
+    }), "UI Designer Save", myNextSaveGroupId);
     myNextSaveGroupId = new Object();
 
     fireHierarchyChanged();
@@ -713,7 +697,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   private void refreshProperties() {
-    final Ref<Boolean> anythingModified = new Ref<Boolean>();
+    final Ref<Boolean> anythingModified = new Ref<>();
     FormEditingUtil.iterate(myRootContainer, new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         final RadComponent radComponent = (RadComponent)component;
@@ -937,7 +921,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   private Map<String, String> saveTabbedPaneSelectedTabs() {
-    final Map<String, String> result = new HashMap<String, String>();
+    final Map<String, String> result = new HashMap<>();
     FormEditingUtil.iterate(getRootContainer(), new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         if (component instanceof RadTabbedPane) {
@@ -1140,11 +1124,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       if (!GuiEditor.this.ensureEditable()) {
         return;
       }
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-        public void run() {
-          FormEditingUtil.deleteSelection(GuiEditor.this);
-        }
-      }, UIDesignerBundle.message("command.delete.selection"), null);
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> FormEditingUtil.deleteSelection(GuiEditor.this), UIDesignerBundle.message("command.delete.selection"), null);
     }
 
     public boolean canDeleteElement(@NotNull final DataContext dataContext) {

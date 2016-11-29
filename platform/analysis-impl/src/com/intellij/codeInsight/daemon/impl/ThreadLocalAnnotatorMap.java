@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
@@ -44,18 +44,18 @@ abstract class ThreadLocalAnnotatorMap<K, V> {
   private final ThreadLocal<VersionedMap<K, V>> CACHE = new ThreadLocal<VersionedMap<K, V>>(){
     @Override
     protected VersionedMap<K, V> initialValue() {
-      return new VersionedMap<K, V>(version);
+      return new VersionedMap<>(version);
     }
   };
 
   @SuppressWarnings("unchecked")
   @NotNull
   private List<V> cloneTemplates(@NotNull Collection<V> templates) {
-    List<V> result = new ArrayList<V>(templates.size());
+    List<V> result = new ArrayList<>(templates.size());
     PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
     for (V template : templates) {
       Class<? extends V> aClass = (Class<? extends V>)template.getClass();
-      V clone = (V)new ConstructorInjectionComponentAdapter(aClass.getName(), aClass).getComponentInstance(container);
+      V clone = (V)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass).getComponentInstance(container);
       result.add(clone);
     }
     return result;

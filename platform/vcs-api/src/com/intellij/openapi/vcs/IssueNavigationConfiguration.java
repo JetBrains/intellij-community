@@ -20,6 +20,8 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
@@ -37,19 +39,22 @@ import java.util.regex.Pattern;
  * @author yole
  */
 @State(name = "IssueNavigationConfiguration", storages = @Storage("vcs.xml"))
-public class IssueNavigationConfiguration extends SimpleModificationTracker implements PersistentStateComponent<IssueNavigationConfiguration> {
+public class IssueNavigationConfiguration extends SimpleModificationTracker
+  implements PersistentStateComponent<IssueNavigationConfiguration> {
+  private static final Logger LOG = Logger.getInstance(IssueNavigationConfiguration.class);
+
   public static IssueNavigationConfiguration getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, IssueNavigationConfiguration.class);
   }
 
-  private List<IssueNavigationLink> myLinks = new ArrayList<IssueNavigationLink>();
+  private List<IssueNavigationLink> myLinks = new ArrayList<>();
 
   public List<IssueNavigationLink> getLinks() {
     return myLinks;
   }
 
   public void setLinks(final List<IssueNavigationLink> links) {
-    myLinks = new ArrayList<IssueNavigationLink>(links);
+    myLinks = new ArrayList<>(links);
     incModificationCount();
   }
 
@@ -82,31 +87,40 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker impl
       if (!(o instanceof LinkMatch)) {
         return 0;
       }
-      LinkMatch rhs = (LinkMatch) o;
-      return myRange.getStartOffset() - rhs.getRange().getStartOffset();
+      return myRange.getStartOffset() - ((LinkMatch)o).getRange().getStartOffset();
     }
   }
 
   public List<LinkMatch> findIssueLinks(CharSequence text) {
-    final List<LinkMatch> result = new ArrayList<LinkMatch>();
-    for(IssueNavigationLink link: myLinks) {
-      Pattern issuePattern = link.getIssuePattern();
-      Matcher m = issuePattern.matcher(text);
-      while(m.find()) {
-        String replacement = issuePattern.matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
-        addMatch(result, new TextRange(m.start(), m.end()), replacement);
+    final List<LinkMatch> result = new ArrayList<>();
+    try {
+      for (IssueNavigationLink link : myLinks) {
+        Pattern issuePattern = link.getIssuePattern();
+        Matcher m = issuePattern.matcher(text);
+        while (m.find()) {
+          try {
+            String replacement = issuePattern.matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
+            addMatch(result, new TextRange(m.start(), m.end()), replacement);
+          }
+          catch (Exception e) {
+            LOG.debug("Malformed regex replacement. IssueLink: " + link + "; text: " + text, e);
+          }
+        }
+      }
+      Matcher m = URLUtil.URL_PATTERN.matcher(text);
+      while (m.find()) {
+        addMatch(result, new TextRange(m.start(), m.end()), m.group());
       }
     }
-    Matcher m = URLUtil.URL_PATTERN.matcher(text);
-    while(m.find()) {
-      addMatch(result, new TextRange(m.start(), m.end()), m.group());
+    catch (ProcessCanceledException e) {
+      //skip too long processing completely
     }
     Collections.sort(result);
     return result;
   }
 
   private static void addMatch(final List<LinkMatch> result, final TextRange range, final String replacement) {
-    for (Iterator<LinkMatch> iterator = result.iterator(); iterator.hasNext();) {
+    for (Iterator<LinkMatch> iterator = result.iterator(); iterator.hasNext(); ) {
       LinkMatch oldMatch = iterator.next();
       if (range.contains(oldMatch.getRange())) {
         iterator.remove();

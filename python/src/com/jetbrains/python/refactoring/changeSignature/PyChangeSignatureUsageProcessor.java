@@ -73,7 +73,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @Nullable
   @Override
   public MultiMap<PsiElement, String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (info instanceof PyChangeInfo && info.isNameChanged()) {
       final PyFunction function = ((PyChangeInfo)info).getMethod();
       final PyClass clazz = function.getContainingClass();
@@ -145,7 +145,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     useKeywords = false;
     isMethod = false;
     isAfterStar = false;
-    List<String> params = new ArrayList<String>();
+    List<String> params = new ArrayList<>();
 
     int currentIndex = 0;
     final PyExpression[] arguments = argumentList.getArguments();
@@ -329,7 +329,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
     if (docStringExpression == null) return;
     final PyParameterInfo[] parameters = changeInfo.getNewParameters();
-    Set<String> names = new HashSet<String>();
+    Set<String> names = new HashSet<>();
     for (PyParameterInfo info : parameters) {
       names.add(StringUtil.trimLeading(info.getName(), '*').trim());
     }

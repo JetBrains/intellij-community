@@ -18,9 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
@@ -29,7 +27,6 @@ import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +109,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
 
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file != null && file.isValid() && (file.isInLocalFileSystem() || file instanceof HttpVirtualFile);
+    return file != null && file.isValid();
   }
 
   private void toggleContextToolbar(final boolean show) {
@@ -235,38 +232,11 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     myTimer.start();
   }
 
-  private ActionToolbar createToolbar(final ActionGroup group) {
-    final ActionToolbarImpl actionToolbar =
-      new ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, group, true, DataManager.getInstance(), ActionManagerEx.getInstanceEx(),
-                            KeymapManagerEx.getInstanceEx()) {
-
-        @Override
-        public ActionButton createToolbarButton(final AnAction action,
-                                                final ActionButtonLook look,
-                                                final String place,
-                                                final Presentation presentation,
-                                                final Dimension minimumSize) {
-          final ActionButton result = new ActionButton(action, presentation, place, minimumSize) {
-            @Override
-            public void paintComponent(final Graphics g) {
-              final ActionButtonLook look = getButtonLook();
-              look.paintBackground(g, this);
-              look.paintIcon(g, this, getIcon());
-            }
-          };
-
-          result.setLook(look);
-          return result;
-        }
-      };
-
-    actionToolbar.setTargetComponent(myEditor.getContentComponent());
-    return actionToolbar;
-  }
-
   private JComponent createComponent() {
-    myActionToolbar = createToolbar(myActionGroup);
-    myActionToolbar.setMinimumButtonSize(new Dimension(20, 20));
+    myActionToolbar = new ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, myActionGroup, true,
+                                            DataManager.getInstance(), ActionManagerEx.getInstanceEx(), KeymapManagerEx.getInstanceEx());
+    myActionToolbar.setTargetComponent(myEditor.getContentComponent());
+    myActionToolbar.setMinimumButtonSize(new Dimension(22, 22));
     myActionToolbar.setReservePlaceAutoPopupIcon(false);
 
     ContextMenuPanel contextMenuPanel = new ContextMenuPanel(this);
@@ -283,7 +253,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
     private ContextMenuPanel(final ContextMenuImpl contextMenu) {
       myContextMenu = contextMenu;
-      setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 2));
       setOpaque(false);
     }
 
@@ -310,7 +280,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       Rectangle r = getBounds();
       Graphics2D graphics = (Graphics2D)g.create();
       try {
-        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myContextMenu.myCurrentOpacity / 500.0f));
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myContextMenu.myCurrentOpacity / 600.0f));
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         graphics.setColor(Color.GRAY);
         graphics.fillRoundRect(0, 0, r.width - 1, r.height - 1, 6, 6);

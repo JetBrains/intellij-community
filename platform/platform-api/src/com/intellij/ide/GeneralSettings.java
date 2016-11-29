@@ -39,11 +39,15 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   public static final int OPEN_PROJECT_NEW_WINDOW = 0;
   public static final int OPEN_PROJECT_SAME_WINDOW = 1;
 
+  public enum ProcessCloseConfirmation {ASK, TERMINATE, DISCONNECT}
+
   public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
+  public static final String PROP_SUPPORT_SCREEN_READERS = "supportScreenReaders";
 
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
   private boolean myReopenLastProject = true;
+  private boolean mySupportScreenReaders = false;
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDEA automatically saves files if it is inactive for some seconds
@@ -54,6 +58,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
+  private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
 
   public static GeneralSettings getInstance(){
     return ServiceManager.getService(GeneralSettings.class);
@@ -76,20 +81,18 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     return myBrowserPath;
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
   /**
    * Use RecentProjectsManagerBase
    */
+  @Deprecated
   public String getLastProjectCreationLocation() {
     return null;
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
   /**
    * Use RecentProjectsManagerBase
    */
+  @Deprecated
   public void setLastProjectCreationLocation(String lastProjectLocation) {
   }
 
@@ -97,7 +100,6 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myBrowserPath = browserPath;
   }
 
-  @SuppressWarnings("unused")
   @Deprecated
   public boolean showTipsOnStartup() {
     return isShowTipsOnStartup();
@@ -126,6 +128,26 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   public void setReopenLastProject(boolean reopenLastProject) {
     myReopenLastProject = reopenLastProject;
+  }
+
+  public boolean isSupportScreenReaders() {
+    return mySupportScreenReaders;
+  }
+
+  public void setSupportScreenReaders(boolean enabled) {
+    boolean oldValue = mySupportScreenReaders;
+    mySupportScreenReaders = enabled;
+    myPropertyChangeSupport.firePropertyChange(
+      PROP_SUPPORT_SCREEN_READERS, Boolean.valueOf(oldValue), Boolean.valueOf(enabled)
+    );
+  }
+
+  public ProcessCloseConfirmation getProcessCloseConfirmation() {
+    return myProcessCloseConfirmation;
+  }
+
+  public void setProcessCloseConfirmation(ProcessCloseConfirmation processCloseConfirmation) {
+    myProcessCloseConfirmation = processCloseConfirmation;
   }
 
   @OptionTag("autoSyncFiles")
@@ -201,14 +223,12 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myUseDefaultBrowser = value;
   }
 
-  @SuppressWarnings("unused")
   @Transient
   @Deprecated
   public boolean isConfirmExtractFiles() {
     return true;
   }
 
-  @SuppressWarnings("unused")
   @Deprecated
   public void setConfirmExtractFiles(boolean value) {
   }

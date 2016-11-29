@@ -147,14 +147,11 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree {
 
   public Map<String, Set<String>> getState() {
     final Map<String, Set<String>> result = ContainerUtil.newHashMap();
-    Consumer<PostfixTemplateCheckedTreeNode> consumer = new Consumer<PostfixTemplateCheckedTreeNode>() {
-      @Override
-      public void consume(PostfixTemplateCheckedTreeNode template) {
-        if (!template.isChecked()) {
-          Set<String> templatesForLanguage =
-            ContainerUtil.getOrCreate(result, template.getLang(), PostfixTemplatesSettings.SET_FACTORY);
-          templatesForLanguage.add(template.getTemplate().getKey());
-        }
+    Consumer<PostfixTemplateCheckedTreeNode> consumer = template -> {
+      if (!template.isChecked()) {
+        Set<String> templatesForLanguage =
+          ContainerUtil.getOrCreate(result, template.getLang(), PostfixTemplatesSettings.SET_FACTORY);
+        templatesForLanguage.add(template.getTemplate().getKey());
       }
     };
     visit(consumer);
@@ -177,18 +174,15 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree {
 
   public void setState(@NotNull final Map<String, Set<String>> langToDisabledTemplates) {
     final TreeState treeState = TreeState.createOn(this, myRoot);
-    Consumer<PostfixTemplateCheckedTreeNode> consumer = new Consumer<PostfixTemplateCheckedTreeNode>() {
-      @Override
-      public void consume(PostfixTemplateCheckedTreeNode template) {
-        Set<String> disabledTemplates = langToDisabledTemplates.get(template.getLang());
-        String key = template.getTemplate().getKey();
-        if (disabledTemplates != null && disabledTemplates.contains(key)) {
-          template.setChecked(false);
-          return;
-        }
-
-        template.setChecked(true);
+    Consumer<PostfixTemplateCheckedTreeNode> consumer = template -> {
+      Set<String> disabledTemplates = langToDisabledTemplates.get(template.getLang());
+      String key = template.getTemplate().getKey();
+      if (disabledTemplates != null && disabledTemplates.contains(key)) {
+        template.setChecked(false);
+        return;
       }
+
+      template.setChecked(true);
     };
 
     visit(consumer);
@@ -199,12 +193,9 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree {
   }
 
   public void selectTemplate(@NotNull final PostfixTemplate postfixTemplate, @NotNull final String lang) {
-    Consumer<PostfixTemplateCheckedTreeNode> consumer = new Consumer<PostfixTemplateCheckedTreeNode>() {
-      @Override
-      public void consume(PostfixTemplateCheckedTreeNode template) {
-        if (lang.equals(template.getLang()) && postfixTemplate.getKey().equals(template.getTemplate().getKey())) {
-          TreeUtil.selectInTree(template, true, PostfixTemplatesCheckboxTree.this, true);
-        }
+    Consumer<PostfixTemplateCheckedTreeNode> consumer = template -> {
+      if (lang.equals(template.getLang()) && postfixTemplate.getKey().equals(template.getTemplate().getKey())) {
+        TreeUtil.selectInTree(template, true, this, true);
       }
     };
     visit(consumer);

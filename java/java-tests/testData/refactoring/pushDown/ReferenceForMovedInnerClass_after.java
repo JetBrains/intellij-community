@@ -1,4 +1,5 @@
-import static Desc.ClassToMove.F1;
+package p;
+import static p.Desc.ClassToMove.F1;
 abstract class InlineIssue {
 
 }

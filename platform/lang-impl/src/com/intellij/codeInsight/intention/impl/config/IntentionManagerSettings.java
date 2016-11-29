@@ -36,7 +36,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jdom.Element;
@@ -50,7 +49,6 @@ import java.util.regex.Pattern;
 @State(name = "IntentionManagerSettings", storages = @Storage("intentionSettings.xml"))
 public class IntentionManagerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
-  private static final Alarm ourRegisterMetaDataAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   private static class MetaDataKey extends Pair<String, String> {
     private static final StringInterner ourInterner = new WeakStringInterner();
@@ -59,9 +57,9 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     }
   }
 
-  private final Set<String> myIgnoredActions = new LinkedHashSet<String>();
+  private final Set<String> myIgnoredActions = new LinkedHashSet<>();
 
-  private final Map<MetaDataKey, IntentionActionMetaData> myMetaData = new LinkedHashMap<MetaDataKey, IntentionActionMetaData>();
+  private final Map<MetaDataKey, IntentionActionMetaData> myMetaData = new LinkedHashMap<>();
   @NonNls private static final String IGNORE_ACTION_TAG = "ignoreAction";
   @NonNls private static final String NAME_ATT = "name";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
@@ -114,7 +112,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   @NotNull
   public synchronized List<IntentionActionMetaData> getMetaData() {
     IntentionManager.getInstance(); // TODO: Hack to make IntentionManager actually register metadata here. Dependencies between IntentionManager and IntentionManagerSettings should be revised.
-    return new ArrayList<IntentionActionMetaData>(myMetaData.values());
+    return new ArrayList<>(myMetaData.values());
   }
 
   public synchronized boolean isEnabled(@NotNull IntentionActionMetaData metaData) {
@@ -164,25 +162,22 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
     final TextDescriptor description = metaData.getDescription();
-    ourRegisterMetaDataAlarm.addRequest(new Runnable(){
-      @Override
-      public void run() {
-        try {
-          SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
-          if (registrar == null) return;
-          @NonNls String descriptionText = description.getText().toLowerCase();
-          descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-          final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
-          words.addAll(registrar.getProcessedWords(metaData.getFamily()));
-          for (String word : words) {
-            registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
-          }
-        }
-        catch (IOException e) {
-          LOG.error(e);
+    app.executeOnPooledThread(() -> {
+      try {
+        SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+        if (registrar == null) return;
+        @NonNls String descriptionText = description.getText().toLowerCase();
+        descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
+        final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
+        words.addAll(registrar.getProcessedWords(metaData.getFamily()));
+        for (String word : words) {
+          registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
         }
       }
-    }, 0);
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   public synchronized void unregisterMetaData(@NotNull IntentionAction intentionAction) {

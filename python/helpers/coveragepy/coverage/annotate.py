@@ -1,9 +1,18 @@
-"""Source file annotation for Coverage."""
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://bitbucket.org/ned/coveragepy/src/default/NOTICE.txt
 
-import os, re
+"""Source file annotation for coverage.py."""
 
-from coverage.backward import sorted                    # pylint: disable=W0622
+import io
+import os
+import re
+
+from coverage.files import flat_rootname
+from coverage.misc import isolate_module
 from coverage.report import Reporter
+
+os = isolate_module(os)
+
 
 class AnnotateReporter(Reporter):
     """Generate annotated source files showing line coverage.
@@ -42,61 +51,53 @@ class AnnotateReporter(Reporter):
         """
         self.report_files(self.annotate_file, morfs, directory)
 
-    def annotate_file(self, cu, analysis):
+    def annotate_file(self, fr, analysis):
         """Annotate a single file.
 
-        `cu` is the CodeUnit for the file to annotate.
+        `fr` is the FileReporter for the file to annotate.
 
         """
-        if not cu.relative:
-            return
-
-        filename = cu.filename
-        source = cu.source_file()
-        if self.directory:
-            dest_file = os.path.join(self.directory, cu.flat_rootname())
-            dest_file += ".py,cover"
-        else:
-            dest_file = filename + ",cover"
-        dest = open(dest_file, 'w')
-
         statements = sorted(analysis.statements)
         missing = sorted(analysis.missing)
         excluded = sorted(analysis.excluded)
 
-        lineno = 0
-        i = 0
-        j = 0
-        covered = True
-        while True:
-            line = source.readline()
-            if line == '':
-                break
-            lineno += 1
-            while i < len(statements) and statements[i] < lineno:
-                i += 1
-            while j < len(missing) and missing[j] < lineno:
-                j += 1
-            if i < len(statements) and statements[i] == lineno:
-                covered = j >= len(missing) or missing[j] > lineno
-            if self.blank_re.match(line):
-                dest.write('  ')
-            elif self.else_re.match(line):
-                # Special logic for lines containing only 'else:'.
-                if i >= len(statements) and j >= len(missing):
-                    dest.write('! ')
-                elif i >= len(statements) or j >= len(missing):
-                    dest.write('> ')
-                elif statements[i] == missing[j]:
-                    dest.write('! ')
+        if self.directory:
+            dest_file = os.path.join(self.directory, flat_rootname(fr.relative_filename()))
+            if dest_file.endswith("_py"):
+                dest_file = dest_file[:-3] + ".py"
+            dest_file += ",cover"
+        else:
+            dest_file = fr.filename + ",cover"
+
+        with io.open(dest_file, 'w', encoding='utf8') as dest:
+            i = 0
+            j = 0
+            covered = True
+            source = fr.source()
+            for lineno, line in enumerate(source.splitlines(True), start=1):
+                while i < len(statements) and statements[i] < lineno:
+                    i += 1
+                while j < len(missing) and missing[j] < lineno:
+                    j += 1
+                if i < len(statements) and statements[i] == lineno:
+                    covered = j >= len(missing) or missing[j] > lineno
+                if self.blank_re.match(line):
+                    dest.write(u'  ')
+                elif self.else_re.match(line):
+                    # Special logic for lines containing only 'else:'.
+                    if i >= len(statements) and j >= len(missing):
+                        dest.write(u'! ')
+                    elif i >= len(statements) or j >= len(missing):
+                        dest.write(u'> ')
+                    elif statements[i] == missing[j]:
+                        dest.write(u'! ')
+                    else:
+                        dest.write(u'> ')
+                elif lineno in excluded:
+                    dest.write(u'- ')
+                elif covered:
+                    dest.write(u'> ')
                 else:
-                    dest.write('> ')
-            elif lineno in excluded:
-                dest.write('- ')
-            elif covered:
-                dest.write('> ')
-            else:
-                dest.write('! ')
-            dest.write(line)
-        source.close()
-        dest.close()
+                    dest.write(u'! ')
+
+                dest.write(line)

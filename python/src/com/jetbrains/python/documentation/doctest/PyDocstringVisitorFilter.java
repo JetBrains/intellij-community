@@ -44,7 +44,7 @@ public class PyDocstringVisitorFilter implements PythonVisitorFilter {
         visitorClass == PyPackageRequirementsInspection.class || visitorClass == PyMandatoryEncodingInspection.class ||
         visitorClass == PyInterpreterInspection.class || visitorClass == PyDocstringTypesInspection.class ||
         visitorClass == PySingleQuotedDocstringInspection.class || visitorClass == PyClassHasNoInitInspection.class || 
-        visitorClass == PyStatementEffectInspection.class) {
+        visitorClass == PyStatementEffectInspection.class || visitorClass == PyPep8Inspection.class) {
       return false;
     }
     //annotators

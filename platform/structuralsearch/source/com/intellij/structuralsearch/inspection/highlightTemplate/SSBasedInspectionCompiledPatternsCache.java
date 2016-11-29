@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene.Kudelevsky
@@ -28,7 +30,8 @@ public class SSBasedInspectionCompiledPatternsCache {
       matcher.precompileOptions(configurations, cache);
       project.putUserData(COMPILED_OPTIONS_KEY, cache);
     }
-    return cache;
+
+    return configurations.stream().collect(Collectors.toMap(Function.identity(), cache::get));
   }
 
   private static boolean areConfigurationsInCache(@NotNull List<Configuration> configurations,

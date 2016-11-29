@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.copy;
 
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -36,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
@@ -48,6 +51,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -61,7 +65,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   private static final String COPY_OPEN_IN_EDITOR = "Copy.OpenInEditor";
   private static final String RECENT_KEYS = "CopyFile.RECENT_KEYS";
 
-  public static String shortenPath(VirtualFile file) {
+  public static String shortenPath(@NotNull VirtualFile file) {
     return StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), MAX_PATH_LENGTH);
   }
 
@@ -78,7 +82,10 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   private JLabel myInformationLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
   private JCheckBox myOpenFilesInEditor = createOpenInEditorCB();
+  private boolean myUnknownFileType = false;
+
   private JTextField myNewNameField;
+  private final PsiElement[] myElements;
   private final Project myProject;
   private final boolean myShowDirectoryField;
   private final boolean myShowNewNameField;
@@ -86,8 +93,9 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   private PsiDirectory myTargetDirectory;
   private boolean myFileCopy = false;
 
-  public CopyFilesOrDirectoriesDialog(PsiElement[] elements, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
+  public CopyFilesOrDirectoriesDialog(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
+    myElements = elements;
     myProject = project;
     myShowDirectoryField = !doClone;
     myShowNewNameField = elements.length == 1;
@@ -99,6 +107,12 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
     setTitle(RefactoringBundle.message(doClone ? "copy.files.clone.title" : "copy.files.copy.title"));
     init();
 
+    for (int i = 0; i < elements.length; i++) {
+      if (elements[i] instanceof PsiFile) {
+        elements[i] = ((PsiFile)elements[i]).getOriginalFile();
+      }
+    }
+
     if (elements.length == 1) {
       String text;
       if (elements[0] instanceof PsiFile) {
@@ -106,7 +120,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         VirtualFile vFile = file.getVirtualFile();
         text = RefactoringBundle.message(doClone ? "copy.files.clone.file.0" : "copy.files.copy.file.0", shortenPath(vFile));
         String fileName = vFile.isInLocalFileSystem() ? vFile.getName() : PathUtil.suggestFileName(file.getName(), true, true);
-        if (StringUtil.isEmpty(vFile.getExtension())) {
+        if (StringUtil.isEmpty(vFile.getExtension()) && ScratchUtil.isScratch(vFile)) {
           FileType type = ObjectUtils.notNull(file.getLanguage().getAssociatedFileType(), file.getFileType());
           fileName = PathUtil.makeFileName(fileName, type.getDefaultExtension());
         }
@@ -116,6 +130,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
           myNewNameField.select(0, dotIdx);
           myNewNameField.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
         }
+        myTargetDirectory = file.getContainingDirectory();
         myFileCopy = true;
       }
       else {
@@ -242,7 +257,9 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   }
 
   public boolean openInEditor() {
-    return myOpenFilesInEditor.isSelected();
+    return myOpenFilesInEditor.isVisible() &&
+           myOpenFilesInEditor.isSelected() &&
+           !myUnknownFileType;
   }
 
   @Override
@@ -259,9 +276,17 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         Messages.showErrorDialog(myNewNameField, "Name is not a valid file name");
         return;
       }
+
+      if (myFileCopy && myTargetDirectory != null) {
+        if (FileTypeChooser.getKnownFileTypeOrAssociate(myTargetDirectory.getVirtualFile(), newName, myProject) == null) {
+          myUnknownFileType = true;
+        }
+      }
     }
 
-    saveOpenInEditorState(myOpenFilesInEditor.isSelected());
+    if (myOpenFilesInEditor.isVisible()) {
+      saveOpenInEditorState(myOpenFilesInEditor.isSelected());
+    }
     if (myShowDirectoryField) {
       final String targetDirectoryName = myTargetDirectoryField.getChildComponent().getText();
 
@@ -273,24 +298,26 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
 
       RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, targetDirectoryName);
 
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                String path = FileUtil.toSystemIndependentName(targetDirectoryName);
-                myTargetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), path);
-              }
-              catch (IncorrectOperationException ignored) { }
-            }
-          });
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          String path = FileUtil.toSystemIndependentName(targetDirectoryName);
+          myTargetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), path);
         }
-      }, RefactoringBundle.message("create.directory"), null);
+        catch (IncorrectOperationException ignored) { }
+      }), RefactoringBundle.message("create.directory"), null);
 
       if (myTargetDirectory == null) {
         Messages.showErrorDialog(myProject, RefactoringBundle.message("cannot.create.directory"), RefactoringBundle.message("error.title"));
+        return;
+      }
+
+      try {
+        for (PsiElement element : myElements) {
+          MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(element, myTargetDirectory);
+        }
+      }
+      catch (IncorrectOperationException e) {
+        Messages.showErrorDialog(myProject, e.getMessage(), RefactoringBundle.message("error.title"));
         return;
       }
     }

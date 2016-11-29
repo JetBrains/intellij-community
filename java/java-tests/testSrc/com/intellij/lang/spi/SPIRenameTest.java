@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,18 +28,22 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SPIRenameTest extends MultiFileTestCase {
   public void testRenameProviderImplementation() throws Exception {
-    doRenameTest("Test.java", "Test1");
+    doRenameTest("Test1", "foo/Test.java");
   }
   
   public void testRenameProviderImplementationContainingClass() throws Exception {
-    doRenameTest("Test.java", "Test1");
+    doRenameTest("Test1", "foo/Test.java");
   }
 
-  private void doRenameTest(final String editorFile, final String newName) throws Exception {
+  public void testRenamePackageWithImplementation() throws Exception {
+    doRenameTest("foo1", "bar/foo/FooRunnable.java");
+  }
+
+  private void doRenameTest(final String newName, final String relPath) throws Exception {
     doTest(new PerformAction() {
       @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        final VirtualFile file = rootDir.findFileByRelativePath("foo/" + editorFile);
+        final VirtualFile file = rootDir.findFileByRelativePath(relPath);
         assert file != null;
         configureByExistingFile(file);
         final PsiElement element = TargetElementUtil.findTargetElement(myEditor,

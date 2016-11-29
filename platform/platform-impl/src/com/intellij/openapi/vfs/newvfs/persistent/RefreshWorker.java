@@ -57,13 +57,13 @@ public class RefreshWorker {
   private static final Logger LOG_ATTRIBUTES = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker_Attributes");
 
   private final boolean myIsRecursive;
-  private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<Pair<NewVirtualFile, FileAttributes>>(100);
-  private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
-  private volatile boolean myCancelled = false;
+  private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<>(100);
+  private final List<VFileEvent> myEvents = new ArrayList<>();
+  private volatile boolean myCancelled;
 
   public RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
     myIsRecursive = isRecursive;
-    myRefreshQueue.addLast(Pair.create(refreshRoot, (FileAttributes)null));
+    myRefreshQueue.addLast(pair(refreshRoot, null));
   }
 
   @NotNull
@@ -76,23 +76,11 @@ public class RefreshWorker {
   }
 
   public void scan() {
-    NewVirtualFile root = myRefreshQueue.pullFirst().first;
-    boolean rootDirty = root.isDirty();
-    if (LOG.isDebugEnabled()) LOG.debug("root=" + root + " dirty=" + rootDirty);
-    if (!rootDirty) return;
-
+    NewVirtualFile root = myRefreshQueue.peekFirst().first;
     NewVirtualFileSystem fs = root.getFileSystem();
-    FileAttributes rootAttributes = fs.getAttributes(root);
-    if (rootAttributes == null) {
-      scheduleDeletion(root);
-      root.markClean();
-      return;
-    }
-    else if (rootAttributes.isDirectory()) {
+    if (root.isDirectory()) {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
-
-    myRefreshQueue.addLast(pair(root, rootAttributes));
     try {
       processQueue(fs, PersistentFS.getInstance());
     }
@@ -116,6 +104,7 @@ public class RefreshWorker {
       FileAttributes attributes = pair.second != null ? pair.second : fs.getAttributes(file);
       if (attributes == null) {
         scheduleDeletion(file);
+        file.markClean();
         continue;
       }
 
@@ -202,7 +191,7 @@ public class RefreshWorker {
 
       OpenTHashSet<String> actualNames = null;
       if (!fs.isCaseSensitive()) {
-        actualNames = new OpenTHashSet<String>(strategy, upToDateNames);
+        actualNames = new OpenTHashSet<>(strategy, upToDateNames);
       }
       if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(currentNames) + " +" + newNames + " -" + deletedNames);
 
@@ -280,7 +269,7 @@ public class RefreshWorker {
 
       OpenTHashSet<String> actualNames = null;
       if (!fs.isCaseSensitive()) {
-        actualNames = new OpenTHashSet<String>(strategy, VfsUtil.filterNames(fs.list(dir)));
+        actualNames = new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
       }
 
       if (LOG.isTraceEnabled()) {
@@ -352,6 +341,7 @@ public class RefreshWorker {
 
   private void checkCancelled(@NotNull NewVirtualFile stopAt) {
     if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
+      if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
       forceMarkDirty(stopAt);
       while (!myRefreshQueue.isEmpty()) {
         NewVirtualFile next = myRefreshQueue.pullFirst().first;
@@ -372,7 +362,7 @@ public class RefreshWorker {
     if (!checkAndScheduleFileTypeChange(parent, child, childAttributes)) {
       boolean upToDateIsDirectory = childAttributes.isDirectory();
       if (myIsRecursive || !upToDateIsDirectory) {
-        myRefreshQueue.addLast(Pair.create((NewVirtualFile)child, childAttributes));
+        myRefreshQueue.addLast(pair((NewVirtualFile)child, childAttributes));
       }
     }
   }
@@ -418,7 +408,7 @@ public class RefreshWorker {
     }
   }
 
-  private static Function<VirtualFile, Boolean> ourCancellingCondition = null;
+  private static Function<VirtualFile, Boolean> ourCancellingCondition;
 
   @TestOnly
   public static void setCancellingCondition(@Nullable Function<VirtualFile, Boolean> condition) {

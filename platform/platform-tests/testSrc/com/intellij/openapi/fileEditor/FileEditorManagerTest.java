@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -129,12 +127,9 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       Editor editor = ((TextEditor)editors[0]).getEditor();
       final FoldingModel foldingModel = editor.getFoldingModel();
       assertEquals(2, foldingModel.getAllFoldRegions().length);
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-            region.setExpanded(false);
-          }
+      foldingModel.runBatchFoldingOperation(() -> {
+        for (FoldRegion region : foldingModel.getAllFoldRegions()) {
+          region.setExpanded(false);
         }
       });
       int textLength = editor.getDocument().getTextLength();
@@ -213,12 +208,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
   private void assertOpenFiles(String... fileNames) {
     EditorWithProviderComposite[] files = myManager.getSplitters().getEditorsComposites();
-    List<String> names = ContainerUtil.map(files, new Function<EditorWithProviderComposite, String>() {
-      @Override
-      public String fun(EditorWithProviderComposite composite) {
-        return composite.getFile().getName();
-      }
-    });
+    List<String> names = ContainerUtil.map(files, composite -> composite.getFile().getName());
     assertEquals(Arrays.asList(fileNames), names);
   }
 
@@ -232,16 +222,6 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     @Override
     public String getEditorTypeId() {
       return "mock";
-    }
-
-    @NotNull
-    @Override
-    public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-      return FileEditorState.INSTANCE;
-    }
-
-    @Override
-    public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
     }
 
     @Override

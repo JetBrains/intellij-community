@@ -31,7 +31,7 @@ import java.util.List;
 public class TableColumnAnimator extends Timer implements ActionListener {
   private final JTable myTable;
   private boolean added = false;
-  private final List<Pair<TableColumn, Integer>> myColumns = new ArrayList<Pair<TableColumn, Integer>>();
+  private final List<Pair<TableColumn, Integer>> myColumns = new ArrayList<>();
   private int myStep = 30;
   private Runnable myDone;
 

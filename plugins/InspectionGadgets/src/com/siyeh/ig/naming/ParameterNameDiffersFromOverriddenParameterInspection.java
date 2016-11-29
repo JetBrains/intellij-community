@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameParameterFix;
+import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,6 +42,6 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameParameterFix((String)infos[0]);
+    return new RenameFix((String)infos[0], false, false);
   }
 }

@@ -173,6 +173,7 @@
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.HtmlClosingTagErrorFilter"/>
+    <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.InjectedHtmlErrorFilter"/>
 
     <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
                         serviceImplementation="com.intellij.javaee.ExternalResourceManagerExImpl"/>
@@ -234,6 +235,7 @@
     <lang.whiteSpaceFormattingStrategy language="XML"
                                        implementationClass="com.intellij.lang.xml.XmlWhiteSpaceFormattingStrategy"/>
     <lang.formatter language="HTML" implementationClass="com.intellij.lang.html.HtmlFormattingModelBuilder"/>
+    <preFormatProcessor implementation="com.intellij.lang.html.HtmlQuotesFormatPreprocessor"/>
     <lang.formatter language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlFormattingModelBuilder"/>
     <lang.lineWrapStrategy language="XML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
     <lang.lineWrapStrategy language="HTML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
@@ -313,6 +315,7 @@
     <completionData fileType="XHTML" className="com.intellij.codeInsight.completion.XHtmlCompletionData"/>
     <completionData fileType="DTD" className="com.intellij.codeInsight.completion.DtdCompletionData"/>
 
+    <referenceProviderType key="Path References Provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
     <!--<pom.declarationSearcher implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.IdDeclarationSearcher"/>-->
     <anchorReferenceProvider implementation="com.intellij.xml.util.AnchorPathReferenceProvider"/>
@@ -447,7 +450,7 @@
                      bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
-    <localInspection language="XML" shortName="HtmlExtraClosingTag" enabledByDefault="true" level="ERROR"
+    <localInspection language="XML" shortName="HtmlExtraClosingTag" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspection.extra.closing.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection"/>

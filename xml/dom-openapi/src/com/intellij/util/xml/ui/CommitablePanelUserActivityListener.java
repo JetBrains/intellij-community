@@ -47,17 +47,14 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
     if (myApplying) return;
     cancel();
     cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        myApplying = true;
-        cancel();
-        try {
-          applyChanges();
-        }
-        finally {
-          myApplying = false;
-        }
+    myAlarm.addRequest(() -> {
+      myApplying = true;
+      cancel();
+      try {
+        applyChanges();
+      }
+      finally {
+        myApplying = false;
       }
     }, 717);
   }

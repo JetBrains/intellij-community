@@ -65,7 +65,7 @@ public class MigrateCvsRootAction extends AnAction implements DumbAware {
     }
     final File directory = dialog.getSelectedDirectory();
     final boolean shouldReplaceAllRoots = dialog.shouldReplaceAllRoots();
-    final List<File> rootFiles = new ArrayList<File>();
+    final List<File> rootFiles = new ArrayList<>();
     try {
       if (shouldReplaceAllRoots) {
         collectRootFiles(directory, null, rootFiles);
@@ -109,26 +109,23 @@ public class MigrateCvsRootAction extends AnAction implements DumbAware {
       rootFiles.add(rootFile);
     }
     try {
-      final File[] files = directory.listFiles(new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-          if (!file.isDirectory()) {
-            return false;
-          }
-          final File rootFile = getRootFile(file);
-          if (!rootFile.exists()) {
-            return false;
-          }
-          if (root == null) {
-            return true;
-          }
-          try {
-            final String cvsRoot = FileUtils.readLineFromFile(rootFile).trim();
-            return root.equals(cvsRoot);
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+      final File[] files = directory.listFiles(file -> {
+        if (!file.isDirectory()) {
+          return false;
+        }
+        final File rootFile1 = getRootFile(file);
+        if (!rootFile1.exists()) {
+          return false;
+        }
+        if (root == null) {
+          return true;
+        }
+        try {
+          final String cvsRoot = FileUtils.readLineFromFile(rootFile1).trim();
+          return root.equals(cvsRoot);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
       });
       for (File file : files) {

@@ -70,10 +70,15 @@ public final class ScratchRootType extends RootType {
                                        final String text,
                                        final ScratchFileService.Option option) {
     RunResult<VirtualFile> result =
-      new WriteCommandAction<VirtualFile>(project, UIBundle.message("file.chooser.create.new.file.command.name")) {
+      new WriteCommandAction<VirtualFile>(project, UIBundle.message("file.chooser.create.new.scratch.file.command.name")) {
         @Override
         protected boolean isGlobalUndoAction() {
           return true;
+        }
+
+        @Override
+        protected boolean shouldRecordActionForActiveDocument() {
+          return false;
         }
 
         @Override
@@ -85,8 +90,11 @@ public final class ScratchRootType extends RootType {
         protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
           ScratchFileService fileService = ScratchFileService.getInstance();
           VirtualFile file = fileService.findFile(ScratchRootType.this, fileName, option);
-          fileService.getScratchesMapping().setMapping(file, language);
+          // save text should go before any other manipulations that load document, 
+          // otherwise undo will be broken  
           VfsUtil.saveText(file, text);
+          
+          fileService.getScratchesMapping().setMapping(file, language);
           result.setResult(file);
         }
       }.execute();

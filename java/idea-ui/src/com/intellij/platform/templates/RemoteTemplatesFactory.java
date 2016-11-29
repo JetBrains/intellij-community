@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JdomKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -51,25 +52,19 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
 
-  public static final String TEMPLATE = "template";
-  public static final String INPUT_DEFAULT = "default";
-
   private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
     @NotNull
     @Override
     protected MultiMap<String, ArchivedProjectTemplate> compute() {
       try {
         return HttpRequests.request(URL + ApplicationInfo.getInstance().getBuild().getProductCode() + "_templates.xml")
-          .connect(new HttpRequests.RequestProcessor<MultiMap<String, ArchivedProjectTemplate>>() {
-            @Override
-            public MultiMap<String, ArchivedProjectTemplate> process(@NotNull HttpRequests.Request request) throws IOException {
-              try {
-                return create(JDOMUtil.load(request.getReader()));
-              }
-              catch (JDOMException e) {
-                LOG.error(e);
-                return MultiMap.emptyInstance();
-              }
+          .connect(request -> {
+            try {
+              return create(JdomKt.loadElement(request.getReader()));
+            }
+            catch (JDOMException e) {
+              LOG.error(e);
+              return MultiMap.emptyInstance();
             }
           });
       }
@@ -113,21 +108,19 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   private static List<ArchivedProjectTemplate> createGroupTemplates(Element groupElement) {
-    return ContainerUtil.mapNotNull(groupElement.getChildren(TEMPLATE), new NullableFunction<Element, ArchivedProjectTemplate>() {
-      @Override
-      public ArchivedProjectTemplate fun(final Element element) {
-        if (!checkRequiredPlugins(element)) {
-          return null;
-        }
-
-        final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(element.getChildText("moduleType"));
-        final String path = element.getChildText("path");
-        final String description = element.getChildTextTrim("description");
-        String name = element.getChildTextTrim("name");
-        RemoteProjectTemplate template = new RemoteProjectTemplate(name, element, moduleType, path, description);
-        template.populateFromElement(element);
-        return template;
+    List<Element> children = groupElement.getChildren(ArchivedProjectTemplate.TEMPLATE);
+    return ContainerUtil.mapNotNull(children, (NullableFunction<Element, ArchivedProjectTemplate>)element -> {
+      if (!checkRequiredPlugins(element)) {
+        return null;
       }
+
+      final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(element.getChildText("moduleType"));
+      final String path = element.getChildText("path");
+      final String description = element.getChildTextTrim("description");
+      String name = element.getChildTextTrim("name");
+      RemoteProjectTemplate template = new RemoteProjectTemplate(name, element, moduleType, path, description);
+      template.populateFromElement(element);
+      return template;
     });
   }
 
@@ -162,12 +155,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
     @Override
     public <T> T processStream(@NotNull final StreamProcessor<T> consumer) throws IOException {
-      return HttpRequests.request(URL + myPath).connect(new HttpRequests.RequestProcessor<T>() {
-        @Override
-        public T process(@NotNull HttpRequests.Request request) throws IOException {
-          return consumeZipStream(consumer, new ZipInputStream(request.getInputStream()));
-        }
-      });
+      return HttpRequests.request(URL + myPath).connect(request -> consumeZipStream(consumer, new ZipInputStream(request.getInputStream())));
     }
 
     @Nullable

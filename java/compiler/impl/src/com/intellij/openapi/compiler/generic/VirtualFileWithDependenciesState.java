@@ -33,7 +33,7 @@ import java.util.Map;
 public class VirtualFileWithDependenciesState {
   public static final DataExternalizer<VirtualFileWithDependenciesState> EXTERNALIZER = new VirtualFileWithDependenciesExternalizer();
   private long mySourceTimestamp;
-  private Map<String, Long> myDependencies = new HashMap<String, Long>();
+  private Map<String, Long> myDependencies = new HashMap<>();
 
   public VirtualFileWithDependenciesState(long sourceTimestamp) {
     mySourceTimestamp = sourceTimestamp;

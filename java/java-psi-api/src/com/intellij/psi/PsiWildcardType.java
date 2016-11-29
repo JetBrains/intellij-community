@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class PsiWildcardType extends PsiType.Stub {
   public static final String EXTENDS_PREFIX = "? extends ";
   public static final String SUPER_PREFIX = "? super ";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiWildcardType");
+  private static final Logger LOG = Logger.getInstance(PsiWildcardType.class);
   private static final Key<PsiWildcardType> UNBOUNDED_WILDCARD = new Key<PsiWildcardType>("UNBOUNDED_WILDCARD");
 
   private final PsiManager myManager;
@@ -39,14 +39,14 @@ public class PsiWildcardType extends PsiType.Stub {
   private final PsiType myBound;
 
   private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound) {
-    super(PsiAnnotation.EMPTY_ARRAY);
+    super(TypeAnnotationProvider.EMPTY);
     myManager = manager;
     myIsExtending = isExtending;
     myBound = bound;
   }
 
-  private PsiWildcardType(@NotNull PsiWildcardType type, @NotNull TypeAnnotationProvider annotations) {
-    super(annotations);
+  private PsiWildcardType(@NotNull PsiWildcardType type, @NotNull TypeAnnotationProvider provider) {
+    super(provider);
     myManager = type.myManager;
     myIsExtending = type.myIsExtending;
     myBound = type.myBound;
@@ -75,26 +75,15 @@ public class PsiWildcardType extends PsiType.Stub {
     return new PsiWildcardType(manager, false, bound);
   }
 
-  @NotNull
+  /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
   public PsiWildcardType annotate(@NotNull final PsiAnnotation[] annotations) {
-    return annotations.length == 0 ? this : new PsiWildcardType(this, new TypeAnnotationProvider() {
-      @NotNull
-      @Override
-      public PsiAnnotation[] getAnnotations() {
-        return annotations;
-      }
-    });
-  }
-
-  @NotNull
-  public PsiWildcardType annotate(@NotNull final TypeAnnotationProvider annotations) {
-    return new PsiWildcardType(this, annotations);
+    return annotations.length == 0 ? this : new PsiWildcardType(this, TypeAnnotationProvider.Static.create(annotations));
   }
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return getText(false, true, myBound == null ? null : myBound.getPresentableText());
+  public String getPresentableText(boolean annotated) {
+    return getText(false, annotated, myBound == null ? null : myBound.getPresentableText());
   }
 
   @Override
@@ -110,8 +99,8 @@ public class PsiWildcardType extends PsiType.Stub {
   }
 
   private String getText(boolean qualified, boolean annotated, @Nullable String suffix) {
-    PsiAnnotation[] annotations = getAnnotations();
-    if ((!annotated || annotations.length == 0) && suffix == null) return "?";
+    PsiAnnotation[] annotations = annotated ? getAnnotations() : PsiAnnotation.EMPTY_ARRAY;
+    if (annotations.length == 0 && suffix == null) return "?";
 
     StringBuilder sb = new StringBuilder();
     if (annotated) {

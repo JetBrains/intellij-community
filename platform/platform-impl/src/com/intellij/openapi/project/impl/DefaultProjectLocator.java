@@ -50,7 +50,7 @@ public class DefaultProjectLocator extends ProjectLocator {
   @Override
   public Collection<Project> getProjectsForFile(VirtualFile file) {
     final ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager == null || file == null) { return new HashSet<Project>(); }
+    if (projectManager == null || file == null) { return new HashSet<>(); }
     final Project[] openProjects = projectManager.getOpenProjects();
     return Arrays.asList(openProjects);
   }

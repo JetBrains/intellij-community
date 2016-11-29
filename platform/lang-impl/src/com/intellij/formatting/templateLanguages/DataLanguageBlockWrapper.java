@@ -108,7 +108,7 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     final List<DataLanguageBlockWrapper> subWrappers = BlockUtil.buildChildWrappers(myOriginal);
     final List<Block> children;
     if (myTlBlocks == null) {
-      children = new ArrayList<Block>(subWrappers);
+      children = new ArrayList<>(subWrappers);
     }
     else if (subWrappers.size() == 0) {
       //noinspection unchecked
@@ -171,7 +171,7 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
   void addTlChild(TemplateLanguageBlock tlBlock) {
     assert myBlocks == null;
     if (myTlBlocks == null) {
-      myTlBlocks = new ArrayList<TemplateLanguageBlock>(5);
+      myTlBlocks = new ArrayList<>(5);
     }
     myTlBlocks.add(tlBlock);
     tlBlock.setParent(this);

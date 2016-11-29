@@ -48,13 +48,14 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
                                     Disposable parentDisposable) {
     super(XDebuggerBundle.message("dialog.title.evaluate.code.fragment"));
     myMultilineEditor = new XDebuggerExpressionEditor(project, editorsProvider, "evaluateCodeFragment", sourcePosition,
-                                                      statements != null ? statements : XExpressionImpl.EMPTY_CODE_FRAGMENT, true, true);
+                                                      statements != null ? statements : XExpressionImpl.EMPTY_CODE_FRAGMENT, true, true, false);
     myMainPanel = new JPanel(new BorderLayout());
     JPanel editorPanel = new JPanel(new BorderLayout());
     editorPanel.add(myMultilineEditor.getComponent(), BorderLayout.CENTER);
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new HistoryNavigationAction(false, IdeActions.ACTION_PREVIOUS_OCCURENCE, parentDisposable));
     group.add(new HistoryNavigationAction(true, IdeActions.ACTION_NEXT_OCCURENCE, parentDisposable));
+    group.add(new ToggleSoftWrapAction());
     editorPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent(), BorderLayout.EAST);
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.label.text.code.fragment")), BorderLayout.NORTH);
     myMainPanel.add(editorPanel, BorderLayout.CENTER);
@@ -66,8 +67,12 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
 
   @Override
   @NotNull
-  protected XDebuggerEditorBase getInputEditor() {
+  public XDebuggerEditorBase getInputEditor() {
     return myMultilineEditor;
+  }
+
+  public JPanel getMainComponent() {
+    return myMainPanel;
   }
 
   @Override
@@ -77,6 +82,22 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     contentPanel.add(splitter, BorderLayout.CENTER);
     splitter.setFirstComponent(myMainPanel);
     splitter.setSecondComponent(resultPanel);
+  }
+
+  private class ToggleSoftWrapAction extends ToggleAction {
+    public ToggleSoftWrapAction() {
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS));
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myMultilineEditor.isUseSoftWraps();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myMultilineEditor.setUseSoftWraps(state);
+    }
   }
 
   private class HistoryNavigationAction extends AnAction {

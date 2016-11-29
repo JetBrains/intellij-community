@@ -15,11 +15,7 @@ import com.jetbrains.rest.RestTokenTypes;
 %function advance
 %type IElementType
 
-
-%eof{ return;
-%eof}
-
-CRLF= \n|\r|\r\n
+CRLF=\R
 SPACE=[\ \t]
 
 ADORNMENT_SYMBOL="="|"-"|"`"|":"|"."|"'"|\"|"~"|"^"|"_"|"*"|"+"|"#"|">"
@@ -27,9 +23,7 @@ ADORNMENT=("="{4, 80}|"-"{4, 80}|"`"{4, 80}|":"{4, 80}|"."{4, 80}|"'"{4, 80}|\"{
 SEPARATOR=[\n .:,()\{\}\[\]\-]
 USUAL_TYPES="attention"|"caution"|"danger"|"error"|"hint"|"important"|"note"|"tip"|"warning"|"admonition"|"image"|"figure"|"topic"|"sidebar"|"parsed-literal"|"rubric"|"epigraph"|"highlights"|"pull-quote"|"compound"|"container"|"table"|"csv-table"|"list-table"|"contents"|"sectnum"|"section-autonumbering"|"header"|"footer"|"target-notes"|"footnotes"|"citations"|"meta"|"replace"|"unicode"|"date"|"include"|"raw"|"class"|"role"|"default-role"|"title"|"restructuredtext-test-directive"
 HIGHLIGHT_TYPES= "highlight" | "sourcecode" | "code-block"
-ANY_CHAR = [^\t`\ \n]
 NOT_BACKQUOTE = [^`]
-ANY= .|\n
 
 %state IN_EXPLISIT_MARKUP
 %state IN_COMMENT
@@ -118,7 +112,7 @@ ANY= .|\n
 
 <IN_LINE> {
 {CRLF}                                              { return WHITESPACE;}
-[^`*:\n\r\[ |({]*                                   { yybegin(INIT); return LINE;}
+[^`*:\n\r\[ |({]+                                   { yybegin(INIT); return LINE;}
 {SPACE}                                             { yybegin(IN_FOOTNOTE); return LINE;}
 "(" | "[" | "{"                                     { yybegin(IN_FOOTNOTE); return LINE;}
 "`" | "_" | ":" | "*" | "[" | "|"                   { yybegin(INIT); return LINE;}
@@ -135,7 +129,7 @@ ANY= .|\n
 }
 
 <PRE_QUOTED> {
-.*                                                  { return chooseType();}
+.+                                                  { return chooseType();}
 {CRLF}                                              { yybegin(QUOTED);  return chooseType();}
 }
 
@@ -145,7 +139,7 @@ ANY= .|\n
 }
 
 <PRE_INDENTED> {
-.*                                                  { yybegin(INDENTED);  return chooseType();}
+.+                                                  { yybegin(INDENTED);  return chooseType();}
 {CRLF}                                              { return chooseType();}
 }
 
@@ -171,14 +165,14 @@ ANY= .|\n
 {HIGHLIGHT_TYPES}"::"                               { yybegin(IN_HIGHLIGHT); return CUSTOM_DIRECTIVE;}
 [0-9A-Za-z\-:]*"::"                                 { yybegin(IN_VALUE); return CUSTOM_DIRECTIVE;}
 "|"[0-9A-Za-z_]*"|"                                 { return SUBSTITUTION;}
-[0-9A-Za-z_\[|.]*                                   { yybegin(IN_COMMENT); return COMMENT;}
+[0-9A-Za-z_\[|.]+                                   { yybegin(IN_COMMENT); return COMMENT;}
 {CRLF}{2}                                           { yybegin(INIT); return COMMENT;}
 {SPACE}*{CRLF}+                                     { return WHITESPACE; }
 {SPACE}+                                            { return WHITESPACE;}
 }
 
 <IN_VALUE> {
-[^\n\r]+                                            { return LINE;}
+.+                                                  { return LINE;}
 {CRLF}                                              { yybegin(INIT); return WHITESPACE; }
 }
 

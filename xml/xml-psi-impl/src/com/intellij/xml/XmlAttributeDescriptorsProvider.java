@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface XmlAttributeDescriptorsProvider {
 
-  ExtensionPointName<XmlAttributeDescriptorsProvider> EP_NAME = new ExtensionPointName<XmlAttributeDescriptorsProvider>("com.intellij.xml.attributeDescriptorsProvider");
+  ExtensionPointName<XmlAttributeDescriptorsProvider> EP_NAME = new ExtensionPointName<>("com.intellij.xml.attributeDescriptorsProvider");
 
   XmlAttributeDescriptor[] getAttributeDescriptors(final XmlTag context);
 

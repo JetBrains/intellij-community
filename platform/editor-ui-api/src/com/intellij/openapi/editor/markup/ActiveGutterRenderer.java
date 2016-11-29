@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
 
@@ -26,6 +27,16 @@ import java.awt.event.MouseEvent;
  * @author max
  */
 public interface ActiveGutterRenderer extends LineMarkerRenderer {
+  /**
+   * Returns the text of the tooltip displayed when the mouse is over the renderer area.
+   *
+   * @return the tooltip text, or null if no tooltip is required.
+   */
+  @Nullable
+  default String getTooltipText() {
+    return null;
+  }
+
   /**
    * Processes a mouse released event on the marker.
    *

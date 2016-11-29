@@ -115,8 +115,13 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
     }
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   private ParameterInfoImpl[] getNewParametersInfo(PsiMethod method) throws IncorrectOperationException {
-    List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
+    List<ParameterInfoImpl> result = new ArrayList<>();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(method.getProject());

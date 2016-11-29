@@ -188,7 +188,7 @@ public class GitLogParserTest extends GitPlatformTest {
     String s = myRecord.prepareOutputLine(NONE);
     List<GitLogRecord> records = myParser.parse(s);
     assertEquals("Incorrect amount of actual records: " + StringUtil.join(records, "\n"), 1, records.size());
-    assertEquals(records.get(0).getSubject(), expectedSubject);
+    assertEquals("Commit subject is incorrect", expectedSubject, records.get(0).getSubject());
   }
 
   private void doTestOneRecord(NameStatus option) throws VcsException {
@@ -437,7 +437,7 @@ public class GitLogParserTest extends GitPlatformTest {
     }
 
     public List<String> paths() {
-      List<String> paths = new ArrayList<String>();
+      List<String> paths = new ArrayList<>();
       for (GitTestChange change : getChanges()) {
         switch (change.myType) {
           case MODIFICATION:

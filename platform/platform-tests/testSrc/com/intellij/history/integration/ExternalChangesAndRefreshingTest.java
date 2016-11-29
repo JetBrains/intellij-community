@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       // this methods waits for another thread to finish, that leads
       // to deadlock in swing-thread. Therefore we have to run this test
       // outside of swing-thread
-      EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)ExternalChangesAndRefreshingTest.super::setUp);
+      EdtTestUtil.runInEdtAndWait(ExternalChangesAndRefreshingTest.super::setUp);
     }
     else {
       super.setUp();
@@ -57,7 +57,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       // this methods waits for another thread to finish, that leads
       // to deadlock in swing-thread. Therefore we have to run this test
       // outside of swing-thread
-      EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)ExternalChangesAndRefreshingTest.super::tearDown);
+      EdtTestUtil.runInEdtAndWait(ExternalChangesAndRefreshingTest.super::tearDown);
     }
     else {
       //noinspection SuperTearDownInFinally

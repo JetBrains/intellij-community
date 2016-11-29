@@ -19,9 +19,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 
-@State(
-  name = "PropertiesComponent",
-  storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
-)
+@State(name = "PropertiesComponent", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectPropertiesComponentImpl extends PropertiesComponentImpl {
 }

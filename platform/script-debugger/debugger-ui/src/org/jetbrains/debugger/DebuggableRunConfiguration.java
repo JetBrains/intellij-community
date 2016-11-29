@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
@@ -32,7 +33,7 @@ import java.net.InetSocketAddress;
 
 public interface DebuggableRunConfiguration extends RunConfiguration {
   @NotNull
-  default InetSocketAddress computeDebugAddress() throws ExecutionException {
+  default InetSocketAddress computeDebugAddress(RunProfileState state) throws ExecutionException {
     try {
       return new InetSocketAddress(InetAddress.getLoopbackAddress(), NetUtils.findAvailableSocketPort());
     }
@@ -47,7 +48,7 @@ public interface DebuggableRunConfiguration extends RunConfiguration {
                                    @Nullable ExecutionResult executionResult,
                                    @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
-  interface RunConfigurationWithConditionalRun {
-    boolean canRun(@NotNull String executorId, @NotNull RunProfile profile);
+  default boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
+    return true;
   }
 }

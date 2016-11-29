@@ -100,9 +100,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
   }
 
   private static LineMarkerInfo findMarkerWithElement(List<LineMarkerInfo> markers, PsiElement psiMethod) {
-    LineMarkerInfo marker = ContainerUtil.find(markers, info -> {
-      return info.getElement().equals(psiMethod);
-    });
+    LineMarkerInfo marker = ContainerUtil.find(markers, info -> info.getElement().equals(psiMethod));
     assertNotNull(markers.toString(), marker);
     return marker;
   }
@@ -117,6 +115,16 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     checkResultByFile(getBasePath() + "SiblingInheritance.java");
   }
 
+  public void testSiblingInheritanceAndGenerics() throws Throwable {
+    configureByFile(getBasePath() + "SiblingInheritanceAndGenerics.java");
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
+    action.update(event);
+    assertTrue(event.getPresentation().isEnabledAndVisible());
+    action.actionPerformed(event);
+    checkResultByFile(getBasePath() + "SiblingInheritanceAndGenerics.after.java");
+  }
+
   public void testDoNotShowSiblingInheritanceLineMarkerIfSubclassImplementsTheSameInterfaceAsTheCurrentClass() throws Throwable {
     configureByFile(getBasePath() + "DeceivingSiblingInheritance.java");
     PsiJavaFile file = (PsiJavaFile)getFile();
@@ -127,9 +135,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     doHighlighting();
     Document document = getEditor().getDocument();
     List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    List<LineMarkerInfo> inMyClass = ContainerUtil.filter(markers, info -> {
-      return OCBaseLanguageFileType.getTextRange().containsRange(info.startOffset, info.endOffset);
-    });
+    List<LineMarkerInfo> inMyClass = ContainerUtil.filter(markers, info -> OCBaseLanguageFileType.getTextRange().containsRange(info.startOffset, info.endOffset));
     assertTrue(inMyClass.toString(), inMyClass.size() == 2);
     LineMarkerInfo iMarker = findMarkerWithElement(inMyClass, getName.getNameIdentifier());
     assertSame(MarkerType.OVERRIDING_METHOD.getNavigationHandler(), iMarker.getNavigationHandler());

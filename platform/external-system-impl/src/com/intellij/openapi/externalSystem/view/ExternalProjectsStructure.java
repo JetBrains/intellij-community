@@ -45,7 +45,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
   private final SimpleTreeBuilder myTreeBuilder;
   private RootNode myRoot;
 
-  private final Map<String, ExternalSystemNode> myNodeMapping = new THashMap<String, ExternalSystemNode>();
+  private final Map<String, ExternalSystemNode> myNodeMapping = new THashMap<>();
 
   public ExternalProjectsStructure(Project project, SimpleTree tree) {
     myProject = project;
@@ -105,12 +105,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
   public void updateProjects(Collection<DataNode<ProjectData>> toImport) {
     List<String> orphanProjects = ContainerUtil.mapNotNull(
-      myNodeMapping.entrySet(), new Function<Map.Entry<String, ExternalSystemNode>, String>() {
-        @Override
-        public String fun(Map.Entry<String, ExternalSystemNode> entry) {
-          return entry.getValue() instanceof ProjectNode ? entry.getKey() : null;
-        }
-      });
+      myNodeMapping.entrySet(), entry -> entry.getValue() instanceof ProjectNode ? entry.getKey() : null);
     for (DataNode<ProjectData> each : toImport) {
       final ProjectData projectData = each.getData();
       final String projectPath = projectData.getLinkedExternalProjectPath();
@@ -265,7 +260,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
   @NotNull
   public <T extends ExternalSystemNode> List<T> getNodes(@NotNull Class<T> nodeClass) {
-    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<T>());
+    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>());
   }
 
   @NotNull
@@ -286,7 +281,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
   @NotNull
   public <T extends ExternalSystemNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
-    final List<T> filtered = new ArrayList<T>();
+    final List<T> filtered = new ArrayList<>();
     for (SimpleNode node : getSelectedNodes(tree)) {
       if ((nodeClass != null) && (!nodeClass.isInstance(node))) {
         filtered.clear();
@@ -299,7 +294,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
   }
 
   private static List<SimpleNode> getSelectedNodes(SimpleTree tree) {
-    List<SimpleNode> nodes = new ArrayList<SimpleNode>();
+    List<SimpleNode> nodes = new ArrayList<>();
     TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths != null) {
       for (TreePath treePath : treePaths) {

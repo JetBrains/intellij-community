@@ -30,6 +30,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nls;
@@ -46,14 +47,14 @@ import java.util.Map;
 public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool {
 
   private final static Logger LOG = Logger.getInstance(MigrateAssertToMatcherAssertInspection.class);
-  private final static Map<String, Pair<String, String>> ASSERT_METHODS = new HashMap<String, Pair<String, String>>();
+  private final static Map<String, Pair<String, String>> ASSERT_METHODS = new HashMap<>();
 
   static {
-    ASSERT_METHODS.put("assertArrayEquals", Pair.create("$a$, $b$", "$a$, org.hamcrest.CoreMatchers.is($b$)"));
-    ASSERT_METHODS.put("assertEquals", Pair.create("$a$, $b$", "$a$, org.hamcrest.CoreMatchers.is($b$)"));
-    ASSERT_METHODS.put("assertNotEquals", Pair.create("$a$, $b$", "$a$, org.hamcrest.CoreMatchers.not(org.hamcrest.CoreMatchers.is($b$))"));
-    ASSERT_METHODS.put("assertSame", Pair.create("$a$, $b$", "$a$, org.hamcrest.CoreMatchersSame.sameInstance($b$)"));
-    ASSERT_METHODS.put("assertNotSame", Pair.create("$a$, $b$", "$a$, org.hamcrest.CoreMatchers.not(org.hamcrest.CoreMatchersSame.sameInstance($b$))"));
+    ASSERT_METHODS.put("assertArrayEquals", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchers.is($expected$)"));
+    ASSERT_METHODS.put("assertEquals", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchers.is($expected$)"));
+    ASSERT_METHODS.put("assertNotEquals", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchers.not(org.hamcrest.CoreMatchers.is($expected$))"));
+    ASSERT_METHODS.put("assertSame", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchersSame.sameInstance($expected$)"));
+    ASSERT_METHODS.put("assertNotSame", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchers.not(org.hamcrest.CoreMatchersSame.sameInstance($expected$))"));
     ASSERT_METHODS.put("assertNotNull", Pair.create("$obj$", "$obj$, org.hamcrest.CoreMatchers.notNullValue()"));
     ASSERT_METHODS.put("assertNull", Pair.create("$obj$", "$obj$, org.hamcrest.CoreMatchers.nullValue()"));
     ASSERT_METHODS.put("assertTrue", Pair.create("$cond$", "$cond$, org.hamcrest.CoreMatchers.is(true)"));
@@ -71,6 +72,9 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (JavaPsiFacade.getInstance(holder.getProject()).findClass("org.hamcrest.CoreMatchers", holder.getFile().getResolveScope()) == null) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -86,19 +90,12 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
           return;
         }
         holder
-          .registerProblem(expression, "Assert expression <code>#ref</code> can be replaced with 'assertThat' call #loc", new MyQuickFix());
+          .registerProblem(expression.getMethodExpression(), "Assert expression <code>#ref</code> can be replaced with 'assertThat' call #loc", new MyQuickFix());
       }
     };
   }
 
   public class MyQuickFix implements LocalQuickFix {
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @Nls
     @NotNull
     @Override
@@ -108,7 +105,9 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiElement element = descriptor.getPsiElement();
+      if (element == null || !element.isValid() || !(element.getParent() instanceof PsiMethodCallExpression)) return;
+      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element.getParent();
       final PsiMethod method = methodCall.resolveMethod();
       if (method == null) {
         return;
@@ -131,11 +130,24 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
       }
       LOG.assertTrue(templatePair != null);
       templatePair = buildFullTemplate(templatePair, method);
-      final PsiExpression replaced =
-        TypeConversionDescriptor.replaceExpression(methodCall, templatePair.getFirst(), templatePair.getSecond());
+      final PsiExpression replaced;
+      try {
+        replaced = TypeConversionDescriptor.replaceExpression(methodCall, templatePair.getFirst(), templatePair.getSecond());
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error("Replacer can't match expression:\n" +
+                  methodCall.getText() +
+                  "\nwith replacement template:\n(" +
+                  templatePair.getFirst() +
+                  ", " +
+                  templatePair.getSecond() +
+                  ")");
+        throw e;
+      }
 
       if (myStaticallyImportMatchers) {
-        for (PsiJavaCodeReferenceElement ref : ContainerUtil.reverse(new ArrayList<PsiJavaCodeReferenceElement>(PsiTreeUtil.findChildrenOfType(replaced, PsiJavaCodeReferenceElement.class)))) {
+        for (PsiJavaCodeReferenceElement ref : ContainerUtil.reverse(
+          new ArrayList<>(PsiTreeUtil.findChildrenOfType(replaced, PsiJavaCodeReferenceElement.class)))) {
           if (!ref.isValid()) continue;
           final PsiElement resolvedElement = ref.resolve();
           if (resolvedElement instanceof PsiClass) {
@@ -157,7 +169,11 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
       }
       final boolean hasMessage = hasMessage(method);
       final String searchTemplate = "'Assert*." + method.getName() + "(" + (hasMessage ? "$msg$, " : "") + templatePair.getFirst() + ")";
-      final String replaceTemplate = "$Assert$.assertThat(" + (hasMessage ? "$msg$, " : "") + templatePair.getSecond() + ")";
+      final PsiClass containingClass = method.getContainingClass();
+      LOG.assertTrue(containingClass != null);
+      final String qualifier = containingClass.getQualifiedName();
+      LOG.assertTrue(qualifier != null);
+      final String replaceTemplate = qualifier + ".assertThat(" + (hasMessage ? "$msg$, " : "") + templatePair.getSecond() + ")";
       return Pair.create(searchTemplate, replaceTemplate);
     }
 
@@ -240,8 +256,8 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
           toRightPart = "org.hamcrest.CoreMatchers.containsString($sub$)";
         } else if (InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           fromTemplate = "$collection$.contains($element$)";
-          toLeftPart = "$element$, ";
-          toRightPart = "org.hamcrest.CoreMatchers.anyOf($collection$)";
+          toLeftPart = "$collection$, ";
+          toRightPart = "org.hamcrest.CoreMatchers.hasItem($element$)";
         }
       }
     }

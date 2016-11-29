@@ -1,15 +1,18 @@
-from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
+import os
 import sys
-from _pydevd_bundle.pydevd_constants import IS_JYTHON
-from _pydev_imps import _pydev_thread as thread
-from _pydevd_bundle import pydevd_xml
-from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_utils import *  # @UnusedWildImport
 import traceback
+from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
+from  _pydev_bundle._pydev_calltip_util import get_description
+from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_xml
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
+from _pydevd_bundle.pydevd_utils import to_string
 
-#=======================================================================================================================
+
+# =======================================================================================================================
 # Null
-#=======================================================================================================================
+# =======================================================================================================================
 class Null:
     """
     Gotten from: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/68205
@@ -52,64 +55,99 @@ class Null:
         return 0
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # BaseStdIn
-#=======================================================================================================================
+# =======================================================================================================================
 class BaseStdIn:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, original_stdin=sys.stdin, *args, **kwargs):
         try:
             self.encoding = sys.stdin.encoding
         except:
-            #Not sure if it's available in all Python versions...
+            # Not sure if it's available in all Python versions...
             pass
+        self.original_stdin = original_stdin
 
     def readline(self, *args, **kwargs):
-        #sys.stderr.write('Cannot readline out of the console evaluation\n') -- don't show anything
-        #This could happen if the user had done input('enter number).<-- upon entering this, that message would appear,
-        #which is not something we want.
+        # sys.stderr.write('Cannot readline out of the console evaluation\n') -- don't show anything
+        # This could happen if the user had done input('enter number).<-- upon entering this, that message would appear,
+        # which is not something we want.
         return '\n'
 
-    def isatty(self):
-        return False #not really a file
-
     def write(self, *args, **kwargs):
-        pass #not available StdIn (but it can be expected to be in the stream interface)
+        pass  # not available StdIn (but it can be expected to be in the stream interface)
 
     def flush(self, *args, **kwargs):
-        pass #not available StdIn (but it can be expected to be in the stream interface)
+        pass  # not available StdIn (but it can be expected to be in the stream interface)
 
     def read(self, *args, **kwargs):
-        #in the interactive interpreter, a read and a readline are the same.
+        # in the interactive interpreter, a read and a readline are the same.
         return self.readline()
 
     def close(self, *args, **kwargs):
-        pass #expected in StdIn
+        pass  # expected in StdIn
+
+    def __getattr__(self, item):
+        # it's called if the attribute wasn't found
+        if hasattr(self.original_stdin, item):
+            return getattr(self.original_stdin, item)
+        raise AttributeError("%s has no attribute %s" % (self.original_stdin, item))
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # StdIn
-#=======================================================================================================================
+# =======================================================================================================================
 class StdIn(BaseStdIn):
     '''
         Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
     '''
 
-    def __init__(self, interpreter, host, client_port):
-        BaseStdIn.__init__(self)
+    def __init__(self, interpreter, host, client_port, original_stdin=sys.stdin):
+        BaseStdIn.__init__(self, original_stdin)
         self.interpreter = interpreter
         self.client_port = client_port
         self.host = host
 
     def readline(self, *args, **kwargs):
-        #Ok, callback into the client to get the new input
+        # Ok, callback into the client to get the new input
         try:
             server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
             requested_input = server.RequestInput()
             if not requested_input:
-                return '\n' #Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
+                return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
             return requested_input
         except:
             return '\n'
+
+    def close(self, *args, **kwargs):
+        pass  # expected in StdIn
+
+#=======================================================================================================================
+# DebugConsoleStdIn
+#=======================================================================================================================
+class DebugConsoleStdIn(BaseStdIn):
+    '''
+        Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
+    '''
+
+    def __init__(self, dbg, original_stdin):
+        BaseStdIn.__init__(self, original_stdin)
+        self.debugger = dbg
+
+    def __pydev_run_command(self, is_started):
+        try:
+            cmd = self.debugger.cmd_factory.make_input_requested_message(is_started)
+            self.debugger.writer.add_command(cmd)
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            return '\n'
+
+    def readline(self, *args, **kwargs):
+        # Notify Java side about input and call original function
+        self.__pydev_run_command(True)
+        result = self.original_stdin.readline(*args, **kwargs)
+        self.__pydev_run_command(False)
+        return result
 
 
 class CodeFragment:
@@ -122,9 +160,10 @@ class CodeFragment:
         if not code_fragment.is_single_line:
             self.is_single_line = False
 
-#=======================================================================================================================
+
+# =======================================================================================================================
 # BaseInterpreterInterface
-#=======================================================================================================================
+# =======================================================================================================================
 class BaseInterpreterInterface:
     def __init__(self, mainThread):
         self.mainThread = mainThread
@@ -162,31 +201,34 @@ class BaseInterpreterInterface:
 
         return self.need_more_for_code(self.buffer.text)
 
-    def create_std_in(self):
-        return StdIn(self, self.host, self.client_port)
+    def create_std_in(self, debugger=None, original_std_in=None):
+        if debugger is None:
+            return StdIn(self, self.host, self.client_port, original_stdin=original_std_in)
+        else:
+            return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
 
-    def add_exec(self, code_fragment):
+    def add_exec(self, code_fragment, debugger=None):
         original_in = sys.stdin
         try:
             help = None
             if 'pydoc' in sys.modules:
-                pydoc = sys.modules['pydoc'] #Don't import it if it still is not there.
+                pydoc = sys.modules['pydoc']  # Don't import it if it still is not there.
 
                 if hasattr(pydoc, 'help'):
-                    #You never know how will the API be changed, so, let's code defensively here
+                    # You never know how will the API be changed, so, let's code defensively here
                     help = pydoc.help
                     if not hasattr(help, 'input'):
                         help = None
         except:
-            #Just ignore any error here
+            # Just ignore any error here
             pass
 
         more = False
         try:
-            sys.stdin = self.create_std_in()
+            sys.stdin = self.create_std_in(debugger, original_in)
             try:
                 if help is not None:
-                    #This will enable the help() function to work.
+                    # This will enable the help() function to work.
                     try:
                         try:
                             help.input = sys.stdin
@@ -232,7 +274,6 @@ class BaseInterpreterInterface:
 
         return more
 
-
     def do_add_exec(self, codeFragment):
         '''
         Subclasses should override.
@@ -240,7 +281,6 @@ class BaseInterpreterInterface:
         @return: more (True if more input is needed to complete the statement and False if the statement is complete).
         '''
         raise NotImplementedError()
-
 
     def get_namespace(self):
         '''
@@ -250,66 +290,48 @@ class BaseInterpreterInterface:
         '''
         raise NotImplementedError()
 
+    def __resolve_reference__(self, text):
+        """
 
-    def getDescription(self, text):
-        try:
-            obj = None
-            if '.' not in text:
+        :type text: str
+        """
+        obj = None
+        if '.' not in text:
+            try:
+                obj = self.get_namespace()[text]
+            except KeyError:
+                pass
+
+            if obj is None:
                 try:
-                    obj = self.get_namespace()[text]
-                except KeyError:
-                    return ''
-
-            else:
-                try:
-                    splitted = text.split('.')
-                    obj = self.get_namespace()[splitted[0]]
-                    for t in splitted[1:]:
-                        obj = getattr(obj, t)
-                except:
-                    return ''
-
-            if obj is not None:
-                try:
-                    if sys.platform.startswith("java"):
-                        #Jython
-                        doc = obj.__doc__
-                        if doc is not None:
-                            return doc
-
-                        from _pydev_bundle import _pydev_jy_imports_tipper
-
-                        is_method, infos = _pydev_jy_imports_tipper.ismethod(obj)
-                        ret = ''
-                        if is_method:
-                            for info in infos:
-                                ret += info.get_as_doc()
-                            return ret
-
-                    else:
-                        #Python and Iron Python
-                        import inspect #@UnresolvedImport
-
-                        doc = inspect.getdoc(obj)
-                        if doc is not None:
-                            return doc
+                    obj = self.get_namespace()['__builtins__'][text]
                 except:
                     pass
 
-            try:
-                #if no attempt succeeded, try to return repr()...
-                return repr(obj)
-            except:
+            if obj is None:
                 try:
-                    #otherwise the class
-                    return str(obj.__class__)
+                    obj = getattr(self.get_namespace()['__builtins__'], text, None)
                 except:
-                    #if all fails, go to an empty string
-                    return ''
-        except:
-            traceback.print_exc()
-            return ''
+                    pass
 
+        else:
+            try:
+                last_dot = text.rindex('.')
+                parent_context = text[0:last_dot]
+                res = pydevd_vars.eval_in_context(parent_context, self.get_namespace(), self.get_namespace())
+                obj = getattr(res, text[last_dot + 1:])
+            except:
+                pass
+        return obj
+
+    def getDescription(self, text):
+        try:
+            obj = self.__resolve_reference__(text)
+            if obj is None:
+                return ''
+            return get_description(obj)
+        except:
+            return ''
 
     def do_exec_code(self, code, is_single_line):
         try:
@@ -328,7 +350,6 @@ class BaseInterpreterInterface:
     def execLine(self, line):
         return self.do_exec_code(line, True)
 
-
     def execMultipleLines(self, lines):
         if IS_JYTHON:
             for line in lines.split('\n'):
@@ -336,9 +357,8 @@ class BaseInterpreterInterface:
         else:
             return self.do_exec_code(lines, False)
 
-
     def interrupt(self):
-        self.buffer = None # Also clear the buffer when it's interrupted.
+        self.buffer = None  # Also clear the buffer when it's interrupted.
         try:
             if self.interruptable:
                 called = False
@@ -376,10 +396,10 @@ class BaseInterpreterInterface:
                     pass
 
                 if not called:
-                    if hasattr(thread, 'interrupt_main'): #Jython doesn't have it
+                    if hasattr(thread, 'interrupt_main'):  # Jython doesn't have it
                         thread.interrupt_main()
                     else:
-                        self.mainThread._thread.interrupt() #Jython
+                        self.mainThread._thread.interrupt()  # Jython
             return True
         except:
             traceback.print_exc()
@@ -399,6 +419,11 @@ class BaseInterpreterInterface:
 
     server = property(get_server)
 
+    def ShowConsole(self):
+        server = self.get_server()
+        if server is not None:
+            server.ShowConsole()
+
     def finish_exec(self, more):
         self.interruptable = False
 
@@ -410,8 +435,9 @@ class BaseInterpreterInterface:
             return True
 
     def getFrame(self):
+        hidden_ns = self.get_ipython_hidden_vars_dict()
         xml = "<xml>"
-        xml += pydevd_xml.frame_vars_to_xml(self.get_namespace())
+        xml += pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns)
         xml += "</xml>"
 
         return xml
@@ -432,20 +458,9 @@ class BaseInterpreterInterface:
         return xml
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
-        xml = "<xml>"
         name = attr.split("\t")[-1]
         array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
-
-        array, metaxml, r, c, f = pydevd_vars.array_to_meta_xml(array, name, format)
-        xml += metaxml
-        format = '%' + f
-        if rows == -1 and cols == -1:
-            rows = r
-            cols = c
-        xml += pydevd_vars.array_to_xml(array, roffset, coffset, rows, cols, format)
-        xml += "</xml>"
-
-        return xml
+        return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
         xml = "<xml>"
@@ -470,31 +485,39 @@ class BaseInterpreterInterface:
         Used to show console with variables connection.
         Always return a frame where the locals map to our internal namespace.
         '''
-        VIRTUAL_FRAME_ID = "1" # matches PyStackFrameConsole.java
-        VIRTUAL_CONSOLE_ID = "console_main" # matches PyThreadConsole.java
+        VIRTUAL_FRAME_ID = "1"  # matches PyStackFrameConsole.java
+        VIRTUAL_CONSOLE_ID = "console_main"  # matches PyThreadConsole.java
         if thread_id == VIRTUAL_CONSOLE_ID and frame_id == VIRTUAL_FRAME_ID:
             f = FakeFrame()
-            f.f_globals = {} #As globals=locals here, let's simply let it empty (and save a bit of network traffic).
+            f.f_globals = {}  # As globals=locals here, let's simply let it empty (and save a bit of network traffic).
             f.f_locals = self.get_namespace()
             return f
         else:
             return self.orig_find_frame(thread_id, frame_id)
 
-    def connectToDebugger(self, debuggerPort):
+    def connectToDebugger(self, debuggerPort, debugger_options=None):
         '''
         Used to show console with variables connection.
         Mainly, monkey-patches things in the debugger structure so that the debugger protocol works.
         '''
+
+        if debugger_options is None:
+            debugger_options = {}
+        env_key = "PYDEVD_EXTRA_ENVS"
+        if env_key in debugger_options:
+            for (env_name, value) in dict_iter_items(debugger_options[env_key]):
+                os.environ[env_name] = value
+            del debugger_options[env_key]
         def do_connect_to_debugger():
             try:
                 # Try to import the packages needed to attach the debugger
                 import pydevd
-                from _pydev_imps import _pydev_threading as threading
+                from _pydev_imps._pydev_saved_modules import threading
 
             except:
                 # This happens on Jython embedded in host eclipse
                 traceback.print_exc()
-                sys.stderr.write('pydevd is not available, cannot connect\n',)
+                sys.stderr.write('pydevd is not available, cannot connect\n', )
 
             from _pydev_bundle import pydev_localhost
             threading.currentThread().__pydevd_id__ = "console_main"
@@ -504,6 +527,7 @@ class BaseInterpreterInterface:
 
             self.debugger = pydevd.PyDB()
             try:
+                pydevd.apply_debugger_options(debugger_options)
                 self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
                 self.debugger.prepare_to_run()
                 from _pydevd_bundle import pydevd_tracing
@@ -555,9 +579,13 @@ class BaseInterpreterInterface:
         # it to run in the main thread.
         self.exec_queue.put(do_enable_gui)
 
-#=======================================================================================================================
+    def get_ipython_hidden_vars_dict(self):
+        return None
+
+
+# =======================================================================================================================
 # FakeFrame
-#=======================================================================================================================
+# =======================================================================================================================
 class FakeFrame:
     '''
     Used to show console with variables connection.

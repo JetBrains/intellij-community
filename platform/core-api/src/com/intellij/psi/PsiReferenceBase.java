@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public abstract class PsiReferenceBase<T extends PsiElement> implements PsiReference {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiReferenceBase");
 
   protected final T myElement;
@@ -89,7 +87,6 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     }
   }
 
-
   @Override
   public T getElement() {
     return myElement;
@@ -136,7 +133,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return new Immediate<T>(element, rangeInElement, resolveTo);
   }
 
-  ElementManipulator<T> getManipulator() {
+  private ElementManipulator<T> getManipulator() {
     ElementManipulator<T> manipulator = ElementManipulators.getManipulator(myElement);
     if (manipulator == null) {
       LOG.error("Cannot find manipulator for " + myElement + " in " + this + " class " + getClass());
@@ -150,7 +147,6 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public abstract static class Poly<T extends PsiElement> extends PsiReferenceBase<T> implements PsiPolyVariantReference {
-
     public Poly(final T psiElement) {
       super(psiElement);
     }
@@ -222,5 +218,10 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     public Object[] getVariants() {
       return EMPTY_ARRAY;
     }
+  }
+
+  @Override
+  public String toString() {
+    return myElement + ":" + myRangeInElement;
   }
 }

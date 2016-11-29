@@ -59,7 +59,7 @@ public class ClassNameSameAsAncestorNameInspectionBase extends BaseInspection {
       if (className == null) {
         return;
       }
-      final Set<PsiClass> alreadyVisited = new HashSet<PsiClass>(8);
+      final Set<PsiClass> alreadyVisited = new HashSet<>(8);
       final PsiClass[] supers = aClass.getSupers();
       for (final PsiClass aSuper : supers) {
         if (hasMatchingName(aSuper, className, alreadyVisited)) {

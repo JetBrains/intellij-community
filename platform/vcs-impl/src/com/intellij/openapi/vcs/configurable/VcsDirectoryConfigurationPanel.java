@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
@@ -31,10 +32,10 @@ import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -85,6 +86,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private final VcsLimitHistoryConfigurable myLimitHistory;
   private final VcsUpdateInfoScopeFilterConfigurable myScopeFilterConfig;
   private VcsCommitMessageMarginConfigurable myCommitMessageMarginConfigurable;
+  private JCheckBox myShowUnversionedFiles;
+  private JCheckBox myCheckCommitMessageSpelling;
 
   private static class MapInfo {
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
@@ -294,19 +297,19 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
-    myAllVcss = new HashMap<String, VcsDescriptor>();
+    myAllVcss = new HashMap<>();
     for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
       myAllVcss.put(vcsDescriptor.getName(), vcsDescriptor);
     }
 
-    myDirectoryMappingTable = new TableView<MapInfo>();
+    myDirectoryMappingTable = new TableView<>();
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
 
     myBaseRevisionTexts = new JCheckBox("Store on shelf base revision texts for files under DVCS");
     myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
     myScopeFilterConfig = new VcsUpdateInfoScopeFilterConfigurable(myProject, myVcsConfiguration);
 
-    myCheckers = new HashMap<String, VcsRootChecker>();
+    myCheckers = new HashMap<>();
     updateRootCheckers();
 
     setLayout(new BorderLayout());
@@ -364,7 +367,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private void initializeModel() {
-    List<MapInfo> mappings = new ArrayList<MapInfo>();
+    List<MapInfo> mappings = new ArrayList<>();
     for (VcsDirectoryMapping mapping : ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings()) {
       mappings.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
                                       isMappingValid(mapping)));
@@ -378,7 +381,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }
     }
 
-    myModel = new ListTableModel<MapInfo>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
+    myModel = new ListTableModel<>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
     myDirectoryMappingTable.setModelAndUpdateColumns(myModel);
 
     myRecentlyChangedConfigurable.reset();
@@ -387,6 +390,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
     myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
     myCommitMessageMarginConfigurable.reset();
+    myShowUnversionedFiles.setSelected(myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT);
+    myCheckCommitMessageSpelling.setSelected(myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING);
   }
 
   @NotNull
@@ -419,14 +424,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     // due to wonderful UI designer bug
     dlg.initProjectMessage();
     if (dlg.showAndGet()) {
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping();
-      dlg.saveToMapping(mapping);
-      addMapping(mapping);
+      addMapping(dlg.getMapping());
     }
   }
 
   private void addMapping(VcsDirectoryMapping mapping) {
-    List<MapInfo> items = new ArrayList<MapInfo>(myModel.getItems());
+    List<MapInfo> items = new ArrayList<>(myModel.getItems());
     items.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
                                  isMappingValid(mapping)));
     Collections.sort(items, MapInfo.COMPARATOR);
@@ -434,8 +437,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     checkNotifyListeners(getActiveVcses());
   }
 
+
   private void addSelectedUnregisteredMappings(List<MapInfo> infos) {
-    List<MapInfo> items = new ArrayList<MapInfo>(myModel.getItems());
+    List<MapInfo> items = new ArrayList<>(myModel.getItems());
     for (MapInfo info : infos) {
       items.remove(info);
       items.add(MapInfo.registered(info.mapping, isMappingValid(info.mapping)));
@@ -467,20 +471,26 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private void editMapping() {
-    Collection<AbstractVcs> activeVcses = getActiveVcses();
     VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.remove.title"));
-    VcsDirectoryMapping mapping = ObjectUtils.assertNotNull(myDirectoryMappingTable.getSelectedObject()).mapping;
+    int row = myDirectoryMappingTable.getSelectedRow();
+    VcsDirectoryMapping mapping = myDirectoryMappingTable.getRow(row).mapping;
     dlg.setMapping(mapping);
     if (dlg.showAndGet()) {
-      dlg.saveToMapping(mapping);
-      myModel.fireTableDataChanged();
-      checkNotifyListeners(activeVcses);
+      setMapping(row, dlg.getMapping());
     }
+  }
+
+  private void setMapping(int row, @NotNull VcsDirectoryMapping mapping) {
+    List<MapInfo> items = new ArrayList<>(myModel.getItems());
+    items.set(row, MapInfo.registered(mapping, isMappingValid(mapping)));
+    Collections.sort(items, MapInfo.COMPARATOR);
+    myModel.setItems(items);
+    checkNotifyListeners(getActiveVcses());
   }
 
   private void removeMapping() {
     Collection<AbstractVcs> activeVcses = getActiveVcses();
-    ArrayList<MapInfo> mappings = new ArrayList<MapInfo>(myModel.getItems());
+    ArrayList<MapInfo> mappings = new ArrayList<>(myModel.getItems());
     int index = myDirectoryMappingTable.getSelectionModel().getMinSelectionIndex();
     Collection<MapInfo> selection = myDirectoryMappingTable.getSelection();
     mappings.removeAll(selection);
@@ -521,7 +531,11 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(createShowChangedOption(), gb.nextLine().next());
     panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
     panel.add(createUseCommitMessageRightMargin(), gb.nextLine().next().fillCellHorizontally());
-
+    createShowUnversionedFilesOption();
+    if (Registry.is("vcs.unversioned.files.in.commit")) {
+      panel.add(myShowUnversionedFiles, gb.nextLine().next());
+    }
+    panel.add(createCheckCommitMessageSpelling(), gb.nextLine().next());
     return panel;
   }
 
@@ -611,7 +625,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     final JBLabel label = new JBLabel(myProjectMessage);
     label.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     label.setFontColor(UIUtil.FontColor.BRIGHTER);
-    label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 0));
+    label.setBorder(JBUI.Borders.empty(2, 5, 2, 0));
     return label;
   }
 
@@ -619,7 +633,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     final JBLabel noteLabel = new JBLabel("File texts bigger than " + ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
     noteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
-    noteLabel.setBorder(BorderFactory.createEmptyBorder(2, 25, 5, 0));
+    noteLabel.setBorder(JBUI.Borders.empty(2, 25, 5, 0));
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myBaseRevisionTexts, BorderLayout.NORTH);
@@ -644,6 +658,19 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return myShowChangedRecursively;
   }
 
+  @NotNull
+  private JComponent createShowUnversionedFilesOption() {
+    myShowUnversionedFiles =
+      new JCheckBox("Show unversioned files in Commit dialog", myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT);
+    return myShowUnversionedFiles;
+  }
+
+  @NotNull
+  private JComponent createCheckCommitMessageSpelling() {
+    myCheckCommitMessageSpelling = new JBCheckBox("Check commit message spelling", myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING);
+    return myCheckCommitMessageSpelling;
+  }
+
   @Override
   public void reset() {
     initializeModel();
@@ -658,6 +685,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
     myCommitMessageMarginConfigurable.apply();
+    myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = myShowUnversionedFiles.isSelected();
+    myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING = myCheckCommitMessageSpelling.isSelected();
     initializeModel();
   }
 
@@ -671,6 +700,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       return true;
     }
     if (myCommitMessageMarginConfigurable.isModified()) {
+      return true;
+    }
+    if (myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT != myShowUnversionedFiles.isSelected()) {
+      return true;
+    }
+    if (myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING != myCheckCommitMessageSpelling.isSelected()) {
       return true;
     }
     return !getModelMappings().equals(myVcsManager.getDirectoryMappings());
@@ -704,7 +739,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   public Collection<AbstractVcs> getActiveVcses() {
-    Set<AbstractVcs> vcses = new HashSet<AbstractVcs>();
+    Set<AbstractVcs> vcses = new HashSet<>();
     for (VcsDirectoryMapping mapping : getModelMappings()) {
       if (mapping.getVcs().length() > 0) {
         vcses.add(myVcsManager.findVcsByName(mapping.getVcs()));

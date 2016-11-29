@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.devkit.internal;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -42,10 +44,9 @@ public class DumpCleanHighlightingTestdataAction extends AnAction implements Dum
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent event) {
-    final DataContext dataContext = event.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
+  public void actionPerformed(final AnActionEvent e) {
+    final Project project = e.getProject();
+    final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (psiFile != null) {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
@@ -83,8 +84,8 @@ public class DumpCleanHighlightingTestdataAction extends AnAction implements Dum
             try {
               FileUtil.writeToFile(file, document.getText());
             }
-            catch (IOException e) {
-              LOG.error(e);
+            catch (IOException ex) {
+              LOG.error(ex);
             }
           }
         }
@@ -94,6 +95,6 @@ public class DumpCleanHighlightingTestdataAction extends AnAction implements Dum
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(CommonDataKeys.PROJECT.getData(e.getDataContext()) != null);
+    e.getPresentation().setEnabled(e.getProject() != null);
   }
 }

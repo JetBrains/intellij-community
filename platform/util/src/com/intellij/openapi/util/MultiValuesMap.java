@@ -105,6 +105,9 @@ public class MultiValuesMap<K, V>{
     return myBaseMap.containsKey(key);
   }
 
+  /**
+   * @deprecated this method will return unordered set for ordered map, use {@link #values()} instead
+   */
   @NotNull
   public Collection<V> collectValues() {
     Collection<V> result = new HashSet<V>();

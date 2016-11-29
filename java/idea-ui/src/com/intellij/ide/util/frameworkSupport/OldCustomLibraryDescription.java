@@ -52,9 +52,9 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
   private OldCustomLibraryDescription(final List<FrameworkVersion> versions, String defaultLibraryName) {
     super(defaultLibraryName);
     myVersions = versions;
-    final List<FrameworkLibraryVersion> libraryVersions = new ArrayList<FrameworkLibraryVersion>();
+    final List<FrameworkLibraryVersion> libraryVersions = new ArrayList<>();
     for (FrameworkVersion version : versions) {
-      List<DownloadableLibraryFileDescription> downloads = new ArrayList<DownloadableLibraryFileDescription>();
+      List<DownloadableLibraryFileDescription> downloads = new ArrayList<>();
       for (LibraryInfo info : version.getLibraries()) {
         final LibraryDownloadInfo downloadingInfo = info.getDownloadingInfo();
         if (downloadingInfo != null) {
@@ -92,7 +92,7 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
   @Nullable
   public static CustomLibraryDescription createByVersions(List<? extends FrameworkVersion> versions) {
     String defaultLibraryName = null;
-    List<FrameworkVersion> withLibraries = new ArrayList<FrameworkVersion>();
+    List<FrameworkVersion> withLibraries = new ArrayList<>();
     for (FrameworkVersion version : versions) {
       if (version.getLibraries().length > 0) {
         if (version.isDefault()) {

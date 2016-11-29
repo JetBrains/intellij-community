@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public class VfsUtil extends VfsUtilCore {
   @NotNull
   public static VirtualFile[] getCommonAncestors(@NotNull VirtualFile[] files) {
     // Separate files by first component in the path.
-    HashMap<VirtualFile,Set<VirtualFile>> map = new HashMap<VirtualFile, Set<VirtualFile>>();
+    HashMap<VirtualFile,Set<VirtualFile>> map = new HashMap<>();
     for (VirtualFile aFile : files) {
       VirtualFile directory = aFile.isDirectory() ? aFile : aFile.getParent();
       if (directory == null) return VirtualFile.EMPTY_ARRAY;
@@ -149,13 +149,13 @@ public class VfsUtil extends VfsUtilCore {
         filesSet = map.get(firstPart);
       }
       else {
-        filesSet = new THashSet<VirtualFile>();
+        filesSet = new THashSet<>();
         map.put(firstPart, filesSet);
       }
       filesSet.add(directory);
     }
     // Find common ancestor for each set of files.
-    ArrayList<VirtualFile> ancestorsList = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> ancestorsList = new ArrayList<>();
     for (Set<VirtualFile> filesSet : map.values()) {
       VirtualFile ancestor = null;
       for (VirtualFile file : filesSet) {
@@ -426,7 +426,11 @@ public class VfsUtil extends VfsUtilCore {
     }.execute().throwException().getResultObject();
   }
 
-  public static VirtualFile createDirectoryIfMissing(VirtualFile parent, String relativePath) throws IOException {
+  public static VirtualFile createDirectoryIfMissing(@Nullable VirtualFile parent, String relativePath) throws IOException {
+    if (parent == null) {
+      return createDirectoryIfMissing(relativePath);
+    }
+
     for (String each : StringUtil.split(relativePath, "/")) {
       VirtualFile child = parent.findChild(each);
       if (child == null) {
@@ -447,6 +451,8 @@ public class VfsUtil extends VfsUtilCore {
       VirtualFile parent = createDirectoryIfMissing(path.substring(0, pos));
       if (parent == null) return null;
       final String dirName = path.substring(pos + 1);
+      VirtualFile child = parent.findChild(dirName);
+      if (child != null && child.isDirectory()) return child;
       return parent.createChildDirectory(LocalFileSystem.getInstance(), dirName);
     }
     return file;
@@ -459,13 +465,10 @@ public class VfsUtil extends VfsUtilCore {
    */
   @NotNull
   public static List<VirtualFile> collectChildrenRecursively(@NotNull final VirtualFile root) {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
-    processFilesRecursively(root, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(final VirtualFile t) {
-        result.add(t);
-        return true;
-      }
+    final List<VirtualFile> result = new ArrayList<>();
+    processFilesRecursively(root, t -> {
+      result.add(t);
+      return true;
     });
     return result;
   }
@@ -567,7 +570,7 @@ public class VfsUtil extends VfsUtilCore {
 
   @NotNull
   public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
-    List<VirtualFile> list = ContainerUtil.filter(Condition.NOT_NULL, files);
+    List<VirtualFile> list = ContainerUtil.filter(files, Condition.NOT_NULL);
     if (list.isEmpty()) {
       return Collections.emptyList();
     }
@@ -589,6 +592,19 @@ public class VfsUtil extends VfsUtilCore {
     return list;
   }
 
+  /**
+   * Refreshes the VFS information of the given files from the local file system.
+   * <p/>
+   * This refresh is performed without help of the FileWatcher,
+   * which means that all given files will be refreshed even if the FileWatcher didn't report any changes in them.
+   * This method is slower, but more reliable, and should be preferred
+   * when it is essential to make sure all the given VirtualFiles are actually refreshed from disk.
+   * <p/>
+   * NB: when invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
+   * NOT be in a read action.
+   *
+   * @see VirtualFile#refresh(boolean, boolean)
+   */
   public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
     List<VirtualFile> list = markDirty(recursive, reloadChildren, files);
     if (list.isEmpty()) return;

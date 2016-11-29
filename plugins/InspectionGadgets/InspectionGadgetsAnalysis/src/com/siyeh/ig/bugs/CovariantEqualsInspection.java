@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,9 +55,6 @@ public class CovariantEqualsInspection extends BaseInspection {
       if (!HardcodedMethodConstants.EQUALS.equals(name)) {
         return;
       }
-      if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return;
-      }
       final PsiParameterList parameterList = method.getParameterList();
       if (parameterList.getParametersCount() != 1) {
         return;
@@ -66,30 +65,19 @@ public class CovariantEqualsInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null || aClass.isInterface()) {
+      if (aClass == null) {
         return;
       }
-      final PsiMethod[] methods = aClass.getMethods();
+      final PsiMethod[] methods = aClass.findMethodsByName("equals", false);
       for (PsiMethod method1 : methods) {
-        if (isNonVariantEquals(method1)) {
+        if (MethodUtils.isEquals(method1)) {
           return;
         }
       }
+      if (SuperMethodsSearch.search(method, null, true, false).findFirst() != null) {
+        return;
+      }
       registerMethodError(method);
-    }
-
-    private static boolean isNonVariantEquals(PsiMethod method) {
-      final String name = method.getName();
-      if (!HardcodedMethodConstants.EQUALS.equals(name)) {
-        return false;
-      }
-      final PsiParameterList paramList = method.getParameterList();
-      final PsiParameter[] parameters = paramList.getParameters();
-      if (parameters.length != 1) {
-        return false;
-      }
-      final PsiType argType = parameters[0].getType();
-      return TypeUtils.isJavaLangObject(argType);
     }
   }
 }

@@ -78,7 +78,7 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
 
       private PsiFile[] getPsiFiles() {
         final Collection<VirtualFile> files = panel.getVirtualFiles();
-        final List<PsiFile> psiFiles = new ArrayList<PsiFile>();
+        final List<PsiFile> psiFiles = new ArrayList<>();
         final PsiManager manager = PsiManager.getInstance(panel.getProject());
         for (final VirtualFile file : files) {
           final PsiFile psiFile = manager.findFile(file);

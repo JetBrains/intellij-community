@@ -13,7 +13,7 @@ import static com.intellij.json.JsonParserDefinition.JSON_LITERALS;
  */
 public class JsonWordScanner extends DefaultWordsScanner {
   public JsonWordScanner() {
-    super(new JsonLexer(), TokenSet.create(JsonElementTypes.INDENTIFIER), JSON_COMMENTARIES, JSON_LITERALS);
+    super(new JsonLexer(), TokenSet.create(JsonElementTypes.IDENTIFIER), JSON_COMMENTARIES, JSON_LITERALS);
     setMayHaveFileRefsInLiterals(true);
   }
 }

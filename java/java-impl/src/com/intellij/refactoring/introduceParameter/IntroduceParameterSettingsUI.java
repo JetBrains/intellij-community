@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 
@@ -43,18 +44,18 @@ public abstract class IntroduceParameterSettingsUI {
   protected final boolean myIsInvokedOnDeclaration;
   protected final boolean myHasInitializer;
 
-  protected StateRestoringCheckBox myCbDeleteLocalVariable = null;
-  protected StateRestoringCheckBox myCbUseInitializer = null;
-  protected JRadioButton myReplaceFieldsWithGettersNoneRadio = null;
-  protected JRadioButton myReplaceFieldsWithGettersInaccessibleRadio = null;
-  protected JRadioButton myReplaceFieldsWithGettersAllRadio = null;
+  protected StateRestoringCheckBox myCbDeleteLocalVariable;
+  protected StateRestoringCheckBox myCbUseInitializer;
+  protected JRadioButton myReplaceFieldsWithGettersNoneRadio;
+  protected JRadioButton myReplaceFieldsWithGettersInaccessibleRadio;
+  protected JRadioButton myReplaceFieldsWithGettersAllRadio;
   protected final ButtonGroup myReplaceFieldsWithGettersButtonGroup = new ButtonGroup();
   protected final PsiParameter[] myParametersToRemove;
   protected final boolean[] myParametersToRemoveChecked;
   protected final boolean myIsLocalVariable;
 
-  protected JCheckBox myCbReplaceAllOccurences = null;
-  protected JCheckBox myCbGenerateDelegate = null;
+  protected JCheckBox myCbReplaceAllOccurences;
+  protected JCheckBox myCbGenerateDelegate;
 
   public IntroduceParameterSettingsUI(PsiLocalVariable onLocalVariable,
                                       PsiExpression onExpression,
@@ -111,7 +112,7 @@ public abstract class IntroduceParameterSettingsUI {
     JPanel radioButtonPanel = new JPanel(new GridBagLayout());
 
     GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 8);
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridy = 0;
@@ -263,7 +264,7 @@ public abstract class IntroduceParameterSettingsUI {
       panel.add(myCbDeleteLocalVariable, gbConstraints);
       myCbDeleteLocalVariable.setSelected(settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE);
 
-      gbConstraints.insets = new Insets(0, 0, 4, 8);
+      gbConstraints.insets = JBUI.insets(0, 0, 4, 8);
       if(myHasInitializer) {
         myCbUseInitializer = new StateRestoringCheckBox();
         myCbUseInitializer.setText(RefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));

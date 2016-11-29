@@ -65,7 +65,7 @@ public class HgUpdateCommand {
 
   @Nullable
   public HgCommandResult execute() {
-    List<String> arguments = new LinkedList<String>();
+    List<String> arguments = new LinkedList<>();
     if (clean) {
       arguments.add("--clean");
     }
@@ -95,7 +95,7 @@ public class HgUpdateCommand {
       DvcsUtil.workingTreeChangeFinished(project, token);
     }
 
-    VfsUtil.markDirtyAndRefresh(true, true, false, repo);
+    VfsUtil.markDirtyAndRefresh(false, true, false, repo);
     return result;
   }
 

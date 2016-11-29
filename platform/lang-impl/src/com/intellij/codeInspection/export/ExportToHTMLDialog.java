@@ -22,14 +22,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.OptionGroup;
+import com.intellij.util.ui.GraphicsUtil;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class ExportToHTMLDialog extends DialogWrapper{
   private final Project myProject;
-  protected JCheckBox myCbOpenInBrowser;
-  protected TextFieldWithBrowseButton myTargetDirectoryField;
-  protected final boolean myCanBeOpenInBrowser;
+  private JCheckBox myCbOpenInBrowser;
+  private TextFieldWithBrowseButton myTargetDirectoryField;
+  private final boolean myCanBeOpenInBrowser;
 
   public ExportToHTMLDialog(Project project, final boolean canBeOpenInBrowser) {
     super(project, true);
@@ -42,12 +44,8 @@ public class ExportToHTMLDialog extends DialogWrapper{
 
   @Override
   protected JComponent createNorthPanel() {
-    OptionGroup optionGroup = new OptionGroup();
-
     myTargetDirectoryField = new TextFieldWithBrowseButton();
-    optionGroup.add(com.intellij.codeEditor.printing.ExportToHTMLDialog.assignLabel(myTargetDirectoryField, myProject));
-
-    return optionGroup.createPanel();
+    return com.intellij.codeEditor.printing.ExportToHTMLDialog.assignLabel(myTargetDirectoryField, myProject);
   }
 
   @Override
@@ -71,7 +69,11 @@ public class ExportToHTMLDialog extends DialogWrapper{
     if (myCanBeOpenInBrowser) {
       myCbOpenInBrowser.setSelected(exportToHTMLSettings.OPEN_IN_BROWSER);
     }
-    myTargetDirectoryField.setText(exportToHTMLSettings.OUTPUT_DIRECTORY);
+    final String text = exportToHTMLSettings.OUTPUT_DIRECTORY;
+    myTargetDirectoryField.setText(text);
+    if (text != null) {
+      myTargetDirectoryField.setPreferredSize(new Dimension(GraphicsUtil.stringWidth(text, myTargetDirectoryField.getFont()) + 100, myTargetDirectoryField.getPreferredSize().height));
+    }
   }
 
   public void apply() {

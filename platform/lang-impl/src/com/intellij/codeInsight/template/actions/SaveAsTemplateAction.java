@@ -31,7 +31,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +46,8 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -90,13 +91,12 @@ public class SaveAsTemplateAction extends AnAction {
     new WriteCommandAction.Simple(project, (String)null) {
       @Override
       protected void run() throws Throwable {
-        Map<RangeMarker, String> rangeToText = new HashMap<RangeMarker, String>();
+        Map<RangeMarker, String> rangeToText = new HashMap<>();
 
         for (PsiElement element : psiElements) {
           for (PsiReference reference : element.getReferences()) {
             if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference)reference).getQualifier() == null) {
               String canonicalText = reference.getCanonicalText();
-              LOG.assertTrue(canonicalText != null, reference.getClass());
               TextRange referenceRange = reference.getRangeInElement();
               final TextRange elementTextRange = element.getTextRange();
               LOG.assertTrue(elementTextRange != null, elementTextRange);
@@ -121,8 +121,24 @@ public class SaveAsTemplateAction extends AnAction {
           }
         }
 
-        for (Map.Entry<RangeMarker, String> entry : rangeToText.entrySet()) {
-          document.replaceString(entry.getKey().getStartOffset(), entry.getKey().getEndOffset(), entry.getValue());
+        List<RangeMarker> markers = new ArrayList<>();
+        for (RangeMarker m1 : rangeToText.keySet()) {
+          boolean nested = false;
+          for (RangeMarker m2 : rangeToText.keySet()) {
+            if (m1 != m2 && m2.getStartOffset() <= m1.getStartOffset() && m1.getEndOffset() <= m2.getEndOffset()) {
+              nested = true;
+              break;
+            }
+          }
+
+          if (!nested) {
+            markers.add(m1);
+          }
+        }
+
+        for (RangeMarker marker : markers) {
+          final String value = rangeToText.get(marker);
+          document.replaceString(marker.getStartOffset(), marker.getEndOffset(), value);
         }
       }
     }.execute();
@@ -130,14 +146,7 @@ public class SaveAsTemplateAction extends AnAction {
     final TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText(), TemplateSettings.USER_GROUP_NAME);
     template.setToReformat(true);
 
-    PsiFile copy;
-    AccessToken token = WriteAction.start();
-    try {
-      copy = TemplateManagerImpl.insertDummyIdentifier(editor, file);
-    }
-    finally {
-      token.finish();
-    }
+    PsiFile copy = WriteAction.compute(() -> TemplateManagerImpl.insertDummyIdentifier(editor, file));
     Set<TemplateContextType> applicable = TemplateManagerImpl.getApplicableContextTypes(copy, startOffset);
 
     for(TemplateContextType contextType: TemplateManagerImpl.getAllContextTypes()) {
@@ -145,12 +154,7 @@ public class SaveAsTemplateAction extends AnAction {
     }
 
     final LiveTemplatesConfigurable configurable = new LiveTemplatesConfigurable();
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      @Override
-      public void run() {
-        configurable.getTemplateListPanel().addTemplate(template);
-      }
-    });
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.getTemplateListPanel().addTemplate(template));
   }
 
   @Override

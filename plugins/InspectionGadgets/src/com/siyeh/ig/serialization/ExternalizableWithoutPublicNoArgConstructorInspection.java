@@ -50,14 +50,8 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends Exter
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("make.constructor.public");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("make.constructor.public");
     }
 
     @Override

@@ -21,13 +21,17 @@ import com.intellij.psi.PsiElement;
 
 /**
  * Allows to disable highlighting of certain elements as unused when such elements are not referenced
- * from the code but are referenced in some other way (for example, from generated code).
- *
+ * from the code but are referenced in some other way. For example,
+ * <ul>
+ * <li>from generated code</li>
+ * <li>from outside containers: {@code @javax.servlet.annotation.WebServlet public class MyServlet {}}</li>
+ * <li>from some frameworks: {@code @javax.ejb.EJB private DataStore myInjectedDataStore;}</li> etc
+ * </ul>
  * @author yole
  * @since 6.0
  */
 public interface ImplicitUsageProvider {
-  ExtensionPointName<ImplicitUsageProvider> EP_NAME = new ExtensionPointName<ImplicitUsageProvider>("com.intellij.implicitUsageProvider");
+  ExtensionPointName<ImplicitUsageProvider> EP_NAME = new ExtensionPointName<>("com.intellij.implicitUsageProvider");
 
   boolean isImplicitUsage(PsiElement element);
   boolean isImplicitRead(PsiElement element);

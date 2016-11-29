@@ -1,6 +1,5 @@
 /// initalizers completion
 import java.io.*;
-import java.net.*;
 
 public class a  {
 
@@ -26,12 +25,17 @@ class a2 {
 
   <error descr="Unhandled exception: java.io.IOException">a2()</error> {}
 }
+class SocketException extends IOException {
+}
+class ConnectException extends SocketException {
+}
+
 class a3 {
   { 
-    if (1==2) <error descr="Unhandled exception: java.net.SocketException">throw new SocketException();</error> 
+    if (1==2) <error descr="Unhandled exception: SocketException">throw new SocketException();</error>
   }
 
-  <error descr="Unhandled exception: java.net.SocketException">a3() throws ConnectException</error> {}
+  <error descr="Unhandled exception: SocketException">a3() throws ConnectException</error> {}
 }
 
 class b {

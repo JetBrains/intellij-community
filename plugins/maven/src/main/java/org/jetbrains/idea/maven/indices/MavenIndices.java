@@ -35,7 +35,7 @@ public class MavenIndices {
   private final File myIndicesDir;
   private final MavenIndex.IndexListener myListener;
 
-  private final List<MavenIndex> myIndices = new ArrayList<MavenIndex>();
+  private final List<MavenIndex> myIndices = new ArrayList<>();
   private static final Object ourDirectoryLock = new Object();
 
   public MavenIndices(MavenIndexerWrapper indexer, File indicesDir, MavenIndex.IndexListener listener) {
@@ -78,7 +78,7 @@ public class MavenIndices {
   }
 
   public synchronized List<MavenIndex> getIndices() {
-    return new ArrayList<MavenIndex>(myIndices);
+    return new ArrayList<>(myIndices);
   }
 
   public synchronized MavenIndex add(String repositoryId, String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {

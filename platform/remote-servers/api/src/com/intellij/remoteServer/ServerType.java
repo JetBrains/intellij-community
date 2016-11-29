@@ -35,6 +35,11 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract String getPresentableName();
 
   @NotNull
+  public String getHelpTopic() {
+    return "reference.settings.clouds";
+  }
+
+  @NotNull
   public abstract Icon getIcon();
 
   @NotNull
@@ -74,13 +79,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
 
   @NotNull
   public Comparator<Deployment> getDeploymentComparator() {
-    return new Comparator<Deployment>() {
-
-      @Override
-      public int compare(Deployment o1, Deployment o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    };
+    return (o1, o2) -> o1.getName().compareTo(o2.getName());
   }
 
   @Nullable

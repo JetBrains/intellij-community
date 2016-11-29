@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author peter
  */
-public class GroovyOverrideImplementTest extends LightGroovyTestCase {
+class GroovyOverrideImplementTest extends LightGroovyTestCase {
 
-  public void testInEmptyBraces() throws Exception {
+  void testInEmptyBraces() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Test {<caret>}
 """
@@ -43,8 +43,8 @@ class Test {
 }
 """
   }
-  
-  public void testConstructor() throws Exception {
+
+  void testConstructor() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Test {<caret>}
 """
@@ -58,7 +58,7 @@ class Test {
 """
   }
 
-  public void testNoSuperReturnType() throws Exception {
+  void testNoSuperReturnType() throws Exception {
     myFixture.addFileToProject("Foo.groovy", """
     class Foo {
       def foo() {
@@ -80,7 +80,7 @@ class Test {
 """
   }
 
-  public void testMethodTypeParameters() {
+  void testMethodTypeParameters() {
     myFixture.addFileToProject "v.java", """
 class Base<E> {
   public <T> T[] toArray(T[] t) {return (T[])new Object[0];}
@@ -198,7 +198,7 @@ interface I {
 ''')
   }
 
-  public void _testImplementIntention() {
+  void _testImplementIntention() {
     myFixture.configureByText('a.groovy', '''
 class Base<E> {
   public <E> E fo<caret>o(E e){}
@@ -215,10 +215,42 @@ class Test extends Base<String> {
     fix.invoke(myFixture.project, myFixture.editor, myFixture.file)
   }
 
+  void 'test abstract final trait properties'() {
+    myFixture.addFileToProject('T.groovy', '''\
+trait T {
+  abstract foo
+  abstract final bar
+}
+''')
+    myFixture.configureByText('classes.groovy', '''\
+class <caret>A implements T {
+}
+''')
+    myFixture.launchAction myFixture.findSingleIntention('Implement methods')
+    myFixture.checkResult('''\
+class A implements T {
+    @Override
+    Object getFoo() {
+        return null
+    }
+
+    @Override
+    void setFoo(Object foo) {
+
+    }
+
+    @Override
+    Object getBar() {
+        return null
+    }
+}
+''')
+  }
+
   private def generateImplementation(PsiMethod method) {
     WriteCommandAction.runWriteCommandAction project, {
       GrTypeDefinition clazz = (myFixture.file as PsiClassOwner).classes[0] as GrTypeDefinition
-      OverrideImplementUtil.overrideOrImplement(clazz, method);
+      OverrideImplementUtil.overrideOrImplement(clazz, method)
       PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()
     }
     myFixture.editor.selectionModel.removeSelection()
@@ -226,10 +258,5 @@ class Test extends Base<String> {
 
   PsiMethod findMethod(String className, String methodName) {
     return JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)).findMethodsByName(methodName, false)[0]
-  }
-
-  @Override
-  protected String getBasePath() {
-    return null
   }
 }

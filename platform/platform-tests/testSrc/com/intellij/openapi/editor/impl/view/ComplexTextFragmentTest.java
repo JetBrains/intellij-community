@@ -25,15 +25,17 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
+import java.util.Objects;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.assertArrayEquals;
 import static com.intellij.openapi.editor.impl.AbstractEditorTest.*;
+import static org.junit.Assert.assertArrayEquals;
 
 public class ComplexTextFragmentTest {
   @Test
   public void testSimpleText() {
     assertCaretPositionsForGlyphVector(
-      glyph(0, 10).glyph(10, 10).glyph(20, 10),
+      glyph(0, 10).glyph(10, 20).glyph(20, 30),
       10, 20, 30
     );
   }
@@ -41,7 +43,7 @@ public class ComplexTextFragmentTest {
   @Test
   public void testSimpleRtlText() {
     assertCaretPositionsForGlyphVector(
-      rtl().glyph(0, 10).glyph(10, 10).glyph(20, 10),
+      rtl().glyph(0, 10).glyph(10, 20).glyph(20, 30),
       10, 20, 30
     );
   }
@@ -49,7 +51,7 @@ public class ComplexTextFragmentTest {
   @Test
   public void testLigature() {
     assertCaretPositionsForGlyphVector(
-      glyph(0, 12).glyph(12, 0).glyph(12, 0),
+      glyph(0, 12).glyph(12, 12).glyph(12, 12), // ICU-style ligature (when all characters get a glyph)
       4, 8, 12
     );
   }
@@ -57,12 +59,36 @@ public class ComplexTextFragmentTest {
   @Test
   public void testRtlLigature() {
     assertCaretPositionsForGlyphVector(
-      rtl().glyph(0, 0).glyph(0, 0).glyph(0, 12),
+      rtl().glyph(0, 0).glyph(0, 0).glyph(0, 12), // ICU-style ligature (when all characters get a glyph)
       4, 8, 12
     );
   }
-  
-  private static void assertCaretPositionsForGlyphVector(GlyphVector gv, int... expectedPositions) {
+
+  @Test
+  public void testHbLigature() {
+    assertCaretPositionsForGlyphVector(
+      glyph(0, 12).noGlyph().noGlyph(), // Harfbuzz-style ligature (some characters don't map to glyphs)
+      4, 8, 12
+    );
+  }
+
+  @Test
+  public void testHbRtlLigature() {
+    assertCaretPositionsForGlyphVector(
+      rtl().noGlyph().noGlyph().glyph(0, 12), // Harfbuzz-style ligature (some characters don't map to glyphs)
+      4, 8, 12
+    );
+  }
+
+  @Test
+  public void testHbLigatureTwoChars() {
+    assertCaretPositionsForGlyphVector(
+      glyph(0, 8).noGlyph(), // Harfbuzz-style ligature (some characters don't map to glyphs)
+      4, 8
+    );
+  }
+
+  private static void assertCaretPositionsForGlyphVector(MyGlyphVector gv, int... expectedPositions) {
     FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
       @NotNull
       @Override
@@ -72,8 +98,7 @@ public class ComplexTextFragmentTest {
       }
     });
     try {
-      // assuming one glyph per character
-      int length = gv.getNumGlyphs();
+      int length = gv.getNumChars();
       char[] text = new char[length];
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0, 
                                                              new Font(null), new FontRenderContext(null, false, false));
@@ -89,49 +114,67 @@ public class ComplexTextFragmentTest {
   }
   
   private static MyGlyphVector rtl() {
-    return new MyGlyphVector(true, new int[0], new int[0]);
+    return new MyGlyphVector(true, new Integer[0], new Integer[0]);
   }
   
-  private static MyGlyphVector glyph(int position, int width) {
-    return new MyGlyphVector(false, new int[]{position}, new int[]{width});
+  private static MyGlyphVector glyph(int xStart, int xEnd) {
+    return new MyGlyphVector(false, new Integer[]{xStart}, new Integer[]{xEnd - xStart});
   }
-  
+
   private static class MyGlyphVector extends AbstractMockGlyphVector {
     private final boolean myRtl;
-    private final int[] myGlyphPositions;
-    private final int[] myGlyphWidths;
+    private final Integer[] myGlyphPositions;
+    private final Integer[] myGlyphWidths;
 
-    private MyGlyphVector(boolean rtl, int[] glyphPositions, int[] glyphWidths) {
+    private MyGlyphVector(boolean rtl, Integer[] glyphPositions, Integer[] glyphWidths) {
       assertTrue(glyphPositions.length == glyphWidths.length);
       myRtl = rtl;
       myGlyphPositions = glyphPositions;
       myGlyphWidths = glyphWidths;
     }
 
-    private MyGlyphVector glyph(int position, int width) {
-      return new MyGlyphVector(myRtl, ArrayUtil.append(myGlyphPositions, position), ArrayUtil.append(myGlyphWidths, width));
+    private MyGlyphVector glyph(int xStart, int xEnd) {
+      return new MyGlyphVector(myRtl, ArrayUtil.append(myGlyphPositions, xStart), ArrayUtil.append(myGlyphWidths, xEnd - xStart));
+    }
+
+    private MyGlyphVector noGlyph() {
+      return new MyGlyphVector(myRtl, ArrayUtil.append(myGlyphPositions, null), ArrayUtil.append(myGlyphWidths, null));
     }
 
     @Override
     public int getNumGlyphs() {
+      return (int)Stream.of(myGlyphPositions).filter(Objects::nonNull).count();
+    }
+
+    private int getNumChars() {
       return myGlyphPositions.length;
     }
 
     @Override
     public Point2D getGlyphPosition(int glyphIndex) {
-      return new Point(glyphIndex == myGlyphPositions.length
-                       ? myGlyphPositions[glyphIndex - 1] + myGlyphWidths[glyphIndex - 1]
-                       : myGlyphPositions[glyphIndex], 0);
+      boolean afterLast = glyphIndex == getNumGlyphs();
+      int index = getGlyphIndexInArray(glyphIndex - (afterLast ? 1 : 0));
+      return new Point(myGlyphPositions[index] + (afterLast ? myGlyphWidths[index] : 0), 0);
     }
 
     @Override
     public Shape getGlyphLogicalBounds(int glyphIndex) {
-      return new Rectangle(myGlyphPositions[glyphIndex], -TEST_DESCENT, myGlyphWidths[glyphIndex], TEST_LINE_HEIGHT);
+      int index = getGlyphIndexInArray(glyphIndex);
+      return new Rectangle(myGlyphPositions[index], -TEST_DESCENT, myGlyphWidths[index], TEST_LINE_HEIGHT);
     }
 
     @Override
     public int getGlyphCharIndex(int glyphIndex) {
-      return myRtl ? myGlyphPositions.length - 1 - glyphIndex : glyphIndex;
+      int index = getGlyphIndexInArray(glyphIndex);
+      return myRtl ? getNumChars() - 1 - index : index;
+    }
+
+    private int getGlyphIndexInArray(int glyphIndex) {
+      int index = 0;
+      for (int i = 0; i < myGlyphPositions.length; i++) {
+        if (myGlyphPositions[i] != null && index++ == glyphIndex) return i;
+      }
+      return -1;
     }
 
     @Override

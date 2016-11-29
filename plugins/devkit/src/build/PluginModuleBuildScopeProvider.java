@@ -38,7 +38,7 @@ public class PluginModuleBuildScopeProvider extends BuildTargetScopeProvider {
   @Override
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
                                                          @NotNull Project project, boolean forceBuild) {
-    List<String> pluginArtifactTargetIds = new ArrayList<String>();
+    List<String> pluginArtifactTargetIds = new ArrayList<>();
     for (Module module : baseScope.getAffectedModules()) {
       if (PluginModuleType.isOfType(module)) {
         pluginArtifactTargetIds.add(module.getName()+":plugin");

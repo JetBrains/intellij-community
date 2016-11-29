@@ -60,7 +60,7 @@ public class ConfigureGroovyLibraryNotificationProvider extends EditorNotificati
       }
     });
 
-    supportedFileTypes = new HashSet<FileType>();
+    supportedFileTypes = new HashSet<>();
     supportedFileTypes.add(GroovyFileType.GROOVY_FILE_TYPE);
 
     for (GroovyFrameworkConfigNotification configNotification : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {

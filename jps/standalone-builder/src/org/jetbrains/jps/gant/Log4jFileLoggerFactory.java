@@ -20,6 +20,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,8 +43,9 @@ public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.L
     myAppender.setMaxBackupIndex(10);
   }
 
+  @NotNull
   @Override
-  public com.intellij.openapi.diagnostic.Logger getLoggerInstance(String category) {
+  public com.intellij.openapi.diagnostic.Logger getLoggerInstance(@NotNull String category) {
     final Logger logger = Logger.getLogger(category);
     logger.addAppender(myAppender);
     logger.setLevel(isDebugLevel(category) ? Level.DEBUG : Level.INFO);

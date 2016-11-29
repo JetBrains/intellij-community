@@ -30,10 +30,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.regex.Matcher;
 
 public class IgnoredFileBean {
@@ -48,12 +48,7 @@ public class IgnoredFileBean {
   IgnoredFileBean(String path, IgnoreSettingsType type, Project project) {
     myPath = path;
     myType = type;
-    if (IgnoreSettingsType.FILE.equals(type)) {
-      myFilenameIfFile = new File(path).getName();
-    }
-    else {
-      myFilenameIfFile = null;
-    }
+    myFilenameIfFile = IgnoreSettingsType.FILE.equals(type) ? PathUtilRt.getFileName(path) : null;
     myProject = project;
     myMask = null;
     myMatcher = null;

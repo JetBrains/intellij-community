@@ -25,7 +25,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public abstract class JBProtocolCommand {
-  public static final ExtensionPointName<JBProtocolCommand> EP_NAME = new ExtensionPointName<JBProtocolCommand>("com.intellij.jbProtocolCommand");
+  public static final ExtensionPointName<JBProtocolCommand> EP_NAME = new ExtensionPointName<>("com.intellij.jbProtocolCommand");
   private final String myCommand;
 
   public JBProtocolCommand(@NotNull String command) {

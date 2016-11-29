@@ -1,0 +1,1 @@
+map("{0}".format, ["test1", "test2"])

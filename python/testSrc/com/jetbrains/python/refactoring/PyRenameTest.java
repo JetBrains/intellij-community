@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -236,17 +237,76 @@ public class PyRenameTest extends PyTestCase {
     renameWithDocStringFormat(DocStringFormat.NUMPY, "bar");
   }
 
-  //PY-2478
+  // PY-2748
   public void testFormatStringKeyword() {
     doTest("renamed");
   }
 
+  // PY-2748
+  public void testFormatStringDictLiteral() {
+    doUnsupportedOperationTest();
+  }
+
+  // PY-2748
+  public void testFormatStringNumericLiteralExpression() {
+    doUnsupportedOperationTest();
+  }
+  
+  // PY-19000
+  public void testStringAsPositionalFormatFunctionArgument() {
+    doUnsupportedOperationTest();
+  }
+  
+  // PY-19000
+  public void testSetAsPercentArg() {
+    doUnsupportedOperationTest();
+  }
+  
+  // PY-19000
+  public void testListAsPercentArg() {
+    doUnsupportedOperationTest();
+  }
+  
+  // PY-19000
+  public void testCallAsPercentArg() {
+    doUnsupportedOperationTest();
+  }
+  
+  // PY-19000
+  public void testStarAsFormatFunctionArg() {
+    doUnsupportedOperationTest();
+  }
+  
+  // PY-19000
+  public void testSubscriptionAsPercentArg() {
+    doUnsupportedOperationTest();
+  }
+  
+  // PY-19000
+  public void testBinaryAsPercentArg() {
+    doUnsupportedOperationTest();
+  }
+  
+  // PY-19000
+  public void testDictAsPercentArg() {
+    doUnsupportedOperationTest();
+  }
+  
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
-    runWithDocStringFormat(format, new Runnable() {
-      public void run() {
-        doTest(newName);
+    runWithDocStringFormat(format, () -> doTest(newName));
+  }
+
+  private void doUnsupportedOperationTest() {
+    myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
+    try {
+      myFixture.renameElementAtCaret("renamed");
+    }
+    catch (RuntimeException e) {
+      if (e.getCause() instanceof IncorrectOperationException) {
+        return;
       }
-    });
+    }
+    fail();
   }
 
   private void doRenameConflictTest(String newName, String expectedConflict) {

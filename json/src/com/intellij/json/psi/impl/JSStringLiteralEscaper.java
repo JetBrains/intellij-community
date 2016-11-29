@@ -16,7 +16,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
     String subText = rangeInsideHost.substring(myHost.getText());
 
-    Ref<int[]> sourceOffsetsRef = new Ref<int[]>();
+    Ref<int[]> sourceOffsetsRef = new Ref<>();
     boolean result = parseStringCharacters(subText, outChars, sourceOffsetsRef, isRegExpLiteral(), !isOneLine());
     outSourceOffsets = sourceOffsetsRef.get();
     return result;

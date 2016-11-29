@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiEventsTest extends PsiTestCase {
   public void testEditingInDocComment() throws  Exception {
-    final Ref<Boolean> gotIt = new Ref<Boolean>(false);
+    final Ref<Boolean> gotIt = new Ref<>(false);
     getPsiManager().addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
       public void childReplaced(@NotNull PsiTreeChangeEvent event) {
@@ -28,18 +28,10 @@ public class PsiEventsTest extends PsiTestCase {
     final Document doc = docManager.getDocument(file);
     assertNotNull(doc);
     CommandProcessor.getInstance().executeCommand(myProject,
-      new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              doc.insertString(3, " ");
-              docManager.commitDocument(doc);
-            }
-          });
-        }
-      },
+                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> {
+                                                    doc.insertString(3, " ");
+                                                    docManager.commitDocument(doc);
+                                                  }),
       "file text set",
       this
     );

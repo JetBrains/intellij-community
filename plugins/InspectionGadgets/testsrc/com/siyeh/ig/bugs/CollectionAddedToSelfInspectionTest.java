@@ -21,6 +21,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("CollectionAddedToSelf")
 public class CollectionAddedToSelfInspectionTest extends LightInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {

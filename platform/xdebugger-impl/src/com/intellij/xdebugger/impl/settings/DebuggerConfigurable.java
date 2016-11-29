@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       return;
     }
 
-    List<Configurable> configurables = new SmartList<Configurable>();
+    List<Configurable> configurables = new SmartList<>();
     configurables.add(new DataViewsConfigurable());
 
     DebuggerConfigurableProvider[] providers = DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions();
@@ -124,12 +124,9 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
     Configurable[] mergedRootConfigurables = rootConfigurables.toArray(new Configurable[rootConfigurables.size()]);
     // move unnamed to top
-    Arrays.sort(mergedRootConfigurables, new Comparator<Configurable>() {
-      @Override
-      public int compare(@NotNull Configurable o1, @NotNull Configurable o2) {
-        boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
-        return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
-      }
+    Arrays.sort(mergedRootConfigurables, (o1, o2) -> {
+      boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
+      return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
     });
     return new MergedCompositeConfigurable("", "", mergedRootConfigurables);
   }
@@ -150,11 +147,6 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   @Override
   public boolean isVisible() {
     return XBreakpointType.EXTENSION_POINT_NAME.getExtensions().length != 0;
-  }
-
-  @Override
-  public Runnable enableSearch(final String option) {
-    return null;
   }
 
   @Override
@@ -201,7 +193,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       Collection<? extends Configurable> providerConfigurables = provider.getConfigurables(category);
       if (!providerConfigurables.isEmpty()) {
         if (configurables == null) {
-          configurables = new SmartList<Configurable>();
+          configurables = new SmartList<>();
         }
         configurables.addAll(providerConfigurables);
       }

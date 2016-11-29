@@ -80,7 +80,7 @@ public class SvnRollbackTest extends Svn17TestCase {
   }
 
   private void rollbackIMpl(List<Change> changes, final List<Change> allowedAfter) throws VcsException {
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    final List<VcsException> exceptions = new ArrayList<>();
     myVcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
     if (! exceptions.isEmpty()) {
       throw exceptions.get(0);
@@ -90,7 +90,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     myChangeListManager.ensureUpToDate(false);
 
     List<LocalChangeList> lists = myChangeListManager.getChangeLists();
-    final HashSet<Change> afterCopy = new HashSet<Change>(allowedAfter);
+    final HashSet<Change> afterCopy = new HashSet<>(allowedAfter);
     for (LocalChangeList list : lists) {
       final Collection<Change> listChanges = list.getChanges();
       if (! listChanges.isEmpty()) {
@@ -557,7 +557,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     Assert.assertNotNull(deletedFiles);
     Assert.assertTrue(deletedFiles.size() == 3);
 
-    final Set<File> files = new HashSet<File>();
+    final Set<File> files = new HashSet<>();
     files.add(wasFile);
     files.add(wasFileS1);
     files.add(wasFileS2);
@@ -599,7 +599,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final List<LocallyDeletedChange> deletedFiles = ((ChangeListManagerImpl)myChangeListManager).getDeletedFiles();
     Assert.assertNotNull(deletedFiles);
     Assert.assertTrue(deletedFiles.size() == 3);
-    final Set<File> files = new HashSet<File>();
+    final Set<File> files = new HashSet<>();
     files.add(wasFile1);
     files.add(wasFile2);
     files.add(wasFile3);
@@ -646,7 +646,7 @@ public class SvnRollbackTest extends Svn17TestCase {
   }
 
   private void rollbackLocallyDeleted(final List<FilePath> locally, final List<FilePath> allowed) {
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    final List<VcsException> exceptions = new ArrayList<>();
     myVcs.createRollbackEnvironment().rollbackMissingFileDeletion(locally, exceptions, RollbackProgressListener.EMPTY);
     Assert.assertTrue(exceptions.isEmpty());
 
@@ -657,7 +657,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     if (allowed == null || allowed.isEmpty()) {
       Assert.assertTrue(deletedFiles == null || deletedFiles.isEmpty());
     }
-    final ArrayList<FilePath> copy = new ArrayList<FilePath>(allowed);
+    final ArrayList<FilePath> copy = new ArrayList<>(allowed);
     for (LocallyDeletedChange file : deletedFiles) {
       copy.remove(file.getPath());
     }

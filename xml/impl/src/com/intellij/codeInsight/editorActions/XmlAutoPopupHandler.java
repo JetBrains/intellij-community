@@ -58,39 +58,36 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
   }
 
   public static void autoPopupXmlLookup(final Project project, final Editor editor){
-    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, new Condition<PsiFile>() {
-      @Override
-      public boolean value(PsiFile file) {
-        int offset = editor.getCaretModel().getOffset();
+    AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
+      int offset = editor.getCaretModel().getOffset();
 
-        PsiElement lastElement = InjectedLanguageUtil.findElementAtNoCommit(file, offset - 1);
-        if (lastElement instanceof PsiFile) { //the very end of an injected file
-          lastElement = file.findElementAt(offset - 1);
-        }
-        if (lastElement == null || !lastElement.isValid()) return false;
-
-        if (doCompleteIfNeeded(offset, file, lastElement)) {
-          return true;
-        }
-
-        FileViewProvider fileViewProvider = file.getViewProvider();
-        Language templateDataLanguage;
-
-        final PsiElement parent = lastElement.getParent();
-        if (fileViewProvider instanceof TemplateLanguageFileViewProvider &&
-            (templateDataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage()) != parent.getLanguage()) {
-          lastElement = fileViewProvider.findElementAt(offset - 1, templateDataLanguage);
-          if (lastElement == null || !lastElement.isValid()) return false;
-          return doCompleteIfNeeded(offset, file, lastElement);
-        }
-        return false;
+      PsiElement lastElement = InjectedLanguageUtil.findElementAtNoCommit(file, offset - 1);
+      if (lastElement instanceof PsiFile) { //the very end of an injected file
+        lastElement = file.findElementAt(offset - 1);
       }
+      if (lastElement == null || !lastElement.isValid()) return false;
+
+      if (doCompleteIfNeeded(offset, file, lastElement)) {
+        return true;
+      }
+
+      FileViewProvider fileViewProvider = file.getViewProvider();
+      Language templateDataLanguage;
+
+      final PsiElement parent = lastElement.getParent();
+      if (fileViewProvider instanceof TemplateLanguageFileViewProvider &&
+          (templateDataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage()) != parent.getLanguage()) {
+        lastElement = fileViewProvider.findElementAt(offset - 1, templateDataLanguage);
+        if (lastElement == null || !lastElement.isValid()) return false;
+        return doCompleteIfNeeded(offset, file, lastElement);
+      }
+      return false;
     });
   }
 
   private static boolean doCompleteIfNeeded(int offset, PsiFile file, PsiElement lastElement) {
-    final Ref<Boolean> isRelevantLanguage = new Ref<Boolean>();
-    final Ref<Boolean> isAnt = new Ref<Boolean>();
+    final Ref<Boolean> isRelevantLanguage = new Ref<>();
+    final Ref<Boolean> isAnt = new Ref<>();
     String text = lastElement.getText();
     final int len = offset - lastElement.getTextRange().getStartOffset();
     if (len < text.length()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -34,10 +33,15 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.CustomStepProjectGenerator;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.templates.ArchivedTemplatesFactory;
+import com.intellij.platform.templates.LocalArchivedTemplate;
+import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.projectImport.ProjectOpenedCallback;
 import com.intellij.util.Function;
 import com.intellij.util.NullableConsumer;
@@ -47,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+
+import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
 
 public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAware {
@@ -63,6 +69,16 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     customization.setUpBasicAction(projectSpecificAction, generators);
 
     addAll(customization.getActions(generators, callback));
+    if (customization.showUserDefinedProjects()) {
+      ArchivedTemplatesFactory factory = new ArchivedTemplatesFactory();
+      ProjectTemplate[] templates = factory.createTemplates(CUSTOM_GROUP, null);
+      DirectoryProjectGenerator[] projectGenerators = ContainerUtil.map(templates,
+                                                                        (ProjectTemplate template) ->
+                                                                          new TemplateProjectDirectoryGenerator(
+                                                                            (LocalArchivedTemplate)template),
+                                                                        new DirectoryProjectGenerator[templates.length]);
+      addAll(customization.getActions(projectGenerators, callback));
+    }
     addAll(customization.getExtraActions(callback));
   }
 
@@ -84,7 +100,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     protected abstract DirectoryProjectGenerator createEmptyProjectGenerator();
 
     @NotNull
-    protected abstract ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator emptyProjectGenerator,
+    protected abstract ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator projectGenerator,
                                                                                  @NotNull NullableConsumer<ProjectSettingsStepBase> callback);
 
 
@@ -96,7 +112,11 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     public AnAction[] getActions(@NotNull DirectoryProjectGenerator[] generators, @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
       final List<AnAction> actions = ContainerUtil.newArrayList();
       for (DirectoryProjectGenerator projectGenerator : generators) {
-        actions.addAll(ContainerUtil.list(getActions(projectGenerator, callback)));
+        try {
+          actions.addAll(ContainerUtil.list(getActions(projectGenerator, callback)));
+        } catch (Throwable throwable) {
+          LOG.error("Broken project generator " + projectGenerator, throwable);
+        }
       }
       return actions.toArray(new AnAction[actions.size()]);
     }
@@ -126,6 +146,10 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
 
     public void setUpBasicAction(@NotNull ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
     }
+
+    public boolean showUserDefinedProjects(){
+      return false;
+    }
   }
 
   protected static abstract class AbstractCallback implements NullableConsumer<ProjectSettingsStepBase> {
@@ -136,12 +160,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       final Project project = ProjectManager.getInstance().getDefaultProject();
       final DirectoryProjectGenerator generator = settings.getProjectGenerator();
       doGenerateProject(project, settings.getProjectLocation(), generator,
-                                                  new Function<VirtualFile, Object>() {
-                                                    @Override
-                                                    public Object fun(VirtualFile file) {
-                                                      return getProjectSettings(generator);
-                                                    }
-                                                  });
+                        file -> getProjectSettings(generator));
     }
 
     @Nullable
@@ -159,16 +178,12 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       return null;
     }
 
-    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
-      }
-    });
+    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction((Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location));
     if (baseDir == null) {
       LOG.error("Couldn't find '" + location + "' in VFS");
       return null;
     }
-    baseDir.refresh(false, true);
+    VfsUtil.markDirtyAndRefresh(false, true, true, baseDir);
 
     if (baseDir.getChildren().length > 0) {
       String message = ActionsBundle.message("action.NewDirectoryProject.not.empty", location.getAbsolutePath());
@@ -190,16 +205,21 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
         return null;
       }
     }
+
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
-    final Object finalSettings = settings;
-    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, new ProjectOpenedCallback() {
-      @Override
-      public void projectOpened(Project project, Module module) {
+
+    ProjectOpenedCallback callback = null;
+    if(generator instanceof TemplateProjectDirectoryGenerator){
+      ((TemplateProjectDirectoryGenerator)generator).generateProject(baseDir.getName(), locationString);
+    } else {
+      final Object finalSettings = settings;
+      callback = (p, module) -> {
         if (generator != null) {
-          generator.generateProject(project, baseDir, finalSettings, module);
+          generator.generateProject(p, baseDir, finalSettings, module);
         }
-      }
-    }, false);
+      };
+    }
+    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, callback, false);
   }
 
 }

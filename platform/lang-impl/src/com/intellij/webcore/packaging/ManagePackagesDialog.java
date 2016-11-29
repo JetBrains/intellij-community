@@ -33,6 +33,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
+import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   private final Set<String> myInstalledPackages;
   @Nullable private final PackageManagementService.Listener myPackageListener;
 
-  private Set<String> myCurrentlyInstalling = new HashSet<String>();
+  private Set<String> myCurrentlyInstalling = new HashSet<>();
   protected final ListSpeedSearch myListSpeedSearch;
 
   public ManagePackagesDialog(@NotNull Project project, final PackageManagementService packageManagementService,
@@ -101,24 +102,18 @@ public class ManagePackagesDialog extends DialogWrapper {
       public void actionPerformed(AnActionEvent e) {
         myPackages.setPaintBusy(true);
         final Application application = ApplicationManager.getApplication();
-        application.executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              myController.reloadAllPackages();
-              initModel();
+        application.executeOnPooledThread(() -> {
+          try {
+            myController.reloadAllPackages();
+            initModel();
+            myPackages.setPaintBusy(false);
+          }
+          catch (final IOException e1) {
+            application.invokeLater(() -> {
+              //noinspection DialogTitleCapitalization
+              Messages.showErrorDialog(myMainPanel, "Error updating package list: " + e1.getMessage(), "Reload List of Packages");
               myPackages.setPaintBusy(false);
-            }
-            catch (final IOException e) {
-              application.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  //noinspection DialogTitleCapitalization
-                  Messages.showErrorDialog(myMainPanel, "Error updating package list: " + e.getMessage(), "Reload List of Packages");
-                  myPackages.setPaintBusy(false);
-                }
-              }, ModalityState.any());
-            }
+            }, ModalityState.any());
           }
         });
       }
@@ -160,12 +155,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       }
     });
 
-    UiNotifyConnector.doWhenFirstShown(myPackages, new Runnable() {
-      @Override
-      public void run() {
-        initModel();
-      }
-    });
+    UiNotifyConnector.doWhenFirstShown(myPackages, () -> initModel());
     myOptionsCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
@@ -175,7 +165,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     myInstallButton.setEnabled(false);
     myDescriptionTextArea.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
     addInstallAction();
-    myInstalledPackages = new HashSet<String>();
+    myInstalledPackages = new HashSet<>();
     updateInstalledPackages();
     addManageAction();
     myPackages.setCellRenderer(new MyTableRenderer());
@@ -233,12 +223,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             @Override
             public void operationStarted(final String packageName) {
               if (!ApplicationManager.getApplication().isDispatchThread()) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    handleInstallationStarted(packageName);
-                  }
-                }, ModalityState.stateForComponent(myMainPanel));
+                ApplicationManager.getApplication().invokeLater(() -> handleInstallationStarted(packageName), ModalityState.stateForComponent(myMainPanel));
               }
               else {
                 handleInstallationStarted(packageName);
@@ -249,12 +234,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             public void operationFinished(final String packageName,
                                           @Nullable final PackageManagementService.ErrorDescription errorDescription) {
               if (!ApplicationManager.getApplication().isDispatchThread()) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    handleInstallationFinished(packageName, errorDescription);
-                  }
-                }, ModalityState.stateForComponent(myMainPanel));
+                ApplicationManager.getApplication().invokeLater(() -> handleInstallationFinished(packageName, errorDescription), ModalityState.stateForComponent(myMainPanel));
               }
               else {
                 handleInstallationFinished(packageName, errorDescription);
@@ -291,24 +271,18 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private void updateInstalledPackages() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final Collection<InstalledPackage> installedPackages = myController.getInstalledPackages();
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              myInstalledPackages.clear();
-              for (InstalledPackage pkg : installedPackages) {
-                myInstalledPackages.add(pkg.getName());
-              }
-            }
-          });
-        }
-        catch(IOException e) {
-          LOG.info("Error updating list of installed packages:" + e);
-        }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        final Collection<InstalledPackage> installedPackages = myController.getInstalledPackages();
+        UIUtil.invokeLaterIfNeeded(() -> {
+          myInstalledPackages.clear();
+          for (InstalledPackage pkg : installedPackages) {
+            myInstalledPackages.add(pkg.getName());
+          }
+        });
+      }
+      catch(IOException e) {
+        LOG.info("Error updating list of installed packages:" + e);
       }
     });
   }
@@ -316,31 +290,24 @@ public class ManagePackagesDialog extends DialogWrapper {
   public void initModel() {
     setDownloadStatus(true);
     final Application application = ApplicationManager.getApplication();
-    application.executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myPackagesModel = new PackagesModel(myController.getAllPackages());
+    application.executeOnPooledThread(() -> {
+      try {
+        myPackagesModel = new PackagesModel(myController.getAllPackages());
 
-          application.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myPackages.setModel(myPackagesModel);
-              ((MyPackageFilter)myFilter).filter();
-              doSelectPackage(mySelectedPackageName);
-              setDownloadStatus(false);
-            }
-          }, ModalityState.any());
-        }
-        catch (final IOException e) {
-          application.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(myMainPanel, "Error loading package list:" + e.getMessage(), "Packages");
-              setDownloadStatus(false);
-            }
-          }, ModalityState.any());
-        }
+        application.invokeLater(() -> {
+          myPackages.setModel(myPackagesModel);
+          ((MyPackageFilter)myFilter).filter();
+          doSelectPackage(mySelectedPackageName);
+          setDownloadStatus(false);
+        }, ModalityState.any());
+      }
+      catch (final IOException e) {
+        application.invokeLater(() -> {
+          if (myMainPanel.isShowing()) {
+            Messages.showErrorDialog(myMainPanel, "Error loading package list:" + e.getMessage(), "Packages");
+          }
+          setDownloadStatus(false);
+        }, ModalityState.any());
       }
     });
   }
@@ -371,6 +338,7 @@ public class ManagePackagesDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myFilter = new MyPackageFilter();
+    myDescriptionTextArea = SwingHelper.createHtmlViewer(true, null, null, null);
   }
 
   public void setOptionsText(@NotNull String optionsText) {
@@ -400,8 +368,8 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private class PackagesModel extends CollectionListModel<RepoPackage> {
-    protected final List<RepoPackage> myFilteredOut = new ArrayList<RepoPackage>();
-    protected List<RepoPackage> myView = new ArrayList<RepoPackage>();
+    protected final List<RepoPackage> myFilteredOut = new ArrayList<>();
+    protected List<RepoPackage> myView = new ArrayList<>();
 
     public PackagesModel(List<RepoPackage> packages) {
       super(packages);
@@ -418,7 +386,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       toProcess.addAll(myFilteredOut);
       myFilteredOut.clear();
 
-      final ArrayList<RepoPackage> filtered = new ArrayList<RepoPackage>();
+      final ArrayList<RepoPackage> filtered = new ArrayList<>();
 
       RepoPackage toSelect = null;
       for (RepoPackage repoPackage : toProcess) {
@@ -452,7 +420,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
 
     protected ArrayList<RepoPackage> toProcess() {
-      return new ArrayList<RepoPackage>(myView);
+      return new ArrayList<>(myView);
     }
 
     @Override
@@ -485,14 +453,11 @@ public class ManagePackagesDialog extends DialogWrapper {
           myController.fetchPackageVersions(packageName, new CatchingConsumer<List<String>, Exception>() {
             @Override
             public void consume(final List<String> releases) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  if (myPackages.getSelectedValue() == pyPackage) {
-                    myVersionComboBox.removeAllItems();
-                    for (String release : releases) {
-                      myVersionComboBox.addItem(release);
-                    }
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (myPackages.getSelectedValue() == pyPackage) {
+                  myVersionComboBox.removeAllItems();
+                  for (String release : releases) {
+                    myVersionComboBox.addItem(release);
                   }
                 }
               }, ModalityState.any());
@@ -509,27 +474,19 @@ public class ManagePackagesDialog extends DialogWrapper {
         myController.fetchPackageDetails(packageName, new CatchingConsumer<String, Exception>() {
           @Override
           public void consume(final String details) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                if (myPackages.getSelectedValue() == pyPackage) {
-                  myDescriptionTextArea.setText(details);
-                  myDescriptionTextArea.setCaretPosition(0);
-                }/* else {
-                   do nothing, because other package gets selected
-                }*/
-              }
+            UIUtil.invokeLaterIfNeeded(() -> {
+              if (myPackages.getSelectedValue() == pyPackage) {
+                myDescriptionTextArea.setText(details);
+                myDescriptionTextArea.setCaretPosition(0);
+              }/* else {
+                 do nothing, because other package gets selected
+              }*/
             });
           }
 
           @Override
           public void consume(Exception exception) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                myDescriptionTextArea.setText("No information available");
-              }
-            });
+            UIUtil.invokeLaterIfNeeded(() -> myDescriptionTextArea.setText("No information available"));
             LOG.info("Error retrieving package details", exception);
           }
         });

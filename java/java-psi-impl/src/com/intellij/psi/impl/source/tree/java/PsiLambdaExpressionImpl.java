@@ -17,16 +17,17 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements PsiLambdaExpression {
+public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiLambdaExpression>>
+  implements PsiLambdaExpression {
 
   private static final ControlFlowPolicy ourPolicy = new ControlFlowPolicy() {
     @Nullable
@@ -55,28 +57,18 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     }
   };
 
-  public PsiLambdaExpressionImpl() {
-    super(JavaElementType.LAMBDA_EXPRESSION);
+  public PsiLambdaExpressionImpl(@NotNull FunctionalExpressionStub<PsiLambdaExpression> stub) {
+    super(stub, JavaStubElementTypes.LAMBDA_EXPRESSION);
+  }
+
+  public PsiLambdaExpressionImpl(@NotNull ASTNode node) {
+    super(node);
   }
 
   @NotNull
   @Override
   public PsiParameterList getParameterList() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiParameterList.class);
-  }
-
-  @Override
-  public int getChildRole(ASTNode child) {
-    final IElementType elType = child.getElementType();
-    if (elType == JavaTokenType.ARROW) {
-      return ChildRole.ARROW;
-    } else if (elType == JavaElementType.PARAMETER_LIST) {
-      return ChildRole.PARAMETER_LIST;
-    } else if (elType == JavaElementType.CODE_BLOCK) {
-      return ChildRole.LBRACE;
-    } else {
-      return ChildRole.EXPRESSION;
-    }
   }
 
   @Override
@@ -107,6 +99,18 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
 
   @Override
   public boolean isValueCompatible() {
+    //it could be called when functional type of lambda expression is not yet defined (during lambda expression compatibility constraint reduction)
+    //thus inferred results for calls inside could be wrong and should not be cached
+    final Boolean result = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(this, false, new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return isValueCompatibleNoCache();
+      }
+    });
+    return result != null && result;
+  }
+
+  private boolean isValueCompatibleNoCache() {
     final PsiElement body = getBody();
     if (body instanceof PsiCodeBlock) {
       try {
@@ -154,7 +158,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
 
   @Override
   public String toString() {
-    return "PsiLambdaExpression:" + getText();
+    return "PsiLambdaExpression";
   }
 
   @Override
@@ -214,7 +218,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
         PsiParameter parameter = lambdaParameters[lambdaParamIdx];
         final PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null) {
-          final PsiType lambdaFormalType = toArray(typeElement.getType());
+          final PsiType lambdaFormalType = toArray(parameter.getType());
           final PsiType methodParameterType = toArray(parameterTypes[lambdaParamIdx]);
           if (!lambdaFormalType.equals(methodParameterType)) {
             return false;

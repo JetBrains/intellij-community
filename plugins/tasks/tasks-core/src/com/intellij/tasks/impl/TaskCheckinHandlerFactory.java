@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -28,7 +29,6 @@ import com.intellij.tasks.context.WorkingContextManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Date;
 
 public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
@@ -50,15 +50,7 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
           final LocalTask localTask = manager.addTask(task);
           localTask.setUpdated(new Date());
 
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!project.isDisposed()) {
-                WorkingContextManager.getInstance(project).saveContext(localTask);
-              }
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> WorkingContextManager.getInstance(project).saveContext(localTask), project.getDisposed());
         }
       }
     };

@@ -46,7 +46,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     SectionBasedDocString.RAISES_SECTION
   );
 
-  private final List<AddParameter> myAddParameterRequests = new ArrayList<AddParameter>();
+  private final List<AddParameter> myAddParameterRequests = new ArrayList<>();
 
   public SectionBasedDocStringUpdater(@NotNull SectionBasedDocString docString, @NotNull String minContentIndent) {
     super(docString, minContentIndent);
@@ -96,12 +96,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     for (Section section : myOriginalDocString.getParameterSections()) {
       final List<SectionField> sectionFields = section.getFields();
       for (SectionField field : sectionFields) {
-        final Substring nameSub = ContainerUtil.find(field.getNamesAsSubstrings(), new Condition<Substring>() {
-          @Override
-          public boolean value(Substring substring) {
-            return substring.toString().equals(name);
-          }
-        });
+        final Substring nameSub = ContainerUtil.find(field.getNamesAsSubstrings(), substring -> substring.toString().equals(name));
         if (nameSub != null) {
           if (field.getNamesAsSubstrings().size() == 1) {
             final int endLine = getFieldEndLine(field);
@@ -159,7 +154,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
 
   @Override
   protected void beforeApplyingModifications() {
-    final List<AddParameter> newParams = new ArrayList<AddParameter>();
+    final List<AddParameter> newParams = new ArrayList<>();
     for (AddParameter param : myAddParameterRequests) {
       if (param.type != null) {
         final Substring typeSub = myOriginalDocString.getParamTypeSubstring(param.name);
@@ -248,7 +243,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     if (index < 0) {
       return Pair.create(findLastNonEmptyLine(), true);
     }
-    final Map<String, Section> namedSections = new HashMap<String, Section>();
+    final Map<String, Section> namedSections = new HashMap<>();
     for (Section section : myOriginalDocString.getSections()) {
       final String normalizedTitle = section.getNormalizedTitle();
       // leave only first occurrences
@@ -279,12 +274,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
 
   @Nullable
   private Substring findParamNameSubstring(@NotNull final String name) {
-    return ContainerUtil.find(myOriginalDocString.getParameterSubstrings(), new Condition<Substring>() {
-      @Override
-      public boolean value(Substring substring) {
-        return substring.toString().equals(name);
-      }
-    });
+    return ContainerUtil.find(myOriginalDocString.getParameterSubstrings(), substring -> substring.toString().equals(name));
   }
 
   protected int getSectionTitleLastLine(@NotNull Section paramSection) {
@@ -302,22 +292,14 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
 
   @Nullable
   protected Section findFirstParametersSection() {
-    return ContainerUtil.find(myOriginalDocString.getSections(), new Condition<Section>() {
-      @Override
-      public boolean value(Section section) {
-        return section.getNormalizedTitle().equals(SectionBasedDocString.PARAMETERS_SECTION);
-      }
-    });
+    return ContainerUtil.find(myOriginalDocString.getSections(),
+                              section -> section.getNormalizedTitle().equals(SectionBasedDocString.PARAMETERS_SECTION));
   }
 
   @Nullable
   protected Section findFirstReturnSection() {
-    return ContainerUtil.find(myOriginalDocString.getSections(), new Condition<Section>() {
-      @Override
-      public boolean value(Section section) {
-        return section.getNormalizedTitle().equals(SectionBasedDocString.RETURNS_SECTION);
-      }
-    });
+    return ContainerUtil.find(myOriginalDocString.getSections(),
+                              section -> section.getNormalizedTitle().equals(SectionBasedDocString.RETURNS_SECTION));
   }
 
   @NotNull

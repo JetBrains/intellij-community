@@ -35,8 +35,8 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
   }
 
   public TestStartedEvent(@Nullable String name,
-                          int id,
-                          int parentId,
+                          @Nullable String id,
+                          @Nullable String parentId,
                           @Nullable final String locationUrl,
                           @Nullable String nodeType,
                           @Nullable String nodeArgs,
@@ -51,7 +51,7 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
   }
 
   public TestStartedEvent(@NotNull String name, @Nullable String locationUrl) {
-    super(name, -1, -1, locationUrl, null, null, true);
+    super(name, null, null, locationUrl, null, null, true);
   }
 
   public void setConfig(boolean config) {

@@ -70,7 +70,7 @@ public final class NavBarIdeView implements IdeView {
     }
     final Module module = myPanel.getSelectedElement(Module.class);
     if (module != null && !module.isDisposed()) {
-      ArrayList<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
+      ArrayList<PsiDirectory> dirs = new ArrayList<>();
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       final PsiManager psiManager = PsiManager.getInstance(myPanel.getProject());
       for (VirtualFile virtualFile : sourceRoots) {

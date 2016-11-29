@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,12 @@ import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.JavaDebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -49,9 +46,8 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    Disposable disposable = Disposer.newDisposable();
-    final MyTabbedConfigurable configurable = new MyTabbedConfigurable(disposable);
+    final Project project = e.getProject();
+    final MyTabbedConfigurable configurable = new MyTabbedConfigurable();
     SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable) {
       @Override
       protected void doOKAction() {
@@ -67,15 +63,10 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
         super.doCancelAction();
       }
     };
-    Disposer.register(editor.getDisposable(), disposable);
     editor.show();
   }
 
   private static class MyTabbedConfigurable extends TabbedConfigurable {
-    public MyTabbedConfigurable(@NotNull Disposable parent) {
-      super(parent);
-    }
-
     @Override
     protected List<Configurable> createConfigurables() {
       return JavaDebuggerSettings.createDataViewsConfigurable();

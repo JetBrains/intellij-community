@@ -331,7 +331,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private DefaultActionGroup createToolbarActionGroup() {
     final DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
 
-    final List<AnAction> createActions = new ArrayList<AnAction>(createNewElementActions());
+    final List<AnAction> createActions = new ArrayList<>(createNewElementActions());
     for (AnAction createAction : createActions) {
       toolbarActionGroup.add(createAction);
     }
@@ -345,7 +345,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public List<AnAction> createNewElementActions() {
-    final List<AnAction> createActions = new ArrayList<AnAction>();
+    final List<AnAction> createActions = new ArrayList<>();
     AddCompositeElementAction.addCompositeCreateActions(createActions, this);
     createActions.add(createAddNonCompositeElementGroup());
     return createActions;
@@ -355,7 +355,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
 
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
-    final List<AnAction> createActions = new ArrayList<AnAction>();
+    final List<AnAction> createActions = new ArrayList<>();
     AddCompositeElementAction.addCompositeCreateActions(createActions, this);
     for (AnAction createAction : createActions) {
       popupActionGroup.add(createAction);
@@ -424,19 +424,16 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   private void doReplaceElement(final @NotNull String pathToParent, final @NotNull PackagingElement<?> element, final @Nullable PackagingElement replacement) {
-    myLayoutTreeComponent.editLayout(new Runnable() {
-      @Override
-      public void run() {
-        final CompositePackagingElement<?> parent = findCompositeElementByPath(pathToParent);
-        if (parent == null) return;
-        for (PackagingElement<?> child : parent.getChildren()) {
-          if (child.isEqualTo(element)) {
-            parent.removeChild(child);
-            if (replacement != null) {
-              parent.addOrFindChild(replacement);
-            }
-            break;
+    myLayoutTreeComponent.editLayout(() -> {
+      final CompositePackagingElement<?> parent = findCompositeElementByPath(pathToParent);
+      if (parent == null) return;
+      for (PackagingElement<?> child : parent.getChildren()) {
+        if (child.isEqualTo(element)) {
+          parent.removeChild(child);
+          if (replacement != null) {
+            parent.addOrFindChild(replacement);
           }
+          break;
         }
       }
     });
@@ -487,12 +484,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       final String fileName = FileUtil.getNameWithoutExtension(name);
       final String extension = FileUtilRt.getExtension(name);
       if (fileName.equals(oldFileName) && extension.length() > 0) {
-        myLayoutTreeComponent.editLayout(new Runnable() {
-          @Override
-          public void run() {
-            ((ArchivePackagingElement)getRootElement()).setArchiveFileName(ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension);
-          }
-        });
+        myLayoutTreeComponent.editLayout(
+          () -> ((ArchivePackagingElement)getRootElement()).setArchiveFileName(ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension));
         myLayoutTreeComponent.updateRootNode();
       }
     }

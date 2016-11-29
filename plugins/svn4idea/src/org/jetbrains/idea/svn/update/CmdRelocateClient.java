@@ -18,7 +18,7 @@ public class CmdRelocateClient extends BaseSvnClient implements RelocateClient {
 
   @Override
   public void relocate(@NotNull File copyRoot, @NotNull String fromPrefix, @NotNull String toPrefix) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     parameters.add(fromPrefix);
     parameters.add(toPrefix);

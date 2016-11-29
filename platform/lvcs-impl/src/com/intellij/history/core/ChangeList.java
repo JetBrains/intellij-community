@@ -105,7 +105,7 @@ public class ChangeList {
 
   @TestOnly
   public List<ChangeSet> getChangesInTests() {
-    List<ChangeSet> result = new ArrayList<ChangeSet>();
+    List<ChangeSet> result = new ArrayList<>();
     for (ChangeSet each : iterChanges()) {
       result.add(each);
     }
@@ -172,11 +172,9 @@ public class ChangeList {
   }
 
   public synchronized void purgeObsolete(long period) {
-    myStorage.purge(period, myIntervalBetweenActivities, new Consumer<ChangeSet>() {
-      public void consume(ChangeSet changeSet) {
-        for (Content each : changeSet.getContentsToPurge()) {
-          each.release();
-        }
+    myStorage.purge(period, myIntervalBetweenActivities, changeSet -> {
+      for (Content each : changeSet.getContentsToPurge()) {
+        each.release();
       }
     });
   }

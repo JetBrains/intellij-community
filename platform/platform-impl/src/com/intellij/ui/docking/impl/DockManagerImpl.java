@@ -42,6 +42,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
@@ -65,11 +66,11 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private final Project myProject;
 
-  private final Map<String, DockContainerFactory> myFactories = new HashMap<String, DockContainerFactory>();
+  private final Map<String, DockContainerFactory> myFactories = new HashMap<>();
 
-  private final Set<DockContainer> myContainers = new HashSet<DockContainer>();
+  private final Set<DockContainer> myContainers = new HashSet<>();
 
-  private final MutualMap<DockContainer, DockWindow> myWindows = new MutualMap<DockContainer, DockWindow>();
+  private final MutualMap<DockContainer, DockWindow> myWindows = new MutualMap<>();
 
   private MyDragSession myCurrentDragSession;
 
@@ -120,7 +121,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   @Override
   public Set<DockContainer> getContainers() {
-    return Collections.unmodifiableSet(new HashSet<DockContainer>(myContainers));
+    return Collections.unmodifiableSet(ContainerUtil.newHashSet(myContainers));
   }
 
   @Override
@@ -389,12 +390,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
     container.add(content, new RelativePoint(target.getLocation()));
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        window.myUiContainer.setPreferredSize(null);
-      }
-    });
+    SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
   }
 
   @NotNull
@@ -409,12 +405,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     final Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
     container.add(EditorTabbedContainer.createDockableEditor(myProject, null, file, new Presentation(file.getName()), editorWindow), null);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        window.myUiContainer.setPreferredSize(null);
-      }
-    });
+    SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
     return result;
   }
 
@@ -432,7 +423,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private final DockContainer myContainer;
 
     private final VerticalBox myNorthPanel = new VerticalBox();
-    private final Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<String, IdeRootPaneNorthExtension>();
+    private final Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<>();
 
     private final NonOpaquePanel myUiContainer;
     private final NonOpaquePanel myDockContentUiContainer;
@@ -477,23 +468,20 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myContainer.addListener(new DockContainer.Listener.Adapter() {
         @Override
         public void contentRemoved(Object key) {
-          getReady().doWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              if (myContainer.isEmpty()) {
-                close();
-              }
+          getReady().doWhenDone(() -> {
+            if (myContainer.isEmpty()) {
+              close();
             }
           });
         }
       }, this);
 
-      UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
         @Override
-        public void uiSettingsChanged(UISettings source) {
+        public void uiSettingsChanged(UISettings uiSettings) {
           updateNorthPanel();
         }
-      }, this);
+      });
 
       updateNorthPanel();
     }
@@ -512,7 +500,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
       IdeRootPaneNorthExtension[] extensions =
         Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();
-      HashSet<String> processedKeys = new HashSet<String>();
+      HashSet<String> processedKeys = new HashSet<>();
       for (IdeRootPaneNorthExtension each : extensions) {
         processedKeys.add(each.getKey());
         if (myNorthExtensions.containsKey(each.getKey())) continue;
@@ -649,12 +637,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       register(container);
 
       final DockWindow window = createWindowFor(eachId, container);
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          window.show();
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> window.show());
     }
   }
 }

@@ -25,10 +25,10 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
-  @Deprecated
   /**
    * @deprecated Use {@link #value()}.
    */
+  @Deprecated
   String file() default "";
 
   /**
@@ -58,15 +58,18 @@ public @interface Storage {
   @SuppressWarnings("deprecation")
   Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
 
-  @Deprecated
   /**
    * @deprecated Not required and not used anymore.
    */
+  @Deprecated
   StorageScheme scheme() default StorageScheme.DEFAULT;
 
-  @Deprecated
   /**
    * @deprecated Not required and not used anymore.
    */
+  @Deprecated
   String id() default "default";
+
+  // internal use only
+  boolean exclusive() default false;
 }

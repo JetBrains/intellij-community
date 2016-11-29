@@ -107,12 +107,9 @@ public abstract class CompletionService {
   public void performCompletion(final CompletionParameters parameters, final Consumer<CompletionResult> consumer) {
     final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();
 
-    getVariantsFromContributors(parameters, null, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(final CompletionResult result) {
-        if (lookupSet.add(result.getLookupElement())) {
-          consumer.consume(result);
-        }
+    getVariantsFromContributors(parameters, null, result -> {
+      if (lookupSet.add(result.getLookupElement())) {
+        consumer.consume(result);
       }
     });
   }

@@ -46,25 +46,22 @@ public class WindowSystemPlaybackCall {
   public static AsyncResult<String> printFocus(final PlaybackContext context) {
     final AsyncResult result = new AsyncResult<String>();
 
-    getUiReady(context).doWhenProcessed(new Runnable() {
-      @Override
-      public void run() {
-        final LinkedHashMap<String, String> focusInfo = getFocusInfo();
-        if (focusInfo == null) {
-          result.setRejected("No component focused");
-          return;
-        }
-
-        StringBuffer text = new StringBuffer();
-        for (Iterator<String> iterator = focusInfo.keySet().iterator(); iterator.hasNext(); ) {
-          String key = iterator.next();
-          text.append(key + "=" + focusInfo.get(key));
-          if (iterator.hasNext()) {
-            text.append("|");
-          }
-        }
-        result.setDone(text.toString());
+    getUiReady(context).doWhenProcessed(() -> {
+      final LinkedHashMap<String, String> focusInfo = getFocusInfo();
+      if (focusInfo == null) {
+        result.setRejected("No component focused");
+        return;
       }
+
+      StringBuffer text = new StringBuffer();
+      for (Iterator<String> iterator = focusInfo.keySet().iterator(); iterator.hasNext(); ) {
+        String key = iterator.next();
+        text.append(key + "=" + focusInfo.get(key));
+        if (iterator.hasNext()) {
+          text.append("|");
+        }
+      }
+      result.setDone(text.toString());
     });
 
     return result;
@@ -72,9 +69,9 @@ public class WindowSystemPlaybackCall {
 
 
   public static AsyncResult<String> waitForDialog(final PlaybackContext context, final String title) {
-    final AsyncResult<String> result = new AsyncResult<String>();
+    final AsyncResult<String> result = new AsyncResult<>();
 
-    final Ref<AWTEventListener> listener = new Ref<AWTEventListener>();
+    final Ref<AWTEventListener> listener = new Ref<>();
     listener.set(new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
@@ -83,12 +80,7 @@ public class WindowSystemPlaybackCall {
           if (wnd instanceof JDialog) {
             if (title.equals(((JDialog)wnd).getTitle())) {
               Toolkit.getDefaultToolkit().removeAWTEventListener(listener.get());
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  getUiReady(context).notify(result);
-                }
-              });
+              SwingUtilities.invokeLater(() -> getUiReady(context).notify(result));
             }
           }
         }
@@ -97,13 +89,10 @@ public class WindowSystemPlaybackCall {
 
     Toolkit.getDefaultToolkit().addAWTEventListener(listener.get(), WindowEvent.WINDOW_EVENT_MASK);
 
-    SimpleTimer.getInstance().setUp(new Runnable() {
-      @Override
-      public void run() {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(listener.get());
-        if (!result.isProcessed()) {
-          result.setRejected("Timed out waiting for window: " + title);
-        }
+    SimpleTimer.getInstance().setUp(() -> {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(listener.get());
+      if (!result.isProcessed()) {
+        result.setRejected("Timed out waiting for window: " + title);
       }
     }, Registry.intValue("actionSystem.commandProcessingTimeout"));
 
@@ -111,8 +100,8 @@ public class WindowSystemPlaybackCall {
   }
 
   public static AsyncResult<String> checkFocus(final PlaybackContext context, String expected) {
-    final AsyncResult<String> result = new AsyncResult<String>();
-    final Map<String, String> expectedMap = new LinkedHashMap<String, String>();
+    final AsyncResult<String> result = new AsyncResult<>();
+    final Map<String, String> expectedMap = new LinkedHashMap<>();
 
     if (expected.length() > 0) {
       final String[] keyValue = expected.split("\\|");
@@ -127,15 +116,12 @@ public class WindowSystemPlaybackCall {
       }
     }
 
-    getUiReady(context).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          doAssert(expectedMap, result, context);
-        }
-        catch (AssertionError error) {
-          result.setRejected("Assertion failed: " + error.getMessage());
-        }
+    getUiReady(context).doWhenDone(() -> {
+      try {
+        doAssert(expectedMap, result, context);
+      }
+      catch (AssertionError error) {
+        result.setRejected("Assertion failed: " + error.getMessage());
       }
     });
 
@@ -143,7 +129,7 @@ public class WindowSystemPlaybackCall {
   }
 
   public static AsyncResult<String> waitForToolWindow(final PlaybackContext context, final String id) {
-    final AsyncResult<String> result = new AsyncResult<String>();
+    final AsyncResult<String> result = new AsyncResult<>();
 
     findProject().doWhenDone(new Consumer<Project>() {
       @Override
@@ -154,89 +140,60 @@ public class WindowSystemPlaybackCall {
           return;
         }
 
-        toolWindow.getReady(context).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(new Runnable() {
-          @Override
-          public void run() {
-            result.setRejected("Cannot activate tool window with id:" + id);
-          }
-        });
+        toolWindow.getReady(context).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> result.setRejected("Cannot activate tool window with id:" + id));
       }
-    }).doWhenRejected(new Runnable() {
-      @Override
-      public void run() {
-        result.setRejected("Cannot retrieve open project");
-      }
-    });
+    }).doWhenRejected(() -> result.setRejected("Cannot retrieve open project"));
 
     return result;
   }
 
   public static AsyncResult<Project> findProject() {
-    final AsyncResult<Project> project = new AsyncResult<Project>();
+    final AsyncResult<Project> project = new AsyncResult<>();
     final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
-    fm.doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        Component parent = UIUtil.findUltimateParent(fm.getFocusOwner());
-        if (parent instanceof IdeFrame) {
-          IdeFrame frame = (IdeFrame)parent;
-          if (frame.getProject() != null) {
-            project.setDone(frame.getProject());
-            return;
-          }
+    fm.doWhenFocusSettlesDown(() -> {
+      Component parent = UIUtil.findUltimateParent(fm.getFocusOwner());
+      if (parent instanceof IdeFrame) {
+        IdeFrame frame = (IdeFrame)parent;
+        if (frame.getProject() != null) {
+          project.setDone(frame.getProject());
+          return;
         }
-
-        project.setRejected();
       }
+
+      project.setRejected();
     });
 
     return project;
   }
 
   public static AsyncResult<String> contextMenu(final PlaybackContext context, final String path) {
-    final AsyncResult<String> result = new AsyncResult<String>();
+    final AsyncResult<String> result = new AsyncResult<>();
 
     final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
-    fm.doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        Component owner = fm.getFocusOwner();
-        if (owner == null) {
-          result.setRejected("No component focused");
-          return;
-        }
-
-        ActionManager am = ActionManager.getInstance();
-        AnAction showPopupMenu = am.getAction("ShowPopupMenu");
-        if (showPopupMenu == null) {
-          result.setRejected("Cannot find action: ShowPopupMenu");
-          return;
-        }
-
-        am.tryToExecute(showPopupMenu, new MouseEvent(owner, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 0, 0, 1, true), null,
-                        null, false).doWhenDone(
-          new Runnable() {
-            @Override
-            public void run() {
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
-                  if (selectedPath.length == 0) {
-                    result.setRejected("Failed to find active popup menu");
-                    return;
-                  }
-                  selectNext(context, path.split("\\|"), 0, selectedPath[0].getSubElements(), result);
-                }
-              });
-            }
-          }).doWhenRejected(new Runnable() {
-          @Override
-          public void run() {
-            result.setRejected("Cannot invoke popup menu from the ShowPopupMenu action, action call rejected");
-          }
-        });
+    fm.doWhenFocusSettlesDown(() -> {
+      Component owner = fm.getFocusOwner();
+      if (owner == null) {
+        result.setRejected("No component focused");
+        return;
       }
+
+      ActionManager am = ActionManager.getInstance();
+      AnAction showPopupMenu = am.getAction("ShowPopupMenu");
+      if (showPopupMenu == null) {
+        result.setRejected("Cannot find action: ShowPopupMenu");
+        return;
+      }
+
+      am.tryToExecute(showPopupMenu, new MouseEvent(owner, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 0, 0, 1, true), null,
+                      null, false).doWhenDone(
+        () -> SwingUtilities.invokeLater(() -> {
+          MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
+          if (selectedPath.length == 0) {
+            result.setRejected("Failed to find active popup menu");
+            return;
+          }
+          selectNext(context, path.split("\\|"), 0, selectedPath[0].getSubElements(), result);
+        })).doWhenRejected(() -> result.setRejected("Cannot invoke popup menu from the ShowPopupMenu action, action call rejected"));
     });
 
     return result;
@@ -262,12 +219,9 @@ public class WindowSystemPlaybackCall {
             public void consume(MenuElement[] menuElements) {
               selectNext(context, toSelect, toSelectIndex + 1, menuElements, result);
             }
-          }).doWhenRejected(new Runnable() {
-            @Override
-            public void run() {
-              result.setRejected("Cannot activate menu element: " + eachButton.getText());
-              return;
-            }
+          }).doWhenRejected(() -> {
+            result.setRejected("Cannot activate menu element: " + eachButton.getText());
+            return;
           });
           return;
         }
@@ -282,55 +236,40 @@ public class WindowSystemPlaybackCall {
   }
 
   private static AsyncResult<MenuElement[]> activateItem(final PlaybackContext context, final MenuElement element) {
-    final AsyncResult<MenuElement[]> result = new AsyncResult<MenuElement[]>();
+    final AsyncResult<MenuElement[]> result = new AsyncResult<>();
     final AbstractButton c = (AbstractButton)element.getComponent();
 
-    final Runnable pressRunnable = new Runnable() {
-      @Override
-      public void run() {
-        Robot robot = context.getRobot();
-        Point location = c.getLocationOnScreen();
-        Dimension size = c.getSize();
-        Point point = new Point(location.x + size.width / 2, location.y + size.height / 2);
-        robot.mouseMove(point.x, point.y);
-        robot.delay(90);
-        robot.mousePress(InputEvent.BUTTON1_MASK);
-        robot.delay(90);
-        robot.mouseRelease(InputEvent.BUTTON1_MASK);
-        robot.delay(90);
-        context.flushAwtAndRunInEdt(new Runnable() {
-          @Override
-          public void run() {
-
-            context.flushAwtAndRunInEdt(new Runnable() {
-              @Override
-              public void run() {
-                MenuElement[] subElements = element.getSubElements();
-                if (subElements == null || subElements.length == 0) {
-                  result.setDone();
-                }
-                else {
-                  MenuElement[] menuElements = subElements[0].getSubElements();
-                  result.setDone(menuElements);
-                }
-              }
-            });
-          }
-        });
-      }
+    final Runnable pressRunnable = () -> {
+      Robot robot = context.getRobot();
+      Point location = c.getLocationOnScreen();
+      Dimension size = c.getSize();
+      Point point = new Point(location.x + size.width / 2, location.y + size.height / 2);
+      robot.mouseMove(point.x, point.y);
+      robot.delay(90);
+      robot.mousePress(InputEvent.BUTTON1_MASK);
+      robot.delay(90);
+      robot.mouseRelease(InputEvent.BUTTON1_MASK);
+      robot.delay(90);
+      context.flushAwtAndRunInEdt(() -> context.flushAwtAndRunInEdt(() -> {
+        MenuElement[] subElements = element.getSubElements();
+        if (subElements == null || subElements.length == 0) {
+          result.setDone();
+        }
+        else {
+          MenuElement[] menuElements = subElements[0].getSubElements();
+          result.setDone(menuElements);
+        }
+      }));
     };
 
     if (c.isShowing()) {
       context.runPooledThread(pressRunnable);
     } else {
-      context.delayAndRunInEdt(new Runnable() {
-        @Override
-        public void run() {
-          if (c.isShowing()) {
-            context.runPooledThread(pressRunnable);
-          } else {
-            result.setRejected();
-          }
+      context.delayAndRunInEdt(() -> {
+        if (c.isShowing()) {
+          context.runPooledThread(pressRunnable);
+        } else {
+          result.setRejected();
         }
       }, 1000);
     }
@@ -340,12 +279,7 @@ public class WindowSystemPlaybackCall {
 
   public static ActionCallback getUiReady(final PlaybackContext context) {
     final ActionCallback result = new ActionCallback();
-    context.flushAwtAndRunInEdt(new Runnable() {
-      @Override
-      public void run() {
-        UiActivityMonitor.getInstance().getBusy().getReady(context).notify(result);
-      }
-    });
+    context.flushAwtAndRunInEdt(() -> UiActivityMonitor.getInstance().getBusy().getReady(context).notify(result));
     return result;
   }
 
@@ -370,7 +304,7 @@ public class WindowSystemPlaybackCall {
       }
     }
 
-    Map<String, String> untested = new HashMap<String, String>();
+    Map<String, String> untested = new HashMap<>();
     for (String eachKey : actual.keySet()) {
       if (testedKeys.contains(eachKey)) continue;
       untested.put(eachKey, actual.get(eachKey));
@@ -399,7 +333,7 @@ public class WindowSystemPlaybackCall {
     }
 
     Component eachParent = owner;
-    final LinkedHashMap<String, String> actual = new LinkedHashMap<String, String>();
+    final LinkedHashMap<String, String> actual = new LinkedHashMap<>();
     while (eachParent != null) {
       if (eachParent instanceof Queryable) {
         ((Queryable)eachParent).putInfo(actual);
@@ -411,7 +345,7 @@ public class WindowSystemPlaybackCall {
   }
 
   public static AsyncResult<String> flushUi(PlaybackContext context) {
-    AsyncResult<String> result = new AsyncResult<String>();
+    AsyncResult<String> result = new AsyncResult<>();
     getUiReady(context).notify(result);
     return result;
   }

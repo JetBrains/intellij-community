@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,34 +17,41 @@
 package com.intellij.util.graph;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nullable;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 /**
- * User: anna
- * Date: Feb 11, 2005
+ * @author anna
+ * @since Feb 11, 2005
  */
 public class ShortestPathTest extends GraphTestCase {
+  @Test
   public void testEmptyPath() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "");
     graph.put("b", "");
     doTest(graph, "a", "a", "a");
   }
 
+  @Test
   public void testNoPath() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "c");
     graph.put("b", "a");
     graph.put("c", "a");
-    assertNull(getShortestPath(graph, "a", "b"));
+    doTest(graph, "a", "b", null);
   }
 
+  @Test
   public void test1() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "");
     graph.put("b", "ac");
     graph.put("c", "ab");
@@ -52,8 +59,9 @@ public class ShortestPathTest extends GraphTestCase {
     doTest(graph, "b", "a", "ba");
   }
 
+  @Test
   public void test2() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "cd");
     graph.put("b", "a");
     graph.put("c", "d");
@@ -61,8 +69,9 @@ public class ShortestPathTest extends GraphTestCase {
     doTest(graph, "c", "b", "cdb");
   }
 
+  @Test
   public void test3() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "bd");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -70,8 +79,9 @@ public class ShortestPathTest extends GraphTestCase {
     doTest(graph, "b", "c", "bdc");
   }
 
+  @Test
   public void test4() {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "be");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -81,14 +91,14 @@ public class ShortestPathTest extends GraphTestCase {
     doTest(graph, "b", "c", "bdec");
   }
 
-  private static void doTest(HashMap<String, String> graph, final String from, final String to, final String expectedPath) {
-    final List<String> shortestPath = getShortestPath(graph, from, to);
-    assertNotNull(shortestPath);
-    assertEquals(expectedPath, StringUtil.join(shortestPath, ""));
-  }
-
-  @Nullable
-  private static List<String> getShortestPath(Map<String, String> graph, final String from, final String to) {
-    return getAlgorithmsInstance().findShortestPath(initGraph(graph), from, to);
+  private static void doTest(Map<String, String> graph, String from, String to, String expectedPath) {
+    List<String> shortestPath = getAlgorithmsInstance().findShortestPath(initGraph(graph), from, to);
+    if (expectedPath != null) {
+      assertNotNull(shortestPath);
+      assertEquals(expectedPath, StringUtil.join(shortestPath, ""));
+    }
+    else {
+      assertNull(shortestPath);
+    }
   }
 }

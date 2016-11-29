@@ -24,10 +24,10 @@ import com.intellij.ide.scratch.ScratchFileService.Option;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ObjectUtils;
@@ -37,12 +37,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Enumeration;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -77,7 +76,12 @@ public class ExtensionsRootType extends RootType {
       private final ExtensionsRootType myRootType = getInstance();
       @Override
       public boolean value(VirtualFile file) {
-        return !file.isDirectory() && !myRootType.isBackupFile(file);
+        if (file.isDirectory()) return false;
+        String extension = file.getExtension();
+        return extension != null &&
+               !"txt".equalsIgnoreCase(extension) && !"properties".equalsIgnoreCase(extension) &&
+               !extension.startsWith(BACKUP_FILE_EXTENSION) &&
+               !myRootType.isResourceFile(file);
       }
     };
   }
@@ -97,28 +101,21 @@ public class ExtensionsRootType extends RootType {
   @Nullable
   public VirtualFile findResourceDirectory(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
     extractBundledExtensionsIfNeeded(pluginId);
-    return findExtensionsDirectoryImpl(pluginId, path, createIfMissing);
+    File dir = findExtensionsDirectoryImpl(pluginId, path, createIfMissing);
+    return dir == null ? null : VfsUtil.findFileByIoFile(dir, true);
   }
 
   public void extractBundledResources(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
     List<URL> bundledResources = getBundledResourceUrls(pluginId, path);
     if (bundledResources.isEmpty()) return;
 
-    final VirtualFile resourcesDirectory = findExtensionsDirectoryImpl(pluginId, path, true);
+    File resourcesDirectory = findExtensionsDirectoryImpl(pluginId, path, true);
     if (resourcesDirectory == null) return;
 
     for (URL bundledResourceDirUrl : bundledResources) {
-      final VirtualFile bundledResourcesDir = VfsUtil.findFileByURL(bundledResourceDirUrl);
+      VirtualFile bundledResourcesDir = VfsUtil.findFileByURL(bundledResourceDirUrl);
       if (bundledResourcesDir == null || !bundledResourcesDir.isDirectory()) continue;
-
-      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-        @Override
-        public Object compute() throws IOException {
-          FileDocumentManager.getInstance().saveAllDocuments();
-          extractResources(bundledResourcesDir, resourcesDirectory);
-          return null;
-        }
-      });
+      extractResources(bundledResourcesDir, resourcesDirectory);
     }
   }
 
@@ -139,9 +136,8 @@ public class ExtensionsRootType extends RootType {
     return super.substituteName(project, file);
   }
 
-  public boolean isBackupFile(@NotNull VirtualFile file) {
-    String extension = file.getExtension();
-    return !file.isDirectory() && extension != null && extension.startsWith(BACKUP_FILE_EXTENSION);
+  public boolean isResourceFile(@NotNull VirtualFile file) {
+    return false;
   }
 
   @Nullable
@@ -157,14 +153,15 @@ public class ExtensionsRootType extends RootType {
   }
 
   @Nullable
-  private VirtualFile findExtensionsDirectoryImpl(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
-    String resourceDirPath = getPath(pluginId, path);
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    VirtualFile file = fs.refreshAndFindFileByPath(resourceDirPath);
-    if (file == null && createIfMissing) {
-      return VfsUtil.createDirectories(resourceDirPath);
+  private File findExtensionsDirectoryImpl(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
+    String fullPath = getPath(pluginId, path);
+    File dir = new File(FileUtil.toSystemDependentName(fullPath));
+    if (createIfMissing && !dir.exists() && !dir.mkdirs()) {
+      throw new IOException("Failed to create directory: " + dir.getPath());
     }
-    return file != null && file.isDirectory() ? file : null;
+    if (!dir.exists()) return null;
+    if (!dir.isDirectory()) throw new IOException("Not a directory: " + dir.getPath());
+    return dir;
   }
 
   @Nullable
@@ -213,93 +210,88 @@ public class ExtensionsRootType extends RootType {
   private static List<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
     String resourcesPath = EXTENSIONS_PATH + "/" + path;
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    ClassLoader cl = plugin != null ? plugin.getPluginClassLoader() : null;
-    Enumeration<URL> urlEnumeration = plugin != null ? cl.getResources(resourcesPath) : null;
-    if (urlEnumeration == null) return ContainerUtil.emptyList();
+    ClassLoader pluginClassLoader = plugin != null ? plugin.getPluginClassLoader() : null;
+    Set<URL> urls = plugin == null ? null : ContainerUtil.newLinkedHashSet(ContainerUtil.toList(pluginClassLoader.getResources(resourcesPath)));
+    if (urls == null) return ContainerUtil.emptyList();
 
     PluginId corePluginId = PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID);
-    Set<URL> excludedUrls = ContainerUtil.newHashSet();
-    if (!plugin.getUseIdeaClassLoader() && !pluginId.equals(corePluginId)) {
-      IdeaPluginDescriptor corePlugin = PluginManager.getPlugin(corePluginId);
-      ClassLoader ideaClassLoader = ObjectUtils.assertNotNull(corePlugin).getPluginClassLoader();
-      Enumeration<URL> resources = ideaClassLoader.getResources(resourcesPath);
-      while (resources.hasMoreElements()) {
-        excludedUrls.add(resources.nextElement());
-      }
-    }
-
-    LinkedHashSet<URL> urls = ContainerUtil.newLinkedHashSet();
-    while (urlEnumeration.hasMoreElements()) {
-      URL url = urlEnumeration.nextElement();
-      if (!excludedUrls.contains(url)) {
-        urls.add(url);
-      }
+    IdeaPluginDescriptor corePlugin = ObjectUtils.notNull(PluginManager.getPlugin(corePluginId));
+    ClassLoader coreClassLoader = corePlugin.getPluginClassLoader();
+    if (coreClassLoader != pluginClassLoader && !plugin.getUseIdeaClassLoader() && !pluginId.equals(corePluginId)) {
+      urls.removeAll(ContainerUtil.toList(coreClassLoader.getResources(resourcesPath)));
     }
 
     return ContainerUtil.newArrayList(urls);
   }
 
-  private static void extractResources(@NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
-    @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] fromChildren = from.getChildren();
-    for (VirtualFile fromChild : fromChildren) {
-      if (fromChild.is(VFileProperty.SYMLINK) || fromChild.is(VFileProperty.SPECIAL)) continue;
-
-      VirtualFile toChild = to.findChild(fromChild.getName());
-      if (toChild != null && fromChild.isDirectory() != toChild.isDirectory()) {
-        renameToBackupCopy(toChild);
-        toChild = null;
-      }
-
-      if (fromChild.isDirectory()) {
-        if (toChild == null) {
-          toChild = to.createChildDirectory(ExtensionsRootType.class, fromChild.getName());
+  private static void extractResources(@NotNull VirtualFile from, @NotNull File to) throws IOException {
+    VfsUtilCore.visitChildrenRecursively(from, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+      @NotNull
+      @Override
+      public Result visitFileEx(@NotNull VirtualFile file) {
+        try {
+          return visitImpl(file);
         }
-        extractResources(fromChild, toChild);
-      }
-      else {
-        if (toChild != null) {
-          String fromHash = hash(fromChild);
-          String toHash = hash(toChild);
-          boolean upToDate = fromHash != null && toHash != null && StringUtil.equals(fromHash, toHash);
-          if (upToDate) {
-            continue;
-          }
-          else {
-            renameToBackupCopy(toChild);
-          }
+        catch (IOException e) {
+          throw new VisitorException(e);
         }
-        toChild = to.createChildData(ExtensionsRootType.class, fromChild.getName());
-        toChild.setBinaryContent(fromChild.contentsToByteArray());
       }
-    }
+
+      Result visitImpl(@NotNull VirtualFile file) throws IOException {
+        File child = new File(to, FileUtil.toSystemDependentName(ObjectUtils.notNull(VfsUtilCore.getRelativePath(file, from))));
+        if (child.exists() && child.isDirectory() != file.isDirectory()) {
+          renameToBackupCopy(child);
+        }
+        File dir = file.isDirectory() ? child : child.getParentFile();
+        if (!dir.exists() && !dir.mkdirs()) {
+          LOG.warn("Failed to create dir: " + dir.getPath());
+          return SKIP_CHILDREN;
+        }
+        if (file.isDirectory()) return CONTINUE;
+        if (file.getFileType().isBinary()) return CONTINUE;
+        if (file.getLength() > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return CONTINUE;
+
+        String newText = FileUtil.loadTextAndClose(file.getInputStream());
+        String oldText = child.exists() ? FileUtil.loadFile(child) : "";
+        String newHash = hash(newText);
+        String oldHash = hash(oldText);
+        boolean upToDate = oldHash != null && newHash != null && StringUtil.equals(oldHash, newHash);
+        if (upToDate) return CONTINUE;
+        if (child.exists()) {
+          renameToBackupCopy(child);
+        }
+        FileUtil.writeToFile(child, newText);
+        return CONTINUE;
+      }
+    }, IOException.class);
   }
 
   @Nullable
-  private static String hash(@NotNull VirtualFile file) throws IOException {
+  private static String hash(@NotNull String s) throws IOException {
     try {
       MessageDigest md5 = MessageDigest.getInstance(HASH_ALGORITHM);
       StringBuilder sb = new StringBuilder();
-      byte[] digest = md5.digest(file.contentsToByteArray());
+      byte[] digest = md5.digest(s.getBytes(CharsetToolkit.UTF8_CHARSET));
       for (byte b : digest) {
         sb.append(Integer.toHexString(b));
       }
       return sb.toString();
     }
     catch (NoSuchAlgorithmException e) {
-      LOG.error("Hash algorithm " + HASH_ALGORITHM + " is not supported." + e);
+      LOG.error("Hash algorithm " + HASH_ALGORITHM + " is not supported", e);
       return null;
     }
   }
 
-  private static void renameToBackupCopy(@NotNull VirtualFile virtualFile) throws IOException {
-    VirtualFile parent = virtualFile.getParent();
+  private static void renameToBackupCopy(@NotNull File file) throws IOException {
+    File parent = file.getParentFile();
     int i = 0;
-    String newName = virtualFile.getName() + "." + BACKUP_FILE_EXTENSION;
-    while (parent.findChild(newName) != null) {
-      newName = virtualFile.getName() + "." + BACKUP_FILE_EXTENSION + "_" + i;
+    String newName = file.getName() + "." + BACKUP_FILE_EXTENSION;
+    while (new File(parent, newName).exists()) {
+      newName = file.getName() + "." + BACKUP_FILE_EXTENSION + "_" + i;
       i++;
     }
-    virtualFile.rename(ExtensionsRootType.class, newName);
+    FileUtil.rename(file, newName);
   }
 
   private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) throws IOException {

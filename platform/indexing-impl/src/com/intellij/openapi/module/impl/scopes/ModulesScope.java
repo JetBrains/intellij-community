@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,16 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
 
 public class ModulesScope extends GlobalSearchScope {
-
   private final ProjectFileIndex myProjectFileIndex;
   private final Set<Module> myModules;
 
-  public ModulesScope(@NotNull Set<Module> modules, Project project) {
+  public ModulesScope(@NotNull Set<Module> modules, @NotNull Project project) {
     super(project);
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myModules = modules;
@@ -59,7 +57,7 @@ public class ModulesScope extends GlobalSearchScope {
     return false;
   }
 
-  @NonNls
+  @Override
   public String toString() {
     return "Modules:" + Arrays.toString(myModules.toArray(new Module[myModules.size()]));
   }

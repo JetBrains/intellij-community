@@ -65,7 +65,7 @@ public class InvocationExprent extends Exprent {
   private String stringDescriptor;
   private String invokeDynamicClassSuffix;
   private int invocationTyp = INVOKE_VIRTUAL;
-  private List<Exprent> lstParameters = new ArrayList<Exprent>();
+  private List<Exprent> lstParameters = new ArrayList<>();
   private List<PooledConstant> bootstrapArguments;
 
   public InvocationExprent() {
@@ -162,7 +162,7 @@ public class InvocationExprent extends Exprent {
     invokeDynamicClassSuffix = expr.getInvokeDynamicClassSuffix();
     stringDescriptor = expr.getStringDescriptor();
     descriptor = expr.getDescriptor();
-    lstParameters = new ArrayList<Exprent>(expr.getLstParameters());
+    lstParameters = new ArrayList<>(expr.getLstParameters());
     ExprProcessor.copyEntries(lstParameters);
 
     addBytecodeOffsets(expr.bytecode);
@@ -192,7 +192,7 @@ public class InvocationExprent extends Exprent {
 
   @Override
   public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<Exprent>();
+    List<Exprent> lst = new ArrayList<>();
     if (instance != null) {
       lst.add(instance);
     }
@@ -224,20 +224,20 @@ public class InvocationExprent extends Exprent {
     else {
 
       if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
-        VarExprent instvar = (VarExprent)instance;
-        VarVersionPair varpaar = new VarVersionPair(instvar);
+        VarExprent instVar = (VarExprent)instance;
+        VarVersionPair varPair = new VarVersionPair(instVar);
 
-        VarProcessor vproc = instvar.getProcessor();
-        if (vproc == null) {
-          MethodWrapper current_meth = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-          if (current_meth != null) {
-            vproc = current_meth.varproc;
+        VarProcessor varProc = instVar.getProcessor();
+        if (varProc == null) {
+          MethodWrapper currentMethod = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+          if (currentMethod != null) {
+            varProc = currentMethod.varproc;
           }
         }
 
         String this_classname = null;
-        if (vproc != null) {
-          this_classname = vproc.getThisVars().get(varpaar);
+        if (varProc != null) {
+          this_classname = varProc.getThisVars().get(varPair);
         }
 
         if (this_classname != null) {
@@ -306,7 +306,12 @@ public class InvocationExprent extends Exprent {
           buf.append("this(");
         }
         else {
-          throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
+          if (instance != null) {
+            buf.append(instance.toJava(indent, tracer)).append(".<init>(");
+          }
+          else {
+            throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
+          }
         }
     }
 
@@ -321,7 +326,7 @@ public class InvocationExprent extends Exprent {
         }
         else {
           if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class
-            sigFields = new ArrayList<VarVersionPair>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
+            sigFields = new ArrayList<>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
             sigFields.set(0, new VarVersionPair(-1, 0));
           }
         }
@@ -334,7 +339,7 @@ public class InvocationExprent extends Exprent {
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
-      if (sigFields == null) {
+      if (sigFields == null || sigFields.get(i) == null) {
         if (!firstParameter) {
           buf.append(", ");
         }
@@ -358,7 +363,7 @@ public class InvocationExprent extends Exprent {
     if (cl == null) return EMPTY_BIT_SET;
 
     // check number of matches
-    List<MethodDescriptor> matches = new ArrayList<MethodDescriptor>();
+    List<MethodDescriptor> matches = new ArrayList<>();
     nextMethod:
     for (StructMethod mt : cl.getMethods()) {
       if (name.equals(mt.getName())) {
@@ -512,43 +517,35 @@ public class InvocationExprent extends Exprent {
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
-  
-  public boolean match(MatchNode matchNode, MatchEngine engine) {
 
-    if(!super.match(matchNode, engine)) {
+  @Override
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
-    
-    for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+
+    for (Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
       RuleValue value = rule.getValue();
-      
-      switch(rule.getKey()) {
-      case EXPRENT_INVOCATION_PARAMETER:
-        if(value.isVariable()) {
-          if(value.parameter < lstParameters.size()) {
-            if(!engine.checkAndSetVariableValue(value.value.toString(), lstParameters.get(value.parameter))) {
-              return false;
-            }
-          } else {
-            return false;
-          }
-        }
-        break;
-      case EXPRENT_INVOCATION_CLASS:
-        if(!value.value.equals(this.classname)) {
+
+      MatchProperties key = rule.getKey();
+      if (key == MatchProperties.EXPRENT_INVOCATION_PARAMETER) {
+        if (value.isVariable() && (value.parameter >= lstParameters.size() ||
+                                   !engine.checkAndSetVariableValue(value.value.toString(), lstParameters.get(value.parameter)))) {
           return false;
         }
-        break;
-      case EXPRENT_INVOCATION_SIGNATURE:
-        if(!value.value.equals(this.name + this.stringDescriptor)) {
-          return false;
-        }
-        break;
       }
-      
+      else if (key == MatchProperties.EXPRENT_INVOCATION_CLASS) {
+        if (!value.value.equals(this.classname)) {
+          return false;
+        }
+      }
+      else if (key == MatchProperties.EXPRENT_INVOCATION_SIGNATURE) {
+        if (!value.value.equals(this.name + this.stringDescriptor)) {
+          return false;
+        }
+      }
     }
-    
+
     return true;
   }
-
 }

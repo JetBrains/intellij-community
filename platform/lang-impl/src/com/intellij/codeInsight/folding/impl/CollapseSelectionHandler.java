@@ -36,46 +36,43 @@ public class CollapseSelectionHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     editor.getFoldingModel().runBatchFoldingOperation(
-            new Runnable() {
-              @Override
-              public void run() {
-                final EditorFoldingInfo info = EditorFoldingInfo.get(editor);
-                FoldingModelEx foldingModel = (FoldingModelEx) editor.getFoldingModel();
-                if (editor.getSelectionModel().hasSelection()) {
-                  int start = editor.getSelectionModel().getSelectionStart();
-                  int end = editor.getSelectionModel().getSelectionEnd();
-                  if (start + 1 >= end) {
-                    return;
-                  }
-                  Document doc = editor.getDocument();
-                  if (start < end && doc.getCharsSequence().charAt(end-1) == '\n') end--;
-                  FoldRegion region;
-                  if ((region = FoldingUtil.findFoldRegion(editor, start, end)) != null) {
-                    if (info.getPsiElement(region) == null) {
-                      editor.getFoldingModel().removeFoldRegion(region);
-                      info.removeRegion(region);
-                    }
-                  } else if (!foldingModel.intersectsRegion(start, end)) {
-                    region = foldingModel.addFoldRegion(start, end, ourPlaceHolderText);
-                    LOG.assertTrue(region != null, "Fold region is not created. Folding model: " + foldingModel);
-                    region.setExpanded(false);
-                    int offset = Math.min(start + ourPlaceHolderText.length(), doc.getTextLength());
-                    editor.getCaretModel().moveToOffset(offset);
-                  }
-                } else {
-                  FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, editor.getCaretModel().getOffset());
-                  if (regions.length > 0) {
-                    FoldRegion region = regions[0];
-                    if (info.getPsiElement(region) == null) {
-                      editor.getFoldingModel().removeFoldRegion(region);
-                      info.removeRegion(region);
-                    } else {
-                      region.setExpanded(!region.isExpanded());
-                    }
-                  }
-                }
-              }
+      () -> {
+        final EditorFoldingInfo info = EditorFoldingInfo.get(editor);
+        FoldingModelEx foldingModel = (FoldingModelEx) editor.getFoldingModel();
+        if (editor.getSelectionModel().hasSelection()) {
+          int start = editor.getSelectionModel().getSelectionStart();
+          int end = editor.getSelectionModel().getSelectionEnd();
+          if (start + 1 >= end) {
+            return;
+          }
+          Document doc = editor.getDocument();
+          if (start < end && doc.getCharsSequence().charAt(end-1) == '\n') end--;
+          FoldRegion region;
+          if ((region = FoldingUtil.findFoldRegion(editor, start, end)) != null) {
+            if (info.getPsiElement(region) == null) {
+              editor.getFoldingModel().removeFoldRegion(region);
+              info.removeRegion(region);
             }
+          } else if (!foldingModel.intersectsRegion(start, end)) {
+            region = foldingModel.addFoldRegion(start, end, ourPlaceHolderText);
+            LOG.assertTrue(region != null, "Fold region is not created. Folding model: " + foldingModel);
+            region.setExpanded(false);
+            int offset = Math.min(start + ourPlaceHolderText.length(), doc.getTextLength());
+            editor.getCaretModel().moveToOffset(offset);
+          }
+        } else {
+          FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, editor.getCaretModel().getOffset());
+          if (regions.length > 0) {
+            FoldRegion region = regions[0];
+            if (info.getPsiElement(region) == null) {
+              editor.getFoldingModel().removeFoldRegion(region);
+              info.removeRegion(region);
+            } else {
+              region.setExpanded(!region.isExpanded());
+            }
+          }
+        }
+      }
     );
   }
   

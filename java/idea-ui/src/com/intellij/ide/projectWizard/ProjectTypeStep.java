@@ -19,12 +19,8 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
-import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
-import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
-import com.intellij.ide.util.newProjectWizard.WizardDelegate;
+import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
-import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
@@ -43,11 +39,11 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
+import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.*;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
@@ -90,12 +86,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         return o.getId();
       }
     };
-  public static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = new Function<FrameworkSupportNode, String>() {
-    @Override
-    public String fun(FrameworkSupportNode node) {
-      return node.getId();
-    }
-  };
+  public static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = FrameworkSupportNodeBase::getId;
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";
   private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
@@ -112,11 +103,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       return (ModuleBuilder)key.createModuleBuilder();
     }
   };
-  private final Map<String, ModuleWizardStep> myCustomSteps = new THashMap<String, ModuleWizardStep>();
+  private final Map<String, ModuleWizardStep> myCustomSteps = new THashMap<>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private JPanel myPanel;
   private JPanel myOptionsPanel;
-  private JBList myProjectTypeList;
+  private JBList<TemplatesGroup> myProjectTypeList;
   private ProjectTemplateList myTemplatesList;
   private JPanel myFrameworksPanelPlaceholder;
   private JPanel myHeaderPanel;
@@ -130,10 +121,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     myContext = context;
     myWizard = wizard;
 
-    myTemplatesMap = new ConcurrentMultiMap<TemplatesGroup, ProjectTemplate>();
+    myTemplatesMap = new ConcurrentMultiMap<>();
     final List<TemplatesGroup> groups = fillTemplatesMap(context);
 
-    myProjectTypeList.setModel(new CollectionListModel<TemplatesGroup>(groups));
+    myProjectTypeList.setModel(new CollectionListModel<>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
     myProjectTypeList.addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -141,7 +132,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         updateSelection();
       }
     });
-    myProjectTypeList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter<TemplatesGroup>() {
+    myProjectTypeList.setCellRenderer(new GroupedItemsListRenderer<TemplatesGroup>(new ListItemDescriptorAdapter<TemplatesGroup>() {
       @Nullable
       @Override
       public String getTextFor(TemplatesGroup value) {
@@ -201,7 +192,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         return getSelectedBuilder();
       }
     };
-    myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true, myHeaderPanel);
+    myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.emptyList(), model, true, myHeaderPanel);
     Disposer.register(this, myFrameworksPanel);
     myFrameworksPanelPlaceholder.add(myFrameworksPanel.getMainPanel());
     myFrameworksLabel.setLabelFor(myFrameworksPanel.getFrameworksTree());
@@ -242,12 +233,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
     final String groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP);
     if (groupId != null) {
-      TemplatesGroup group = ContainerUtil.find(groups, new Condition<TemplatesGroup>() {
-        @Override
-        public boolean value(TemplatesGroup group) {
-          return groupId.equals(group.getId());
-        }
-      });
+      TemplatesGroup group = ContainerUtil.find(groups, group1 -> groupId.equals(group1.getId()));
       if (group != null) {
         myProjectTypeList.setSelectedValue(group, true);
       }
@@ -272,6 +258,24 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
 
+  public static MultiMap<TemplatesGroup, ProjectTemplate> getTemplatesMap(WizardContext context) {
+    ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
+    final MultiMap<TemplatesGroup, ProjectTemplate> groups = new MultiMap<>();
+    for (ProjectTemplatesFactory factory : factories) {
+      for (String group : factory.getGroups()) {
+        ProjectTemplate[] templates = factory.createTemplates(group, context);
+        List<ProjectTemplate> values = Arrays.asList(templates);
+        if (!values.isEmpty()) {
+          Icon icon = factory.getGroupIcon(group);
+          String parentGroup = factory.getParentGroup(group);
+          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group), parentGroup, group, null);
+          groups.putValues(templatesGroup, values);
+        }
+      }
+    }
+    return groups;
+  }
+
   private boolean isFrameworksMode() {
     return FRAMEWORKS_CARD.equals(myCurrentCard) && getSelectedBuilder().equals(myContext.getProjectBuilder());
   }
@@ -282,7 +286,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     if (context.isCreatingNewProject()) {
       builders.add(new EmptyModuleBuilder());
     }
-    Map<String, TemplatesGroup> groupMap = new HashMap<String, TemplatesGroup>();
+    Map<String, TemplatesGroup> groupMap = new HashMap<>();
     for (ModuleBuilder builder : builders) {
       BuilderBasedTemplate template = new BuilderBasedTemplate(builder);
       if (builder.isTemplate()) {
@@ -295,17 +299,17 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       else {
         TemplatesGroup group = new TemplatesGroup(builder);
         groupMap.put(group.getName(), group);
-        myTemplatesMap.put(group, new ArrayList<ProjectTemplate>());
+        myTemplatesMap.put(group, new ArrayList<>());
       }
     }
 
-    MultiMap<TemplatesGroup, ProjectTemplate> map = CreateFromTemplateMode.getTemplatesMap(context);
+    MultiMap<TemplatesGroup, ProjectTemplate> map = getTemplatesMap(context);
     myTemplatesMap.putAllValues(map);
 
     for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
       TemplatesGroup group = new TemplatesGroup(category);
       myTemplatesMap.remove(group);
-      myTemplatesMap.put(group, new ArrayList<ProjectTemplate>());
+      myTemplatesMap.put(group, new ArrayList<>());
     }
 
     if (context.isCreatingNewProject()) {
@@ -315,34 +319,26 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       }
     }
 
-    List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(myTemplatesMap.keySet());
+    List<TemplatesGroup> groups = new ArrayList<>(myTemplatesMap.keySet());
 
     // sorting by module type popularity
-    final MultiMap<ModuleType, TemplatesGroup> moduleTypes = new MultiMap<ModuleType, TemplatesGroup>();
+    final MultiMap<ModuleType, TemplatesGroup> moduleTypes = new MultiMap<>();
     for (TemplatesGroup group : groups) {
       ModuleType type = getModuleType(group);
       moduleTypes.putValue(type, group);
     }
-    Collections.sort(groups, new Comparator<TemplatesGroup>() {
-      @Override
-      public int compare(TemplatesGroup o1, TemplatesGroup o2) {
-        int i = o2.getWeight() - o1.getWeight();
-        if (i != 0) return i;
-        int i1 = moduleTypes.get(getModuleType(o2)).size() - moduleTypes.get(getModuleType(o1)).size();
-        if (i1 != 0) return i1;
-        return o1.compareTo(o2);
-      }
+    Collections.sort(groups, (o1, o2) -> {
+      int i = o2.getWeight() - o1.getWeight();
+      if (i != 0) return i;
+      int i1 = moduleTypes.get(getModuleType(o2)).size() - moduleTypes.get(getModuleType(o1)).size();
+      if (i1 != 0) return i1;
+      return o1.compareTo(o2);
     });
 
-    Set<String> groupNames = ContainerUtil.map2Set(groups, new Function<TemplatesGroup, String>() {
-      @Override
-      public String fun(TemplatesGroup group) {
-        return group.getParentGroup();
-      }
-    });
+    Set<String> groupNames = ContainerUtil.map2Set(groups, TemplatesGroup::getParentGroup);
 
     // move subgroups
-    MultiMap<String, TemplatesGroup> subGroups = new MultiMap<String, TemplatesGroup>();
+    MultiMap<String, TemplatesGroup> subGroups = new MultiMap<>();
     for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
       TemplatesGroup group = iterator.next();
       String parentGroup = group.getParentGroup();
@@ -393,15 +389,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(groupModuleBuilder);
       final ProjectCategory category = group.getProjectCategory();
       if (category != null) {
-        List<FrameworkSupportInModuleProvider> filtered = ContainerUtil.filter(providers, new Condition<FrameworkSupportInModuleProvider>() {
-                    @Override
-                    public boolean value(FrameworkSupportInModuleProvider provider) {
-                      return matchFramework(category, provider);
-                    }
-                  });
+        List<FrameworkSupportInModuleProvider> filtered = ContainerUtil.filter(providers, provider -> matchFramework(category, provider));
         // add associated
         Map<String, FrameworkSupportInModuleProvider> map = ContainerUtil.newMapFromValues(providers.iterator(), PROVIDER_STRING_CONVERTOR);
-        Set<FrameworkSupportInModuleProvider> set = new HashSet<FrameworkSupportInModuleProvider>(filtered);
+        Set<FrameworkSupportInModuleProvider> set = new HashSet<>(filtered);
         for (FrameworkSupportInModuleProvider provider : filtered) {
           for (FrameworkSupportInModuleProvider.FrameworkDependency depId : provider.getDependenciesFrameworkIds()) {
             FrameworkSupportInModuleProvider dependency = map.get(depId.getFrameworkId());
@@ -415,9 +406,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
           }
         }
 
-        myFrameworksPanel.setProviders(new ArrayList<FrameworkSupportInModuleProvider>(set),
-                                       new HashSet<String>(Arrays.asList(category.getAssociatedFrameworkIds())),
-                                       new HashSet<String>(Arrays.asList(category.getPreselectedFrameworkIds())));
+        myFrameworksPanel.setProviders(new ArrayList<>(set),
+                                       new HashSet<>(Arrays.asList(category.getAssociatedFrameworkIds())),
+                                       new HashSet<>(Arrays.asList(category.getPreselectedFrameworkIds())));
       }
       else {
         myFrameworksPanel.setProviders(providers);
@@ -456,7 +447,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   private void setTemplatesList(TemplatesGroup group, Collection<ProjectTemplate> templates, boolean preserveSelection) {
-    List<ProjectTemplate> list = new ArrayList<ProjectTemplate>(templates);
+    List<ProjectTemplate> list = new ArrayList<>(templates);
     ModuleBuilder moduleBuilder = group.getModuleBuilder();
     if (moduleBuilder != null && !(moduleBuilder instanceof TemplateModuleBuilder)) {
       list.add(0, new BuilderBasedTemplate(moduleBuilder));
@@ -483,7 +474,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   private TemplatesGroup getSelectedGroup() {
-    return (TemplatesGroup)myProjectTypeList.getSelectedValue();
+    return myProjectTypeList.getSelectedValue();
   }
 
   @Nullable
@@ -508,13 +499,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       List<FrameworkSupportNode> nodes = myFrameworksPanel.getSelectedNodes();
       if (nodes.isEmpty()) return templates;
       final List<String> selectedFrameworks = ContainerUtil.map(nodes, NODE_STRING_FUNCTION);
-      return ContainerUtil.filter(templates, new Condition<ProjectTemplate>() {
-        @Override
-        public boolean value(ProjectTemplate template) {
-          if (!(template instanceof ArchivedProjectTemplate)) return true;
-          List<String> frameworks = ((ArchivedProjectTemplate)template).getFrameworks();
-          return frameworks.containsAll(selectedFrameworks);
-        }
+      return ContainerUtil.filter(templates, template -> {
+        if (!(template instanceof ArchivedProjectTemplate)) return true;
+        List<String> frameworks = ((ArchivedProjectTemplate)template).getFrameworks();
+        return frameworks.containsAll(selectedFrameworks);
       });
     }
   }
@@ -525,6 +513,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       if (!ok) {
         throw new CommitStepException(null);
       }
+    }
+    TemplatesGroup group = getSelectedGroup();
+    if (group != null) {
+      ProjectCategoryUsagesCollector.projectTypeUsed(group.getId());
     }
   }
 
@@ -576,7 +568,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   private MultiMap<String, ProjectTemplate> loadLocalTemplates() {
-    ConcurrentMultiMap<String, ProjectTemplate> map = new ConcurrentMultiMap<String, ProjectTemplate>();
+    ConcurrentMultiMap<String, ProjectTemplate> map = new ConcurrentMultiMap<>();
     ProjectTemplateEP[] extensions = ProjectTemplateEP.EP_NAME.getExtensions();
     for (ProjectTemplateEP ep : extensions) {
       ClassLoader classLoader = ep.getLoaderForClass();
@@ -652,6 +644,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       myWizard.getSequence().setType(builder.getBuilderId());
     }
     myWizard.setDelegate(builder instanceof WizardDelegate ? (WizardDelegate)builder : null);
+    myWizard.updateWizardButtons();
   }
 
   @TestOnly

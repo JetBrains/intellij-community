@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.rules.PsiElementUsage;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,11 +74,13 @@ class NameUsage implements PsiElementUsage {
     return new UsagePresentation() {
       @Nullable
       public Icon getIcon() {
+        PyPsiUtils.assertValid(myElement);
         return myElement.isValid() ? myElement.getIcon(0) : null;
       }
 
       @NotNull
       public TextChunk[] getText() {
+        PyPsiUtils.assertValid(myElement);
         if (myElement.isValid()) {
           TextChunk[] chunks = new TextChunk[3];
           PsiFile file = myElement.getContainingFile();

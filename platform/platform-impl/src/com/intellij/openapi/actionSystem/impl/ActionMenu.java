@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -28,10 +29,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.ui.plaf.gtk.GtkMenuUI;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +42,7 @@ import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.plaf.MenuItemUI;
+import javax.swing.plaf.synth.SynthMenuUI;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ComponentEvent;
@@ -47,7 +51,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public final class ActionMenu extends JMenu {
+public final class ActionMenu extends JBMenu {
   private final String myPlace;
   private DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -163,12 +167,12 @@ public final class ActionMenu extends JMenu {
 
     if (myTopLevel && UIUtil.isUnderGTKLookAndFeel()) {
       Insets insets = getInsets();
-      Insets newInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
-      if (insets.top + insets.bottom < 6) {
-        newInsets.top = newInsets.bottom = 3;
+      @SuppressWarnings("UseDPIAwareInsets") Insets newInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
+      if (insets.top + insets.bottom < JBUI.scale(6)) {
+        newInsets.top = newInsets.bottom = JBUI.scale(3);
       }
-      if (insets.left + insets.right < 12) {
-        newInsets.left = newInsets.right = 6;
+      if (insets.left + insets.right < JBUI.scale(12)) {
+        newInsets.left = newInsets.right = JBUI.scale(6);
       }
       if (!newInsets.equals(insets)) {
         setBorder(BorderFactory.createEmptyBorder(newInsets.top, newInsets.left, newInsets.bottom, newInsets.right));
@@ -177,8 +181,8 @@ public final class ActionMenu extends JMenu {
   }
 
   @Override
-  public void setUI(final MenuItemUI ui) {
-    final MenuItemUI newUi = !myTopLevel && UIUtil.isUnderGTKLookAndFeel() && GtkMenuUI.isUiAcceptable(ui) ? new GtkMenuUI(ui) : ui;
+  public void setUI(MenuItemUI ui) {
+    MenuItemUI newUi = !myTopLevel && UIUtil.isUnderGTKLookAndFeel() && ui instanceof SynthMenuUI ? new GtkMenuUI((SynthMenuUI)ui) : ui;
     super.setUI(newUi);
   }
 
@@ -221,7 +225,8 @@ public final class ActionMenu extends JMenu {
   }
 
   private void updateIcon() {
-    if (UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+    UISettings settings = UISettings.getInstance();
+    if (settings != null && settings.SHOW_ICONS_IN_MENUS) {
       final Presentation presentation = myPresentation;
       final Icon icon = presentation.getIcon();
       setIcon(icon);
@@ -241,9 +246,7 @@ public final class ActionMenu extends JMenu {
   }
 
   public static void showDescriptionInStatusBar(boolean isIncluded, Component component, String description) {
-    IdeFrame frame = component instanceof IdeFrame
-                     ? (IdeFrame)component
-                     : (IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class, component);
+    IdeFrame frame = (IdeFrame)(component instanceof IdeFrame ? component : SwingUtilities.getAncestorOfClass(IdeFrame.class, component));
     StatusBar statusBar;
     if (frame != null && (statusBar = frame.getStatusBar()) != null) {
       statusBar.setInfo(isIncluded ? description : null);
@@ -320,7 +323,7 @@ public final class ActionMenu extends JMenu {
       mayContextBeInvalid = true;
     }
 
-    Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid);
+    Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid, LaterInvocator.isInModalContext());
   }
 
   private class MenuItemSynchronizer implements PropertyChangeListener {
@@ -359,17 +362,26 @@ public final class ActionMenu extends JMenu {
     private SingleAlarm myCallbackAlarm;
     private MouseEvent myEventToRedispatch;
 
+    private long myLastEventTime = 0L;
+    private boolean myInBounds = false;
+    private SingleAlarm myCheckAlarm;
+
     private UsabilityHelper(Component component) {
-      myCallbackAlarm = new SingleAlarm(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(myCallbackAlarm);
-          myCallbackAlarm = null;
-          if (myEventToRedispatch != null) {
-            IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
-          }
+      myCallbackAlarm = new SingleAlarm(() -> {
+        Disposer.dispose(myCallbackAlarm);
+        myCallbackAlarm = null;
+        if (myEventToRedispatch != null) {
+          IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
         }
       }, 50, this);
+      myCheckAlarm = new SingleAlarm(() -> {
+        if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
+          if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
+            myCallbackAlarm.request();
+          }
+        }
+        myCheckAlarm.request();
+      }, 100, this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
       myLastMousePoint = info != null ? info.getLocation() : null;
@@ -384,7 +396,7 @@ public final class ActionMenu extends JMenu {
       if (event instanceof ComponentEvent) {
         ComponentEvent componentEvent = (ComponentEvent)event;
         Component component = componentEvent.getComponent();
-        JPopupMenu popup = UIUtil.findParentByClass(component, JPopupMenu.class);
+        JPopupMenu popup = UIUtil.getParentOfType(JPopupMenu.class, component);
         if (popup != null && popup.getInvoker() == myComponent) {
           Rectangle bounds = popup.getBounds();
           if (bounds.isEmpty()) return;
@@ -408,17 +420,21 @@ public final class ActionMenu extends JMenu {
           return false;
         }
         Point point = ((MouseEvent)e).getLocationOnScreen();
-
-        myCallbackAlarm.cancel();
-        boolean isMouseMovingTowardsSubmenu = new Polygon(
+        Rectangle bounds = myComponent.getBounds();
+        bounds.setLocation(myComponent.getLocationOnScreen());
+        myInBounds = bounds.contains(point);
+        boolean isMouseMovingTowardsSubmenu = myInBounds || new Polygon(
           new int[]{myLastMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
           new int[]{myLastMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
           3).contains(point);
 
         myEventToRedispatch = (MouseEvent)e;
+        myLastEventTime = System.currentTimeMillis();
 
         if (!isMouseMovingTowardsSubmenu) {
           myCallbackAlarm.request();
+        } else {
+          myCallbackAlarm.cancel();
         }
         myLastMousePoint = point;
         return true;

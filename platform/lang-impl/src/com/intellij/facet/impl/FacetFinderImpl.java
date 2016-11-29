@@ -40,9 +40,9 @@ import java.util.*;
  */
 public class FacetFinderImpl extends FacetFinder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetFinderImpl");
-  private final Map<FacetTypeId, AllFacetsOfTypeModificationTracker> myAllFacetTrackers = new HashMap<FacetTypeId, AllFacetsOfTypeModificationTracker>();
+  private final Map<FacetTypeId, AllFacetsOfTypeModificationTracker> myAllFacetTrackers = new HashMap<>();
   private final Map<FacetTypeId, CachedValue<Map<VirtualFile, List<Facet>>>> myCachedMaps =
-    new HashMap<FacetTypeId, CachedValue<Map<VirtualFile, List<Facet>>>>();
+    new HashMap<>();
   private final Project myProject;
   private final CachedValuesManager myCachedValuesManager;
   private final ModuleManager myModuleManager;
@@ -57,7 +57,7 @@ public class FacetFinderImpl extends FacetFinder {
   public <F extends Facet> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type) {
     AllFacetsOfTypeModificationTracker tracker = myAllFacetTrackers.get(type);
     if (tracker == null) {
-      tracker = new AllFacetsOfTypeModificationTracker<F>(myProject, type);
+      tracker = new AllFacetsOfTypeModificationTracker<>(myProject, type);
       Disposer.register(myProject, tracker);
       myAllFacetTrackers.put(type, tracker);
     }
@@ -67,12 +67,9 @@ public class FacetFinderImpl extends FacetFinder {
   private <F extends Facet & FacetRootsProvider> Map<VirtualFile, List<Facet>> getRootToFacetsMap(final FacetTypeId<F> type) {
     CachedValue<Map<VirtualFile, List<Facet>>> cachedValue = myCachedMaps.get(type);
     if (cachedValue == null) {
-      cachedValue = myCachedValuesManager.createCachedValue(new CachedValueProvider<Map<VirtualFile, List<Facet>>>() {
-        @Override
-        public Result<Map<VirtualFile, List<Facet>>> compute() {
-          Map<VirtualFile, List<Facet>> map = computeRootToFacetsMap(type);
-          return Result.create(map, getAllFacetsOfTypeModificationTracker(type));
-        }
+      cachedValue = myCachedValuesManager.createCachedValue(() -> {
+        Map<VirtualFile, List<Facet>> map = computeRootToFacetsMap(type);
+        return CachedValueProvider.Result.create(map, getAllFacetsOfTypeModificationTracker(type));
       }, false);
       myCachedMaps.put(type, cachedValue);
     }
@@ -84,14 +81,14 @@ public class FacetFinderImpl extends FacetFinder {
   @NotNull
   private <F extends Facet&FacetRootsProvider> Map<VirtualFile, List<Facet>> computeRootToFacetsMap(final FacetTypeId<F> type) {
     final Module[] modules = myModuleManager.getModules();
-    final HashMap<VirtualFile, List<Facet>> map = new HashMap<VirtualFile, List<Facet>>();
+    final HashMap<VirtualFile, List<Facet>> map = new HashMap<>();
     for (Module module : modules) {
       final Collection<F> facets = FacetManager.getInstance(module).getFacetsByType(type);
       for (F facet : facets) {
         for (VirtualFile root : facet.getFacetRoots()) {
           List<Facet> list = map.get(root);
           if (list == null) {
-            list = new SmartList<Facet>();
+            list = new SmartList<>();
             map.put(root, list);
           }
           list.add(facet);

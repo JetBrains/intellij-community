@@ -53,7 +53,7 @@ public class ChooseByNameLanguageFilter extends ChooseByNameFilter<Language> {
   @Override
   protected Collection<Language> getAllFilterValues() {
     final Collection<Language> registeredLanguages = Language.getRegisteredLanguages();
-    List<Language> accepted = new ArrayList<Language>();
+    List<Language> accepted = new ArrayList<>();
     for (Language language : registeredLanguages) {
       if (language != Language.ANY && !(language instanceof DependentLanguage)) {
         accepted.add(language);

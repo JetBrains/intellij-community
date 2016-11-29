@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.grape;
+package org.jetbrains.plugins.groovy.grape
 
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -21,7 +21,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
  */
-public class GrabDependenciesTest extends LightCodeInsightFixtureTestCase {
+class GrabDependenciesTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() {
     super.setUp()
@@ -31,13 +31,13 @@ public class GrabDependenciesTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package groovy.lang; public @interface GrabResolver {}")
   }
 
-  public void testOneGrab() {
+  void testOneGrab() {
     assert queries("@Grab() import xxx") ==
 
            ['@Grab()': '@Grab()']
   }
 
-  public void testTwoGrabs() {
+  void testTwoGrabs() {
     assert queries("""
     @Grab('x') import xxx
     @Grab('y') import yyy """) ==
@@ -45,7 +45,7 @@ public class GrabDependenciesTest extends LightCodeInsightFixtureTestCase {
            ["@Grab('x')": "@Grab('x')", "@Grab('y')": "@Grab('y')"]
   }
 
-  public void testGrapesResolversExcludes() {
+  void testGrapesResolversExcludes() {
     assert queries("""
         @Grapes([@Grab('x'),@Grab('y')]) import xxx
         @GrabResolver('res') @GrabExclude('exc') import yyy

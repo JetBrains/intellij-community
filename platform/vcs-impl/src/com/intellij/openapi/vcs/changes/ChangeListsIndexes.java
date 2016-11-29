@@ -39,13 +39,13 @@ public class ChangeListsIndexes {
   private final Map<FilePath, Pair<VcsKey, VcsRevisionNumber>> myFileToVcs;
 
   ChangeListsIndexes() {
-    myFileToStatus = new TreeMap<FilePath, FileStatus>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
-    myFileToVcs = new HashMap<FilePath, Pair<VcsKey, VcsRevisionNumber>>();
+    myFileToStatus = new TreeMap<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
+    myFileToVcs = new HashMap<>();
   }
 
   ChangeListsIndexes(final ChangeListsIndexes idx) {
-    myFileToStatus = new TreeMap<FilePath, FileStatus>(idx.myFileToStatus);
-    myFileToVcs = new HashMap<FilePath, Pair<VcsKey, VcsRevisionNumber>>(idx.myFileToVcs);
+    myFileToStatus = new TreeMap<>(idx.myFileToStatus);
+    myFileToVcs = new HashMap<>(idx.myFileToVcs);
   }
 
   void add(final FilePath file, final FileStatus status, final VcsKey key, VcsRevisionNumber number) {
@@ -85,17 +85,17 @@ public class ChangeListsIndexes {
     }
   }
 
-  public VcsKey getVcsFor(final Change change) {
+  @Nullable
+  public VcsKey getVcsFor(@NotNull Change change) {
     VcsKey key = getVcsForRevision(change.getAfterRevision());
     if (key != null) return key;
     return getVcsForRevision(change.getBeforeRevision());
   }
 
   @Nullable
-  private VcsKey getVcsForRevision(final ContentRevision revision) {
+  private VcsKey getVcsForRevision(@Nullable ContentRevision revision) {
     if (revision != null) {
-      final FilePath fileKey = revision.getFile();
-      final Pair<VcsKey, VcsRevisionNumber> pair = myFileToVcs.get(fileKey);
+      Pair<VcsKey, VcsRevisionNumber> pair = myFileToVcs.get(revision.getFile());
       return pair == null ? null : pair.getFirst();
     }
     return null;
@@ -152,7 +152,7 @@ public class ChangeListsIndexes {
       final Pair<VcsKey, VcsRevisionNumber> newOne = newIndexes.myFileToVcs.get(s);
       assert old != null && newOne != null;
       if (! old.equals(newOne)) {
-        toModify.add(new BeforeAfter<BaseRevision>(fromPairAndPath(s, old), fromPairAndPath(s, newOne)));
+        toModify.add(new BeforeAfter<>(fromPairAndPath(s, old), fromPairAndPath(s, newOne)));
       }
     }
   }
@@ -162,7 +162,7 @@ public class ChangeListsIndexes {
   }
 
   public List<BaseRevision> getAffectedFilesUnderVcs() {
-    final List<BaseRevision> result = new ArrayList<BaseRevision>();
+    final List<BaseRevision> result = new ArrayList<>();
     for (Map.Entry<FilePath, Pair<VcsKey, VcsRevisionNumber>> entry : myFileToVcs.entrySet()) {
       final Pair<VcsKey, VcsRevisionNumber> value = entry.getValue();
       result.add(fromPairAndPath(entry.getKey(), value));

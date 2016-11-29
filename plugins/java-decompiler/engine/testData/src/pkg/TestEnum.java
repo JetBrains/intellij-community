@@ -21,16 +21,18 @@ public enum TestEnum {
     @Override
     public void m() { }
   },
-  E3("-"),
-  E4("+") {
+  E3("-", Type.ODD),
+  E4("+", Type.EVEN) {
     @Override
     public void m() { }
   };
+
+  private enum Type {ODD, EVEN}
 
   public void m() { }
 
   private String s;
 
-  private TestEnum() { this("?"); }
-  private TestEnum(@Deprecated String s) { this.s = s; }
+  private TestEnum() { this("?", null); }
+  private TestEnum(@Deprecated String s, Type t) { this.s = s; }
 }

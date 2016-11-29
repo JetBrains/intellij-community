@@ -60,6 +60,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.images.editor.ImageFileEditor;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,6 +166,7 @@ public class DvcsUtil {
    * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
    */
   @Nullable
+  @CalledInAwt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, statusBar);
@@ -241,10 +243,15 @@ public class DvcsUtil {
    */
   @NotNull
   public static String tryLoadFile(@NotNull final File file) throws RepoStateException {
+    return tryLoadFile(file, null);
+  }
+
+  @NotNull
+  public static String tryLoadFile(@NotNull final File file, @Nullable String encoding) throws RepoStateException {
     return tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        return StringUtil.convertLineSeparators(FileUtil.loadFile(file)).trim();
+        return StringUtil.convertLineSeparators(FileUtil.loadFile(file, encoding)).trim();
       }
     }, file);
   }
@@ -252,8 +259,14 @@ public class DvcsUtil {
   @Nullable
   @Contract("_ , !null -> !null")
   public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable String defaultValue) {
+    return tryLoadFileOrReturn(file, defaultValue, null);
+  }
+
+  @Nullable
+  @Contract("_ , !null, _ -> !null")
+  public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable String defaultValue, @Nullable String encoding) {
     try {
-      return tryLoadFile(file);
+      return tryLoadFile(file, encoding);
     }
     catch (RepoStateException e) {
       LOG.error(e);
@@ -317,6 +330,7 @@ public class DvcsUtil {
   }
 
   @Nullable
+  @CalledInAwt
   public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
                                                                      @NotNull AbstractRepositoryManager<T> manager,
                                                                      @Nullable String defaultRootPathValue) {
@@ -414,7 +428,7 @@ public class DvcsUtil {
 
     // for other libs which don't have jars inside the project dir (such as JDK) take the owner module of the lib
     List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
-    Set<VirtualFile> libraryRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> libraryRoots = new HashSet<>();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
         VirtualFile moduleRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
@@ -502,7 +516,7 @@ public class DvcsUtil {
   }
 
   @NotNull
-  private static String joinWithAnd(@NotNull List<String> strings, int limit) {
+  public static String joinWithAnd(@NotNull List<String> strings, int limit) {
     int size = strings.size();
     if (size == 0) return "";
     if (size == 1) return strings.get(0);

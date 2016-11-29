@@ -31,7 +31,7 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
     MavenProjectIndicesManager m = MavenProjectIndicesManager.getInstance(project);
     Set<MavenArtifactInfo> infos = m.search(patternAndQuery.second, maxResult);
 
-    List<RESULT_TYPE> result = new ArrayList<RESULT_TYPE>(processResults(infos, patternAndQuery.first, maxResult));
+    List<RESULT_TYPE> result = new ArrayList<>(processResults(infos, patternAndQuery.first, maxResult));
     sort(result);
     return result;
   }
@@ -43,7 +43,7 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
   private void sort(List<RESULT_TYPE> result) {
     for (RESULT_TYPE each : result) {
       if (each.versions.size() > 1) {
-        TreeMap<MavenVersionComparable, MavenArtifactInfo> tree = new TreeMap<MavenVersionComparable, MavenArtifactInfo>(Collections.reverseOrder());
+        TreeMap<MavenVersionComparable, MavenArtifactInfo> tree = new TreeMap<>(Collections.reverseOrder());
 
         for (MavenArtifactInfo artifactInfo : each.versions) {
           tree.put(new MavenVersionComparable(artifactInfo.getVersion()), artifactInfo);
@@ -54,11 +54,7 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
       }
     }
 
-    Collections.sort(result, new Comparator<RESULT_TYPE>() {
-      public int compare(RESULT_TYPE o1, RESULT_TYPE o2) {
-        return makeSortKey(o1).compareTo(makeSortKey(o2));
-      }
-    });
+    Collections.sort(result, (o1, o2) -> makeSortKey(o1).compareTo(makeSortKey(o2)));
   }
 
   protected String makeSortKey(RESULT_TYPE result) {

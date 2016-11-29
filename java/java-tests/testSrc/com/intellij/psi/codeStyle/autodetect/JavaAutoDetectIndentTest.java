@@ -153,7 +153,7 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
     
     FormattingModel model = builder.createModel(myFile, CodeStyleSettingsManager.getSettings(getProject()));
     Block block = model.getRootBlock();
-    List<LineIndentInfo> list = new FormatterBasedLineIndentInfoBuilder(document, block).build();
+    List<LineIndentInfo> list = new FormatterBasedLineIndentInfoBuilder(document, block, null).build();
     
     Assert.assertEquals(list.size(), spacesForLine.length);
     for (int i = 0; i < spacesForLine.length; i++) {

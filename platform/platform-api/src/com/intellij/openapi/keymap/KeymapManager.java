@@ -25,6 +25,7 @@ public abstract class KeymapManager {
   @NonNls public static final String DEFAULT_IDEA_KEYMAP = "$default";
   @NonNls public static final String MAC_OS_X_KEYMAP = "Mac OS X";
   @NonNls public static final String X_WINDOW_KEYMAP = "Default for XWin";
+  @NonNls public static final String KDE_KEYMAP = "Default for KDE";
   @NonNls public static final String MAC_OS_X_10_5_PLUS_KEYMAP = "Mac OS X 10.5+";
 
   public abstract Keymap getActiveKeymap();

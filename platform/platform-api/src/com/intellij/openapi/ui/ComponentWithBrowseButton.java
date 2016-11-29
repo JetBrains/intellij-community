@@ -26,7 +26,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,9 +33,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.LazyUiDisposable;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,20 +65,23 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (browseActionListener != null) {
       myBrowseButton.addActionListener(browseActionListener);
     }
-    // don't force FixedSizeButton to occupy the whole height
-    add(wrapWithoutResize(myBrowseButton), BorderLayout.EAST);
+    add(centerComponentVertically(myBrowseButton), BorderLayout.EAST);
 
     myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
-
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
     if (ApplicationManager.getApplication() != null) {  // avoid crash at design time
       new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
     }
+    if (ScreenReader.isActive()) {
+      myBrowseButton.setFocusable(true);
+      myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
+    }
   }
 
-  private static JPanel wrapWithoutResize(JComponent component) {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    panel.add(component);
+  @NotNull
+  private static JPanel centerComponentVertically(@NotNull Component component) {
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(component, new GridBagConstraints());
     return panel;
   }
 
@@ -128,42 +129,46 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<Comp> accessor) {
-    addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor, true);
+    addActionListener(new BrowseFolderActionListener<>(title, description, this, project, fileChooserDescriptor, accessor));
   }
 
+  /**
+   * @deprecated use {@link #addBrowseFolderListener(String, String, Project, FileChooserDescriptor, TextComponentAccessor)} instead
+   */
+  @Deprecated
   public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
                                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<Comp> accessor, boolean autoRemoveOnHide) {
-    addBrowseFolderListener(project, new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor), autoRemoveOnHide);
+    addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
   }
 
+  /**
+   * @deprecated use {@link #addActionListener(ActionListener)} instead
+   */
+  @Deprecated
+  @SuppressWarnings("UnusedParameters")
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener) {
-    addBrowseFolderListener(project, actionListener, true);
+    addActionListener(actionListener);
   }
 
+  /**
+   * @deprecated use {@link #addActionListener(ActionListener)} instead
+   */
+  @Deprecated
+  @SuppressWarnings("UnusedParameters")
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
-    if (autoRemoveOnHide) {
-      new LazyUiDisposable<ComponentWithBrowseButton<Comp>>(null, this, this) {
-        @Override
-        protected void initialize(@NotNull Disposable parent, @NotNull ComponentWithBrowseButton<Comp> child, @Nullable Project project) {
-          addActionListener(actionListener);
-          Disposer.register(child, new Disposable() {
-            @Override
-            public void dispose() {
-              removeActionListener(actionListener);
-            }
-          });
-        }
-      };
-    } else {
-      addActionListener(actionListener);
-    }
+    addActionListener(actionListener);
   }
 
   @Override
-  public void dispose() { }
+  public void dispose() {
+    ActionListener[] listeners = myBrowseButton.getActionListeners();
+    for (ActionListener listener : listeners) {
+      myBrowseButton.removeActionListener(listener);
+    }
+  }
 
   public FixedSizeButton getButton() {
     return myBrowseButton;
@@ -253,12 +258,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
         }
       }
 
-      FileChooser.chooseFile(fileChooserDescriptor, getProject(), getInitialFile(), new Consumer<VirtualFile>() {
-        @Override
-        public void consume(VirtualFile file) {
-          onFileChosen(file);
-        }
-      });
+      FileChooser.chooseFile(fileChooserDescriptor, getProject(), myTextComponent, getInitialFile(), this::onFileChosen);
     }
 
     @Nullable

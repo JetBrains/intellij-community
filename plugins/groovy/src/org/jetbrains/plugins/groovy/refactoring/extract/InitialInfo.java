@@ -63,12 +63,7 @@ public class InitialInfo implements ExtractInfoHelper {
     myStringPartInfo = stringPartInfo;
     myVariable = variable;
 
-    myHasReturnValue = ContainerUtil.find(returnStatements, new Condition<GrStatement>() {
-      @Override
-      public boolean value(GrStatement statement) {
-        return statement instanceof GrReturnStatement && ((GrReturnStatement)statement).getReturnValue() != null;
-      }
-    }) != null;
+    myHasReturnValue = ContainerUtil.find(returnStatements, statement -> statement instanceof GrReturnStatement && ((GrReturnStatement)statement).getReturnValue() != null) != null;
 
     assert myStringPartInfo != null || myStatements.length > 0;
     myProject = project;
@@ -109,7 +104,7 @@ public class InitialInfo implements ExtractInfoHelper {
     }
     else if (hasReturnValue) {
       assert !returnStatements.isEmpty();
-      List<PsiType> types = new ArrayList<PsiType>(returnStatements.size());
+      List<PsiType> types = new ArrayList<>(returnStatements.size());
       for (GrStatement statement : returnStatements) {
         if (statement instanceof GrReturnStatement) {
           GrExpression returnValue = ((GrReturnStatement)statement).getReturnValue();

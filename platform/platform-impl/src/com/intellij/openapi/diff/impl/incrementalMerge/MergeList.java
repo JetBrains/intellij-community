@@ -55,12 +55,7 @@ public class MergeList implements UserDataHolder {
   public static final FragmentSide BASE_SIDE = FragmentSide.SIDE1;
 
   public static final DataKey<MergeList> DATA_KEY = DataKey.create("mergeList");
-  public static final Condition<Change> NOT_CONFLICTS = new Condition<Change>() {
-    @Override
-    public boolean value(Change change) {
-      return !(change instanceof ConflictChange);
-    }
-  };
+  public static final Condition<Change> NOT_CONFLICTS = change -> !(change instanceof ConflictChange);
 
   @NotNull private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
   @NotNull private final ChangeList myBaseToLeftChangeList;
@@ -109,8 +104,8 @@ public class MergeList implements UserDataHolder {
       mergeList = new MergeList(project, left, base, right, e.getMessage());
     }
 
-    ArrayList<Change> leftChanges = new ArrayList<Change>();
-    ArrayList<Change> rightChanges = new ArrayList<Change>();
+    ArrayList<Change> leftChanges = new ArrayList<>();
+    ArrayList<Change> rightChanges = new ArrayList<>();
     for (MergeFragment mergeFragment : fragmentList) {
       TextRange baseRange = mergeFragment.getBase();
       TextRange leftRange = mergeFragment.getLeft();

@@ -70,7 +70,7 @@ public class ConcatenationHelper {
 
 
     // iterate in depth, collecting possible operands
-    List<Exprent> lstOperands = new ArrayList<Exprent>();
+    List<Exprent> lstOperands = new ArrayList<>();
 
     while (true) {
 
@@ -160,7 +160,7 @@ public class ConcatenationHelper {
       if (constant.type == CodeConstants.CONSTANT_String) {
         String recipe = ((PrimitiveConstant)constant).getString();
 
-        List<Exprent> res = new ArrayList<Exprent>();
+        List<Exprent> res = new ArrayList<>();
         StringBuilder acc = new StringBuilder();
         int parameterId = 0;
         for (int i = 0; i < recipe.length(); i++) {
@@ -195,7 +195,7 @@ public class ConcatenationHelper {
         return res;
       }
     }
-    return new ArrayList<Exprent>(parameters);
+    return new ArrayList<>(parameters);
   }
 
   private static boolean isAppendConcat(InvocationExprent expr, VarType cltype) {

@@ -74,12 +74,9 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
       }
     };
     panel.setText(message);
-    panel.createActionLabel("Edit JSON Schema Mappings", new Runnable() {
-      @Override
-      public void run() {
-        ShowSettingsUtil.getInstance().editConfigurable(myProject, new JsonSchemaMappingsConfigurable(myProject));
-        EditorNotifications.getInstance(myProject).updateNotifications(file);
-      }
+    panel.createActionLabel("Edit JSON Schema Mappings", () -> {
+      ShowSettingsUtil.getInstance().editConfigurable(myProject, new JsonSchemaMappingsConfigurable(myProject));
+      EditorNotifications.getInstance(myProject).updateNotifications(file);
     });
     return panel;
   }

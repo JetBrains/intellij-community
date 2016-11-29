@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public abstract class RunManagerEx extends RunManager {
   public abstract RunManagerConfig getConfig();
 
   /**
-   * @deprecated use {@link RunManager#createRunConfiguration(String, com.intellij.execution.configurations.ConfigurationFactory)} instead
+   * @deprecated use {@link RunManager#createRunConfiguration(String, ConfigurationFactory)} instead
    * @param name
    * @param type
    * @return
@@ -76,7 +77,11 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable final String name);
 
-  public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
+  public Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings) {
+    return getConfigurationIcon(settings, false);
+  }
+
+  public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings, boolean withLiveIndicator);
 
   @NotNull
   public abstract Collection<RunnerAndConfigurationSettings> getSortedConfigurations();
@@ -89,7 +94,8 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);
 
-  public static void disableTasks(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
+  @SafeVarargs
+  public static void disableTasks(Project project, RunConfiguration settings, @NotNull Key<? extends BeforeRunTask>... keys) {
     for (Key<? extends BeforeRunTask> key : keys) {
       List<? extends BeforeRunTask> tasks = getInstanceEx(project).getBeforeRunTasks(settings, key);
       for (BeforeRunTask task : tasks) {
@@ -98,11 +104,8 @@ public abstract class RunManagerEx extends RunManager {
     }
   }
 
-  public static int getTasksCount(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
-    int result = 0;
-    for (Key<? extends BeforeRunTask> key : keys) {
-      result += getInstanceEx(project).getBeforeRunTasks(settings, key).size();
-    }
-    return result;
+  @SafeVarargs
+  public static int getTasksCount(Project project, RunConfiguration settings, @NotNull Key<? extends BeforeRunTask>... keys) {
+    return Arrays.stream(keys).mapToInt(key -> getInstanceEx(project).getBeforeRunTasks(settings, key).size()).sum();
   }
 }

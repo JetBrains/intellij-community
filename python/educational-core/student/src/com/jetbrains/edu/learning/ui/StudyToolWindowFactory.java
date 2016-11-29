@@ -7,9 +7,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,20 +23,18 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
     StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     final Course course = taskManager.getCourse();
     if (course != null) {
-
       final StudyToolWindow studyToolWindow;
-      if (StudyProjectComponent.getInstance(project).useJavaFx()) {
+      if (StudyUtils.hasJavaFx() && taskManager.shouldUseJavaFx()) {
         studyToolWindow = new StudyJavaFxToolWindow();
       }
       else {
         studyToolWindow = new StudySwingToolWindow();
       }
-      studyToolWindow.init(project);
+      studyToolWindow.init(project, true);
       final ContentManager contentManager = toolWindow.getContentManager();
       final Content content = contentManager.getFactory().createContent(studyToolWindow, null, false);
       contentManager.addContent(content);
       Disposer.register(project, studyToolWindow);
     }
   }
-
 }

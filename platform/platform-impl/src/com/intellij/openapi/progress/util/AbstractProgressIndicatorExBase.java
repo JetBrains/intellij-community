@@ -15,14 +15,15 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -105,12 +106,14 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   protected final void enterModality() {
     if (myModalityProgress == this) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          doEnterModality();
-        }
-      });
+      ModalityState modalityState = ModalityState.defaultModalityState();
+      if (!myModalityEntered &&
+          !ApplicationManager.getApplication().isDispatchThread() &&
+          !((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteSafeModality(modalityState)) {
+        // exceptions here should be assigned to Peter
+        LOG.error("Non-modal progress should be started in a write-safe context: an action or modality-aware invokeLater. See also TransactionGuard documentation.");
+      }
+      GuiUtils.invokeLaterIfNeeded(this::doEnterModality, modalityState);
     }
   }
 
@@ -130,12 +133,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   protected final void exitModality() {
     if (myModalityProgress == this) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          doExitModality();
-         }
-      });
+      GuiUtils.invokeLaterIfNeeded(this::doExitModality, ModalityState.defaultModalityState());
     }
   }
 
@@ -164,7 +162,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
       synchronized (this) {
         finished = myFinished;
         if (finished == null) {
-          myFinished = finished = new WeakList<TaskInfo>();
+          myFinished = finished = new WeakList<>();
         }
       }
     }

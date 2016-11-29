@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -54,7 +53,7 @@ public class PropertiesAnnotator implements Annotator {
     ASTNode keyNode = ((PropertyImpl)property).getKeyNode();
     if (others.size() != 1) {
       Annotation annotation = holder.createErrorAnnotation(keyNode, PropertiesBundle.message("duplicate.property.key.error.message"));
-      annotation.registerFix(PropertiesQuickFixFactory.getInstance().createRemovePropertyFix(property));
+      annotation.registerFix(new RemovePropertyFix(property));
     }
 
     highlightTokens(property, keyNode, holder, new PropertiesHighlighter());
@@ -113,7 +112,6 @@ public class PropertiesAnnotator implements Annotator {
               }
 
               public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-                if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
                 int offset = annotation.getStartOffset();
                 if (property.getPropertiesFile().getContainingFile().getText().charAt(offset) == '\\') {
                   editor.getDocument().deleteString(offset, offset+1);

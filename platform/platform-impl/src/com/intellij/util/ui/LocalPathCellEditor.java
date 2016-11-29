@@ -77,7 +77,7 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
 
   @Override
   public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, final int row, int column) {
-    myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(createActionListener(table)), this);
+    myComponent = new CellEditorComponentWithBrowseButton<>(new TextFieldWithBrowseButton(createActionListener(table)), this);
     myComponent.getChildComponent().setText((String)value);
     return myComponent;
   }
@@ -88,15 +88,12 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
       public void actionPerformed(ActionEvent e) {
         String initial = (String)getCellEditorValue();
         VirtualFile initialFile = StringUtil.isNotEmpty(initial) ? LocalFileSystem.getInstance().findFileByPath(initial) : null;
-        FileChooser.chooseFile(getFileChooserDescriptor(), myProject, table, initialFile, new Consumer<VirtualFile>() {
-          @Override
-          public void consume(VirtualFile file) {
-            String path = file.getPresentableUrl();
-            if (SystemInfo.isWindows && path.length() == 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {
-              path += "\\"; // make path absolute
-            }
-            myComponent.getChildComponent().setText(path);
+        FileChooser.chooseFile(getFileChooserDescriptor(), myProject, table, initialFile, file -> {
+          String path = file.getPresentableUrl();
+          if (SystemInfo.isWindows && path.length() == 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {
+            path += "\\"; // make path absolute
           }
+          myComponent.getChildComponent().setText(path);
         });
       }
     };

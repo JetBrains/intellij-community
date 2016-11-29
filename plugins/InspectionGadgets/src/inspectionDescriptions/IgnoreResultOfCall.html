@@ -1,23 +1,29 @@
 <html>
 <body>
 Reports any calls to specific methods where the result of that call is ignored.
-Both methods specified in the inspection's settings and methods annotated with
-<b>org.jetbrains.annotations.Contract(pure=true)</b> are checked.
-For many methods, ignoring the result is perfectly
+Method calls inspected are:
+<ul>
+  <li>Calls to simple getters (which do nothing except return a field)</li>
+  <li>Calls to methods specified in the settings of this inspection</li>
+  <li>Calls to Methods annotated with <b>org.jetbrains.annotations.Contract(pure=true)</b></li>
+  <li>Calls to Methods annotated with <b>javax.annotation.CheckReturnValue</b></li>
+  <li>Calls to Methods located in a class annotated with <b>javax.annotation.CheckReturnValue</b></li>
+  <li>Calls to Methods located in a package annotated with <b>javax.annotation.CheckReturnValue</b></li>
+  <li>Optionally all calls to non-library methods</li>
+</ul>
+<p>For calls to many methods ignoring the result is perfectly
 legitimate, but for some methods it is almost certainly an error. Examples of methods where ignoring
 the result of a call is likely to be an error include <b>java.io.inputStream.read()</b>,
-which returns the number of bytes actually read, any method on
+which returns the number of bytes actually read and any method on
 <b>java.lang.String </b> or <b>java.math.BigInteger</b>,
 as all of those methods are side-effect free and thus pointless if ignored.
 <!-- tooltip end -->
 <p>
-Use the panel below to enter the class names and method name patterns of the methods you wish to check for
-ignored returns when called.
-Class names must be specified as a fully qualified name string and will match a class and all its inheritors.
-Method name patterns must be specified using a Java regular expression.
+Use the panel below to specify the names of the classes containing the methods and method name patterns of the methods you wish to check.
+Class names have to be specified as a fully qualified name string and will match a class and all its inheritors.
+Method name patterns use the Java regular expression syntax.
 <p>
-Use the checkbox below to report all
-calls to non-library methods where the result of that call is ignored
+Use the checkbox below to report all calls to non-library methods where the result of that call is ignored
 <p>
 
 </body>

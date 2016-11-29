@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Iterator;
-import java.util.Stack;
 
 /**
  * Actually this class represent two stacks.
@@ -43,8 +45,8 @@ final class ActiveStack {
    * Creates enabled window stack.
    */
   ActiveStack() {
-    myStack = new Stack<String>();
-    myPersistentStack = new Stack<String>();
+    myStack = new Stack<>();
+    myPersistentStack = new Stack<>();
   }
 
   /**
@@ -61,10 +63,12 @@ final class ActiveStack {
     return myStack.isEmpty();
   }
 
+  @NotNull
   String pop() {
     return myStack.pop();
   }
 
+  @NotNull
   String peek() {
     return myStack.peek();
   }
@@ -73,10 +77,12 @@ final class ActiveStack {
     return myStack.size();
   }
 
-  String peek(int i) {
+  @NotNull
+  private String peek(int i) {
     return myStack.get(getSize() - i - 1);
   }
 
+  @NotNull
   String[] getStack() {
     String[] result = new String[getSize()];
     for (int i = 0; i < getSize(); i++) {
@@ -85,6 +91,7 @@ final class ActiveStack {
     return result;
   }
 
+  @NotNull
   String[] getPersistentStack() {
     String[] result = new String[getPersistentSize()];
     for (int i = 0; i < getPersistentSize(); i++) {
@@ -93,7 +100,7 @@ final class ActiveStack {
     return result;
   }
 
-  void push(final String id) {
+  void push(@NotNull String id) {
     remove(id, true);
     myStack.push(id);
     myPersistentStack.push(id);
@@ -106,6 +113,7 @@ final class ActiveStack {
   /**
    * Peeks element at the persistent stack. <code>0</code> means the top of the stack.
    */
+  @NotNull
   String peekPersistent(final int index) {
     return myPersistentStack.get(myPersistentStack.size() - index - 1);
   }
@@ -117,7 +125,7 @@ final class ActiveStack {
    * @param removePersistentAlso if <code>true</code> then clears last active <code>ID</code>
    *                             if it's the last active <code>ID</code>.
    */
-  void remove(final String id, final boolean removePersistentAlso) {
+  void remove(@NotNull String id, final boolean removePersistentAlso) {
     for (Iterator i = myStack.iterator(); i.hasNext();) {
       if (id.equals(i.next())) {
         i.remove();

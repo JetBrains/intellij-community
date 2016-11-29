@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import java.util.List;
  */
 public class WatchersPanel extends JPanel{
 
-  private final ListTableModel<WatcherInfo> myModel = new ListTableModel<WatcherInfo>(COLUMNS);
-  private final TableView<WatcherInfo> myTable = new TableView<WatcherInfo>(myModel);
+  private final ListTableModel<WatcherInfo> myModel = new ListTableModel<>(COLUMNS);
+  private final TableView<WatcherInfo> myTable = new TableView<>(myModel);
 
   private final static ColumnInfo<WatcherInfo, String> USER = new ColumnInfo<WatcherInfo, String>(CvsBundle.message("view.watchers.user.column.name")){
     public String valueOf(WatcherInfo object) {
@@ -41,11 +41,7 @@ public class WatchersPanel extends JPanel{
     }
 
     public Comparator<WatcherInfo> getComparator() {
-      return new Comparator<WatcherInfo>(){
-        public int compare(WatcherInfo o, WatcherInfo o1) {
-          return o.getUser().compareTo(o1.getUser());
-        }
-      };
+      return Comparator.comparing(WatcherInfo::getUser);
     }
   };
 
@@ -55,11 +51,7 @@ public class WatchersPanel extends JPanel{
     }
 
     public Comparator<WatcherInfo> getComparator() {
-      return new Comparator<WatcherInfo>(){
-        public int compare(WatcherInfo o, WatcherInfo o1) {
-          return o.getActions().compareTo(o1.getActions());
-        }
-      };
+      return Comparator.comparing(WatcherInfo::getActions);
     }
   };
 
@@ -69,11 +61,7 @@ public class WatchersPanel extends JPanel{
     }
 
     public Comparator<WatcherInfo> getComparator() {
-      return new Comparator<WatcherInfo>(){
-        public int compare(WatcherInfo o, WatcherInfo o1) {
-          return o.getFile().compareTo(o1.getFile());
-        }
-      };
+      return Comparator.comparing(WatcherInfo::getFile);
     }
   };
 

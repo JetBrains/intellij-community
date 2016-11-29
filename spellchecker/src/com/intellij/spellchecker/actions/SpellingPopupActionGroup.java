@@ -67,11 +67,11 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     Project project = e.getData(LangDataKeys.PROJECT);
     Editor editor = e.getData(LangDataKeys.EDITOR);
     if (psiFile != null && project != null && editor != null) {
-      List<HighlightInfo.IntentionActionDescriptor> quickFixes = ShowIntentionsPass.getAvailableActions(editor, psiFile, -1);
-      Map<Anchor, List<AnAction>> children = new HashMap<Anchor, List<AnAction>>();
-      ArrayList<AnAction> first = new ArrayList<AnAction>();
+      List<HighlightInfo.IntentionActionDescriptor> quickFixes = ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1);
+      Map<Anchor, List<AnAction>> children = new HashMap<>();
+      ArrayList<AnAction> first = new ArrayList<>();
       children.put(Anchor.FIRST, first);
-      ArrayList<AnAction> last = new ArrayList<AnAction>();
+      ArrayList<AnAction> last = new ArrayList<>();
       children.put(Anchor.LAST, last);
       extractActions(quickFixes, children);
       if (first.size() > 0 && last.size() > 0) {
@@ -128,20 +128,20 @@ public final class SpellingPopupActionGroup extends ActionGroup {
       final Project project = e.getData(LangDataKeys.PROJECT);
       final Editor editor = e.getData(LangDataKeys.EDITOR);
       if (psiFile != null && project != null && editor != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-              public void run() {
-                try {
-                  intention.invoke(project, editor, psiFile);
-                }
-                catch (IncorrectOperationException ex) {
-                  LOGGER.error(ex);
-                }
-              }
-            }, e.getPresentation().getText(), e.getActionManager().getId(SpellCheckerIntentionAction.this));
+        final Runnable runnable = () -> CommandProcessor.getInstance().executeCommand(project, () -> {
+          try {
+            intention.invoke(project, editor, psiFile);
           }
-        });
+          catch (IncorrectOperationException ex) {
+            LOGGER.error(ex);
+          }
+        }, e.getPresentation().getText(), e.getActionManager().getId(this));
+        if (intention.startInWriteAction()) {
+          ApplicationManager.getApplication().runWriteAction(runnable);
+        }
+        else {
+          runnable.run();
+        }
       }
     }
   }

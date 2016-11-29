@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,8 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
                             final UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiClass aClass = (PsiClass) element;
-    ArrayList<UsageInfo> postponedCollisions = new ArrayList<UsageInfo>();
-    List<MemberHidesOuterMemberUsageInfo> hidesOut = new ArrayList<MemberHidesOuterMemberUsageInfo>();
+    ArrayList<UsageInfo> postponedCollisions = new ArrayList<>();
+    List<MemberHidesOuterMemberUsageInfo> hidesOut = new ArrayList<>();
     // rename all references
     for (final UsageInfo usage : usages) {
       if (usage instanceof ResolvableCollisionUsageInfo) {
@@ -177,7 +177,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames, final List<UsageInfo> result) {
     final PsiClass aClass = (PsiClass)element;
     final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);
-    Collection<UsageInfo> initialResults = new ArrayList<UsageInfo>(result);
+    Collection<UsageInfo> initialResults = new ArrayList<>(result);
     for(UsageInfo usageInfo: initialResults) {
       if (usageInfo instanceof MoveRenameUsageInfo) {
         classCollisionsDetector.addClassCollisions(usageInfo.getElement(), newName, result);
@@ -205,7 +205,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   public static void findSubmemberHidesMemberCollisions(final PsiClass aClass, final String newName, final List<UsageInfo> result) {
     if (aClass.getParent() instanceof PsiClass) {
       PsiClass parent = (PsiClass)aClass.getParent();
-      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent, true).findAll();
+      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent).findAll();
       for (PsiClass inheritor : inheritors) {
         if (newName.equals(inheritor.getName())) {
           final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);
@@ -234,14 +234,12 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
           PsiClass[] inners = superClass.getInnerClasses();
           for (final PsiClass inner : inners) {
             if (newName.equals(inner.getName())) {
-              ReferencesSearch.search(inner).forEach(new Processor<PsiReference>() {
-                public boolean process(final PsiReference reference) {
-                  PsiElement refElement = reference.getElement();
-                  if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
-                  MemberHidesOuterMemberUsageInfo info = new MemberHidesOuterMemberUsageInfo(refElement, aClass);
-                  result.add(info);
-                  return true;
-                }
+              ReferencesSearch.search(inner).forEach(reference -> {
+                PsiElement refElement = reference.getElement();
+                if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
+                MemberHidesOuterMemberUsageInfo info = new MemberHidesOuterMemberUsageInfo(refElement, aClass);
+                result.add(info);
+                return true;
               });
             }
           }
@@ -251,7 +249,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   }
 
   private static class ClassCollisionsDetector {
-    final HashSet<PsiFile> myProcessedFiles = new HashSet<PsiFile>();
+    final HashSet<PsiFile> myProcessedFiles = new HashSet<>();
     final PsiClass myRenamedClass;
     private final String myRenamedClassQualifiedName;
 

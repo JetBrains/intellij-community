@@ -72,13 +72,10 @@ import java.util.List;
 public class ModulesDependenciesPanel extends JPanel implements Disposable {
   private static final String HELP_ID = "module.dependencies.tool.window";
 
-  private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = new Comparator<DefaultMutableTreeNode>() {
-    @Override
-    public int compare(DefaultMutableTreeNode o1, DefaultMutableTreeNode o2) {
-      if (!(o1.getUserObject() instanceof MyUserObject)) return 1;
-      if (!(o2.getUserObject() instanceof MyUserObject)) return -1;
-      return (o1.getUserObject().toString().compareToIgnoreCase(o2.getUserObject().toString()));
-    }
+  private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (o1, o2) -> {
+    if (!(o1.getUserObject() instanceof MyUserObject)) return 1;
+    if (!(o2.getUserObject() instanceof MyUserObject)) return -1;
+    return (o1.getUserObject().toString().compareToIgnoreCase(o2.getUserObject().toString()));
   };
 
   private static final ColoredTreeCellRenderer NODE_RENDERER = new ColoredTreeCellRenderer() {
@@ -212,12 +209,9 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       public void valueChanged(TreeSelectionEvent e) {
         TreePath selectionPath = myLeftTree.getSelectionPath();
         if (selectionPath != null) {
-          myPathField.setText(StringUtil.join(selectionPath.getPath(), new Function<Object, String>() {
-            @Override
-            public String fun(Object o) {
-              Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
-              return userObject instanceof MyUserObject ? ((MyUserObject)userObject).myModule.getName() : "";
-            }
+          myPathField.setText(StringUtil.join(selectionPath.getPath(), o -> {
+            Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
+            return userObject instanceof MyUserObject ? ((MyUserObject)userObject).myModule.getName() : "";
           }, " : "));
 
           DefaultMutableTreeNode selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
@@ -263,7 +257,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
   }
 
   private void updateSplitterProportion() {
-    DFSTBuilder<Module> builder = new DFSTBuilder<Module>(myModuleGraph);
+    DFSTBuilder<Module> builder = new DFSTBuilder<>(myModuleGraph);
     mySplitter.setProportion(builder.isAcyclic() ? 1.0f : 0.6f);
   }
 
@@ -336,18 +330,15 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myLeftTree.getModel().getRoot();
     root.removeAllChildren();
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        for (Module module : myModules) {
-          if (module.isDisposed()) continue;
-          ProgressManager.progress(AnalysisScopeBundle.message("update.module.tree.progress.text", module.getName()));
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      for (Module module : myModules) {
+        if (module.isDisposed()) continue;
+        ProgressManager.progress(AnalysisScopeBundle.message("update.module.tree.progress.text", module.getName()));
 
-          DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(isInCycle(module), module));
-          root.add(moduleNode);
-          for (Module dependency : getModuleDependencies(module)) {
-            moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(isInCycle(dependency), dependency)));
-          }
+        DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(isInCycle(module), module));
+        root.add(moduleNode);
+        for (Module dependency : getModuleDependencies(module)) {
+          moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(isInCycle(dependency), dependency)));
         }
       }
     }, AnalysisScopeBundle.message("update.module.tree.progress.title"), true, myProject);

@@ -67,6 +67,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testMultipleSubclasses() { doTestMultipleSubclasses(); }
   public void testMultipleSubstitutions() { doTestMultipleSubclasses(); }
   public void testMultipleSubclassesInheritsOneBaseBase() { doTestMultipleSubclasses(); }
+  public void testInlineClassUsedInJavadocLink() { doTest(); }
   public void testInlineSuperclassExtendsList() { doTest(); }
   public void testInterfaceHierarchyWithSubstitution() { doTest(); }
   public void testTypeParameterBound() { doTest();}
@@ -87,7 +88,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
         PsiClass superClass = myJavaFacade.findClass("Super", scope);
         if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
         assertNotNull("Class Super not found", superClass);
-        new InlineSuperClassRefactoringProcessor(myProject, inlineOne ? aClass : null, superClass, DocCommentPolicy.ASIS, aClass).run();
+        new InlineSuperClassRefactoringProcessor(myProject, inlineOne ? aClass : null, superClass, DocCommentPolicy.ASIS).run();
       });
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
@@ -109,9 +110,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
       PsiClass superClass = myJavaFacade.findClass("Super", scope);
       if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
       assertNotNull("Class Super not found", superClass);
-      PsiClass target1 = myJavaFacade.findClass("Test", scope);
-      PsiClass target2 = myJavaFacade.findClass("Test1", scope);
-      new InlineSuperClassRefactoringProcessor(myProject, null, superClass, DocCommentPolicy.ASIS, target1, target2).run();
+      new InlineSuperClassRefactoringProcessor(myProject, null, superClass, DocCommentPolicy.ASIS).run();
     });
   }
 }

@@ -27,7 +27,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitLocalBranch;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
@@ -74,7 +73,7 @@ public class GitRebaseSpec {
     GitUtil.updateRepositories(repositories);
     Map<GitRepository, String> initialHeadPositions = findInitialHeadPositions(repositories, params.getBranch());
     Map<GitRepository, String> initialBranchNames = findInitialBranchNames(repositories);
-    Map<GitRepository, GitRebaseStatus> initialStatusMap = new TreeMap<GitRepository, GitRebaseStatus>(DvcsUtil.REPOSITORY_COMPARATOR);
+    Map<GitRepository, GitRebaseStatus> initialStatusMap = new TreeMap<>(DvcsUtil.REPOSITORY_COMPARATOR);
     for (GitRepository repository : repositories) {
       initialStatusMap.put(repository, GitRebaseStatus.notStarted());
     }
@@ -169,8 +168,7 @@ public class GitRebaseSpec {
   @NotNull
   private static GitStashChangesSaver newSaver(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     Git git = ServiceManager.getService(Git.class);
-    GitPlatformFacade facade = ServiceManager.getService(GitPlatformFacade.class);
-    return new GitStashChangesSaver(project, facade, git, indicator, "Uncommitted changes before rebase");
+    return new GitStashChangesSaver(project, git, indicator, "Uncommitted changes before rebase");
   }
 
   @NotNull

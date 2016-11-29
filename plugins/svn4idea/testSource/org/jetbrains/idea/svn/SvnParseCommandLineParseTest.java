@@ -740,7 +740,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
     final SvnStatusHandler[] handlerArr = new SvnStatusHandler[1];
     final boolean isWindows = SystemInfo.isWindows;
     final String basePath = isWindows ? "C:/base/" : "/base33729/";
-    final Set<PortableStatus> statuses = new HashSet<PortableStatus>();
+    final Set<PortableStatus> statuses = new HashSet<>();
     final SvnStatusHandler handler = new
       SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
@@ -826,7 +826,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
     final SvnStatusHandler[] handlerArr = new SvnStatusHandler[1];
     final boolean isWindows = SystemInfo.isWindows;
     final String basePath = isWindows ? "C:/base/" : "/base33729/";
-    final Set<PortableStatus> statuses = new HashSet<PortableStatus>();
+    final Set<PortableStatus> statuses = new HashSet<>();
     final String[] clName = new String[1];
     final SvnStatusHandler handler = new
       SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {

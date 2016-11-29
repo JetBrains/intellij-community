@@ -52,7 +52,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   }
 
   public static Set<? extends LibraryKind> getAllGroovyKinds() {
-    final HashSet<LibraryKind> kinds = new HashSet<LibraryKind>();
+    final HashSet<LibraryKind> kinds = new HashSet<>();
     for (LibraryPresentationProvider provider : LibraryPresentationProvider.EP_NAME.getExtensions()) {
       if (provider instanceof GroovyLibraryPresentationProviderBase) {
         kinds.add(provider.getKind());

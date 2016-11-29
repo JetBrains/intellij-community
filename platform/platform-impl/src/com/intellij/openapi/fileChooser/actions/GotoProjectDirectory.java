@@ -36,11 +36,7 @@ public final class GotoProjectDirectory extends FileChooserAction {
   protected void actionPerformed(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final VirtualFile projectPath = getProjectDir(e);
     if (projectPath != null) {
-      fileSystemTree.select(projectPath, new Runnable() {
-        public void run() {
-          fileSystemTree.expand(projectPath, null);
-        }
-      });
+      fileSystemTree.select(projectPath, () -> fileSystemTree.expand(projectPath, null));
     }
   }
 

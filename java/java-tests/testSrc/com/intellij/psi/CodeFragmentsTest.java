@@ -32,11 +32,8 @@ public class CodeFragmentsTest extends PsiTestCase{
     PsiCodeFragment fragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment("AAA.foo()", null, null, false);
     PsiClass arrayListClass = myJavaFacade.findClass("java.util.ArrayList", GlobalSearchScope.allScope(getProject()));
     PsiReference ref = fragment.findReferenceAt(0);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ref.bindToElement(arrayListClass);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ref.bindToElement(arrayListClass);
     });
 
     assertEquals("ArrayList.foo()", fragment.getText());
@@ -44,18 +41,15 @@ public class CodeFragmentsTest extends PsiTestCase{
 
   public void testDontLoseDocument() {
     PsiExpressionCodeFragment fragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment("a", null, null, true);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(fragment);
-        document.insertString(1, "b");
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        assertEquals("ab", fragment.getText());
-        assertEquals("ab", fragment.getExpression().getText());
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(fragment);
+      document.insertString(1, "b");
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      assertEquals("ab", fragment.getText());
+      assertEquals("ab", fragment.getExpression().getText());
 
-        //noinspection UnusedAssignment
-        document = null;
-      }
+      //noinspection UnusedAssignment
+      document = null;
     });
 
 
@@ -68,12 +62,7 @@ public class CodeFragmentsTest extends PsiTestCase{
     VirtualFile file = fragment.getViewProvider().getVirtualFile();
     assertInstanceOf(file, LightVirtualFile.class);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
 
 
     assertSame(fragment, PsiManager.getInstance(myProject).findFile(file));

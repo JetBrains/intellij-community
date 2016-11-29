@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,21 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.icons.AllIcons;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.util.IconUtil;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public class InspectionNode extends InspectionTreeNode {
-  public static final Icon TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
-  private volatile boolean myUpdatingNow;
+  @NotNull private final InspectionProfileImpl myProfile;
 
-  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionProfileImpl profile) {
     super(toolWrapper);
+    myProfile = profile;
   }
 
   public String toString() {
@@ -44,9 +42,10 @@ public class InspectionNode extends InspectionTreeNode {
     return (InspectionToolWrapper)getUserObject();
   }
 
+  @Nullable
   @Override
-  public Icon getIcon(boolean expanded) {
-    return TOOL;
+  public String getCustomizedTailText() {
+    final ToolsImpl tools = myProfile.getTools(getToolWrapper().getShortName(), null);
+    return tools.isEnabled() ? null : "Disabled";
   }
-
 }

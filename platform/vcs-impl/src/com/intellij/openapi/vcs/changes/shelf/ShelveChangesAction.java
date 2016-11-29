@@ -24,22 +24,14 @@ import com.intellij.openapi.vcs.changes.actions.AbstractCommitChangesAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
 public class ShelveChangesAction extends AbstractCommitChangesAction {
   @Override
   protected String getActionName(@NotNull VcsContext dataContext) {
     return VcsBundle.message("shelve.changes.action");
   }
 
-  @Override
-  protected String getMnemonicsFreeActionName(VcsContext context) {
-    return getActionName(context);
-  }
-
   @Override @Nullable
-  protected CommitExecutor getExecutor(Project project) {
+  protected CommitExecutor getExecutor(@NotNull Project project) {
     return new ShelveChangesCommitExecutor(project);
   }
 }

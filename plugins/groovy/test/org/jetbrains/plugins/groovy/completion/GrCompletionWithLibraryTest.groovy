@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,62 +37,78 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/")
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
+      modifiableModel.commit()
     }
   }
 
   final String basePath = TestUtils.testDataPath + "groovy/completion/"
 
-  public void testCategoryMethod() {doBasicTest()}
-  public void testCategoryProperty() {doCompletionTest(null, null, '\n', CompletionType.BASIC)}
-  public void testMultipleCategories() {doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52')}
-  public void testMultipleCategories2() {doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52')}
-  public void testMultipleCategories3() {doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52')}
-  public void testCategoryForArray() {doCompletionTest(null, null, '\n', CompletionType.BASIC)}
+  void testCategoryMethod() { doBasicTest() }
 
-  public void testArrayLikeAccessForList() throws Throwable {doBasicTest(); }
-  public void testArrayLikeAccessForMap() throws Throwable {doBasicTest();}
+  void testCategoryProperty() { doCompletionTest(null, null, '\n', CompletionType.BASIC) }
 
-  public void testEachMethodForList() throws Throwable {doBasicTest();}
-  public void testEachMethodForMapWithKeyValue() throws Throwable {doBasicTest();}
-  public void testEachMethodForMapWithEntry() throws Throwable {doBasicTest();}
-  public void testWithMethod() throws Throwable {doBasicTest();}
-  public void testInjectMethodForCollection() throws Throwable {doBasicTest();}
-  public void testInjectMethodForArray() throws Throwable {doBasicTest();}
-  public void testInjectMethodForMap() throws Throwable {doBasicTest();}
-  public void testClosureDefaultParameterInEachMethod() throws Throwable {doBasicTest();}
-  public void testEachMethodForRanges() throws Throwable {doBasicTest();}
-  public void testEachMethodForEnumRanges() throws Throwable {
+  void testMultipleCategories() { doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52') }
+
+  void testMultipleCategories2() { doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52') }
+
+  void testMultipleCategories3() { doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52') }
+
+  void testCategoryForArray() { doCompletionTest(null, null, '\n', CompletionType.BASIC) }
+
+  void testArrayLikeAccessForList() throws Throwable { doBasicTest() }
+
+  void testArrayLikeAccessForMap() throws Throwable { doBasicTest() }
+
+  void testEachMethodForList() throws Throwable { doBasicTest() }
+
+  void testEachMethodForMapWithKeyValue() throws Throwable { doBasicTest() }
+
+  void testEachMethodForMapWithEntry() throws Throwable { doBasicTest() }
+
+  void testWithMethod() throws Throwable { doBasicTest() }
+
+  void testInjectMethodForCollection() throws Throwable { doBasicTest() }
+
+  void testInjectMethodForArray() throws Throwable { doBasicTest() }
+
+  void testInjectMethodForMap() throws Throwable { doBasicTest() }
+
+  void testClosureDefaultParameterInEachMethod() throws Throwable { doBasicTest() }
+
+  void testEachMethodForRanges() throws Throwable { doBasicTest() }
+
+  void testEachMethodForEnumRanges() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy")
     myFixture.completeBasic()
     myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
-  public void testPrintlnSpace() { checkCompletion 'print<caret>', 'l ', "println <caret>" }
-  public void testHashCodeSpace() { checkCompletion 'if ("".h<caret>', ' ', 'if ("".hashCode() <caret>' }
+  void testPrintlnSpace() { checkCompletion 'print<caret>', 'l ', "println <caret>" }
 
-  public void testTwoMethodWithSameName() {
+  void testHashCodeSpace() { checkCompletion 'if ("".h<caret>', ' ', 'if ("".hashCode() <caret>' }
+
+  void testTwoMethodWithSameName() {
     doVariantableTest "fooo", "fooo"
   }
 
-  public void testIteratorNext() {
+  void testIteratorNext() {
     doHasVariantsTest('next', 'notify')
   }
 
-  public void testGstringExtendsString() {
+  void testGstringExtendsString() {
     doBasicTest()
   }
 
-  public void testCompletionInEachClosure() {
+  void testCompletionInEachClosure() {
     doHasVariantsTest('intValue', 'intdiv')
   }
 
-  public void testEllipsisTypeCompletion() {
+  void testEllipsisTypeCompletion() {
     myFixture.configureByText "a.groovy", """
 def foo(def... args) {
   args.si<caret>
@@ -104,7 +120,7 @@ def foo(def... args) {
 }"""
   }
 
-  public void testBoxForinParams() {
+  void testBoxForinParams() {
     myFixture.configureByText "A.groovy", """
 for (def ch: "abc".toCharArray()) {
   print ch.toUpperCa<caret>
@@ -116,15 +132,15 @@ for (def ch: "abc".toCharArray()) {
 }"""
   }
 
-  public void testEachSpace() throws Exception {
+  void testEachSpace() throws Exception {
     checkCompletion '[].ea<caret>', ' ', '[].each <caret>'
   }
 
-  public void testEachBrace() throws Exception {
+  void testEachBrace() throws Exception {
     checkCompletion '[].ea<caret> {}', '\n', '[].each {<caret>}'
   }
 
-  public void testDeclaredMembersGoFirst() {
+  void testDeclaredMembersGoFirst() {
     myFixture.configureByText "a.groovy", """
       class Foo {
         def superProp
@@ -235,8 +251,8 @@ use\
     doVariantableTest('drop', 'dropWhile')
   }
 
-  public void testGStringConcatenationCompletion() {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence");
+  void testGStringConcatenationCompletion() {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence")
   }
 
   void testCompleteClassClashingWithGroovyUtilTuple() {
@@ -256,7 +272,7 @@ use\
     new WriteCommandAction(myFixture.project, file) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        lookup.finishLookup('\n' as char);
+        lookup.finishLookup('\n' as char)
       }
     }.execute()
 

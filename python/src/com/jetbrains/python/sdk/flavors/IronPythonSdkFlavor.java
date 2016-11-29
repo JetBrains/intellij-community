@@ -40,7 +40,7 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    Set<String> result = new TreeSet<String>();
+    Set<String> result = new TreeSet<>();
     String root = System.getenv("ProgramFiles(x86)");
     if (root == null) {
       root = System.getenv("ProgramFiles");

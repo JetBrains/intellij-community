@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
@@ -110,7 +111,8 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
     }
 
     final String url = StringUtil.trimEnd(files[0], JarFileSystem.JAR_SEPARATOR);
-    return SimpleTextCellAppearance.regular(PathUtil.getFileName(url), PlatformIcons.LIBRARY_ICON);
+    String text = ProjectBundle.message("library.unnamed.text", PathUtil.getFileName(url), files.length - 1);
+    return SimpleTextCellAppearance.regular(text, PlatformIcons.LIBRARY_ICON);
   }
 
   @NotNull

@@ -38,19 +38,14 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
   @Nullable private final Project myProject;
   private final PluginDownloader[] myUploadedPlugins;
   private final List<PluginId> myAllPlugins;
-  private final Set<String> mySkippedPlugins = new HashSet<String>();
+  private final Set<String> mySkippedPlugins = new HashSet<>();
 
   private final PluginManagerMain.PluginEnabler.HEADLESS pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
 
   PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<PluginId> allPlugins) {
     super(project);
     myProject = project;
-    Arrays.sort(plugins, new Comparator<PluginDownloader>() {
-      @Override
-      public int compare(PluginDownloader o1, PluginDownloader o2) {
-        return o1.getPluginName().compareToIgnoreCase(o2.getPluginName());
-      }
-    });
+    Arrays.sort(plugins, (o1, o2) -> o1.getPluginName().compareToIgnoreCase(o2.getPluginName()));
     myUploadedPlugins = plugins;
     myAllPlugins = allPlugins;
     setTitle("Choose Plugins to Install or Enable");
@@ -76,8 +71,8 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final Set<String> pluginsToEnable = new HashSet<String>();
-    final List<PluginNode> nodes = new ArrayList<PluginNode>();
+    final Set<String> pluginsToEnable = new HashSet<>();
+    final List<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myUploadedPlugins) {
       String pluginId = downloader.getPluginId();
       if (!mySkippedPlugins.contains(pluginId)) {
@@ -93,18 +88,13 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
 
-    final Runnable notifyRunnable = new Runnable() {
-      @Override
-      public void run() {
-        PluginManagerMain.notifyPluginsUpdated(myProject);
-      }
-    };
+    final Runnable notifyRunnable = () -> PluginManagerMain.notifyPluginsUpdated(myProject);
     for (String pluginId : pluginsToEnable) {
       PluginManagerCore.enablePlugin(pluginId);
     }
     if (!nodes.isEmpty()) {
       try {
-        PluginManagerMain.downloadPlugins(nodes, myAllPlugins, notifyRunnable, null);
+        PluginManagerMain.downloadPlugins(nodes, myAllPlugins, notifyRunnable, pluginHelper, null);
       }
       catch (IOException e) {
         LOG.error(e);

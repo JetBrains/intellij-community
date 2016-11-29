@@ -96,12 +96,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
           return myReference;
         }
 
-        final PsiReference reference = checkReferenceRange(element, new Function<Integer, PsiReference>() {
-          @Override
-          public PsiReference fun(Integer start) {
-            return myReference;
-          }
-        });
+        final PsiReference reference = checkReferenceRange(element, start -> myReference);
 
         if (reference != null) {
           return reference;
@@ -114,12 +109,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
     if (element == null || !element.isValid()) {
       return null;
     }
-    return checkReferenceRange(element, new Function<Integer, PsiReference>() {
-      @Override
-      public PsiReference fun(Integer start) {
-        return element.findReferenceAt(start);
-      }
-    });
+    return checkReferenceRange(element, start -> element.findReferenceAt(start));
   }
 
   @Nullable

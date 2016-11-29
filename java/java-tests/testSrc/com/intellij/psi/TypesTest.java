@@ -38,11 +38,8 @@ public class TypesTest extends GenericsTestCase {
 
     final String testPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/psi/types/" + getTestName(true);
     final VirtualFile[] testRoot = { null };
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        testRoot[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(testPath);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      testRoot[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(testPath);
     });
     if (testRoot[0] != null) {
       PsiTestUtil.addSourceRoot(myModule, testRoot[0]);

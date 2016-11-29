@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public interface ClasspathStorageProvider {
   @NonNls ExtensionPointName<ClasspathStorageProvider> EXTENSION_POINT_NAME =
-    new ExtensionPointName<ClasspathStorageProvider>("com.intellij.classpathStorageProvider");
+    new ExtensionPointName<>("com.intellij.classpathStorageProvider");
 
   @NonNls
   String getID();
@@ -50,6 +51,7 @@ public interface ClasspathStorageProvider {
   @NotNull
   ClasspathConverter createConverter(@NotNull Module module);
 
+  @Nullable
   String getContentRoot(@NotNull ModuleRootModel model);
 
   void modulePathChanged(Module module, String path);

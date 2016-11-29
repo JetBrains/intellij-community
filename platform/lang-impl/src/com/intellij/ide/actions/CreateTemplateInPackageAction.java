@@ -20,6 +20,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -101,7 +102,14 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
       className = names[names.length - 1];
     }
 
-    return doCreate(dir, className, templateName);
+    DumbService service = DumbService.getInstance(dir.getProject());
+    service.setAlternativeResolveEnabled(true);
+    try {
+      return doCreate(dir, className, templateName);
+    }
+    finally {
+      service.setAlternativeResolveEnabled(false);
+    }
   }
 
   protected String removeExtension(String templateName, String className) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.ui.content.MessageView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MutableErrorTreeView;
 import com.intellij.util.ui.StatusText;
@@ -64,12 +63,12 @@ import java.util.List;
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.errorTreeView.NewErrorTreeViewPanel");
   private volatile String myProgressText = "";
-  private volatile float myFraction = 0.0f;
+  private volatile float myFraction;
   private final boolean myCreateExitAction;
   private final ErrorViewStructure myErrorViewStructure;
   private final ErrorViewTreeBuilder myBuilder;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private volatile boolean myIsDisposed = false;
+  private volatile boolean myIsDisposed;
   private final ErrorTreeViewConfiguration myConfiguration;
 
   public interface ProcessController {
@@ -127,17 +126,11 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     myMessagePanel = new JPanel(new BorderLayout());
 
-    myErrorViewStructure = new ErrorViewStructure(project, canHideWarnings());
+    myErrorViewStructure = createErrorViewStructure(project, canHideWarnings());
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myErrorViewStructure.createDescriptor(myErrorViewStructure.getRootElement(), null));
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    myTree = new Tree(treeModel) {
-      @Override
-      public void setRowHeight(int i) {
-        super.setRowHeight(0);
-        // this is needed in order to make UI calculate the height for each particular row
-      }
-    };
+    myTree = createTree(treeModel);
     myTree.getEmptyText().setText(IdeBundle.message("errortree.noMessages"));
     myBuilder = new ErrorViewTreeBuilder(myTree, treeModel, myErrorViewStructure);
 
@@ -180,6 +173,21 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     EditSourceOnDoubleClickHandler.install(myTree);
   }
 
+  @NotNull
+  protected Tree createTree(@NotNull final DefaultTreeModel treeModel) {
+    return new Tree(treeModel) {
+      @Override
+      public void setRowHeight(int i) {
+        super.setRowHeight(0);
+        // this is needed in order to make UI calculate the height for each particular row
+      }
+    };
+  }
+
+  protected ErrorViewStructure createErrorViewStructure(Project project, boolean canHideWarnings) {
+    return new ErrorViewStructure(project, canHideWarnings);
+  }
+
   @Override
   public void dispose() {
     myIsDisposed = true;
@@ -193,12 +201,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public void performCopy(@NotNull DataContext dataContext) {
     List<ErrorTreeNodeDescriptor> descriptors = getSelectedNodeDescriptors();
     if (!descriptors.isEmpty()) {
-      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(descriptors, new Function<ErrorTreeNodeDescriptor, String>() {
-        @Override
-        public String fun(ErrorTreeNodeDescriptor descriptor) {
-          ErrorTreeElement element = descriptor.getElement();
-          return NewErrorTreeRenderer.calcPrefix(element) + StringUtil.join(element.getText(), "\n");
-        }
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(descriptors, descriptor -> {
+        ErrorTreeElement element = descriptor.getElement();
+        return NewErrorTreeRenderer.calcPrefix(element) + StringUtil.join(element.getText(), "\n");
       }, "\n")));
     }
   }
@@ -245,12 +250,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public void selectFirstMessage() {
     final ErrorTreeElement firstError = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.ERROR);
     if (firstError != null) {
-      selectElement(firstError, new Runnable() {
-        @Override
-        public void run() {
-          if (shouldShowFirstErrorInEditor()) {
-            navigateToSource(false);
-          }
+      selectElement(firstError, () -> {
+        if (shouldShowFirstErrorInEditor()) {
+          navigateToSource(false);
         }
       });
     }
@@ -467,17 +469,14 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       return;
     }
     myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        final float fraction = myFraction;
-        final String text = myProgressText;
-        if (fraction > 0.0f) {
-          myProgressLabel.setText((int)(fraction * 100 + 0.5) + "%  " + text);
-        }
-        else {
-          myProgressLabel.setText(text);
-        }
+    myUpdateAlarm.addRequest(() -> {
+      final float fraction = myFraction;
+      final String text = myProgressText;
+      if (fraction > 0.0f) {
+        myProgressLabel.setText((int)(fraction * 100 + 0.5) + "%  " + text);
+      }
+      else {
+        myProgressLabel.setText(text);
       }
     }, 50, ModalityState.NON_MODAL);
 

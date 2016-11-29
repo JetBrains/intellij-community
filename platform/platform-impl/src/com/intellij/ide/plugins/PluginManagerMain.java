@@ -50,7 +50,6 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -233,12 +232,9 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public void reset() {
-    UiNotifyConnector.doWhenFirstShown(getPluginTable(), new Runnable() {
-      @Override
-      public void run() {
-        requireShutdown = false;
-        TableUtil.ensureSelectionExists(getPluginTable());
-      }
+    UiNotifyConnector.doWhenFirstShown(getPluginTable(), () -> {
+      requireShutdown = false;
+      TableUtil.ensureSelectionExists(getPluginTable());
     });
   }
 
@@ -248,12 +244,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   @NotNull
   public static List<PluginId> mapToPluginIds(List<IdeaPluginDescriptor> plugins) {
-    return ContainerUtil.map(plugins, new Function<IdeaPluginDescriptor, PluginId>() {
-      @Override
-      public PluginId fun(IdeaPluginDescriptor descriptor) {
-        return descriptor.getPluginId();
-      }
-    });
+    return ContainerUtil.map(plugins, descriptor -> descriptor.getPluginId());
   }
 
   private static String getTextPrefix() {
@@ -335,65 +326,59 @@ public abstract class PluginManagerMain implements Disposable {
   protected void loadPluginsFromHostInBackground() {
     setDownloadStatus(true);
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
-        final Map<String, String> errors = ContainerUtil.newLinkedHashMap();
-        ProgressIndicator indicator = new EmptyProgressIndicator();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
+      final Map<String, String> errors = ContainerUtil.newLinkedHashMap();
+      ProgressIndicator indicator = new EmptyProgressIndicator();
 
-        List<String> hosts = RepositoryHelper.getPluginHosts();
-        Set<PluginId> unique = ContainerUtil.newHashSet();
-        for (String host : hosts) {
-          try {
-            if (host == null || acceptHost(host)) {
-              List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, indicator);
-              for (IdeaPluginDescriptor plugin : plugins) {
-                if (unique.add(plugin.getPluginId())) {
-                  list.add(plugin);
-                }
+      List<String> hosts = RepositoryHelper.getPluginHosts();
+      Set<PluginId> unique = ContainerUtil.newHashSet();
+      for (String host : hosts) {
+        try {
+          if (host == null || acceptHost(host)) {
+            List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, indicator);
+            for (IdeaPluginDescriptor plugin : plugins) {
+              if (unique.add(plugin.getPluginId())) {
+                list.add(plugin);
               }
-            }
-          }
-          catch (FileNotFoundException e) {
-            LOG.info(host, e);
-          }
-          catch (IOException e) {
-            LOG.info(host, e);
-            if (host != ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) {
-              errors.put(host, String.format("'%s' for '%s'", e.getMessage(), host));
             }
           }
         }
-
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            setDownloadStatus(false);
-
-            if (!list.isEmpty()) {
-              InstalledPluginsState state = InstalledPluginsState.getInstance();
-              for (IdeaPluginDescriptor descriptor : list) {
-                state.onDescriptorDownload(descriptor);
-              }
-
-              modifyPluginsList(list);
-              propagateUpdates(list);
-            }
-
-            if (!errors.isEmpty()) {
-              String message = IdeBundle.message("error.list.of.plugins.was.not.loaded",
-                                                 StringUtil.join(errors.keySet(), ", "),
-                                                 StringUtil.join(errors.values(), ",\n"));
-              String title = IdeBundle.message("title.plugins");
-              String ok = CommonBundle.message("button.retry"), cancel = CommonBundle.getCancelButtonText();
-              if (Messages.showOkCancelDialog(message, title, ok, cancel, Messages.getErrorIcon()) == Messages.OK) {
-                loadPluginsFromHostInBackground();
-              }
-            }
+        catch (FileNotFoundException e) {
+          LOG.info(host, e);
+        }
+        catch (IOException e) {
+          LOG.info(host, e);
+          if (host != ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) {
+            errors.put(host, String.format("'%s' for '%s'", e.getMessage(), host));
           }
-        });
+        }
       }
+
+      UIUtil.invokeLaterIfNeeded(() -> {
+        setDownloadStatus(false);
+
+        if (!list.isEmpty()) {
+          InstalledPluginsState state = InstalledPluginsState.getInstance();
+          for (IdeaPluginDescriptor descriptor : list) {
+            state.onDescriptorDownload(descriptor);
+          }
+
+          modifyPluginsList(list);
+          propagateUpdates(list);
+        }
+
+        if (!errors.isEmpty()) {
+          String message = IdeBundle.message("error.list.of.plugins.was.not.loaded",
+                                             StringUtil.join(errors.keySet(), ", "),
+                                             StringUtil.join(errors.values(), ",\n"));
+          String title = IdeBundle.message("title.plugins");
+          String ok = CommonBundle.message("button.retry"), cancel = CommonBundle.getCancelButtonText();
+          if (Messages.showOkCancelDialog(message, title, ok, cancel, Messages.getErrorIcon()) == Messages.OK) {
+            loadPluginsFromHostInBackground();
+          }
+        }
+      });
     });
   }
 
@@ -422,9 +407,20 @@ public abstract class PluginManagerMain implements Disposable {
     loadPluginsFromHostInBackground();
   }
 
+  /**
+   * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
+   */
   public static boolean downloadPlugins(final List<PluginNode> plugins,
                                         final List<PluginId> allPlugins,
                                         final Runnable onSuccess,
+                                        @Nullable final Runnable cleanup) throws IOException {
+    return downloadPlugins(plugins, allPlugins, onSuccess, new PluginEnabler.HEADLESS(), cleanup);
+  }
+
+  public static boolean downloadPlugins(final List<PluginNode> plugins,
+                                        final List<PluginId> allPlugins,
+                                        final Runnable onSuccess,
+                                        PluginEnabler pluginEnabler,
                                         @Nullable final Runnable cleanup) throws IOException {
     final boolean[] result = new boolean[1];
     try {
@@ -432,7 +428,7 @@ public abstract class PluginManagerMain implements Disposable {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (PluginInstaller.prepareToInstall(plugins, allPlugins, indicator)) {
+            if (PluginInstaller.prepareToInstall(plugins, allPlugins, pluginEnabler, indicator)) {
               ApplicationManager.getApplication().invokeLater(onSuccess);
               result[0] = true;
             }
@@ -638,15 +634,15 @@ public abstract class PluginManagerMain implements Disposable {
     Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWords(description);
     if (words.contains(filter)) return true;
     if (search.isEmpty()) return false;
-    Set<String> descriptionSet = new HashSet<String>(search);
+    Set<String> descriptionSet = new HashSet<>(search);
     descriptionSet.removeAll(words);
     return descriptionSet.isEmpty();
   }
 
   public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
                                                                  List<PluginNode> list) {
-    final Set<IdeaPluginDescriptor> disabled = new HashSet<IdeaPluginDescriptor>();
-    final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<IdeaPluginDescriptor>();
+    final Set<IdeaPluginDescriptor> disabled = new HashSet<>();
+    final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (PluginNode node : list) {
       final PluginId pluginId = node.getPluginId();
       if (pluginEnabler.isDisabled(pluginId)) {
@@ -654,7 +650,7 @@ public abstract class PluginManagerMain implements Disposable {
       }
       final List<PluginId> depends = node.getDepends();
       if (depends != null) {
-        final Set<PluginId> optionalDeps = new HashSet<PluginId>(Arrays.asList(node.getOptionalDependentPluginIds()));
+        final Set<PluginId> optionalDeps = new HashSet<>(Arrays.asList(node.getOptionalDependentPluginIds()));
         for (PluginId dependantId : depends) {
           if (optionalDeps.contains(dependantId)) continue;
           final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
@@ -671,12 +667,7 @@ public abstract class PluginManagerMain implements Disposable {
         message += "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled.";
       }
       else if (!disabled.isEmpty()) {
-        message += "Updated plugins " + StringUtil.join(disabled, new Function<IdeaPluginDescriptor, String>() {
-          @Override
-          public String fun(IdeaPluginDescriptor pluginDescriptor) {
-            return pluginDescriptor.getName();
-          }
-        }, ", ") + " are disabled.";
+        message += "Updated plugins " + StringUtil.join(disabled, pluginDescriptor -> pluginDescriptor.getName(), ", ") + " are disabled.";
       }
 
       if (!disabledDependants.isEmpty()) {
@@ -686,12 +677,7 @@ public abstract class PluginManagerMain implements Disposable {
           message += " plugin '" + disabledDependants.iterator().next().getName() + "'.";
         }
         else {
-          message += " plugins " + StringUtil.join(disabledDependants, new Function<IdeaPluginDescriptor, String>() {
-            @Override
-            public String fun(IdeaPluginDescriptor pluginDescriptor) {
-              return pluginDescriptor.getName();
-            }
-          }, ", ") + ".";
+          message += " plugins " + StringUtil.join(disabledDependants, pluginDescriptor -> pluginDescriptor.getName(), ", ") + ".";
         }
       }
       message += " Disabled plugins " + (disabled.isEmpty() ? "and plugins which depend on disabled " :"") + "won't be activated after restart.";
@@ -732,6 +718,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   public interface PluginEnabler {
     void enablePlugins(Set<IdeaPluginDescriptor> disabled);
+    void disablePlugins(Set<IdeaPluginDescriptor> disabled);
 
     boolean isDisabled(PluginId pluginId);
 
@@ -740,6 +727,13 @@ public abstract class PluginManagerMain implements Disposable {
       public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
         for (IdeaPluginDescriptor descriptor : disabled) {
           PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
+        }
+      }
+
+      @Override
+      public void disablePlugins(Set<IdeaPluginDescriptor> disabled) {
+        for (IdeaPluginDescriptor descriptor : disabled) {
+          PluginManagerCore.disablePlugin(descriptor.getPluginId().getIdString());
         }
       }
 
@@ -763,7 +757,12 @@ public abstract class PluginManagerMain implements Disposable {
 
       @Override
       public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
-        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
+        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[0]), true);
+      }
+
+      @Override
+      public void disablePlugins(Set<IdeaPluginDescriptor> disabled) {
+        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[0]), false);
       }
 
       @Override

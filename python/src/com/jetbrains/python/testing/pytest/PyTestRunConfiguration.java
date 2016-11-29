@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -74,6 +74,26 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
 
   public String getTestToRun() {
     return myTestToRun;
+  }
+
+  @NotNull
+  @Override
+  public String getWorkingDirectorySafe() {
+    final String workingDirectoryFromConfig = getWorkingDirectory();
+    if (StringUtil.isNotEmpty(workingDirectoryFromConfig)) {
+      return workingDirectoryFromConfig;
+    }
+    final String testToRun = myTestToRun;
+    if (testToRun != null) {
+      final VirtualFile path = LocalFileSystem.getInstance().findFileByPath(testToRun);
+      if (path != null) {
+        if (path.isDirectory()) {
+          return path.getPath();
+        }
+        return path.getParent().getPath();
+      }
+    }
+    return super.getWorkingDirectorySafe();
   }
 
   public void setTestToRun(String testToRun) {
@@ -121,7 +141,6 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     myTestToRun = JDOMExternalizerUtil.readField(element, TEST_TO_RUN_FIELD);
     myKeywords = JDOMExternalizerUtil.readField(element, KEYWORDS_FIELD);
@@ -178,7 +197,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     if (indexOfBrace == -1) {
       return super.getTestSpec(location, failedTest);
     }
-    final List<String> testNameParts = new ArrayList<String>();
+    final List<String> testNameParts = new ArrayList<>();
     final VirtualFile file = location.getVirtualFile();
     if (file == null) {
       return null;

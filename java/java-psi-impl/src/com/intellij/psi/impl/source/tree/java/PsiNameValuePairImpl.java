@@ -29,16 +29,20 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.reference.SoftReference;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+
 /**
  * @author Dmitry Avdeev
  *         Date: 7/27/12
  */
-public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStub> implements PsiNameValuePair {
+public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStub> implements PsiNameValuePair.Detachable {
 
   public PsiNameValuePairImpl(@NotNull PsiNameValuePairStub stub) {
     super(stub, JavaStubElementTypes.NAME_VALUE_PAIR);
@@ -68,14 +72,8 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
 
   @Override
   public String getLiteralValue() {
-    PsiNameValuePairStub stub = getStub();
-    if (stub == null) {
-      PsiAnnotationMemberValue value = getValue();
-      return value instanceof PsiLiteralExpression ? StringUtil.unquoteString(value.getText()) : null;
-    }
-    else {
-      return stub.getValue();
-    }
+    PsiAnnotationMemberValue value = getValue();
+    return value instanceof PsiLiteralExpression ? StringUtil.unquoteString(value.getText()) : null;
   }
 
   @Override
@@ -86,6 +84,9 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
 
   @Override
   public PsiAnnotationMemberValue getValue() {
+    PsiLiteralExpression child = getStubOrPsiChild(JavaStubElementTypes.LITERAL_EXPRESSION);
+    if (child != null) return child;
+
     ASTNode node = getNode().findChildByRole(ChildRole.ANNOTATION_VALUE);
     return node == null ? null : (PsiAnnotationMemberValue)node.getPsi();
   }
@@ -97,6 +98,31 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
     return getValue();
   }
 
+  private volatile Reference<PsiAnnotationMemberValue> myDetachedValue;
+
+  @Override
+  @Nullable
+  public PsiAnnotationMemberValue getDetachedValue() {
+    PsiNameValuePairStub stub = getGreenStub();
+    if (stub != null) {
+      String text = stub.getValue();
+      PsiAnnotationMemberValue result = SoftReference.dereference(myDetachedValue);
+      if (result == null) {
+        PsiAnnotation anno = JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText("@F(" + text + ")", this);
+        ((LightVirtualFile)anno.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
+        myDetachedValue = new SoftReference<PsiAnnotationMemberValue>(result = anno.findAttributeValue(null));
+      }
+      return result;
+    }
+
+    return getValue();
+  }
+
+  @Override
+  public void subtreeChanged() {
+    myDetachedValue = null;
+    super.subtreeChanged();
+  }
 
   @Override
   public PsiReference getReference() {

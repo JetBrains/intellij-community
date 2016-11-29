@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +34,6 @@ import javax.swing.*;
  */
 public class ProjectUtil {
   private ProjectUtil() {
-  }
-
-  @Nullable
-  public static String getProjectLocationString(@NotNull final Project project) {
-    return FileUtil.getLocationRelativeToUserHome(project.getBasePath());
   }
 
   @NotNull
@@ -88,12 +82,12 @@ public class ProjectUtil {
     return guessProjectForContentFile(file, file.getFileType());
   }
 
-  @Nullable
   /***
    * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
    */
+  @Nullable
   public static Project guessProjectForContentFile(@NotNull VirtualFile file, @NotNull FileType fileType) {
-    if (isProjectOrWorkspaceFile(file, fileType)) {
+    if (ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType)) {
       return null;
     }
 
@@ -106,13 +100,9 @@ public class ProjectUtil {
     return null;
   }
 
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
+  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
     // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
-    return isProjectOrWorkspaceFile(file, FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
-  }
-
-  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
-    return ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
+    return ProjectCoreUtil.isProjectOrWorkspaceFile(file, FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
   }
 
   @NotNull

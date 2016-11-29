@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightParameterListBuilder;
@@ -27,12 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
@@ -77,7 +76,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
       addModifier(PsiModifier.FINAL);
     }
 
-    if (GrTraitUtil.isTrait(property.getContainingClass())) {
+    if (myProperty.hasModifierProperty(PsiModifier.ABSTRACT) && GrTraitUtil.isTrait(myProperty.getContainingClass())) {
       addModifier(PsiModifier.ABSTRACT);
     }
 
@@ -132,75 +131,18 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     return getManager().areElementsEquivalent(myProperty, ((GrAccessorMethod)another).getProperty());
   }
 
-  @Nullable
-  public static GrAccessorMethod createSetterMethod(GrField field) {
-    if (field.isProperty() && !field.hasModifierProperty(PsiModifier.FINAL)) {
-      String fieldName = field.getName();
-
-      String name = GroovyPropertyUtils.getSetterName(fieldName);
-      final GrAccessorMethod setter = new GrAccessorMethodImpl(field, true, name);
-      final PsiClass clazz = field.getContainingClass();
-      if (!hasContradictingMethods(setter, fieldName, clazz)) {
-        return setter;
-      }
-    }
-
-    return null;
-  }
-
-  public static GrAccessorMethod[] createGetterMethods(GrField field) {
-    if (field.isProperty()) {
-      String fieldName = field.getName();
-
-      final PsiClass clazz = field.getContainingClass();
-      GrAccessorMethod getter1 = new GrAccessorMethodImpl(field, false, GroovyPropertyUtils.getGetterNameNonBoolean(fieldName));
-      if (!hasContradictingMethods(getter1, fieldName, clazz)) {
-        GrAccessorMethod getter2 = null;
-        if (PsiType.BOOLEAN.equals(field.getDeclaredType())) {
-          getter2 = new GrAccessorMethodImpl(field, false, GroovyPropertyUtils.getGetterNameBoolean(fieldName));
-          if (hasContradictingMethods(getter2, fieldName, clazz)) {
-            getter2 = null;
-          }
-        }
-
-        if (getter2 != null) {
-          return new GrAccessorMethod[]{getter1, getter2};
-        }
-        else {
-          return new GrAccessorMethod[]{getter1};
-        }
-      }
-    }
-
-    return GrAccessorMethod.EMPTY_ARRAY;
-  }
-
-  private static boolean hasContradictingMethods(GrAccessorMethod proto, String fieldName, PsiClass clazz) {
-    if (clazz == null) return false;
-    PsiMethod[] methods = clazz instanceof GrTypeDefinition
-                          ? ((GrTypeDefinition)clazz).findCodeMethodsByName(proto.getName(), true)
-                          : clazz.findMethodsByName(proto.getName(), true);
-    final int paramCount = proto.getParameterList().getParametersCount();
-    for (PsiMethod method : methods) {
-      if (paramCount != method.getParameterList().getParametersCount()) continue;
-
-      if (clazz.equals(method.getContainingClass())) return true;
-      if (PsiUtil.isAccessible(clazz, method) && method.hasModifierProperty(PsiModifier.FINAL)) return true;
-    }
-
-    //final property in supers
-    PsiClass aSuper = clazz.getSuperClass();
-    if (aSuper != null) {
-      PsiField field = aSuper.findFieldByName(fieldName, true);
-      if (field instanceof GrField && ((GrField)field).isProperty() && field.hasModifierProperty(PsiModifier.FINAL)) return true;
-    }
-
-    return false;
-  }
-
   @NotNull
   @Override
   public PsiElement getPrototype() {
     return getProperty();
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    if (GrTraitUtil.isTrait(getContainingClass())) {
+      if (PsiModifier.ABSTRACT.equals(name)) return true;
+      if (PsiModifier.FINAL.equals(name)) return false;
+    }
+    return super.hasModifierProperty(name);
   }
 }

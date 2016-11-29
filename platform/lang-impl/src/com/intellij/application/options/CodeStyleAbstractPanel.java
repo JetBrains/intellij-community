@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -59,8 +57,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public abstract class CodeStyleAbstractPanel implements Disposable {
@@ -69,8 +69,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
 
-  private final ChangesDiffCalculator myDiffCalculator           = new ChangesDiffCalculator();
-  private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<TextRange>();
+  private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<>();
 
   private final Editor myEditor;
   private final CodeStyleSettings mySettings;
@@ -98,7 +97,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
                                    @Nullable CodeStyleSettings currentSettings,
                                    @NotNull CodeStyleSettings settings)
   {
-    Disposer.register(this, myDiffCalculator);
     myCurrentSettings = currentSettings;
     mySettings = settings;
     myDefaultLanguage = defaultLanguage;
@@ -186,12 +184,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
 
     final Project finalProject = ProjectUtil.guessCurrentProject(getPanel());
-    CommandProcessor.getInstance().executeCommand(finalProject, new Runnable() {
-      @Override
-      public void run() {
-        replaceText(finalProject);
-      }
-    }, null, null);
+    CommandProcessor.getInstance().executeCommand(finalProject, () -> replaceText(finalProject), null, null);
 
     myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
@@ -206,43 +199,42 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected abstract int getRightMargin();
 
   private void replaceText(final Project project) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          Document beforeReformat = null;
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        Document beforeReformat = null;
+        if (myEditor.getDocument().getTextLength() > 0) {
           beforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
-
-          //important not mark as generated not to get the classes before setting language level
-          PsiFile psiFile = createFileFromText(project, myTextToReformat);
-          prepareForReformat(psiFile);
-
-          try {
-            apply(mySettings);
-          }
-          catch (ConfigurationException ignore) {
-          }
-          CodeStyleSettings clone = mySettings.clone();
-          clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
-          CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-          PsiFile formatted;
-          try {
-            formatted = doReformat(project, psiFile);
-          }
-          finally {
-            CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-          }
-
-          myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
-          Document document = myEditor.getDocument();
-          document.replaceString(0, document.getTextLength(), formatted.getText());
-          if (document != null && beforeReformat != null) {
-            highlightChanges(beforeReformat);
-          }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+
+        //important not mark as generated not to get the classes before setting language level
+        PsiFile psiFile = createFileFromText(project, myTextToReformat);
+        prepareForReformat(psiFile);
+
+        try {
+          apply(mySettings);
         }
+        catch (ConfigurationException ignore) {
+        }
+        CodeStyleSettings clone = mySettings.clone();
+        clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
+        CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
+        PsiFile formatted;
+        try {
+          formatted = doReformat(project, psiFile);
+        }
+        finally {
+          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+        }
+
+        myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
+        Document document = myEditor.getDocument();
+        document.replaceString(0, document.getTextLength(), formatted.getText());
+        if (beforeReformat != null) {
+          highlightChanges(beforeReformat);
+        }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
   }
@@ -297,23 +289,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   private void highlightChanges(Document beforeReformat) {
-
     myPreviewRangesToHighlight.clear();
     MarkupModel markupModel = myEditor.getMarkupModel();
     markupModel.removeAllHighlighters();
-    int textLength = myEditor.getDocument().getTextLength();
-    boolean highlightPreview = false;
-    Collection<TextRange> ranges = myDiffCalculator.calculateDiff(beforeReformat, myEditor.getDocument());
-    for (TextRange range : ranges) {
-      if (range.getStartOffset() >= textLength) {
-        continue;
-      }
-      highlightPreview = true;
-      TextRange rangeToUse = calculateChangeHighlightRange(range);
-      myPreviewRangesToHighlight.add(rangeToUse);
-    }
 
-    if (highlightPreview) {
+    myPreviewRangesToHighlight.addAll(ChangesDiffCalculator.calculateDiff(beforeReformat, myEditor.getDocument()));
+
+    if (!myPreviewRangesToHighlight.isEmpty()) {
       myEndHighlightPreviewChangesTimeMillis = System.currentTimeMillis() + TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS;
       myShowsPreviewHighlighters = true;
     }
@@ -332,43 +314,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private static boolean isWithinBounds(VisualPosition targetPosition, VisualPosition startPosition, VisualPosition endPosition) {
     return targetPosition.line >= startPosition.line && targetPosition.line <= endPosition.line
            && targetPosition.column >= startPosition.column && targetPosition.column <= endPosition.column;
-  }
-
-  /**
-   * We want to highlight document formatting changes introduced by particular formatting property value change.
-   * However, there is a possible effect that white space region is removed. We still want to highlight that, hence, it's necessary
-   * to highlight neighbour region.
-   * <p/>
-   * This method encapsulates logic of adjusting preview highlight change if necessary.
-   *
-   * @param range   initial range to highlight
-   * @return        resulting range to highlight
-   */
-  private TextRange calculateChangeHighlightRange(TextRange range) {
-    CharSequence text = myEditor.getDocument().getCharsSequence();
-
-    if (range.getLength() <= 0) {
-      int offset = range.getStartOffset();
-      while (offset < text.length() && text.charAt(offset) == ' ') {
-        offset++;
-      }
-      return offset > range.getStartOffset() ? new TextRange(offset, offset) : range;
-    }
-
-    int startOffset = range.getStartOffset() + 1;
-    int endOffset = range.getEndOffset() + 1;
-    boolean useSameRange = true;
-    while (endOffset <= text.length()
-           && StringUtil.equals(text.subSequence(range.getStartOffset(), range.getEndOffset()), text.subSequence(startOffset, endOffset)))
-    {
-      useSameRange = false;
-      startOffset++;
-      endOffset++;
-    }
-    startOffset--;
-    endOffset--;
-
-    return useSameRange ? range : new TextRange(startOffset, endOffset);
   }
 
   private void updatePreviewHighlighter(final EditorEx editor) {
@@ -493,12 +438,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         updateEditor(true);
       }
       else {
-        UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), new Runnable() {
-          @Override
-          public void run() {
-            addUpdatePreviewRequest();
-          }
-        });
+        UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), () -> addUpdatePreviewRequest());
       }
     }
   }
@@ -554,13 +494,11 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
                                  || isWithinBounds(myEditor.offsetToVisualPosition(range.getEndOffset()), visualStart, visualEnd);
           scrollToChange = !rangeVisible;
           if (offsetToScroll < 0) {
-            if (offsetToScroll < 0) {
-              if (text.charAt(range.getStartOffset()) != '\n') {
-                offsetToScroll = range.getStartOffset();
-              }
-              else if (range.getEndOffset() > 0 && text.charAt(range.getEndOffset() - 1) != '\n') {
-                offsetToScroll = range.getEndOffset() - 1;
-              }
+            if (text.charAt(range.getStartOffset()) != '\n') {
+              offsetToScroll = range.getStartOffset();
+            }
+            else if (range.getEndOffset() > 0 && text.charAt(range.getEndOffset() - 1) != '\n') {
+              offsetToScroll = range.getEndOffset() - 1;
             }
           }
         }

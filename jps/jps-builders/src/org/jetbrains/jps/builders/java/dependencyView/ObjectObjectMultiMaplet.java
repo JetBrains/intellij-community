@@ -28,7 +28,7 @@ import java.util.*;
  * @author: db
  * Date: 03.11.11
  */
-abstract class ObjectObjectMultiMaplet<K, V extends Streamable> implements Streamable {
+abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMaplet {
   abstract boolean containsKey(final K key);
 
   abstract Collection<V> get(final K key);
@@ -48,8 +48,6 @@ abstract class ObjectObjectMultiMaplet<K, V extends Streamable> implements Strea
   abstract void removeFrom(final K key, final V value);
 
   abstract void removeAll(final K key, final Collection<V> value);
-
-  abstract void close();
 
   abstract void forEachEntry(TObjectObjectProcedure<K, Collection<V>> procedure);
 
@@ -87,12 +85,12 @@ abstract class ObjectObjectMultiMaplet<K, V extends Streamable> implements Strea
       final List<String> list = new LinkedList<String>();
 
       for (final V value : b) {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final PrintStream s = new PrintStream(baos);
-
-        value.toStream(context, s);
-
-        list.add(baos.toString());
+        if (value instanceof Streamable) {
+          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+          final PrintStream s = new PrintStream(baos);
+          ((Streamable) value).toStream(context, s);
+          list.add(baos.toString());
+        }
       }
 
       Collections.sort(list);

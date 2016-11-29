@@ -67,7 +67,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
         myBunch.reloadBranchesAsync(myRoot, url, InfoReliability.defaultValues);
       }
 
-      myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.defaultValues), false);
+      myBunch.updateForRoot(myRoot, new InfoStorage<>(configuration, InfoReliability.defaultValues), false);
     }
   }
 
@@ -146,7 +146,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
           }
           else {
             result.addBranches(childUrl.toString(),
-                               new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(0), InfoReliability.defaultValues));
+                               new InfoStorage<>(new ArrayList<>(0), InfoReliability.defaultValues));
           }
         }
       }

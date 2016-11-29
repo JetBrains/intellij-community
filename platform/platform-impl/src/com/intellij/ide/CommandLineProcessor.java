@@ -15,13 +15,13 @@
  */
 package com.intellij.ide;
 
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,11 +55,9 @@ public class CommandLineProcessor {
 
   public static void openFileOrProject(final String name) {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (name != null) {
-          doOpenFileOrProject(name);
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (name != null) {
+        doOpenFileOrProject(name);
       }
     });
   }
@@ -67,7 +66,7 @@ public class CommandLineProcessor {
   private static Project doOpenFileOrProject(String name) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(name);
     if (virtualFile == null) {
-      Messages.showErrorDialog("Cannot find file '" + name + "'", "Cannot find file");
+      Messages.showErrorDialog("Cannot find file '" + name + "'", "Cannot Find File");
       return null;
     }
     ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
@@ -75,12 +74,10 @@ public class CommandLineProcessor {
       // HACK: PlatformProjectOpenProcessor agrees to open anything
       provider = null;
     }
-    if (provider != null ||
-        name.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        new File(name, Project.DIRECTORY_STORE_FOLDER).exists()) {
+    if (provider != null || ProjectKt.isValidProjectPath(name)) {
       final Project result = ProjectUtil.openOrImport(name, null, true);
       if (result == null) {
-        Messages.showErrorDialog("Cannot open project '" + name + "'", "Cannot open project");
+        Messages.showErrorDialog("Cannot open project '" + name + "'", "Cannot Open Project");
       }
       return result;
     }
@@ -97,10 +94,11 @@ public class CommandLineProcessor {
       if (processor != null) {
         return PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
       }
-      Messages.showErrorDialog("No project found to open file in", "Cannot open file");
+      Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
       return null;
     }
     else {
+      NonProjectFileWritingAccessProvider.allowWriting(virtualFile);
       Project project = findBestProject(virtualFile, projects);
       if (line == -1) {
         new OpenFileDescriptor(project, virtualFile).navigate(true);
@@ -151,12 +149,7 @@ public class CommandLineProcessor {
         try {
           final String url = URLDecoder.decode(command, "UTF-8");
           JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              JBProtocolCommand.handleCurrentCommand();
-            }
-          }, ModalityState.any());
+          ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
         }
         catch (UnsupportedEncodingException e) {
           LOG.error(e);
@@ -199,7 +192,7 @@ public class CommandLineProcessor {
             lastOpenedProject = doOpenFile(virtualFile, line);
           }
           else {
-            Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot find file");
+            Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
           }
         }
         else {

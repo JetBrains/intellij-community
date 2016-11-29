@@ -45,7 +45,7 @@ public class CommentWithInjectionBlock extends AbstractJavaBlock {
 
   @Override
   protected List<Block> buildChildren() {
-    final List<Block> result = new ArrayList<Block>();
+    final List<Block> result = new ArrayList<>();
     myInjectedBlockBuilder.addInjectedBlocks(result, myNode, myWrap, myAlignment, Indent.getNoneIndent());
     return result;
   }

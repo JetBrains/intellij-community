@@ -70,9 +70,9 @@ public class SearchResults implements DocumentListener {
   private @Nullable FindResult myCursor;
 
   @NotNull
-  private List<FindResult> myOccurrences = new ArrayList<FindResult>();
+  private List<FindResult> myOccurrences = new ArrayList<>();
 
-  private final Set<RangeMarker> myExcluded = new HashSet<RangeMarker>();
+  private final Set<RangeMarker> myExcluded = new HashSet<>();
 
   private Editor myEditor;
   private final Project myProject;
@@ -89,14 +89,15 @@ public class SearchResults implements DocumentListener {
   private int myLastUpdatedStamp = -1;
   private long myDocumentTimestamp;
 
-  private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<Pair<FindModel, FindResult>>();
+  private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
-  private final SelectionManager mySelectionManager = new SelectionManager(this);
+  private final SelectionManager mySelectionManager;
 
   public SearchResults(Editor editor, Project project) {
     myEditor = editor;
     myProject = project;
     myEditor.getDocument().addDocumentListener(this);
+    mySelectionManager = new SelectionManager(this); // important to initialize last for accessing other fields
   }
 
   public void setNotFoundState(boolean isForward) {
@@ -191,7 +192,7 @@ public class SearchResults implements DocumentListener {
   }
 
   public void clear() {
-    searchCompleted(new ArrayList<FindResult>(), getEditor(), null, false, null, getStamp());
+    searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
   }
 
   public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, @Nullable final TextRange next, final int stamp) {
@@ -199,51 +200,43 @@ public class SearchResults implements DocumentListener {
 
     final Editor editor = getEditor();
 
-    final ArrayList<FindResult> results = new ArrayList<FindResult>();
+    final ArrayList<FindResult> results = new ArrayList<>();
     if (findModel != null) {
       updatePreviousFindModel(findModel);
-      final FutureResult<int[]> startsRef = new FutureResult<int[]>();
-      final FutureResult<int[]> endsRef = new FutureResult<int[]>();
+      final FutureResult<int[]> startsRef = new FutureResult<>();
+      final FutureResult<int[]> endsRef = new FutureResult<>();
       getSelection(editor, startsRef, endsRef);
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          Project project = getProject();
-          if (myDisposed || project != null && project.isDisposed()) return;
-          int[] starts = new int[0];
-          int[] ends = new int[0];
-          try {
-            starts = startsRef.get();
-            ends = endsRef.get();
-          }
-          catch (InterruptedException ignore) {
-          }
-          catch (ExecutionException ignore) {
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        Project project = getProject();
+        if (myDisposed || project != null && project.isDisposed()) return;
+        int[] starts = new int[0];
+        int[] ends = new int[0];
+        try {
+          starts = startsRef.get();
+          ends = endsRef.get();
+        }
+        catch (InterruptedException ignore) {
+        }
+        catch (ExecutionException ignore) {
+        }
 
-          if (starts.length == 0 || findModel.isGlobal()) {
-            findInRange(new TextRange(0, Integer.MAX_VALUE), editor, findModel, results);
+        if (starts.length == 0 || findModel.isGlobal()) {
+          findInRange(new TextRange(0, Integer.MAX_VALUE), editor, findModel, results);
+        }
+        else {
+          for (int i = 0; i < starts.length; ++i) {
+            findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
           }
-          else {
-            for (int i = 0; i < starts.length; ++i) {
-              findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
-            }
-          }
+        }
 
-          final Runnable searchCompletedRunnable = new Runnable() {
-            @Override
-            public void run() {
-              searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
-            }
-          };
+        final Runnable searchCompletedRunnable = () -> searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
 
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
-          }
-          else {
-            searchCompletedRunnable.run();
-          }
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
+        }
+        else {
+          searchCompletedRunnable.run();
         }
       });
     }
@@ -267,13 +260,10 @@ public class SearchResults implements DocumentListener {
       ends.set(selection.getBlockSelectionEnds());
     } else {
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            SelectionModel selection = editor.getSelectionModel();
-            starts.set(selection.getBlockSelectionStarts());
-            ends.set(selection.getBlockSelectionEnds());
-          }
+        SwingUtilities.invokeAndWait(() -> {
+          SelectionModel selection = editor.getSelectionModel();
+          starts.set(selection.getBlockSelectionStarts());
+          ends.set(selection.getBlockSelectionEnds());
         });
       }
       catch (InterruptedException ignore) {
@@ -330,19 +320,15 @@ public class SearchResults implements DocumentListener {
       return;
     }
     myLastUpdatedStamp = stamp;
-    if (editor != getEditor() || myDisposed) {
+    if (editor != getEditor() || myDisposed || editor.isDisposed()) {
       return;
     }
     myOccurrences = occurrences;
     final TextRange oldCursorRange = myCursor;
-    Collections.sort(myOccurrences, new Comparator<FindResult>() {
-      @Override
-      public int compare(FindResult findResult, FindResult findResult1) {
-        return findResult.getStartOffset() - findResult1.getStartOffset();
-      }
-    });
+    Collections.sort(myOccurrences, (findResult, findResult1) -> findResult.getStartOffset() - findResult1.getStartOffset());
 
     myFindModel = findModel;
+    myDocumentTimestamp = myEditor.getDocument().getModificationStamp();
     updateCursor(oldCursorRange, next);
     updateExcluded();
     notifyChanged();
@@ -353,7 +339,6 @@ public class SearchResults implements DocumentListener {
       notifyCursorMoved();
     }
     dumpIfNeeded();
-    myDocumentTimestamp = myEditor.getDocument().getModificationStamp();
   }
 
   private void dumpIfNeeded() {
@@ -363,7 +348,7 @@ public class SearchResults implements DocumentListener {
   }
 
   private void updateExcluded() {
-    Set<RangeMarker> invalid = new HashSet<RangeMarker>();
+    Set<RangeMarker> invalid = new HashSet<>();
     for (RangeMarker marker : myExcluded) {
       if (!marker.isValid()) {
         invalid.add(marker);

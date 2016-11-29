@@ -24,11 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PythonStringUtil;
-import com.jetbrains.python.psi.PyDocStringOwner;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +42,7 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
     if (stringLiteralExpression != null) {
       final String text = stringLiteralExpression.getText();
       final Pair<String,String> quotes =
-        PythonStringUtil.getQuotes(text);
+        PyStringLiteralUtil.getQuotes(text);
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
       if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
         String indent = getIndent(stringLiteralExpression);
@@ -90,7 +86,7 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
     if (stringLiteralExpression != null) {
       final String text = stringLiteralExpression.getText();
       final Pair<String,String> quotes =
-        PythonStringUtil.getQuotes(text);
+        PyStringLiteralUtil.getQuotes(text);
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
       if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
         String indent = getIndent(stringLiteralExpression);

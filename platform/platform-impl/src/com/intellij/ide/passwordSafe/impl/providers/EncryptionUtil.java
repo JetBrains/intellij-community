@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.OneTimeString;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,15 +77,8 @@ public class EncryptionUtil {
     // do nothing
   }
 
-  /**
-   * Calculate raw key
-   *
-   * @param requester the requester
-   * @param key       the key
-   * @return the raw key bytes
-   */
-  static byte[] rawKey(Class requester, String key) {
-    return hash(getUTF8Bytes(requester.getName() + "/" + key));
+  static byte[] rawKey(@NotNull CredentialAttributes attributes) {
+    return hash(getUTF8Bytes(attributes.getServiceName() + "/" + attributes.getUserName()));
   }
 
   /**
@@ -105,7 +101,7 @@ public class EncryptionUtil {
    * @param password the password to use
    * @return the generated key
    */
-  public static byte[] genPasswordKey(String password) {
+  public static byte[] genPasswordKey(@NotNull String password) {
     return genKey(hash(getUTF8Bytes(password)));
   }
 
@@ -117,6 +113,7 @@ public class EncryptionUtil {
    * @param rawKey   the raw key to encrypt
    * @return the encrypted key
    */
+  @NotNull
   public static byte[] encryptKey(@NotNull byte[] password, byte[] rawKey) {
     try {
       Cipher c = Cipher.getInstance(ENCRYPT_KEY_ALGORITHM);
@@ -124,22 +121,9 @@ public class EncryptionUtil {
       return c.doFinal(rawKey);
     }
     catch (GeneralSecurityException e) {
-      throw new IllegalStateException(e.getMessage(), e);
+      throw new IllegalStateException(e);
     }
   }
-
-  /**
-   * Create encrypted db key
-   *
-   * @param password  the password to protect the key
-   * @param requestor the requestor for the key
-   * @param key       the key within requestor
-   * @return the key to use in the database
-   */
-  public static byte[] dbKey(@NotNull byte[] password, Class requestor, String key) {
-    return encryptKey(password, rawKey(requestor, key));
-  }
-
 
   /**
    * Decrypt key (does not use salting, so the encryption result is the same for the same input)
@@ -179,18 +163,10 @@ public class EncryptionUtil {
     }
   }
 
-  /**
-   * Encrypt text
-   *
-   * @param password the secret key to use
-   * @param text     the text to encrypt
-   * @return encrypted text
-   */
-  public static byte[] encryptText(byte[] password, String text) {
-    byte[] data = getUTF8Bytes(text);
+  public static byte[] encryptText(byte[] password, @NotNull OneTimeString value) {
+    byte[] data = value.toByteArray(false);
     return encryptData(password, data.length, data);
   }
-
 
   /**
    * Decrypt key (does not use salting, so the encryption result is the same for the same input)
@@ -210,21 +186,14 @@ public class EncryptionUtil {
     }
   }
 
-
-  /**
-   * Encrypt text
-   *
-   * @param password the secret key to use
-   * @param data     the bytes to decrypt
-   * @return encrypted text
-   */
-  public static String decryptText(byte[] password, byte[] data) {
+  @NotNull
+  public static OneTimeString decryptText(byte[] password, byte[] data) {
     byte[] plain = decryptData(password, data);
     int len = ((plain[0] & 0xff) << 24) + ((plain[1] & 0xff) << 16) + ((plain[2] & 0xff) << 8) + (plain[3] & 0xff);
     if (len < 0 || len > plain.length - 4) {
       throw new IllegalStateException("Unmatched password is used");
     }
-    return new String(plain, 4, len, CharsetToolkit.UTF8_CHARSET);
+    return CredentialAttributesKt.OneTimeString(plain, 4, len);
   }
 
   /**

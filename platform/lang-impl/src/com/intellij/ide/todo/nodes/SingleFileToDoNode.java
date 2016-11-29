@@ -37,7 +37,7 @@ public class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    return new ArrayList<AbstractTreeNode>(Collections.singleton(myFileNode));
+    return new ArrayList<>(Collections.singleton(myFileNode));
   }
 
   @Override

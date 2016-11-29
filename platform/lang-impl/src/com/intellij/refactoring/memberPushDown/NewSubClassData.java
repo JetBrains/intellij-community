@@ -17,10 +17,13 @@ package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.psi.PsiElement;
 
+/**
+ * Bean to store new class data if no inheritors were found: {@link PushDownDelegate#preprocessNoInheritorsFound(PsiElement, String)}
+ */
 public class NewSubClassData {
-  public static final NewSubClassData EMPTY = new NewSubClassData(null, null);
+  public static final NewSubClassData ABORT_REFACTORING = new NewSubClassData(null, null);
 
-  private PsiElement myContext;
+  private Object myContext;
   private String myNewClassName;
 
   public NewSubClassData(PsiElement context, String newClassName) {
@@ -28,7 +31,10 @@ public class NewSubClassData {
     myNewClassName = newClassName;
   }
 
-  protected PsiElement getContext() {
+  /**
+   * Directory to create new class
+   */
+  protected Object getContext() {
     return myContext;
   }
 

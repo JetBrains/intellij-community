@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.MethodSignatureComponent;
+import com.intellij.refactoring.util.AbstractVariableData;
+import com.intellij.refactoring.util.SimpleParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +38,7 @@ import java.util.Map;
 
 public class AbstractExtractMethodDialog extends DialogWrapper implements ExtractMethodSettings {
   private JPanel myContentPane;
-  private AbstractParameterTablePanel myParametersPanel;
+  private SimpleParameterTablePanel myParametersPanel;
   private JTextField myMethodNameTextField;
   private MethodSignatureComponent mySignaturePreviewTextArea;
   private JTextArea myOutputVariablesTextArea;
@@ -64,9 +66,9 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     myValidator = validator;
     myDecorator = decorator;
     myFileType = type;
-    myArguments = new ArrayList<String>(fragment.getInputVariables());
+    myArguments = new ArrayList<>(fragment.getInputVariables());
     Collections.sort(myArguments);
-    myOutputVariables = new ArrayList<String>(fragment.getOutputVariables());
+    myOutputVariables = new ArrayList<>(fragment.getOutputVariables());
     Collections.sort(myOutputVariables);
     setModal(true);
     setTitle(RefactoringBundle.message("extract.method.title"));
@@ -90,10 +92,9 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     });
 
 
-    myVariableData = createVariableData(myArguments);
+    myVariableData = createVariableDataByNames(myArguments);
     myVariablesMap = createVariableMap(myVariableData);
-    myParametersPanel.setVariableData(myVariableData);
-    myParametersPanel.init();
+    myParametersPanel.init(myVariableData);
 
     updateOutputVariables();
     updateSignature();
@@ -105,7 +106,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     return myMethodNameTextField;
   }
 
-  public static AbstractVariableData[] createVariableData(final List<String> args) {
+  public static AbstractVariableData[] createVariableDataByNames(final List<String> args) {
     final AbstractVariableData[] datas = new AbstractVariableData[args.size()];
     for (int i = 0; i < args.size(); i++) {
       final AbstractVariableData data = new AbstractVariableData();
@@ -119,7 +120,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
   }
 
   public static Map<String, AbstractVariableData> createVariableMap(final AbstractVariableData[] data) {
-    final HashMap<String, AbstractVariableData> map = new HashMap<String, AbstractVariableData>();
+    final HashMap<String, AbstractVariableData> map = new HashMap<>();
     for (AbstractVariableData variableData : data) {
       map.put(variableData.getOriginalName(), variableData);
     }
@@ -158,7 +159,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
   }
 
   private void createUIComponents() {
-    myParametersPanel = new AbstractParameterTablePanel(myValidator){
+    myParametersPanel = new SimpleParameterTablePanel(myValidator::isValidName) {
       @Override
       protected void doCancelAction() {
         AbstractExtractMethodDialog.this.doCancelAction();
@@ -197,7 +198,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
   }
 
   private void updateSignature() {
-    mySignaturePreviewTextArea.setSignature(myDecorator.createMethodPreview(getMethodName(), myVariableData));
+    mySignaturePreviewTextArea.setSignature(myDecorator.createMethodSignature(getMethodName(), myVariableData));
   }
 
   private void updateOkStatus() {
@@ -210,7 +211,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
   }
 
   @Override
-  public AbstractVariableData[] getVariableData() {
+  public AbstractVariableData[] getAbstractVariableData() {
     return myVariableData;
   }
 

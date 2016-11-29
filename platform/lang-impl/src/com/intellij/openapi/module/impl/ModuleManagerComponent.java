@@ -19,16 +19,14 @@ import com.intellij.ProjectTopics;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.UnknownModuleType;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
@@ -46,13 +44,11 @@ import java.util.List;
 @State(name = ModuleManagerImpl.COMPONENT_NAME, storages = @Storage("modules.xml"))
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerComponent");
-  private final ProgressManager myProgressManager;
   private final MessageBusConnection myConnection;
 
-  public ModuleManagerComponent(Project project, ProgressManager progressManager, MessageBus bus) {
+  public ModuleManagerComponent(Project project, MessageBus bus) {
     super(project, bus);
     myConnection = bus.connect(project);
-    myProgressManager = progressManager;
     myConnection.setDefaultHandler(new MessageHandler() {
       @Override
       public void handle(Method event, Object... params) {
@@ -61,7 +57,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     });
 
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
-    myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+    myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void projectComponentsInitialized(@NotNull final Project project) {
         if (project != myProject) return;
@@ -69,7 +65,9 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
         long t = System.currentTimeMillis();
         loadModules(myModuleModel);
         t = System.currentTimeMillis() - t;
-        LOG.info(myModuleModel.getModules().length + " module(s) loaded in " + t + " ms");
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.info(myModuleModel.getModules().length + " module(s) loaded in " + t + " ms");
+        }
       }
     });
 
@@ -122,33 +120,8 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
   @Override
   protected void fireModulesAdded() {
-    if (myModuleModel.myModules.isEmpty()) {
-      return;
-    }
-
-    Runnable runnableWithProgress = new Runnable() {
-      @Override
-      public void run() {
-        for (final Module module : myModuleModel.myModules.values()) {
-          final Application app = ApplicationManager.getApplication();
-          final Runnable swingRunnable = new Runnable() {
-            @Override
-            public void run() {
-              fireModuleAddedInWriteAction(module);
-            }
-          };
-          ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-          app.invokeAndWait(swingRunnable, pi.getModalityState());
-        }
-      }
-    };
-
-    ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
-    if (progressIndicator == null) {
-      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Initializing modules...", false, myProject);
-    }
-    else {
-      runnableWithProgress.run();
+    for (final Module module : myModuleModel.myModules.values()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> fireModuleAddedInWriteAction(module));
     }
   }
 

@@ -145,7 +145,7 @@ public final class GroovyDocGenerationPanel extends JPanel {
 
 private static String[] toStringArray(final DefaultListModel model) {
     final int count = model.getSize();
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
     for (int i = 0; i < count; i++) {
       final Object o = model.getElementAt(i);
       assert o instanceof String;

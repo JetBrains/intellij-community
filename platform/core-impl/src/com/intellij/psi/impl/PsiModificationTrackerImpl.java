@@ -16,6 +16,8 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
@@ -65,13 +67,18 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     myModificationCount.getAndIncrement();
     myJavaStructureModificationCount.getAndIncrement();
     myOutOfCodeBlockModificationCount.getAndIncrement();
+    fireEvent();
+  }
+
+  private void fireEvent() {
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     myPublisher.modificationCountChanged();
   }
 
   public void incOutOfCodeBlockModificationCounter() {
     myModificationCount.getAndIncrement();
     myOutOfCodeBlockModificationCount.getAndIncrement();
-    myPublisher.modificationCountChanged();
+    fireEvent();
   }
 
   @Override
@@ -82,7 +89,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
       myOutOfCodeBlockModificationCount.getAndIncrement();
     }
 
-    myPublisher.modificationCountChanged();
+    fireEvent();
   }
 
   @Override

@@ -59,12 +59,7 @@ public class TestRunnerUtil {
     // in JDK 1.6 java.awt.EventQueue.push() causes slow painful death of current EDT
     // so we have to wait through its agony to termination
     try {
-      SwingUtilities.invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          IdeEventQueue.getInstance();
-        }
-      });
+      SwingUtilities.invokeAndWait(() -> IdeEventQueue.getInstance());
       SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
       SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
     }

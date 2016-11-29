@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -66,8 +65,6 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     final Object value = myLiteral.getValue();
     if (value != null && value.toString().length() == 1) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -97,7 +94,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
 
   public static void registerFixes(@NotNull final PsiMethod[] candidates, @NotNull final PsiConstructorCall call,
                                         @NotNull final HighlightInfo out) {
-    final Set<PsiLiteralExpression> literals = new HashSet<PsiLiteralExpression>();
+    final Set<PsiLiteralExpression> literals = new HashSet<>();
     if (call.getArgumentList() == null) {
       return;
     }
@@ -114,7 +111,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
                                    @NotNull final PsiMethodCallExpression methodCall,
                                    @Nullable final HighlightInfo info) {
     if (info == null) return;
-    final Set<PsiLiteralExpression> literals = new HashSet<PsiLiteralExpression>();
+    final Set<PsiLiteralExpression> literals = new HashSet<>();
     boolean exactMatch = false;
     for (CandidateInfo candidate : candidates) {
       if (candidate instanceof MethodCandidateInfo) {

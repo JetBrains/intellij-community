@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
     myType = ChangeType.deriveApplied(myType);
     for (SimpleChangeSide side : mySides) {
       ChangeHighlighterHolder highlighterHolder = side.getHighlighterHolder();
-      highlighterHolder.setActions(new AnAction[0]);
+      highlighterHolder.setActions(AnAction.EMPTY_ARRAY);
       highlighterHolder.updateHighlighter(side, myType);
     }
     myChangeList.apply(this);

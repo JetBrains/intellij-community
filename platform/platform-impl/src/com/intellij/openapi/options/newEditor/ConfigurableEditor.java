@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -75,12 +73,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private final AbstractAction myApplyAction = new AbstractAction(CommonBundle.getApplyButtonText()) {
     @Override
     public void actionPerformed(ActionEvent event) {
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
-          apply();
-        }
-      });
+      apply();
     }
   };
   private final AbstractAction myResetAction = new AbstractAction(RESET_NAME) {
@@ -247,12 +240,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   final ActionCallback select(final Configurable configurable) {
     assert !myDisposed : "Already disposed";
     ActionCallback callback = myCardPanel.select(configurable, false);
-    callback.doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myConfigurable = configurable;
-        updateCurrent(configurable, false);
-      }
+    callback.doWhenDone(() -> {
+      myConfigurable = configurable;
+      updateCurrent(configurable, false);
     });
     return callback;
   }
@@ -299,13 +289,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         content.add(BorderLayout.CENTER, panel);
         panel.add(Box.createVerticalStrut(10));
-        for (final Configurable current : composite.getConfigurables()) {
-          LinkLabel label = new LinkLabel(current.getDisplayName(), null) {
-            @Override
-            public void doClick() {
-              openLink(current);
-            }
-          };
+        for (Configurable current : composite.getConfigurables()) {
+          LinkLabel label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
           label.setBorder(BorderFactory.createEmptyBorder(1, 17, 3, 1));
           panel.add(label);
         }

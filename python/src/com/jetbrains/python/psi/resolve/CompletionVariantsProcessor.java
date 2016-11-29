@@ -42,7 +42,7 @@ import java.util.*;
  * @author yole
  */
 public class CompletionVariantsProcessor extends VariantsProcessor {
-  private final Map<String, LookupElement> myVariants = new HashMap<String, LookupElement>();
+  private final Map<String, LookupElement> myVariants = new HashMap<>();
   private boolean mySuppressParentheses = false;
 
   public CompletionVariantsProcessor(PsiElement context) {
@@ -70,12 +70,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
         final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
-        final String params = StringUtil.join(parameters, new Function<PyParameter, String>() {
-          @Override
-          public String fun(PyParameter pyParameter) {
-            return pyParameter.getName();
-          }
-        }, ", ");
+        final String params = StringUtil.join(parameters, pyParameter -> pyParameter.getName(), ", ");
         item = item.withTailText("(" + params + ")");
       }
       else if (element instanceof PyClass) {
@@ -149,7 +144,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   }
 
   public List<LookupElement> getResultList() {
-    return new ArrayList<LookupElement>(myVariants.values());
+    return new ArrayList<>(myVariants.values());
   }
 
   @Override

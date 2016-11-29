@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,39 +28,39 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
+class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}refactoring/copy/";
+    return "${TestUtils.testDataPath}refactoring/copy/"
   }
 
-  public void testBetweenPackages() throws Throwable {
-    final String testName = getTestName(false);
-    myFixture.copyFileToProject("${testName}.groovy", "foo/${testName}.groovy");
-    myFixture.addClass("package foo; public class Bar {}");
-    myFixture.addClass("package bar; public class Bar {}");
+  void testBetweenPackages() throws Throwable {
+    final String testName = getTestName(false)
+    myFixture.copyFileToProject("${testName}.groovy", "foo/${testName}.groovy")
+    myFixture.addClass("package foo; public class Bar {}")
+    myFixture.addClass("package bar; public class Bar {}")
 
-    final PsiClass srcClass = myFixture.javaFacade.findClass("foo.$testName", GlobalSearchScope.allScope(project));
-    assertTrue(CopyClassesHandler.canCopyClass(srcClass));
+    final PsiClass srcClass = myFixture.javaFacade.findClass("foo.$testName", GlobalSearchScope.allScope(project))
+    assertTrue(CopyClassesHandler.canCopyClass(srcClass))
     new WriteCommandAction(project, [] as PsiFile[]) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
         def map = Collections.singletonMap(srcClass.navigationElement.containingFile, [srcClass] as PsiClass[])
         def dir = srcClass.manager.findDirectory(myFixture.tempDirFixture.getFile("bar"))
-        CopyClassesHandler.doCopyClasses(map, "${testName}_after", dir, project);
+        CopyClassesHandler.doCopyClasses(map, "${testName}_after", dir, project)
       }
-    }.execute();
+    }.execute()
 
-    myFixture.checkResultByFile("bar/${testName}_after.groovy", "${testName}_after.groovy", true);
+    myFixture.checkResultByFile("bar/${testName}_after.groovy", "${testName}_after.groovy", true)
   }
 
-  public void testCopyScript() throws Throwable {
-    final String testName = getTestName(false);
-    def file = myFixture.copyFileToProject("${testName}.groovy", "/foo/${testName}.groovy");
+  void testCopyScript() throws Throwable {
+    final String testName = getTestName(false)
+    def file = myFixture.copyFileToProject("${testName}.groovy", "/foo/${testName}.groovy")
     def psiFile = myFixture.psiManager.findFile(file)
     //would be copied as file
-    assertFalse(CopyClassesHandler.canCopyClass(myFixture.javaFacade.findClass("foo.$testName", GlobalSearchScope.allScope(project))));
-    assertFalse(CopyClassesHandler.canCopyClass(psiFile));
+    assertFalse(CopyClassesHandler.canCopyClass(myFixture.javaFacade.findClass("foo.$testName", GlobalSearchScope.allScope(project))))
+    assertFalse(CopyClassesHandler.canCopyClass(psiFile))
   }
 }

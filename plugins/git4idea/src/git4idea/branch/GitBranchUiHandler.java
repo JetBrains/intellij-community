@@ -81,8 +81,12 @@ public interface GitBranchUiHandler {
   int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull Collection<String> paths,
                                @NotNull String operation, @Nullable String forceButtonTitle);
 
-  boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull Map<GitRepository, List<GitCommit>> history,
-                                           @NotNull String unmergedBranch, @NotNull List<String> mergedToBranches,
-                                           @NotNull String baseBranch);
+  /**
+   * @return true if user decided to restore the branch.
+   */
+  boolean showBranchIsNotFullyMergedDialog(@NotNull Project project,
+                                           @NotNull Map<GitRepository, List<GitCommit>> history,
+                                           @NotNull Map<GitRepository, String> baseBranches,
+                                           @NotNull String removedBranch);
 
 }

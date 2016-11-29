@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,10 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.util.Comparing;
@@ -52,22 +48,22 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
+  public void ensureRunnerConfigured(@NotNull GroovyScriptRunConfiguration configuration) throws RuntimeConfigurationException {
+    Module module = configuration.getModule();
     if (module == null) {
-      throw new ExecutionException("Module is not specified");
+      throw new RuntimeConfigurationException("Module is not specified");
     }
 
     if (LibrariesUtil.getGroovyHomePath(module) == null) {
-      ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, new ExecutionException("Groovy is not configured"));
-      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME);
-      return false;
+      RuntimeConfigurationException e = new RuntimeConfigurationException("Groovy is not configured for module '" + module.getName() + "'");
+      e.setQuickFix(() -> ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME));
+      throw e;
     }
-    return true;
   }
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests);
+    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests, configuration.isAddClasspathToTheRunner());
 
     //addClasspathFromRootModel(module, tests, params, true);
 
@@ -81,7 +77,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     String path = ScriptFileUtil.getLocalFilePath(StringUtil.notNullize(configuration.getScriptPath()));
     params.getProgramParametersList().add(FileUtil.toSystemDependentName(path));
-    params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
+    params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
   }
 
   public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
@@ -89,6 +85,15 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   @NotNull String mainClass,
                                                   boolean useBundled,
                                                   boolean tests) throws CantRunException {
+    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true);
+  }
+
+  public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
+                                                  @NotNull Module module,
+                                                  @NotNull String mainClass,
+                                                  boolean useBundled,
+                                                  boolean tests,
+                                                  boolean addClasspathToRunner) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (useBundled) {
       params.getClassPath().add(GroovyFacetUtil.getBundledGroovyJar());
@@ -97,7 +102,9 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
       params.getClassPath().add(groovyJar);
     }
 
-    getClassPathFromRootModel(module, tests, params, true, params.getClassPath());
+    if (addClasspathToRunner) {
+      getClassPathFromRootModel(module, tests, params, true, params.getClassPath());
+    }
 
     setToolsJar(params);
 
@@ -110,7 +117,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     final String confPath = getConfPath(groovyHomeDependentName);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
-    params.getVMParametersList().addAll(HttpConfigurable.convertArguments(HttpConfigurable.getJvmPropertiesList(false, null)));
+    HttpConfigurable.getInstance().getJvmProperties(false, null).forEach(p -> params.getVMParametersList().addProperty(p.first, p.second));
 
     params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
 

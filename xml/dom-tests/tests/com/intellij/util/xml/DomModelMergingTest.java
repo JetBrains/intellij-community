@@ -61,7 +61,7 @@ public class DomModelMergingTest extends DomTestCase {
     assertEquals(1, count[0]);
 
     count[0] = 0;
-    final Set<DomElement> result = new HashSet<DomElement>();
+    final Set<DomElement> result = new HashSet<>();
     element.acceptChildren(new DomElementVisitor() {
       @Override
       public void visitDomElement(DomElement element) {

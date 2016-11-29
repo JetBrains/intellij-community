@@ -137,22 +137,14 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   protected void doAction() {
     LOG.assertTrue(myElement.isValid());
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              myTag.setName(getNewName());
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        myTag.setName(getNewName());
       }
-    }, RefactoringBundle.message("rename.title"), null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), RefactoringBundle.message("rename.title"), null);
 
     close(DialogWrapper.OK_EXIT_CODE);
   }

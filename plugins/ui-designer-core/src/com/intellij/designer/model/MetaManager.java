@@ -42,12 +42,12 @@ public abstract class MetaManager extends ModelLoader {
   private static final String TAG = "tag";
   private static final String WRAP_IN = "wrap-in";
 
-  private final Map<String, MetaModel> myTag2Model = new HashMap<String, MetaModel>();
-  private final Map<String, MetaModel> myTarget2Model = new HashMap<String, MetaModel>();
-  private final List<PaletteGroup> myPaletteGroups = new ArrayList<PaletteGroup>();
-  private final List<MetaModel> myWrapModels = new ArrayList<MetaModel>();
+  private final Map<String, MetaModel> myTag2Model = new HashMap<>();
+  private final Map<String, MetaModel> myTarget2Model = new HashMap<>();
+  private final List<PaletteGroup> myPaletteGroups = new ArrayList<>();
+  private final List<MetaModel> myWrapModels = new ArrayList<>();
 
-  private Map<Object, Object> myCache = new HashMap<Object, Object>();
+  private Map<Object, Object> myCache = new HashMap<>();
 
   protected MetaManager(Project project, String name) {
     super(project);
@@ -58,7 +58,7 @@ public abstract class MetaManager extends ModelLoader {
   protected void loadDocument(Element rootElement) throws Exception {
     ClassLoader classLoader = getClass().getClassLoader();
 
-    Map<MetaModel, List<String>> modelToMorphing = new HashMap<MetaModel, List<String>>();
+    Map<MetaModel, List<String>> modelToMorphing = new HashMap<>();
 
     for (Element element : rootElement.getChildren(META)) {
       loadModel(classLoader, element, modelToMorphing);
@@ -77,7 +77,7 @@ public abstract class MetaManager extends ModelLoader {
 
     for (Map.Entry<MetaModel, List<String>> entry : modelToMorphing.entrySet()) {
       MetaModel meta = entry.getKey();
-      List<MetaModel> morphingModels = new ArrayList<MetaModel>();
+      List<MetaModel> morphingModels = new ArrayList<>();
 
       for (String tag : entry.getValue()) {
         MetaModel morphingModel = myTag2Model.get(tag);

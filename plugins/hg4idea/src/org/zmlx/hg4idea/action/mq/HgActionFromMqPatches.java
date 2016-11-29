@@ -35,7 +35,7 @@ public abstract class HgActionFromMqPatches extends DumbAwareAction {
       @Override
       public void run() {
         ProgressManager.getInstance().getProgressIndicator().setText(getTitle());
-        execute(repository, names);
+        executeInCurrentThread(repository, names);
       }
     };
     patchInfo.updatePatchSeriesInBackground(task);
@@ -51,7 +51,7 @@ public abstract class HgActionFromMqPatches extends DumbAwareAction {
     return true;        //todo should be improved, param not needed
   }
 
-  protected abstract void execute(@NotNull HgRepository repository, @NotNull List<String> patchNames);
+  protected abstract void executeInCurrentThread(@NotNull HgRepository repository, @NotNull List<String> patchNames);
 
   @NotNull
   protected abstract String getTitle();

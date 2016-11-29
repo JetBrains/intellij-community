@@ -17,6 +17,7 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.ScreenUtil;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 
 class DragHelper extends MouseDragHelper {
 
@@ -40,7 +43,7 @@ class DragHelper extends MouseDragHelper {
   private Dimension myHoldDelta;
 
   private TabInfo myDragOutSource;
-  private TabLabel myPressedTabLabel;
+  private Reference<TabLabel> myPressedTabLabel;
 
   public DragHelper(JBTabsImpl tabs) {
     super(tabs, tabs);
@@ -57,10 +60,8 @@ class DragHelper extends MouseDragHelper {
 
     int dX = dragToScreenPoint.x - startScreenPoint.x;
     int dY = dragToScreenPoint.y - startScreenPoint.y;
-    boolean dragOut =
-      myTabs.getEffectiveLayout().isDragOut(label, dX, dY);
 
-    return dragOut;
+    return myTabs.getEffectiveLayout().isDragOut(label, dX, dY);
   }
 
   @Override
@@ -90,7 +91,8 @@ class DragHelper extends MouseDragHelper {
   protected void processMousePressed(MouseEvent event) {
     // since selection change can cause tabs to be reordered, we need to remember the tab on which the mouse was pressed, otherwise
     // we'll end up dragging the wrong tab (IDEA-65073)
-    myPressedTabLabel = findLabel(new RelativePoint(event).getPoint(myTabs));
+    TabLabel label = findLabel(new RelativePoint(event).getPoint(myTabs));
+    myPressedTabLabel = label == null ? null : new WeakReference<>(label);
   }
 
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
@@ -99,12 +101,13 @@ class DragHelper extends MouseDragHelper {
     SwingUtilities.convertPointFromScreen(startPointScreen, myTabs);
 
     if (isDragJustStarted()) {
-      if (myPressedTabLabel == null) return;
+      TabLabel pressedTabLabel = SoftReference.dereference(myPressedTabLabel);
+      if (pressedTabLabel == null) return;
 
-      final Rectangle labelBounds = myPressedTabLabel.getBounds();
+      final Rectangle labelBounds = pressedTabLabel.getBounds();
 
       myHoldDelta = new Dimension(startPointScreen.x - labelBounds.x, startPointScreen.y - labelBounds.y);
-      myDragSource = myPressedTabLabel.getInfo();
+      myDragSource = pressedTabLabel.getInfo();
       myDragRec = new Rectangle(startPointScreen, labelBounds.getSize());
       myDragOriginalRec = (Rectangle)myDragRec.clone();
 

@@ -136,7 +136,7 @@ public class JavaI18nUtil extends I18nUtil {
       if (processed.contains(method)) return false;
     }
     else {
-      processed = new THashSet<PsiMethod>();
+      processed = new THashSet<>();
     }
     processed.add(method);
 
@@ -191,7 +191,7 @@ public class JavaI18nUtil extends I18nUtil {
                                           @NotNull PsiExpression expression,
                                           @NotNull String key,
                                           @NotNull Ref<String> outResourceBundle) {
-    final HashMap<String, Object> annotationAttributeValues = new HashMap<String, Object>();
+    final HashMap<String, Object> annotationAttributeValues = new HashMap<>();
     annotationAttributeValues.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
     if (mustBePropertyKey(expression, annotationAttributeValues)) {
       final Object resourceBundleName = annotationAttributeValues.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
@@ -269,7 +269,7 @@ public class JavaI18nUtil extends I18nUtil {
 
   public static Set<String> suggestExpressionOfType(final PsiClassType type, final PsiLiteralExpression context) {
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(context, "");
-    Set<String> result = new LinkedHashSet<String>();
+    Set<String> result = new LinkedHashSet<>();
     for (PsiVariable var : variables) {
       PsiType varType = var.getType();
       if (type == null || type.isAssignableFrom(varType)) {
@@ -368,7 +368,7 @@ public class JavaI18nUtil extends I18nUtil {
     } else {
       literalExpression = null;
     }
-    final TreeSet<Integer> paramsCount = new TreeSet<Integer>();
+    final TreeSet<Integer> paramsCount = new TreeSet<>();
     if (literalExpression == null) {
       return paramsCount;
     }

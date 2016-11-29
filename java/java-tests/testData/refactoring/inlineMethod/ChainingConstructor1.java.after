@@ -1,5 +1,8 @@
 class TestInlineMethod {
 
+    /**
+     * {@link #TestInlineMethod(String, int, String, int)}
+     */
     public TestInlineMethod(Integer i1, Integer i2) {
     }
 

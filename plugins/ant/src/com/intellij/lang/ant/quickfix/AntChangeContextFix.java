@@ -54,6 +54,11 @@ public class AntChangeContextFix extends BaseIntentionAction {
     return true;
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final HectorComponent component = new HectorComponent(file);
     //final JComponent focusComponent = findComponentToFocus(component);

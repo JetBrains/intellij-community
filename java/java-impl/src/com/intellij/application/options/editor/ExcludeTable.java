@@ -43,13 +43,12 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
 class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
-  private static final Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
-  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>("Class or package") {
+  private static final Pattern ourPackagePattern = Pattern.compile("([\\w*]+\\.)*[\\w*]+");
+  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>("Class/package/member qualified name mask") {
     @Nullable
     @Override
     public String valueOf(Item pair) {
@@ -111,7 +110,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     @Nullable
     @Override
     public TableCellRenderer getRenderer(Item pair) {
-      return new ComboBoxTableRenderer<ExclusionScope>(ExclusionScope.values());
+      return new ComboBoxTableRenderer<>(ExclusionScope.values());
     }
 
     @Nullable
@@ -196,12 +195,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     for (String s : JavaProjectCodeInsightSettings.getSettings(myProject).excludedNames) {
       rows.add(new Item(s, ExclusionScope.Project));
     }
-    Collections.sort(rows, new Comparator<Item>() {
-      @Override
-      public int compare(Item o1, Item o2) {
-        return o1.exclude.compareTo(o2.exclude);
-      }
-    });
+    Collections.sort(rows, (o1, o2) -> o1.exclude.compareTo(o2.exclude));
 
     setValues(rows);
   }

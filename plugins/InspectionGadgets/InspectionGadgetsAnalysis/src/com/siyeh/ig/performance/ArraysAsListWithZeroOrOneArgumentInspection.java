@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,14 +96,15 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
         return;
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
+      final String parameterText = parameterList != null ? parameterList.getText() : "";
       if (myEmpty) {
-        PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections.emptyList()");
+        PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections." + parameterText +
+                                                                             "emptyList()");
       }
       else {
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-        final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
-        final String parameterText = parameterList != null ? parameterList.getText() : "";
         PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections." + parameterText +
                                                                              "singletonList" + argumentList.getText());
       }

@@ -212,32 +212,27 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   public void selectNode(final PsiElement element, final PsiFileSystemItem file, final boolean requestFocus) {
-    final Runnable runnable = new Runnable() {
+    final Runnable runnable = () -> myUpdateQueue.queue(new Update("Select") {
       @Override
       public void run() {
-        myUpdateQueue.queue(new Update("Select") {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            PackageDependenciesNode node = myBuilder.findNode(file, element);
-            if (node != null && node.getPsiElement() != element) {
-              final TreePath path = new TreePath(node.getPath());
-              if (myTree.isCollapsed(path)) {
-                myTree.expandPath(path);
-                myTree.makeVisible(path);
-              }
-            }
-            node = myBuilder.findNode(file, element);
-            if (node != null) {
-              TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
-              if (requestFocus) {
-                myTree.requestFocus();
-              }
-            }
+        if (myProject.isDisposed()) return;
+        PackageDependenciesNode node = myBuilder.findNode(file, element);
+        if (node != null && node.getPsiElement() != element) {
+          final TreePath path = new TreePath(node.getPath());
+          if (myTree.isCollapsed(path)) {
+            myTree.expandPath(path);
+            myTree.makeVisible(path);
           }
-        });
+        }
+        node = myBuilder.findNode(file, element);
+        if (node != null) {
+          TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
+          if (requestFocus) {
+            myTree.requestFocus();
+          }
+        }
       }
-    };
+    });
     doWhenDone(runnable);
   }
 
@@ -305,7 +300,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private PsiElement[] getSelectedPsiElements() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
-      Set<PsiElement> result = new HashSet<PsiElement>();
+      Set<PsiElement> result = new HashSet<>();
       for (TreePath path : treePaths) {
         final Object component = path.getLastPathComponent();
         if (component instanceof PackageDependenciesNode) {
@@ -348,14 +343,11 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myBuilder.setTree(myTree);
     myTree.getEmptyText().setText("Loading...");
     myActionCallback = new ActionCallback();
-    myTree.putClientProperty(TreeState.CALLBACK, new WeakReference<ActionCallback>(myActionCallback));
-    myTree.setModel(myBuilder.build(myProject, true, new Runnable(){
-      @Override
-      public void run() {
-        myTree.setPaintBusy(false);
-        myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-        myActionCallback.setDone();
-      }
+    myTree.putClientProperty(TreeState.CALLBACK, new WeakReference<>(myActionCallback));
+    myTree.setModel(myBuilder.build(myProject, true, () -> {
+      myTree.setPaintBusy(false);
+      myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+      myActionCallback.setDone();
     }));
     ((PackageDependenciesNode)myTree.getModel().getRoot()).sortChildren();
     ((DefaultTreeModel)myTree.getModel()).reload();
@@ -392,7 +384,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
       if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        Set<PsiElement> psiElements = new HashSet<PsiElement>();
+        Set<PsiElement> psiElements = new HashSet<>();
         for (TreePath treePath : treePaths) {
           final PackageDependenciesNode node = (PackageDependenciesNode)treePath.getLastPathComponent();
           if (node.isValid()) {
@@ -439,7 +431,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private Module[] getSelectedModules() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
-      Set<Module> result = new HashSet<Module>();
+      Set<Module> result = new HashSet<>();
       for (TreePath path : treePaths) {
         PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
         if (node instanceof ModuleNode) {
@@ -463,20 +455,17 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       final List<TreePath> selectionPaths = TreeUtil.collectSelectedPaths(myTree, new TreePath(rootToReload.getPath()));
       final TreePath path = new TreePath(rootToReload.getPath());
       final boolean wasCollapsed = myTree.isCollapsed(path);
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          if (!isTreeShowing() || rootToReload.getParent() == null) return;
-          TreeUtil.sort(rootToReload, getNodeComparator());
-          treeModel.reload(rootToReload);
-          if (!wasCollapsed) {
-            myTree.collapsePath(path);
-            for (TreePath treePath : treePaths) {
-              myTree.expandPath(treePath);
-            }
-            for (TreePath selectionPath : selectionPaths) {
-              TreeUtil.selectPath(myTree, selectionPath);
-            }
+      final Runnable runnable = () -> {
+        if (!isTreeShowing() || rootToReload.getParent() == null) return;
+        TreeUtil.sort(rootToReload, getNodeComparator());
+        treeModel.reload(rootToReload);
+        if (!wasCollapsed) {
+          myTree.collapsePath(path);
+          for (TreePath treePath : treePaths) {
+            myTree.expandPath(treePath);
+          }
+          for (TreePath selectionPath : selectionPaths) {
+            TreeUtil.selectPath(myTree, selectionPath);
           }
         }
       };
@@ -541,12 +530,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
             isProblem = myWolfTheProblemSolver.isProblemFile(virtualFile);
           }
           else if (virtualFile != null) {
-            isProblem = myWolfTheProblemSolver.hasProblemFilesBeneath(new Condition<VirtualFile>() {
-              @Override
-              public boolean value(VirtualFile file) {
-                return VfsUtilCore.isAncestor(virtualFile, file, false);
-              }
-            });
+            isProblem = myWolfTheProblemSolver.hasProblemFilesBeneath(file -> VfsUtilCore.isAncestor(virtualFile, file, false));
           }
           else {
             final Module module =  node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null;
@@ -582,12 +566,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       final PsiElement child = event.getChild();
       if (child == null) return;
       if (element.getContainingFile() == null) {
-        queueUpdate(new Runnable() {
-          @Override
-          public void run() {
-            if (!child.isValid()) return;
-            processNodeCreation(child);
-          }
+        queueUpdate(() -> {
+          if (!child.isValid()) return;
+          processNodeCreation(child);
         }, false);
       }
     }
@@ -617,13 +598,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       final PsiElement child = event.getChild();
       final PsiElement parent = event.getParent();
       if (parent instanceof PsiDirectory && (child instanceof PsiFile && !isInjected((PsiFile)child) || child instanceof PsiDirectory)) {
-        queueUpdate(new Runnable() {
-          @Override
-          public void run() {
-            final DefaultMutableTreeNode rootToReload = myBuilder.removeNode(child, (PsiDirectory)parent);
-            if (rootToReload != null) {
-              reload(rootToReload);
-            }
+        queueUpdate(() -> {
+          final DefaultMutableTreeNode rootToReload = myBuilder.removeNode(child, (PsiDirectory)parent);
+          if (rootToReload != null) {
+            reload(rootToReload);
           }
         }, true);
       }
@@ -635,14 +613,11 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       final PsiElement child = event.getChild();
       if (oldParent instanceof PsiDirectory) {
         if (child instanceof PsiFileSystemItem && (!(child instanceof PsiFile) || !isInjected((PsiFile)child))) {
-          queueUpdate(new Runnable() {
-            @Override
-            public void run() {
-              final DefaultMutableTreeNode rootToReload =
-                myBuilder.removeNode(child, child instanceof PsiDirectory ? (PsiDirectory)child : (PsiDirectory)oldParent);
-              if (rootToReload != null) {
-                reload(rootToReload);
-              }
+          queueUpdate(() -> {
+            final DefaultMutableTreeNode rootToReload =
+              myBuilder.removeNode(child, child instanceof PsiDirectory ? (PsiDirectory)child : (PsiDirectory)oldParent);
+            if (rootToReload != null) {
+              reload(rootToReload);
             }
           }, true);
         }
@@ -656,20 +631,17 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       if (newParent instanceof PsiDirectory) {
         if (child instanceof PsiFileSystemItem && (!(child instanceof PsiFile) || !isInjected((PsiFile)child))) {
           final PsiFileSystemItem file = (PsiFileSystemItem)child;
-          queueUpdate(new Runnable() {
-            @Override
-            public void run() {
-              final VirtualFile virtualFile = file.getVirtualFile();
-              if (virtualFile != null && virtualFile.isValid()) {
-                final PsiFileSystemItem newFile = file.isValid() ? file :
-                                                  (file.isDirectory() ? PsiManager.getInstance(myProject).findDirectory(virtualFile)
-                                                                      : PsiManager.getInstance(myProject).findFile(virtualFile));
-                if (newFile != null) {
-                  final PackageDependenciesNode rootToReload = newFile.isDirectory() ? myBuilder.addDirNode((PsiDirectory)newFile)
-                                                                                     : myBuilder.addFileNode((PsiFile)newFile);
-                  if (rootToReload != null) {
-                    reload(rootToReload);
-                  }
+          queueUpdate(() -> {
+            final VirtualFile virtualFile = file.getVirtualFile();
+            if (virtualFile != null && virtualFile.isValid()) {
+              final PsiFileSystemItem newFile = file.isValid() ? file :
+                                                (file.isDirectory() ? PsiManager.getInstance(myProject).findDirectory(virtualFile)
+                                                                    : PsiManager.getInstance(myProject).findFile(virtualFile));
+              if (newFile != null) {
+                final PackageDependenciesNode rootToReload = newFile.isDirectory() ? myBuilder.addDirNode((PsiDirectory)newFile)
+                                                                                   : myBuilder.addFileNode((PsiFile)newFile);
+                if (rootToReload != null) {
+                  reload(rootToReload);
                 }
               }
             }
@@ -685,16 +657,13 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       final PsiFile file = parent.getContainingFile();
       if (file != null && file.getFileType() == StdFileTypes.JAVA) {
         if (!file.getViewProvider().isPhysical() && !isInjected(file)) return;
-        queueUpdate(new Runnable() {
-          @Override
-          public void run() {
-            if (file.isValid() && file.getViewProvider().isPhysical()) {
-              final NamedScope scope = getCurrentScope();
-              final PackageSet packageSet = scope.getValue();
-              if (packageSet == null) return; //invalid scope selected
-              if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))){
-                reload(myBuilder.getFileParentNode(file.getVirtualFile()));
-              }
+        queueUpdate(() -> {
+          if (file.isValid() && file.getViewProvider().isPhysical()) {
+            final NamedScope scope = getCurrentScope();
+            final PackageSet packageSet = scope.getValue();
+            if (packageSet == null) return; //invalid scope selected
+            if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))){
+              reload(myBuilder.getFileParentNode(file.getVirtualFile()));
             }
           }
         }, false);
@@ -708,12 +677,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       if (element != null) {
         final NamedScope scope = getCurrentScope();
         if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)) {
-          queueUpdate(new Runnable() {
-            @Override
-            public void run() {
-              if (element.isValid()) {
-                processRenamed(scope, element.getContainingFile());
-              }
+          queueUpdate(() -> {
+            if (element.isValid()) {
+              processRenamed(scope, element.getContainingFile());
             }
           }, false);
         }
@@ -733,12 +699,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       final PsiFile psiFile = event.getFile();
       if (psiFile != null && !isInjected(psiFile)) {
         if (psiFile.getLanguage() == psiFile.getViewProvider().getBaseLanguage()) {
-          queueUpdate(new Runnable() {
-            @Override
-            public void run() {
-              processRenamed(scope, psiFile);
-            }
-          }, false);
+          queueUpdate(() -> processRenamed(scope, psiFile), false);
         }
       }
       else if (element instanceof PsiDirectory && element.isValid()) {
@@ -752,22 +713,16 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
     private void queueRefreshScope(final NamedScope scope, final PsiDirectory dir) {
       myUpdateQueue.cancelAllUpdates();
-      queueUpdate(new Runnable() {
-        @Override
-        public void run() {
-          myTreeExpansionMonitor.freeze();
-          refreshScope(scope);
-          doWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              myTreeExpansionMonitor.restore();
-              final PackageDependenciesNode dirNode = myBuilder.findNode(dir, dir);
-              if (dirNode != null) {
-                TreeUtil.selectPath(myTree, new TreePath(dirNode.getPath()));
-              }
-            }
-          });
-        }
+      queueUpdate(() -> {
+        myTreeExpansionMonitor.freeze();
+        refreshScope(scope);
+        doWhenDone(() -> {
+          myTreeExpansionMonitor.restore();
+          final PackageDependenciesNode dirNode = myBuilder.findNode(dir, dir);
+          if (dirNode != null) {
+            TreeUtil.selectPath(myTree, new TreePath(dirNode.getPath()));
+          }
+        });
       }, false);
     }
 
@@ -788,12 +743,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
     //expand/collapse state should be restored in actual request if needed
     private void queueUpdate(final Runnable request, boolean updateImmediately) {
-      final Runnable wrapped = new Runnable() {
-        @Override
-        public void run() {
-          if (myProject.isDisposed()) return;
-          request.run();
-        }
+      final Runnable wrapped = () -> {
+        if (myProject.isDisposed()) return;
+        request.run();
       };
       if (updateImmediately && isTreeShowing()) {
         myUpdateQueue.run(new Update(request) {
@@ -912,7 +864,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiElement> allElements = Arrays.asList(getSelectedPsiElements());
-      ArrayList<PsiElement> validElements = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> validElements = new ArrayList<>();
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
@@ -945,23 +897,11 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   private void addNode(VirtualFile file, final String scopeName) {
-    queueUpdate(file, new Function<PsiFile, DefaultMutableTreeNode>() {
-      @Override
-      @Nullable
-      public DefaultMutableTreeNode fun(final PsiFile psiFile) {
-        return myBuilder.addFileNode(psiFile);
-      }
-    }, scopeName);
+    queueUpdate(file, psiFile -> myBuilder.addFileNode(psiFile), scopeName);
   }
 
   private void removeNode(VirtualFile file, final String scopeName) {
-    queueUpdate(file, new Function<PsiFile, DefaultMutableTreeNode>() {
-      @Override
-      @Nullable
-      public DefaultMutableTreeNode fun(final PsiFile psiFile) {
-        return myBuilder.removeNode(psiFile, psiFile.getContainingDirectory());
-      }
-    }, scopeName);
+    queueUpdate(file, psiFile -> myBuilder.removeNode(psiFile, psiFile.getContainingDirectory()), scopeName);
   }
 
   private void queueUpdate(final VirtualFile fileToRefresh,
@@ -1018,18 +958,13 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       if (!list.getName().equals(subId) && (oldName == null || !oldName.equals(subId))) {
         return;
       }
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myDependencyValidationManager.fireScopeListeners();
-        }
-      }, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> myDependencyValidationManager.fireScopeListeners(), myProject.getDisposed());
     }
 
     @Override
     public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
       final String name = fromList.getName();
-      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      final Set<VirtualFile> files = new HashSet<>();
       collectFiles(changes, files);
       for (VirtualFile file : files) {
         removeNode(file, name);
@@ -1039,7 +974,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     @Override
     public void changesAdded(Collection<Change> changes, ChangeList toList) {
       final String name = toList.getName();
-      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      final Set<VirtualFile> files = new HashSet<>();
       collectFiles(changes, files);
       for (VirtualFile file : files) {
         addNode(file, name);

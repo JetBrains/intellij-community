@@ -37,12 +37,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ProjectStructureDaemonAnalyzer implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.validation.ProjectStructureDaemonAnalyzer");
-  private final Map<ProjectStructureElement, ProjectStructureProblemsHolderImpl> myProblemHolders = new HashMap<ProjectStructureElement, ProjectStructureProblemsHolderImpl>();
-  private final MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage> mySourceElement2Usages = new MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage>();
-  private final MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage> myContainingElement2Usages = new MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage>();
-  private final Set<ProjectStructureElement> myElementWithNotCalculatedUsages = new HashSet<ProjectStructureElement>();
-  private final Set<ProjectStructureElement> myElementsToShowWarningIfUnused = new HashSet<ProjectStructureElement>();
-  private final Map<ProjectStructureElement, ProjectStructureProblemDescription> myWarningsAboutUnused = new HashMap<ProjectStructureElement, ProjectStructureProblemDescription>();
+  private final Map<ProjectStructureElement, ProjectStructureProblemsHolderImpl> myProblemHolders = new HashMap<>();
+  private final MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage> mySourceElement2Usages = new MultiValuesMap<>();
+  private final MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage> myContainingElement2Usages = new MultiValuesMap<>();
+  private final Set<ProjectStructureElement> myElementWithNotCalculatedUsages = new HashSet<>();
+  private final Set<ProjectStructureElement> myElementsToShowWarningIfUnused = new HashSet<>();
+  private final Map<ProjectStructureElement, ProjectStructureProblemDescription> myWarningsAboutUnused = new HashMap<>();
   private final MergingUpdateQueue myAnalyzerQueue;
   private final MergingUpdateQueue myResultsUpdateQueue;
   private final EventDispatcher<ProjectStructureDaemonAnalyzerListener> myDispatcher = EventDispatcher.create(ProjectStructureDaemonAnalyzerListener.class);
@@ -215,7 +215,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   public void queueUpdateForAllElementsWithErrors() {
-    List<ProjectStructureElement> toUpdate = new ArrayList<ProjectStructureElement>();
+    List<ProjectStructureElement> toUpdate = new ArrayList<>();
     for (Map.Entry<ProjectStructureElement, ProjectStructureProblemsHolderImpl> entry : myProblemHolders.entrySet()) {
       if (entry.getValue().containsProblems()) {
         toUpdate.add(entry.getKey());

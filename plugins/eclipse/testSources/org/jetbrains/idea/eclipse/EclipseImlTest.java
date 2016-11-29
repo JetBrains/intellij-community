@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -40,12 +41,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
+
+import static com.intellij.testFramework.Assertions.assertThat;
 
 public class EclipseImlTest extends IdeaTestCase {
   @NonNls private static final String JUNIT = "JUNIT";
@@ -78,23 +80,14 @@ public class EclipseImlTest extends IdeaTestCase {
     String communityLib = FileUtil.toSystemIndependentName(PathManagerEx.findFileUnderCommunityHome("lib").getAbsolutePath());
     fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityLib);
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
-    final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return ModuleManager.getInstance(project)
-          .newModule(new File(path) + File.separator + EclipseProjectFinder
-            .findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId());
-      }
-    });
+    final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> ModuleManager.getInstance(project)
+      .newModule(new File(path) + File.separator + EclipseProjectFinder
+        .findProjectName(path) + ModuleManagerImpl.IML_EXTENSION, StdModuleTypes.JAVA.getId()));
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
     classpathReader.init(rootModel);
     classpathReader.readClasspath(rootModel, classpathElement);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(rootModel::commit);
 
     final Element actualImlElement = new Element("root");
     ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getState().writeExternal(actualImlElement);
@@ -104,11 +97,8 @@ public class EclipseImlTest extends IdeaTestCase {
     PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
     PathMacros.getInstance().removeMacro(JUNIT);
 
-    final Element expectedIml =
-      JDOMUtil.loadDocument(new File(project.getBaseDir().getPath() + "/expected", "expected.iml")).getRootElement();
-    PlatformTestUtil.assertElementsEqual(expectedIml, actualImlElement);
+    assertThat(actualImlElement).isEqualTo(new File(project.getBaseDir().getPath() + "/expected", "expected.iml"));
   }
-
 
   public void testWorkspaceOnly() throws Exception {
     doTest();

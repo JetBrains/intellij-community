@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class Javac2 extends Javac {
   private ArrayList myFormFiles;
   private List myNestedFormPathList;
   private boolean instrumentNotNull = true;
+  private String myNotNullAnnotations = "org.jetbrains.annotations.NotNull";
   private List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
 
   public Javac2() {
@@ -73,6 +74,20 @@ public class Javac2 extends Javac {
 
   public void setInstrumentNotNull(boolean instrumentNotNull) {
     this.instrumentNotNull = instrumentNotNull;
+  }
+
+  /**
+   * @return semicolon-separated names of not-null annotations to be instrumented. Example: <code>"org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"</code>
+   */
+  public String getNotNullAnnotations() {
+    return myNotNullAnnotations;
+  }
+
+  /**
+   * @param notNullAnnotations semicolon-separated names of not-null annotations to be instrumented. Example: <code>"org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"</code>
+   */
+  public void setNotNullAnnotations(String notNullAnnotations) {
+    myNotNullAnnotations = notNullAnnotations;
   }
 
   /**
@@ -240,7 +255,6 @@ public class Javac2 extends Javac {
         final int instrumented = instrumentNotNull(getDestdir(), finder);
         log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
       }
-
     }
     finally {
       finder.releaseResources();
@@ -439,7 +453,7 @@ public class Javac2 extends Javac {
             if (version >= Opcodes.V1_5 && !shouldBeSkippedByAnnotationPattern(reader)) {
               ClassWriter writer = new InstrumenterClassWriter(reader, getAsmClassWriterFlags(version), finder);
 
-              if (NotNullVerifyingInstrumenter.processClassFile(reader, writer)) {
+              if (NotNullVerifyingInstrumenter.processClassFile(reader, writer, myNotNullAnnotations.split(";"))) {
                 final FileOutputStream fileOutputStream = new FileOutputStream(path);
                 try {
                   fileOutputStream.write(writer.toByteArray());
@@ -472,7 +486,7 @@ public class Javac2 extends Javac {
 
   private static int getClassFileVersion(ClassReader reader) {
     final int[] classfileVersion = new int[1];
-    reader.accept(new ClassVisitor(Opcodes.ASM5) {
+    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         classfileVersion[0] = version;
       }
@@ -487,7 +501,7 @@ public class Javac2 extends Javac {
     }
 
     final boolean[] result = new boolean[]{false};
-    reader.accept(new ClassVisitor(Opcodes.ASM5) {
+    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         if (!result[0]) {
           String internalName = Type.getType(desc).getInternalName();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.ui.components;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
@@ -32,7 +32,9 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
+import javax.swing.plaf.ListUI;
 import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicListUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -44,7 +46,7 @@ import java.util.Collection;
  * @author Anton Makeev
  * @author Konstantin Bulenkov
  */
-public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>{
+public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>{
   @NotNull private StatusText myEmptyText;
   @NotNull private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -75,7 +77,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     return model;
   }
 
-  public JBList(@NotNull Collection items) {
+  public JBList(@NotNull Collection<E> items) {
     this(ArrayUtil.toObjectArray(items));
   }
 
@@ -103,11 +105,39 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Override
   public void paint(Graphics g) {
     super.paint(g);
     if (myBusyIcon != null) {
       myBusyIcon.updateLocation(this);
     }
+  }
+
+  @Override
+  public void repaint(long tm, int x, int y, int width, int height) {
+    if (width > 0 && height > 0) {
+      ListUI ui = getUI();
+      if (ui instanceof WideSelectionListUI) {
+        x = 0;
+        width = getWidth();
+      }
+      super.repaint(tm, x, y, width, height);
+    }
+  }
+
+  @Override
+  public void setUI(ListUI ui) {
+    if (ui != null && Registry.is("ide.wide.selection.list.ui")) {
+      Class<? extends ListUI> type = ui.getClass();
+      if (type == BasicListUI.class) {
+        ui = new WideSelectionListUI();
+      }
+    }
+    super.setUI(ui);
   }
 
   public void setPaintBusy(boolean paintBusy) {
@@ -134,11 +164,9 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
       else {
         myBusyIcon.suspend();
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (myBusyIcon != null) {
-              repaint();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (myBusyIcon != null) {
+            repaint();
           }
         });
       }
@@ -192,7 +220,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          ArrayList<String> selected = new ArrayList<String>();
+          ArrayList<String> selected = new ArrayList<>();
           JBList list = JBList.this;
           ListCellRenderer renderer = list.getCellRenderer();
           if (renderer != null) {
@@ -261,16 +289,16 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     myExpandableItemsHandler.setEnabled(enabled);
   }
 
-  //@Override
-  //public void setCellRenderer(final ListCellRenderer cellRenderer) {
-  //  // myExpandableItemsHandler may not yeb be initialized
-  //  //noinspection ConstantConditions
-  //  if (myExpandableItemsHandler == null) {
-  //    super.setCellRenderer(cellRenderer);
-  //    return;
-  //  }
-  //  super.setCellRenderer(new ExpandedItemListCellRendererWrapper(cellRenderer, myExpandableItemsHandler));
-  //}
+  @Override
+  public void setCellRenderer(@NotNull ListCellRenderer<? super E> cellRenderer) {
+    // myExpandableItemsHandler may not yeb be initialized
+    //noinspection ConstantConditions
+    if (myExpandableItemsHandler == null) {
+      super.setCellRenderer(cellRenderer);
+      return;
+    }
+    super.setCellRenderer(new ExpandedItemListCellRendererWrapper(cellRenderer, myExpandableItemsHandler));
+  }
 
   public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {
     setCellRenderer(new DefaultListCellRenderer() {
@@ -346,12 +374,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     public AccessibleRole getAccessibleRole() {
       // In some cases, this method is called from the Access Bridge thread
       // instead of the AWT thread. See https://code.google.com/p/android/issues/detail?id=193072
-      return UIUtil.invokeAndWaitIfNeeded(new Computable<AccessibleRole>() {
-        @Override
-        public AccessibleRole compute() {
-          return AccessibleJBList.super.getAccessibleRole();
-        }
-      });
+      return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
     }
 
     protected class AccessibleJBListChild extends AccessibleJListChild {
@@ -363,12 +386,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
       public AccessibleRole getAccessibleRole() {
         // In some cases, this method is called from the Access Bridge thread
         // instead of the AWT thread. See https://code.google.com/p/android/issues/detail?id=193072
-        return UIUtil.invokeAndWaitIfNeeded(new Computable<AccessibleRole>() {
-          @Override
-          public AccessibleRole compute() {
-            return AccessibleJBListChild.super.getAccessibleRole();
-          }
-        });
+        return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
       }
     }
   }

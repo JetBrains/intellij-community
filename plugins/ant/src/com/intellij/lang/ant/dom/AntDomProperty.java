@@ -190,7 +190,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
       if (psiFile != null) {
         final PropertiesFile file = toPropertiesFile(psiFile);
         if (file != null) {
-          result = new HashMap<String, String>();
+          result = new HashMap<>();
           for (final IProperty property : file.getProperties()) {
             result.put(property.getUnescapedKey(), property.getUnescapedValue());
           }
@@ -201,7 +201,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         if (!prefix.endsWith(".")) {
           prefix += ".";
         }
-        result = new HashMap<String, String>();
+        result = new HashMap<>();
         for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
           result.put(prefix + entry.getKey(), entry.getValue());
         }
@@ -218,7 +218,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
               try {
                 // todo: Remote file can be XmlPropertiesFile
                 final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream, StdFileTypes.PROPERTIES);
-                result = new HashMap<String, String>();
+                result = new HashMap<>();
                 for (final IProperty property : propFile.getProperties()) {
                   result.put(property.getUnescapedKey(), property.getUnescapedValue());
                 }

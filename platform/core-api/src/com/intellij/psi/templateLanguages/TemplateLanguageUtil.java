@@ -39,6 +39,11 @@ public class TemplateLanguageUtil {
     }
   }
 
+  public static PsiFile getBaseFile(@NotNull PsiFile file) {
+    FileViewProvider viewProvider = file.getViewProvider();
+    return viewProvider.getPsi(viewProvider.getBaseLanguage());
+  }
+
   public static boolean isInsideTemplateFile(@NotNull PsiElement element) {
     return element.getContainingFile().getViewProvider() instanceof TemplateLanguageFileViewProvider;
   }

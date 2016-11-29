@@ -48,7 +48,7 @@ public class BaseSuggestionProvider implements SuggestionProvider {
         res[i++] = variants;
       }
       else {
-        List<String> variants = new ArrayList<String>();
+        List<String> variants = new ArrayList<>();
         variants.add(word);
         res[i++] = variants;
       }

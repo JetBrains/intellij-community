@@ -57,7 +57,7 @@ class TypeSafeMovingStrategy<T extends PyElement> {
                                  @NotNull final PyClass[] to) {
     myFrom = from;
     myManager = manager;
-    myMemberInfoCollection = new ArrayList<PyMemberInfo<T>>(memberInfoCollection);
+    myMemberInfoCollection = new ArrayList<>(memberInfoCollection);
     myTo = to.clone();
   }
 

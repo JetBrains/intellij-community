@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Bas Leijdekkers
+ * Copyright 2006-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,17 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.psi.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.fixes.RefactoringInspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +38,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUs
     return new StaticMethodOnlyUsedInOneClassFix(usageClass);
   }
 
-  private static class StaticMethodOnlyUsedInOneClassFix extends InspectionGadgetsFix {
+  private static class StaticMethodOnlyUsedInOneClassFix extends RefactoringInspectionGadgetsFix {
 
     private final SmartPsiElementPointer<PsiClass> usageClass;
 
@@ -52,36 +49,20 @@ public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUs
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix");
     }
-    @Override
+
     @NotNull
-    public String getFamilyName() {
-      return getName();
+    @Override
+    public RefactoringActionHandler getHandler() {
+      return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     }
 
+    @NotNull
     @Override
-    protected void doFix(@NotNull final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement location = descriptor.getPsiElement();
-      final PsiMethod method = (PsiMethod)location.getParent();
-      final RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();
-      final AsyncResult<DataContext> result = DataManager.getInstance().getDataContextFromFocus();
-      result.doWhenDone(new Consumer<DataContext>() {
-        @Override
-        public void consume(final DataContext originalContext) {
-          final DataContext dataContext = new DataContext() {
-            @Override
-            public Object getData(@NonNls String name) {
-              if (LangDataKeys.TARGET_PSI_ELEMENT.is(name)) {
-                return usageClass.getElement();
-              }
-              return originalContext.getData(name);
-            }
-          };
-          moveHandler.invoke(project, new PsiElement[]{method}, dataContext);
-        }
-      });
+    public DataContext enhanceDataContext(DataContext context) {
+      return SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), usageClass.getElement(), context);
     }
   }
 }

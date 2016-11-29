@@ -55,26 +55,23 @@ public class AddRemoveInTypeParameterListTest extends LightIdeaTestCase{
     PsiReferenceParameterList list = ref.getParameterList();
     final PsiTypeElement[] parms = list.getTypeParameterElements();
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        parms[0].delete();
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      parms[0].delete();
 
-        assertEquals("class Test extends Type< B, C, D> {\n}", file.getText());
-        PsiTestUtil.checkFileStructure(file);
+      assertEquals("class Test extends Type< B, C, D> {\n}", file.getText());
+      PsiTestUtil.checkFileStructure(file);
 
-        parms[2].delete();
+      parms[2].delete();
 
-        assertEquals("class Test extends Type< B,  D> {\n}", file.getText());
-        PsiTestUtil.checkFileStructure(file);
+      assertEquals("class Test extends Type< B,  D> {\n}", file.getText());
+      PsiTestUtil.checkFileStructure(file);
 
-        parms[3].delete();
+      parms[3].delete();
 
-        assertEquals("class Test extends Type< B  > {\n}", file.getText());
-        PsiTestUtil.checkFileStructure(file);
+      assertEquals("class Test extends Type< B  > {\n}", file.getText());
+      PsiTestUtil.checkFileStructure(file);
 
-        parms[1].delete();
-      }
+      parms[1].delete();
     });
 
 

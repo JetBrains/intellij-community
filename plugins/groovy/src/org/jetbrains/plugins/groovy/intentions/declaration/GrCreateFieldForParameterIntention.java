@@ -131,7 +131,7 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
   }
 
   private static String[] getModifiers(boolean aStatic, boolean aFinal) {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     list.add(PsiModifier.PRIVATE);
     if (aStatic) list.add(PsiModifier.STATIC);
     if (aFinal) list.add(PsiModifier.FINAL);

@@ -29,6 +29,12 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 
+/**
+ * @deprecated See {@link com.intellij.diff.comparison.ByWord}
+ * <p>
+ * might produce wrong results - IDEA-75504
+ */
+@Deprecated
 public class ByWord implements DiffPolicy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.ByWord");
   private final ComparisonPolicy myComparisonPolicy;

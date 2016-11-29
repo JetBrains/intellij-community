@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
@@ -49,7 +46,10 @@ import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -120,6 +120,25 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     installComparator();
     initTree();
 
+    Disposer.register(getTreeBuilder(), new UiNotifyConnector(myTree, new Activatable() {
+      private boolean showing;
+
+      @Override
+      public void showNotify() {
+        if (!showing) {
+          showing = true;
+          restoreExpandedPaths();
+        }
+      }
+
+      @Override
+      public void hideNotify() {
+        if (showing) {
+          showing = false;
+          saveExpandedPaths();
+        }
+      }
+    }));
     return myComponent;
   }
 
@@ -183,7 +202,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
           }
 
           DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-          OpenSourceUtil.openSourcesFrom(dataContext, false);
+          OpenSourceUtil.openSourcesFrom(dataContext, ScreenReader.isActive());
         }
         else if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
           if (e.isConsumed()) return;
@@ -202,21 +221,18 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   @Override
   public final ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
-    final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
-    final ArrayList<Object> selectionPaths = new ArrayList<Object>();
+    final ArrayList<Object> pathsToExpand = new ArrayList<>();
+    final ArrayList<Object> selectionPaths = new ArrayList<>();
     Runnable afterUpdate;
     final ActionCallback cb = new ActionCallback();
     if (restoreExpandedPaths) {
       TreeBuilderUtil.storePaths(getTreeBuilder(), (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
-      afterUpdate = new Runnable() {
-        @Override
-        public void run() {
-          if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
-            myTree.setSelectionPaths(new TreePath[0]);
-            TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
-          }
-          cb.setDone();
+      afterUpdate = () -> {
+        if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
+          myTree.setSelectionPaths(new TreePath[0]);
+          TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
         }
+        cb.setDone();
       };
     }
     else {
@@ -237,7 +253,10 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
-      return ((BaseProjectTreeBuilder)getTreeBuilder()).select(element, file, requestFocus);
+      BaseProjectTreeBuilder builder = (BaseProjectTreeBuilder)getTreeBuilder();
+      // actually, getInitialized().doWhenDone() should be called by builder internally
+      // this will be done in 2017
+      return builder.getInitialized().doWhenDone(() -> builder.select(element, file, requestFocus));
     }
     return ActionCallback.DONE;
   }

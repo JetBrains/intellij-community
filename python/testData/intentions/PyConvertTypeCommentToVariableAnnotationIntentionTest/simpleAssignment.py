@@ -1,0 +1,1 @@
+x = 42 # ty<caret>pe: int

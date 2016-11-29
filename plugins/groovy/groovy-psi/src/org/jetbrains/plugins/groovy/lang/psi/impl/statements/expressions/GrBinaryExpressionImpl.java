@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -49,7 +52,7 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     @NotNull
     private List<GroovyResolveResult[]> resolveSubExpressions(@NotNull GrBinaryExpression expression, final boolean incompleteCode) {
       // to avoid SOE, resolve all binary sub-expressions starting from the innermost
-      final List<GroovyResolveResult[]> subExpressions = new SmartList<GroovyResolveResult[]>();
+      final List<GroovyResolveResult[]> subExpressions = new SmartList<>();
       expression.getLeftOperand().accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {
@@ -59,7 +62,7 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
         }
 
         @Override
-        protected void elementFinished(@NotNull PsiElement element) {
+        protected void elementFinished(PsiElement element) {
           if (element instanceof GrBinaryExpressionImpl) {
             subExpressions.add(((GrBinaryExpressionImpl)element).multiResolve(incompleteCode));
           }
@@ -86,12 +89,8 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     }
   };
 
-  private static final Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
-    @Override
-    public PsiType fun(GrBinaryExpressionImpl expression) {
-      return GrBinaryExpressionTypeCalculators.getTypeCalculator(expression.getFacade()).fun(expression.getFacade());
-    }
-  };
+  private static final Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR =
+    expression -> GrBinaryExpressionTypeCalculators.getTypeCalculator(expression.getFacade()).fun(expression.getFacade());
 
   private final GrBinaryFacade myFacade = new GrBinaryFacade() {
     @NotNull

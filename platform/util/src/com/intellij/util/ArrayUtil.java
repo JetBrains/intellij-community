@@ -165,8 +165,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> T[] insert(@NotNull T[] array, int index, T value) {
-    @SuppressWarnings("unchecked")
-    T[] result = (T[])Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+    T[] result = createArray(array.getClass().getComponentType(), array.length + 1);
     System.arraycopy(array, 0, result, 0, index);
     result[index] = value;
     System.arraycopy(array, index, result, index + 1, array.length - index);
@@ -217,15 +216,16 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] toObjectArray(@NotNull Collection<T> collection, @NotNull Class<T> aClass) {
-    @SuppressWarnings("unchecked") T[] array = (T[])Array.newInstance(aClass, collection.size());
+  public static <T> T[] toObjectArray(@NotNull Collection<? extends T> collection, @NotNull Class<T> aClass) {
+    T[] array = createArray(aClass, collection.size());
     return collection.toArray(array);
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> T[] toObjectArray(@NotNull Class<T> aClass, @NotNull Object... source) {
-    @SuppressWarnings("unchecked") T[] array = (T[])Array.newInstance(aClass, source.length);
+    T[] array = createArray(aClass, source.length);
+    //noinspection SuspiciousSystemArraycopy
     System.arraycopy(source, 0, array, 0, array.length);
     return array;
   }
@@ -263,7 +263,7 @@ public class ArrayUtil extends ArrayUtilRt {
     final Class<?> class2 = a2.getClass().getComponentType();
     final Class<?> aClass = class1.isAssignableFrom(class2) ? class1 : class2;
 
-    @SuppressWarnings("unchecked") T[] result = (T[])Array.newInstance(aClass, a1.length + a2.length);
+    T[] result = createArray(aClass, a1.length + a2.length);
     System.arraycopy(a1, 0, result, 0, a1.length);
     System.arraycopy(a2, 0, result, a1.length, a2.length);
     return result;
@@ -339,12 +339,12 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   /**
-   * Allocates new array of size <code>array.length + collection.size()</code> and copies elements of <code>array</code> and
-   * <code>collection</code> to it.
+   * Allocates new array of size {@code array.length + collection.size()} and copies elements of {@code array} and
+   * {@code collection} to it.
    *
    * @param array      source array
    * @param collection source collection
-   * @param factory    array factory used to create destination array of type <code>T</code>
+   * @param factory    array factory used to create destination array of type {@code T}
    * @return destination array
    */
   @NotNull
@@ -375,22 +375,24 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   /**
-   * Appends <code>element</code> to the <code>src</code> array. As you can
+   * Appends {@code element} to the {@code src} array. As you can
    * imagine the appended element will be the last one in the returned result.
    *
-   * @param src     array to which the <code>element</code> should be appended.
-   * @param element object to be appended to the end of <code>src</code> array.
+   * @param src     array to which the {@code element} should be appended.
+   * @param element object to be appended to the end of {@code src} array.
    * @return new array
    */
   @NotNull
   @Contract(pure=true)
   public static <T> T[] append(@NotNull final T[] src, @Nullable final T element) {
+    //noinspection unchecked
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> T[] prepend(final T element, @NotNull final T[] array) {
+    //noinspection unchecked
     return prepend(element, array, (Class<T>)array.getClass().getComponentType());
   }
 
@@ -398,7 +400,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <T> T[] prepend(T element, @NotNull T[] array, @NotNull Class<T> type) {
     int length = array.length;
-    T[] result = (T[])Array.newInstance(type, length + 1);
+    T[] result = createArray(type, length + 1);
     System.arraycopy(array, 0, result, 1, length);
     result[0] = element;
     return result;
@@ -438,14 +440,14 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <T> T[] append(@NotNull T[] src, @Nullable final T element, @NotNull Class<T> componentType) {
     int length = src.length;
-    T[] result = (T[])Array.newInstance(componentType, length + 1);
+    T[] result = createArray(componentType, length + 1);
     System.arraycopy(src, 0, result, 0, length);
     result[length] = element;
     return result;
   }
 
   /**
-   * Removes element with index <code>idx</code> from array <code>src</code>.
+   * Removes element with index {@code idx} from array {@code src}.
    *
    * @param src array.
    * @param idx index of element to be removed.
@@ -458,10 +460,15 @@ public class ArrayUtil extends ArrayUtilRt {
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
-    T[] result = (T[])Array.newInstance(src.getClass().getComponentType(), length - 1);
+    T[] result = createArray(src.getClass().getComponentType(), length - 1);
     System.arraycopy(src, 0, result, 0, idx);
     System.arraycopy(src, idx + 1, result, idx, length - idx - 1);
     return result;
+  }
+
+  private static <T> T[] createArray(@NotNull Class<?> type, int length) {
+    //noinspection unchecked
+    return (T[])Array.newInstance(type, length);
   }
 
   @NotNull
@@ -532,6 +539,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static boolean startsWith(@NotNull byte[] array, @NotNull byte[] prefix) {
+    //noinspection ArrayEquality
     if (array == prefix) {
       return true;
     }
@@ -551,6 +559,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static <E> boolean startsWith(@NotNull E[] array, @NotNull E[] subArray) {
+    //noinspection ArrayEquality
     if (array == subArray) {
       return true;
     }
@@ -586,6 +595,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static <T> boolean equals(@NotNull T[] a1, @NotNull T[] a2, @NotNull Equality<? super T> comparator) {
+    //noinspection ArrayEquality
     if (a1 == a2) {
       return true;
     }
@@ -605,6 +615,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static <T> boolean equals(@NotNull T[] a1, @NotNull T[] a2, @NotNull Comparator<? super T> comparator) {
+    //noinspection ArrayEquality
     if (a1 == a2) {
       return true;
     }
@@ -662,6 +673,7 @@ public class ArrayUtil extends ArrayUtilRt {
       T o2 = i < obj2.length ? obj2[i] : null;
       if (o1 == null) return -1;
       if (o2 == null) return 1;
+      //noinspection unchecked
       int res = ((Comparable)o1).compareTo(o2);
       if (res != 0) return res;
     }
@@ -792,7 +804,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull final int[] src, final int obj) {
+  public static int lastIndexOf(@NotNull final int[] src, final int obj) {
     for (int i = src.length - 1; i >= 0; i--) {
       final int o = src[i];
       if (o == obj) {
@@ -825,7 +837,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static boolean contains(@Nullable final Object o, @NotNull Object... objects) {
+  public static <T> boolean contains(@Nullable final T o, @NotNull T... objects) {
     return indexOf(objects, o) >= 0;
   }
 
@@ -873,7 +885,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <E> E[] ensureExactSize(int count, @NotNull E[] sample) {
     if (count == sample.length) return sample;
-    @SuppressWarnings({"unchecked"}) final E[] array = (E[])Array.newInstance(sample.getClass().getComponentType(), count);
+    @SuppressWarnings("unchecked") final E[] array = createArray(sample.getClass().getComponentType(), count);
     return array;
   }
 
@@ -907,6 +919,27 @@ public class ArrayUtil extends ArrayUtilRt {
     }
   }
 
+  @Nullable
+  @Contract("null -> null; !null -> !null")
+  public static <T> T[] copyOf(@Nullable T[] original) {
+    if (original == null) return null;
+    return Arrays.copyOf(original, original.length);
+  }
+
+  @Nullable
+  @Contract("null -> null; !null -> !null")
+  public static boolean[] copyOf(@Nullable boolean[] original) {
+    if (original == null) return null;
+    return Arrays.copyOf(original, original.length);
+  }
+
+  @Nullable
+  @Contract("null -> null; !null -> !null")
+  public static int[] copyOf(@Nullable int[] original) {
+    if (original == null) return null;
+    return Arrays.copyOf(original, original.length);
+  }
+
   @NotNull
   public static <T> T[] stripTrailingNulls(@NotNull T[] array) {
     return array.length != 0 && array[array.length-1] == null ? Arrays.copyOf(array, trailingNullsIndex(array)) : array;
@@ -933,6 +966,7 @@ public class ArrayUtil extends ArrayUtilRt {
     int middlePartLength = n / part;
     return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
+
   public static long averageAmongMedians(@NotNull int[] time, int part) {
     assert part >= 1;
     int n = time.length;
@@ -943,5 +977,13 @@ public class ArrayUtil extends ArrayUtilRt {
     }
     int middlePartLength = n / part;
     return middlePartLength == 0 ? 0 : total / middlePartLength;
+  }
+
+  public static int min(int[] values) {
+    int min = Integer.MAX_VALUE;
+    for (int value : values) {
+      if (value < min) min = value;
+    }
+    return min;
   }
 }

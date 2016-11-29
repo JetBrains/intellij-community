@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
     return GrIntroduceConstantHandler.REFACTORING_NAME;
   }
 
+  @NotNull
   @Override
   protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return mySuggestedNames;
@@ -92,13 +93,15 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
 
   @Override
   protected GrVariable runRefactoring(GrIntroduceContext context, GrIntroduceConstantSettings settings, boolean processUsages) {
-    if (processUsages) {
-      return new GrIntroduceConstantProcessor(context, settings).run();
-    }
-    else {
-      PsiElement scope = context.getScope();
-      return new GrIntroduceConstantProcessor(context, settings).addDeclaration(scope instanceof GroovyFileBase ? ((GroovyFileBase)scope).getScriptClass() : (PsiClass)scope).getVariables()[0];
-    }
+    return refactorInWriteAction(() -> {
+      if (processUsages) {
+        return new GrIntroduceConstantProcessor(context, settings).run();
+      }
+      else {
+        PsiElement scope = context.getScope();
+        return new GrIntroduceConstantProcessor(context, settings).addDeclaration(scope instanceof GroovyFileBase ? ((GroovyFileBase)scope).getScriptClass() : (PsiClass)scope).getVariables()[0];
+      }
+    });
   }
 
   @Nullable

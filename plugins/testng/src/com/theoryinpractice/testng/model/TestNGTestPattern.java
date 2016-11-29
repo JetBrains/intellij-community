@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -100,7 +101,7 @@ public class TestNGTestPattern extends TestNGTestObject {
       }
     }
     if (classes.size() != patterns.size()) {
-      final List<Pattern> compilePatterns = new ArrayList<Pattern>();
+      final List<Pattern> compilePatterns = new ArrayList<>();
       for (String p : patterns) {
         final Pattern compilePattern;
         try {
@@ -118,7 +119,7 @@ public class TestNGTestPattern extends TestNGTestObject {
           @Override
           public boolean isAccepted(PsiClass psiClass) {
             if (super.isAccepted(psiClass)) {
-              final String qualifiedName = psiClass.getQualifiedName();
+              final String qualifiedName = ReadAction.compute(psiClass::getQualifiedName);
               LOG.assertTrue(qualifiedName != null);
               for (Pattern pattern : compilePatterns) {
                 if (pattern.matcher(qualifiedName).matches()) return true;

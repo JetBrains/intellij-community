@@ -46,10 +46,11 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,10 +59,11 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Collection;
 
 /**
@@ -92,7 +94,7 @@ class LookupUiImpl implements LookupUi {
     myProject = project;
 
     myIconPanel.setVisible(false);
-    myIconPanel.setBackground(Color.LIGHT_GRAY);
+    myIconPanel.setBackground(JBColor.LIGHT_GRAY);
     myIconPanel.add(myProcessIcon);
 
     JComponent adComponent = advertiser.getAdComponent();
@@ -109,7 +111,7 @@ class LookupUiImpl implements LookupUi {
 
     myLayeredPane.mainPanel.add(myScrollPane, BorderLayout.CENTER);
 
-    mySortingLabel.setBorder(new LineBorder(new JBColor(Color.LIGHT_GRAY, JBColor.background())));
+    mySortingLabel.setBorder(new LineBorder(new JBColor(JBColor.LIGHT_GRAY, JBColor.background())));
     mySortingLabel.setOpaque(true);
     new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
@@ -124,31 +126,20 @@ class LookupUiImpl implements LookupUi {
   }
 
   private void addListeners() {
-    myList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (myLookup.isLookupDisposed()) return;
-        myHintAlarm.cancelAllRequests();
+    myList.addListSelectionListener(e -> {
+      if (myLookup.isLookupDisposed()) return;
+      myHintAlarm.cancelAllRequests();
 
-        final LookupElement item = myLookup.getCurrentItem();
-        if (item != null) {
-          updateHint(item);
-        }
+      final LookupElement item = myLookup.getCurrentItem();
+      if (item != null) {
+        updateHint(item);
       }
     });
 
     final Alarm alarm = new Alarm(myLookup);
-    myScrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
-      @Override
-      public void adjustmentValueChanged(AdjustmentEvent e) {
-        if (myLookup.myUpdating || myLookup.isLookupDisposed()) return;
-        alarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            myLookup.refreshUi(false, false);
-          }
-        }, 300, myModalityState);
-      }
+    myScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
+      if (myLookup.myUpdating || myLookup.isLookupDisposed()) return;
+      alarm.addRequest(() -> myLookup.refreshUi(false, false), 300, myModalityState);
     });
   }
 
@@ -176,17 +167,14 @@ class LookupUiImpl implements LookupUi {
 
     final Collection<LookupElementAction> actions = myLookup.getActionsFor(item);
     if (!actions.isEmpty()) {
-      myHintAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (!ShowHideIntentionIconLookupAction.shouldShowLookupHint() ||
-              ((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) {
-            return;
-          }
-          myElementHint = new LookupHint();
-          myLayeredPane.add(myElementHint, 20, 0);
-          myLayeredPane.layoutHint();
+      myHintAlarm.addRequest(() -> {
+        if (!ShowHideIntentionIconLookupAction.shouldShowLookupHint() ||
+            ((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) {
+          return;
         }
+        myElementHint = new LookupHint();
+        myLayeredPane.add(myElementHint, 20, 0);
+        myLayeredPane.layoutHint();
       }, 500, myModalityState);
     }
   }
@@ -200,12 +188,9 @@ class LookupUiImpl implements LookupUi {
         final ActionCallback done =
           IdeFocusManager.getInstance(myProject).requestFocus(myLookup.getTopLevelEditor().getContentComponent(), true);
         IdeFocusManager.getInstance(myProject).typeAheadUntil(done);
-        new Alarm(myLookup).addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (!done.isDone()) {
-              done.setDone();
-            }
+        new Alarm(myLookup).addRequest(() -> {
+          if (!done.isDone()) {
+            done.setDone();
           }
         }, 300, myModalityState);
       }
@@ -214,12 +199,7 @@ class LookupUiImpl implements LookupUi {
 
   @Override
   public void setCalculating(final boolean calculating) {
-    Runnable setVisible = new Runnable() {
-      @Override
-      public void run() {
-        myIconPanel.setVisible(myLookup.isCalculating());
-      }
-    };
+    Runnable setVisible = () -> myIconPanel.setVisible(myLookup.isCalculating());
     if (myLookup.isCalculating()) {
       new Alarm(myLookup).addRequest(setVisible, 100, myModalityState);
     }
@@ -276,7 +256,7 @@ class LookupUiImpl implements LookupUi {
 
   @Override
   public boolean isPositionedAboveCaret() {
-    return myPositionedAbove != null && myPositionedAbove.booleanValue();
+    return myPositionedAbove != null && myPositionedAbove;
   }
 
   // in layered pane coordinate system.
@@ -331,8 +311,9 @@ class LookupUiImpl implements LookupUi {
     }
     Rectangle candidate = new Rectangle(location, dim);
     ScreenUtil.cropRectangleToFitTheScreen(candidate);
-
-    SwingUtilities.convertPointFromScreen(location, rootPane.getLayeredPane());
+    if (rootPane != null) {
+      SwingUtilities.convertPointFromScreen(location, rootPane.getLayeredPane());
+    }
     myMaximumHeight = candidate.height;
     return new Rectangle(location.x, location.y, dim.width, candidate.height);
   }
@@ -482,7 +463,7 @@ class LookupUiImpl implements LookupUi {
   private class LookupHint extends JLabel {
     private final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(2, 2, 2, 2);
     private final Border ACTIVE_BORDER =
-      BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(1, 1, 1, 1));
+      BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(JBColor.BLACK, 1), BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
     private LookupHint() {
       setOpaque(false);
@@ -531,7 +512,7 @@ class LookupUiImpl implements LookupUi {
 
     private AnAction createSortingAction(boolean checked) {
       boolean currentSetting = UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
-      final boolean newSetting = checked ? currentSetting : !currentSetting;
+      final boolean newSetting = checked == currentSetting;
       return new DumbAwareAction(newSetting ? "Sort lexicographically" : "Sort by relevance", null,
                                  checked ? PlatformIcons.CHECK_ICON : null) {
         @Override

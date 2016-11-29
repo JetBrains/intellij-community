@@ -20,9 +20,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,9 +58,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     //panel.setBorder(new LineBorder(Color.red));
     if (projects.length == 0) return panel;
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                   new Insets(0, 0, 0, 0), 0, 0);
-    final Project contextProject = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    final Project project = contextProject != null ? contextProject : projects[0];
+                                                   JBUI.emptyInsets(), 0, 0);
 
     JButton button = new JButton("Manage Scopes...");
     button.setPreferredSize(new Dimension(230, button.getPreferredSize().height));
@@ -74,7 +74,9 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
+        DataContext context = DataManager.getInstance().getDataContext(panel);
+        Settings settings = Settings.KEY.getData(context);
+        Project project = CommonDataKeys.PROJECT.getData(context);
         if (settings != null) {
           try {
             if (settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES)).isRejected()) {

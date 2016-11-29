@@ -52,14 +52,14 @@ public class HgCheckoutProvider implements CheckoutProvider {
     }
     final String targetDir = destinationParent.getPath() + File.separator + dialog.getDirectoryName();
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
-    final AtomicReference<HgCommandResult> cloneResult = new AtomicReference<HgCommandResult>();
+    final AtomicReference<HgCommandResult> cloneResult = new AtomicReference<>();
     new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         HgCloneCommand clone = new HgCloneCommand(project);
         clone.setRepositoryURL(sourceRepositoryURL);
         clone.setDirectory(targetDir);
-        cloneResult.set(clone.execute());
+        cloneResult.set(clone.executeInCurrentThread());
       }
 
       @Override

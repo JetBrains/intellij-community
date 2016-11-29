@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -136,6 +137,8 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
       final StringBuilder chars = new StringBuilder(text.length());
       boolean result = GrStringUtil.parseRegexCharacters(text, chars, null, false);
       return result ? chars.toString() : null;
+    } else if (elemType == GroovyTokenTypes.kNULL) {
+      return ObjectUtils.NULL;
     }
 
     return null;

@@ -48,6 +48,11 @@ public class DanglingJavadocInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("dangling.javadoc.problem.descriptor");
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
@@ -61,14 +66,8 @@ public class DanglingJavadocInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("dangling.javadoc.convert.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("dangling.javadoc.convert.quickfix");
     }
 
     @Override
@@ -102,14 +101,8 @@ public class DanglingJavadocInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("dangling.javadoc.delete.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("dangling.javadoc.delete.quickfix");
     }
 
     @Override

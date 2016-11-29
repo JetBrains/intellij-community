@@ -32,6 +32,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +110,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     TreePath[] paths = myActionsTree.getTree().getSelectionPaths();
     if (paths == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    ArrayList<String> actions = new ArrayList<String>();
+    ArrayList<String> actions = new ArrayList<>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       if (node instanceof DefaultMutableTreeNode) {
@@ -153,23 +154,24 @@ public class ChooseActionsDialog extends DialogWrapper {
 
     panel.add(toolbar, BorderLayout.WEST);
     group = new DefaultActionGroup();
-    final JComponent searchToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    actionToolbar.setReservePlaceAutoPopupIcon(false);
+    final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
     myFilterComponent = new FilterComponent("KEYMAP_IN_QUICK_LISTS", 5) {
       public void filter() {
         alarm.cancelAllRequests();
-        alarm.addRequest(new Runnable() {
-          public void run() {
-            if (!myFilterComponent.isShowing()) return;
-            if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
-            final String filter = getFilter();
-            myActionsTree.filter(filter, myQuicklists);
-            final JTree tree = myActionsTree.getTree();
-            TreeUtil.expandAll(tree);
-            if (filter == null || filter.length() == 0) {
-              TreeUtil.collapseAll(tree, 0);
-              myTreeExpansionMonitor.restore();
-            }
+        alarm.addRequest(() -> {
+          if (!myFilterComponent.isShowing()) return;
+          if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+          myFilteringPanel.setShortcut(null);
+          final String filter = getFilter();
+          myActionsTree.filter(filter, myQuicklists);
+          final JTree tree = myActionsTree.getTree();
+          TreeUtil.expandAll(tree);
+          if (filter == null || filter.length() == 0) {
+            TreeUtil.collapseAll(tree, 0);
+            myTreeExpansionMonitor.restore();
           }
         }, 300);
       }
@@ -189,7 +191,16 @@ public class ChooseActionsDialog extends DialogWrapper {
     });
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
                            KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
+      @Override
+      public void update(AnActionEvent event) {
+        boolean enabled = null != myFilteringPanel.getShortcut();
+        Presentation presentation = event.getPresentation();
+        presentation.setEnabled(enabled);
+        presentation.setIcon(enabled ? AllIcons.Actions.Cancel : EmptyIcon.ICON_16);
+      }
+
       public void actionPerformed(AnActionEvent e) {
+        myFilteringPanel.setShortcut(null);
         myActionsTree.filter(null, myQuicklists); //clear filtering
         TreeUtil.collapseAll(myActionsTree.getTree(), 0);
         myTreeExpansionMonitor.restore();

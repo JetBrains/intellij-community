@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,42 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class IndexInfrastructure {
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   private static final String STUB_VERSIONS = ".versions";
   private static final String PERSISTENT_INDEX_DIRECTORY_NAME = ".persistent";
+  private static final boolean ourDoParallelIndicesInitialization = SystemProperties
+    .getBooleanProperty("idea.parallel.indices.initialization", false);
+  public static final boolean ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true);
+  private static final ExecutorService ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("IndexInfrastructure pool");
 
   private IndexInfrastructure() {
   }
@@ -130,5 +148,72 @@ public class IndexInfrastructure {
   @Nullable
   private static VirtualFile findTestFile(final int id) {
     return DummyFileSystem.getInstance().findById(id);
+  }
+
+  public static <T> Future<T> submitGenesisTask(Callable<T> action) {
+    return ourGenesisExecutor.submit(action);
+  }
+
+  public static abstract class DataInitialization<T> implements Callable<T> {
+    private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<>();
+
+    @Override
+    public final T call() throws Exception {
+      long started = System.nanoTime();
+      try {
+        prepare();
+        runParallelNestedInitializationTasks();
+        return finish();
+      } finally {
+        Logger.getInstance(getClass().getName()).info("Initialization done:" + (System.nanoTime() - started) / 1000000);
+      }
+    }
+
+    protected T finish() {
+      return null;
+    }
+
+    protected void prepare() {}
+    protected abstract void onThrowable(Throwable t);
+
+    public void addNestedInitializationTask(ThrowableRunnable nestedInitializationTask) {
+      myNestedInitializationTasks.add(nestedInitializationTask);
+    }
+
+    private void runParallelNestedInitializationTasks() throws InterruptedException {
+      int numberOfTasksToExecute = myNestedInitializationTasks.size();
+      if (numberOfTasksToExecute == 0) return;
+
+      CountDownLatch proceedLatch = new CountDownLatch(numberOfTasksToExecute);
+
+      if (ourDoParallelIndicesInitialization) {
+        BoundedTaskExecutor taskExecutor = new BoundedTaskExecutor("IndexInfrastructure.DataInitialization.runParallelNestedInitializationTasks", PooledThreadExecutor.INSTANCE,
+                                                                   CacheUpdateRunner.indexingThreadCount());
+
+        for (ThrowableRunnable callable : myNestedInitializationTasks) {
+          taskExecutor.submit(() -> executeNestedInitializationTask(callable, proceedLatch));
+        }
+
+        proceedLatch.await();
+        taskExecutor.shutdown();
+      } else {
+        for (ThrowableRunnable callable : myNestedInitializationTasks) {
+          executeNestedInitializationTask(callable, proceedLatch);
+        }
+      }
+    }
+
+    private void executeNestedInitializationTask(ThrowableRunnable callable, CountDownLatch proceedLatch) {
+      Application app = ApplicationManager.getApplication();
+      if (app.isDisposed() || app.isDisposeInProgress()) return;
+
+      try {
+        callable.run();
+      } catch(Throwable t) {
+        onThrowable(t);
+      } finally {
+        proceedLatch.countDown();
+      }
+    }
   }
 }

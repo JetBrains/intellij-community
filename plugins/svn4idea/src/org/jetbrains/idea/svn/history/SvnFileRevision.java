@@ -72,7 +72,7 @@ public class SvnFileRevision implements VcsFileRevision {
     myCopyFromPath = copyFromPath;
     myVCS = vcs;
     myURL = url;
-    myMergeSources = new ArrayList<SvnFileRevision>();
+    myMergeSources = new ArrayList<>();
   }
 
   public SvnFileRevision(SvnVcs vcs,
@@ -90,7 +90,7 @@ public class SvnFileRevision implements VcsFileRevision {
     myCopyFromPath = copyFromPath;
     myVCS = vcs;
     myURL = url;
-    myMergeSources = new ArrayList<SvnFileRevision>();
+    myMergeSources = new ArrayList<>();
   }
 
   @NotNull
@@ -107,6 +107,7 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.BitUtil;
 
 import java.awt.event.InputEvent;
 import java.io.File;
@@ -44,12 +48,15 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    //Force move focus to IdeFrame
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
+
     final int modifiers = e.getModifiers();
-    final boolean forceOpenInNewFrame = (modifiers & InputEvent.CTRL_MASK) != 0
-                                        || (modifiers & InputEvent.SHIFT_MASK) != 0
+    final boolean forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
+                                        || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
                                         || e.getPlace() == ActionPlaces.WELCOME_SCREEN;
 
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (!new File(myProjectPath).exists()) {
       if (Messages.showDialog(project, "The path " + FileUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
                                        "If it is on a removable or network drive, please make sure that the drive is connected.",
@@ -61,11 +68,20 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     RecentProjectsManagerBase.getInstanceEx().doOpenProject(myProjectPath, project, forceOpenInNewFrame);
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setText(getProjectName(), false);
+  }
+
   public String getProjectPath() {
     return myProjectPath;
   }
   
   public String getProjectName() {
+    final RecentProjectsManager mgr = RecentProjectsManager.getInstance();
+    if (mgr instanceof RecentProjectsManagerBase) {
+      return ((RecentProjectsManagerBase)mgr).getProjectName(myProjectPath);
+    }
     return myProjectName;
   }
 }

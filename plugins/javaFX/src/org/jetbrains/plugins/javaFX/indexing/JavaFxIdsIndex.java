@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.indexing;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.indexing.*;
@@ -31,7 +32,6 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
 
   @NonNls public static final ID<String, Set<String>> KEY = ID.create("javafx.id.name");
 
-  private final KeyDescriptor<String> myKeyDescriptor = new EnumeratorStringDescriptor();
   private final FileBasedIndex.InputFilter myInputFilter = new JavaFxControllerClassIndex.MyInputFilter();
   private final FxmlDataIndexer myDataIndexer = new FxmlDataIndexer();
   private final FxmlDataExternalizer myDataExternalizer = new FxmlDataExternalizer();
@@ -63,7 +63,7 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @Override
@@ -78,9 +78,9 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
 
   @NotNull
   public static Collection<String> getAllRegisteredIds(Project project) {
-    CommonProcessors.CollectUniquesProcessor<String> processor = new CommonProcessors.CollectUniquesProcessor<String>();
+    CommonProcessors.CollectUniquesProcessor<String> processor = new CommonProcessors.CollectUniquesProcessor<>();
     FileBasedIndex.getInstance().processAllKeys(KEY, processor, project);
-    final Collection<String> results = new ArrayList<String>(processor.getResults());
+    final Collection<String> results = new ArrayList<>(processor.getResults());
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
     for (Iterator<String> iterator = results.iterator(); iterator.hasNext(); ) {
       final String id = iterator.next();
@@ -97,8 +97,7 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
   }
 
   @NotNull
-  public static Collection<String> getFilePaths(Project project, String id) {
-    final List<Set<String>> values = FileBasedIndex.getInstance().getValues(KEY, id, GlobalSearchScope.projectScope(project));
-    return (Collection<String>)(values.isEmpty() ? Collections.emptySet() : values.get(0));
+  public static Collection<VirtualFile> getContainingFiles(Project project, String id) {
+    return FileBasedIndex.getInstance().getContainingFiles(KEY, id, GlobalSearchScope.projectScope(project));
   }
 }

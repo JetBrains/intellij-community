@@ -16,6 +16,7 @@
 package com.intellij.debugger;
 
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages the correspondence between source positions and bytecode locations during JVM debugging.
@@ -76,4 +78,13 @@ public interface PositionManager {
    */
   @Nullable
   ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) throws NoDataException;
+
+  /**
+   * Return file types this position manager accepts
+   * @return set of accepted file types, or null if it accepts all
+   */
+  @Nullable
+  default Set<? extends FileType> getAcceptedFileTypes() {
+    return null;
+  }
 }

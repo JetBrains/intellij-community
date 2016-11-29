@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -76,7 +78,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       return;
     }
 
-    ExternalResourceManagerExImpl.addTestResource(url, location, myTestRootDisposable);
+    ExternalResourceManagerExImpl.addTestResource(url, location, getTestRootDisposable());
   }
 
   @Override
@@ -340,6 +342,30 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     configureByFile("37.xml");
     selectItem(myFixture.getLookupElements()[0], '\t');
     checkResultByFile("37_after.xml");
+  }
+
+  public void testInsertExtraRequiredAttributeSingleQuote() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
+    try {
+      settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
+      configureByFile(getTestName(true) + ".html");
+      checkResultByFile(getTestName(true) + "_after.html");
+    } finally {
+      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
+    }
+  }
+
+  public void testInsertExtraRequiredAttributeNoneQuote() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
+    try {
+      settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;
+      configureByFile(getTestName(true) + ".html");
+      checkResultByFile(getTestName(true) + "_after.html");
+    } finally {
+      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
+    }
   }
 
   public void testBeforeAttributeValue() throws Throwable {

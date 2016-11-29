@@ -23,33 +23,34 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import org.apache.oro.text.regex.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,59 +61,58 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
-@SuppressWarnings("TestOnlyProblems")
-public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel, DumbAware {
-  @NotNull private static java.util.regex.Pattern INNER_GROUP_WITH_IDS = java.util.regex.Pattern.compile("(.*) \\(\\d+\\)");
+public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
+  private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
 
   @Nullable private final Project myProject;
   private final Component myContextComponent;
+  @Nullable private final Editor myEditor;
+  @Nullable private final PsiFile myFile;
 
   protected final ActionManager myActionManager = ActionManager.getInstance();
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  private Pattern myCompiledPattern;
-
-  protected final SearchableOptionsRegistrar myIndex;
   protected final Map<AnAction, String> myActionGroups = ContainerUtil.newHashMap();
 
-  protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<String, ApplyIntentionAction>();
-  private final Map<String, String> myConfigurablesNames = ContainerUtil.newTroveMap();
+  private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
+    Map<String, String> map = ContainerUtil.newTroveMap();
+    for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
+      if (configurable instanceof SearchableConfigurable) {
+        map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
+      }
+    }
+    return map;
+  });
 
-  public GotoActionModel(@Nullable Project project, Component component) {
-    this(project, component, null, null);
-  }
+  private final ModalityState myModality = ModalityState.defaultModalityState();
 
   public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file) {
     myProject = project;
     myContextComponent = component;
+    myEditor = editor;
+    myFile = file;
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
-    if (project != null && editor != null && file != null) {
-      ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(editor, file);
+  }
+
+  @NotNull
+  Map<String, ApplyIntentionAction> getAvailableIntentions() {
+    Map<String, ApplyIntentionAction> map = new TreeMap<>();
+    if (myProject != null && myEditor != null && myFile != null) {
+      ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(myEditor, myFile);
       if (children != null) {
         for (ApplyIntentionAction action : children) {
-          myIntentions.put(action.getName(), action);
+          map.put(action.getName(), action);
         }
       }
     }
-    myIndex = SearchableOptionsRegistrar.getInstance();
-    if (!EventQueue.isDispatchThread()) {
-      return;
-    }
-    fillConfigurablesNames(ShowSettingsUtilImpl.getConfigurables(project, true));
-  }
-
-  private void fillConfigurablesNames(@NotNull Configurable[] configurables) {
-    for (Configurable configurable : configurables) {
-      if (configurable instanceof SearchableConfigurable) {
-        myConfigurablesNames.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
-      }
-    }
+    return map;
   }
 
   @Override
@@ -235,13 +235,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public ListCellRenderer getListCellRenderer() {
-    return new GotoActionListCellRenderer(new Function<OptionDescription, String>() {
-      @NotNull
-      @Override
-      public String fun(@NotNull OptionDescription description) {
-        return getGroupName(description);
-      }
-    });
+    return new GotoActionListCellRenderer(this::getGroupName);
   }
 
   protected String getActionId(@NotNull AnAction anAction) {
@@ -260,37 +254,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return new JLabel(layeredIcon);
   }
 
-
-  @NotNull
-  protected JLabel createActionLabel(@NotNull AnAction anAction, String anActionName,
-                                     Color fg, Color bg,
-                                     @Nullable Icon icon) {
-    LayeredIcon layeredIcon = new LayeredIcon(2);
-    layeredIcon.setIcon(EMPTY_ICON, 0);
-    if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
-      layeredIcon
-        .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
-    }
-
-    Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction)));
-    String actionName = anActionName + (shortcut != null ? " (" + KeymapUtil.getShortcutText(shortcut) + ")" : "");
-    JLabel actionLabel = new JLabel(actionName, layeredIcon, SwingConstants.LEFT);
-    actionLabel.setBackground(bg);
-    actionLabel.setForeground(fg);
-    return actionLabel;
-  }
-
-  @Nullable
-  private static Shortcut preferKeyboardShortcut(@Nullable Shortcut[] shortcuts) {
-    if (shortcuts != null) {
-      for (Shortcut shortcut : shortcuts) {
-        if (shortcut.isKeyboard()) return shortcut;
-      }
-      return shortcuts.length > 0 ? shortcuts[0] : null;
-    }
-    return null;
-  }
-
   @Override
   public int compare(@NotNull Object o1, @NotNull Object o2) {
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
@@ -302,11 +265,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   public static AnActionEvent updateActionBeforeShow(@NotNull AnAction anAction, @NotNull DataContext dataContext) {
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, dataContext);
     ActionUtil.performDumbAwareUpdate(anAction, event, false);
-    ActionUtil.performDumbAwareUpdate(anAction, event, true);
     return event;
   }
 
-  protected static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
+  public static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
     if (isSelected) return UIUtil.getListSelectionForeground();
     if (presentation != null && (!presentation.isEnabled() || !presentation.isVisible())) return UIUtil.getInactiveTextColor();
     return UIUtil.getListForeground();
@@ -327,10 +289,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @NotNull
   String getGroupName(@NotNull OptionDescription description) {
     String id = description.getConfigurableId();
-    String name = myConfigurablesNames.get(id);
+    String name = myConfigurablesNames.getValue().get(id);
     String settings = SystemInfo.isMac ? "Preferences" : "Settings";
     if (name == null) return settings;
     return settings + " > " + name;
+  }
+
+  void initConfigurables() {
+    myConfigurablesNames.getValue();
   }
 
   private void collectActions(@NotNull Map<AnAction, String> result, @NotNull ActionGroup group, @Nullable String containingGroupName) {
@@ -404,40 +370,24 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return ((MatchedValue) mv).getValueText();
   }
 
-  @Override
-  public boolean matches(@NotNull String name, @NotNull String pattern) {
-    AnAction anAction = myActionManager.getAction(name);
-    if (anAction == null) return true;
-    return actionMatches(pattern, anAction) != MatchMode.NONE;
-  }
-
-  protected MatchMode actionMatches(@NotNull String pattern, @NotNull AnAction anAction) {
-    Pattern compiledPattern = getPattern(pattern);
+  protected MatchMode actionMatches(@NotNull String pattern, MinusculeMatcher matcher, @NotNull AnAction anAction) {
     Presentation presentation = anAction.getTemplatePresentation();
     String text = presentation.getText();
     String description = presentation.getDescription();
     String groupName = myActionGroups.get(anAction);
-    PatternMatcher matcher = getMatcher();
-    if (text != null && matcher.matches(text, compiledPattern)) {
+    if (text != null && matcher.matches(text)) {
       return MatchMode.NAME;
     }
-    else if (description != null && !description.equals(text) && matcher.matches(description, compiledPattern)) {
+    else if (description != null && !description.equals(text) && matcher.matches(description)) {
       return MatchMode.DESCRIPTION;
     }
     if (text == null) {
       return MatchMode.NONE;
     }
-    if (groupName == null) {
-      return matches(pattern, compiledPattern, matcher, text) ? MatchMode.NON_MENU : MatchMode.NONE;
-    }
-    if (matches(pattern, compiledPattern, matcher, groupName + " " + text)) {
+    if (matcher.matches(groupName + " " + text)) {
       return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
     }
-    return matches(pattern, compiledPattern, matcher, text + " " + groupName) ? MatchMode.GROUP : MatchMode.NONE;
-  }
-
-  private static boolean matches(@NotNull String pattern, Pattern compiledPattern, @NotNull PatternMatcher matcher, @NotNull String str) {
-    return StringUtil.containsIgnoreCase(str, pattern) || matcher.matches(str, compiledPattern);
+    return matcher.matches(text + " " + groupName) ? MatchMode.GROUP : MatchMode.NONE;
   }
 
   @Nullable
@@ -450,123 +400,52 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   @NotNull
-  Pattern getPattern(@NotNull String pattern) {
-    String converted = convertPattern(pattern.trim());
-    Pattern compiledPattern = myCompiledPattern;
-    if (compiledPattern != null && !Comparing.strEqual(converted, compiledPattern.getPattern())) {
-      compiledPattern = null;
-    }
-    if (compiledPattern == null) {
-      try {
-        myCompiledPattern = compiledPattern = new Perl5Compiler().compile(converted, Perl5Compiler.READ_ONLY_MASK);
-      }
-      catch (MalformedPatternException e) {
-        //do nothing
-      }
+  public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
+    List<ActionWrapper> toUpdate = getActionsToUpdate(elements);
+    if (!toUpdate.isEmpty()) {
+      updateActions(toUpdate);
     }
 
-    return compiledPattern;
-  }
-
-  @NotNull
-  @Override
-  public SortedSet<Object> sort(@NotNull Set<Object> elements) {
     TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
     objects.addAll(elements);
     return objects;
   }
 
-  @VisibleForTesting
+  @NotNull
+  private static List<ActionWrapper> getActionsToUpdate(@NotNull Set<Object> elements) {
+    List<ActionWrapper> toUpdate = new ArrayList<>();
+    for (Object element : elements) {
+      if (element instanceof MatchedValue) {
+        Comparable value = ((MatchedValue)element).value;
+        if (value instanceof ActionWrapper && !((ActionWrapper)value).hasPresentation()) {
+          toUpdate.add((ActionWrapper)value);
+        }
+      }
+    }
+    return toUpdate;
+  }
+
+  private void updateActions(List<ActionWrapper> toUpdate) {
+    TransferToEDTQueue<ActionWrapper> queue = new TransferToEDTQueue<ActionWrapper>("goto action", aw -> {
+      aw.getPresentation();
+      return true;
+    }, Conditions.FALSE, 50) {
+      @Override
+      protected void schedule(@NotNull Runnable updateRunnable) {
+        ApplicationManager.getApplication().invokeLater(updateRunnable, myModality);
+      }
+    };
+    for (ActionWrapper wrapper : toUpdate) {
+      queue.offer(wrapper);
+    }
+    while (queue.size() > 0) {
+      ProgressManager.checkCanceled();
+      TimeoutUtil.sleep(50);
+    }
+  }
+
   public enum MatchMode {
     NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
-  }
-
-  static String convertPattern(@NotNull String pattern) {
-    int eol = pattern.indexOf('\n');
-    if (eol != -1) {
-      pattern = pattern.substring(0, eol);
-    }
-    if (pattern.length() >= 80) {
-      pattern = pattern.substring(0, 80);
-    }
-
-    @NonNls StringBuilder buffer = new StringBuilder();
-
-    boolean allowToLower = true;
-    if (containsOnlyUppercaseLetters(pattern)) {
-      allowToLower = false;
-    }
-
-    if (allowToLower) {
-      buffer.append(".*");
-    }
-
-    boolean firstIdentifierLetter = true;
-    for (int i = 0; i < pattern.length(); i++) {
-      char c = pattern.charAt(i);
-      if (Character.isLetterOrDigit(c)) {
-        // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
-        if (Character.isUpperCase(c) || Character.isDigit(c)) {
-
-          if (!firstIdentifierLetter) {
-            buffer.append("[^A-Z]*");
-          }
-
-          buffer.append("[");
-          buffer.append(c);
-          if (allowToLower || i == 0) {
-            buffer.append('|');
-            buffer.append(Character.toLowerCase(c));
-          }
-          buffer.append("]");
-        }
-        else if (Character.isLowerCase(c)) {
-          buffer.append('[');
-          buffer.append(c);
-          buffer.append('|');
-          buffer.append(Character.toUpperCase(c));
-          buffer.append(']');
-        }
-        else {
-          buffer.append(c);
-        }
-
-        firstIdentifierLetter = false;
-      }
-      else if (c == '*') {
-        buffer.append(".*");
-        firstIdentifierLetter = true;
-      }
-      else if (c == '.') {
-        buffer.append("\\.");
-        firstIdentifierLetter = true;
-      }
-      else if (c == ' ') {
-        buffer.append(".*\\ ");
-        firstIdentifierLetter = true;
-      }
-      else {
-        firstIdentifierLetter = true;
-        // for standard RegExp engine
-        // buffer.append("\\u");
-        // buffer.append(Integer.toHexString(c + 0x20000).substring(1));
-
-        // for OROMATCHER RegExp engine
-        buffer.append("\\x");
-        buffer.append(Integer.toHexString(c + 0x20000).substring(3));
-      }
-    }
-
-    buffer.append(".*");
-    return buffer.toString();
-  }
-
-  private static boolean containsOnlyUppercaseLetters(@NotNull String s) {
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      if (c != '*' && c != ' ' && !Character.isUpperCase(c)) return false;
-    }
-    return true;
   }
 
   @Override
@@ -579,23 +458,12 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return true;
   }
 
-  private final ThreadLocal<PatternMatcher> myMatcher = new ThreadLocal<PatternMatcher>() {
-    @NotNull
-    @Override
-    protected PatternMatcher initialValue() {
-      return new Perl5Matcher();
-    }
-  };
-  PatternMatcher getMatcher() {
-    return myMatcher.get();
-  }
-
   public static class ActionWrapper implements Comparable<ActionWrapper> {
     @NotNull private final AnAction myAction;
     @NotNull private final MatchMode myMode;
     @Nullable  private final String myGroupName;
     private final DataContext myDataContext;
-    private Presentation myPresentation;
+    private volatile Presentation myPresentation;
 
     public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull MatchMode mode, DataContext dataContext) {
       myAction = action;
@@ -640,6 +508,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     public Presentation getPresentation() {
       if (myPresentation != null) return myPresentation;
       return myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+    }
+
+    private boolean hasPresentation() {
+      return myPresentation != null;
     }
 
     @Nullable
@@ -717,10 +589,13 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           panel.add(createIconLabel(presentation.getIcon()), BorderLayout.WEST);
         }
         appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
+        panel.setToolTipText(presentation.getDescription());
 
-        Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(ActionManager.getInstance().getId(anAction)));
-        if (shortcut != null) {
-          nameComponent.append(" " + KeymapUtil.getShortcutText(shortcut),
+        Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(ActionManager.getInstance().getId(anAction));
+        String shortcutText = KeymapUtil.getPreferredShortcutText(
+          shortcuts);
+        if (StringUtil.isNotEmpty(shortcutText)) {
+          nameComponent.append(" " + shortcutText,
                                new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD,
                                                         UIUtil.isUnderDarcula() ? groupFg : ColorUtil.shift(groupFg, 1.3)));
         }

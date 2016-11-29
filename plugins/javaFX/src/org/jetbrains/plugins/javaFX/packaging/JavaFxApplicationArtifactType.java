@@ -66,7 +66,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
   @NotNull
   @Override
   public List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
-    final List<Module> modules = new ArrayList<Module>();
+    final List<Module> modules = new ArrayList<>();
     for (Module module : context.getModulesProvider().getModules()) {
       if (ModuleType.get(module) instanceof JavaModuleType) {
         modules.add(module);

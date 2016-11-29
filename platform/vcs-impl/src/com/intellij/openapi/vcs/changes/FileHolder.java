@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 
-interface FileHolder {
+public interface FileHolder {
   void cleanAll();
   void cleanAndAdjustScope(VcsModifiableDirtyScope scope);
   FileHolder copy();
@@ -25,7 +25,7 @@ interface FileHolder {
 
   void notifyVcsStarted(AbstractVcs scope);
 
-  static enum HolderType {
+  enum HolderType {
     DELETED,
     UNVERSIONED,
     SWITCHED,

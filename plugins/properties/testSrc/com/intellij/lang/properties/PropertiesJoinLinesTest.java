@@ -34,17 +34,17 @@ public class PropertiesJoinLinesTest extends LightPlatformCodeInsightTestCase {
     return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile/joinLines/";
   }
 
-  public void testProperties() throws Exception { doTest(); }
-  public void testPropertiesBackSlash() throws Exception { doTest(); }
-  public void testPropertiesBackSlashSlash() throws Exception { doTest(); }
+  public void testProperties() { doTest(); }
+  public void testPropertiesBackSlash() { doTest(); }
+  public void testPropertiesBackSlashSlash() { doTest(); }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     configureByFile(getTestName(false) + ".properties");
     performAction();
     checkResultByFile(getTestName(false) + "_after.properties");
   }
 
-  private void performAction() {
+  private static void performAction() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES);
 

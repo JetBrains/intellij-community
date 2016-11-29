@@ -1,0 +1,15 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>idl</title>
+  <g>
+    <rect x="1" y="9" width="15" height="7" fill="#b99bf8" opacity="0.5"/>
+    <path d="M10,10h0.87879v4.19972H13.507V15H10V10Z" fill="#231f20" opacity="0.6"/>
+    <g>
+      <g>
+        <polygon points="6 0 2 4 6 4 6 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+        <polygon points="7 0 7 4 7 5 6 5 2 5 2 8 13 8 13 0 7 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      </g>
+      <path d="M5,10H6.6496A2.34381,2.34381,0,0,1,9,12.48575v0.01454A2.35566,2.35566,0,0,1,6.6496,15H5V10Zm0.77746,0.80028v3.39944H6.6496A1.539,1.539,0,0,0,8.185,12.51425v-0.014a1.5514,1.5514,0,0,0-1.53537-1.7H5.77746Z" fill="#231f20" opacity="0.6"/>
+      <path d="M3,10H3.87879v5H3V10Z" fill="#231f20" opacity="0.6"/>
+    </g>
+  </g>
+</svg>

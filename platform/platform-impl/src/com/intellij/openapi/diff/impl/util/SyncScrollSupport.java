@@ -35,7 +35,7 @@ import java.util.ArrayList;
 public class SyncScrollSupport implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.SyncScrollSupport");
   private boolean myDuringVerticalScroll = false;
-  @NotNull private final ArrayList<ScrollListener> myScrollers = new ArrayList<ScrollListener>();
+  @NotNull private final ArrayList<ScrollListener> myScrollers = new ArrayList<>();
   private boolean myEnabled = true;
 
   public void install(EditingSides[] sideContainers) {
@@ -151,6 +151,7 @@ public class SyncScrollSupport implements Disposable {
     Editor slave = sidesContainer.getEditor(masterSide.otherSide());
 
     if (master == null || slave == null) return;
+    if (master.isDisposed() || slave.isDisposed()) return;
 
     int masterVerticalScrollOffset = master.getScrollingModel().getVerticalScrollOffset();
     int slaveVerticalScrollOffset = slave.getScrollingModel().getVerticalScrollOffset();

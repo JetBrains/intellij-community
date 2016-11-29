@@ -53,7 +53,7 @@
 1.6 => plugins/maven/lib/maven2-server-impl.jar
 1.6 => plugins/maven/lib/maven3-server-common.jar
 1.6 => plugins/maven/lib/maven30-server-impl.jar
-1.6 => plugins/maven/lib/maven32-server-impl.jar
+1.6 => plugins/maven/lib/maven3-server-impl.jar
 1.6 => plugins/maven/lib/artifact-resolver-m2.jar
 1.6 => plugins/maven/lib/artifact-resolver-m3.jar
 1.6 => plugins/maven/lib/artifact-resolver-m31.jar
@@ -62,4 +62,4 @@
 1.5 => plugins/xslt-debugger/lib/xslt-debugger-engine.jar
 1.5 => plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar
 
-1.6 => plugins/android/lib/android-rt.jar
+1.6 => plugins/cucumber-java/lib/cucumber-jvm-formatter.jar

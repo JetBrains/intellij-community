@@ -67,6 +67,8 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.ZipOutputStream;
 
+import static org.jetbrains.idea.maven.server.MavenServerManager.verifyMavenSdkRequirements;
+
 /**
  * @author Ralf Quebbemann
  */
@@ -92,7 +94,6 @@ public class MavenExternalParameters {
   }
 
   /**
-   *
    * @param project
    * @param parameters
    * @param coreSettings
@@ -119,10 +120,13 @@ public class MavenExternalParameters {
 
     params.setWorkingDirectory(parameters.getWorkingDirFile());
 
-    params.setJdk(getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings));
+    Sdk jdk = getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings);
+    params.setJdk(jdk);
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
     final String mavenVersion = MavenUtil.getMavenVersion(mavenHome);
+    String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Runner | JRE";
+    verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
 
     params.getProgramParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
@@ -157,7 +161,7 @@ public class MavenExternalParameters {
       params.getClassPath().add(path);
     }
 
-    params.setEnv(new HashMap<String, String>(runnerSettings.getEnvironmentProperties()));
+    params.setEnv(new HashMap<>(runnerSettings.getEnvironmentProperties()));
     params.setPassParentEnvs(runnerSettings.isPassParentEnv());
 
     params.setMainClass(MAVEN_LAUNCHER_CLASS);
@@ -212,19 +216,15 @@ public class MavenExternalParameters {
   }
 
   private static String getArtifactResolverJar(@Nullable String mavenVersion) throws IOException {
-    boolean isMaven3;
     Class marker;
 
     if (mavenVersion != null && mavenVersion.compareTo("3.1.0") >= 0) {
-      isMaven3 = true;
       marker = MavenArtifactResolvedM31RtMarker.class;
     }
     else if (mavenVersion != null && mavenVersion.compareTo("3.0.0") >= 0) {
-      isMaven3 = true;
       marker = MavenArtifactResolvedM3RtMarker.class;
     }
     else {
-      isMaven3 = false;
       marker = MavenArtifactResolvedM2RtMarker.class;
     }
 
@@ -242,13 +242,12 @@ public class MavenExternalParameters {
     try {
       ZipUtil.addDirToZipRecursively(zipOutput, null, classDirOrJar, "", null, null);
 
-      if (isMaven3) {
-        File m2Module = new File(PathUtil.getJarPathForClass(MavenModuleMap.class));
+      File m2Module = new File(PathUtil.getJarPathForClass(MavenModuleMap.class));
 
-        String commonClassesPath = MavenModuleMap.class.getPackage().getName().replace('.', '/');
-        ZipUtil.addDirToZipRecursively(zipOutput, null, new File(m2Module, commonClassesPath), commonClassesPath, null, null);
-      }
-    } finally {
+      String commonClassesPath = MavenModuleMap.class.getPackage().getName().replace('.', '/');
+      ZipUtil.addDirToZipRecursively(zipOutput, null, new File(m2Module, commonClassesPath), commonClassesPath, null, null);
+    }
+    finally {
       zipOutput.close();
     }
 
@@ -274,16 +273,20 @@ public class MavenExternalParameters {
 
           res.setProperty(mavenProject.getMavenId().getGroupId()
                           + ':' + mavenProject.getMavenId().getArtifactId()
+                          + ':' + mavenProject.getPackaging()
+                          + ':' + mavenProject.getMavenId().getVersion(),
+                          mavenProject.getOutputDirectory());
+
+          res.setProperty(mavenProject.getMavenId().getGroupId()
+                          + ':' + mavenProject.getMavenId().getArtifactId()
                           + ":test-jar"
                           + ':' + mavenProject.getMavenId().getVersion(),
                           mavenProject.getTestOutputDirectory());
 
-          res.setProperty(mavenProject.getMavenId().getGroupId()
-                          + ':' + mavenProject.getMavenId().getArtifactId()
-                          + ':' + mavenProject.getPackaging()
-                          + ':' + mavenProject.getMavenId().getVersion(),
-                           mavenProject.getOutputDirectory());
-
+          addArtifactFileMapping(res, mavenProject, "sources");
+          addArtifactFileMapping(res, mavenProject, "test-sources");
+          addArtifactFileMapping(res, mavenProject, "javadoc");
+          addArtifactFileMapping(res, mavenProject, "test-javadoc");
         }
       }
     }
@@ -302,8 +305,20 @@ public class MavenExternalParameters {
     return file;
   }
 
+  private static void addArtifactFileMapping(@NotNull Properties res, @NotNull MavenProject mavenProject, @NotNull String classifier) {
+    File file = new File(mavenProject.getBuildDirectory(), mavenProject.getFinalName() + '-' + classifier + ".jar");
+    if (file.exists()) {
+      res.setProperty(mavenProject.getMavenId().getGroupId()
+                      + ':' + mavenProject.getMavenId().getArtifactId()
+                      + ':' + classifier
+                      + ':' + mavenProject.getMavenId().getVersion(),
+                      file.getPath());
+    }
+  }
+
   @NotNull
-  private static Sdk getJdk(@Nullable Project project, MavenRunnerSettings runnerSettings, boolean isGlobalRunnerSettings) throws ExecutionException {
+  private static Sdk getJdk(@Nullable Project project, MavenRunnerSettings runnerSettings, boolean isGlobalRunnerSettings)
+    throws ExecutionException {
     String name = runnerSettings.getJreName();
     if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
@@ -404,9 +419,8 @@ public class MavenExternalParameters {
   }
 
   /**
-   *
    * @param coreSettings
-   * @param project used to creation fix if maven home not found
+   * @param project          used to creation fix if maven home not found
    * @param runConfiguration used to creation fix if maven home not found
    * @return
    * @throws ExecutionException
@@ -480,7 +494,7 @@ public class MavenExternalParameters {
       mavenHomeBootAsFile = new File(mavenHome, "boot");
     }
 
-    List<String> classpathEntries = new ArrayList<String>();
+    List<String> classpathEntries = new ArrayList<>();
 
     File[] files = mavenHomeBootAsFile.listFiles();
     if (files != null) {
@@ -604,7 +618,8 @@ public class MavenExternalParameters {
     }
   }
 
-  private static abstract class WithHyperlinkExecutionException extends ExecutionException implements HyperlinkListener, NotificationListener {
+  private static abstract class WithHyperlinkExecutionException extends ExecutionException
+    implements HyperlinkListener, NotificationListener {
 
     public WithHyperlinkExecutionException(String s) {
       super(s);

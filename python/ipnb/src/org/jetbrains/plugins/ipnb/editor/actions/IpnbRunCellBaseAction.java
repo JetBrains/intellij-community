@@ -5,8 +5,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
@@ -18,31 +16,9 @@ public abstract class IpnbRunCellBaseAction extends AnAction {
   }
 
   public static void runCell(@NotNull final IpnbFilePanel ipnbFilePanel, boolean selectNext) {
-    final IpnbEditablePanel cell = ipnbFilePanel.getSelectedCell();
+    final IpnbEditablePanel cell = ipnbFilePanel.getSelectedCellPanel();
     if (cell == null) return;
-    cell.runCell();
-    if (selectNext) {
-      final int index = ipnbFilePanel.getSelectedIndex();
-      if (ipnbFilePanel.getIpnbPanels().size() - 1 == index) {
-        ipnbFilePanel.createAndAddCell(true);
-        CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                ipnbFilePanel.saveToFile();
-
-              }
-            });
-          }
-        }, "Ipnb.runCell", new Object());
-      }
-      else {
-        ipnbFilePanel.selectNext(cell);
-      }
-    }
-    ipnbFilePanel.revalidate();
-    ipnbFilePanel.repaint();
-    ipnbFilePanel.requestFocus();
+    cell.runCell(selectNext);
   }
 
   @Override

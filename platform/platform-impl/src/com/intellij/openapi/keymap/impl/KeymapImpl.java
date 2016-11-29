@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.ArrayUtil;
@@ -73,22 +74,20 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   private KeymapImpl myParent;
   private boolean myCanModify = true;
 
-  private final THashMap<String, OrderedSet<Shortcut>> myActionId2ListOfShortcuts = new THashMap<String, OrderedSet<Shortcut>>();
+  private final THashMap<String, OrderedSet<Shortcut>> myActionId2ListOfShortcuts = new THashMap<>();
 
   /**
    * Don't use this field directly! Use it only through <code>getKeystroke2ListOfIds</code>.
    */
   private Map<KeyStroke, List<String>> myKeystroke2ListOfIds = null;
   private Map<KeyboardModifierGestureShortcut, List<String>> myGesture2ListOfIds = null;
-  // TODO[vova,anton] it should be final member
 
   /**
    * Don't use this field directly! Use it only through <code>getMouseShortcut2ListOfIds</code>.
    */
   private Map<MouseShortcut, List<String>> myMouseShortcut2ListOfIds = null;
-  // TODO[vova,anton] it should be final member
 
-  private static final Shortcut[] ourEmptyShortcutsArray = new Shortcut[0];
+  private static final Shortcut[] ourEmptyShortcutsArray = Shortcut.EMPTY_ARRAY;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private KeymapManagerEx myKeymapManager;
 
@@ -97,14 +96,14 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     return getName();
   }
 
-  public KeymapImpl deriveKeymap() {
+  public KeymapImpl deriveKeymap(@NotNull String newName) {
     if (canModify()) {
       return copy();
     }
     else {
       KeymapImpl newKeymap = new KeymapImpl();
       newKeymap.myParent = this;
-      newKeymap.myName = null;
+      newKeymap.setName(newName);
       newKeymap.myCanModify = canModify();
       return newKeymap;
     }
@@ -118,7 +117,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   @NotNull
   public KeymapImpl copyTo(@NotNull final KeymapImpl otherKeymap) {
     otherKeymap.myParent = myParent;
-    otherKeymap.myName = myName;
+    otherKeymap.setName(getName());
     otherKeymap.myCanModify = canModify();
 
     otherKeymap.cleanShortcutsCache();
@@ -128,7 +127,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     myActionId2ListOfShortcuts.forEachEntry(new TObjectObjectProcedure<String, OrderedSet<Shortcut>>() {
       @Override
       public boolean execute(String actionId, OrderedSet<Shortcut> shortcuts) {
-        otherKeymap.myActionId2ListOfShortcuts.put(actionId, new OrderedSet<Shortcut>(shortcuts));
+        otherKeymap.myActionId2ListOfShortcuts.put(actionId, new OrderedSet<>(shortcuts));
         return true;
       }
     });
@@ -136,9 +135,9 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   }
 
   public boolean equals(Object object) {
-    if (!(object instanceof Keymap)) return false;
+    if (!(object instanceof KeymapImpl)) return false;
     KeymapImpl secondKeymap = (KeymapImpl)object;
-    if (!Comparing.equal(myName, secondKeymap.myName)) return false;
+    if (!Comparing.equal(getName(), secondKeymap.getName())) return false;
     if (myCanModify != secondKeymap.myCanModify) return false;
     if (!Comparing.equal(myParent, secondKeymap.myParent)) return false;
     if (!Comparing.equal(myActionId2ListOfShortcuts, secondKeymap.myActionId2ListOfShortcuts)) return false;
@@ -146,11 +145,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   }
 
   public int hashCode() {
-    int hashCode = 0;
-    if (myName != null) {
-      hashCode += myName.hashCode();
-    }
-    return hashCode;
+    return getName().hashCode();
   }
 
   @Override
@@ -180,7 +175,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   private void addShortcutSilently(String actionId, Shortcut shortcut, final boolean checkParentShortcut) {
     OrderedSet<Shortcut> list = myActionId2ListOfShortcuts.get(actionId);
     if (list == null) {
-      list = new OrderedSet<Shortcut>();
+      list = new OrderedSet<>();
       myActionId2ListOfShortcuts.put(actionId, list);
       Shortcut[] boundShortcuts = getBoundShortcuts(actionId);
       if (boundShortcuts != null) {
@@ -223,7 +218,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
           if ((myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId)))
               || (myParent == null && list.isEmpty())) {
             myActionId2ListOfShortcuts.remove(actionId);
-          } 
+          }
           break;
         }
       }
@@ -236,7 +231,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
       if (inherited != null) {
         boolean affected = false;
-        OrderedSet<Shortcut> newShortcuts = new OrderedSet<Shortcut>(inherited.length);
+        OrderedSet<Shortcut> newShortcuts = new OrderedSet<>(inherited.length);
         for (Shortcut eachInherited : inherited) {
           if (toDelete.equals(eachInherited)) {
             // skip this one
@@ -258,7 +253,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   private Map<KeyStroke, List<String>> getKeystroke2ListOfIds() {
     if (myKeystroke2ListOfIds != null) return myKeystroke2ListOfIds;
 
-    myKeystroke2ListOfIds = new THashMap<KeyStroke, List<String>>();
+    myKeystroke2ListOfIds = new THashMap<>();
     for (String id : ContainerUtil.concat(myActionId2ListOfShortcuts.keySet(), getKeymapManager().getBoundActions())) {
       addKeystrokesMap(id, myKeystroke2ListOfIds);
     }
@@ -267,7 +262,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
   private Map<KeyboardModifierGestureShortcut, List<String>> getGesture2ListOfIds() {
     if (myGesture2ListOfIds == null) {
-      myGesture2ListOfIds = new THashMap<KeyboardModifierGestureShortcut, List<String>>();
+      myGesture2ListOfIds = new THashMap<>();
       fillShortcut2ListOfIds(myGesture2ListOfIds, KeyboardModifierGestureShortcut.class);
     }
     return myGesture2ListOfIds;
@@ -281,7 +276,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
   private Map<MouseShortcut, List<String>> getMouseShortcut2ListOfIds() {
     if (myMouseShortcut2ListOfIds == null) {
-      myMouseShortcut2ListOfIds = new THashMap<MouseShortcut, List<String>>();
+      myMouseShortcut2ListOfIds = new THashMap<>();
 
       fillShortcut2ListOfIds(myMouseShortcut2ListOfIds, MouseShortcut.class);
     }
@@ -299,7 +294,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
       List<String> listOfIds = strokesMap.get(t);
       if (listOfIds == null) {
-        listOfIds = new ArrayList<String>();
+        listOfIds = new ArrayList<>();
         strokesMap.put(t, listOfIds);
       }
 
@@ -319,7 +314,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
       KeyStroke firstKeyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
       List<String> listOfIds = strokesMap.get(firstKeyStroke);
       if (listOfIds == null) {
-        listOfIds = new ArrayList<String>();
+        listOfIds = new ArrayList<>();
         strokesMap.put(firstKeyStroke, listOfIds);
       }
 
@@ -337,7 +332,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
       return listOfShortcuts;
     }
     else {
-      listOfShortcuts = new OrderedSet<Shortcut>();
+      listOfShortcuts = new OrderedSet<>();
     }
 
     final String actionBinding = keymapManager.getActionBinding(actionId);
@@ -360,7 +355,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   private String[] getActionIds(KeyboardModifierGestureShortcut shortcut) {
     // first, get keystrokes from own map
     final Map<KeyboardModifierGestureShortcut, List<String>> map = getGesture2ListOfIds();
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
 
     for (Map.Entry<KeyboardModifierGestureShortcut, List<String>> entry : map.entrySet()) {
       if (shortcut.startsWith(entry.getKey())) {
@@ -392,15 +387,15 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
         boolean originalListInstance = true;
         for (String id : ids) {
           // add actions from parent keymap only if they are absent in this keymap
-          // do not add parent bind actions, if bind-on action is overwritten in the child 
-          if (!myActionId2ListOfShortcuts.containsKey(id) && 
+          // do not add parent bind actions, if bind-on action is overwritten in the child
+          if (!myActionId2ListOfShortcuts.containsKey(id) &&
               !myActionId2ListOfShortcuts.containsKey(getActionBinding(id))) {
             if (list == null) {
-              list = new ArrayList<String>();
+              list = new ArrayList<>();
               originalListInstance = false;
             }
             else if (originalListInstance) {
-              list = new ArrayList<String>(list);
+              list = new ArrayList<>(list);
               originalListInstance = false;
             }
             if (!list.contains(id)) list.add(id);
@@ -415,7 +410,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   @Override
   public String[] getActionIds(KeyStroke firstKeyStroke, KeyStroke secondKeyStroke) {
     String[] ids = getActionIds(firstKeyStroke);
-    ArrayList<String> actualBindings = new ArrayList<String>();
+    ArrayList<String> actualBindings = new ArrayList<>();
     for (String id : ids) {
       Shortcut[] shortcuts = getShortcuts(id);
       for (Shortcut shortcut : shortcuts) {
@@ -468,11 +463,11 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
           // add actions from parent keymap only if they are absent in this keymap
           if (!myActionId2ListOfShortcuts.containsKey(id)) {
             if (list == null) {
-              list = new ArrayList<String>();
+              list = new ArrayList<>();
               originalListInstance = false;
             }
             else if (originalListInstance) {
-              list = new ArrayList<String>(list);
+              list = new ArrayList<>(list);
             }
             list.add(id);
           }
@@ -521,7 +516,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   }
 
   @Nullable
-  private Shortcut[] getOwnShortcuts(String actionId) {
+  public Shortcut[] getOwnShortcuts(String actionId) {
     OrderedSet<Shortcut> own = myActionId2ListOfShortcuts.get(actionId);
     if (own == null) return null;
     return own.isEmpty() ? ourEmptyShortcutsArray : own.toArray(new Shortcut[own.size()]);
@@ -566,18 +561,19 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
         }
       }
     }
-    myName = keymapElement.getAttributeValue(NAME_ATTRIBUTE);
+    setName(keymapElement.getAttributeValue(NAME_ATTRIBUTE));
 
-    Map<String, ArrayList<Shortcut>> id2shortcuts = new HashMap<String, ArrayList<Shortcut>>();
-    final boolean skipInserts = SystemInfo.isMac && !ApplicationManager.getApplication().isUnitTestMode();
+    Map<String, ArrayList<Shortcut>> id2shortcuts = new HashMap<>();
+    final boolean skipInserts = SystemInfo.isMac
+                                && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode());
     for (final Object o : keymapElement.getChildren()) {
       Element actionElement = (Element)o;
       if (ACTION.equals(actionElement.getName())) {
         String id = actionElement.getAttributeValue(ID_ATTRIBUTE);
         if (id == null) {
-          throw new InvalidDataException("Attribute 'id' cannot be null; Keymap's name=" + myName);
+          throw new InvalidDataException("Attribute 'id' cannot be null; Keymap's name=" + getName());
         }
-        id2shortcuts.put(id, new ArrayList<Shortcut>(1));
+        id2shortcuts.put(id, new ArrayList<>(1));
         for (final Object o1 : actionElement.getChildren()) {
           Element shortcutElement = (Element)o1;
           if (KEYBOARD_SHORTCUT.equals(shortcutElement.getName())) {
@@ -586,12 +582,12 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
             String firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE);
             if (firstKeyStrokeStr == null) {
-              throw new InvalidDataException("Attribute '" + FIRST_KEYSTROKE_ATTRIBUTE + "' cannot be null; Action's id=" + id + "; Keymap's name=" + myName);
+              throw new InvalidDataException("Attribute '" + FIRST_KEYSTROKE_ATTRIBUTE + "' cannot be null; Action's id=" + id + "; Keymap's name=" + getName());
             }
             if (skipInserts && firstKeyStrokeStr.contains("INSERT")) continue;
 
             KeyStroke firstKeyStroke = KeyStrokeAdapter.getKeyStroke(firstKeyStrokeStr);
-            if (firstKeyStroke == null) continue; // logged when parsed 
+            if (firstKeyStroke == null) continue; // logged when parsed
 
             // Parse second keystroke
 
@@ -599,7 +595,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
             String secondKeyStrokeStr = shortcutElement.getAttributeValue(SECOND_KEYSTROKE_ATTRIBUTE);
             if (secondKeyStrokeStr != null) {
               secondKeyStroke = KeyStrokeAdapter.getKeyStroke(secondKeyStrokeStr);
-              if (secondKeyStroke == null) continue; // logged when parsed 
+              if (secondKeyStroke == null) continue; // logged when parsed
             }
             Shortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
             ArrayList<Shortcut> shortcuts = id2shortcuts.get(id);
@@ -608,10 +604,10 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
           else if (KEYBOARD_GESTURE_SHORTCUT.equals(shortcutElement.getName())) {
             final String strokeText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_KEY);
             if (strokeText == null) {
-              throw new InvalidDataException("Attribute '" + KEYBOARD_GESTURE_KEY + "' cannot be null; Action's id=" + id + "; Keymap's name=" + myName);
+              throw new InvalidDataException("Attribute '" + KEYBOARD_GESTURE_KEY + "' cannot be null; Action's id=" + id + "; Keymap's name=" + getName());
             }
             KeyStroke stroke = KeyStrokeAdapter.getKeyStroke(strokeText);
-            if (stroke == null) continue; // logged when parsed 
+            if (stroke == null) continue; // logged when parsed
 
             final String modifierText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_MODIFIER);
             KeyboardGestureAction.ModifierType modifier = null;
@@ -623,7 +619,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
             }
 
             if (modifier == null) {
-              throw new InvalidDataException("Wrong modifier=" + modifierText + " action id=" + id + " keymap=" + myName);
+              throw new InvalidDataException("Wrong modifier=" + modifierText + " action id=" + id + " keymap=" + getName());
             }
 
             Shortcut shortcut = KeyboardModifierGestureShortcut.newInstance(modifier, stroke);
@@ -633,7 +629,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
           else if (MOUSE_SHORTCUT.equals(shortcutElement.getName())) {
             String keystrokeString = shortcutElement.getAttributeValue(KEYSTROKE_ATTRIBUTE);
             if (keystrokeString == null) {
-              throw new InvalidDataException("Attribute 'keystroke' cannot be null; Action's id=" + id + "; Keymap's name=" + myName);
+              throw new InvalidDataException("Attribute 'keystroke' cannot be null; Action's id=" + id + "; Keymap's name=" + getName());
             }
 
             try {
@@ -643,21 +639,21 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
             }
             catch (InvalidDataException exc) {
               throw new InvalidDataException(
-                "Wrong mouse-shortcut: '" + keystrokeString + "'; Action's id=" + id + "; Keymap's name=" + myName);
+                "Wrong mouse-shortcut: '" + keystrokeString + "'; Action's id=" + id + "; Keymap's name=" + getName());
             }
           }
           else {
-            throw new InvalidDataException("unknown element: " + shortcutElement + "; Keymap's name=" + myName);
+            throw new InvalidDataException("unknown element: " + shortcutElement + "; Keymap's name=" + getName());
           }
         }
       }
       else {
-        throw new InvalidDataException("unknown element: " + actionElement + "; Keymap's name=" + myName);
+        throw new InvalidDataException("unknown element: " + actionElement + "; Keymap's name=" + getName());
       }
     }
     // Add read shortcuts
     for (String id : id2shortcuts.keySet()) {
-      myActionId2ListOfShortcuts.put(id, new OrderedSet<Shortcut>(2)); // It's a trick! After that parent's shortcuts are not added to the keymap
+      myActionId2ListOfShortcuts.put(id, new OrderedSet<>(2)); // It's a trick! After that parent's shortcuts are not added to the keymap
       ArrayList<Shortcut> shortcuts = id2shortcuts.get(id);
       for (Shortcut shortcut : shortcuts) {
         addShortcutSilently(id, shortcut, false);
@@ -668,7 +664,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   public Element writeExternal() {
     Element keymapElement = new Element(KEY_MAP);
     keymapElement.setAttribute(VERSION_ATTRIBUTE, Integer.toString(1));
-    keymapElement.setAttribute(NAME_ATTRIBUTE, myName);
+    keymapElement.setAttribute(NAME_ATTRIBUTE, getName());
 
     if (myParent != null) {
       keymapElement.setAttribute(PARENT_ATTRIBUTE, myParent.getName());
@@ -747,6 +743,11 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
    *         be used only for serializing of the <code>MouseShortcut</code>
    */
   private static String getMouseShortcutString(MouseShortcut shortcut) {
+
+    if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
+      return "Force touch";
+    }
+
     StringBuilder buffer = new StringBuilder();
 
     // modifiers
@@ -822,7 +823,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
   @Override
   public Map<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut) {
-    HashMap<String, ArrayList<KeyboardShortcut>> result = new HashMap<String, ArrayList<KeyboardShortcut>>();
+    HashMap<String, ArrayList<KeyboardShortcut>> result = new HashMap<>();
 
     String[] actionIds = getActionIds(keyboardShortcut.getFirstKeyStroke());
     for (String id : actionIds) {
@@ -862,7 +863,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
         ArrayList<KeyboardShortcut> list = result.get(id);
         if (list == null) {
-          list = new ArrayList<KeyboardShortcut>();
+          list = new ArrayList<>();
           result.put(id, list);
         }
 
@@ -904,6 +905,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
   }
 
+  @NotNull
   @Override
   public String toString() {
     return getPresentableName();

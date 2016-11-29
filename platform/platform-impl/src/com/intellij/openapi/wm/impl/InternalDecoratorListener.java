@@ -27,23 +27,23 @@ import java.util.EventListener;
  */
 interface InternalDecoratorListener extends EventListener{
 
-  public void anchorChanged(InternalDecorator source,ToolWindowAnchor anchor);
+  void anchorChanged(@NotNull InternalDecorator source, @NotNull ToolWindowAnchor anchor);
 
-  public void autoHideChanged(InternalDecorator source,boolean autoHide);
+  void autoHideChanged(@NotNull InternalDecorator source, boolean autoHide);
 
-  public void hidden(InternalDecorator source);
+  void hidden(@NotNull InternalDecorator source);
 
-  public void hiddenSide(InternalDecorator source);
+  void hiddenSide(@NotNull InternalDecorator source);
 
-  public void resized(InternalDecorator source);
+  void resized(@NotNull InternalDecorator source);
 
-  public void activated(InternalDecorator source);
+  void activated(@NotNull InternalDecorator source);
 
-  public void typeChanged(InternalDecorator source,ToolWindowType type);
+  void typeChanged(@NotNull InternalDecorator source, @NotNull ToolWindowType type);
 
-  public void sideStatusChanged(InternalDecorator source,boolean isSideTool);
+  void sideStatusChanged(@NotNull InternalDecorator source, boolean isSideTool);
 
-  public void contentUiTypeChanges(InternalDecorator sources, @NotNull ToolWindowContentUiType type);
+  void contentUiTypeChanges(@NotNull InternalDecorator sources, @NotNull ToolWindowContentUiType type);
 
-  public void visibleStripeButtonChanged(InternalDecorator source, boolean visible);
+  void visibleStripeButtonChanged(@NotNull InternalDecorator source, boolean visible);
 }

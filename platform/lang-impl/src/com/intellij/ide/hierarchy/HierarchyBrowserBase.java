@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.CommonActionsManager;
@@ -56,9 +55,10 @@ import java.util.Set;
 public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable, DataProvider {
   private static final HierarchyNodeDescriptor[] EMPTY_DESCRIPTORS = new HierarchyNodeDescriptor[0];
 
-  protected Content myContent;
-  private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   protected final Project myProject;
+  protected Content myContent;
+
+  private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   protected HierarchyBrowserBase(@NotNull Project project) {
     super(true, true);
@@ -66,12 +66,12 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {
-        return HierarchyBrowserManager.getInstance(myProject).getState().IS_AUTOSCROLL_TO_SOURCE;
+        return HierarchyBrowserManager.getSettings(myProject).IS_AUTOSCROLL_TO_SOURCE;
       }
 
       @Override
-      protected void setAutoScrollMode(final boolean state) {
-        HierarchyBrowserManager.getInstance(myProject).getState().IS_AUTOSCROLL_TO_SOURCE = state;
+      protected void setAutoScrollMode(boolean state) {
+        HierarchyBrowserManager.getSettings(myProject).IS_AUTOSCROLL_TO_SOURCE = state;
       }
     };
   }
@@ -87,8 +87,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   @Override
-  public void dispose() {
-  }
+  public void dispose() { }
 
   protected ActionToolbar createToolbar(final String place, final String helpID) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -155,7 +154,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     }
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
     final HierarchyNodeDescriptor descriptor = getDescriptor(node);
-    final Set<PsiElement> result = new HashSet<PsiElement>();
+    final Set<PsiElement> result = new HashSet<>();
     collectElements(descriptor, result);
     return result.toArray(PsiElement.EMPTY_ARRAY);
   }
@@ -189,7 +188,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     if (paths == null || paths.length == 0) {
       return EMPTY_DESCRIPTORS;
     }
-    final ArrayList<HierarchyNodeDescriptor> list = new ArrayList<HierarchyNodeDescriptor>(paths.length);
+    final ArrayList<HierarchyNodeDescriptor> list = new ArrayList<>(paths.length);
     for (final TreePath path : paths) {
       final Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
@@ -206,7 +205,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   @NotNull
   protected PsiElement[] getSelectedElements() {
     HierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
-    ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> elements = new ArrayList<>();
     for (HierarchyNodeDescriptor descriptor : descriptors) {
       PsiElement element = getElementFromDescriptor(descriptor);
       if (element != null) elements.add(element);
@@ -218,7 +217,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   private Navigatable[] getNavigatables() {
     final HierarchyNodeDescriptor[] selectedDescriptors = getSelectedDescriptors();
     if (selectedDescriptors == null || selectedDescriptors.length == 0) return null;
-    final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
+    final ArrayList<Navigatable> result = new ArrayList<>();
     for (HierarchyNodeDescriptor descriptor : selectedDescriptors) {
       Navigatable navigatable = getNavigatable(descriptor);
       if (navigatable != null) {
@@ -302,5 +301,4 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     TreeUtil.installActions(tree);
     myAutoScrollToSourceHandler.install(tree);
   }
-
 }

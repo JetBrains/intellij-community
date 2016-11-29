@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.StripTrailingSpacesFilter;
 import com.intellij.openapi.editor.StripTrailingSpacesFilterFactory;
@@ -34,6 +35,8 @@ import java.util.BitSet;
 public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailingSpacesFilter {
   @NotNull private final BitSet myDisabledLinesBitSet;
   @NotNull private final Document myDocument;
+  
+  private static Logger LOG = Logger.getInstance("#" + PsiBasedStripTrailingSpacesFilter.class.getName());
   
   public abstract static class Factory extends StripTrailingSpacesFilterFactory {
     @NotNull
@@ -72,7 +75,7 @@ public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailing
   protected abstract void process(@NotNull PsiFile psiFile);
 
   @Nullable
-  private static Language getDocumentLanguage(@NotNull Document document) {
+  public static Language getDocumentLanguage(@NotNull Document document) {
     FileDocumentManager manager = FileDocumentManager.getInstance();
     VirtualFile file = manager.getFile(document);
     if (file != null && file.isValid()) {
@@ -89,12 +92,21 @@ public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailing
         return documentManager.getCachedPsiFile(document);
       }
     }
+    else {
+      VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+      LOG.warn(
+        "No current project is given, trailing spaces will be stripped later (postponed). File: " +
+        (virtualFile != null ? virtualFile.getCanonicalPath() : "undefined"));
+    }
     return null;
   }
 
-  protected final void disableRange(@NotNull TextRange range) {
+  protected final void disableRange(@NotNull TextRange range, boolean includeEndLine) {
     int startLine = myDocument.getLineNumber(range.getStartOffset());
     int endLine = myDocument.getLineNumber(range.getEndOffset());
+    if (includeEndLine) {
+      endLine++;
+    }
     myDisabledLinesBitSet.set(startLine, endLine);
   }
 }

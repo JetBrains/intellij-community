@@ -103,7 +103,22 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                "  \n" +
                "}");
   }
-  
+
+  public void testToCodeBlockLambda() throws Exception {
+    doTextTest("java", "class Issue {\n" +
+                       "public static void main(String[] args) {\n" +
+                       "Arrays.asList().stream().collect(() -> {<caret> new ArrayList<>(), ArrayList::add, ArrayList::addAll);\n" +
+                       "}\n" +
+                       "}",
+                        "class Issue {\n" +
+                        "public static void main(String[] args) {\n" +
+                        "Arrays.asList().stream().collect(() -> {\n" +
+                        "    new ArrayList<>()\n" +
+                        "}, ArrayList::add, ArrayList::addAll);\n" +
+                        "}\n" +
+                        "}");
+  }
+
   public void testEnter_BetweenChainedMethodCalls() throws IOException {
     doTextTest("java",
                "class T {\n" +
@@ -154,4 +169,33 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                "    }\n" +
                "}");
   }
+  
+  public void testEnter_AfterLastChainedCall() throws IOException {
+    CodeStyleSettings settings = getCodeStyleSettings();
+    CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaCommon.ALIGN_MULTILINE_CHAINED_METHODS = true;
+    setCodeStyleSettings(settings);
+
+    doTextTest("java",
+               "class T {\n" +
+               "    public void main() {\n" +
+               "        ActionBarPullToRefresh.from(getActivity())\n" +
+               "                              .theseChildrenArePullable(eventsListView)\n" +
+               "                              .listener(this)\n" +
+               "                              .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())<caret>\n" +
+               "    }\n" +
+               "}",
+               "class T {\n" +
+               "    public void main() {\n" +
+               "        ActionBarPullToRefresh.from(getActivity())\n" +
+               "                              .theseChildrenArePullable(eventsListView)\n" +
+               "                              .listener(this)\n" +
+               "                              .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
+               "                              <caret>\n" +
+               "    }\n" +
+               "}");
+  }
+  
+  
+  
 }

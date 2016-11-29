@@ -21,7 +21,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.editor.PropertiesAnchorizer;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -54,7 +53,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
   @Override
   @NotNull
   public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
-    List<Key> keys = new ArrayList<Key>();
+    List<Key> keys = new ArrayList<>();
 
     String parentPrefix;
     int parentPrefixLength;
@@ -71,9 +70,6 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
         continue;
       }
       Object value = ((StructureViewTreeElement)element).getValue();
-      if (value instanceof PropertiesAnchorizer.PropertyAnchor) {
-        value = ((PropertiesAnchorizer.PropertyAnchor)value).getRepresentative();
-      }
       if (!(value instanceof IProperty)) {
         continue;
       }
@@ -83,23 +79,20 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       List<String> words = StringUtil.split(text, mySeparator);
       keys.add(new Key(words, element));
     }
-    Collections.sort(keys, new Comparator<Key>() {
-      @Override
-      public int compare(final Key k1, final Key k2) {
-        List<String> o1 = k1.words;
-        List<String> o2 = k2.words;
-        for (int i = 0; i < Math.max(o1.size(), o2.size()); i++) {
-          if (i == o1.size()) return 1;
-          if (i == o2.size()) return -1;
-          String s1 = o1.get(i);
-          String s2 = o2.get(i);
-          int res = s1.compareTo(s2);
-          if (res != 0) return res;
-        }
-        return 0;
+    Collections.sort(keys, (k1, k2) -> {
+      List<String> o1 = k1.words;
+      List<String> o2 = k2.words;
+      for (int i = 0; i < Math.max(o1.size(), o2.size()); i++) {
+        if (i == o1.size()) return 1;
+        if (i == o2.size()) return -1;
+        String s1 = o1.get(i);
+        String s2 = o2.get(i);
+        int res = s1.compareTo(s2);
+        if (res != 0) return res;
       }
+      return 0;
     });
-    List<Group> groups = new ArrayList<Group>();
+    List<Group> groups = new ArrayList<>();
     int groupStart = 0;
     for (int i = 0; i <= keys.size(); i++) {
       if (!isEndOfGroup(i, keys, parentPrefixLength)) {

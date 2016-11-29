@@ -39,7 +39,7 @@ public class EditorDocumentPriorities {
   public static final int SOFT_WRAP_MODEL = 100;
   public static final int EDITOR_TEXT_WIDTH_CACHE = 110;
   public static final int CARET_MODEL = 120;
-  public static final int SELECTION_MODEL = 140;
+  public static final int INLAY_MODEL = 150;
   public static final int EDITOR_DOCUMENT_ADAPTER = 160;
 
   private EditorDocumentPriorities() {

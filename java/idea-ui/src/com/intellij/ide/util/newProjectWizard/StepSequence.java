@@ -35,10 +35,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class StepSequence {
-  private final List<ModuleWizardStep> myCommonSteps = new ArrayList<ModuleWizardStep>();
-  private final List<Pair<ModuleWizardStep, Set<String>>> myCommonFinishingSteps = new ArrayList<Pair<ModuleWizardStep, Set<String>>>();
-  private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<String, ModuleWizardStep>();
-  @NonNls private List<String> myTypes = new ArrayList<String>();
+  private final List<ModuleWizardStep> myCommonSteps = new ArrayList<>();
+  private final List<Pair<ModuleWizardStep, Set<String>>> myCommonFinishingSteps = new ArrayList<>();
+  private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<>();
+  @NonNls private List<String> myTypes = new ArrayList<>();
   private List<ModuleWizardStep> mySelectedSteps;
 
   public StepSequence(ModuleWizardStep... commonSteps) {
@@ -68,7 +68,7 @@ public class StepSequence {
 
   public List<ModuleWizardStep> getSelectedSteps() {
     if (mySelectedSteps == null) {
-      mySelectedSteps = new ArrayList<ModuleWizardStep>();
+      mySelectedSteps = new ArrayList<>();
       mySelectedSteps.addAll(myCommonSteps);
       for (String type : myTypes) {
         Collection<ModuleWizardStep> steps = mySpecificSteps.get(type);
@@ -115,7 +115,7 @@ public class StepSequence {
   }
 
   public List<ModuleWizardStep> getAllSteps() {
-    final List<ModuleWizardStep> result = new ArrayList<ModuleWizardStep>();
+    final List<ModuleWizardStep> result = new ArrayList<>();
     result.addAll(myCommonSteps);
     result.addAll(mySpecificSteps.values());
     for (Pair<ModuleWizardStep, Set<String>> pair : myCommonFinishingSteps) {

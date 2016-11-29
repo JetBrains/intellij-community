@@ -34,12 +34,12 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   private final ElementFilter<Object> myFilter;
   private final AbstractTreeStructure myBaseStructure;
   protected final FilteringNode myRoot;
-  protected final HashSet<FilteringNode> myLeaves = new HashSet<FilteringNode>();
-  private final Map<FilteringNode, List<FilteringNode>> myNodesCache = new HashMap<FilteringNode, List<FilteringNode>>();
+  protected final HashSet<FilteringNode> myLeaves = new HashSet<>();
+  private final Map<FilteringNode, List<FilteringNode>> myNodesCache = new HashMap<>();
 
   protected enum State {UNKNOWN, VISIBLE, HIDDEN}
 
-  private final Map<Object, FilteringNode> myDescriptors2Nodes = new HashMap<Object, FilteringNode>();
+  private final Map<Object, FilteringNode> myDescriptors2Nodes = new HashMap<>();
 
   public FilteringTreeStructure(@NotNull ElementFilter filter, @NotNull AbstractTreeStructure originalStructure) {
     this(filter, originalStructure, true);
@@ -68,7 +68,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     if (delegates == null || delegates.length == 0 || duplicate) {
       myLeaves.add(node);
     } else {
-      ArrayList<FilteringNode> nodes = new ArrayList<FilteringNode>(delegates.length);
+      ArrayList<FilteringNode> nodes = new ArrayList<>(delegates.length);
       for (Object d : delegates) {
         boolean isDuplicate = myDescriptors2Nodes.containsKey(d);
         if (!isDuplicate) {
@@ -242,15 +242,11 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     public SimpleNode[] getChildren() {
       List<FilteringNode> nodes = myNodesCache.get(this);
       if (nodes == null) {
-        return myDelegate instanceof SimpleNode ? ContainerUtil.map(((SimpleNode)myDelegate).getChildren(), new Function<SimpleNode, SimpleNode>() {
-          @Override
-          public SimpleNode fun(SimpleNode node) {
-            return new FilteringNode(FilteringNode.this, node);
-          }
-        }, NO_CHILDREN) : NO_CHILDREN;
+        return myDelegate instanceof SimpleNode ? ContainerUtil.map(((SimpleNode)myDelegate).getChildren(),
+                                                                    node -> new FilteringNode(this, node), NO_CHILDREN) : NO_CHILDREN;
       }
 
-      ArrayList<FilteringNode> result = new ArrayList<FilteringNode>();
+      ArrayList<FilteringNode> result = new ArrayList<>();
       for (FilteringNode node : nodes) {
         if (node.state == State.VISIBLE) {
           result.add(node);

@@ -18,12 +18,13 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,6 +75,10 @@ public class RenameClassTest extends MultiFileTestCase {
     doRenameClass("XX", "Y");
   }
 
+  public void testAutomaticRenameLambdaParams() throws Exception {
+    doRenameClass("Bar", "Baz");
+  }
+
   private void doRenameClass(final String className, final String newName) throws Exception {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
@@ -98,7 +103,7 @@ public class RenameClassTest extends MultiFileTestCase {
   }
 
   private void doTest(@NonNls final String qClassName, @NonNls final String newName) throws Exception {
-    doTest((rootDir, rootAfter) -> RenameClassTest.this.performAction(qClassName, newName));
+    doTest((rootDir, rootAfter) -> this.performAction(qClassName, newName));
   }
 
   private void performAction(String qClassName, String newName) throws Exception {
@@ -114,5 +119,10 @@ public class RenameClassTest extends MultiFileTestCase {
   @Override
   protected String getTestRoot() {
     return "/refactoring/renameClass/";
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

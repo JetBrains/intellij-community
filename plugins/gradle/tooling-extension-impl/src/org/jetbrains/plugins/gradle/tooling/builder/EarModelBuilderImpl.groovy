@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.ear.EarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
+import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 
 /**
  * @author Vladislav.Soroka
@@ -40,17 +41,20 @@ import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
 class EarModelBuilderImpl implements ModelBuilderService {
 
   private static final String APP_DIR_PROPERTY = "appDirName"
+  private SourceSetCachedFinder mySourceSetFinder = null
 
   @Override
-  public boolean canBuild(String modelName) {
+  boolean canBuild(String modelName) {
     return EarConfiguration.name.equals(modelName)
   }
 
   @Nullable
   @Override
-  public Object buildAll(String modelName, Project project) {
+  Object buildAll(String modelName, Project project) {
     final EarPlugin earPlugin = project.plugins.findPlugin(EarPlugin)
     if (earPlugin == null) return null
+
+    if(mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(project)
 
     final String appDirName = !project.hasProperty(APP_DIR_PROPERTY) ?
                               "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
@@ -59,7 +63,7 @@ class EarModelBuilderImpl implements ModelBuilderService {
     def deployConfiguration = project.configurations.findByName(EarPlugin.DEPLOY_CONFIGURATION_NAME)
     def earlibConfiguration = project.configurations.findByName(EarPlugin.EARLIB_CONFIGURATION_NAME)
 
-    DependencyResolver dependencyResolver = new DependencyResolverImpl(project, false, false, false)
+    DependencyResolver dependencyResolver = new DependencyResolverImpl(project, false, false, false, mySourceSetFinder)
     def deployDependencies = dependencyResolver.resolveDependencies(deployConfiguration)
     def earlibDependencies = dependencyResolver.resolveDependencies(earlibConfiguration)
     def buildDirPath = project.getBuildDir().absolutePath
@@ -91,8 +95,8 @@ class EarModelBuilderImpl implements ModelBuilderService {
           })
         }
         catch (Exception e) {
-          ErrorMessageBuilder builderError = getErrorMessageBuilder(project, e);
-          project.getLogger().error(builderError.build());
+          ErrorMessageBuilder builderError = getErrorMessageBuilder(project, e)
+          project.getLogger().error(builderError.build())
         }
 
         earModel.resources = earResources
@@ -103,6 +107,8 @@ class EarModelBuilderImpl implements ModelBuilderService {
           deploymentDescriptor.writeTo(writer)
           earModel.deploymentDescriptor = writer.toString()
         }
+
+        earModel.archivePath = earTask.archivePath
 
         Manifest manifest = earTask.manifest
         if (manifest != null) {
@@ -120,7 +126,7 @@ class EarModelBuilderImpl implements ModelBuilderService {
 
   @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
     ErrorMessageBuilder.create(
       project, e, "JEE project import errors"
     ).withDescription("Ear Artifacts may not be configured properly")

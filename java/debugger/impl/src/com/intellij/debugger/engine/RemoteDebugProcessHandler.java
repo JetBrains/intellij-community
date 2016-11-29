@@ -30,7 +30,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
 
   public void startNotify() {
     final DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
-    final DebugProcessAdapter listener = new DebugProcessAdapter() {
+    final DebugProcessListener listener = new DebugProcessListener() {
       //executed in manager thread
       public void processDetached(DebugProcess process, boolean closedByUser) {
         debugProcess.removeDebugProcessListener(this);

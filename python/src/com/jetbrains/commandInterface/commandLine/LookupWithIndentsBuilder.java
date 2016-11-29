@@ -54,7 +54,7 @@ import java.util.Map.Entry;
  */
 final class LookupWithIndentsBuilder {
   @NotNull
-  private final Map<LookupElementBuilder, Pair<String, Integer>> myMap = new LinkedHashMap<LookupElementBuilder, Pair<String, Integer>>();
+  private final Map<LookupElementBuilder, Pair<String, Integer>> myMap = new LinkedHashMap<>();
   private int myMaxLength;
   private boolean myHasPriority;
 
@@ -105,7 +105,7 @@ final class LookupWithIndentsBuilder {
    */
   @NotNull
   LookupElement[] getResult() {
-    final List<LookupElement> result = new ArrayList<LookupElement>(myMap.size());
+    final List<LookupElement> result = new ArrayList<>(myMap.size());
     for (final Entry<LookupElementBuilder, Pair<String, Integer>> entry : myMap.entrySet()) {
       LookupElementBuilder elementBuilder = entry.getKey();
       final Pair<String, Integer> helpAndPriority = entry.getValue();

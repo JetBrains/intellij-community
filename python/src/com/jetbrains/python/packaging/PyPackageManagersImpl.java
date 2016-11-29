@@ -15,38 +15,28 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author yole
  */
 public class PyPackageManagersImpl extends PyPackageManagers {
-  private final Map<String, PyPackageManagerImpl> myInstances = new HashMap<String, PyPackageManagerImpl>();
+  private final Map<String, PyPackageManagerImpl> myInstances = new HashMap<>();
 
   @NotNull
   public synchronized PyPackageManager forSdk(@NotNull final Sdk sdk) {
-    final String homePath = sdk.getHomePath();
-    if (homePath == null) {
-      return new DummyPackageManager(sdk);
-    }
-    PyPackageManagerImpl manager = myInstances.get(homePath);
+    final String key = PythonSdkType.getSdkKey(sdk);
+    PyPackageManagerImpl manager = myInstances.get(key);
     if (manager == null) {
       if (PythonSdkType.isRemote(sdk)) {
         manager = new PyRemotePackageManagerImpl(sdk);
@@ -58,7 +48,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
         manager = new PyPackageManagerImpl(sdk);
       }
       if (sdkIsSetUp(sdk))
-        myInstances.put(homePath, manager);
+        myInstances.put(key, manager);
     }
     return manager;
   }
@@ -77,91 +67,9 @@ public class PyPackageManagersImpl extends PyPackageManagers {
 
   @Override
   public void clearCache(@NotNull Sdk sdk) {
-    if (myInstances.containsKey(sdk.getHomePath())) {
-      myInstances.remove(sdk.getHomePath());
+    final String key = PythonSdkType.getSdkKey(sdk);
+    if (myInstances.containsKey(key)) {
+      myInstances.remove(key);
     }
   }
-
-  static class DummyPackageManager extends PyPackageManager {
-    private final String myName;
-    private final LanguageLevel myLanguageLevel;
-    private final PythonSdkFlavor myFlavor;
-
-    public DummyPackageManager(@NotNull final Sdk sdk) {
-      myName = sdk.getName();
-      myLanguageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
-      myFlavor = PythonSdkFlavor.getFlavor(sdk);
-    }
-
-    @Override
-    public void installManagement() throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @NotNull
-    private String getErrorMessage() {
-      return "Invalid interpreter \"" + myName + "\" version: " + myLanguageLevel.toString() + " type: " + myFlavor.getName();
-    }
-
-    @Override
-    public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @Override
-    public void install(@NotNull String requirementString) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @Override
-    public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @Override
-    public void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @Override
-    public void refresh() {
-    }
-
-    @NotNull
-    @Override
-    public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @Nullable
-    @Override
-    public List<PyPackage> getPackages(boolean cachedOnly) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @Nullable
-    @Override
-    public PyPackage findPackage(@NotNull String name, boolean cachedOnly) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @Nullable
-    @Override
-    public PyPackage findPackage(@NotNull String name) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @Nullable
-    @Override
-    public List<PyRequirement> getRequirements(@NotNull Module module) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-  }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -105,6 +106,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public Project getProject() {
+      //noinspection ConstantConditions
       return super.getProject();
     }
 
@@ -135,7 +137,7 @@ public class GlobalSearchScopesCore {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myFileIndex.isInSourceContent(file) && !myFileIndex.isInTestSourceContent(file);
+      return myFileIndex.isInSourceContent(file) && !TestSourcesFilter.isTestSources(file, ObjectUtils.assertNotNull(getProject()));
     }
 
     @Override
@@ -166,16 +168,13 @@ public class GlobalSearchScopesCore {
   }
 
   private static class TestScopeFilter extends GlobalSearchScope {
-    private final ProjectFileIndex myFileIndex;
-
     private TestScopeFilter(@NotNull Project project) {
       super(project);
-      myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myFileIndex.isInTestSourceContent(file);
+      return TestSourcesFilter.isTestSources(file, ObjectUtils.assertNotNull(getProject()));
     }
 
     @Override
@@ -279,6 +278,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public Project getProject() {
+      //noinspection ConstantConditions
       return super.getProject();
     }
 
@@ -373,12 +373,12 @@ public class GlobalSearchScopesCore {
       }
       if (scope instanceof DirectoriesScope) {
         DirectoriesScope other = (DirectoriesScope)scope;
-        List<VirtualFile> newDirectories = new ArrayList<VirtualFile>(myDirectories.length + other.myDirectories.length);
-        newDirectories.addAll(Arrays.asList(other.myDirectories));
+        List<VirtualFile> newDirectories = new ArrayList<>(myDirectories.length + other.myDirectories.length);
+        newDirectories.addAll(Arrays.asList(myDirectories));
         BitSet newWithSubdirectories = (BitSet)myWithSubdirectories.clone();
-        VirtualFile[] directories = other.myDirectories;
-        for (int i = 0; i < directories.length; i++) {
-          VirtualFile otherDirectory = directories[i];
+        VirtualFile[] otherDirectories = other.myDirectories;
+        for (int i = 0; i < otherDirectories.length; i++) {
+          VirtualFile otherDirectory = otherDirectories[i];
           if (!in(otherDirectory)) {
             newWithSubdirectories.set(newDirectories.size(), other.myWithSubdirectories.get(i));
             newDirectories.add(otherDirectory);
@@ -392,6 +392,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public Project getProject() {
+      //noinspection ConstantConditions
       return super.getProject();
     }
 
@@ -402,12 +403,7 @@ public class GlobalSearchScopesCore {
         VirtualFile root = myDirectories[0];
         return "Directory '" + root.getName() + "'";
       }
-      return "Directories " + StringUtil.join(myDirectories, new Function<VirtualFile, String>() {
-        @Override
-        public String fun(VirtualFile file) {
-          return "'" + file.getName() + "'";
-        }
-      }, ", ");
+      return "Directories " + StringUtil.join(myDirectories, file -> "'" + file.getName() + "'", ", ");
     }
 
   }

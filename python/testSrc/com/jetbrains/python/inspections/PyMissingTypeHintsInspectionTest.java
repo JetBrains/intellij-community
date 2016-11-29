@@ -35,6 +35,11 @@ public class PyMissingTypeHintsInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON27);
   }
 
+  // PY-18877
+  public void testTypeCommentOnTheSameLine() {
+    doTest(LanguageLevel.PYTHON27);
+  }
+  
   private void doTest(LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {

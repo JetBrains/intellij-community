@@ -19,13 +19,16 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -103,6 +106,11 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     boolean firstIsEntityRef = isEntityRef(node1);
     boolean secondIsEntityRef = isEntityRef(node2);
 
+    if ((secondIsText && isInlineTag(node1) || firstIsText && isInlineTag(node2)) &&
+        myXmlFormattingPolicy.isKeepSpacesAroundInlineTags()) {
+      return Spacing.getReadOnlySpacing();
+    }
+
     if (isSpaceInText(firstIsTag, secondIsTag, firstIsText, secondIsText) && keepWhiteSpaces()) {
         return Spacing.getReadOnlySpacing();
     }
@@ -125,10 +133,6 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
       return Spacing.createSpacing(1, 1, 0,
                                    myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                    myXmlFormattingPolicy.getKeepBlankLines());
-    }
-
-    if (secondIsTag && myXmlFormattingPolicy.keepWhiteSpacesInsideTag((XmlTag)node2.getPsi()) && node2.textContains('\n')) {
-      return Spacing.getReadOnlySpacing();
     }
 
     if (isXmlTagName(type1, type2)){
@@ -263,5 +267,49 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
 
   public Indent getChildIndent() {
     return myChildIndent;
+  }
+
+  private static boolean isInlineTag(@NotNull ASTNode astNode) {
+    return astNode.getElementType() == XmlElementType.XML_TAG && isTextOnlyTag(astNode) &&
+           isTextNotEndingWithLineBreaks(astNode.getTreePrev()) && isTextNotStartingWithLineBreaks(astNode.getTreeNext());
+  }
+  
+  private static boolean isTextNotEndingWithLineBreaks(@Nullable ASTNode astNode) {
+    if (astNode != null && astNode.getElementType() == XmlElementType.XML_TEXT) {
+      ASTNode lastChild = astNode.getLastChildNode();
+      if (lastChild != null) {
+        return !(lastChild.getPsi() instanceof PsiWhiteSpace) || !CharArrayUtil.containLineBreaks(lastChild.getChars());
+      }
+    }
+    return false;
+  }
+  
+  private static boolean isTextNotStartingWithLineBreaks(@Nullable ASTNode astNode) {
+    if (astNode != null && astNode.getElementType() == XmlElementType.XML_TEXT) {
+      ASTNode firstChild = astNode.getFirstChildNode();
+      if (firstChild != null) {
+        return !(firstChild.getPsi() instanceof PsiWhiteSpace) || !CharArrayUtil.containLineBreaks(firstChild.getChars());
+      }
+    }
+    return false;
+  }
+  
+  private static boolean isTextOnlyTag(@NotNull ASTNode tagNode) {
+    ASTNode child = tagNode.getFirstChildNode();
+    boolean checkContent = false;
+    while (child != null) {
+      IElementType childType = child.getElementType();
+      if (checkContent) {
+        if (childType == XmlTokenType.XML_END_TAG_START) return true;
+        else if (childType != XmlElementType.XML_TEXT) return false;
+      }
+      else {
+        if (childType == XmlTokenType.XML_TAG_END) {
+          checkContent = true;
+        }
+      }
+      child = child.getTreeNext();
+    }
+    return false;
   }
 }

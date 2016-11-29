@@ -133,7 +133,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
       @Override
       public Collection<Integer> read(@NotNull DataInput in) throws IOException {
         int size = DataInputOutputUtil.readINT(in);
-        ArrayList<Integer> result = new ArrayList<Integer>(size);
+        ArrayList<Integer> result = new ArrayList<>(size);
         int prev = 0;
         while(size -- > 0) {
           int l = (int)(DataInputOutputUtil.readLONG(in) + prev);
@@ -149,7 +149,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
     Map<Integer, Void> map;
     @Override
     public boolean consumeTrigramsCount(int count) {
-      map = new THashMap<Integer, Void>(count);
+      map = new THashMap<>(count);
       return true;
     }
 

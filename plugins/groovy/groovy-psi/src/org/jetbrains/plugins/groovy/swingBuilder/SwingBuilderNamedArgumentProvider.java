@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.extensions.impl.TypeCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -48,7 +49,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
 
     Map<String, Pair<PsiType, PsiElement>> typeMap = null;
     if (!forCompletion) {
-      typeMap = new HashMap<String, Pair<PsiType, PsiElement>>();
+      typeMap = new HashMap<>();
     }
 
     PsiManager manager = aClass.getManager();
@@ -74,14 +75,14 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
 
           Pair<PsiType, PsiElement> oldPair = typeMap.get(propertyName);
           if (oldPair == null) {
-            typeMap.put(propertyName, new Pair<PsiType, PsiElement>(newType, method));
+            typeMap.put(propertyName, new Pair<>(newType, method));
           }
           else {
             PsiType type = TypesUtil.getLeastUpperBound(oldPair.first, newType, manager);
             if (type == null) {
               type = PsiType.getJavaLangObject(manager, aClass.getResolveScope());
             }
-            typeMap.put(propertyName, new Pair<PsiType, PsiElement>(newType, null));
+            typeMap.put(propertyName, new Pair<>(newType, null));
           }
         }
       }
@@ -106,7 +107,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
                 closureType = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, call.getResolveScope());
               }
 
-              result.put(psiMethod.getName(), new NamedArgumentDescriptor.TypeCondition(closureType, method));
+              result.put(psiMethod.getName(), new TypeCondition(closureType, method));
             }
           }
         }
@@ -115,7 +116,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
 
     if (!forCompletion) {
       for (Map.Entry<String, Pair<PsiType, PsiElement>> entry : typeMap.entrySet()) {
-        result.put(entry.getKey(), new NamedArgumentDescriptor.TypeCondition(entry.getValue().first, entry.getValue().second));
+        result.put(entry.getKey(), new TypeCondition(entry.getValue().first, entry.getValue().second));
       }
     }
   }

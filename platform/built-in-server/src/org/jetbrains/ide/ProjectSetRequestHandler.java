@@ -22,6 +22,7 @@ import com.intellij.platform.ProjectSetReader;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,14 +64,16 @@ public class ProjectSetRequestHandler extends RestService {
   @Override
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     final JsonObject descriptor = new JsonParser().parse(createJsonReader(request)).getAsJsonObject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        new ProjectSetReader().readDescriptor(descriptor, null);
-        activateLastFocusedFrame();
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      new ProjectSetReader().readDescriptor(descriptor, null);
+      activateLastFocusedFrame();
     });
     sendOk(request, context);
     return null;
+  }
+
+  @Override
+  public boolean isAccessible(@NotNull HttpRequest request) {
+    return true;
   }
 }

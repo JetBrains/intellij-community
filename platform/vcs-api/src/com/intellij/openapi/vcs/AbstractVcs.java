@@ -15,19 +15,19 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -54,9 +54,6 @@ import java.util.List;
  * @see ProjectLevelVcsManager
  */
 public abstract class AbstractVcs<ComList extends CommittedChangeList> extends StartedActivated {
-  // true is default
-  private static final String USE_ANNOTATION_CACHE = "vcs.use.annotation.cache";
-
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
   @NotNull
@@ -69,15 +66,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   private CheckinEnvironment myCheckinEnvironment;
   private UpdateEnvironment myUpdateEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
-  private static boolean ourUseAnnotationCache;
-
-  static {
-    final String property = System.getProperty(USE_ANNOTATION_CACHE);
-    ourUseAnnotationCache = true;
-    if (property != null) {
-      ourUseAnnotationCache = Boolean.valueOf(property);
-    }
-  }
 
   public AbstractVcs(@NotNull Project project, final String name) {
     super(project);
@@ -285,13 +273,16 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return false;
   }
 
-  public static boolean fileInVcsByFileStatus(final Project project, final FilePath path) {
-    final VirtualFile virtualFile = path.getVirtualFile();
-    if (virtualFile != null) {
-      final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
-      return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.ADDED && fileStatus != FileStatus.IGNORED;
-    }
-    return true;
+  public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull FilePath path) {
+    VirtualFile file = path.getVirtualFile();
+
+    return file == null || fileInVcsByFileStatus(project, file);
+  }
+
+  public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull VirtualFile file) {
+    FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
+
+    return status != FileStatus.UNKNOWN && status != FileStatus.ADDED && status != FileStatus.IGNORED;
   }
 
   /**
@@ -466,14 +457,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return null;
   }
 
-  /**
-   * List of actions that would be added to local changes browser if there are any changes for this VCS
-   */
-  @Nullable
-  public List<AnAction> getAdditionalActionsForLocalChange() {
-    return null;
-  }
-
   @Nullable
   public ChangeListEditHandler getEditHandler() {
     return null;
@@ -586,6 +569,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     setRollbackEnvironment(createRollbackEnvironment());
   }
 
+  /**
+   * @Deprecated to delete in 2017.3
+   */
+  @Deprecated
   public boolean reportsIgnoredDirectories() {
     return true;
   }
@@ -604,15 +591,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
       }
     };
     return VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents") ? list[0] : null;
-  }
-
-  @Nullable
-  public AnnotationProvider getCachingAnnotationProvider() {
-    final AnnotationProvider ap = getAnnotationProvider();
-    if (ourUseAnnotationCache && ap instanceof VcsCacheableAnnotationProvider) {
-      return new VcsAnnotationCachedProxy(this, ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache());
-    }
-    return ap;
   }
 
   @Override

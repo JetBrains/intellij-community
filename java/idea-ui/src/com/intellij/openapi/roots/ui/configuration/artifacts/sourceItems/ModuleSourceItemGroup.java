@@ -61,12 +61,12 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
   @Override
   @NotNull
   public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
-    final Set<Module> modules = new LinkedHashSet<Module>();
+    final Set<Module> modules = new LinkedHashSet<>();
     collectDependentModules(myModule, modules, context);
 
     final Artifact artifact = context.getArtifact();
     final ArtifactType artifactType = artifact.getArtifactType();
-    Set<PackagingSourceItem> items = new LinkedHashSet<PackagingSourceItem>();
+    Set<PackagingSourceItem> items = new LinkedHashSet<>();
     for (Module module : modules) {
       for (PackagingSourceItemsProvider provider : PackagingSourceItemsProvider.EP_NAME.getExtensions()) {
         final ModuleSourceItemGroup parent = new ModuleSourceItemGroup(module);
@@ -78,7 +78,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
       }
     }
 
-    List<PackagingElement<?>> result = new ArrayList<PackagingElement<?>>();
+    List<PackagingElement<?>> result = new ArrayList<>();
     final PackagingElementFactory factory = PackagingElementFactory.getInstance();
     for (PackagingSourceItem item : items) {
       final String path = artifactType.getDefaultPathFor(item.getKindOfProducedElements());

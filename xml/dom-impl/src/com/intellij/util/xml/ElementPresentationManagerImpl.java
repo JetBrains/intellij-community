@@ -33,7 +33,7 @@ public class ElementPresentationManagerImpl extends ElementPresentationManager {
   @Override
   @NotNull
   public <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags) {
-    List<Object> result = new ArrayList<Object>(elements.size());
+    List<Object> result = new ArrayList<>(elements.size());
     for (T element : elements) {
       String name = namer.fun(element);
       if (name != null) {

@@ -42,24 +42,24 @@ import java.util.Map.Entry;
 public class SSAConstructorSparseEx {
 
   // node id, var, version
-  private final HashMap<String, SFormsFastMapDirect> inVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> inVarVersions = new HashMap<>();
 
   // node id, var, version (direct branch)
-  private final HashMap<String, SFormsFastMapDirect> outVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> outVarVersions = new HashMap<>();
 
   // node id, var, version (negative branch)
-  private final HashMap<String, SFormsFastMapDirect> outNegVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> outNegVarVersions = new HashMap<>();
 
   // node id, var, version
-  private final HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<>();
 
   // (var, version), version
-  private final HashMap<VarVersionPair, FastSparseSet<Integer>> phi = new HashMap<VarVersionPair, FastSparseSet<Integer>>();
+  private final HashMap<VarVersionPair, FastSparseSet<Integer>> phi = new HashMap<>();
 
   // var, version
-  private final HashMap<Integer, Integer> lastversion = new HashMap<Integer, Integer>();
+  private final HashMap<Integer, Integer> lastversion = new HashMap<>();
 
-  private final List<VarVersionPair> startVars = new ArrayList<VarVersionPair>();
+  private final List<VarVersionPair> startVars = new ArrayList<>();
 
   // set factory
   private FastSparseSetFactory<Integer> factory;
@@ -73,18 +73,18 @@ public class SSAConstructorSparseEx {
     // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
     // } catch(Exception ex) {ex.printStackTrace();}
 
-    HashSet<Integer> setInit = new HashSet<Integer>();
+    HashSet<Integer> setInit = new HashSet<>();
     for (int i = 0; i < 64; i++) {
       setInit.add(i);
     }
-    factory = new FastSparseSetFactory<Integer>(setInit);
+    factory = new FastSparseSetFactory<>(setInit);
 
     SFormsFastMapDirect firstmap = createFirstMap(mt);
     extraVarVersions.put(dgraph.first.id, firstmap);
 
     setCatchMaps(root, dgraph, flatthelper);
 
-    HashSet<String> updated = new HashSet<String>();
+    HashSet<String> updated = new HashSet<>();
     do {
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
       ssaStatements(dgraph, updated);
@@ -348,7 +348,7 @@ public class SSAConstructorSparseEx {
       String exceptionDest = dgraph.mapFinallyMonitorExceptionPathExits.get(predid);
       boolean isExceptionMonitorExit = (exceptionDest != null && !nodeid.equals(exceptionDest));
 
-      HashSet<String> setLongPathWrapper = new HashSet<String>();
+      HashSet<String> setLongPathWrapper = new HashSet<>();
       for (FinallyPathWrapper finwraplong : dgraph.mapLongRangeFinallyPaths.get(predid)) {
         setLongPathWrapper.add(finwraplong.destination + "##" + finwraplong.source);
       }

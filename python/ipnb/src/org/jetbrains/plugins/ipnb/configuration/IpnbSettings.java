@@ -7,11 +7,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @State(name = "IpnbSettings")
 public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
-  public static String DEFAULT_URL = "http://127.0.0.1:8888";
+  public static final String DEFAULT_URL = "http://127.0.0.1:8888";
   public String URL = DEFAULT_URL;
+  private String myWorkingDirectory;
+  private String myArguments;
 
   public static IpnbSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, IpnbSettings.class);
@@ -26,6 +29,23 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
     return URL;
   }
 
+  public void setWorkingDirectory(@Nullable final String workingDirectory) {
+    myWorkingDirectory = workingDirectory;
+  }
+
+  @Nullable
+  public String getWorkingDirectory() {
+    return myWorkingDirectory;
+  }
+
+  public String getArguments() {
+    return myArguments;
+  }
+
+  public void setArguments(String arguments) {
+    myArguments = arguments;
+  }
+
   @Override
   public IpnbSettings getState() {
     return this;
@@ -35,5 +55,4 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   public void loadState(IpnbSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
-
 }

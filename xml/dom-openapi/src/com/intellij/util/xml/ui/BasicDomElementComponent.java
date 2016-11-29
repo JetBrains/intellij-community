@@ -44,7 +44,7 @@ import java.util.Map;
  */
 public abstract class BasicDomElementComponent<T extends DomElement> extends AbstractDomElementComponent<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ui.editors.BasicDomElementComponent");
-  private final Map<JComponent, DomUIControl> myBoundComponents = new HashMap<JComponent, DomUIControl>();
+  private final Map<JComponent, DomUIControl> myBoundComponents = new HashMap<>();
 
   public BasicDomElementComponent(T domElement) {
     super(domElement);
@@ -64,12 +64,9 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     DomElementAnnotationsManager.getInstance(domElement.getManager().getProject()).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
       @Override
       public void highlightingFinished(@NotNull final DomFileElement element) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (getComponent().isShowing() && element.isValid()) {
-              updateHighlighting();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (getComponent().isShowing() && element.isValid()) {
+            updateHighlighting();
           }
         });
       }
@@ -80,12 +77,8 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
       if (boundComponent != null) {
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
           if ((description.getValues(domElement)).size() == 1) {
-            final GenericDomValue element = domElement.getManager().createStableValue(new Factory<GenericDomValue>() {
-              @Override
-              public GenericDomValue create() {
-                return domElement.isValid() ? (GenericDomValue)description.getValues(domElement).get(0) : null;
-              }
-            });
+            final GenericDomValue element = domElement.getManager().createStableValue(
+              () -> domElement.isValid() ? (GenericDomValue)description.getValues(domElement).get(0) : null);
             doBind(DomUIFactory.createControl(element, commitOnEveryChange(element)), boundComponent);
           }
           else {

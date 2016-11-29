@@ -26,7 +26,7 @@ import java.util.ArrayList;
  * @author Konstantin Bulenkov
  */
 public class JBSlidingPanel extends JBPanel {
-  private final ArrayList<Pair<String,Component>> mySlides = new ArrayList<Pair<String, Component>>();
+  private final ArrayList<Pair<String,Component>> mySlides = new ArrayList<>();
   private int mySelectedIndex = -1;
 
   public JBSlidingPanel() {
@@ -57,12 +57,7 @@ public class JBSlidingPanel extends JBPanel {
 
   public ActionCallback swipe(String id, JBCardLayout.SwipeDirection direction) {
     final ActionCallback done = new ActionCallback();
-    getLayout().swipe(this, id, direction, new Runnable() {
-      @Override
-      public void run() {
-        done.setDone();
-      }
-    });
+    getLayout().swipe(this, id, direction, () -> done.setDone());
     return done;
   }
 
@@ -76,12 +71,7 @@ public class JBSlidingPanel extends JBPanel {
 
   private ActionCallback applySlide(JBCardLayout.SwipeDirection direction) {
     final ActionCallback callback = new ActionCallback();
-    getLayout().swipe(this, mySlides.get(mySelectedIndex).first, direction, new Runnable() {
-      @Override
-      public void run() {
-        callback.setDone();
-      }
-    });
+    getLayout().swipe(this, mySlides.get(mySelectedIndex).first, direction, () -> callback.setDone());
     return callback;
   }
 

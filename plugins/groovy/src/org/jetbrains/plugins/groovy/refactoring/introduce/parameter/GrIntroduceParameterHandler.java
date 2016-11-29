@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
@@ -66,7 +64,8 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   private JBPopup myEnclosingMethodsPopup;
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @Nullable final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable final DataContext dataContext) {
+    if (editor == null || file == null) return;
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
@@ -85,12 +84,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
           public void pass(final GrExpression selectedValue) {
             invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
           }
-        }, new Function<GrExpression, String>() {
-          @Override
-          public String fun(GrExpression grExpression) {
-            return grExpression.getText();
-          }
-        }
+        }, grExpression -> grExpression.getText()
         );
         return;
       }
@@ -129,12 +123,9 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
       showDialogOrStartInplace(new IntroduceParameterInfoImpl(initialInfo, owner, toSearchFor), editor);
     }
     else {
-      myEnclosingMethodsPopup = MethodOrClosureScopeChooser.create(scopes, editor, this, new PairFunction<GrParametersOwner, PsiElement, Object>() {
-        @Override
-        public Object fun(GrParametersOwner owner, PsiElement element) {
-          showDialogOrStartInplace(new IntroduceParameterInfoImpl(initialInfo, owner, element), editor);
-          return null;
-        }
+      myEnclosingMethodsPopup = MethodOrClosureScopeChooser.create(scopes, editor, this, (owner, element) -> {
+        showDialogOrStartInplace(new IntroduceParameterInfoImpl(initialInfo, owner, element), editor);
+        return null;
       });
       myEnclosingMethodsPopup.showInBestPositionFor(editor);
     }
@@ -143,7 +134,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   @NotNull
   private static List<GrParametersOwner> findScopes(@NotNull InitialInfo initialInfo) {
     PsiElement place = initialInfo.getContext();
-    final List<GrParametersOwner> scopes = new ArrayList<GrParametersOwner>();
+    final List<GrParametersOwner> scopes = new ArrayList<>();
     while (true) {
       final GrParametersOwner parent = PsiTreeUtil.getParentOfType(place, GrMethod.class, GrClosableBlock.class);
       if (parent == null) break;

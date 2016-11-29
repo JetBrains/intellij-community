@@ -37,37 +37,34 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
   protected void init() {
     super.init();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ExternalResourceManagerEx m = ExternalResourceManagerEx.getInstanceEx();
-        ExternalResourceManagerExImpl
-          .addTestResource("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"), myTestRootDisposable);
-        ExternalResourceManagerExImpl.addTestResource("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"),
-                                                      myTestRootDisposable);
-        //m.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("highlighting/relaxng.rng"));
-        ExternalResourceManagerExImpl.addTestResource("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"),
-                                                      myTestRootDisposable);
-        ExternalResourceManagerExImpl.addTestResource("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"),
-                                                      myTestRootDisposable);
-        ExternalResourceManagerExImpl.addTestResource("urn:intelliForm:AttachmentFilter",
-                                                      toAbsolutePath("highlighting/attachment-filter.rng"), myTestRootDisposable);
-        ExternalResourceManagerExImpl
-          .addTestResource("http://www.w3.org/1999/xhtml", toAbsolutePath("highlighting/html5/xhtml5.rnc"), myTestRootDisposable);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final ExternalResourceManagerEx m = ExternalResourceManagerEx.getInstanceEx();
+      ExternalResourceManagerExImpl
+        .addTestResource("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"), getTestRootDisposable());
+      ExternalResourceManagerExImpl.addTestResource("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"),
+                                                    getTestRootDisposable());
+      //m.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("highlighting/relaxng.rng"));
+      ExternalResourceManagerExImpl.addTestResource("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"),
+                                                    getTestRootDisposable());
+      ExternalResourceManagerExImpl.addTestResource("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"),
+                                                    getTestRootDisposable());
+      ExternalResourceManagerExImpl.addTestResource("urn:intelliForm:AttachmentFilter",
+                                                    toAbsolutePath("highlighting/attachment-filter.rng"), getTestRootDisposable());
+      ExternalResourceManagerExImpl
+        .addTestResource("http://www.w3.org/1999/xhtml", toAbsolutePath("highlighting/html5/xhtml5.rnc"), getTestRootDisposable());
 
-        m.addIgnoredResource("urn:intelliForm:Spaces");
-        m.addIgnoredResource("http://www.w3.org/1999/xlink");
-        m.addIgnoredResource("http://www.w3.org/2000/svg");
-        m.addIgnoredResource("http://www.ascc.net/xml/schematron");
-        m.addIgnoredResource("http://www.w3.org/2000/svg");
-        m.addIgnoredResource("http://www.w3.org/1998/Math/MathML");
-        m.addIgnoredResource("http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-        m.addIgnoredResource("http://nwalsh.com/xmlns/schema-control/");
-        m.addIgnoredResource("http://xml.apache.org/fop/extensions");
-        m.addIgnoredResource("http://www.antennahouse.com/names/XSL/Extensions");
-        m.addIgnoredResource("http://www.renderx.com/XSL/Extensions");
-        m.addIgnoredResource("http://relaxng.org/ns/compatibility/annotations/1.0");
-      }
+      m.addIgnoredResource("urn:intelliForm:Spaces");
+      m.addIgnoredResource("http://www.w3.org/1999/xlink");
+      m.addIgnoredResource("http://www.w3.org/2000/svg");
+      m.addIgnoredResource("http://www.ascc.net/xml/schematron");
+      m.addIgnoredResource("http://www.w3.org/2000/svg");
+      m.addIgnoredResource("http://www.w3.org/1998/Math/MathML");
+      m.addIgnoredResource("http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+      m.addIgnoredResource("http://nwalsh.com/xmlns/schema-control/");
+      m.addIgnoredResource("http://xml.apache.org/fop/extensions");
+      m.addIgnoredResource("http://www.antennahouse.com/names/XSL/Extensions");
+      m.addIgnoredResource("http://www.renderx.com/XSL/Extensions");
+      m.addIgnoredResource("http://relaxng.org/ns/compatibility/annotations/1.0");
     });
   }
 

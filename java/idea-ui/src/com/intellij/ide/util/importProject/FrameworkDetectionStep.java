@@ -95,7 +95,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
 
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
-    List<File> roots = new ArrayList<File>();
+    List<File> roots = new ArrayList<>();
     for (ModuleDescriptor moduleDescriptor : getModuleDescriptors()) {
       roots.addAll(moduleDescriptor.getContentRoots());
     }
@@ -107,7 +107,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
   public abstract List<ModuleDescriptor> getModuleDescriptors();
 
   private List<File> getRoots() {
-    List<File> roots = new ArrayList<File>();
+    List<File> roots = new ArrayList<>();
     for (ModuleDescriptor moduleDescriptor : getModuleDescriptors()) {
       roots.addAll(moduleDescriptor.getContentRoots());
     }

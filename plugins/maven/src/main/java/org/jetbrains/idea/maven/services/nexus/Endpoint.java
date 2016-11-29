@@ -55,14 +55,14 @@ public class Endpoint {
             List<String> _matrixParamSet;
             _matrixParamSet = _uriBuilder.addPathSegment(nexusRoot);
             _matrixParamSet = _uriBuilder.addPathSegment("data_index");
-            _templateAndMatrixParameterValues = new HashMap<String, Object>();
+            _templateAndMatrixParameterValues = new HashMap<>();
         }
 
         public DataSource getArtifactlistAsApplicationXml()
             throws IOException, MalformedURLException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             DataSource _retVal = _dsDispatcher.doGET(_url, _headerParameterValues, "application/xml");
             return _retVal;
@@ -71,8 +71,8 @@ public class Endpoint {
         public SearchResults getArtifactlistAsSearchResults()
             throws IOException, MalformedURLException, JAXBException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             Object _retVal = _jaxbDispatcher.doGET(_url, _headerParameterValues, "application/xml");
             if (_retVal == null) {
@@ -88,8 +88,8 @@ public class Endpoint {
         public DataSource getArtifactlistAsApplicationXml(String q, String g, String a, String v, String c)
             throws IOException, MalformedURLException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             _queryParameterValues.put("q", q);
             _queryParameterValues.put("g", g);
             _queryParameterValues.put("a", a);
@@ -103,8 +103,8 @@ public class Endpoint {
         public SearchResults getArtifactlistAsSearchResults(String q, String g, String a, String v, String c, String cn)
             throws IOException, MalformedURLException, JAXBException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             _queryParameterValues.put("q", q);
             _queryParameterValues.put("g", g);
             _queryParameterValues.put("a", a);
@@ -147,7 +147,7 @@ public class Endpoint {
             List<String> _matrixParamSet;
             _matrixParamSet = _uriBuilder.addPathSegment("http://repository.sonatype.org/service/local/");
             _matrixParamSet = _uriBuilder.addPathSegment("data_index/{repository}");
-            _templateAndMatrixParameterValues = new HashMap<String, Object>();
+            _templateAndMatrixParameterValues = new HashMap<>();
             _templateAndMatrixParameterValues.put("repository", repository);
         }
 
@@ -170,8 +170,8 @@ public class Endpoint {
         public DataSource getArtifactlistAsApplicationXml()
             throws IOException, MalformedURLException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             DataSource _retVal = _dsDispatcher.doGET(_url, _headerParameterValues, "application/xml");
             return _retVal;
@@ -180,8 +180,8 @@ public class Endpoint {
         public SearchResults getArtifactlistAsSearchResults()
             throws IOException, MalformedURLException, JAXBException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             Object _retVal = _jaxbDispatcher.doGET(_url, _headerParameterValues, "application/xml");
             if (_retVal == null) {
@@ -197,8 +197,8 @@ public class Endpoint {
         public DataSource getArtifactlistAsApplicationXml(String q, String g, String a, String v, String c)
             throws IOException, MalformedURLException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             _queryParameterValues.put("q", q);
             _queryParameterValues.put("g", g);
             _queryParameterValues.put("a", a);
@@ -212,8 +212,8 @@ public class Endpoint {
         public SearchResults getArtifactlistAsSearchResults(String q, String g, String a, String v, String c)
             throws IOException, MalformedURLException, JAXBException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             _queryParameterValues.put("q", q);
             _queryParameterValues.put("g", g);
             _queryParameterValues.put("a", a);
@@ -256,14 +256,14 @@ public class Endpoint {
             List<String> _matrixParamSet;
             _matrixParamSet = _uriBuilder.addPathSegment(url);
             _matrixParamSet = _uriBuilder.addPathSegment("repositories");
-            _templateAndMatrixParameterValues = new HashMap<String, Object>();
+            _templateAndMatrixParameterValues = new HashMap<>();
         }
 
         public DataSource getRepolistAsApplicationXml()
             throws IOException, MalformedURLException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             DataSource _retVal = _dsDispatcher.doGET(_url, _headerParameterValues, "application/xml");
             return _retVal;
@@ -272,8 +272,8 @@ public class Endpoint {
         public org.jetbrains.idea.maven.services.nexus.Repositories getRepolistAsRepositories()
             throws IOException, MalformedURLException, JAXBException
         {
-            HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
-            HashMap<String, Object> _headerParameterValues = new HashMap<String, Object>();
+            HashMap<String, Object> _queryParameterValues = new HashMap<>();
+            HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             Object _retVal = _jaxbDispatcher.doGET(_url, _headerParameterValues, "application/xml");
             if (_retVal == null) {

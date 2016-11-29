@@ -48,12 +48,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   private final boolean myYieldingUiBuild;
   private final boolean myBgStructureBuilding;
-  protected Set<Object> myForegroundLoadingNodes = new HashSet<Object>();
+  protected Set<Object> myForegroundLoadingNodes = new HashSet<>();
 
   private boolean myPassThroughMode;
 
-  final Set<StructureElement> myAutoExpand = new HashSet<StructureElement>();
-  final Set<StructureElement> myAlwaysShowPlus = new HashSet<StructureElement>();
+  final Set<StructureElement> myAutoExpand = new HashSet<>();
+  final Set<StructureElement> myAlwaysShowPlus = new HashSet<>();
   boolean mySmartExpand;
   protected Validator myValidator;
 
@@ -69,20 +69,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void doAndWaitForBuilder(final Runnable runnable, final Condition condition) throws Exception {
     final AtomicBoolean started = new AtomicBoolean();
-    invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        started.set(true);
-        runnable.run();
-      }
+    invokeLaterIfNeeded(() -> {
+      started.set(true);
+      runnable.run();
     });
 
-    waitBuilderToCome(new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return started.get() && condition.value(null);
-      }
-    });
+    waitBuilderToCome(o -> started.get() && condition.value(null));
   }
 
   void waitBuilderToCome()  {
@@ -99,17 +91,14 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       @Override
       protected boolean condition() {
         final boolean[] ready = {false};
-        invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            AbstractTreeUi ui = getBuilder().getUi();
-            if (ui == null) {
-              ready[0] = true;
-              return;
-            }
-
-            ready[0] = myCancelRequest != null || myReadyRequest || condition.value(null) && ui.isReady();
+        invokeAndWaitIfNeeded(() -> {
+          AbstractTreeUi ui = getBuilder().getUi();
+          if (ui == null) {
+            ready[0] = true;
+            return;
           }
+
+          ready[0] = myCancelRequest != null || myReadyRequest || condition.value(null) && ui.isReady();
         });
 
         return ready[0];
@@ -130,22 +119,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void expand(final TreePath p) throws Exception {
-    invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myTree.expandPath(p);
-      }
-    });
+    invokeAndWaitIfNeeded(() -> myTree.expandPath(p));
     waitBuilderToCome();
   }
 
   void collapsePath(final TreePath p) throws Exception {
-    invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myTree.collapsePath(p);
-      }
-    });
+    invokeAndWaitIfNeeded(() -> myTree.collapsePath(p));
     waitBuilderToCome();
   }
 
@@ -346,12 +325,9 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (getBuilder() != null) {
-          Disposer.dispose(getBuilder());
-        }
+    invokeLaterIfNeeded(() -> {
+      if (getBuilder() != null) {
+        Disposer.dispose(getBuilder());
       }
     });
 
@@ -384,12 +360,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void updateFromRoot(final boolean withStructure) throws Exception {
-    doAndWaitForBuilder(new Runnable() {
-      @Override
-      public void run() {
-        getBuilder().queueUpdate(withStructure);
-      }
-    });
+    doAndWaitForBuilder(() -> getBuilder().queueUpdate(withStructure));
   }
 
   void updateFrom(final NodeElement element) throws Exception {
@@ -397,21 +368,11 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void updateFrom(final NodeElement element, final boolean forceResort) throws Exception {
-    doAndWaitForBuilder(new Runnable() {
-      @Override
-      public void run() {
-        getBuilder().queueUpdateFrom(element, forceResort);
-      }
-    });
+    doAndWaitForBuilder(() -> getBuilder().queueUpdateFrom(element, forceResort));
   }
 
   void showTree() throws Exception {
-    doAndWaitForBuilder(new Runnable() {
-      @Override
-      public void run() {
-        getBuilder().getUi().activate(true);
-      }
-    });
+    doAndWaitForBuilder(() -> getBuilder().getUi().activate(true));
   }
 
   void select(final Object element, final boolean addToSelection) throws Exception {
@@ -424,22 +385,8 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void select(final Object[] elements, final boolean addToSelection, final boolean canBeInterrupted) throws Exception {
     final AtomicBoolean done = new AtomicBoolean();
-    doAndWaitForBuilder(new Runnable() {
-      @Override
-      public void run() {
-        getBuilder().select(elements, new Runnable() {
-          @Override
-          public void run() {
-            done.set(true);
-          }
-        }, addToSelection);
-      }
-    }, new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return done.get() || canBeInterrupted && getBuilder().getUi().isCancelledReady();
-      }
-    });
+    doAndWaitForBuilder(() -> getBuilder().select(elements, () -> done.set(true), addToSelection),
+                        o -> done.get() || canBeInterrupted && getBuilder().getUi().isCancelledReady());
   }
 
   protected final boolean isYieldingUiBuild() {

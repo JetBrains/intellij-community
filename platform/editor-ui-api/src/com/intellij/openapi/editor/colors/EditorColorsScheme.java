@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.SchemeMetaInfo;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +26,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme {
+public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo {
   @NonNls String DEFAULT_SCHEME_NAME = "Default";
 
   void setName(String name);
 
-  void setAttributes(TextAttributesKey key, TextAttributes attributes);
+  void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes);
 
   @NotNull
   Color getDefaultBackground();
@@ -61,15 +62,32 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setEditorFontName(String fontName);
 
   int getEditorFontSize();
+
+  /**
+   * Sets font size. Note, that this method checks that {@code fontSize} is within bounds and could change it if it is
+   * more than {@code com.intellij.application.options.EditorFontsConstants.getMaxEditorFontSize()} or less than
+   * {@code com.intellij.application.options.EditorFontsConstants.getMinEditorFontSize()}
+   * @see com.intellij.application.options.EditorFontsConstants
+   */
   void setEditorFontSize(int fontSize);
 
+  @Deprecated
   FontSize getQuickDocFontSize();
+
+  @Deprecated
   void setQuickDocFontSize(@NotNull FontSize fontSize);
 
   Font getFont(EditorFontType key);
   void setFont(EditorFontType key, Font font);
 
   float getLineSpacing();
+
+  /**
+   * Sets line spacing. Note, that this method checks that {@code lineSpacing} is within bounds and could change it if it is
+   * more than {@code com.intellij.application.options.EditorFontsConstants.getMaxEditorLineSpacing()} or less than
+   * {@code com.intellij.application.options.EditorFontsConstants.getMinEditorLineSpacing()}
+   * @see com.intellij.application.options.EditorFontsConstants
+   */
   void setLineSpacing(float lineSpacing);
 
   Object clone();

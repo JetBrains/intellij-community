@@ -27,16 +27,16 @@ public class DominatorTreeExceptionFilter {
   private final Statement statement;
 
   // idom, nodes
-  private final Map<Integer, Set<Integer>> mapTreeBranches = new HashMap<Integer, Set<Integer>>();
+  private final Map<Integer, Set<Integer>> mapTreeBranches = new HashMap<>();
 
   // handler, range nodes
-  private final Map<Integer, Set<Integer>> mapExceptionRanges = new HashMap<Integer, Set<Integer>>();
+  private final Map<Integer, Set<Integer>> mapExceptionRanges = new HashMap<>();
 
   // handler, head dom
-  private Map<Integer, Integer> mapExceptionDoms = new HashMap<Integer, Integer>();
+  private Map<Integer, Integer> mapExceptionDoms = new HashMap<>();
 
   // statement, handler, exit nodes
-  private final Map<Integer, Map<Integer, Integer>> mapExceptionRangeUniqueExit = new HashMap<Integer, Map<Integer, Integer>>();
+  private final Map<Integer, Map<Integer, Integer>> mapExceptionRangeUniqueExit = new HashMap<>();
 
   private DominatorEngine domEngine;
 
@@ -86,7 +86,7 @@ public class DominatorTreeExceptionFilter {
 
       Set<Integer> set = mapTreeBranches.get(idom);
       if (set == null) {
-        mapTreeBranches.put(idom, set = new HashSet<Integer>());
+        mapTreeBranches.put(idom, set = new HashSet<>());
       }
       set.add(key);
     }
@@ -101,7 +101,7 @@ public class DominatorTreeExceptionFilter {
       List<Statement> lstPreds = stat.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD);
       if (!lstPreds.isEmpty()) {
 
-        Set<Integer> set = new HashSet<Integer>();
+        Set<Integer> set = new HashSet<>();
 
         for (Statement st : lstPreds) {
           set.add(st.id);
@@ -116,7 +116,7 @@ public class DominatorTreeExceptionFilter {
 
   private Map<Integer, Integer> buildExceptionDoms(Integer id) {
 
-    Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> map = new HashMap<>();
 
     Set<Integer> children = mapTreeBranches.get(id);
     if (children != null) {
@@ -140,7 +140,7 @@ public class DominatorTreeExceptionFilter {
 
   private void buildFilter(Integer id) {
 
-    Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> map = new HashMap<>();
 
     Set<Integer> children = mapTreeBranches.get(id);
     if (children != null) {

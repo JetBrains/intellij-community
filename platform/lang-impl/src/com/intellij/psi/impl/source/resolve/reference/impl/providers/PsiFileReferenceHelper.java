@@ -132,7 +132,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
     for(VirtualFile file:query) {
       if (scope != null && !scope.contains(file)) continue;
       if (result == null) {
-        result = new ArrayList<PsiFileSystemItem>();
+        result = new ArrayList<>();
         manager = PsiManager.getInstance(module.getProject());
       }
       PsiDirectory psiDirectory = manager.findDirectory(file);

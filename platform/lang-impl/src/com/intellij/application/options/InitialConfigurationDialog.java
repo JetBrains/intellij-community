@@ -23,6 +23,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.ide.actions.CreateLauncherScriptAction;
+import com.intellij.ide.customize.CustomizeDesktopEntryStep;
+import com.intellij.ide.customize.CustomizeLauncherScriptStep;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.ui.LafComboBoxRenderer;
 import com.intellij.ide.ui.LafManager;
@@ -32,12 +34,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -89,9 +92,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
     myColorSettingsPage = colorSettingsPage;
     setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Initial Configuration");
 
-    final ArrayList<Keymap> keymaps = new ArrayList<Keymap>();
+    final ArrayList<Keymap> keymaps = new ArrayList<>();
     for (Keymap keymap : ((KeymapManagerImpl)KeymapManager.getInstance()).getAllKeymaps()) {
-      if (matchesPlatform(keymap)) {
+      if (DefaultKeymap.matchesPlatform(keymap)) {
         keymaps.add(keymap);
       }
     }
@@ -148,7 +151,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean cellHasFocus) {
         if (value != null) {
-          setText(((EditorColorsScheme)value).getName());
+          setText(AbstractColorsScheme.getDisplayName((EditorColorsScheme)value));
         }
       }
     });
@@ -164,22 +167,26 @@ public class InitialConfigurationDialog extends DialogWrapper {
     init();
 
     final boolean canCreateLauncherScript = canCreateLauncherScript();
-    myCreateScriptCheckbox.setVisible(canCreateLauncherScript);
-    myCreateScriptCheckbox.setSelected(canCreateLauncherScript);
     myCreateScriptPanel.setVisible(canCreateLauncherScript);
+    myCreateScriptCheckbox.setVisible(canCreateLauncherScript);
+    myCreateScriptCheckbox.setSelected(false);
     if (canCreateLauncherScript) {
       myScriptPathTextField.setText(CreateLauncherScriptAction.defaultScriptPath());
+      myScriptPathTextField.setEnabled(false);
+      myCreateScriptCheckbox.addChangeListener(e -> myScriptPathTextField.setEnabled(myCreateScriptCheckbox.isSelected()));
     }
 
     final boolean canCreateDesktopEntry = canCreateDesktopEntry();
+    myCreateEntryPanel.setVisible(canCreateDesktopEntry);
     myCreateEntryCheckBox.setVisible(canCreateDesktopEntry);
     myCreateEntryCheckBox.setSelected(canCreateDesktopEntry);
-    myCreateEntryPanel.setVisible(canCreateDesktopEntry);
+    myGlobalEntryCheckBox.setSelected(false);
     if (canCreateDesktopEntry) {
-      myGlobalEntryCheckBox.setSelected(!PathManager.getHomePath().startsWith("/home"));
+      myGlobalEntryCheckBox.setEnabled(true);
+      myCreateEntryCheckBox.addChangeListener(e -> myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected()));
     }
 
-    myPreferencesLabel.setText("You can use "+ CommonBundle.settingsActionPath() + " to configure any of these settings later.");
+    myPreferencesLabel.setText("You can use " + CommonBundle.settingsActionPath() + " to configure any of these settings later.");
 
     Disposer.register(myDisposable, new Disposable() {
       @Override
@@ -209,11 +216,11 @@ public class InitialConfigurationDialog extends DialogWrapper {
   }
 
   protected boolean canCreateDesktopEntry() {
-    return CreateDesktopEntryAction.isAvailable();
+    return CustomizeDesktopEntryStep.isAvailable();
   }
 
   protected boolean canCreateLauncherScript() {
-    return CreateLauncherScriptAction.isAvailable();
+    return CustomizeLauncherScriptStep.isAvailable();
   }
 
   public JComboBox getKeymapComboBox() {
@@ -323,19 +330,6 @@ public class InitialConfigurationDialog extends DialogWrapper {
     }
 
     @Override
-    public boolean refreshDataSynch() {
-      return false;
-    }
-
-    @Override
-    public void dataChanged() {}
-
-    @Override
-    public boolean isStillValid(Object o) {
-      return false;
-    }
-
-    @Override
     public void refresh() {
       updateColorSchemePreview(false);
     }
@@ -343,14 +337,6 @@ public class InitialConfigurationDialog extends DialogWrapper {
     @Override
     public JPanel getPanel() {
       return (JPanel)myPreviewEditor.getPanel();
-    }
-
-    @Override
-    public void away() {}
-
-    @Override
-    public void dispose() {
-      disposeUIResources();
     }
 
     public void updateColorSchemePreview(final boolean recalculateDialogSize) {
@@ -371,26 +357,12 @@ public class InitialConfigurationDialog extends DialogWrapper {
       assert myColorAndFontPanel != null;
       myPreviewEditor = new SimpleEditorPreview(myPreviewOptions, myColorAndFontPanel.getSettingsPage(), false);
       myPreviewEditor.updateView();
-      myWrapper.add(myPreviewEditor.getPanel(), BorderLayout.EAST);
+      myWrapper.add(myPreviewEditor.getPanel());
       if (recalculateDialogSize) {
         final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
         resizeTo(dialog.getSize().width, dialog.getSize().height - wrapperHeight + getPreviewPreferredHeight());
       }
     }
-  }
-
-  private static boolean matchesPlatform(Keymap keymap) {
-    final String name = keymap.getName();
-    if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) {
-      return SystemInfo.isWindows;
-    }
-    else if (KeymapManager.MAC_OS_X_KEYMAP.equals(name) || KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP.equals(name)) {
-      return SystemInfo.isMac;
-    }
-    else if (KeymapManager.X_WINDOW_KEYMAP.equals(name) || "Default for GNOME".equals(name) || "Default for KDE".equals(name)) {
-      return SystemInfo.isXWindow;
-    }
-    return true;
   }
 
   @Override

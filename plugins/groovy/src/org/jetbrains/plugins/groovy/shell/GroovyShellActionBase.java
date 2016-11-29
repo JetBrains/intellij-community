@@ -75,14 +75,10 @@ public abstract class GroovyShellActionBase extends AnAction {
   }
 
   private boolean hasGroovyCompatibleModule(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, APPLICABLE_MODULE_CACHE, new CachedValueProvider<Boolean>() {
-      @Nullable
-      @Override
-      public Result<Boolean> compute() {
-        Collection<Module> possibleModules = myConfig.getPossiblySuitableModules(project);
-        return Result.create(ModuleChooserUtil.hasGroovyCompatibleModules(possibleModules, APPLICABLE_MODULE),
-                             ProjectRootModificationTracker.getInstance(project));
-      }
+    return CachedValuesManager.getManager(project).getCachedValue(project, APPLICABLE_MODULE_CACHE, () -> {
+      Collection<Module> possibleModules = myConfig.getPossiblySuitableModules(project);
+      return CachedValueProvider.Result.create(ModuleChooserUtil.hasGroovyCompatibleModules(possibleModules, APPLICABLE_MODULE),
+                                               ProjectRootModificationTracker.getInstance(project));
     }, false);
   }
 

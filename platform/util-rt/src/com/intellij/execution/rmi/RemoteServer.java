@@ -77,7 +77,7 @@ public class RemoteServer {
       String id = port + "/" + name;
       System.out.println("Port/ID: " + id);
 
-      long waitTime = 2 * 60 * 1000L;
+      long waitTime = RemoteDeadHand.PING_TIMEOUT;
       Object lock = new Object();
       //noinspection InfiniteLoopStatement
       while (true) {

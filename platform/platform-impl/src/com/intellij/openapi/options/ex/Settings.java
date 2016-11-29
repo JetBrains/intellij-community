@@ -33,7 +33,7 @@ public abstract class Settings {
 
   private final ConfigurableGroup[] myGroups;
   private final IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper>
-    myMap = new IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper>();
+    myMap = new IdentityHashMap<>();
 
   protected Settings(@NotNull ConfigurableGroup... groups) {
     myGroups = groups;

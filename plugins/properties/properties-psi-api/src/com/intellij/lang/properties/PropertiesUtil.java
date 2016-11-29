@@ -26,7 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,34 +36,31 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.ui.plaf.beg.BegResources.j;
-
 /**
  * @author cdr
  */
 public class PropertiesUtil {
-  public final static Pattern LOCALE_PATTERN = Pattern.compile("(_[a-zA-Z]{2,8}(_[a-zA-Z]{2}|[0-9]{3})?(_[\\w\\-]+)?)\\.[^_]+$");
-  public final static Set<Character> BASE_NAME_BORDER_CHAR = ContainerUtil.newHashSet('-', '_', '.');
-  public final static Locale DEFAULT_LOCALE = new Locale("", "", "");
+  private static final Pattern LOCALE_PATTERN = Pattern.compile("(_[a-zA-Z]{2,8}(_[a-zA-Z]{2}|[0-9]{3})?(_[\\w\\-]+)?)\\.[^_]+$");
+  public static final Set<Character> BASE_NAME_BORDER_CHAR = ContainerUtil.newHashSet('-', '_', '.');
+  public static final Locale DEFAULT_LOCALE = new Locale("", "", "");
 
   private static final SoftLazyValue<Set<String>> LOCALES_LANGUAGE_CODES = new SoftLazyValue<Set<String>>() {
     @NotNull
     @Override
     protected Set<String> compute() {
       final HashSet<String> locales =
-        new HashSet<String>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(), new Function<Locale, List<String>>() {
-          @Override
-          public List<String> fun(Locale locale) {
-            final ArrayList<String> languages = ContainerUtil.newArrayList(locale.getLanguage());
-            try {
-              languages.add(locale.getISO3Language());
-            }
-            catch (MissingResourceException ignored) {
-              // if ISO3 language is not found for existed locale then exception is thrown anyway
-            }
-            return languages;
-          }
-        })));
+        new HashSet<>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(),
+                                                              (Function<Locale, List<String>>)locale -> {
+                                                                final ArrayList<String> languages =
+                                                                  ContainerUtil.newArrayList(locale.getLanguage());
+                                                                try {
+                                                                  languages.add(locale.getISO3Language());
+                                                                }
+                                                                catch (MissingResourceException ignored) {
+                                                                  // if ISO3 language is not found for existed locale then exception is thrown anyway
+                                                                }
+                                                                return languages;
+                                                              })));
       locales.addAll(ContainerUtil.newArrayList(Locale.getISOLanguages()));
       return locales;
     }
@@ -101,7 +98,7 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static String getDefaultBaseName(@NotNull final VirtualFile file) {
+  static String getDefaultBaseName(@NotNull final VirtualFile file) {
     final String name = file.getName();
 
     if (!StringUtil.containsChar(name, '_')) {
@@ -130,7 +127,7 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static Locale getLocale(final @NotNull PropertiesFile propertiesFile) {
+  public static Locale getLocale(@NotNull final PropertiesFile propertiesFile) {
     String name = propertiesFile.getName();
     if (!StringUtil.containsChar(name, '_')) return DEFAULT_LOCALE;
     final String containingResourceBundleBaseName = propertiesFile.getResourceBundle().getBaseName();
@@ -142,11 +139,11 @@ public class PropertiesUtil {
     final Matcher matcher = LOCALE_PATTERN.matcher(suffix);
     if (matcher.find()) {
       final String rawLocale = matcher.group(1);
-      final String[] splittedRawLocale = rawLocale.split("_");
-      if (splittedRawLocale.length > 1 && splittedRawLocale[1].length() >= 2) {
-        final String language = splittedRawLocale[1];
-        final String country = splittedRawLocale.length > 2 ? splittedRawLocale[2] : "";
-        final String variant = splittedRawLocale.length > 3 ? splittedRawLocale[3] : "";
+      final String[] splitRawLocale = rawLocale.split("_");
+      if (splitRawLocale.length > 1 && splitRawLocale[1].length() >= 2) {
+        final String language = splitRawLocale[1];
+        final String country = splitRawLocale.length > 2 ? splitRawLocale[2] : "";
+        final String variant = splitRawLocale.length > 3 ? splitRawLocale[3] : "";
         return new Locale(language, country, variant);
       }
     }
@@ -157,7 +154,7 @@ public class PropertiesUtil {
    * messages_en.properties is a parent of the messages_en_US.properties
    */
   @Nullable
-  public static PropertiesFile getParent(PropertiesFile file, List<PropertiesFile> candidates) {
+  public static PropertiesFile getParent(@NotNull PropertiesFile file, @NotNull Collection<PropertiesFile> candidates) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
     String name = virtualFile.getNameWithoutExtension();
@@ -179,7 +176,7 @@ public class PropertiesUtil {
   @NotNull
   @Deprecated
   public static List<IProperty> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
-    List<IProperty> result = new SmartList<IProperty>();
+    List<IProperty> result = new SmartList<>();
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       result.addAll(propertiesFile.findPropertiesByKey(key));
@@ -188,7 +185,7 @@ public class PropertiesUtil {
   }
 
   public static List<IProperty> findAllProperties(@NotNull ResourceBundle resourceBundle, String key) {
-    List<IProperty> result = new SmartList<IProperty>();
+    List<IProperty> result = new SmartList<>();
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       result.addAll(propertiesFile.findPropertiesByKey(key));
@@ -210,13 +207,13 @@ public class PropertiesUtil {
   }
 
   @Nullable
-  public static String getPackageQualifiedName(@NotNull PsiDirectory directory) {
+  static String getPackageQualifiedName(@NotNull PsiDirectory directory) {
     return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
   }
 
   @NotNull
   public static String getPresentableLocale(@NotNull Locale locale) {
-    List<String> names = new ArrayList<String>();
+    List<String> names = new ArrayList<>();
     if (!Comparing.strEqual(locale.getDisplayLanguage(), null)) {
       names.add(locale.getDisplayLanguage());
     }
@@ -226,7 +223,7 @@ public class PropertiesUtil {
     if (!Comparing.strEqual(locale.getDisplayVariant(), null)) {
       names.add(locale.getDisplayVariant());
     }
-    return names.isEmpty() ? "" : (" (" + StringUtil.join(names, "/") + ")");
+    return names.isEmpty() ? "" : " (" + StringUtil.join(names, "/") + ")";
   }
 
   public static boolean hasDefaultLanguage(Locale locale) {

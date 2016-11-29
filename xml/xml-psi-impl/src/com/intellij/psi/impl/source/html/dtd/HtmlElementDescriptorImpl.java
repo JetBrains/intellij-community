@@ -105,7 +105,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   // Read-only calculation
   @Override
   protected HashMap<String, XmlElementDescriptor> collectElementDescriptorsMap(final XmlTag element) {
-    final HashMap<String, XmlElementDescriptor> hashMap = new HashMap<String, XmlElementDescriptor>();
+    final HashMap<String, XmlElementDescriptor> hashMap = new HashMap<>();
     final XmlElementDescriptor[] elementDescriptors = myDelegate.getElementsDescriptors(element);
 
     for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
@@ -152,7 +152,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   // Read-only calculation
   @Override
   protected HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap(final XmlTag context) {
-    final HashMap<String, XmlAttributeDescriptor> hashMap = new HashMap<String, XmlAttributeDescriptor>();
+    final HashMap<String, XmlAttributeDescriptor> hashMap = new HashMap<>();
     XmlAttributeDescriptor[] elementAttributeDescriptors = myDelegate.getAttributesDescriptors(context);
 
     for (final XmlAttributeDescriptor attributeDescriptor : elementAttributeDescriptors) {

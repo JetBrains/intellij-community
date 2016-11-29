@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class ClassReferenceSearchingScanner extends ClassReferenceScanner {
 
   public PsiReference[] findReferences() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
-    return ReferencesSearch.search(myClass, projectScope, false).toArray(new PsiReference[0]);
+    return ReferencesSearch.search(myClass, projectScope, false).toArray(PsiReference.EMPTY_ARRAY);
   }
 
 }

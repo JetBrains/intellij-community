@@ -70,15 +70,10 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
 
   private static class UnnecessarilyQualifiedInnerClassAccessFix
     extends InspectionGadgetsFix {
-     @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessarily.qualified.inner.class.access.quickfix");
     }

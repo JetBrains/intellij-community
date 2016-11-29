@@ -16,8 +16,7 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.Descriptor;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -42,11 +41,10 @@ public class ToolDescriptors {
   }
 
   public static ToolDescriptors fromScopeToolState(final ScopeToolState state,
-                                                   final InspectionProfileImpl profile,
+                                                   @NotNull InspectionProfileModifiableModel profile,
                                                    final Project project) {
-    final InspectionToolWrapper toolWrapper = state.getTool();
-    final List<ScopeToolState> nonDefaultTools = profile.getNonDefaultTools(toolWrapper.getShortName(), project);
-    final ArrayList<Descriptor> descriptors = new ArrayList<Descriptor>(nonDefaultTools.size());
+    List<ScopeToolState> nonDefaultTools = profile.getNonDefaultTools(state.getTool().getShortName(), project);
+    ArrayList<Descriptor> descriptors = new ArrayList<>(nonDefaultTools.size());
     for (final ScopeToolState nonDefaultToolState : nonDefaultTools) {
       descriptors.add(new Descriptor(nonDefaultToolState, profile, project));
     }

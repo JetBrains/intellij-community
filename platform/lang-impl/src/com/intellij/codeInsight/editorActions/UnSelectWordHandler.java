@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,13 +59,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
     doAction(editor, file);
   }
 
-
   private static void doAction(final Editor editor, PsiFile file) {
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-      if (file == null) return;
-    }
-
     if (!editor.getSelectionModel().hasSelection()) {
       return;
     }
@@ -108,7 +102,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
 
     final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
-    final Ref<TextRange> maximumRange = new Ref<TextRange>();
+    final Ref<TextRange> maximumRange = new Ref<>();
 
     final int finalCursorOffset = cursorOffset;
     SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<TextRange>() {

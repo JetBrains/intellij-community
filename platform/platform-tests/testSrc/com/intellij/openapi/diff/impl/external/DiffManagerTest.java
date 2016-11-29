@@ -20,7 +20,7 @@ import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import org.easymock.classextension.EasyMock;
+import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -76,8 +76,8 @@ public class DiffManagerTest {
   }
 
   private static class MyDiffRequest extends DiffRequest {
-    private final List<String> myContentTitles = new ArrayList<String>();
-    private final List<DiffContent> myDiffContents = new ArrayList<DiffContent>();
+    private final List<String> myContentTitles = new ArrayList<>();
+    private final List<DiffContent> myDiffContents = new ArrayList<>();
 
     public MyDiffRequest() {
       super(null);

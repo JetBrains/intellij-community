@@ -36,11 +36,11 @@ import java.util.*;
  * @author yole
  */
 public class StartupWizardModel extends WizardModel {
-  private final Set<String> myDisabledPluginIds = new HashSet<String>();
-  private final Map<String, SelectPluginsStep> myStepMap = new HashMap<String, SelectPluginsStep>();
-  private Map<PluginId, SelectPluginsStep> myPluginToStepMap = new HashMap<PluginId, SelectPluginsStep>();
+  private final Set<String> myDisabledPluginIds = new HashSet<>();
+  private final Map<String, SelectPluginsStep> myStepMap = new HashMap<>();
+  private Map<PluginId, SelectPluginsStep> myPluginToStepMap = new HashMap<>();
   private MultiMap<IdeaPluginDescriptor, IdeaPluginDescriptor> myBackwardDependencies =
-    new MultiMap<IdeaPluginDescriptor, IdeaPluginDescriptor>();
+    new MultiMap<>();
   private SelectPluginsStep myOtherStep;
   private IdeaPluginDescriptor[] myAllPlugins;
 
@@ -103,7 +103,7 @@ public class StartupWizardModel extends WizardModel {
   }
 
   static List<PluginId> getNonOptionalDependencies(final IdeaPluginDescriptor descriptor) {
-    List<PluginId> result = new ArrayList<PluginId>();
+    List<PluginId> result = new ArrayList<>();
     for (PluginId pluginId : descriptor.getDependentPluginIds()) {
       if (pluginId.getIdString().equals("com.intellij")) continue;
       if (!ArrayUtil.contains(pluginId, descriptor.getOptionalDependentPluginIds())) {
@@ -166,7 +166,7 @@ public class StartupWizardModel extends WizardModel {
   }
 
   public List<IdeaPluginDescriptor> getDependentsOnEarlierPages(IdeaPluginDescriptor descriptor, boolean includeSamePage) {
-    List<IdeaPluginDescriptor> dependents = new ArrayList<IdeaPluginDescriptor>();
+    List<IdeaPluginDescriptor> dependents = new ArrayList<>();
     int thisStep = getPluginStepIndex(descriptor);
     for (IdeaPluginDescriptor dependent : myBackwardDependencies.get(descriptor)) {
       if (!myDisabledPluginIds.contains(dependent.getPluginId().toString())) {

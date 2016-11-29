@@ -112,10 +112,10 @@ public class CheckoutOptionsDialog extends DialogWrapper {
 
   private void fillTargetList(final File target) {
     final DefaultListModel listModel = new DefaultListModel();
-    final List<CheckoutStrategy> strategies = new ArrayList<CheckoutStrategy>();
+    final List<CheckoutStrategy> strategies = new ArrayList<>();
     Collections.addAll(strategies, CheckoutStrategy.createAllStrategies(target, new File(myRelativePath), false));
     strategies.add(new SvnTrunkCheckoutStrategy(target, new File(myRelativePath), false));
-    final List<File> targets = new ArrayList<File>(5);
+    final List<File> targets = new ArrayList<>(5);
     for (CheckoutStrategy strategy : strategies) {
       final File result = strategy.getResult();
       if (result != null && (! targets.contains(result))) {

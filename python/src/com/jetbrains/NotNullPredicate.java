@@ -23,12 +23,14 @@ import org.jetbrains.annotations.Nullable;
  * Filters out nullable elements allowing children to filter not-null elements
  *
  * @author Ilya.Kazakevich
+ * @deprecated use java 8 primitives instead
  */
+@Deprecated
 public class NotNullPredicate<T> implements Predicate<T> {
   /**
    * Simply filters nulls
    */
-  public static final Predicate<Object> INSTANCE = new NotNullPredicate<Object>();
+  public static final Predicate<Object> INSTANCE = new NotNullPredicate<>();
 
   @Override
   public final boolean apply(@Nullable final T input) {

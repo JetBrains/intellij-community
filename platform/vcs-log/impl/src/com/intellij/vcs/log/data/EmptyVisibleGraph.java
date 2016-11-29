@@ -61,6 +61,11 @@ class EmptyVisibleGraph implements VisibleGraph<Integer> {
     return DumbActionController.INSTANCE;
   }
 
+  @Override
+  public int getRecommendedWidth() {
+    return 0;
+  }
+
   private static class DumbActionController implements ActionController<Integer> {
 
     private static ActionController<Integer> INSTANCE = new DumbActionController();

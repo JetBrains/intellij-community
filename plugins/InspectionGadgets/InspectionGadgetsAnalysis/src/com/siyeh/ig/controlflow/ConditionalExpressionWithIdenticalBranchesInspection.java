@@ -87,7 +87,8 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
     }
 
     private EquivalenceChecker.Decision getEquivalenceDecision() {
-      return EquivalenceChecker.expressionsAreEquivalentDecision(getConditionalExpression().getThenExpression(), getConditionalExpression().getElseExpression());
+      return EquivalenceChecker.getCanonicalPsiEquivalence()
+        .expressionsAreEquivalentDecision(getConditionalExpression().getThenExpression(), getConditionalExpression().getElseExpression());
     }
 
     @Override
@@ -127,7 +128,8 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
       super.visitConditionalExpression(expression);
       final PsiExpression thenExpression = expression.getThenExpression();
       final PsiExpression elseExpression = expression.getElseExpression();
-      final EquivalenceChecker.Decision decision = EquivalenceChecker.expressionsAreEquivalentDecision(thenExpression, elseExpression);
+      final EquivalenceChecker.Decision decision = EquivalenceChecker.getCanonicalPsiEquivalence()
+        .expressionsAreEquivalentDecision(thenExpression, elseExpression);
       if (thenExpression != null && (myReportOnlyExactlyIdentical ? decision.getExactlyMatches() : !decision.isExactUnMatches())) {
         registerError(expression, expression, decision);
       }

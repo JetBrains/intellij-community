@@ -105,7 +105,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
   }
 
   private class SynchronizationController {
-    private final Set<SettingsEditor> myChangedEditors = new HashSet<SettingsEditor>();
+    private final Set<SettingsEditor> myChangedEditors = new HashSet<>();
     private final Alarm mySyncAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     private boolean myIsInSync = false;
 
@@ -113,11 +113,9 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
       if (myIsInSync || myIsDisposed) return;
       myChangedEditors.add(editor);
       mySyncAlarm.cancelAllRequests();
-      mySyncAlarm.addRequest(new Runnable() {
-        public void run() {
-          if (!myIsDisposed) {
-            sync();
-          }
+      mySyncAlarm.addRequest(() -> {
+        if (!myIsDisposed) {
+          sync();
         }
       }, 300);
     }

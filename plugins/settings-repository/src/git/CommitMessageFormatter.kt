@@ -57,11 +57,7 @@ class IdeaCommitMessageFormatter : CommitMessageFormatter {
         append(appInfo.fullVersion)
       }
       else {
-        var buildString = build.asStringWithoutProductCode()
-        if (build.buildNumber == Integer.MAX_VALUE) {
-          buildString = buildString.replace(".SNAPSHOT", "")
-        }
-        append(buildString)
+        append(build.asStringWithoutProductCodeAndSnapshot())
       }
     }
   }

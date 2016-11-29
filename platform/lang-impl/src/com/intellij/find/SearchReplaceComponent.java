@@ -39,7 +39,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -52,11 +51,14 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
 import java.util.EventListener;
 import java.util.List;
 
+import static java.awt.event.InputEvent.*;
+
 public class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
+  static final KeyStroke NEW_LINE_KEYSTROKE
+    = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   private final MyTextComponentWrapper mySearchFieldWrapper;
@@ -142,7 +144,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     myLeftPanel = new NonOpaquePanel(new BorderLayout());
     myLeftPanel.add(mySearchFieldWrapper, BorderLayout.NORTH);
-    myLeftPanel.add(myReplaceFieldWrapper, BorderLayout.CENTER);
+    myLeftPanel.add(myReplaceFieldWrapper, BorderLayout.SOUTH);
 
     mySearchActionsToolbar1 = createSearchToolbar1(searchToolbar1Actions);
     Wrapper searchToolbarWrapper1 = new NonOpaquePanel(new BorderLayout());
@@ -182,6 +184,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     myRightPanel.add(myReplaceToolbarWrapper, BorderLayout.CENTER);
 
     OnePixelSplitter splitter = new OnePixelSplitter(false, .25F);
+    myRightPanel.setBorder(JBUI.Borders.emptyLeft(6));
     splitter.setFirstComponent(myLeftPanel);
     splitter.setSecondComponent(myRightPanel);
     splitter.setHonorComponentsMinimumSize(true);
@@ -194,6 +197,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     // it's assigned after all action updates so that actions don't get access to uninitialized components
     myDataProviderDelegate = dataProvider;
+
+    setFocusCycleRoot(true);
+
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
   }
 
   public void resetUndoRedoActions() {
@@ -211,10 +218,12 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     }
   }
 
-  public void requestFocusInTheSearchFieldAndSelectContent (Project project) {
-    mySearchTextComponent.setSelectionStart(0);
-    mySearchTextComponent.setSelectionEnd(mySearchTextComponent.getText().length());
+  public void requestFocusInTheSearchFieldAndSelectContent(Project project) {
+    mySearchTextComponent.selectAll();
     IdeFocusManager.getInstance(project).requestFocus(mySearchTextComponent, true);
+    if (myReplaceTextComponent != null) {
+      myReplaceTextComponent.selectAll();
+    }
   }
 
   public void setStatusText(@NotNull String status) {
@@ -233,7 +242,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   public void close() {
-    if (myCloseAction != null ) {
+    if (myCloseAction != null) {
       myCloseAction.run();
     }
   }
@@ -297,8 +306,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
 
   private void updateSearchComponent(@NotNull String textToSet) {
-    final int oldCaretPosition = mySearchTextComponent != null ? mySearchTextComponent.getCaretPosition() : 0;
-    boolean wasNull = mySearchTextComponent == null;
     if (!updateTextComponent(true)) {
       if (!mySearchTextComponent.getText().equals(textToSet)) {
         mySearchTextComponent.setText(textToSet);
@@ -306,21 +313,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       return;
     }
 
-    if (!mySearchTextComponent.getText().equals(textToSet)) {
-      mySearchTextComponent.setText(textToSet);
-      if (wasNull) {
-        mySearchTextComponent.selectAll();
-      }
-    }
     mySearchTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            searchFieldDocumentChanged();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> searchFieldDocumentChanged());
       }
     });
 
@@ -335,23 +331,17 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                                        addTextToRecent(mySearchTextComponent);
                                                      }
                                                    }
-                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),
+                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK),
                                                  JComponent.WHEN_FOCUSED);
-    if (!wasNull) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          mySearchTextComponent.setCaretPosition(Math.min(oldCaretPosition, mySearchTextComponent.getText().length()));
-        }
-      });
-    }
 
     new VariantsCompletionAction(mySearchTextComponent); // It registers a shortcut set automatically on construction
   }
 
   private void updateReplaceComponent(@NotNull String textToSet) {
-    final int oldCaretPosition = myReplaceTextComponent != null ? myReplaceTextComponent.getCaretPosition() : 0;
     if (!updateTextComponent(false)) {
+      if (!myReplaceTextComponent.getText().equals(textToSet)) {
+        myReplaceTextComponent.setText(textToSet);
+      }
       return;
     }
     myReplaceTextComponent.setText(textToSet);
@@ -359,26 +349,13 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     myReplaceTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            replaceFieldDocumentChanged();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> replaceFieldDocumentChanged());
       }
     });
 
     if (!isMultiline()) {
       installReplaceOnEnterAction(myReplaceTextComponent);
     }
-
-    //myReplaceTextComponent.setText(myFindModel.getStringToReplace());
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myReplaceTextComponent.setCaretPosition(oldCaretPosition);
-      }
-    });
 
     new VariantsCompletionAction(myReplaceTextComponent);
     myReplaceFieldWrapper.revalidate();
@@ -401,7 +378,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       if (needToResetReplaceFocus) {
         myReplaceTextComponent.requestFocusInWindow();
       }
-    } else {
+    }
+    else {
       if (myReplaceFieldWrapper.getParent() != null) {
         myLeftPanel.remove(myReplaceFieldWrapper);
       }
@@ -426,13 +404,15 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   public void addTextToRecent(@NotNull JTextComponent textField) {
     final String text = textField.getText();
     if (text.length() > 0) {
+      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
       if (textField == mySearchTextComponent) {
-        FindSettings.getInstance().addStringToFind(text);
+        findInProjectSettings.addStringToFind(text);
         if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
           ((SearchTextField)mySearchFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
         }
-      } else {
-        FindSettings.getInstance().addStringToReplace(text);
+      }
+      else {
+        findInProjectSettings.addStringToReplace(text);
         if (myReplaceFieldWrapper.getTargetComponent() instanceof SearchTextField) {
           ((SearchTextField)myReplaceFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
         }
@@ -442,53 +422,46 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   private boolean updateTextComponent(boolean search) {
     JTextComponent oldComponent = search ? mySearchTextComponent : myReplaceTextComponent;
-    Color oldBackground = oldComponent != null ? oldComponent.getBackground() : null;
+    if (oldComponent != null) return false;
     final MyTextComponentWrapper wrapper = search ? mySearchFieldWrapper : myReplaceFieldWrapper;
-    if (isMultiline() && oldComponent instanceof JTextArea) return false;
-    if (!isMultiline() && oldComponent instanceof JTextField) return false;
 
     final JTextComponent textComponent;
-    if (isMultiline()) {
       SearchTextArea textArea = new SearchTextArea(search);
       textComponent = textArea.getTextArea();
-      ((JTextArea)textComponent).setColumns(25);
-      ((JTextArea)textComponent).setRows(2);
-      wrapper.setContent(textArea);
-    }
-    else {
-      SearchTextField searchTextField = new SearchTextField(true);
-      searchTextField.setOpaque(false);
-      textComponent = searchTextField.getTextEditor();
-      searchTextField.getTextEditor().setColumns(25);
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        textComponent.setOpaque(false);
-      }
-      searchTextField.setHistorySize(20);
-      searchTextField.setHistory(ContainerUtil.reverse(Arrays.asList(search ? FindSettings.getInstance().getRecentFindStrings()
-                                                                            : FindSettings.getInstance().getRecentReplaceStrings())));
-      textComponent.registerKeyboardAction(new ActionListener() {
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-          final String text = textComponent.getText();
-          setMultilineInternal(true);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              ObjectUtils.assertNotNull(wrapper.getTextComponent()).setText(text + "\n");
-            }
-          });
+      ((JTextArea)textComponent).setRows(isMultiline() ? 2 : 1);
+      KeymapUtil.reassignAction(textComponent,
+                                KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+                                NEW_LINE_KEYSTROKE,
+                                WHEN_FOCUSED);
+
+    textComponent.registerKeyboardAction(e -> {
+      if (isMultiline(textComponent)) {
+        if (textComponent.isEditable() && textComponent.isEnabled()) {
+          textComponent.replaceSelection("\t");
         }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK), JComponent.WHEN_FOCUSED);
-      wrapper.setContent(searchTextField);
-    }
+        else {
+          UIManager.getLookAndFeel().provideErrorFeedback(textComponent);
+        }
+      }
+      else {
+        textComponent.transferFocus();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), WHEN_FOCUSED);
+
+    textComponent.registerKeyboardAction(e -> textComponent.transferFocusBackward(), KeyStroke.getKeyStroke(KeyEvent.VK_TAB, SHIFT_DOWN_MASK), WHEN_FOCUSED);
+
+    wrapper.setContent(textArea);
 
     UIUtil.addUndoRedoActions(textComponent);
-    Utils.setSmallerFont(textComponent);
+
+    if (UIUtil.isUnderWindowsLookAndFeel()) {
+      textComponent.setFont(UIManager.getFont("TextField.font"));
+    } else {
+      Utils.setSmallerFont(textComponent);
+    }
 
     textComponent.putClientProperty("AuxEditorComponent", Boolean.TRUE);
-    if (oldBackground != null) {
-      textComponent.setBackground(oldBackground);
-    }
+    textComponent.setBackground(UIUtil.getTextFieldBackground());
     textComponent.addFocusListener(new FocusListener() {
       @Override
       public void focusGained(final FocusEvent e) {
@@ -515,6 +488,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     if (myReplaceTextComponent instanceof JTextArea) {
       adjustRows((JTextArea)myReplaceTextComponent);
     }
+    myReplaceActionsToolbar2.invalidate();
+    doLayout();
     myEventDispatcher.getMulticaster().replaceFieldDocumentChanged();
   }
 
@@ -523,7 +498,11 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   private static void adjustRows(@NotNull JTextArea area) {
-    area.setRows(Math.max(2, Math.min(3, StringUtil.countChars(area.getText(),'\n')+1)));
+    area.setRows(Math.max(1, Math.min(3, StringUtil.countChars(area.getText(), '\n') + 1)));
+  }
+
+  private static boolean isMultiline(@NotNull JTextComponent component) {
+    return component.getText().contains("\n");
   }
 
 
@@ -536,7 +515,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     };
     c.registerKeyboardAction(action, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
     if (KeymapUtil.isEmacsKeymap()) {
-      c.registerKeyboardAction(action, KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
+      c.registerKeyboardAction(action, KeyStroke.getKeyStroke(KeyEvent.VK_G, CTRL_MASK), JComponent.WHEN_FOCUSED);
     }
   }
 
@@ -565,7 +544,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   private void updateBindings(@NotNull ActionToolbarImpl toolbar, @NotNull JComponent shortcutHolder) {
-    updateBindings(toolbar.getActions(true), shortcutHolder);
+    updateBindings(toolbar.getActions(), shortcutHolder);
   }
 
   private void updateBindings(@NotNull List<? extends AnAction> actions, @NotNull JComponent shortcutHolder) {
@@ -624,7 +603,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     toolbar.setTargetComponent(this);
     toolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
     toolbar.setBorder(null);
-    toolbar.setOpaque(false);
     Utils.setSmallerFontForChildren(toolbar);
     return toolbar;
   }
@@ -647,12 +625,12 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     private Runnable myReplaceAction;
     private Runnable myCloseAction;
 
-    private DefaultActionGroup mySearchActions      = new DefaultActionGroup("search bar 1", false);
+    private DefaultActionGroup mySearchActions = new DefaultActionGroup("search bar 1", false);
     private DefaultActionGroup myExtraSearchActions = new DefaultActionGroup("search bar 2", false);
     private DefaultActionGroup mySearchFieldActions = new DefaultActionGroup("search field actions", false);
     private BooleanGetter mySearchToolbarModifiedFlagGetter = BooleanGetter.FALSE;
 
-    private DefaultActionGroup myReplaceActions      = new DefaultActionGroup("replace bar 1", false);
+    private DefaultActionGroup myReplaceActions = new DefaultActionGroup("replace bar 1", false);
     private DefaultActionGroup myExtraReplaceActions = new DefaultActionGroup("replace bar 1", false);
     private DefaultActionGroup myReplaceFieldActions = new DefaultActionGroup("replace field actions", false);
 

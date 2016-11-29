@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
@@ -34,12 +33,9 @@ class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
   public Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
     List<Configurable> list;
     if (category == DebuggerSettingsCategory.GENERAL) {
-      list = new SmartList<Configurable>(SimpleConfigurable.create("debugger.general", "", GeneralConfigurableUi.class, new Getter<XDebuggerGeneralSettings>() {
-        @Override
-        public XDebuggerGeneralSettings get() {
-          return XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings();
-        }
-      }));
+      list = new SmartList<>(
+        SimpleConfigurable.create("debugger.general", "", GeneralConfigurableUi.class,
+                                  () -> XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings()));
     }
     else {
       list = null;
@@ -49,7 +45,7 @@ class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
       Collection<? extends Configurable> configurables = settings.createConfigurables(category);
       if (!configurables.isEmpty()) {
         if (list == null) {
-          list = new SmartList<Configurable>();
+          list = new SmartList<>();
         }
         list.addAll(configurables);
       }
@@ -61,7 +57,7 @@ class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
         Configurable configurable = settings.createConfigurable();
         if (configurable != null) {
           if (list == null) {
-            list = new SmartList<Configurable>();
+            list = new SmartList<>();
           }
           list.add(configurable);
         }

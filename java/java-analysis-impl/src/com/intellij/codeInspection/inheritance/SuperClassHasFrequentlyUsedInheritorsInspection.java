@@ -62,7 +62,7 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaBat
       return null;
     }
 
-    final Collection<LocalQuickFix> topInheritorsQuickFix = new ArrayList<LocalQuickFix>(topInheritors.size());
+    final Collection<LocalQuickFix> topInheritorsQuickFix = new ArrayList<>(topInheritors.size());
 
     boolean isFirst = true;
     for (final InheritorsStatisticsSearchResult searchResult : topInheritors) {

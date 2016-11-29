@@ -63,7 +63,7 @@ public final class ContextUtil {
     }
     final Set<String> containingClassQNames = resolveSupersNamesRecursively(aClass);
 
-    final List<PsiVariable> contextVars = new SmartList<PsiVariable>();
+    final List<PsiVariable> contextVars = new SmartList<>();
     for (final PsiField field : aClass.getFields()) {
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass != null) {
@@ -80,7 +80,7 @@ public final class ContextUtil {
     final PsiCodeBlock methodBody = method.getBody();
     assert methodBody != null;
     boolean processMethodTail = false;
-    final List<PsiElement> afterElements = new ArrayList<PsiElement>();
+    final List<PsiElement> afterElements = new ArrayList<>();
     for (final PsiElement element : methodBody.getChildren()) {
       if (element.isEquivalentTo(containingElement)) {
         if (variableType instanceof PsiClassType) {
@@ -111,7 +111,7 @@ public final class ContextUtil {
                                                                 contextVars)
                                        : Collections.<String>emptySet();
 
-    final List<PsiMethod> contextMethods = new ArrayList<PsiMethod>();
+    final List<PsiMethod> contextMethods = new ArrayList<>();
     for (final PsiMethod psiMethod : aClass.getMethods()) {
       if ((psiMethod.hasModifierProperty(PsiModifier.PROTECTED) || psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) &&
           psiMethod.getParameterList().getParametersCount() == 0) {
@@ -135,10 +135,10 @@ public final class ContextUtil {
       return Collections.emptySet();
     }
 
-    final Set<String> excludedQNames = new HashSet<String>();
+    final Set<String> excludedQNames = new HashSet<>();
     if (!tailElements.isEmpty()) {
-      final Set<String> contextVarTypes = new HashSet<String>();
-      final Map<String, PsiVariable> contextVarNamesToVar = new HashMap<String, PsiVariable>();
+      final Set<String> contextVarTypes = new HashSet<>();
+      final Map<String, PsiVariable> contextVarNamesToVar = new HashMap<>();
       for (final PsiVariable var : contextVars) {
         contextVarTypes.add(var.getType().getCanonicalText());
         contextVarNamesToVar.put(var.getName(), var);
@@ -181,10 +181,10 @@ public final class ContextUtil {
                                                final Project project,
                                                final GlobalSearchScope resolveScope,
                                                final Set<String> excludedQNames) {
-    final MultiMap<String, PsiVariable> classQNameToVariable = new MultiMap<String, PsiVariable>();
-    final MultiMap<String, PsiMethod> containingClassGetters = new MultiMap<String, PsiMethod>();
-    final MultiMap<String, ContextRelevantVariableGetter> contextVarsGetters = new MultiMap<String, ContextRelevantVariableGetter>();
-    final Map<String, PsiVariable> stringVars = new HashMap<String, PsiVariable>();
+    final MultiMap<String, PsiVariable> classQNameToVariable = new MultiMap<>();
+    final MultiMap<String, PsiMethod> containingClassGetters = new MultiMap<>();
+    final MultiMap<String, ContextRelevantVariableGetter> contextVarsGetters = new MultiMap<>();
+    final Map<String, PsiVariable> stringVars = new HashMap<>();
 
     for (final PsiMethod method : contextMethods) {
       final PsiType returnType = method.getReturnType();
@@ -196,7 +196,7 @@ public final class ContextUtil {
 
     for (final PsiVariable var : contextVars) {
       final PsiType type = var.getType();
-      final Set<String> classQNames = new HashSet<String>();
+      final Set<String> classQNames = new HashSet<>();
       if (type instanceof PsiClassType) {
         if (JAVA_LANG_STRING_SHORT_NAME.equals(((PsiClassType)type).getClassName())) {
           final String varName = var.getName();
@@ -238,7 +238,7 @@ public final class ContextUtil {
 
   @NotNull
   private static Set<String> resolveSupersNamesRecursively(@Nullable final PsiClass psiClass) {
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new HashSet<>();
     if (psiClass != null) {
       for (final PsiClass superClass : psiClass.getSupers()) {
         final String qualifiedName = superClass.getQualifiedName();

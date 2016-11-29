@@ -2,7 +2,7 @@ import sys
 
 
 class TeamcityServiceMessages:
-    quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", ']': '|]'}
+    quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", ']': '|]', '[': '|['}
 
     def __init__(self, output=sys.stdout, prepend_linebreak=False):
         self.output = output

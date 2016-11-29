@@ -426,17 +426,14 @@ public class PyFormatterTest extends PyTestCase {
 
   private void doTest(final boolean reformatText) {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFixture.getProject());
-        PsiFile file = myFixture.getFile();
-        if (reformatText) {
-          codeStyleManager.reformatText(file, 0, file.getTextLength());
-        }
-        else {
-          codeStyleManager.reformat(file);
-        }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFixture.getProject());
+      PsiFile file = myFixture.getFile();
+      if (reformatText) {
+        codeStyleManager.reformatText(file, 0, file.getTextLength());
+      }
+      else {
+        codeStyleManager.reformat(file);
       }
     });
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
@@ -458,12 +455,7 @@ public class PyFormatterTest extends PyTestCase {
     getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     final String testName = "formatter/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.type("\n(");
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> myFixture.type("\n("));
     myFixture.checkResultByFile(testName + "_after.py");
   }
 
@@ -537,16 +529,13 @@ public class PyFormatterTest extends PyTestCase {
    */
   public void testReformatOfSingleElementPossible() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
-        assertNotNull(elementAtCaret);
-        final PyStatement statement = PsiTreeUtil.getParentOfType(elementAtCaret, PyStatement.class, false);
-        assertNotNull(statement);
-        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFixture.getProject());
-        codeStyleManager.reformat(statement);
-      }
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+      assertNotNull(elementAtCaret);
+      final PyStatement statement = PsiTreeUtil.getParentOfType(elementAtCaret, PyStatement.class, false);
+      assertNotNull(statement);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFixture.getProject());
+      codeStyleManager.reformat(statement);
     });
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
   }
@@ -670,5 +659,22 @@ public class PyFormatterTest extends PyTestCase {
   public void testNoSpaceAroundPowerOperator() {
     getPythonCodeStyleSettings().SPACE_AROUND_POWER_OPERATOR = false;
     doTest();
+  }
+
+  // PY-20392
+  public void testSpaceAfterTrailingCommaInDictLiterals() {
+    doTest();
+  }
+
+  // PY-20392
+  public void testSpaceAfterTrailingCommaIfNoSpaceAfterCommaButWithinBracesOrBrackets() {
+    getPythonCodeStyleSettings().SPACE_WITHIN_BRACES = true;
+    getCommonCodeStyleSettings().SPACE_WITHIN_BRACKETS = true;
+    getCommonCodeStyleSettings().SPACE_AFTER_COMMA = false;
+    doTest();
+  }
+
+  public void testVariableAnnotations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 }

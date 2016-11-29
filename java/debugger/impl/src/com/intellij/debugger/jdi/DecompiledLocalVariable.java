@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,20 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Comparator;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 10/7/13
  */
 public class DecompiledLocalVariable{
-  public static final Comparator<DecompiledLocalVariable> COMPARATOR = new Comparator<DecompiledLocalVariable>() {
-    @Override
-    public int compare(DecompiledLocalVariable v1, DecompiledLocalVariable v2) {
-      return v1.getSlot() - v2.getSlot();
-    }
-  };
-
   private final int mySlot;
   private final String mySignature;
   private final boolean myIsParam;

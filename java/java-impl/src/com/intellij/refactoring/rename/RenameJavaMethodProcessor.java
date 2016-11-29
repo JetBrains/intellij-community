@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -42,7 +39,6 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -63,11 +59,11 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                             final UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiMethod method = (PsiMethod) psiElement;
-    Set<PsiMethod> methodAndOverriders = new HashSet<PsiMethod>();
-    Set<PsiClass> containingClasses = new HashSet<PsiClass>();
-    LinkedHashSet<PsiElement> renamedReferences = new LinkedHashSet<PsiElement>();
-    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
-    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
+    Set<PsiMethod> methodAndOverriders = new HashSet<>();
+    Set<PsiClass> containingClasses = new HashSet<>();
+    LinkedHashSet<PsiElement> renamedReferences = new LinkedHashSet<>();
+    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<>();
+    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<>();
 
     methodAndOverriders.add(method);
     containingClasses.add(method.getContainingClass());
@@ -128,7 +124,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     qualifyOuterMemberReferences(outerHides);
     qualifyStaticImportReferences(staticImportHides);
     
-    if (method.findDeepestSuperMethods().length == 0) {
+    if (!method.isConstructor() && method.findDeepestSuperMethods().length == 0) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE);
       if (annotation != null && annotation.isPhysical()) {
         annotation.delete();
@@ -158,7 +154,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       if (!methodAndOverriders.contains(actualMethod)) {
         PsiClass outerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
         while (outerClass != null) {
-          if (containingClasses.contains(outerClass)) {
+          PsiClass finalOuterClass = outerClass;
+          if (containingClasses.stream().anyMatch(psiClass -> InheritanceUtil.isInheritorOrSelf(finalOuterClass, psiClass, true))) {
             qualifyMember(element, newName, outerClass, isStatic);
             break;
           }
@@ -277,26 +274,24 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   @Override
   public void prepareRenaming(PsiElement element, final String newName, final Map<PsiElement, String> allRenames, SearchScope scope) {
     final PsiMethod method = (PsiMethod) element;
-    OverridingMethodsSearch.search(method, scope, true).forEach(new Processor<PsiMethod>() {
-      public boolean process(PsiMethod overrider) {
-        if (overrider instanceof PsiMirrorElement) {
-          final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
-          if (prototype instanceof PsiMethod) {
-            overrider = (PsiMethod)prototype;
-          }
+    OverridingMethodsSearch.search(method, scope, true).forEach(overrider -> {
+      if (overrider instanceof PsiMirrorElement) {
+        final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
+        if (prototype instanceof PsiMethod) {
+          overrider = (PsiMethod)prototype;
         }
-
-        if (overrider instanceof SyntheticElement) return true;
-
-        final String overriderName = overrider.getName();
-        final String baseName = method.getName();
-        final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
-        if (newOverriderName != null) {
-          RenameProcessor.assertNonCompileElement(overrider);
-          allRenames.put(overrider, newOverriderName);
-        }
-        return true;
       }
+
+      if (overrider instanceof SyntheticElement) return true;
+
+      final String overriderName = overrider.getName();
+      final String baseName = method.getName();
+      final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
+      if (newOverriderName != null) {
+        RenameProcessor.assertNonCompileElement(overrider);
+        allRenames.put(overrider, newOverriderName);
+      }
+      return true;
     });
   }
 
@@ -360,7 +355,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return;
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
-    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, true).findAll();
+    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass).findAll();
 
     MethodSignature oldSignature = method.getSignature(PsiSubstitutor.EMPTY);
     MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),

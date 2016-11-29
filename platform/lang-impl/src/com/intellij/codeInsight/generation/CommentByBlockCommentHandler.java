@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -651,13 +651,13 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     String text = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     int startOffset = range.getStartOffset();
     //boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);
-    List<Couple<TextRange>> ranges = new ArrayList<Couple<TextRange>>();
+    List<Couple<TextRange>> ranges = new ArrayList<>();
 
 
     if (commenter instanceof CustomUncommenter) {
-      /**
-       * In case of custom uncommenter, we need to ask it for list of [commentOpen-start,commentOpen-end], [commentClose-start,commentClose-end]
-       * and shift if according to current offset
+      /*
+        In case of custom uncommenter, we need to ask it for list of [commentOpen-start,commentOpen-end], [commentClose-start,commentClose-end]
+        and shift if according to current offset
        */
       CustomUncommenter customUncommenter = (CustomUncommenter)commenter;
       for (Couple<TextRange> coupleFromCommenter : customUncommenter.getCommentRangesToDelete(text)) {

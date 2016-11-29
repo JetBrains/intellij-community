@@ -62,7 +62,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
   private boolean myHasDragDelta = false;
 
   private DraggedComponentList(Collection<RadComponent> selection) {
-    mySelection = new ArrayList<RadComponent>(selection);
+    mySelection = new ArrayList<>(selection);
     fillOriginalConstraints();
   }
 
@@ -71,17 +71,15 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     mySelection = FormEditingUtil.getSelectedComponents(editor);
 
     // sort selection in correct grid order
-    Collections.sort(mySelection, new Comparator<RadComponent>() {
-      public int compare(final RadComponent o1, final RadComponent o2) {
-        if (o1.getParent() == o2.getParent()) {
-          int result = o1.getConstraints().getRow() - o2.getConstraints().getRow();
-          if (result == 0) {
-            result = o1.getConstraints().getColumn() - o2.getConstraints().getColumn();
-          }
-          return result;
+    Collections.sort(mySelection, (o1, o2) -> {
+      if (o1.getParent() == o2.getParent()) {
+        int result = o1.getConstraints().getRow() - o2.getConstraints().getRow();
+        if (result == 0) {
+          result = o1.getConstraints().getColumn() - o2.getConstraints().getColumn();
         }
-        return 0;
+        return result;
       }
+      return 0;
     });
 
     RadComponent componentUnderMouse = null;
@@ -150,7 +148,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
   }
 
   public static DraggedComponentList withComponents(RadComponent... c) {
-    ArrayList<RadComponent> list = new ArrayList<RadComponent>();
+    ArrayList<RadComponent> list = new ArrayList<>();
     Collections.addAll(list, c);
     return new DraggedComponentList(list);
   }

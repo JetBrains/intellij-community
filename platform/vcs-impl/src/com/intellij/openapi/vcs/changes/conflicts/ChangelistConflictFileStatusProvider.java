@@ -34,11 +34,11 @@ import org.jetbrains.annotations.Nullable;
 public class ChangelistConflictFileStatusProvider implements FileStatusProvider {
 
   private static final FileStatus MODIFIED_OUTSIDE =
-    FileStatusFactory.getInstance().createFileStatus("modifiedOutside", "Modified in not active changelist", FileStatus.COLOR_MODIFIED.brighter());
+    FileStatusFactory.getInstance().createFileStatus("modifiedOutside", "Modified in not active changelist");
   private static final FileStatus ADDED_OUTSIDE =
-    FileStatusFactory.getInstance().createFileStatus("addedOutside", "Added in not active changelist", FileStatus.COLOR_ADDED.brighter());
+    FileStatusFactory.getInstance().createFileStatus("addedOutside", "Added in not active changelist");
   private static final FileStatus CHANGELIST_CONFLICT =
-    FileStatusFactory.getInstance().createFileStatus("changelistConflict", "Changelist conflict", JBColor.RED);
+    FileStatusFactory.getInstance().createFileStatus("changelistConflict", "Changelist conflict");
 
   private final ChangelistConflictTracker myConflictTracker;
   private final ChangeListManager myChangeListManager;

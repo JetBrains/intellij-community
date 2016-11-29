@@ -38,9 +38,9 @@ public final class VerticalLayout implements LayoutManager2 {
   public static final String BOTTOM = "BOTTOM";
   public static final String CENTER = "CENTER";
 
-  private final ArrayList<Component> myTop = new ArrayList<Component>();
-  private final ArrayList<Component> myBottom = new ArrayList<Component>();
-  private final ArrayList<Component> myCenter = new ArrayList<Component>();
+  private final ArrayList<Component> myTop = new ArrayList<>();
+  private final ArrayList<Component> myBottom = new ArrayList<>();
+  private final ArrayList<Component> myCenter = new ArrayList<>();
   private final int myAlignment;
   private final int myGap;
 

@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class OutputParser {
-  protected final List<ParserAction> myParserActions = new ArrayList<ParserAction>(10);
+  protected final List<ParserAction> myParserActions = new ArrayList<>(10);
 
   public interface Callback {
     String getNextLine();        

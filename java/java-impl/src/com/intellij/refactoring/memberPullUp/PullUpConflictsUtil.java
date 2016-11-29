@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,8 @@ public class PullUpConflictsUtil {
                                                             @NotNull PsiDirectory targetDirectory,
                                                             final InterfaceContainmentVerifier interfaceContainmentVerifier,
                                                             boolean movedMembers2Super) {
-    final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
-    final Set<PsiMethod> abstractMethods = new HashSet<PsiMethod>();
+    final Set<PsiMember> movedMembers = new HashSet<>();
+    final Set<PsiMethod> abstractMethods = new HashSet<>();
     final boolean isInterfaceTarget;
     final PsiElement targetRepresentativeElement;
     if (superClass != null) {
@@ -96,8 +96,8 @@ public class PullUpConflictsUtil {
         movedMembers.add(member);
       }
     }
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final Set<PsiMethod> abstrMethods = new HashSet<PsiMethod>(abstractMethods);
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final Set<PsiMethod> abstrMethods = new HashSet<>(abstractMethods);
     if (superClass != null) {
       for (PsiMethod method : subclass.getMethods()) {
         if (!movedMembers.contains(method) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -137,7 +137,7 @@ public class PullUpConflictsUtil {
       }
     }
     // check if moved methods use other members in the classes between Subclass and Superclass
-    List<PsiElement> checkModuleConflictsList = new ArrayList<PsiElement>();
+    List<PsiElement> checkModuleConflictsList = new ArrayList<>();
     for (PsiMember member : movedMembers) {
       if (member instanceof PsiMethod || member instanceof PsiClass && !(member instanceof PsiCompiledElement)) {
         ClassMemberReferencesVisitor visitor =
@@ -155,20 +155,11 @@ public class PullUpConflictsUtil {
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getTypeParameterList());
     }
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
-                                           new UsageInfo[0], targetRepresentativeElement, conflicts);
-    final String fqName = subclass.getQualifiedName();
-    final String packageName;
-    if (fqName != null) {
-      packageName = StringUtil.getPackageName(fqName);
-    } else {
-      final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiFile.class);
-      if (psiFile instanceof PsiClassOwner) {
-        packageName = ((PsiClassOwner)psiFile).getPackageName();
-      } else {
-        packageName = null;
-      }
-    }
-    final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(), packageName);
+                                                    UsageInfo.EMPTY_ARRAY, targetRepresentativeElement, conflicts);
+
+    final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiClassOwner.class);
+    final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(),
+                                                           psiFile != null ? ((PsiClassOwner)psiFile).getPackageName() : null);
     for (final PsiMethod abstractMethod : abstractMethods) {
       abstractMethod.accept(new ClassMemberReferencesVisitor(subclass) {
         @Override

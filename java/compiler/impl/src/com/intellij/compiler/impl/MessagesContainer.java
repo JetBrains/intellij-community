@@ -33,7 +33,7 @@ import java.util.*;
  */
 public class MessagesContainer {
   private final Project myProject;
-  private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<CompilerMessageCategory, Collection<CompilerMessage>>(CompilerMessageCategory.class);
+  private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<>(CompilerMessageCategory.class);
 
   public MessagesContainer(Project project) {
     myProject = project;
@@ -60,7 +60,7 @@ public class MessagesContainer {
   public boolean addMessage(CompilerMessage msg) {
     Collection<CompilerMessage> messages = myMessages.get(msg.getCategory());
     if (messages == null) {
-      messages = new LinkedHashSet<CompilerMessage>();
+      messages = new LinkedHashSet<>();
       myMessages.put(msg.getCategory(), messages);
     }
     return messages.add(msg);
@@ -84,13 +84,7 @@ public class MessagesContainer {
       Collection<CompilerMessage> collection = myMessages.get(category);
       return collection != null ? collection.size() : 0;
     }
-    int count = 0;
-    for (Collection<CompilerMessage> collection : myMessages.values()) {
-      if (collection != null) {
-        count += collection.size();
-      }
-    }
-    return count;
+    return myMessages.values().stream().filter(Objects::nonNull).mapToInt(Collection::size).sum();
   }
 
 }

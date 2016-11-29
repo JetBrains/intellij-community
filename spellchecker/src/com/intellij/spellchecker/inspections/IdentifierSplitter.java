@@ -86,7 +86,7 @@ public class IdentifierSplitter extends BaseSplitter {
   @NotNull
   private static List<TextRange> splitByCase(@NotNull String text, @NotNull TextRange range) {
     //System.out.println("text = " + text + " range = " + range);
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
     int i = range.getStartOffset();
     int s = -1;
     int prevType = Character.MATH_SYMBOL;

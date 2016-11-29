@@ -69,12 +69,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     }
     myModuleOutputDir = new File(ourOutputRoot, PathUtil.getFileName(getTestAppPath()));
     myChecker = initOutputChecker();
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        ExecutionTestCase.super.setUp();
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> super.setUp());
     if (!myModuleOutputDir.exists()) {
       VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ourOutputRoot);
       assertNotNull(ourOutputRoot.getAbsolutePath(), vDir);
@@ -94,21 +89,18 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final String modulePath = getTestAppPath();
-        final String srcPath = modulePath + File.separator + "src";
-        VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByPath(modulePath.replace(File.separatorChar, '/'));
-        VirtualFile srcDir = LocalFileSystem.getInstance().findFileByPath(srcPath.replace(File.separatorChar, '/'));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final String modulePath = getTestAppPath();
+      final String srcPath = modulePath + File.separator + "src";
+      VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByPath(modulePath.replace(File.separatorChar, '/'));
+      VirtualFile srcDir = LocalFileSystem.getInstance().findFileByPath(srcPath.replace(File.separatorChar, '/'));
 
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-        PsiTestUtil.removeAllRoots(myModule, rootManager.getSdk());
-        PsiTestUtil.addContentRoot(myModule, moduleDir);
-        PsiTestUtil.addSourceRoot(myModule, srcDir);
-        IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8);
-        PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(myModuleOutputDir.getAbsolutePath())), false);
-      }
+      final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+      PsiTestUtil.removeAllRoots(myModule, rootManager.getSdk());
+      PsiTestUtil.addContentRoot(myModule, moduleDir);
+      PsiTestUtil.addSourceRoot(myModule, srcDir);
+      IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8);
+      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(myModuleOutputDir.getAbsolutePath())), false);
     });
   }
 
@@ -141,12 +133,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     if (myCompilerTester != null) {
       myCompilerTester.tearDown();
     }
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        ExecutionTestCase.super.tearDown();
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
     //myChecker.checkValid(getTestProjectJdk());
     //probably some thread is destroyed right now because of log exception
     //wait a little bit
@@ -181,20 +168,17 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   }
 
   public void waitProcess(@NotNull final ProcessHandler processHandler) {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
 
     final boolean[] isRunning = {true};
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        boolean b;
-        synchronized (isRunning) {
-          b = isRunning[0];
-        }
-        if (b) {
-          processHandler.destroyProcess();
-          LOG.error("process was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
-        }
+    alarm.addRequest(() -> {
+      boolean b;
+      synchronized (isRunning) {
+        b = isRunning[0];
+      }
+      if (b) {
+        processHandler.destroyProcess();
+        LOG.error("process was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
       }
     }, myTimeout);
     processHandler.waitFor();
@@ -205,21 +189,18 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   }
 
   public void waitFor(Runnable r) {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     final Thread thread = Thread.currentThread();
 
     final boolean[] isRunning = {true};
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        boolean b;
-        synchronized (isRunning) {
-          b = isRunning[0];
-        }
-        if (b) {
-          thread.interrupt();
-          LOG.error("test was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
-        }
+    alarm.addRequest(() -> {
+      boolean b;
+      synchronized (isRunning) {
+        b = isRunning[0];
+      }
+      if (b) {
+        thread.interrupt();
+        LOG.error("test was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
       }
     }, myTimeout);
     r.run();

@@ -42,7 +42,8 @@ public class HgCreateNewBranchFromLogAction extends HgLogSingleCommitAction {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           if (HgUpdateCommand.updateRepoToInCurrentThread(project, repository.getRoot(), commit.asString(), false)) {
-            new HgBranchPopupActions.HgNewBranchAction(project, Collections.singletonList(repository), repository).createNewBranch(name);
+            new HgBranchPopupActions.HgNewBranchAction(project, Collections.singletonList(repository), repository)
+              .createNewBranchInCurrentThread(name);
           }
         }
       }.queue();

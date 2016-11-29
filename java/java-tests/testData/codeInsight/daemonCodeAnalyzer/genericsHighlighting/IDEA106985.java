@@ -4,7 +4,7 @@ import java.util.Map;
 class Test {
 
   public static void main(String[] args) {
-    Map<Integer, Object> map = <error descr="Inferred type 'java.lang.Object' for type parameter 'V' is not within its bound; should implement 'java.lang.Comparable'">make()</error>;
+    <error descr="Incompatible types. Found: 'java.util.Map<java.lang.Integer,java.lang.Comparable>', required: 'java.util.Map<java.lang.Integer,java.lang.Object>'">Map<Integer, Object> map = make();</error>
   }
 
 

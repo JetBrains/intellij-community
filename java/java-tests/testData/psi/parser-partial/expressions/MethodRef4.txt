@@ -1,5 +1,5 @@
 PsiJavaFile:MethodRef4.java
-  PsiMethodReferenceExpression:int[]::clone
+  PsiMethodReferenceExpression
     PsiTypeElement:int[]
       PsiTypeElement:int
         PsiKeyword:int('int')

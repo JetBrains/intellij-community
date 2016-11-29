@@ -101,6 +101,7 @@ public abstract class IndentationParser implements PsiParser {
           startLineMarker = builder.mark();
         }
         eolSeen = true;
+        currentIndent = 0;
       }
       else {
         if (type == myIndentTokenType) {

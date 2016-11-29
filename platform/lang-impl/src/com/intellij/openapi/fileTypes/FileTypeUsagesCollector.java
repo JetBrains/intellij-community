@@ -21,18 +21,13 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,7 +35,6 @@ import java.util.Set;
  * @author Nikolay Matveev
  */
 public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector {
-
   private static final String GROUP_ID = "file-type";
 
   @NotNull
@@ -52,7 +46,7 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) throws CollectUsagesException {
-    final Set<FileType> usedFileTypes = new HashSet<FileType>();
+    final Set<FileType> usedFileTypes = new HashSet<>();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager == null) {
       throw new CollectUsagesException("Cannot get instance of FileTypeManager");
@@ -62,46 +56,17 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
       if (project.isDisposed()) {
         throw new CollectUsagesException("Project is disposed");
       }
-      final String ideaDirPath = getIdeaDirPath(project);
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          FileBasedIndex.getInstance().processValues(
-            FileTypeIndex.NAME,
-            fileType,
-            null,
-            new FileBasedIndex.ValueProcessor<Void>() {
-              @Override
-              public boolean process(VirtualFile file, Void value) {
-                //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
-                if (ideaDirPath == null || FileUtil.isAncestorThreeState(ideaDirPath, file.getPath(), true) == ThreeState.NO) {
-                  usedFileTypes.add(fileType);
-                  return false;
-                }
-                return true;
-              }
-            }, GlobalSearchScope.projectScope(project));
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        FileTypeIndex.processFiles(fileType, file -> {
+          //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
+          if (!ProjectKt.getStateStore(project).isProjectFile(file)) {
+            usedFileTypes.add(fileType);
+            return false;
+          }
+          return true;
+        }, GlobalSearchScope.projectScope(project));
       });
     }
-    return ContainerUtil.map2Set(usedFileTypes, new NotNullFunction<FileType, UsageDescriptor>() {
-      @NotNull
-      @Override
-      public UsageDescriptor fun(FileType fileType) {
-        return new UsageDescriptor(fileType.getName(), 1);
-      }
-    });
-  }
-
-  @Nullable
-  private static String getIdeaDirPath(@NotNull Project project) {
-    String projectPath = project.getBasePath();
-    if (projectPath != null) {
-      String ideaDirPath = projectPath + "/" + Project.DIRECTORY_STORE_FOLDER;
-      if (new File(ideaDirPath).isDirectory()) {
-        return ideaDirPath;
-      }
-    }
-    return null;
+    return ContainerUtil.map2Set(usedFileTypes, (NotNullFunction<FileType, UsageDescriptor>)fileType -> new UsageDescriptor(fileType.getName(), 1));
   }
 }

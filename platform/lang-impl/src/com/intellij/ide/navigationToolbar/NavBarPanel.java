@@ -71,6 +71,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.PanelUI;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
@@ -91,7 +92,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private final NavBarPresentation myPresentation;
   private final Project myProject;
 
-  private final ArrayList<NavBarItem> myList = new ArrayList<NavBarItem>();
+  private final ArrayList<NavBarItem> myList = new ArrayList<>();
 
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final IdeView myIdeView;
@@ -175,12 +176,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public void clearItems() {
     final NavBarItem[] toDispose = myList.toArray(new NavBarItem[myList.size()]);
     myList.clear();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        for (NavBarItem item : toDispose) {
-          Disposer.dispose(item);
-        }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      for (NavBarItem item : toDispose) {
+        Disposer.dispose(item);
       }
     });
     
@@ -282,17 +280,19 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
+  void resetSelection() {
+    int size = myModel.size();
+    if (size > 0) myModel.setSelectedIndex(size - 1);
+  }
+
   public void rebuildAndSelectTail(final boolean requestFocus) {
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
-    myUpdateQueue.queueSelect(new Runnable() {
-      @Override
-      public void run() {
-        if (!myList.isEmpty()) {
-          myModel.setSelectedIndex(myList.size() - 1);
-          if (requestFocus) {
-            IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
-          }
+    myUpdateQueue.queueSelect(() -> {
+      if (!myList.isEmpty()) {
+        myModel.setSelectedIndex(myList.size() - 1);
+        if (requestFocus) {
+          IdeFocusManager.getInstance(myProject).requestFocus(this, true);
         }
       }
     });
@@ -340,12 +340,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     else {
       final NavBarItem item = new NavBarItem(this, null, 0, null);
       final Dimension size = item.getPreferredSize();
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(item);
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> Disposer.dispose(item));
       return size;
     }
   }
@@ -435,35 +430,30 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   private void installDnD(final int index, NavBarItem component) {
     DnDSupport.createBuilder(component)
-      .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
+      .setBeanProvider(dnDActionInfo -> new DnDDragStartBean(new TransferableWrapper() {
         @Override
-        public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
-          return new DnDDragStartBean(new TransferableWrapper() {
-            @Override
-            public List<File> asFileList() {
-              final Object o = myModel.get(index);
-              if (o instanceof PsiElement) {
-                final VirtualFile vf =  o instanceof PsiDirectory ? ((PsiDirectory)o).getVirtualFile()
-                                                                  : ((PsiElement)o).getContainingFile().getVirtualFile();
-                if (vf != null) {
-                  return Arrays.asList(new File(vf.getPath()).getAbsoluteFile());
-                }
-              }
-              return Collections.emptyList();
+        public List<File> asFileList() {
+          final Object o = myModel.get(index);
+          if (o instanceof PsiElement) {
+            final VirtualFile vf =  o instanceof PsiDirectory ? ((PsiDirectory)o).getVirtualFile()
+                                                              : ((PsiElement)o).getContainingFile().getVirtualFile();
+            if (vf != null) {
+              return Arrays.asList(new File(vf.getPath()).getAbsoluteFile());
             }
-
-            @Override
-            public TreeNode[] getTreeNodes() {
-              return null;
-            }
-
-            @Override
-            public PsiElement[] getPsiElements() {
-              return null;
-            }
-          });
+          }
+          return Collections.emptyList();
         }
-      })
+
+        @Override
+        public TreeNode[] getTreeNodes() {
+          return null;
+        }
+
+        @Override
+        public PsiElement[] getPsiElements() {
+          return null;
+        }
+      }))
       .setDisposableParent(component)
       .install();
   }
@@ -535,20 +525,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
     myUpdateQueue.queueRebuildUi();
 
-    myUpdateQueue.queueAfterAll(new Runnable() {
-      @Override
-      public void run() {
-        int index = myModel.indexOf(obj);
-        if (index >= 0) {
-          myModel.setSelectedIndex(index);
-        }
+    myUpdateQueue.queueAfterAll(() -> {
+      int index = myModel.indexOf(obj);
+      if (index >= 0) {
+        myModel.setSelectedIndex(index);
+      }
 
-        if (myModel.hasChildren(obj)) {
-          restorePopup();
-        }
-        else {
-          doubleClick(obj);
-        }
+      if (myModel.hasChildren(obj)) {
+        restorePopup();
+      }
+      else {
+        doubleClick(obj);
       }
     }, NavBarUpdateQueue.ID.NAVIGATE_INSIDE);
   }
@@ -559,6 +546,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.NAVIGATION_BAR_POPUP, group);
     final NavBarItem item = getItem(index);
     if (item != null) {
+      popupMenu.getComponent().addPopupMenuListener(new PopupMenuListenerAdapter() {
+        @Override
+        public void popupMenuCanceled(PopupMenuEvent event) {
+          resetSelection(); // select last item if popup cancelled
+        }
+      });
       popupMenu.getComponent().show(this, item.getX(), item.getY() + item.getHeight());
     }
   }
@@ -624,7 +617,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final List<PsiElement> elements = getSelectedElements(PsiElement.class);
       if (elements == null || elements.isEmpty()) return null;
-      List<PsiElement> result = new ArrayList<PsiElement>();
+      List<PsiElement> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element != null && element.isValid()) {
           result.add(element);
@@ -636,7 +629,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       PsiElement[] psiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
       if (psiElements == null) return null;
-      Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
+      Set<VirtualFile> files = new LinkedHashSet<>();
       for (PsiElement element : psiElements) {
         PsiFile file = element.getContainingFile();
         if (file != null) {
@@ -707,7 +700,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       final T selectedElement = getSelectedElement(klass);
       return selectedElement == null ? null : Arrays.asList(selectedElement);
     } else {
-      List<T> result = new ArrayList<T>();
+      List<T> result = new ArrayList<>();
       for (Object value : values) {
         if (value != null && klass.isAssignableFrom(value.getClass())) {
           result.add((T)value);
@@ -806,7 +799,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   AsyncResult<RelativePoint> getHintContainerShowPoint() {
-    final AsyncResult<RelativePoint> result = new AsyncResult<RelativePoint>();
+    final AsyncResult<RelativePoint> result = new AsyncResult<>();
     if (myLocationCache == null) {
       if (myHintContainer != null) {
         final Point p = AbstractPopup.getCenterOf(myHintContainer, this);

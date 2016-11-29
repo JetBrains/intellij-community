@@ -49,6 +49,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mike
@@ -118,7 +120,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
    * @deprecated 
    * use {@link JDOMUtil#internElement(Element, StringInterner)}
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public static void internJDOMElement(@NotNull Element rootElement) {
   }
@@ -163,13 +164,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myPath = path;
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url) throws InvalidDataException, FileNotFoundException {
+  public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException, FileNotFoundException {
     Application application = ApplicationManager.getApplication();
-    readExternal(document, url, application != null && application.isUnitTestMode());
+    readExternal(document, url, application != null && application.isUnitTestMode(), pathResolver);
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude) throws InvalidDataException, FileNotFoundException {
-    document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude);
+  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException, FileNotFoundException {
+    document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude, pathResolver);
     Element rootElement = document.getRootElement();
     JDOMUtil.internElement(rootElement, new StringInterner());
     readExternal(document.getRootElement());
@@ -178,7 +179,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void readExternal(@NotNull URL url) throws InvalidDataException, FileNotFoundException {
     try {
       Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url);
+      readExternal(document, url, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
     }
     catch (FileNotFoundException e) {
       throw e;
@@ -194,7 +195,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   // used in upsource
   protected void readExternal(@NotNull Element element) {
     final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
-
+    if (pluginBean == null) throw new InvalidDataException("Invalid plugin element");
     url = pluginBean.url;
     myName = pluginBean.name;
     String idString = pluginBean.id;
@@ -217,7 +218,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myAllowBundledUpdate = pluginBean.allowBundledUpdate;
     if (pluginBean.ideaVersion != null) {
       mySinceBuild = pluginBean.ideaVersion.sinceBuild;
-      myUntilBuild = pluginBean.ideaVersion.untilBuild;
+      myUntilBuild = convertExplicitBigNumberInUntilBuildToStar(pluginBean.ideaVersion.untilBuild);
     }
 
     myResourceBundleBaseName = pluginBean.resourceBundle;
@@ -226,7 +227,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myChangeNotes = pluginBean.changeNotes;
     myVersion = pluginBean.pluginVersion;
     if (myVersion == null) {
-      myVersion = PluginManagerCore.getBuildNumber().getBaselineVersion() + ".SNAPSHOT";
+      myVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
     }
 
     myCategory = pluginBean.category;
@@ -306,6 +307,21 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
+  public static final Pattern EXPLICIT_BIG_NUMBER_PATTERN = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)");
+
+  /**
+   * Convert build number like '146.9999' to '146.*' (like plugin repository does) to ensure that plugins which have such values in
+   * 'until-build' attribute will be compatible with 146.SNAPSHOT build.
+   */
+  public static String convertExplicitBigNumberInUntilBuildToStar(@Nullable String build) {
+    if (build == null) return null;
+    Matcher matcher = EXPLICIT_BIG_NUMBER_PATTERN.matcher(build);
+    if (matcher.matches()) {
+      return matcher.group(1) + ".*";
+    }
+    return build;
+  }
+
   // made public for Upsource
   public void registerExtensionPoints(@NotNull ExtensionsArea area) {
     if (myExtensionsPoints != null) {
@@ -334,6 +350,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myChangeNotes;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;

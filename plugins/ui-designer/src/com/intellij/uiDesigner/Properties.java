@@ -47,10 +47,10 @@ public final class Properties implements PersistentStateComponent<Element> {
   }
 
   public Properties(){
-    myClass2InplaceProperty = new HashMap<String,String>();
-    myClass2ExpertProperties = new HashMap<String,HashSet<String>>();
-    myClass2EnumProperties = new HashMap<String, Map<String, IntEnumEditor.Pair[]>>();
-    myClass2DeprecatedProperties = new HashMap<String, Set<String>>();
+    myClass2InplaceProperty = new HashMap<>();
+    myClass2ExpertProperties = new HashMap<>();
+    myClass2EnumProperties = new HashMap<>();
+    myClass2DeprecatedProperties = new HashMap<>();
   }
 
   /**
@@ -70,7 +70,7 @@ public final class Properties implements PersistentStateComponent<Element> {
     // TODO[yole]: correct module-dependent caching
     Set<String> deprecated = myClass2DeprecatedProperties.get(aClass.getName());
     if (deprecated == null) {
-      deprecated = new HashSet<String>();
+      deprecated = new HashSet<>();
       PsiClass componentClass =
         JavaPsiFacade.getInstance(module.getProject()).findClass(aClass.getName(), module.getModuleWithDependenciesAndLibrariesScope(true));
       if (componentClass != null) {
@@ -120,7 +120,7 @@ public final class Properties implements PersistentStateComponent<Element> {
       // Read "expert" properties
       final Element expertPropertiesElement = classElement.getChild("expert-properties");
       if (expertPropertiesElement != null) {
-        HashSet<String> expertProperties = new HashSet<String>();
+        HashSet<String> expertProperties = new HashSet<>();
         for (Element e : expertPropertiesElement.getChildren("property")) {
           expertProperties.add(LwXmlReader.getRequiredString(e, "name"));
         }
@@ -143,7 +143,7 @@ public final class Properties implements PersistentStateComponent<Element> {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private void loadEnumProperties(final String className, final Element enumPropertyElement) {
-    Map<String, IntEnumEditor.Pair[]> map = new HashMap<String, IntEnumEditor.Pair[]>();
+    Map<String, IntEnumEditor.Pair[]> map = new HashMap<>();
     for(final Object o: enumPropertyElement.getChildren("property")) {
       final Element e = (Element) o;
       final String name = LwXmlReader.getRequiredString(e, "name");

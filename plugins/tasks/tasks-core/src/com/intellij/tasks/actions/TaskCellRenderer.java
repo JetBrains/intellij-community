@@ -12,7 +12,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -24,16 +23,13 @@ import java.awt.*;
 /**
  * @author Evgeny Zakrevsky
  */
-public class TaskCellRenderer extends DefaultListCellRenderer implements MatcherHolder {
-  private Matcher myMatcher;
+public class TaskCellRenderer extends DefaultListCellRenderer {
   private final Project myProject;
-
 
   public TaskCellRenderer(Project project) {
     super();
     myProject = project;
   }
-
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean sel, boolean focus) {
     final JPanel panel = new JPanel(new BorderLayout());
@@ -51,7 +47,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
       SimpleTextAttributes attr = getAttributes(sel, isClosed);
 
       c.setIcon(isClosed ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
-      SpeedSearchUtil.appendColoredFragmentForMatcher(task.getPresentableName(), c, attr, myMatcher, bg, sel);
+      SpeedSearchUtil.appendColoredFragmentForMatcher(task.getPresentableName(), c, attr, MatcherHolder.getAssociatedMatcher(list), bg, sel);
       panel.add(c, BorderLayout.CENTER);
     }
     else if ("...".equals(value)) {
@@ -78,8 +74,4 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
                                     taskClosed ? UIUtil.getLabelDisabledForeground() : UIUtil.getListForeground(selected));
   }
 
-  @Override
-  public void setPatternMatcher(Matcher matcher) {
-    myMatcher = matcher;
-  }
 }

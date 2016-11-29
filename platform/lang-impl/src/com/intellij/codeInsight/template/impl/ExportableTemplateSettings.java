@@ -32,7 +32,7 @@ import java.util.List;
   storages = @Storage(value = "template.settings.xml", roamingType = RoamingType.DISABLED)
 )
 final class ExportableTemplateSettings implements PersistentStateComponent<ExportableTemplateSettings> {
-  public Collection<TemplateSettings.TemplateKey> deletedKeys = new SmartList<TemplateSettings.TemplateKey>();
+  public Collection<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
 
   @Nullable
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,28 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 /**
- * Highlights incorrect return statements: 'return' and 'yield' outside functions, 'yield' inside async functions.
+ * Highlights incorrect return statements: 'return' and 'yield' outside functions
  */
 public class ReturnAnnotator extends PyAnnotator {
   public void visitPyReturnStatement(final PyReturnStatement node) {
-    PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
+    final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
     if (function == null) {
       getHolder().createErrorAnnotation(node, "'return' outside of function");
+    }
+    if (function != null && node.getExpression() != null) {
+      final PyType returnType = TypeEvalContext.codeAnalysis(function.getProject(), function.getContainingFile()).getReturnType(function);
+
+      if (returnType != null && PyNames.FAKE_ASYNC_GENERATOR.equals(returnType.getName())) {
+        getHolder().createErrorAnnotation(node, "non-empty 'return' inside asynchronous generator");
+      }
     }
   }
 
@@ -36,8 +46,13 @@ public class ReturnAnnotator extends PyAnnotator {
     if (!(owner instanceof PyFunction || owner instanceof PyLambdaExpression)) {
       getHolder().createErrorAnnotation(node, "'yield' outside of function");
     }
-    if (owner instanceof PyFunction && ((PyFunction)owner).isAsync()) {
-      getHolder().createErrorAnnotation(node, "'yield' inside async function");
+
+    if (node.isDelegating() && owner instanceof PyFunction) {
+      final PyFunction function = (PyFunction)owner;
+
+      if (function.isAsync() && function.isAsyncAllowed()) {
+        getHolder().createErrorAnnotation(node, "Python does not support 'yield from' inside async functions");
+      }
     }
   }
 }

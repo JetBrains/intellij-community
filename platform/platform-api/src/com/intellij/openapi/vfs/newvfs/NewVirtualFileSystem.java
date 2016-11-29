@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -22,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,11 +31,10 @@ import java.util.Map;
  * @author max
  */
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
-  private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers =
-    ContainerUtil.newConcurrentMap();
+  private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = ContainerUtil.newConcurrentMap();
 
   @Nullable
-  public abstract VirtualFile findFileByPathIfCached(@NotNull @NonNls final String path);
+  public abstract VirtualFile findFileByPathIfCached(@NotNull String path);
 
   @Nullable
   protected String normalize(@NotNull String path) {
@@ -76,7 +73,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   @Override
   public void removeVirtualFileListener(@NotNull final VirtualFileListener listener) {
-    final VirtualFileListener wrapper = myListenerWrappers.remove(listener);
+    VirtualFileListener wrapper = myListenerWrappers.remove(listener);
     if (wrapper != null) {
       VirtualFileManager.getInstance().removeVirtualFileListener(wrapper);
     }
@@ -118,7 +115,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * Reads various file attributes in one shot (to reduce the number of native I/O calls).
    *
    * @param file file to get attributes of.
-   * @return attributes of a given file, or <code>null</code> if the file doesn't exist.
+   * @return attributes of a given file, or {@code null} if the file doesn't exist.
    * @since 11.1
    */
   @Nullable

@@ -40,7 +40,7 @@ class AntKeymapExtension implements KeymapExtension {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntProjectKeymap");
 
   public KeymapGroup createGroup(final Condition<AnAction> filtered, Project project) {
-    final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<AntBuildFile, KeymapGroup>();
+    final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<>();
     final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(KeyMapBundle.message("ant.targets.group.title"),
                                                                             AllIcons.Nodes.KeymapAnt);
 
@@ -50,25 +50,23 @@ class AntKeymapExtension implements KeymapExtension {
 
     if (project != null) {
       final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          for (final String id : ids) {
-            if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) {
-              continue;
+      ApplicationManager.getApplication().runReadAction(() -> {
+        for (final String id : ids) {
+          if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) {
+            continue;
+          }
+          final AntBuildFile buildFile = antConfiguration.findBuildFileByActionId(id);
+          if (buildFile != null) {
+            KeymapGroup subGroup = buildFileToGroup.get(buildFile);
+            if (subGroup == null) {
+              subGroup = KeymapGroupFactory.getInstance().createGroup(buildFile.getPresentableName());
+              buildFileToGroup.put(buildFile, subGroup);
+              result.addGroup(subGroup);
             }
-            final AntBuildFile buildFile = antConfiguration.findBuildFileByActionId(id);
-            if (buildFile != null) {
-              KeymapGroup subGroup = buildFileToGroup.get(buildFile);
-              if (subGroup == null) {
-                subGroup = KeymapGroupFactory.getInstance().createGroup(buildFile.getPresentableName());
-                buildFileToGroup.put(buildFile, subGroup);
-                result.addGroup(subGroup);
-              }
-              subGroup.addActionId(id);
-            }
-            else {
-              LOG.info("no buildfile found for actionId=" + id);
-            }
+            subGroup.addActionId(id);
+          }
+          else {
+            LOG.info("no buildfile found for actionId=" + id);
           }
         }
       });

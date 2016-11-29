@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -42,6 +43,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +69,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       return false;
     }
 
-    List<PsiClass> targetClasses = getTargetClasses(element);
+    List<PsiClass> targetClasses = filterTargetClasses(element, project);
     return !targetClasses.isEmpty();
   }
 
@@ -91,7 +93,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       return;
     }
 
-    List<PsiClass> targetClasses = getTargetClasses(element);
+    List<PsiClass> targetClasses = filterTargetClasses(element, project);
+
     if (targetClasses.isEmpty()) return;
 
     if (targetClasses.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -101,18 +104,17 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
+  protected List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
+    return ContainerUtil.filter(getTargetClasses(element), psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
+  }
+
   private void doInvoke(Project project, final PsiClass targetClass) {
     if (!FileModificationService.getInstance().prepareFileForWrite(targetClass.getContainingFile())) {
       return;
     }
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        invokeImpl(targetClass);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(targetClass));
   }
 
   @Nullable
@@ -123,7 +125,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     final Project project = firstClass.getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
+    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
@@ -134,20 +136,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       list.setSelectedValue(preselection, true);
     }
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        final PsiClass aClass = (PsiClass) list.getSelectedValue();
-        AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            doInvoke(project, aClass);
-          }
-        }, getText(), null);
-      }
+    Runnable runnable = () -> {
+      int index = list.getSelectedIndex();
+      if (index < 0) return;
+      final PsiClass aClass = (PsiClass) list.getSelectedValue();
+      AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
+      CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(project, aClass), getText(), null);
     };
 
     builder.
@@ -168,6 +162,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       if (file == null) return null;
     }
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, textOffset);
+    descriptor.setScrollType(ScrollType.MAKE_VISIBLE); // avoid centering caret in editor if it's already visible
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
@@ -367,7 +362,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
     if (psiClass instanceof PsiTypeParameter) {
       PsiClass[] supers = psiClass.getSupers();
-      List<PsiClass> filtered = new ArrayList<PsiClass>();
+      List<PsiClass> filtered = new ArrayList<>();
       for (PsiClass aSuper : supers) {
         if (!aSuper.getManager().isInProject(aSuper)) continue;
         if (!(aSuper instanceof PsiTypeParameter)) filtered.add(aSuper);
@@ -380,12 +375,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       }
 
       if (!allowOuterClasses || !isAllowOuterTargetClass()) {
-        final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
+        final ArrayList<PsiClass> classes = new ArrayList<>();
         collectSupers(psiClass, classes);
         return classes;
       }
 
-      List<PsiClass> result = new ArrayList<PsiClass>();
+      List<PsiClass> result = new ArrayList<>();
 
       while (psiClass != null) {
         result.add(psiClass);
@@ -428,17 +423,10 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
                                       @NotNull final Project project,
                                       final TemplateEditingListener listener,
                                       final String commandName) {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed() || editor.isDisposed()) return;
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            TemplateManager.getInstance(project).startTemplate(editor, template, listener);
-          }
-        }, commandName, commandName);
-      }
+    Runnable runnable = () -> {
+      if (project.isDisposed() || editor.isDisposed()) return;
+      CommandProcessor.getInstance().executeCommand(project,
+                                                    () -> TemplateManager.getInstance(project).startTemplate(editor, template, listener), commandName, commandName);
     };
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
       runnable.run();
@@ -457,7 +445,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     int numParams = ref.getTypeParameters().length;
     if (numParams == 0) return;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(ref.getProject()).getElementFactory();
-    final Set<String> typeParamNames = new HashSet<String>();
+    final Set<String> typeParamNames = new HashSet<>();
     for (PsiType type : ref.getTypeParameters()) {
       final PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass instanceof PsiTypeParameter) {

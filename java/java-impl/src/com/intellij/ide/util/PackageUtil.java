@@ -169,21 +169,17 @@ public class PackageUtil {
     final PsiDirectory[] psiDirectory = new PsiDirectory[1];
     final IncorrectOperationException[] exception = new IncorrectOperationException[1];
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable(){
-      public void run() {
-        psiDirectory[0] = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-          public PsiDirectory compute() {
-            try {
-              return oldDirectory.createSubdirectory(name);
-            }
-            catch (IncorrectOperationException e) {
-              exception[0] = e;
-              return null;
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(project, () -> psiDirectory[0] = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+      public PsiDirectory compute() {
+        try {
+          return oldDirectory.createSubdirectory(name);
+        }
+        catch (IncorrectOperationException e) {
+          exception[0] = e;
+          return null;
+        }
       }
-    }, IdeBundle.message("command.create.new.subdirectory"), null);
+    }), IdeBundle.message("command.create.new.subdirectory"), null);
 
     if (exception[0] != null) throw exception[0];
 
@@ -227,7 +223,7 @@ public class PackageUtil {
     if (psiDirectory == null) {
       if (!checkSourceRootsConfigured(module, askUserToCreate)) return null;
       final List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
-      List<PsiDirectory> directoryList = new ArrayList<PsiDirectory>();
+      List<PsiDirectory> directoryList = new ArrayList<>();
       for (VirtualFile sourceRoot : sourceRoots) {
         final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(sourceRoot);
         if (directory != null) {
@@ -288,7 +284,7 @@ public class PackageUtil {
   private static PsiDirectory[] filterSourceDirectories(PsiDirectory baseDir, Project project, PsiDirectory[] moduleDirectories) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInTestSourceContent(baseDir.getVirtualFile())) {
-      List<PsiDirectory> result = new ArrayList<PsiDirectory>();
+      List<PsiDirectory> result = new ArrayList<>();
       for (PsiDirectory moduleDirectory : moduleDirectories) {
         if (fileIndex.isInTestSourceContent(moduleDirectory.getVirtualFile())) {
           result.add(moduleDirectory);

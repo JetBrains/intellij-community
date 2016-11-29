@@ -98,7 +98,7 @@ public abstract class PathReferenceManager {
   public abstract PathReferenceProvider createStaticPathReferenceProvider(final boolean relativePathsAllowed);
 
   public static PsiReference[] getReferencesFromProvider(@NotNull PathReferenceProvider provider, @NotNull PsiElement psiElement, boolean soft) {
-    final ArrayList<PsiReference> references = new ArrayList<PsiReference>();
+    final ArrayList<PsiReference> references = new ArrayList<>();
     provider.createReferences(psiElement, references, soft);
     return references.toArray(new PsiReference[references.size()]);    
   }

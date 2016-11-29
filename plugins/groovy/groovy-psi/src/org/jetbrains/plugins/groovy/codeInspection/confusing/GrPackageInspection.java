@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ExpectedPackageNameProviderKt;
 
 import javax.swing.*;
 
@@ -84,12 +84,12 @@ public class GrPackageInspection extends BaseInspection {
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitFile(GroovyFileBase file) {
+      public void visitFile(@NotNull GroovyFileBase file) {
         if (!(file instanceof GroovyFile)) return;
 
         if (!myCheckScripts && file.isScript()) return;
 
-        String expectedPackage = ResolveUtil.inferExpectedPackageName(file);
+        String expectedPackage = ExpectedPackageNameProviderKt.inferExpectedPackageName((GroovyFile)file);
         String actual = file.getPackageName();
         if (!expectedPackage.equals(actual)) {
 
@@ -136,12 +136,6 @@ public class GrPackageInspection extends BaseInspection {
 
     public ChangePackageQuickFix(String newPackageName) {
       myNewPackageName = newPackageName;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return GroovyBundle.message("fix.package.name");
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,13 +27,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class QuickList extends ExternalizableSchemeAdapter {
+public class QuickList extends ExternalizableSchemeAdapter implements SerializableScheme {
   public static final String QUICK_LIST_PREFIX = "QuickList.";
   public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 
   private static final String ID_TAG = "id";
   private static final String ACTION_TAG = "action";
-  private static final String DISPLAY_NAME_TAG = "display";
+  static final String DISPLAY_NAME_TAG = "display";
   private static final String DESCRIPTION_TAG = "description";
 
   private String myDescription;
@@ -42,11 +43,11 @@ public class QuickList extends ExternalizableSchemeAdapter {
    * With read external to be called immediately after in mind
    */
   QuickList() {
-    myName = "";
+    setName("");
   }
 
   public QuickList(@NotNull String name, @Nullable String description, String[] actionIds) {
-    myName = name;
+    setName(name);
     myDescription = StringUtil.nullize(description);
     myActionIds = actionIds;
   }
@@ -77,13 +78,14 @@ public class QuickList extends ExternalizableSchemeAdapter {
     }
 
     QuickList quickList = (QuickList)o;
-    return Arrays.equals(myActionIds, quickList.myActionIds) && Comparing.strEqual(myDescription, quickList.myDescription) && myName.equals(quickList.myName);
+    return Arrays.equals(myActionIds, quickList.myActionIds) && Comparing.strEqual(myDescription, quickList.myDescription) && getName().equals(quickList.getName());
   }
 
   public int hashCode() {
-    return 29 * myName.hashCode() + Comparing.hashcode(myDescription);
+    return 29 * getName().hashCode() + Comparing.hashcode(myDescription);
   }
 
+  @NotNull
   @Override
   public String toString() {
     return getName() + " " + getDescription();
@@ -94,8 +96,8 @@ public class QuickList extends ExternalizableSchemeAdapter {
     return QUICK_LIST_PREFIX + getName();
   }
 
-  public void writeExternal(@NotNull Element groupElement) {
-    groupElement.setAttribute(DISPLAY_NAME_TAG, myName);
+  private void writeExternal(@NotNull Element groupElement) {
+    groupElement.setAttribute(DISPLAY_NAME_TAG, getName());
     if (myDescription != null) {
       groupElement.setAttribute(DESCRIPTION_TAG, myDescription);
     }
@@ -106,7 +108,7 @@ public class QuickList extends ExternalizableSchemeAdapter {
   }
 
   public void readExternal(@NotNull Element element) {
-    myName = element.getAttributeValue(DISPLAY_NAME_TAG);
+    setName(element.getAttributeValue(DISPLAY_NAME_TAG));
     myDescription = StringUtil.nullize(element.getAttributeValue(DESCRIPTION_TAG));
 
     List<Element> actionElements = element.getChildren(ACTION_TAG);
@@ -114,5 +116,13 @@ public class QuickList extends ExternalizableSchemeAdapter {
     for (int i = 0, n = actionElements.size(); i < n; i++) {
       myActionIds[i] = actionElements.get(i).getAttributeValue(ID_TAG);
     }
+  }
+
+  @NotNull
+  @Override
+  public Element writeScheme() {
+    Element element = new Element("list");
+    writeExternal(element);
+    return element;
   }
 }

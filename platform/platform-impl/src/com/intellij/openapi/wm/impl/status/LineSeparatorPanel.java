@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,58 +87,55 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
   }
 
   private void update() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFile file = getSelectedFile();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      VirtualFile file = getSelectedFile();
+      myActionEnabled = false;
+      String lineSeparator = null;
+      String toolTipText = null;
+      String panelText = null;
+
+      if (file != null) {
+        myActionEnabled = file.isWritable();
+
+        lineSeparator =
+          LoadTextUtil.detectLineSeparator(file, true);
+
+        if (lineSeparator != null) {
+           toolTipText = String.format("Line separator: %s",
+                                       StringUtil.escapeLineBreak(lineSeparator));
+           panelText = LineSeparator.fromString(lineSeparator).toString();
+        }
+      }
+
+      if (lineSeparator == null) {
+        toolTipText = "No line separator";
+        panelText = file != null ? "n/a" : "";
         myActionEnabled = false;
-        String lineSeparator = null;
-        String toolTipText = null;
-        String panelText = null;
+      }
 
-        if (file != null) {
-          myActionEnabled = file.isWritable();
+      myComponent.resetColor();
 
-          lineSeparator =
-            LoadTextUtil.detectLineSeparator(file, true);
+      String toDoComment;
 
-          if (lineSeparator != null) {
-             toolTipText = String.format("Line separator: %s",
-                                         StringUtil.escapeLineBreak(lineSeparator));
-             panelText = LineSeparator.fromString(lineSeparator).toString();
-          }
-        }
+      if (myActionEnabled) {
+        toDoComment = "Click to change";
+        myComponent.setForeground(UIUtil.getActiveTextColor());
+        myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
+      } else {
+        toDoComment = "";
+        myComponent.setForeground(UIUtil.getInactiveTextColor());
+        myComponent.setTextAlignment(Component.CENTER_ALIGNMENT);
+      }
 
-        if (lineSeparator == null) {
-          toolTipText = "No line separator";
-          panelText = "n/a";
-          myActionEnabled = false;
-        }
-
-        myComponent.resetColor();
-
-        String toDoComment;
-
-        if (myActionEnabled) {
-          toDoComment = "Click to change";
-          myComponent.setForeground(UIUtil.getActiveTextColor());
-          myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
-        } else {
-          toDoComment = "";
-          myComponent.setForeground(UIUtil.getInactiveTextColor());
-          myComponent.setTextAlignment(Component.CENTER_ALIGNMENT);
-        }
-
-        myComponent.setToolTipText(String.format("%s%n%s",
-                                                 toolTipText,
-                                                 toDoComment));
-        myComponent.setText(panelText);
+      myComponent.setToolTipText(String.format("%s%n%s",
+                                               toolTipText,
+                                               toDoComment));
+      myComponent.setText(panelText);
 
 
 
-        if (myStatusBar != null) {
-          myStatusBar.updateWidget(ID());
-        }
+      if (myStatusBar != null) {
+        myStatusBar.updateWidget(ID());
       }
     });
   }

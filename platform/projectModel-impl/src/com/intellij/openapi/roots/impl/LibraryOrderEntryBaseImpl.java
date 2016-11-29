@@ -81,12 +81,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
   }
 
   protected void updateFromRootProviderAndSubscribe() {
-    getRootModel().makeExternalChange(new Runnable() {
-      @Override
-      public void run() {
-        resubscribe(getRootProvider());
-      }
-    });
+    getRootModel().makeExternalChange(() -> resubscribe(getRootProvider()));
   }
 
   private void resubscribe(RootProvider wrapper) {

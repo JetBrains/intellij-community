@@ -67,7 +67,7 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
 
           JsonElement element = new JsonParser().parse(pair.getSecond());
 
-          HashMap<String, String> parameters = new HashMap<String, String>();
+          HashMap<String, String> parameters = new HashMap<>();
           for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
             JsonElement value = entry.getValue();
             parameters.put(entry.getKey(), value instanceof JsonPrimitive ? value.getAsString() : value.toString());

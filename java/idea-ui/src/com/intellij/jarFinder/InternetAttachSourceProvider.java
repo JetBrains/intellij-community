@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.intellij.jarFinder;
 
-import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -48,25 +46,13 @@ import java.util.regex.Pattern;
 /**
  * @author Sergey Evdokimov
  */
-public class InternetAttachSourceProvider implements AttachSourcesProvider {
+public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
   private static final Logger LOG = Logger.getInstance(InternetAttachSourceProvider.class);
   private static final Pattern ARTIFACT_IDENTIFIER = Pattern.compile("[A-Za-z0-9\\.\\-_]+");
 
-  @Nullable
-  protected static VirtualFile getJarByPsiFile(PsiFile psiFile) {
-    VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return null;
-
-    VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(psiFile.getVirtualFile());
-
-    if (jar == null || !jar.getName().endsWith(".jar")) return null;
-
-    return jar;
-  }
-
   @NotNull
   @Override
-  public Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
+  public Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, @Nullable PsiFile psiFile) {
     final VirtualFile jar = getJarByPsiFile(psiFile);
     if (jar == null) return Collections.emptyList();
 
@@ -81,7 +67,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
       return Collections.emptyList();
     }
 
-    final Set<Library> libraries = new HashSet<Library>();
+    final Set<Library> libraries = new HashSet<>();
     for (LibraryOrderEntry orderEntry : orderEntries) {
       ContainerUtil.addIfNotNull(libraries, orderEntry.getLibrary());
     }
@@ -105,7 +91,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
     final File sourceFile = new File(libSourceDir, sourceFileName);
 
     if (sourceFile.exists()) {
-      return Collections.<AttachSourcesAction>singleton(new LightAttachSourcesAction() {
+      return Collections.singleton(new LightAttachSourcesAction() {
         @Override
         public String getName() {
           return "Attach downloaded source";
@@ -124,7 +110,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
       });
     }
 
-    return Collections.<AttachSourcesAction>singleton(new LightAttachSourcesAction() {
+    return Collections.singleton(new LightAttachSourcesAction() {
       @Override
       public String getName() {
         return "Download...";
@@ -207,8 +193,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
   }
 
   public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<Library> libraries) {
-    AccessToken accessToken = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       VirtualFile srcFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar);
       if (srcFile == null) return;
 
@@ -231,18 +216,11 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
         }
         model.commit();
       }
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   public static File getLibrarySourceDir() {
     String path = System.getProperty("idea.library.source.dir");
-    if (path != null) {
-      return new File(path);
-    }
-
-    return new File(SystemProperties.getUserHome(), ".ideaLibSources");
+    return path != null ? new File(path) : new File(SystemProperties.getUserHome(), ".ideaLibSources");
   }
 }

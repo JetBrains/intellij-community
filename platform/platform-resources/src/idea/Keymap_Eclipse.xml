@@ -348,6 +348,9 @@
     <action id="ToggleBookmark">
       <keyboard-shortcut first-keystroke="shift control F11" />
     </action>
+    <action id="ToggleBookmarkWithMnemonic">
+      <keyboard-shortcut first-keystroke="shift alt control F11" />
+    </action>
     <action id="ToggleLineBreakpoint">
       <keyboard-shortcut first-keystroke="shift control B" />
       <keyboard-shortcut first-keystroke="control F8" />

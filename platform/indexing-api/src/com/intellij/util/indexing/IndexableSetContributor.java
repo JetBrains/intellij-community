@@ -18,7 +18,6 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,7 @@ import java.util.Set;
  */
 public abstract class IndexableSetContributor {
 
-  public static final ExtensionPointName<IndexableSetContributor> EP_NAME = new ExtensionPointName<IndexableSetContributor>("com.intellij.indexedRootsProvider");
+  public static final ExtensionPointName<IndexableSetContributor> EP_NAME = new ExtensionPointName<>("com.intellij.indexedRootsProvider");
   private static final Logger LOG = Logger.getInstance(IndexableSetContributor.class);
 
   @NotNull
@@ -71,12 +70,7 @@ public abstract class IndexableSetContributor {
         LOG.error("Please fix " + contributor.getClass().getName() + "#" + methodInfo + ".\n" +
                   (root == null ? "The returned set is not expected to contain nulls, but it is " + roots
                                 : "Invalid file returned: " + root));
-        return ContainerUtil.newLinkedHashSet(ContainerUtil.filter(roots, new Condition<VirtualFile>() {
-          @Override
-          public boolean value(VirtualFile virtualFile) {
-            return virtualFile != null && virtualFile.isValid();
-          }
-        }));
+        return ContainerUtil.newLinkedHashSet(ContainerUtil.filter(roots, virtualFile -> virtualFile != null && virtualFile.isValid()));
       }
     }
     return roots;

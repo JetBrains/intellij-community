@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -48,7 +51,7 @@ import java.util.*;
  * @author yole
  */
 public abstract class GeneratePluginClassAction extends CreateElementActionBase implements DescriptorUtil.Patcher {
-  protected final Set<XmlFile> myFilesToPatch = new HashSet<XmlFile>();
+  protected final Set<XmlFile> myFilesToPatch = new HashSet<>();
 
   // length == 1 is important to make MyInputValidator close the dialog when
   // module selection is canceled. That's some weird interface actually...
@@ -80,10 +83,10 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     final Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
       final DataContext context = e.getDataContext();
-      final Module module = LangDataKeys.MODULE.getData(context);
+      final Module module = e.getData(LangDataKeys.MODULE);
       if (PluginModuleType.isPluginModuleOrDependency(module)) {
-        final IdeView view = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
-        final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+        final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
+        final Project project = e.getProject();
         if (view != null && project != null) {
           // from com.intellij.ide.actions.CreateClassAction.update()
           ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -113,7 +116,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
       if (orderEntries.isEmpty()) {
         return null;
       }
-      Set<Module> modules = new HashSet<Module>();
+      Set<Module> modules = new HashSet<>();
       for (OrderEntry orderEntry : orderEntries) {
         modules.add(orderEntry.getOwnerModule());
       }

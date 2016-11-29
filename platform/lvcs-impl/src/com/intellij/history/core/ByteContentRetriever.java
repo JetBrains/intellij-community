@@ -64,7 +64,7 @@ public class ByteContentRetriever extends ChangeSetsProcessor {
 
   @Override
   protected Pair<String, List<ChangeSet>> collectChanges() {
-    final List<ChangeSet> result = new ArrayList<ChangeSet>();
+    final List<ChangeSet> result = new ArrayList<>();
 
     myVcs.accept(new ChangeVisitor() {
       @Override

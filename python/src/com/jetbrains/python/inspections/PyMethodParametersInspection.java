@@ -101,7 +101,7 @@ public class PyMethodParametersInspection extends PyInspection {
       PsiElement ret;
       synchronized (this) { // other threads would wait as long in resolveInRoots() anyway
         if (myPossibleZopeRef == null) {
-          myPossibleZopeRef = new Ref<PsiElement>();
+          myPossibleZopeRef = new Ref<>();
           ret = ResolveImportUtil.resolveModuleInRoots(QualifiedName.fromComponents("zope.interface.Interface"), foothold);
           myPossibleZopeRef.set(ret); // null is OK
         }
@@ -121,7 +121,7 @@ public class PyMethodParametersInspection extends PyInspection {
       PsiElement zope_interface = findZopeInterface(node);
       final PyClass cls = node.getContainingClass();
       if (zope_interface instanceof PyClass) {
-        if (cls != null && cls.isSubclass((PyClass) zope_interface, null)) return; // it can have any params
+        if (cls != null && cls.isSubclass((PyClass) zope_interface, myTypeEvalContext)) return; // it can have any params
       }
       // analyze function itself
       PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(node);
@@ -205,7 +205,9 @@ public class PyMethodParametersInspection extends PyInspection {
                 );
               }
             }
-            else if (flags.isClassMethod() || PyNames.NEW.equals(methodName)) {
+            else if (flags.isClassMethod() ||
+                     PyNames.NEW.equals(methodName) ||
+                     PyNames.INIT_SUBCLASS.equals(methodName) && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36)) {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),

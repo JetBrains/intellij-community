@@ -1,6 +1,24 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
@@ -46,8 +64,19 @@ public abstract class PatchAction {
     out.write(file.canExecute() ? 1 : 0);
   }
 
-  protected static boolean readExecutableFlag(InputStream in) throws IOException {
-    return in.read() == 1;
+  protected static void writeLinkInfo(File file, OutputStream out) throws IOException {
+    Path path = Paths.get(file.getAbsolutePath());
+    String link = Files.readSymbolicLink(path).toString();
+    if (link.isEmpty()) throw new IOException("Invalid link: " + path);
+    out.write(link.length());
+    byte[] byteArray = link.getBytes("UTF-8");
+    out.write(byteArray);
+  }
+
+  protected static String readLinkInfo(InputStream in, int length) throws IOException {
+    byte[] byteArray = new byte[length];
+    if (length == 0 || in.read(byteArray) != length) throw new IOException("Stream format error");
+    return new String(byteArray, "UTF-8");
   }
 
   public boolean calculate(File olderDir, File newerDir) throws IOException {
@@ -97,26 +126,14 @@ public abstract class PatchAction {
                                 myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE);
   }
 
-  private boolean isWritable(File toFile) {
-    try {
-      FileOutputStream s = new FileOutputStream(toFile, true);
-      FileChannel ch = s.getChannel();
-      try {
-        FileLock lock = ch.tryLock();
-        if (lock == null) return false;
-        lock.release();
-      }
-      finally {
-        ch.close();
-        s.close();
-      }
+  private static boolean isWritable(File toFile) {
+    try (FileOutputStream s = new FileOutputStream(toFile, true); FileChannel ch = s.getChannel()) {
+      FileLock lock = ch.tryLock();
+      if (lock == null) return false;
+      lock.release();
       return true;
     }
-    catch (OverlappingFileLockException e) {
-      Runner.printStackTrace(e);
-      return false;
-    }
-    catch (IOException e) {
+    catch (OverlappingFileLockException | IOException e) {
       Runner.printStackTrace(e);
       return false;
     }

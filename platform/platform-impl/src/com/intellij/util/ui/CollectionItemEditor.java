@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,25 @@ package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-public abstract class CollectionItemEditor<T> {
-  @NotNull
+public interface CollectionItemEditor<T> {
   /**
    * Class must have an empty constructor.
    */
-  public abstract Class<? extends T> getItemClass();
+  @NotNull
+  Class<? extends T> getItemClass();
 
   /**
    * Used for "copy" and "in place edit" actions.
    *
    * You must perform deep clone in case of "add" operation, but in case of "in place edit" you should copy only exposed (via column) properties.
    */
-  public abstract T clone(@NotNull T item, boolean forInPlaceEditing);
+  T clone(@NotNull T item, boolean forInPlaceEditing);
 
-  public boolean isRemovable(@NotNull T item) {
+  default boolean isRemovable(@NotNull T item) {
     return true;
   }
 
-  public boolean isEmpty(@NotNull T item) {
+  default boolean isEmpty(@NotNull T item) {
     return false;
   }
 }

@@ -55,7 +55,7 @@ public class PropertiesKeysConsistencyInspectionProvider implements Inconsistent
       PropertiesFile parent = parents.get(file);
       Set<String> parentKeys = keysUpToParent.get(parent);
       if (parent == null) {
-        parentKeys = new THashSet<String>();
+        parentKeys = new THashSet<>();
         for (PropertiesFile otherTopLevelFile : files) {
           if (otherTopLevelFile != file && parents.get(otherTopLevelFile) == null) {
             parent = otherTopLevelFile;
@@ -64,7 +64,7 @@ public class PropertiesKeysConsistencyInspectionProvider implements Inconsistent
         }
         if (parent == null) continue;
       }
-      Set<String> keys = new THashSet<String>(propertiesFilesNamesMaps.get(file).keySet());
+      Set<String> keys = new THashSet<>(propertiesFilesNamesMaps.get(file).keySet());
       keys.removeAll(parentKeys);
       for (String inconsistentKey : keys) {
         IProperty property = file.findPropertyByKey(inconsistentKey);

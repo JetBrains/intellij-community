@@ -5,5 +5,10 @@
     <line>3</line>
     <description>Casting 'array' to String[] is redundant</description>
   </problem>
+  <problem>
+    <file>A.java</file>
+    <line>20</line>
+    <description>Casting '1' to 'Integer' is redundant</description>
+  </problem>
 </problems>
 

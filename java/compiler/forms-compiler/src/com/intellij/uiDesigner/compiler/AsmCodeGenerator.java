@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.*;
  * @author yole
  */
 public class AsmCodeGenerator {
-  private static final int ASM_API_VERSION = Opcodes.ASM5;
+  private static final int ASM_API_VERSION = Opcodes.API_VERSION;
   private final LwRootContainer myRootContainer;
   private final InstrumentationClassFinder myFinder;
   private final ArrayList myErrors;

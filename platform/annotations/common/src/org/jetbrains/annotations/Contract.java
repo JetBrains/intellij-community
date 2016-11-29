@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,15 @@ import java.lang.annotation.*;
 /**
  * Specifies some aspects of the method behavior depending on the arguments. Can be used by tools for advanced data flow analysis.
  * Note that this annotation just describes how the code works and doesn't add any functionality by means of code generation.<p>
- * 
+ *
  * Method contract has the following syntax:<br>
  *  contract ::= (clause ';')* clause<br>
  *  clause ::= args '-&gt;' effect<br>
  *  args ::= ((arg ',')* arg )?<br>
  *  arg ::= value-constraint<br>
- *  value-constraint ::= 'any' | 'null' | '!null' | 'false' | 'true'<br>
+ *  value-constraint ::= '_' | 'null' | '!null' | 'false' | 'true'<br>
  *  effect ::= value-constraint | 'fail' <p>
- *  
+ *
  * The constraints denote the following:<br>
  * <ul>
  * <li> _ - any value
@@ -42,14 +42,14 @@ import java.lang.annotation.*;
  * <code>@Contract("_, null -&gt; null")</code> - method returns null if its second argument is null<br>
  * <code>@Contract("_, null -&gt; null; _, !null -&gt; !null")</code> - method returns null if its second argument is null and not-null otherwise<br>
  * <code>@Contract("true -&gt; fail")</code> - a typical assertFalse method which throws an exception if <code>true</code> is passed to it<br>
- * 
+ *
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
 public @interface Contract {
   /**
-   * Contains the contract clauses describing causal relations between call arguments and the returned value 
+   * Contains the contract clauses describing causal relations between call arguments and the returned value
    */
   String value() default "";
 

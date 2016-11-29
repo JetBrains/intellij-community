@@ -156,7 +156,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   }
 
   protected String getTargetOutputPath(MavenProject p, String... subFoldersAndFile) {
-    List<String> elements = new ArrayList<String>();
+    List<String> elements = new ArrayList<>();
     elements.add(p.getBuildDirectory());
     Collections.addAll(elements, subFoldersAndFile);
     return makePath(p, ArrayUtil.toStringArray(elements));

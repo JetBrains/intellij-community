@@ -26,7 +26,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabsPresentation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -40,19 +39,15 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
-  private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<PlaceInGrid, GridCellImpl>(PlaceInGrid.class);
+  private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<>(PlaceInGrid.class);
 
   private final String mySessionName;
 
-  private final List<Content> myContents = new ArrayList<Content>();
-  private final Map<Content, GridCellImpl> myContent2Cell = new HashMap<Content, GridCellImpl>();
+  private final List<Content> myContents = new ArrayList<>();
+  private final Map<Content, GridCellImpl> myContent2Cell = new HashMap<>();
 
-  private final Comparator<Content> myContentComparator = new Comparator<Content>() {
-    @Override
-    public int compare(final Content o1, final Content o2) {
-      return getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
-    }
-  };
+  private final Comparator<Content> myContentComparator =
+    (o1, o2) -> getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
 
   private final ViewContextEx myViewContext;
 
@@ -358,7 +353,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   public List<Content> getAttachedContents() {
-    ArrayList<Content> result = new ArrayList<Content>();
+    ArrayList<Content> result = new ArrayList<>();
 
     for (Content each : getContents()) {
       result.add(each);
@@ -392,31 +387,5 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
       return contents.toArray(new Content[contents.size()]);
     }
     return null;
-  }
-
-  @Nullable
-  public SwitchTarget getCellFor(Component c) {
-    Component eachParent = c;
-    while (eachParent != null) {
-      for (GridCellImpl eachCell : myContent2Cell.values()) {
-        if (eachCell.contains(eachParent)) {
-          return eachCell.getTargetForSelection();
-        }
-      }
-
-      eachParent = eachParent.getParent();
-    }
-
-    return null;
-  }
-
-
-  public List<SwitchTarget> getTargets(boolean onlyVisible) {
-    Collection<GridCellImpl> cells = myPlaceInGrid2Cell.values();
-    ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
-    for (GridCellImpl each : cells) {
-      result.addAll(each.getTargets(onlyVisible));
-    }
-    return result;
   }
 }

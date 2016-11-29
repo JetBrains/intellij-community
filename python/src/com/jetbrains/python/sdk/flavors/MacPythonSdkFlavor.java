@@ -36,7 +36,7 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    Set<String> candidates = new HashSet<String>();
+    Set<String> candidates = new HashSet<>();
     collectPythonInstallations("/Library/Frameworks/Python.framework/Versions", candidates);
     collectPythonInstallations("/System/Library/Frameworks/Python.framework/Versions", candidates);
     UnixPythonSdkFlavor.collectUnixPythons("/usr/local/bin", candidates);

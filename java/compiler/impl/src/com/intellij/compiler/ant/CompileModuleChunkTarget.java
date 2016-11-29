@@ -188,7 +188,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
     final PatternSetRef resourcePatternsPatternSet = new PatternSetRef(BuildProperties.PROPERTY_COMPILER_RESOURCE_PATTERNS);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final CompositeGenerator composite = new CompositeGenerator();
-    final Map<String, Copy> outputDirToTaskMap = new HashMap<String, Copy>();
+    final Map<String, Copy> outputDirToTaskMap = new HashMap<>();
     for (final VirtualFile root : sourceRoots) {
       final String packagePrefix = fileIndex.getPackageNameByDirectory(root);
       final String targetDir =

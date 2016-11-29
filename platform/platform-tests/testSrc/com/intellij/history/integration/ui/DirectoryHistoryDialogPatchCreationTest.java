@@ -19,17 +19,19 @@ package com.intellij.history.integration.ui;
 import com.intellij.history.integration.PatchingTestCase;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 
+import java.nio.charset.Charset;
+
 public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
   public void testPatchCreation() throws Exception {
-    createChildData(myRoot, "f1.txt");
-    createChildData(myRoot, "f2.txt");
-    createChildData(myRoot, "f3.txt");
+    createChildDataWithContent(myRoot, "f1.txt");
+    createChildDataWithContent(myRoot, "f2.txt");
+    createChildDataWithContent(myRoot, "f3.txt");
 
     DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), myRoot);
-    assertSize(3, m.getRevisions());
+    assertSize(6, m.getRevisions());
 
-    m.selectRevisions(0, 2);
-    m.createPatch(patchFilePath, false);
+    m.selectRevisions(0, 5);
+    m.createPatch(patchFilePath, myProject.getBasePath(), false, Charset.defaultCharset());
     clearRoot();
 
     applyPatch();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -35,7 +36,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,8 +66,8 @@ class HTMLTextPainter {
   private final LineMarkerInfo[] myMethodSeparators;
   private int myCurrentMethodSeparator;
   private final Project myProject;
-  private final Map<TextAttributes, String> myStyleMap = new HashMap<TextAttributes, String>();
-  private final Map<Color, String> mySeparatorStyles = new HashMap<Color, String>();
+  private final Map<TextAttributes, String> myStyleMap = new HashMap<>();
+  private final Map<Color, String> mySeparatorStyles = new HashMap<>();
 
   public HTMLTextPainter(PsiFile psiFile, Project project, String dirName, boolean printLineNumbers) {
     myProject = project;
@@ -86,7 +90,7 @@ class HTMLTextPainter {
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     myDocument = psiDocumentManager.getDocument(psiFile);
 
-    ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
+    ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<>();
     if (myDocument != null) {
       final List<LineMarkerInfo> separators = FileSeparatorProvider.getFileSeparators(psiFile, myDocument);
       if (separators != null) {
@@ -342,7 +346,7 @@ class HTMLTextPainter {
     Color color = scheme.getDefaultBackground();
     if (color==null) color = JBColor.GRAY;
     writer.write("<BODY BGCOLOR=\"#" + Integer.toString(color.getRGB() & 0xFFFFFF, 16) + "\">\r\n");
-    writer.write("<TABLE CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH=\"100%\" BGCOLOR=\"#C0C0C0\" >\r\n");
+    writer.write("<TABLE CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH=\"100%\" BGCOLOR=\"#" + ColorUtil.toHex(new JBColor(Gray.xC0, Gray.x60)) + "\" >\r\n");
     writer.write("<TR><TD><CENTER>\r\n");
     writer.write("<FONT FACE=\"Arial, Helvetica\" COLOR=\"#000000\">\r\n");
     writer.write(title + "</FONT>\r\n");
@@ -351,10 +355,11 @@ class HTMLTextPainter {
   }
 
   private void writeStyles(@NonNls final Writer writer) throws IOException {
-    writer.write("<style type=\"text/css\">\n");
-    writer.write(".ln { color: rgb(0,0,0); font-weight: normal; font-style: normal; }\n");
-    HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    writer.write("<style type=\"text/css\">\n");
+    final Color lineNumbers = scheme.getColor(EditorColors.LINE_NUMBERS_COLOR);
+    writer.write(String.format(".ln { color: #%s; font-weight: normal; font-style: normal; }\n", ColorUtil.toHex(lineNumbers == null ? Gray.x00 : lineNumbers)));
+    HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     while(!hIterator.atEnd()) {
       TextAttributes textAttributes = hIterator.getTextAttributes();
       if (!myStyleMap.containsKey(textAttributes)) {
@@ -364,10 +369,10 @@ class HTMLTextPainter {
         Color foreColor = textAttributes.getForegroundColor();
         if (foreColor == null) foreColor = scheme.getDefaultForeground();
         writer.write("color: " + colorToHtml(foreColor) + "; ");
-        if ((textAttributes.getFontType() & Font.BOLD) != 0) {
+        if (BitUtil.isSet(textAttributes.getFontType(), Font.BOLD)) {
           writer.write("font-weight: bold; ");
         }
-        if ((textAttributes.getFontType() & Font.ITALIC) != 0) {
+        if (BitUtil.isSet(textAttributes.getFontType(), Font.ITALIC)) {
           writer.write("font-style: italic; ");
         }
         writer.write("}\n");

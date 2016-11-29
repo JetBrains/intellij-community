@@ -57,7 +57,7 @@ public class TestMethodInProductCodeInspection extends BaseInspection {
     public void visitMethod(PsiMethod method) {
       final PsiClass containingClass = method.getContainingClass();
       if (TestUtils.isInTestSourceContent(containingClass) ||
-          !TestUtils.isJUnit4TestMethod(method)) {
+          !TestUtils.isAnnotatedTestMethod(method)) {
         return;
       }
       registerMethodError(method);

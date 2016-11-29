@@ -87,9 +87,7 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
       return new ComboBoxButton(presentation) {
         @Override
         protected JBPopup createPopup(Runnable onDispose) {
-          ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-            null, createPopupActionGroup(this), getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, onDispose,
-            getMaxRows());
+          ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, createPopupActionGroup(this), getDataContext(), true, onDispose, getMaxRows());
           popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
           return popup;
         }

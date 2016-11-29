@@ -118,7 +118,7 @@ public class ChainCompletionContext {
   public Collection<?> getContextRefElements(final String typeQName) {
     final Collection<PsiVariable> variables = getVariables(typeQName);
     final Collection<PsiMethod> containingClassMethods = getContainingClassMethods(typeQName);
-    final Collection<UserDataHolder> refElements = new ArrayList<UserDataHolder>(variables.size() + containingClassMethods.size());
+    final Collection<UserDataHolder> refElements = new ArrayList<>(variables.size() + containingClassMethods.size());
     refElements.addAll(variables);
     refElements.addAll(containingClassMethods);
     for (final ContextRelevantVariableGetter contextRelevantVariableGetter : getRelevantVariablesGetters(typeQName)) {
@@ -153,7 +153,7 @@ public class ChainCompletionContext {
   }
 
   private static <T> HashSet<T> unionToHashSet(final Collection<T>... collections) {
-    final HashSet<T> res = new HashSet<T>();
+    final HashSet<T> res = new HashSet<>();
     for (final Collection<T> set : collections) {
       res.addAll(set);
     }

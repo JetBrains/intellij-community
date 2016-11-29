@@ -67,7 +67,7 @@ public class ProjectGroup {
   }
 
   public List<String> getProjects() {
-    return new ArrayList<String>(new HashSet<String>(StringUtil.split(myProjectPaths, File.pathSeparator)));
+    return new ArrayList<>(new HashSet<>(StringUtil.split(myProjectPaths, File.pathSeparator)));
   }
 
   public void removeProject(String path) {

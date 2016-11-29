@@ -19,6 +19,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -34,16 +36,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -61,7 +61,7 @@ public class ExtractMethodHelper {
       return;
     }
     final Project project = callElement.getProject();
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching for duplicates...", true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, RefactoringBundle.message("searching.for.duplicates"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProject == null || myProject.isDisposed()) return;
         final List<SimpleMatch> duplicates = ApplicationManager.getApplication().runReadAction(new Computable<List<SimpleMatch>>() {
@@ -71,21 +71,56 @@ public class ExtractMethodHelper {
           }
         });
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            replaceDuplicates(callElement, editor, replacer, duplicates);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(callElement, editor, replacer, duplicates));
       }
     });
   }
 
-  private static void replaceDuplicates(PsiElement callElement,
-                                        Editor editor,
-                                        Consumer<Pair<SimpleMatch, PsiElement>> replacer,
-                                        List<SimpleMatch> duplicates) {
-    if (duplicates.size() > 0) {
+
+  /**
+   * Finds duplicates of the code fragment specified in the finder in given scopes.
+   * Note that in contrast to {@link #processDuplicates} the search is performed synchronously because normally you need the results in 
+   * order to complete the refactoring. If user cancels it, empty list will be returned.
+   *
+   * @param finder          finder object to seek for duplicates
+   * @param searchScopes    scopes where to look them in
+   * @param generatedMethod new method that should be excluded from the search
+   * @return list of discovered duplicate code fragments or empty list if user interrupted the search 
+   * @see #replaceDuplicates(PsiElement, Editor, Consumer, List)  
+   */
+  @NotNull
+  public static List<SimpleMatch> collectDuplicates(@NotNull SimpleDuplicatesFinder finder,
+                                                    @NotNull List<PsiElement> searchScopes,
+                                                    @NotNull PsiElement generatedMethod) {
+    final Project project = generatedMethod.getProject();
+    try {
+      //noinspection RedundantCast
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        (ThrowableComputable<List<SimpleMatch>, RuntimeException>)() -> {
+          ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+          return ReadAction.compute(() -> finder.findDuplicates(searchScopes, generatedMethod));
+        }, RefactoringBundle.message("searching.for.duplicates"), true, project);
+    }
+    catch (ProcessCanceledException e) {
+      return Collections.emptyList();
+    }
+  }
+  
+
+  /**
+   * Notifies user about found duplicates and then highlights each of them in the editor and asks user how to proceed.
+   *
+   * @param callElement generated expression or statement that contains invocation of the new method
+   * @param editor      instance of editor where refactoring is performed
+   * @param replacer    strategy of substituting each duplicate occurence with the replacement fragment
+   * @param duplicates  discovered duplicates of extracted code fragment
+   * @see #collectDuplicates(SimpleDuplicatesFinder, List, PsiElement)
+   */
+  public static void replaceDuplicates(@NotNull PsiElement callElement,
+                                       @NotNull Editor editor,
+                                       @NotNull Consumer<Pair<SimpleMatch, PsiElement>> replacer,
+                                       @NotNull List<SimpleMatch> duplicates) {
+    if (!duplicates.isEmpty()) {
       final String message = RefactoringBundle
         .message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
                  ApplicationNamesInfo.getInstance().getProductName(), duplicates.size());
@@ -97,7 +132,7 @@ public class ExtractMethodHelper {
                            Messages.YES;
       if (exitCode == Messages.YES) {
         boolean replaceAll = false;
-        final Map<SimpleMatch, RangeHighlighter> highlighterMap = new HashMap<SimpleMatch, RangeHighlighter>();
+        final Map<SimpleMatch, RangeHighlighter> highlighterMap = new HashMap<>();
         for (SimpleMatch match : duplicates) {
           if (!match.getStartElement().isValid() || !match.getEndElement().isValid()) continue;
           final Pair<SimpleMatch, PsiElement> replacement = Pair.create(match, callElement);
@@ -138,23 +173,13 @@ public class ExtractMethodHelper {
 
   private static void replaceDuplicate(final Project project, final Consumer<Pair<SimpleMatch, PsiElement>> replacer,
                                        final Pair<SimpleMatch, PsiElement> replacement) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            replacer.consume(replacement);
-          }
-        });
-      }
-    }, "Replace duplicate", null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> replacer.consume(replacement)), "Replace duplicate", null);
   }
 
 
   private static void highlightInEditor(@NotNull final Project project, @NotNull final SimpleMatch match,
                                  @NotNull final Editor editor, Map<SimpleMatch, RangeHighlighter> highlighterMap) {
-    final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final List<RangeHighlighter> highlighters = new ArrayList<>();
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);

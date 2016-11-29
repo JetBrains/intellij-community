@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -26,6 +28,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +52,7 @@ public class JavaSharedImplUtil {
     List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor, stopAt);
     if (allAnnotations == null) return null;
     for (PsiAnnotation[] annotations : allAnnotations) {
-      type = type.createArrayType(annotations);
+      type = type.createArrayType().annotate(TypeAnnotationProvider.Static.create(annotations));
     }
 
     return type;
@@ -82,6 +86,42 @@ public class JavaSharedImplUtil {
 
     // annotation is misplaced (either located before the anchor or has no following brackets)
     return !found || stop ? null : annotations;
+  }
+
+  @NotNull
+  public static PsiType applyAnnotations(@NotNull PsiType type, @Nullable PsiModifierList modifierList) {
+    if (modifierList != null) {
+      PsiAnnotation[] annotations = modifierList.getAnnotations();
+      if (annotations.length > 0) {
+        TypeAnnotationProvider original =
+          modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
+        TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations, original);
+        if (type instanceof PsiArrayType) {
+          Stack<PsiArrayType> types = new Stack<PsiArrayType>();
+          do {
+            types.push((PsiArrayType)type);
+            type = ((PsiArrayType)type).getComponentType();
+          }
+          while (type instanceof PsiArrayType);
+          type = type.annotate(provider);
+          while (!types.isEmpty()) {
+            PsiArrayType t = types.pop();
+            type = t instanceof PsiEllipsisType ? new PsiEllipsisType(type, t.getAnnotations()) : new PsiArrayType(type, t.getAnnotations());
+          }
+          return type;
+        }
+        else if (type instanceof PsiDisjunctionType) {
+          List<PsiType> components = ContainerUtil.newArrayList(((PsiDisjunctionType)type).getDisjunctions());
+          components.set(0, components.get(0).annotate(provider));
+          return ((PsiDisjunctionType)type).newDisjunctionType(components);
+        }
+        else {
+          return type.annotate(provider);
+        }
+      }
+    }
+
+    return type;
   }
 
   public static void normalizeBrackets(@NotNull PsiVariable variable) {
@@ -155,5 +195,35 @@ public class JavaSharedImplUtil {
       assert eq != null : variable;
     }
     variable.addAfter(initializer, eq.getPsi());
+  }
+
+  private static class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
+    private final PsiAnnotation[] myCandidates;
+    private final TypeAnnotationProvider myOriginalProvider;
+    private volatile PsiAnnotation[] myCache;
+
+    private FilteringTypeAnnotationProvider(PsiAnnotation[] candidates, TypeAnnotationProvider originalProvider) {
+      myCandidates = candidates;
+      myOriginalProvider = originalProvider;
+    }
+
+    @NotNull
+    @Override
+    public PsiAnnotation[] getAnnotations() {
+      PsiAnnotation[] result = myCache;
+      if (result == null) {
+        List<PsiAnnotation> filtered = JBIterable.of(myCandidates)
+          .filter(new Condition<PsiAnnotation>() {
+            @Override
+            public boolean value(PsiAnnotation annotation) {
+              return AnnotationTargetUtil.isTypeAnnotation(annotation);
+            }
+          })
+          .append(myOriginalProvider.getAnnotations())
+          .toList();
+        myCache = result = filtered.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : filtered.toArray(new PsiAnnotation[filtered.size()]);
+      }
+      return result;
+    }
   }
 }

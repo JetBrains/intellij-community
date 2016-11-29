@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author nik
@@ -52,31 +49,17 @@ public class CompilerTestUtil {
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
   }
 
-  /**
-   * @deprecated not needed anymore
-   */
-  public static void scanSourceRootsToRecompile(Project project) {
-  }
-
   @TestOnly
   public static void saveApplicationSettings() {
-    EdtTestUtil.runInEdtAndWait(new Runnable() {
-      @Override
-      public void run() {
-        doSaveComponent(ProjectJdkTable.getInstance());
-        doSaveComponent(FileTypeManager.getInstance());
-      }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      doSaveComponent(ProjectJdkTable.getInstance());
+      doSaveComponent(FileTypeManager.getInstance());
     });
   }
 
   @TestOnly
   public static void saveApplicationComponent(final Object appComponent) {
-    EdtTestUtil.runInEdtAndWait(new Runnable() {
-      @Override
-      public void run() {
-        doSaveComponent(appComponent);
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> doSaveComponent(appComponent));
   }
 
   private static void doSaveComponent(Object appComponent) {
@@ -97,36 +80,23 @@ public class CompilerTestUtil {
 
   @TestOnly
   public static void disableExternalCompiler(@NotNull  final Project project) {
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Sdk internalJdk = table.getInternalJdk();
-            List<Module> modulesToRestore = new SmartList<Module>();
-            for (Module module : ModuleManager.getInstance(project).getModules()) {
-              Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-              if (sdk != null && sdk.equals(internalJdk)) {
-                modulesToRestore.add(module);
-              }
-            }
-            table.removeJdk(internalJdk);
-            for (Module module : modulesToRestore) {
-              ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
-            }
-            BuildManager.getInstance().clearState(project);
-            Future<?> future = BuildManager.getInstance().stopListening();
-            try {
-              future.get(100, TimeUnit.SECONDS);
-            }
-            catch (Exception e) {
-              throw new RuntimeException(e);
-            }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        Sdk internalJdk = table.getInternalJdk();
+        List<Module> modulesToRestore = new SmartList<>();
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+          if (sdk != null && sdk.equals(internalJdk)) {
+            modulesToRestore.add(module);
           }
-        });
-      }
+        }
+        table.removeJdk(internalJdk);
+        for (Module module : modulesToRestore) {
+          ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
+        }
+        BuildManager.getInstance().clearState(project);
+      });
     });
   }
 }

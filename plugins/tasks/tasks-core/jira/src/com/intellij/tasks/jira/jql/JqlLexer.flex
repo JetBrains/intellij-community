@@ -11,8 +11,6 @@ import com.intellij.psi.tree.IElementType;
 %function advance
 %type IElementType
 %ignorecase
-%eof{  return;
-%eof}
 
 WHITESPACE_CHAR = [\ \t]
 DIGIT = [0-9]

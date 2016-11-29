@@ -15,13 +15,16 @@
  */
 package com.intellij.openapi.editor.richcopy.view;
 
+import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.openapi.editor.richcopy.model.ColorRegistry;
 import com.intellij.openapi.editor.richcopy.model.FontNameRegistry;
 import com.intellij.openapi.editor.richcopy.model.MarkupHandler;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.color.ColorSpace;
 import java.awt.datatransfer.DataFlavor;
 
 public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransferableData {
@@ -47,7 +50,8 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     ColorRegistry colorRegistry = mySyntaxInfo.getColorRegistry();
     for (int id : colorRegistry.getAllIds()) {
       Color color = colorRegistry.dataById(id);
-      holder.append(String.format("\\red%d\\green%d\\blue%d;", color.getRed(), color.getGreen(), color.getBlue()));
+      int[] components = getAdjustedColorComponents(color);
+      holder.append(String.format("\\red%d\\green%d\\blue%d;", components[0], components[1], components[2]));
     }
     holder.append("}\n");
 
@@ -61,7 +65,8 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
 
     holder.append("\n\\s0\\box")
       .append("\\cbpat").append(mySyntaxInfo.getDefaultBackground())
-      .append("\\cb").append(mySyntaxInfo.getDefaultBackground());
+      .append("\\cb").append(mySyntaxInfo.getDefaultBackground())
+      .append("\\cf").append(mySyntaxInfo.getDefaultForeground());
     addFontSize(holder, mySyntaxInfo.getFontSize());
     holder.append('\n');
 
@@ -69,6 +74,26 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
 
     holder.append("\\par");
     holder.append(HEADER_SUFFIX);
+  }
+  
+  private static int[] getAdjustedColorComponents(Color color) {
+    if (SystemInfo.isMac) {
+      // on Mac OS color components are expected in Apple's 'Generic RGB' color space
+      ColorSpace genericRgbSpace = MacOSApplicationProvider.getInstance().getGenericRgbColorSpace();
+      if (genericRgbSpace != null) {
+        float[] components = genericRgbSpace.fromRGB(color.getRGBColorComponents(null));
+        return new int[] {
+          colorComponentFloatToInt(components[0]), 
+          colorComponentFloatToInt(components[1]), 
+          colorComponentFloatToInt(components[2])
+        };
+      }
+    }
+    return new int[] {color.getRed(), color.getGreen(), color.getBlue()};
+  }
+  
+  private static int colorComponentFloatToInt(float component) {
+    return (int)(component * 255 + 0.5f);
   }
 
   @NotNull

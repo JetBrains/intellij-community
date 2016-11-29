@@ -17,7 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Before;
@@ -52,9 +52,11 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Before
   public void setUp() throws IOException {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
+    Files.write(myTempDir.getRoot().toPath().resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
     Files.copy(myTestData.resolve("jrt-fs.jar"), myTempDir.getRoot().toPath().resolve("jrt-fs.jar"));
     Path lib = Files.createDirectory(myTempDir.getRoot().toPath().resolve("lib"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
 
     String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, myTempDir.getRoot() + JrtFileSystem.SEPARATOR);
     myRoot = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -63,13 +65,22 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void nonRoot() {
+    String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, JavaTestUtil.getJavaTestDataPath() + JrtFileSystem.SEPARATOR);
+    VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+    assertThat(root).isNull();
+  }
+
+  @Test
   public void basicOps() throws IOException {
-    assertThat(myRoot.findChild("test")).isNotNull();
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1");
 
-    List<String> names = Stream.of(myRoot.getChildren()).map(VirtualFile::getName).collect(Collectors.toList());
-    assertThat(names).containsOnly("test");
+    VirtualFile moduleRoot = myRoot.findChild("test1");
+    assertThat(moduleRoot).isNotNull();
+    assertThat(JrtFileSystem.isModuleRoot(moduleRoot)).isTrue();
+    assertThat(childNames(moduleRoot)).containsExactlyInAnyOrder("test", "module-info.class");
 
-    VirtualFile classFile = myRoot.findFileByRelativePath("test/pkg1/Class1.class");
+    VirtualFile classFile = moduleRoot.findFileByRelativePath("test/pkg1/Class1.class");
     assertThat(classFile).isNotNull();
 
     byte[] bytes = classFile.contentsToByteArray();
@@ -79,23 +90,21 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void refresh() throws IOException {
-    VirtualFile dir = myRoot.findChild("test");
-    assertThat(dir).isNotNull();
-
-    assertThat(dir.isValid()).isTrue();
-    assertThat(Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList())).containsOnly("pkg1");
-    assertThat(myRoot.findFileByRelativePath("test/pkg2/Class2.class")).isNull();
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1");
 
     Path modules = myTempDir.getRoot().toPath().resolve("lib/modules");
     Files.move(modules, myTempDir.getRoot().toPath().resolve("lib/modules.bak"));
     Files.copy(myTestData.resolve("image2"), modules, StandardCopyOption.REPLACE_EXISTING);
+    Files.write(myTempDir.getRoot().toPath().resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(CharsetToolkit.UTF8_CHARSET));
 
     VirtualFile local = LocalFileSystem.getInstance().findFileByIoFile(myTempDir.getRoot());
     assertThat(local).isNotNull();
     local.refresh(false, true);
 
-    assertThat(dir.isValid()).isTrue();
-    assertThat(Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList())).containsOnly("pkg1", "pkg2");
-    assertThat(myRoot.findFileByRelativePath("test/pkg2/Class2.class")).isNotNull();
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1", "test2");
+  }
+
+  private static List<String> childNames(VirtualFile dir) {
+    return Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList());
   }
 }

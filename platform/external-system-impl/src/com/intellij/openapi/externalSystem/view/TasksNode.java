@@ -35,10 +35,10 @@ import java.util.Map;
  * @author Vladislav.Soroka
  * @since 11/6/2014
  */
-@Order(1)
+@Order(ExternalSystemNode.BUILTIN_TASKS_DATA_NODE_ORDER)
 public class TasksNode extends ExternalSystemNode {
 
-  private final MultiMap<String, TaskNode> myTasksMap = new MultiMap<String, TaskNode>();
+  private final MultiMap<String, TaskNode> myTasksMap = new MultiMap<>();
 
   @SuppressWarnings("unchecked")
   public TasksNode(ExternalProjectsView externalProjectsView, final Collection<DataNode<?>> dataNodes) {
@@ -47,7 +47,6 @@ public class TasksNode extends ExternalSystemNode {
     if (dataNodes != null && !dataNodes.isEmpty()) {
       for (DataNode<?> dataNode : dataNodes) {
         if (!(dataNode.getData() instanceof TaskData)) continue;
-        if (dataNode.getParent() != null && ProjectKeys.PROJECT.equals(dataNode.getParent().getKey())) break;
         String group = ((TaskData)dataNode.getData()).getGroup();
         if (group == null) group = "other";
         myTasksMap.putValue(StringUtil.toLowerCase(group), new TaskNode(externalProjectsView, (DataNode<TaskData>)dataNode));

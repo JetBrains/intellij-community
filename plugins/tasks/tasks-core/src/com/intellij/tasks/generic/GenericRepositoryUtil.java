@@ -43,15 +43,12 @@ public class GenericRepositoryUtil {
     }
     PostMethod postMethod = new PostMethod(requestUrl.substring(0, n));
     String[] queryParams = requestUrl.substring(n + 1).split("&");
-    postMethod.addParameters(ContainerUtil.map2Array(queryParams, NameValuePair.class, new Function<String, NameValuePair>() {
-      @Override
-      public NameValuePair fun(String s) {
-        String[] nv = s.split("=");
-        if (nv.length == 1) {
-          return new NameValuePair(nv[0], "");
-        }
-        return new NameValuePair(nv[0], nv[1]);
+    postMethod.addParameters(ContainerUtil.map2Array(queryParams, NameValuePair.class, s -> {
+      String[] nv = s.split("=");
+      if (nv.length == 1) {
+        return new NameValuePair(nv[0], "");
       }
+      return new NameValuePair(nv[0], nv[1]);
     }));
     return postMethod;
   }
@@ -61,7 +58,7 @@ public class GenericRepositoryUtil {
   }
 
   public static String substituteTemplateVariables(String s, Collection<TemplateVariable> variables, boolean escape) throws Exception {
-    Map<String, String> lookup = new HashMap<String, String>();
+    Map<String, String> lookup = new HashMap<>();
     for (TemplateVariable v : variables) {
       lookup.put(v.getName(), v.getValue());
     }
@@ -89,12 +86,7 @@ public class GenericRepositoryUtil {
   }
 
   public static List<String> createPlaceholdersList(List<TemplateVariable> variables) {
-    return ContainerUtil.map2List(variables, new Function<TemplateVariable, String>() {
-      @Override
-      public String fun(TemplateVariable variable) {
-        return String.format("{%s}", variable.getName());
-      }
-    });
+    return ContainerUtil.map2List(variables, variable -> String.format("{%s}", variable.getName()));
   }
 
   public static String prettifyVariableName(String variableName) {

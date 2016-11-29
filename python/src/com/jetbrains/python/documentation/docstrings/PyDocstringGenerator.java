@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -92,7 +91,7 @@ public class PyDocstringGenerator {
       indentation = PyIndentUtil.getElementIndent(((PyStatementListContainer)owner).getStatementList());
     }
     final String docStringText = owner.getDocStringExpression() == null ? null : owner.getDocStringExpression().getText();
-    return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getConfiguredDocStringFormat(owner), indentation, owner);
+    return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getConfiguredDocStringFormatOrPlain(owner), indentation, owner);
   }
   
   /**
@@ -109,7 +108,7 @@ public class PyDocstringGenerator {
   public static PyDocstringGenerator update(@NotNull PyStringLiteralExpression docString) {
     return new PyDocstringGenerator(PsiTreeUtil.getParentOfType(docString, PyDocStringOwner.class),
                                     docString.getText(), 
-                                    DocStringUtil.getConfiguredDocStringFormat(docString),
+                                    DocStringUtil.getConfiguredDocStringFormatOrPlain(docString),
                                     PyIndentUtil.getElementIndent(docString), 
                                     docString);
   }
@@ -209,10 +208,7 @@ public class PyDocstringGenerator {
       statementList.accept(visitor);
       if (!isConstructor((PyFunction)myDocStringOwner) && (visitor.myHasReturn || addReturn)) {
         // will add :return: placeholder in Sphinx/Epydoc docstrings
-        myAddedParams.add(new DocstringParam("", null, true));
-        if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-          withReturnValue("");
-        }
+        withReturnValue(null);
       }
     }
     return this;
@@ -274,7 +270,8 @@ public class PyDocstringGenerator {
         String type = paramTypes.get(paramCoordinates);
         if (type == null && PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
           if (signature != null) {
-            type = StringUtil.notNullize(param.isReturnValue() ? signature.getReturnTypeQualifiedName() :
+            type = StringUtil.notNullize(param.isReturnValue() ? 
+                                         signature.getReturnTypeQualifiedName() :
                                          signature.getArgTypeQualifiedName(param.getName()));
           }
           else {
@@ -430,12 +427,7 @@ public class PyDocstringGenerator {
       if (myAddFirstEmptyLine) {
         sectionBuilder.addEmptyLine();
       }
-      final List<DocstringParam> parameters = ContainerUtil.findAll(myAddedParams, new Condition<DocstringParam>() {
-        @Override
-        public boolean value(DocstringParam param) {
-          return !param.isReturnValue();
-        }
-      });
+      final List<DocstringParam> parameters = ContainerUtil.findAll(myAddedParams, param -> !param.isReturnValue());
       if (!parameters.isEmpty()) {
         sectionBuilder.startParametersSection();
         for (DocstringParam param : parameters) {
@@ -443,12 +435,7 @@ public class PyDocstringGenerator {
         }
       }
 
-      final List<DocstringParam> returnValues = ContainerUtil.findAll(myAddedParams, new Condition<DocstringParam>() {
-        @Override
-        public boolean value(DocstringParam param) {
-          return param.isReturnValue();
-        }
-      });
+      final List<DocstringParam> returnValues = ContainerUtil.findAll(myAddedParams, param -> param.isReturnValue());
 
       if (!returnValues.isEmpty()) {
         sectionBuilder.startReturnsSection();
@@ -542,7 +529,7 @@ public class PyDocstringGenerator {
         throw new IllegalStateException("Should be a function or class");
       }
       final PyStatementList statements = container.getStatementList();
-      final String indentation = PyIndentUtil.getExpectedElementIndent(statements);
+      final String indentation = PyIndentUtil.getElementIndent(statements);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(myDocStringOwner.getContainingFile());
 
       if (document != null) {

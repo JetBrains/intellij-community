@@ -45,7 +45,7 @@ public class InstalledPluginsState {
   private final Object myLock = new Object();
   private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = ContainerUtil.newIdentityHashMap();
   private final Map<PluginId, IdeaPluginDescriptor> myUpdatedPlugins = ContainerUtil.newIdentityHashMap();
-  private final Set<String> myOutdatedPlugins = new SmartHashSet<String>();
+  private final Set<String> myOutdatedPlugins = new SmartHashSet<>();
 
   @NotNull
   public Collection<IdeaPluginDescriptor> getInstalledPlugins() {

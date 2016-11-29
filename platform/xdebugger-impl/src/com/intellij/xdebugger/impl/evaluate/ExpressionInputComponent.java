@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -60,7 +61,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     myMainPanel = new JPanel(new BorderLayout());
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
     myExpressionEditor = new XDebuggerExpressionEditor(project, editorsProvider, "evaluateExpression", sourcePosition,
-                                                       expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false, true);
+                                                       expression != null ? expression : XExpressionImpl.EMPTY_EXPRESSION, false, true, false);
     myMainPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
     JButton historyButton = new FixedSizeButton(myExpressionEditor.getComponent());
     historyButton.setIcon(AllIcons.General.MessageHistory);
@@ -72,7 +73,9 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
       }
     });
     myMainPanel.add(historyButton, BorderLayout.EAST);
-    final JBLabel help = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint"), SwingConstants.RIGHT);
+    final JBLabel help = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint",
+                                                             KeymapUtil.getKeystrokeText(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE)),
+                                     SwingConstants.RIGHT);
     help.setBorder(JBUI.Borders.empty(2, 0, 6, 0));
     help.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     help.setFontColor(UIUtil.FontColor.BRIGHTER);
@@ -110,7 +113,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
         protected ListCellRenderer getListElementRenderer() {
           return new ColoredListCellRenderer<XExpression>() {
             @Override
-            protected void customizeCellRenderer(JList list, XExpression value, int index, boolean selected, boolean hasFocus) {
+            protected void customizeCellRenderer(@NotNull JList list, XExpression value, int index, boolean selected, boolean hasFocus) {
               append(value.getExpression());
             }
           };

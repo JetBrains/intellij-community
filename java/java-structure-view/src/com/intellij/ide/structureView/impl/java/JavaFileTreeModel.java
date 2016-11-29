@@ -29,8 +29,9 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class JavaFileTreeModel extends TextEditorBasedStructureViewModel implements StructureViewModel.ElementInfoProvider, PlaceHolder<String> {
-  private static final Collection<NodeProvider> NODE_PROVIDERS = Arrays.<NodeProvider>asList(new JavaInheritedMembersNodeProvider(),
-                                                                                             new JavaAnonymousClassesNodeProvider());
+  private static final Collection<NodeProvider> NODE_PROVIDERS = Arrays.asList(new JavaInheritedMembersNodeProvider(),
+                                                                               new JavaAnonymousClassesNodeProvider(),
+                                                                               new JavaLambdaNodeProvider());
   private String myPlace;
 
   public JavaFileTreeModel(@NotNull PsiClassOwner file, @Nullable Editor editor) {
@@ -112,6 +113,8 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
       if (element instanceof PsiClass) {
         return ((PsiClass)element).getQualifiedName() != null;
       }
+
+      return element instanceof PsiLambdaExpression;
     }
     return false;
   }
@@ -119,7 +122,7 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
   @Override
   @NotNull
   protected Class[] getSuitableClasses() {
-    return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaFile.class};
+    return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class, PsiLambdaExpression.class, PsiJavaFile.class};
   }
 
   @Override

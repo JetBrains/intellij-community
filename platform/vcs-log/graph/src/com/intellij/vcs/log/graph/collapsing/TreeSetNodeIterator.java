@@ -26,7 +26,7 @@ class TreeSetNodeIterator {
   private final SortedSet<Integer> myWalkNodes;
 
   TreeSetNodeIterator(int startNode, final boolean isUp) {
-    myWalkNodes = new TreeSet<Integer>(new Comparator<Integer>() {
+    myWalkNodes = new TreeSet<>(new Comparator<Integer>() {
       @Override
       public int compare(@NotNull Integer o1, @NotNull Integer o2) {
         if (isUp) return o2 - o1;

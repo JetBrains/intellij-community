@@ -49,7 +49,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseOnMaster()
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
   }
@@ -59,7 +59,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseOnMaster()
 
-    assertSuccessfulNotification("feature is up-to-date with master")
+    assertSuccessfulRebaseNotification("feature is up-to-date with master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
   }
@@ -69,7 +69,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseOnMaster()
 
-    assertSuccessfulNotification("Fast-forwarded feature to master")
+    assertSuccessfulRebaseNotification("Fast-forwarded feature to master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
   }
@@ -114,7 +114,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     assertEquals("Incorrect number of conflicting patches", 2, conflicts)
     myRepo.`assert feature rebased on master`()
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
   }
 
   fun `test continue rebase after resolving all conflicts`() {
@@ -125,7 +125,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
 
     rebaseOnMaster()
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
   }
@@ -147,7 +147,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.skipRebase(myProject)
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
   }
@@ -188,7 +188,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
       }
     }.rebase()
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     assertRebased(myRepo, "feature", "master")
     assertNoRebaseInProgress(myRepo)
     localChange.verify()
@@ -204,7 +204,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
       }
     }.rebase()
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     assertRebased(myRepo, "feature", "master")
     assertNoRebaseInProgress(myRepo)
     localChange.verify()
@@ -363,7 +363,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
     GitRebaseUtils.continueRebase(myProject)
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
   }
@@ -392,7 +392,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertRebased(myRepo, "feature", "master")
     assertNoRebaseInProgress(myRepo)
 
-    assertSuccessfulNotification(
+    assertSuccessfulRebaseNotification(
         """
         Rebased feature on master<br/>
         The following commit was skipped during rebase:<br/>
@@ -427,7 +427,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.continueRebase(myProject)
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
   }
@@ -470,9 +470,9 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
-    GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler).rebaseOnCurrent(listOf(myRepo), "feature")
+    GitBranchWorker(myProject, myGit, uiHandler).rebaseOnCurrent(listOf(myRepo), "feature")
 
-    assertSuccessfulNotification("Checked out feature and rebased it on master")
+    assertSuccessfulRebaseNotification("Checked out feature and rebased it on master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
   }

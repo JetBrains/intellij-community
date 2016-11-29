@@ -89,7 +89,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     }
   }
 
-  protected List<PendingToken> myTokenQueue = new ArrayList<PendingToken>();
+  protected List<PendingToken> myTokenQueue = new ArrayList<>();
 
   protected boolean myProcessSpecialTokensPending = false;
 

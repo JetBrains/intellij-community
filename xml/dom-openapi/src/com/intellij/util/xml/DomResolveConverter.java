@@ -60,9 +60,9 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
       return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
         @Override
         public Result<Map<String, DomElement>> compute() {
-          final Map<String, DomElement> map = new THashMap<String, DomElement>();
+          final Map<String, DomElement> map = new THashMap<>();
           visitDomElement(scope, map);
-          return new Result<Map<String, DomElement>>(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+          return new Result<>(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
 
         private void visitDomElement(DomElement element, final Map<String, DomElement> map) {

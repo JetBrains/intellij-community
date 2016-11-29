@@ -53,14 +53,14 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof CommonElement) {
-      ((CommonElement)psiElement).accept(new MyAnnotator<PsiElement>(CommonAnnotationHolder.create(holder)));
+      ((CommonElement)psiElement).accept(new MyAnnotator<>(CommonAnnotationHolder.create(holder)));
     }
   }
 
   @Override
   public void annotate(DomElement element, DomElementAnnotationHolder holder) {
     if (element instanceof RngDomElement) {
-      ((RngDomElement)element).accept(new MyAnnotator<DomElement>(CommonAnnotationHolder.create(holder)));
+      ((RngDomElement)element).accept(new MyAnnotator<>(CommonAnnotationHolder.create(holder)));
     }
   }
 
@@ -77,7 +77,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
       if (element != null) {
         final XmlFile xmlFile = (XmlFile)element.getContainingFile();
 
-        final List<Define> result = new SmartList<Define>();
+        final List<Define> result = new SmartList<>();
         final OverriddenDefineSearcher searcher = new OverriddenDefineSearcher(define, xmlFile, result);
 
         final PsiElementProcessor.FindElement<XmlFile> processor = new PsiElementProcessor.FindElement<XmlFile>() {

@@ -71,7 +71,7 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
   @Override
   public void okClicked() {
     final MultiMap<PyClass, PyMemberInfo<?>> conflicts = getConflicts();
-    final Collection<PyMemberInfo<?>> dependencyConflicts = new ArrayList<PyMemberInfo<?>>();
+    final Collection<PyMemberInfo<?>> dependencyConflicts = new ArrayList<>();
     for (final PyMemberInfo<PyElement> memberInfo : myStorage.getClassMemberInfos(myClassUnderRefactoring)) {
       if (myModel.checkForProblems(memberInfo) != MemberInfoModel.OK) {
         dependencyConflicts.add(memberInfo);
@@ -118,7 +118,7 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
    */
   @NotNull
   protected final MultiMap<PyClass, PyMemberInfo<?>> getConflicts() {
-    final MultiMap<PyClass, PyMemberInfo<?>> result = new MultiMap<PyClass, PyMemberInfo<?>>();
+    final MultiMap<PyClass, PyMemberInfo<?>> result = new MultiMap<>();
     final Collection<PyMemberInfo<PyElement>> memberInfos = myView.getSelectedMemberInfos();
     for (final PyClass destinationClass : getDestClassesToCheckConflicts()) {
       for (final PyMemberInfo<PyElement> pyMemberInfo : memberInfos) {

@@ -157,30 +157,24 @@ public class OutOfMemoryDialog extends DialogWrapper {
     myDumpMessageLabel.setVisible(true);
     myDumpMessageLabel.setText("Dumping memory...");
 
-    Runnable task = new Runnable() {
-      @Override
-      public void run() {
-        TimeoutUtil.sleep(250);  // to give UI chance to update
-        String message = "";
-        try {
-          String name = ApplicationNamesInfo.getInstance().getLowercaseProductName();
-          String path = SystemProperties.getUserHome() + File.separator + "heapDump-" + name + '-' + System.currentTimeMillis() + ".hprof.zip";
-          MemoryDumpHelper.captureMemoryDumpZipped(path);
-          message = "Dumped to " + path;
-        }
-        catch (Throwable t) {
-          message = "Error: " + t.getMessage();
-        }
-        finally {
-          final String _message = message;
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myDumpMessageLabel.setText(_message);
-              enableControls(true);
-            }
-          });
-        }
+    Runnable task = () -> {
+      TimeoutUtil.sleep(250);  // to give UI chance to update
+      String message = "";
+      try {
+        String name = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+        String path = SystemProperties.getUserHome() + File.separator + "heapDump-" + name + '-' + System.currentTimeMillis() + ".hprof.zip";
+        MemoryDumpHelper.captureMemoryDumpZipped(path);
+        message = "Dumped to " + path;
+      }
+      catch (Throwable t) {
+        message = "Error: " + t.getMessage();
+      }
+      finally {
+        final String _message = message;
+        SwingUtilities.invokeLater(() -> {
+          myDumpMessageLabel.setText(_message);
+          enableControls(true);
+        });
       }
     };
     new Thread(task, "OOME Heap Dump").start();

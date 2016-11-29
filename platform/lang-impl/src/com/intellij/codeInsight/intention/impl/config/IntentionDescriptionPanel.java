@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -64,10 +62,22 @@ public class IntentionDescriptionPanel {
   private TitledSeparator myBeforeSeparator;
   private TitledSeparator myAfterSeparator;
   private JPanel myPoweredByPanel;
-  private final List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<IntentionUsagePanel>();
-  private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
+  private final List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<>();
+  private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<>();
   @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
   @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
+
+  public IntentionDescriptionPanel() {
+    myDescriptionBrowser.addHyperlinkListener(
+      new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            BrowserUtil.browse(e.getURL());
+          }
+        }
+      }
+    );
+  }
 
   // TODO 134099: see SingleInspectionProfilePanel#readHTML
   private boolean readHTML(String text) {
@@ -99,12 +109,7 @@ public class IntentionDescriptionPanel {
       showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
       showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
 
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myPanel.revalidate();
-        }
-      });
+      SwingUtilities.invokeLater(() -> myPanel.revalidate());
 
     }
     catch (IOException e) {
@@ -128,12 +133,7 @@ public class IntentionDescriptionPanel {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           final PluginManagerConfigurable pluginConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
           final Project project = ProjectManager.getInstance().getDefaultProject();
-          util.editConfigurable(project, pluginConfigurable, new Runnable(){
-            @Override
-            public void run() {
-              pluginConfigurable.select(pluginDescriptor);
-            }
-          });
+          util.editConfigurable(project, pluginConfigurable, () -> pluginConfigurable.select(pluginDescriptor));
         }
       });
       owner = label;
@@ -154,12 +154,7 @@ public class IntentionDescriptionPanel {
       URL afterURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + AFTER_TEMPLATE);
       showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, new ResourceTextDescriptor[]{new ResourceTextDescriptor(afterURL)});
 
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myPanel.revalidate();
-        }
-      });
+      SwingUtilities.invokeLater(() -> myPanel.revalidate());
     }
     catch (IOException e) {
       LOG.error(e);

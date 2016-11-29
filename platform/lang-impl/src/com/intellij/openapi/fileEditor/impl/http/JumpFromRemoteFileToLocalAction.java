@@ -72,20 +72,17 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
       //noinspection unchecked
       list.setCellRenderer(new ColoredListCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
           FileAppearanceService.getInstance().forVirtualFile((VirtualFile)value).customize(this);
         }
       });
       new PopupChooserBuilder(list)
        .setTitle("Select Target File")
        .setMovable(true)
-       .setItemChoosenCallback(new Runnable() {
-         @Override
-         public void run() {
-           //noinspection deprecation
-           for (Object value : list.getSelectedValues()) {
-             navigateToFile(myProject, (VirtualFile)value);
-           }
+       .setItemChoosenCallback(() -> {
+         //noinspection deprecation
+         for (Object value : list.getSelectedValues()) {
+           navigateToFile(myProject, (VirtualFile)value);
          }
        }).createPopup().showUnderneathOf(e.getInputEvent().getComponent());
     }

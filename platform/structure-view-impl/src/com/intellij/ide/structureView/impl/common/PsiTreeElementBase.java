@@ -18,6 +18,7 @@ package com.intellij.ide.structureView.impl.common;
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.customRegions.CustomRegionStructureUtil;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Iconable;
@@ -100,9 +101,9 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   public final StructureViewTreeElement[] getChildren() {
     final T element = getElement();
     if (element == null) return EMPTY_ARRAY;
-    List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
+    List<StructureViewTreeElement> result = new ArrayList<>();
     Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
-    result.addAll(baseChildren);
+    result.addAll(CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren));
     StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstanceEx(element.getProject());
     Class<? extends PsiElement> aClass = element.getClass();
     for (StructureViewExtension extension : structureViewFactory.getAllExtensions(aClass)) {

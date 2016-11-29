@@ -46,7 +46,7 @@ public class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersProvide
   protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
    final PyFile moduleSkeleton = PyUserSkeletonsUtil.getUserSkeletonForModuleQName(qName, module);
     if (moduleSkeleton != null) {
-      final List<PyCustomMember> results = new ArrayList<PyCustomMember>();
+      final List<PyCustomMember> results = new ArrayList<>();
       for (PyElement element : moduleSkeleton.iterateNames()) {
         if (element instanceof PsiFileSystemItem) {
           continue;

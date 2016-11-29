@@ -83,10 +83,10 @@ public class CompareFilesAction extends BaseShowDiffAction {
     }
 
     if (files.length == 1) {
-      return files[0].isValid();
+      return hasContent(files[0]);
     }
     else if (files.length == 2) {
-      return files[0].isValid() && files[1].isValid();
+      return hasContent(files[0]) && hasContent(files[1]);
     }
     else {
       return false;
@@ -106,7 +106,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
     if (data.length == 1) {
       VirtualFile otherFile = getOtherFile(project, data[0]);
       if (otherFile == null) return null;
-      if (!data[0].isValid()) return null;
+      if (!hasContent(data[0])) return null;
       return DiffRequestFactory.getInstance().createFromFiles(project, data[0], otherFile);
     }
     else {

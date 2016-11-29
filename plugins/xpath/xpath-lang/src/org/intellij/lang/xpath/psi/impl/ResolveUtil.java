@@ -154,7 +154,7 @@ public class ResolveUtil {
             return Collections.emptyList();
         }
         myHistory.add(root);
-        final List<PsiElement> found = new ArrayList<PsiElement>();
+        final List<PsiElement> found = new ArrayList<>();
 
         try {
             if (matcher.isRecursive()) {

@@ -42,14 +42,12 @@ import java.util.Map;
  */
 public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.Key, List<FileIncludeInfoImpl>> {
 
-  private final FileIncludeProvider[] myProviders = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
-
   public static final ID<Key,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
   private static final int BASE_VERSION = 5;
 
   public static List<FileIncludeInfoImpl> getIncludes(VirtualFile file, GlobalSearchScope scope) {
-    final List<FileIncludeInfoImpl> result = new ArrayList<FileIncludeInfoImpl>();
+    final List<FileIncludeInfoImpl> result = new ArrayList<>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, new FileKey(file), file, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
       @Override
       public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
@@ -61,7 +59,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   }
 
   public static MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, GlobalSearchScope scope) {
-    final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<VirtualFile, FileIncludeInfoImpl>();
+    final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, new IncludeKey(fileName), null, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
       @Override
       public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
@@ -70,6 +68,10 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       }
     }, scope);
     return result;
+  }
+
+  private static class Holder {
+    private static final FileIncludeProvider[] myProviders = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
   }
 
   @NotNull
@@ -89,11 +91,11 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
         Map<Key, List<FileIncludeInfoImpl>> map = new FactoryMap<Key, List<FileIncludeInfoImpl>>() {
           @Override
           protected List<FileIncludeInfoImpl> create(Key key) {
-            return new ArrayList<FileIncludeInfoImpl>();
+            return new ArrayList<>();
           }
         };
 
-        for (FileIncludeProvider provider : myProviders) {
+        for (FileIncludeProvider provider : Holder.myProviders) {
           if (!provider.acceptFile(inputData.getFile())) continue;
           FileIncludeInfo[] infos = provider.getIncludeInfos(inputData);
           if (infos.length  == 0) continue;
@@ -156,7 +158,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       @Override
       public List<FileIncludeInfoImpl> read(@NotNull DataInput in) throws IOException {
         int size = in.readInt();
-        ArrayList<FileIncludeInfoImpl> infos = new ArrayList<FileIncludeInfoImpl>(size);
+        ArrayList<FileIncludeInfoImpl> infos = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
           infos.add(new FileIncludeInfoImpl(IOUtil.readUTF(in), in.readInt(), in.readBoolean(), IOUtil.readUTF(in)));
         }
@@ -174,7 +176,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
         if (file.getFileSystem() == JarFileSystem.getInstance()) {
           return false;
         }
-        for (FileIncludeProvider provider : myProviders) {
+        for (FileIncludeProvider provider : Holder.myProviders) {
           if (provider.acceptFile(file)) {
             return true;
           }
@@ -184,7 +186,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
       @Override
       public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
-        for (FileIncludeProvider provider : myProviders) {
+        for (FileIncludeProvider provider : Holder.myProviders) {
           provider.registerFileTypesUsedForIndexing(fileTypeSink);
         }
       }
@@ -199,7 +201,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   @Override
   public int getVersion() {
     int version = BASE_VERSION;
-    for (FileIncludeProvider provider : myProviders) {
+    for (FileIncludeProvider provider : Holder.myProviders) {
       version = version * 31 + (provider.getVersion() ^ provider.getClass().getName().hashCode());
     }
     return version;

@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class FileTreeIterator {
-  private Queue<PsiFile> myCurrentFiles = new LinkedList<PsiFile>();
-  private Queue<PsiDirectory> myCurrentDirectories = new LinkedList<PsiDirectory>();
+  private Queue<PsiFile> myCurrentFiles = new LinkedList<>();
+  private Queue<PsiDirectory> myCurrentDirectories = new LinkedList<>();
 
   public FileTreeIterator(@NotNull List<PsiFile> files) {
     myCurrentFiles.addAll(files);
@@ -64,8 +64,8 @@ public class FileTreeIterator {
   }
 
   public FileTreeIterator(@NotNull FileTreeIterator fileTreeIterator) {
-    myCurrentFiles = new LinkedList<PsiFile>(fileTreeIterator.myCurrentFiles);
-    myCurrentDirectories = new LinkedList<PsiDirectory>(fileTreeIterator.myCurrentDirectories);
+    myCurrentFiles = new LinkedList<>(fileTreeIterator.myCurrentFiles);
+    myCurrentDirectories = new LinkedList<>(fileTreeIterator.myCurrentDirectories);
   }
 
   @NotNull

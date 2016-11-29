@@ -47,7 +47,7 @@ public class MavenConsoleImpl extends MavenConsole {
   private static final Key<MavenConsoleImpl> CONSOLE_KEY = Key.create("MAVEN_CONSOLE_KEY");
 
   private static final String CONSOLE_FILTER_REGEXP =
-    "(?:^|(?:\\[\\w+\\]\\s*))" + RegexpFilter.FILE_PATH_MACROS + ":\\[" + RegexpFilter.LINE_MACROS + "," + RegexpFilter.COLUMN_MACROS + "]";
+    "(?:^|(?:\\[\\w+\\]\\s*)( /)?)" + RegexpFilter.FILE_PATH_MACROS + ":\\[" + RegexpFilter.LINE_MACROS + "," + RegexpFilter.COLUMN_MACROS + "]";
 
   private final String myTitle;
   private final Project myProject;
@@ -153,35 +153,33 @@ public class MavenConsoleImpl extends MavenConsole {
   private void ensureAttachedToToolWindow() {
     if (!isOpen.compareAndSet(false, true)) return;
 
-    MavenUtil.invokeLater(myProject, new Runnable() {
-      public void run() {
-        MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+    MavenUtil.invokeLater(myProject, () -> {
+      MessageView messageView = MessageView.SERVICE.getInstance(myProject);
 
-        Content content = ContentFactory.SERVICE.getInstance().createContent(
-          myConsoleView.getComponent(), myTitle, true);
-        content.putUserData(CONSOLE_KEY, MavenConsoleImpl.this);
-        messageView.getContentManager().addContent(content);
-        messageView.getContentManager().setSelectedContent(content);
+      Content content = ContentFactory.SERVICE.getInstance().createContent(
+        myConsoleView.getComponent(), myTitle, true);
+      content.putUserData(CONSOLE_KEY, this);
+      messageView.getContentManager().addContent(content);
+      messageView.getContentManager().setSelectedContent(content);
 
-        // remove unused tabs
-        for (Content each : messageView.getContentManager().getContents()) {
-          if (each.isPinned()) continue;
-          if (each == content) continue;
+      // remove unused tabs
+      for (Content each : messageView.getContentManager().getContents()) {
+        if (each.isPinned()) continue;
+        if (each == content) continue;
 
-          MavenConsoleImpl console = each.getUserData(CONSOLE_KEY);
-          if (console == null) continue;
+        MavenConsoleImpl console = each.getUserData(CONSOLE_KEY);
+        if (console == null) continue;
 
-          if (!myTitle.equals(console.myTitle)) continue;
+        if (!myTitle.equals(console.myTitle)) continue;
 
-          if (console.isFinished()) {
-            messageView.getContentManager().removeContent(each, true);
-          }
+        if (console.isFinished()) {
+          messageView.getContentManager().removeContent(each, true);
         }
+      }
 
-        ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        if (!toolWindow.isActive()) {
-          toolWindow.activate(null, false);
-        }
+      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+      if (!toolWindow.isActive()) {
+        toolWindow.activate(null, false);
       }
     });
   }

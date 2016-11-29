@@ -21,11 +21,15 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PySignatureCacheManagerImpl;
+import org.junit.Test;
 
 import java.io.IOException;
 
@@ -34,16 +38,15 @@ import java.io.IOException;
  */
 
 public class PyDynamicTypesTest extends PyEnvTestCase {
+  
+  @Staging
+  @Test
   public void test1() throws Exception {
     doTest(getTestName(true) + ".py");
   }
 
   private void doTest(final String scriptName) {
     runPythonTest(new PyDebuggerTask("/" + "dynamicTypes", scriptName) {
-      @Override
-      public void setUp(String testName) throws Exception {
-        super.setUp(testName);
-      }
 
       @Override
       public void before() throws Exception {
@@ -72,8 +75,8 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForTerminate();
 
-        edt(() -> {
-          myFixture.configureByFile("dynamicTypes/" + scriptName);
+        EdtTestUtil.runInEdtAndWait(() -> {
+          myFixture.configureByFile(scriptName);
 
           try {
             //copy signature attributes from real file to temporary test file
@@ -89,9 +92,15 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
           EditorTestUtil.setCaretsAndSelection(myFixture.getEditor(), new EditorTestUtil.CaretAndSelectionState(
             Lists.newArrayList(new EditorTestUtil.CaretInfo(new LogicalPosition(0, 6), null)), null));
           final IntentionAction action = myFixture.findSingleIntention(PyBundle.message("INTN.doc.string.stub"));
-          myFixture.launchAction(action);
-          myFixture.checkResultByFile("dynamicTypes/" + getTestName(true) + "_after.py");
-        });
+          boolean saved = PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB;
+          try {
+            PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB = true;
+            myFixture.launchAction(action);
+            myFixture.checkResultByFile("dynamicTypes/" + getTestName(true) + "_after.py");
+          } finally {
+            PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB = saved;
+          }
+          });
       }
     });
   }

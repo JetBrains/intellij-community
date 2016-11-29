@@ -26,9 +26,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
-import static com.intellij.tasks.generic.GenericRepositoryUtil.createPlaceholdersList;
-import static com.intellij.tasks.generic.GenericRepositoryUtil.prettifyVariableName;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.*;
 import static com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
 
 /**
@@ -117,7 +115,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     myCardPanel.add(jsonHandler.getConfigurationComponent(myProject), ResponseType.JSON.getMimeType());
     myCardPanel.add(textHandler.getConfigurationComponent(myProject), ResponseType.TEXT.getMimeType());
 
-    myRadio2ResponseType = new IdentityHashMap<JRadioButton, ResponseType>();
+    myRadio2ResponseType = new IdentityHashMap<>();
     myRadio2ResponseType.put(myJsonRadioButton, ResponseType.JSON);
     myRadio2ResponseType.put(myXmlRadioButton, ResponseType.XML);
     myRadio2ResponseType.put(myTextRadioButton, ResponseType.TEXT);
@@ -128,12 +126,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
         final ManageTemplateVariablesDialog dialog = new ManageTemplateVariablesDialog(myManageTemplateVariablesButton);
         dialog.setTemplateVariables(myRepository.getAllTemplateVariables());
         if (dialog.showAndGet()) {
-          myRepository.setTemplateVariables(ContainerUtil.filter(dialog.getTemplateVariables(), new Condition<TemplateVariable>() {
-            @Override
-            public boolean value(TemplateVariable variable) {
-              return !variable.isReadOnly();
-            }
-          }));
+          myRepository.setTemplateVariables(ContainerUtil.filter(dialog.getTemplateVariables(), variable -> !variable.isReadOnly()));
           myCustomPanel.removeAll();
           myCustomPanel.add(createCustomPanel());
           //myCustomPanel.repaint();
@@ -183,7 +176,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myField2Variable = new IdentityHashMap<JTextField, TemplateVariable>();
+    myField2Variable = new IdentityHashMap<>();
     FormBuilder builder = FormBuilder.createFormBuilder();
     for (final TemplateVariable variable : myRepository.getTemplateVariables()) {
       if (variable.isShownOnFirstTab()) {
@@ -258,18 +251,17 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
 
   private TextFieldWithAutoCompletion<String> createTextFieldWithCompletion(String text, final List<String> variants) {
     final StringsCompletionProvider provider = new StringsCompletionProvider(variants, null) {
-        @Nullable
-        @Override
-        public String getPrefix(@NotNull CompletionParameters parameters) {
-          final String text = parameters.getOriginalFile().getText();
-          final int i = text.lastIndexOf('{', parameters.getOffset() - 1);
-          if (i < 0) {
-            return "";
-          }
-          return text.substring(i, parameters.getOffset());
+      @Nullable
+      @Override
+      public String getPrefix(@NotNull String text, int offset) {
+        final int i = text.lastIndexOf('{', offset - 1);
+        if (i < 0) {
+          return "";
         }
-      };
-    return new TextFieldWithAutoCompletion<String>(myProject, provider, true, text);
+        return text.substring(i, offset);
+      }
+    };
+    return new TextFieldWithAutoCompletion<>(myProject, provider, true, text);
   }
 
   @Override

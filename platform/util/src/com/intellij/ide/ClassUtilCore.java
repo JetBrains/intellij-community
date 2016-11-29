@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij.ide;
+
+import com.intellij.util.BitUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -35,7 +37,7 @@ public class ClassUtilCore {
 
   private static void clearMap(Field cache) throws IllegalAccessException {
     cache.setAccessible(true);
-    if ((cache.getModifiers() & Modifier.FINAL) == 0) {
+    if (!BitUtil.isSet(cache.getModifiers(), Modifier.FINAL)) {
       cache.set(null, new HashMap());
     }
     else {

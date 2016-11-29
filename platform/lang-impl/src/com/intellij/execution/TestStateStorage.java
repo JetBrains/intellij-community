@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
@@ -44,8 +43,11 @@ import java.util.concurrent.ScheduledFuture;
  * @author Dmitry Avdeev
  */
 public class TestStateStorage implements Disposable {
-
+  
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
+
+  private static final int CURRENT_VERSION = 1; 
+  
   private final File myFile;
 
   public static File getTestHistoryRoot(Project project) {
@@ -54,11 +56,13 @@ public class TestStateStorage implements Disposable {
 
   public static class Record {
     public final int magnitude;
+    public final long configurationHash;
     public final Date date;
 
-    public Record(int magnitude, Date date) {
+    public Record(int magnitude, Date date, long configurationHash) {
       this.magnitude = magnitude;
       this.date = date;
+      this.configurationHash = configurationHash;
     }
   }
 
@@ -72,22 +76,17 @@ public class TestStateStorage implements Disposable {
   }
 
   public TestStateStorage(Project project) {
+    String directoryPath = getTestHistoryRoot(project).getPath();
 
-    myFile = new File(getTestHistoryRoot(project).getPath() + "/testStateMap");
+    myFile = new File(directoryPath + "/testStateMap");
     FileUtilRt.createParentDirs(myFile);
+
     try {
       myMap = initializeMap();
     } catch (IOException e) {
       LOG.error(e);
     }
-    myMapFlusher = FlushingDaemon.everyFiveSeconds(new Runnable() {
-      @Override
-      public void run() {
-        flushMap();
-      }
-    });
-
-    Disposer.register(project, this);
+    myMapFlusher = FlushingDaemon.everyFiveSeconds(this::flushMap);
   }
 
   private PersistentHashMap<String, Record> initializeMap() throws IOException {
@@ -101,23 +100,19 @@ public class TestStateStorage implements Disposable {
 
   @NotNull
   private static ThrowableComputable<PersistentHashMap<String, Record>, IOException> getComputable(final File file) {
-    return new ThrowableComputable<PersistentHashMap<String, Record>, IOException>() {
+    return () -> new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<Record>() {
       @Override
-      public PersistentHashMap<String, Record> compute() throws IOException {
-        return new PersistentHashMap<String, Record>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
-          @Override
-          public void save(@NotNull DataOutput out, Record value) throws IOException {
-            out.writeInt(value.magnitude);
-            out.writeLong(value.date.getTime());
-          }
-
-          @Override
-          public Record read(@NotNull DataInput in) throws IOException {
-            return new Record(in.readInt(), new Date(in.readLong()));
-          }
-        });
+      public void save(@NotNull DataOutput out, Record value) throws IOException {
+        out.writeInt(value.magnitude);
+        out.writeLong(value.date.getTime());
+        out.writeLong(value.configurationHash);
       }
-    };
+
+      @Override
+      public Record read(@NotNull DataInput in) throws IOException {
+        return new Record(in.readInt(), new Date(in.readLong()), in.readLong());
+      }
+    }, 4096, CURRENT_VERSION);
   }
 
   @Nullable

@@ -147,7 +147,7 @@ public class LocateLibraryDialog extends DialogWrapper {
       return Collections.emptyList();
     }
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String path : myDefaultLibraryPaths) {
       final File srcFile = new File(path);
       if (!srcFile.exists()) {

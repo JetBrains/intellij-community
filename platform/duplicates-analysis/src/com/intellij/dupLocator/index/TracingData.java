@@ -41,12 +41,7 @@ public class TracingData {
           }
         }
       }, 5, 5, TimeUnit.SECONDS);
-      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-        @Override
-        public void run() {
-          flushingFuture.cancel(false);
-        }
-      });
+      ShutDownTracker.getInstance().registerShutdownTask(() -> flushingFuture.cancel(false));
     } catch (IOException ex) {
       ex.printStackTrace();
     }
@@ -54,7 +49,8 @@ public class TracingData {
   }
 
   private static PersistentHashMap<Integer, Integer> createOrOpenMap() throws IOException {
-    return new PersistentHashMap<Integer, Integer>(new File(tracingDataLocation), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE);
+    return new PersistentHashMap<>(new File(tracingDataLocation), EnumeratorIntegerDescriptor.INSTANCE,
+                                   EnumeratorIntegerDescriptor.INSTANCE);
   }
 
   public void record(int hash, int cost, PsiFragment frag) {
@@ -87,12 +83,7 @@ public class TracingData {
     final TIntIntHashMap map = new TIntIntHashMap(mapping.size());
     for(Integer i:mapping) map.put(i, lkeys.get(i));
 
-    Collections.sort(mapping, new Comparator<Integer>() {
-      @Override
-      public int compare(Integer o1, Integer o2) {
-        return map.get(o2) - map.get(o1);
-      }
-    });
+    Collections.sort(mapping, (o1, o2) -> map.get(o2) - map.get(o1));
 
     for(int i = 0; i < 500; ++i) {
       //System.out.println(mapping.get(i) + ",");

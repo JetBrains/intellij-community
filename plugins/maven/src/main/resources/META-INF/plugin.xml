@@ -28,7 +28,7 @@
     <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" />
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
-    <extensionPoint name="repositoryLibrary" interface="org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription"/>
+    <extensionPoint name="mavenCoordinates" beanClass="org.jetbrains.idea.maven.utils.library.RepositoryLibraryBean"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -71,7 +71,7 @@
 
     <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher" />
 
-    <compileServer.plugin classpath="maven-jps-plugin.jar;maven3/lib/plexus-utils-2.0.6.jar"/>
+    <compileServer.plugin classpath="maven-jps-plugin.jar;aether-dependency-resolver.jar;aether-1.1.0-all.jar;maven-aether-provider-3.3.9-all.jar;maven3/lib/plexus-utils-2.0.6.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 
@@ -163,7 +163,7 @@
     <problemHighlightFilter implementation="org.jetbrains.idea.maven.utils.ArchetypeResourceHighlightFilter" />
 
     <codeInsight.unresolvedReferenceQuickFixProvider
-        implementation="org.jetbrains.idea.maven.dom.intentions.ResolveReferenceQuickFixProvider"/>
+        implementation="org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFixProvider"/>
 
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoFileContributor"/>
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContributor"/>
@@ -506,12 +506,12 @@
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Make"
-              description="Execute selected phase/goal before Make">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Build"
+              description="Execute selected phase/goal before Build">
       </action>
       <action id="Maven.AfterCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Make"
-              description="Execute selected phase/goal after Make">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Build"
+              description="Execute selected phase/goal after Build">
       </action>
       <action id="Maven.BeforeRebuild"
               class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRebuildTasksAction" text="Execute Before Rebuild"
@@ -543,6 +543,7 @@
       <reference id="Maven.UpdateFolders"/>
 
       <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
+             text="Download Sources and/or Documentation"
              icon="AllIcons.Actions.Download">
         <reference id="Maven.DownloadAllGroup"/>
       </group>

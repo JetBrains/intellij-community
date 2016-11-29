@@ -20,5 +20,15 @@
 
   <extensions defaultExtensionNs="org.intellij.groovy">
     <membersContributor implementation="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomScriptMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPolyglotPomMemberContributor"/>
+    <scriptTypeDetector implementation="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyScriptTypeDetector"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <weigher key="completion" implementationClass="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionWeigher"
+             id="myWeigher" order="first"/>
+
+    <completion.contributor language="Groovy" id="mavenGroovyPom" order="last"
+                            implementationClass="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionContributor"/>
   </extensions>
 </idea-plugin>

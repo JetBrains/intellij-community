@@ -29,9 +29,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -39,6 +37,7 @@ import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 
 /**
@@ -53,6 +52,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
    * @see RegionPainter
    * @see UIUtil#putClientProperty
    */
+  @Deprecated
   public static final Key<RegionPainter<Integer>> MAXI_THUMB = Key.create("BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB");
 
   private static final Logger LOG = Logger.getInstance("#" + ButtonlessScrollBarUI.class.getName());
@@ -82,13 +82,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private JBColor jbColor(final Color regular, final Color dark) {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return isDark() ? dark : regular;
-      }
-    });
+    return new JBColor(() -> isDark() ? dark : regular);
   }
 
   private int getAnimationColorShift() {
@@ -99,7 +93,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private final MouseMotionAdapter myMouseMotionListener;
   private final MouseAdapter myMouseListener;
   private final HierarchyListener myHierarchyListener;
-  private final AWTEventListener myAWTMouseListener;
+  private final AWTEventListener myAWTMouseListener; // holds strong reference while a scroll bar in the hierarchy
+  private final AWTEventListener myWeakListener;
   private final NSScrollerHelper.ScrollbarStyleListener myNSScrollerListener;
   private boolean myGlobalListenersAdded;
 
@@ -248,6 +243,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         }
       }
     };
+    myWeakListener = new WeakLestener(myAWTMouseListener);
     myNSScrollerListener = new NSScrollerHelper.ScrollbarStyleListener() {
       @Override
       public void styleChanged() {
@@ -401,12 +397,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
       Application application = ApplicationManager.getApplication();
       if (!myMouseOverScrollbar && !sb.getValueIsAdjusting() && (application == null || !application.isUnitTestMode())) {
-        myMacScrollbarFadeTimer.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            myMacScrollbarFadeAnimator.resume();
-          }
-        }, 700, null);
+        myMacScrollbarFadeTimer.addRequest(() -> myMacScrollbarFadeAnimator.resume(), 700, null);
       }
     }
   }
@@ -507,13 +498,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     boolean shouldAdd = scrollbar.isDisplayable();
 
     if (myGlobalListenersAdded && (!shouldAdd || forceRemove)) {
-      Toolkit.getDefaultToolkit().removeAWTEventListener(myAWTMouseListener);
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myWeakListener);
       NSScrollerHelper.removeScrollbarStyleListener(myNSScrollerListener);
       myGlobalListenersAdded = false;
     }
 
     if (!myGlobalListenersAdded && shouldAdd && !forceRemove) {
-      Toolkit.getDefaultToolkit().addAWTEventListener(myAWTMouseListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+      Toolkit.getDefaultToolkit().addAWTEventListener(myWeakListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
       NSScrollerHelper.addScrollbarStyleListener(myNSScrollerListener);
       myGlobalListenersAdded = true;
     }
@@ -702,7 +693,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (isMacOverlayScrollbar()) {
       paintMacThumb(g, thumbBounds);
     }
-    else if (Registry.is("ide.scroll.new.layout")) {
+    else {
       Rectangle bounds = new Rectangle(thumbBounds);
       if (isThumbTranslucent()) {
         Alignment alignment = Alignment.get(scrollbar);
@@ -720,57 +711,38 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
             if (alignment == Alignment.BOTTOM) bounds.y += offset;
           }
         }
-        if (SystemInfo.isMac) {
-          bounds.x += 1;
-          bounds.y += 1;
-          bounds.width -= 2;
-          bounds.height -= 2;
-        }
       }
       else if (SystemInfo.isMac) {
         boolean vertical = scrollbar == null || Adjustable.VERTICAL == scrollbar.getOrientation();
-        bounds.x += vertical ? 3 : 2;
-        bounds.y += vertical ? 2 : 3;
-        bounds.width -= vertical ? 5 : 4;
-        bounds.height -= vertical ? 4 : 5;
+        bounds.x += vertical ? 1 : 0;
+        bounds.y += vertical ? 0 : 1;
+        bounds.width -= vertical ? 1 : 0;
+        bounds.height -= vertical ? 0 : 1;
       }
-      else if (Registry.is("ide.scroll.thumb.small.if.opaque")) {
+      else {
         bounds.x += 1;
         bounds.y += 1;
         bounds.width -= 2;
         bounds.height -= 2;
       }
       if (SystemInfo.isMac) {
-        int arc = Math.min(bounds.width, bounds.height);
-
-        boolean dark = isDark();
-        int c = dark ? 128 : 0;
-        int a = dark ? 40 : 100;
-
-        //noinspection UseJBColor
-        g.setColor(new Color(c, c, c, a));
-
-        Graphics2D g2d = (Graphics2D)g;
-        Object old = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, arc, arc);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+        int max = JBUI.scale(12);
+        if (max < bounds.width && bounds.width < bounds.height) {
+          bounds.x += (bounds.width - max) / 2;
+          bounds.width = max;
+        }
+        else if (max < bounds.height && bounds.height < bounds.width) {
+          bounds.y += (bounds.height - max) / 2;
+          bounds.height = max;
+        }
+        float value = (float)myThumbFadeColorShift / getAnimationColorShift();
+        RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
+        painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
       }
       else {
         float value = (float)myThumbFadeColorShift / getAnimationColorShift();
         RegionPainter<Float> painter = isDark() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
         painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
-      }
-    }
-    else {
-      RegionPainter<Integer> painter = UIUtil.getClientProperty(scrollbar, MAXI_THUMB);
-      if (painter != null) {
-        painter.paint((Graphics2D)g, thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, myThumbFadeColorShift);
-      }
-      else {
-        g.translate(thumbBounds.x, thumbBounds.y);
-        paintMaxiThumb((Graphics2D)g, thumbBounds);
-        g.translate(-thumbBounds.x, -thumbBounds.y);
       }
     }
   }
@@ -804,31 +776,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     thumbBounds = getMacScrollBarBounds(thumbBounds, true);
     Graphics2D g2d = (Graphics2D)g;
-    RenderingHints oldHints = g2d.getRenderingHints();
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    JBColor baseColor = new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return !isDark() ? Gray._0 : Gray._128;
-      }
-    });
-    
-    int arc = Math.min(thumbBounds.width, thumbBounds.height);
-
-    if (alwaysPaintThumb()) {
-      //noinspection UseJBColor
-      g2d.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), isDark() ? 100 : 40));
-      g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
-      //g2d.drawRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
+    float value = (float)(1 - myMacScrollbarFadeLevel);
+    if (!myMacScrollbarHidden || alwaysPaintThumb()) {
+      RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
+      painter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
     }
-
-    if (!myMacScrollbarHidden) {
-      g2d.setColor(adjustColor(baseColor));
-      g2d.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, arc, arc);
-    }
-    g2d.setRenderingHints(oldHints);
   }
   
   protected boolean isDark() {
@@ -1108,21 +1061,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       return false;
     }
 
-    @Override
-    protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      if (!Registry.is("ide.scroll.new.layout") && !isMacOverlayScrollbar()) {
-        int half = getThickness() / 2;
-        int shiftX = isVertical() ? half - 1 : 0;
-        int shiftY = isVertical() ? 0 : half - 1;
-        g.translate(shiftX, shiftY);
-        super.paintThumb(g, c, thumbBounds);
-        g.translate(-shiftX, -shiftY);
-      }
-      else {
-        super.paintThumb(g, c, thumbBounds);
-      }
-    }
-
     protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
       int arc = JBUI.scale(3);
       g.setColor(adjustColor(getGradientDarkColor()));
@@ -1133,6 +1071,25 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       }
       else {
         g.fillRoundRect(gap, 0, thumbBounds.width - 2 * gap, thumbBounds.height, arc, arc);
+      }
+    }
+  }
+
+  private static final class WeakLestener implements AWTEventListener {
+    private final WeakReference<AWTEventListener> myReference;
+
+    private WeakLestener(AWTEventListener listener) {
+      myReference = new WeakReference<>(listener);
+    }
+
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      AWTEventListener listener = myReference.get();
+      if (listener != null) {
+        listener.eventDispatched(event);
+      }
+      else {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(this);
       }
     }
   }

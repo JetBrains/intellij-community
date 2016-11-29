@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,12 +24,19 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ven
@@ -46,7 +54,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     final PsiElement navigationElement = element.getNavigationElement();
     final PsiField field = (PsiField)(navigationElement instanceof PsiField ? navigationElement : element);
 
-    if (!field.hasInitializer()) {
+    if (getInitializer(field) == null) {
       String message = RefactoringBundle.message("no.initializer.present.for.the.field");
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
       return;
@@ -65,24 +73,16 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     }
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-      final Ref<Boolean> hasWriteUsages = new Ref<Boolean>(false);
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              for (PsiReference reference : ReferencesSearch.search(field)) {
-                final PsiElement referenceElement = reference.getElement();
-                if (!(referenceElement instanceof PsiExpression && PsiUtil.isAccessedForReading((PsiExpression)referenceElement))) {
-                  hasWriteUsages.set(true);
-                  break;
-                }
-              }
-            }
-          });
+      final Ref<Boolean> hasWriteUsages = new Ref<>(false);
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+        for (PsiReference reference : ReferencesSearch.search(field)) {
+          final PsiElement referenceElement = reference.getElement();
+          if (!(referenceElement instanceof PsiExpression) || PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+            hasWriteUsages.set(true);
+            break;
+          }
         }
-      }, "Check if inline is possible...", true, project)) {
+      }), "Check if Inline Is Possible...", true, project)) {
         return;
       }
       if (hasWriteUsages.get()) {
@@ -104,5 +104,41 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     PsiReferenceExpression refExpression = reference instanceof PsiReferenceExpression ? (PsiReferenceExpression)reference : null;
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);
     dialog.show();
+  }
+
+  @Nullable
+  protected static PsiExpression getInitializer(PsiField field) {
+    if (field.hasInitializer()) {
+      return field.getInitializer();
+    }
+
+    if (field.hasModifierProperty(PsiModifier.FINAL)) {
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null) {
+        PsiMethod[] constructors = containingClass.getConstructors();
+        final List<PsiExpression> result = new ArrayList<>();
+        for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(constructors))) {
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
+            PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class);
+            if (assignmentExpression != null) {
+              ContainerUtil.addIfNotNull(result, assignmentExpression.getRExpression());
+            }
+          }
+        }
+
+        if (result.isEmpty()) return null;
+
+        PsiExpression first = result.get(0);
+        for (PsiExpression expr : result) {
+          if (!PsiEquivalenceUtil.areElementsEquivalent(expr, first)) {
+            return null;
+          }
+        }
+        return first;
+      }
+    }
+
+    return null;
   }
 }

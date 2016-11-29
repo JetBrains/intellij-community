@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.merge.MergeStrategy
-import org.jetbrains.jgit.dirCache.deleteAllFiles
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.MutableUpdateResult
 import org.jetbrains.settingsRepository.UpdateResult
@@ -38,7 +37,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
     // grab added/deleted/renamed/modified files
     val mergeStrategy = if (toTheirs) MergeStrategy.THEIRS else MergeStrategy.OURS
 
-    var refToMerge = fetch()
+    val refToMerge = fetch()
     val mergeResult = if (refToMerge == null) null else merge(refToMerge, mergeStrategy, forceMerge = true, commitMessage = commitMessage)
     val firstMergeResult = mergeResult?.result
 

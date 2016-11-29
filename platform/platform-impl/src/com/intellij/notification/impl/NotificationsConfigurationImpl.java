@@ -50,15 +50,11 @@ public class NotificationsConfigurationImpl
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
   private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
 
-  private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR = new Comparator<NotificationSettings>() {
-    @Override
-    public int compare(@NotNull NotificationSettings o1, @NotNull NotificationSettings o2) {
-      return o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
-    }
-  };
+  private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR =
+    (o1, o2) -> o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
 
-  private final Map<String, NotificationSettings> myIdToSettingsMap = new THashMap<String, NotificationSettings>();
-  private final Map<String, String> myToolWindowCapable = new THashMap<String, String>();
+  private final Map<String, NotificationSettings> myIdToSettingsMap = new THashMap<>();
+  private final Map<String, String> myToolWindowCapable = new THashMap<>();
   private final MessageBus myMessageBus;
 
   public boolean SHOW_BALLOONS = true;
@@ -83,7 +79,7 @@ public class NotificationsConfigurationImpl
   }
 
   public synchronized NotificationSettings[] getAllSettings() {
-    Collection<NotificationSettings> settings = new THashSet<NotificationSettings>(myIdToSettingsMap.values());
+    Collection<NotificationSettings> settings = new THashSet<>(myIdToSettingsMap.values());
     for (NotificationGroup group : NotificationGroup.getAllRegisteredGroups()) {
       settings.add(getSettings(group.getDisplayId()));
     }

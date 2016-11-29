@@ -48,7 +48,7 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
 
   @NotNull
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>(1);
+    final List<VirtualFile> files = new ArrayList<>(1);
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final ContentIterator iterator = new CompilerContentIterator(fileType, projectFileIndex, inSourceOnly, files);
     if (myFile.isDirectory()){

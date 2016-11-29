@@ -18,6 +18,9 @@ package org.jetbrains.idea.devkit.projectRoots;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaDependentSdkType;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -26,6 +29,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -35,21 +39,40 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaLibraryType;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryRoot;
+import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsLibraryDependency;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.serialization.JpsSerializationManager;
 
 import javax.swing.*;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -126,15 +149,10 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   public static boolean isFromIDEAProject(String path) {
-    File home = new File(path);
-    File[] openapiDir = home.listFiles(new FileFilter() {
-      public boolean accept(File pathname) {
-        @NonNls final String name = pathname.getName();
-        if (name.equals("openapi") && pathname.isDirectory()) return true; //todo
-        return false;
-      }
-    });
-    return openapiDir != null && openapiDir.length != 0;
+    File ultimate = new File(path, "idea.iml");
+    File community = new File(path, "community-main.iml");
+    return ultimate.exists() && ultimate.isFile() ||
+           community.exists() && community.isFile();
   }
 
   @Nullable
@@ -153,6 +171,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
+    if (isFromIDEAProject(sdkHome)) return "Local IDEA [" + sdkHome + "]";
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
   }
@@ -176,7 +195,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static VirtualFile[] getIdeaLibrary(String home) {
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> result = new ArrayList<>();
     appendIdeaLibrary(home, result, "junit.jar");
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-console.jar");
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
@@ -217,49 +236,61 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       additionalData.cleanupWatchedRoots();
     }
 
-    final SdkModificator sdkModificator = sdk.getSdkModificator();
+    SdkModificator sdkModificator = sdk.getSdkModificator();
 
-    final List<String> javaSdks = new ArrayList<String>();
-    final Sdk[] sdks = sdkModel.getSdks();
-    for (Sdk jdk : sdks) {
-      if (isValidInternalJdk(sdk, jdk)) {
-        javaSdks.add(jdk.getName());
+    boolean result = setupSdkPaths(sdk, sdkModificator, sdkModel);
+
+    if (result && sdkModificator.getSdkAdditionalData() == null) {
+      List<String> javaSdks = new ArrayList<>();
+      Sdk[] sdks = sdkModel.getSdks();
+      for (Sdk jdk : sdks) {
+        if (isValidInternalJdk(sdk, jdk)) {
+          javaSdks.add(jdk.getName());
+        }
       }
-    }
-    if (javaSdks.isEmpty()){
-      JavaSdkVersion requiredVersion = getRequiredJdkVersion(sdk);
-      if (requiredVersion != null) {
-        Messages.showErrorDialog(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", requiredVersion), "No Java SDK Found");
+      if (javaSdks.isEmpty()) {
+        JavaSdkVersion requiredVersion = getRequiredJdkVersion(sdk);
+        if (requiredVersion != null) {
+          Messages.showErrorDialog(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", requiredVersion), "No Java SDK Found");
+        }
+        else {
+          Messages.showErrorDialog(DevKitBundle.message("no.idea.sdk.version.found"), "No Java SDK Found");
+        }
+        return false;
+      }
+
+      int choice = Messages.showChooseDialog(
+        "Select Java SDK to be used for " + DevKitBundle.message("sdk.title"),
+        "Select Internal Java Platform",
+        ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
+      if (choice != -1) {
+        String name = javaSdks.get(choice);
+        Sdk internalJava = ObjectUtils.assertNotNull(sdkModel.findSdk(name));
+        //roots from internal jre
+        setInternalJdk(sdk, sdkModificator, internalJava);
       }
       else {
-        Messages.showErrorDialog(DevKitBundle.message("no.idea.sdk.version.found"), "No Java SDK Found");
+        result = false;
       }
-      return false;
     }
 
-    final int choice = Messages
-      .showChooseDialog("Select Java SDK to be used for " + DevKitBundle.message("sdk.title"),
-                        "Select Internal Java Platform",
-                        ArrayUtil.toStringArray(javaSdks), javaSdks.get(0),
-                        Messages.getQuestionIcon());
-
-    if (choice != -1) {
-      final String name = javaSdks.get(choice);
-      final Sdk jdk = sdkModel.findSdk(name);
-      LOG.assertTrue(jdk != null);
-      setupSdkPaths(sdkModificator, sdk.getHomePath(), jdk);
-      sdkModificator.setSdkAdditionalData(new Sandbox(getDefaultSandbox(), jdk, sdk));
-      sdkModificator.setVersionString(jdk.getVersionString());
-      sdkModificator.commitChanges();
-      return true;
-    }
-    return false;
+    sdkModificator.commitChanges();
+    return result;
   }
 
-  public static boolean isValidInternalJdk(Sdk ideaSdk, Sdk sdk) {
-    final SdkTypeId sdkType = sdk.getSdkType();
+  private static void setInternalJdk(@NotNull Sdk sdk, @NotNull SdkModificator sdkModificator, @NotNull Sdk internalJava) {
+    addClasses(sdkModificator, internalJava);
+    addDocs(sdkModificator, internalJava);
+    addSources(sdkModificator, internalJava);
+
+    sdkModificator.setSdkAdditionalData(new Sandbox(getDefaultSandbox(), internalJava, sdk));
+    sdkModificator.setVersionString(internalJava.getVersionString());
+  }
+
+  public static boolean isValidInternalJdk(@NotNull Sdk ideaSdk, @NotNull Sdk sdk) {
+    SdkTypeId sdkType = sdk.getSdkType();
     if (sdkType instanceof JavaSdk) {
-      final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+      JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
       JavaSdkVersion requiredVersion = getRequiredJdkVersion(ideaSdk);
       if (version != null && requiredVersion != null) {
         return version.isAtLeast(requiredVersion);
@@ -270,18 +301,11 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Nullable
   private static JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
+    if (isFromIDEAProject(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
     File apiJar = getOpenApiJar(ideaSdk.getHomePath());
-    if (apiJar != null) {
-      int classFileVersion = getIdeaClassFileVersion(apiJar);
-      if (classFileVersion > 0) {
-        LanguageLevel languageLevel = ClsParsingUtil.getLanguageLevelByVersion(classFileVersion);
-        if (languageLevel != null) {
-          return JavaSdkVersion.fromLanguageLevel(languageLevel);
-        }
-      }
-    }
-
-    return null;
+    int classFileVersion = apiJar == null ? -1 : getIdeaClassFileVersion(apiJar);
+    LanguageLevel languageLevel = classFileVersion <= 0? null : ClsParsingUtil.getLanguageLevelByVersion(classFileVersion);
+    return languageLevel != null ? JavaSdkVersion.fromLanguageLevel(languageLevel) : null;
   }
 
   private static int getIdeaClassFileVersion(File apiJar) {
@@ -312,21 +336,98 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return -1;
   }
 
-  public static void setupSdkPaths(final SdkModificator sdkModificator, final String sdkHome, final Sdk internalJava) {
-    //roots from internal jre
-    addClasses(sdkModificator, internalJava);
-    addDocs(sdkModificator, internalJava);
-    addSources(sdkModificator, internalJava);
-    //roots for openapi and other libs
-    if (!isFromIDEAProject(sdkHome)) {
-      final VirtualFile[] ideaLib = getIdeaLibrary(sdkHome);
-      if (ideaLib != null) {
-        for (VirtualFile aIdeaLib : ideaLib) {
-          sdkModificator.addRoot(aIdeaLib, OrderRootType.CLASSES);
-        }
+  private static boolean setupSdkPaths(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) {
+    String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
+    if (isFromIDEAProject(sdkHome)) {
+      try {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Void, IOException>)() -> {
+          setupSdkPathsFromIDEAProject(sdk, sdkModificator, sdkModel);
+          return null;
+        }, "Scanning for Roots", true, null);
+      }
+      catch (ProcessCanceledException e) {
+        return false;
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+        Messages.showErrorDialog(e.toString(), DevKitBundle.message("sdk.title"));
+        return false;
+      }
+    }
+    else  {
+      VirtualFile[] ideaLib = getIdeaLibrary(sdkHome);
+      for (VirtualFile aIdeaLib : ideaLib) {
+        sdkModificator.addRoot(aIdeaLib, OrderRootType.CLASSES);
       }
       addSources(new File(sdkHome), sdkModificator);
     }
+    return true;
+  }
+
+  private static void setupSdkPathsFromIDEAProject(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) throws IOException {
+    ProgressIndicator indicator = ObjectUtils.assertNotNull(ProgressManager.getInstance().getProgressIndicator());
+    String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
+    JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
+    JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
+    String sdkName = sdkRef == null ? null : sdkRef.getSdkName();
+    Sdk internalJava = sdkModel.findSdk(sdkName);
+    if (internalJava != null && isValidInternalJdk(sdk, internalJava)) {
+      setInternalJdk(sdk, sdkModificator, internalJava);
+    }
+    Set<VirtualFile> addedRoots = ContainerUtil.newTroveSet();
+    VirtualFileManager vfsManager = VirtualFileManager.getInstance();
+    JpsJavaExtensionService javaService = JpsJavaExtensionService.getInstance();
+    boolean isUltimate = vfsManager.findFileByUrl(VfsUtilCore.pathToUrl(sdkHome + "/ultimate/ultimate-resources")) != null;
+    Set<String> suppressedModules = ContainerUtil.newTroveSet("jps-plugin-system");
+    List<JpsModule> modules = JBIterable.from(model.getProject().getModules())
+      .filter(o -> {
+        if (suppressedModules.contains(o.getName())) return false;
+        if (o.getName().endsWith("-ide")) return false;
+        String contentUrl = ContainerUtil.getFirstItem(o.getContentRootsList().getUrls());
+        if (contentUrl == null) return true;
+        // add only community modules/plugins to avoid EP duplicates & minor IDE conflicts
+        return !isUltimate || contentUrl.contains("/community/");
+      })
+      .toList();
+    indicator.setIndeterminate(false);
+    double delta = 1 / (2 * Math.max(0.5, modules.size()));
+    for (JpsModule o : modules) {
+      indicator.setFraction(indicator.getFraction() + delta);
+      for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {
+        ProgressManager.checkCanceled();
+        JpsLibrary library = dep instanceof JpsLibraryDependency ? ((JpsLibraryDependency)dep).getLibrary() : null;
+        JpsLibraryType<?> libraryType = library == null ? null : library.getType();
+        if (!(libraryType instanceof JpsJavaLibraryType)) continue;
+        JpsJavaDependencyExtension extension = javaService.getDependencyExtension(dep);
+        if (extension == null) continue;
+
+        // do not check extension.getScope(), plugin projects need tests too
+        for (JpsLibraryRoot jps : library.getRoots(JpsOrderRootType.COMPILED)) {
+          VirtualFile root = vfsManager.findFileByUrl(jps.getUrl());
+          if (root == null || !addedRoots.add(root)) continue;
+          sdkModificator.addRoot(root, OrderRootType.CLASSES);
+        }
+        for (JpsLibraryRoot jps : library.getRoots(JpsOrderRootType.SOURCES)) {
+          VirtualFile root = vfsManager.findFileByUrl(jps.getUrl());
+          if (root == null || !addedRoots.add(root)) continue;
+          sdkModificator.addRoot(root, OrderRootType.SOURCES);
+        }
+      }
+    }
+    for (JpsModule o : modules) {
+      indicator.setFraction(indicator.getFraction() + delta);
+      String outputUrl = javaService.getOutputUrl(o, false);
+      VirtualFile outputRoot = outputUrl == null ? null : vfsManager.findFileByUrl(outputUrl);
+      if (outputRoot == null) continue;
+      sdkModificator.addRoot(outputRoot, OrderRootType.CLASSES);
+      for (JpsModuleSourceRoot jps : o.getSourceRoots()) {
+        ProgressManager.checkCanceled();
+        VirtualFile root = vfsManager.findFileByUrl(jps.getUrl());
+        if (root == null || !addedRoots.add(root)) continue;
+        sdkModificator.addRoot(root, OrderRootType.SOURCES);
+      }
+    }
+    indicator.setFraction(1.0);
   }
 
   static String getDefaultSandbox() {
@@ -343,13 +444,11 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static void addSources(File file, SdkModificator sdkModificator) {
     final File src = new File(new File(file, LIB_DIR_NAME), SRC_DIR_NAME);
     if (!src.exists()) return;
-    File[] srcs = src.listFiles(new FileFilter() {
-      public boolean accept(File pathname) {
-        @NonNls final String path = pathname.getPath();
-        //noinspection SimplifiableIfStatement
-        if (path.contains("generics")) return false;
-        return path.endsWith(".jar") || path.endsWith(".zip");
-      }
+    File[] srcs = src.listFiles(pathname -> {
+      @NonNls final String path = pathname.getPath();
+      //noinspection SimplifiableIfStatement
+      if (path.contains("generics")) return false;
+      return path.endsWith(".jar") || path.endsWith(".zip");
     });
     for (int i = 0; srcs != null && i < srcs.length; i++) {
       File jarFile = srcs[i];
@@ -363,13 +462,12 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
   }
 
-  private static void addClasses(SdkModificator sdkModificator, final Sdk javaSdk) {
+  private static void addClasses(@NotNull SdkModificator sdkModificator, @NotNull Sdk javaSdk) {
     addOrderEntries(OrderRootType.CLASSES, javaSdk, sdkModificator);
   }
 
-  private static void addDocs(SdkModificator sdkModificator, final Sdk javaSdk) {
-    if (!addOrderEntries(JavadocOrderRootType.getInstance(), javaSdk, sdkModificator) &&
-        SystemInfo.isMac){
+  private static void addDocs(@NotNull SdkModificator sdkModificator, @NotNull Sdk javaSdk) {
+    if (!addOrderEntries(JavadocOrderRootType.getInstance(), javaSdk, sdkModificator) && SystemInfo.isMac) {
       Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
       for (Sdk jdk : jdks) {
         if (jdk.getSdkType() instanceof JavaSdk) {
@@ -393,7 +491,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
           }
         }
         else {
-          final File jdkHome = new File(javaSdk.getHomePath()).getParentFile();
+          String homePath = javaSdk.getHomePath();
+          if (homePath == null) return;
+          final File jdkHome = new File(homePath).getParentFile();
           @NonNls final String srcZip = "src.zip";
           final File jarFile = new File(jdkHome, srcZip);
           if (jarFile.exists()){
@@ -407,7 +507,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
   }
 
-  private static boolean addOrderEntries(OrderRootType orderRootType, Sdk sdk, SdkModificator toModificator){
+  private static boolean addOrderEntries(@NotNull OrderRootType orderRootType, @NotNull Sdk sdk, @NotNull SdkModificator toModificator){
     boolean wasSmthAdded = false;
     final String[] entries = sdk.getRootProvider().getUrls(orderRootType);
     for (String entry : entries) {

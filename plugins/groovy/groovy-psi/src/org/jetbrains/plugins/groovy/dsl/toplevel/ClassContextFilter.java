@@ -15,14 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -31,36 +27,17 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class ClassContextFilter implements ContextFilter {
-  private final Condition<Pair<PsiType, PsiFile>> myPattern;
+public class ClassContextFilter {
 
-  public ClassContextFilter(Condition<Pair<PsiType, PsiFile>> pattern) {
-    myPattern = pattern;
+  public static ContextFilter fromClassPattern(ElementPattern pattern) {
+    return (descriptor, ctx) -> {
+      PsiType type = descriptor.getPsiType();
+      return type instanceof PsiClassType && pattern.accepts(((PsiClassType)type).resolve());
+    };
   }
 
-  @Override
-  public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-    final PsiFile place = descriptor.getPlaceFile();
-    return myPattern.value(Pair.create(ClassUtil.findPsiType(descriptor, ctx), place));
-  }
-
-  public static ClassContextFilter fromClassPattern(final ElementPattern pattern) {
-    return new ClassContextFilter(new Condition<Pair<PsiType, PsiFile>>() {
-      @Override
-      public boolean value(Pair<PsiType, PsiFile> pair) {
-        final PsiType type = pair.first;
-        return type instanceof PsiClassType ? pattern.accepts(((PsiClassType)type).resolve()) : false;
-      }
-    });
-  }
-
-  public static ClassContextFilter subtypeOf(final String typeText) {
-    return new ClassContextFilter(new Condition<Pair<PsiType, PsiFile>>() {
-      @Override
-      public boolean value(Pair<PsiType, PsiFile> p) {
-        return isSubtype(p.first, p.second, typeText);
-      }
-    });
+  public static ContextFilter subtypeOf(String typeText) {
+    return (descriptor, ctx) -> isSubtype(descriptor.getPsiType(), descriptor.justGetPlaceFile(), typeText);
   }
 
   public static boolean isSubtype(PsiType checked, PsiFile placeFile, String typeText) {

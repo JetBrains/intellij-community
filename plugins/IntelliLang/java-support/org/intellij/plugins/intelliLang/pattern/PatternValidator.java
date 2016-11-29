@@ -17,12 +17,8 @@ package org.intellij.plugins.intelliLang.pattern;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
+import com.intellij.codeInspection.RefactoringQuickFix;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +29,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -208,21 +203,18 @@ public class PatternValidator extends LocalInspectionTool {
     // cache compiled pattern with annotation
     CachedValue<Pattern> p = psiAnnotation.getUserData(COMPLIED_PATTERN);
     if (p == null) {
-      final CachedValueProvider<Pattern> provider = new CachedValueProvider<Pattern>() {
-        @Override
-        public Result<Pattern> compute() {
-          final String pattern = AnnotationUtilEx.calcAnnotationValue(psiAnnotation, "value");
-          Pattern p = null;
-          if (pattern != null) {
-            try {
-              p = Pattern.compile(pattern);
-            }
-            catch (PatternSyntaxException e) {
-              // pattern stays null
-            }
+      final CachedValueProvider<Pattern> provider = () -> {
+        final String pattern = AnnotationUtilEx.calcAnnotationValue(psiAnnotation, "value");
+        Pattern p1 = null;
+        if (pattern != null) {
+          try {
+            p1 = Pattern.compile(pattern);
           }
-          return Result.create(p, (Object[])annotations);
+          catch (PatternSyntaxException e) {
+            // pattern stays null
+          }
         }
+        return CachedValueProvider.Result.create(p1, (Object[])annotations);
       };
       p = CachedValuesManager.getManager(expression.getProject()).createCachedValue(provider, false);
       psiAnnotation.putUserData(COMPLIED_PATTERN, p);
@@ -231,7 +223,7 @@ public class PatternValidator extends LocalInspectionTool {
     final Pattern pattern = p.getValue();
     if (pattern == null) return;
 
-    List<PsiExpression> nonConstantElements = new SmartList<PsiExpression>();
+    List<PsiExpression> nonConstantElements = new SmartList<>();
     final Object result = new SubstitutedExpressionEvaluationHelper(expression.getProject()).computeExpression(
       expression, myConfiguration.getAdvancedConfiguration().getDfaOption(), false, nonConstantElements);
     final String o = result == null ? null : String.valueOf(result);
@@ -275,46 +267,31 @@ public class PatternValidator extends LocalInspectionTool {
 
           final String classname = myConfiguration.getAdvancedConfiguration().getSubstAnnotationPair().first;
           final AnnotateFix fix = new AnnotateFix((PsiModifierListOwner)e, classname);
-          quickFix = fix.canApply() ? fix : new IntroduceVariableFix(expr);
+          quickFix = fix.canApply() ? fix : new IntroduceVariableFix();
         }
         else {
-          quickFix = new IntroduceVariableFix(expr);
+          quickFix = new IntroduceVariableFix();
         }
         holder.registerProblem(expr, "Unsubstituted expression", quickFix);
       }
     }
   }
 
-  private static class IntroduceVariableFix implements LocalQuickFix {
-    private final PsiExpression myExpr;
+  private static class IntroduceVariableFix implements RefactoringQuickFix {
 
-    public IntroduceVariableFix(PsiExpression expr) {
-      myExpr = expr;
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
-      return "Introduce Variable";
-    }
+    public IntroduceVariableFix() {}
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return "Introduce variable";
     }
 
+    @NotNull
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
-      final AsyncResult<DataContext> dataContextContainer = DataManager.getInstance().getDataContextFromFocus();
-      dataContextContainer.doWhenDone(new Consumer<DataContext>() {
-        @Override
-        public void consume(DataContext dataContext) {
-          handler.invoke(project, new PsiElement[]{myExpr}, dataContext);
-        }
-      });
+    public RefactoringActionHandler getHandler() {
       // how to automatically annotate the variable after it has been introduced?
+      return JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
     }
   }
 }

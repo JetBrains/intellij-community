@@ -33,13 +33,13 @@ public class NodeImpl implements MarkedNode {
   LinkedList<EdgeImpl> myOut;
 
   public NodeImpl() {
-    myIn = new LinkedList<EdgeImpl>();
-    myOut = new LinkedList<EdgeImpl>();
+    myIn = new LinkedList<>();
+    myOut = new LinkedList<>();
   }
 
   public NodeImpl(EdgeImpl[] in, EdgeImpl[] out) {
-    myIn = new LinkedList<EdgeImpl>();
-    myOut = new LinkedList<EdgeImpl>();
+    myIn = new LinkedList<>();
+    myOut = new LinkedList<>();
 
     for (int i = 0; i < (in == null ? 0 : in.length); i++) {
       myIn.add(in[i]);
@@ -53,8 +53,8 @@ public class NodeImpl implements MarkedNode {
   }
 
   public NodeImpl(LinkedList<EdgeImpl> in, LinkedList<EdgeImpl> out) {
-    myIn = in == null ? new LinkedList<EdgeImpl>() : in;
-    myOut = out == null ? new LinkedList<EdgeImpl>() : out;
+    myIn = in == null ? new LinkedList<>() : in;
+    myOut = out == null ? new LinkedList<>() : out;
 
     for (EdgeImpl aMyIn : myIn) aMyIn.myEnd = this;
     for (EdgeImpl aMyOut : myOut) aMyOut.myBeg = this;

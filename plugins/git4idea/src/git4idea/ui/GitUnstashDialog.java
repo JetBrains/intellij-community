@@ -38,10 +38,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Consumer;
-import git4idea.GitPlatformFacade;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -53,8 +53,8 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
-import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import git4idea.util.GitUntrackedFilesHelper;
+import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,7 +90,7 @@ public class GitUnstashDialog extends DialogWrapper {
   /**
    * Set of branches for the current root
    */
-  private final HashSet<String> myBranches = new HashSet<String>();
+  private final HashSet<String> myBranches = new HashSet<>();
 
   private final Project myProject;
   private GitVcs myVcs;
@@ -367,13 +367,13 @@ public class GitUnstashDialog extends DialogWrapper {
         public void run() {
           h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(progressManager.getProgressIndicator(), h, "stash", false));
           Git git = ServiceManager.getService(Git.class);
-          result.set(git.runCommand(new Computable.PredefinedValueComputable<GitLineHandler>(h)));
+          result.set(git.runCommand(new Computable.PredefinedValueComputable<>(h)));
         }
       }, GitBundle.getString("unstash.unstashing"), true, myProject);
 
       if (!completed) return;
 
-      ServiceManager.getService(myProject, GitPlatformFacade.class).hardRefresh(root);
+      VfsUtil.markDirtyAndRefresh(false, true, false, root);
       GitCommandResult res = result.get();
       if (conflict.get()) {
         boolean conflictsResolved = new UnstashConflictResolver(myProject, root, getSelectedStash()).merge();
@@ -404,7 +404,7 @@ public class GitUnstashDialog extends DialogWrapper {
     private final StashInfo myStashInfo;
 
     public UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
-      super(project, ServiceManager.getService(Git.class), ServiceManager.getService(GitPlatformFacade.class),
+      super(project, ServiceManager.getService(Git.class),
             Collections.singleton(root), makeParams(stashInfo));
       myRoot = root;
       myStashInfo = stashInfo;

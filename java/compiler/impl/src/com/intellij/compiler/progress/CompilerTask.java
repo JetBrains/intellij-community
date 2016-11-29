@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,19 +167,16 @@ public class CompilerTask extends CompilerTaskBase {
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final Project project = myProject;
-        if (project == null || project.isDisposed()) {
-          return;
-        }
-        synchronized (myMessageViewLock) {
-          // clear messages from the previous compilation
-          if (myErrorTreeView == null) {
-            // if message view != null, the contents has already been cleared
-            removeAllContents(project, null);
-          }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Project project = myProject;
+      if (project == null || project.isDisposed()) {
+        return;
+      }
+      synchronized (myMessageViewLock) {
+        // clear messages from the previous compilation
+        if (myErrorTreeView == null) {
+          // if message view != null, the contents has already been cleared
+          removeAllContents(project, null);
         }
       }
     });
@@ -211,16 +208,13 @@ public class CompilerTask extends CompilerTaskBase {
 
       private void selectFirstMessage() {
         if (!isHeadlessMode()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (myProject != null && myProject.isDisposed()) {
-                return;
-              }
-              synchronized (myMessageViewLock) {
-                if (myErrorTreeView != null) {
-                  myErrorTreeView.selectFirstMessage();
-                }
+          SwingUtilities.invokeLater(() -> {
+            if (myProject != null && myProject.isDisposed()) {
+              return;
+            }
+            synchronized (myMessageViewLock) {
+              if (myErrorTreeView != null) {
+                myErrorTreeView.selectFirstMessage();
               }
             }
           });
@@ -228,22 +222,19 @@ public class CompilerTask extends CompilerTaskBase {
       }
 
       private void stopAppIconProgress() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject != null && myProject.isDisposed()) {
-              return;
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (myProject != null && myProject.isDisposed()) {
+            return;
+          }
+          final AppIcon appIcon = AppIcon.getInstance();
+          if (appIcon.hideProgress(myProject, APP_ICON_ID)) {
+            if (myErrorCount > 0) {
+              appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
+              appIcon.requestAttention(myProject, true);
             }
-            final AppIcon appIcon = AppIcon.getInstance();
-            if (appIcon.hideProgress(myProject, APP_ICON_ID)) {
-              if (myErrorCount > 0) {
-                appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
-                appIcon.requestAttention(myProject, true);
-              }
-              else if (!myCompilationStartedAutomatically) {
-                appIcon.setOkBadge(myProject, true);
-                appIcon.requestAttention(myProject, false);
-              }
+            else if (!myCompilationStartedAutomatically) {
+              appIcon.setOkBadge(myProject, true);
+              appIcon.requestAttention(myProject, false);
             }
           }
         });
@@ -265,12 +256,8 @@ public class CompilerTask extends CompilerTaskBase {
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
         updateProgressText();
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(
+          () -> AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true));
       }
 
       @Override
@@ -306,13 +293,10 @@ public class CompilerTask extends CompilerTaskBase {
     else {
       final Window window = getWindow();
       final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myProject != null && !myProject.isDisposed()) {
-            openMessageView();
-            doAddMessage(message);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject != null && !myProject.isDisposed()) {
+          openMessageView();
+          doAddMessage(message);
         }
       }, modalityState);
     }
@@ -359,7 +343,7 @@ public class CompilerTask extends CompilerTaskBase {
     if (!text.contains("\n")) {
       return new String[]{text};
     }
-    ArrayList<String> lines = new ArrayList<String>();
+    ArrayList<String> lines = new ArrayList<>();
     StringTokenizer tokenizer = new StringTokenizer(text, "\n", false);
     while (tokenizer.hasMoreTokens()) {
       lines.add(tokenizer.nextToken());
@@ -385,9 +369,6 @@ public class CompilerTask extends CompilerTaskBase {
   }
 
   private void updateProgressText() {
-    if (isHeadlessMode()) {
-      return;
-    }
   }
 
   // error tree view initialization must be invoked from event dispatch thread
@@ -585,10 +566,6 @@ public class CompilerTask extends CompilerTaskBase {
     }
 
     @Override
-    public void projectOpened(Project project) {
-    }
-
-    @Override
     public void projectClosed(Project project) {
       if (project.equals(myProject) && myContent != null) {
         myContentManager.removeContent(myContent, true);
@@ -604,4 +581,3 @@ public class CompilerTask extends CompilerTaskBase {
   }
 
 }
-                                      

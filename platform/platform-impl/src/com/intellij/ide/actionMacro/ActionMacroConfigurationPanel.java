@@ -95,7 +95,7 @@ public class ActionMacroConfigurationPanel implements Disposable {
 
     final ActionMacroManager manager = ActionMacroManager.getInstance();
     ActionMacro[] macros = manager.getAllMacros();
-    HashSet<String> removedIds = new HashSet<String>();
+    HashSet<String> removedIds = new HashSet<>();
     for (ActionMacro macro1 : macros) {
       removedIds.add(macro1.getActionId());
     }
@@ -164,7 +164,7 @@ public class ActionMacroConfigurationPanel implements Disposable {
               }
               while (!canRenameMacro(newName));
 
-              if (myRenamingList == null) myRenamingList = new ArrayList<Couple<String>>();
+              if (myRenamingList == null) myRenamingList = new ArrayList<>();
               myRenamingList.add(Couple.of(macro.getName(), newName));
               macro.setName(newName);
               myMacrosList.repaint();

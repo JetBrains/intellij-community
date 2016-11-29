@@ -33,11 +33,11 @@ import java.util.List;
 public class RangeBlinker {
   private final Editor myEditor;
   private int myTimeToLive;
-  private final List<Segment> myMarkers = new ArrayList<Segment>();
+  private final List<Segment> myMarkers = new ArrayList<>();
   private boolean show = true;
   private final Alarm myBlinkingAlarm = new Alarm();
   private final TextAttributes myAttributes;
-  private final List<RangeHighlighter> myAddedHighlighters = new ArrayList<RangeHighlighter>();
+  private final List<RangeHighlighter> myAddedHighlighters = new ArrayList<>();
 
   public RangeBlinker(Editor editor, final TextAttributes attributes, int timeToLive) {
     myAttributes = attributes;
@@ -85,14 +85,11 @@ public class RangeBlinker {
       removeHighlights();
     }
     stopBlinking();
-    myBlinkingAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (myTimeToLive > 0 || show) {
-          myTimeToLive--;
-          show = !show;
-          startBlinking();
-        }
+    myBlinkingAlarm.addRequest(() -> {
+      if (myTimeToLive > 0 || show) {
+        myTimeToLive--;
+        show = !show;
+        startBlinking();
       }
     }, 400);
   }

@@ -1068,7 +1068,7 @@ public class Messages {
                                           @Nullable Icon icon,
                                           @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
 
     return MessagesService.SERVICE.getInstance().showPasswordDialog(project, message, title, icon, validator);
@@ -1115,7 +1115,7 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       return MessagesService.SERVICE.getInstance().showInputDialog(project, message, title, icon, initialValue, validator);
@@ -1131,7 +1131,7 @@ public class Messages {
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       return MessagesService.SERVICE.getInstance().showInputDialog2(project, message, title, icon, initialValue, validator, selection);
@@ -1146,7 +1146,7 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       return MessagesService.SERVICE.getInstance().showInputDialog3(parent, message, title, icon, initialValue, validator);
@@ -1166,7 +1166,7 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       return MessagesService.SERVICE.getInstance().showInputDialog4(message, title, icon, initialValue, validator);
@@ -1181,7 +1181,7 @@ public class Messages {
                                                 @Nullable Icon icon,
                                                 @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     return MessagesService.SERVICE.getInstance().showMultilineInputDialog(project, message, title, initialValue, icon, validator);
   }
@@ -1196,7 +1196,7 @@ public class Messages {
                                                                   @NonNls String initialValue,
                                                                   @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return new Pair<String, Boolean>(ourTestInputImplementation.show(message), checked);
+      return new Pair<>(ourTestInputImplementation.show(message), checked);
     }
     else {
       return MessagesService.SERVICE.getInstance()
@@ -1212,7 +1212,7 @@ public class Messages {
                                                 String initialValue,
                                                 @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message);
+      return ourTestInputImplementation.show(message, validator);
     }
     else {
       return MessagesService.SERVICE.getInstance().showEditableChooseDialog(message, title, icon, values, initialValue, validator);

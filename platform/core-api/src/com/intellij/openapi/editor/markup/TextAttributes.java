@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -32,8 +31,7 @@ public class TextAttributes implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.markup.TextAttributes");
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
-
-  private boolean myEnforceEmpty;
+  public static final TextAttributes USE_INHERITED_MARKER = new TextAttributes();
 
   @SuppressWarnings("NullableProblems")
   @NotNull
@@ -71,9 +69,8 @@ public class TextAttributes implements Cloneable {
     this(null, null, null, EffectType.BOXED, Font.PLAIN);
   }
 
-  private TextAttributes(@NotNull AttributesFlyweight attributesFlyweight, boolean enforced) {
+  private TextAttributes(@NotNull AttributesFlyweight attributesFlyweight) {
     myAttrs = attributesFlyweight;
-    myEnforceEmpty = enforced;
   }
 
   public TextAttributes(@NotNull Element element) {
@@ -95,14 +92,6 @@ public class TextAttributes implements Cloneable {
 
   public boolean isEmpty(){
     return getForegroundColor() == null && getBackgroundColor() == null && getEffectColor() == null && getFontType() == Font.PLAIN;
-  }
-
-  public boolean isFallbackEnabled() {
-    return isEmpty() && !myEnforceEmpty;
-  }
-
-  public boolean containsValue() {
-    return !isEmpty() || myEnforceEmpty;
   }
 
   public void reset() {
@@ -172,14 +161,14 @@ public class TextAttributes implements Cloneable {
   public void setFontType(@JdkConstants.FontStyle int type) {
     if (type < 0 || type > 3) {
       LOG.error("Wrong font type: " + type);
-      type = 0;
+      type = Font.PLAIN;
     }
     myAttrs = myAttrs.withFontType(type);
   }
 
   @Override
   public TextAttributes clone() {
-    return new TextAttributes(myAttrs, myEnforceEmpty);
+    return new TextAttributes(myAttrs);
   }
 
   public boolean equals(Object obj) {
@@ -194,17 +183,8 @@ public class TextAttributes implements Cloneable {
     return myAttrs.hashCode();
   }
 
-  public void readExternal(Element element) {
-    try {
-      myAttrs = AttributesFlyweight.create(element);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
-
-    if (isEmpty()) {
-      myEnforceEmpty = true;
-    }
+  public void readExternal(@NotNull Element element) {
+    myAttrs = AttributesFlyweight.create(element);
   }
 
   public void writeExternal(Element element) {
@@ -215,18 +195,5 @@ public class TextAttributes implements Cloneable {
   public String toString() {
     return "[" + getForegroundColor() + "," + getBackgroundColor() + "," + getFontType() + "," + getEffectType() + "," +
            getEffectColor() + "," + getErrorStripeColor() + "]";
-  }
-
-  /**
-   * Enforces empty attributes instead of treating empty values as undefined.
-   *
-   * @param enforceEmpty True if empty values should be used as is (fallback is disabled).
-   */
-  public void setEnforceEmpty(boolean enforceEmpty) {
-    myEnforceEmpty = enforceEmpty;
-  }
-
-  public boolean isEnforceEmpty() {
-    return myEnforceEmpty;
   }
 }

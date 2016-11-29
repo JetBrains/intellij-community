@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.customize;
 
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -43,7 +44,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private final JButton myNextButton = new JButton("Next");
 
   private final JBCardLayout myCardLayout = new JBCardLayout();
-  private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<AbstractCustomizeWizardStep>();
+  private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<>();
   private int myIndex = 0;
   private final JBLabel myNavigationLabel = new JBLabel();
   private final JBLabel myHeaderLabel = new JBLabel();
@@ -54,10 +55,16 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     super(null, true, true);
-    setTitle("Customize " + ApplicationNamesInfo.getInstance().getProductName());
+    setTitle("Customize " + ApplicationNamesInfo.getInstance().getFullProductName());
     getPeer().setAppIcons();
 
     stepsProvider.initSteps(this, mySteps);
+
+    CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+    if (configProvider != null) {
+      myIndex = configProvider.initSteps(mySteps);
+    }
+
     if (mySteps.isEmpty()) {
       throw new IllegalArgumentException(stepsProvider + " provided no steps");
     }
@@ -178,13 +185,10 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private void initCurrentStep(boolean forward) {
     final AbstractCustomizeWizardStep myCurrentStep = mySteps.get(myIndex);
     myCurrentStep.beforeShown(forward);
-    myCardLayout.swipe(myContentPanel, myCurrentStep.getTitle(), JBCardLayout.SwipeDirection.AUTO, new Runnable() {
-      @Override
-      public void run() {
-        Component component = myCurrentStep.getDefaultFocusedComponent();
-        if (component != null) {
-          component.requestFocus();
-        }
+    myCardLayout.swipe(myContentPanel, myCurrentStep.getTitle(), JBCardLayout.SwipeDirection.AUTO, () -> {
+      Component component = myCurrentStep.getDefaultFocusedComponent();
+      if (component != null) {
+        component.requestFocus();
       }
     });
 
@@ -200,8 +204,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     myHeaderLabel.setText(ensureHTML(myCurrentStep.getHTMLHeader()));
     myFooterLabel.setText(ensureHTML(myCurrentStep.getHTMLFooter()));
     StringBuilder navHTML = new StringBuilder("<html><body>");
+    String arrow = myNavigationLabel.getFont().canDisplay(0x2192) ? "&#8594;" : "&gt;";
     for (int i = 0; i < mySteps.size(); i++) {
-      if (i > 0) navHTML.append("&nbsp;&#8594;&nbsp;");
+      if (i > 0) navHTML.append("&nbsp;").append(arrow).append("&nbsp;");
       if (i == myIndex) navHTML.append("<b>");
       navHTML.append(mySteps.get(i).getTitle());
       if (i == myIndex) navHTML.append("</b>");

@@ -52,6 +52,9 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
     if (text != null && text.length() > 0) {
       prependItem(text);
     }
+    else if (text != null) {
+      getChildComponent().setSelectedItem(null);
+    }
   }
 
   public String getText(){

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         message = RefactoringBundle.message("move.method.is.not.supported.for.generic.classes");
       }
       else if (method.findSuperMethods().length > 0 ||
-               OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
+               OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
         message = RefactoringBundle.message("move.method.is.not.supported.when.method.is.part.of.inheritance.hierarchy");
       }
       else {
@@ -107,7 +107,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       return;
     }
 
-    final List<PsiVariable> suitableVariables = new ArrayList<PsiVariable>();
+    final List<PsiVariable> suitableVariables = new ArrayList<>();
     message = collectSuitableVariables(method, suitableVariables);
     if (message != null) {
       final String unableToMakeStaticMessage = MakeStaticHandler.validateTarget(method);
@@ -137,7 +137,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   @Nullable
   private static String collectSuitableVariables(final PsiMethod method, final List<PsiVariable> suitableVariables) {
-    final List<PsiVariable> allVariables = new ArrayList<PsiVariable>();
+    final List<PsiVariable> allVariables = new ArrayList<>();
     ContainerUtil.addAll(allVariables, method.getParameterList().getParameters());
     ContainerUtil.addAll(allVariables, method.getContainingClass().getFields());
     boolean classTypesFound = false;
@@ -183,7 +183,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   public static Map<PsiClass, String> suggestParameterNames(final PsiMethod method, final PsiVariable targetVariable) {
     final Map<PsiClass, Set<PsiMember>> classesToMembers = MoveInstanceMembersUtil.getThisClassesToMembers(method);
-    Map<PsiClass, String> result = new LinkedHashMap<PsiClass, String>();
+    Map<PsiClass, String> result = new LinkedHashMap<>();
     for (Map.Entry<PsiClass, Set<PsiMember>> entry : classesToMembers.entrySet()) {
       PsiClass aClass = entry.getKey();
       final Set<PsiMember> members = entry.getValue();

@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,7 +52,7 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final Runnable optimize = new GroovyImportOptimizer().processFile(file);
-    GroovyOptimizeImportsFix.invokeOnTheFlyImportOptimizer(optimize, file, editor);
+    invokeOnTheFlyImportOptimizer(optimize, file, editor);
   }
 
   @Override
@@ -116,14 +116,11 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
     }
 
     return !DaemonCodeAnalyzerEx
-      .processHighlights(myDocument, myFile.getProject(), HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
-        @Override
-        public boolean process(HighlightInfo error) {
-          int infoStart = error.getActualStartOffset();
-          int infoEnd = error.getActualEndOffset();
+      .processHighlights(myDocument, myFile.getProject(), HighlightSeverity.ERROR, 0, myDocument.getTextLength(), error -> {
+        int infoStart = error.getActualStartOffset();
+        int infoEnd = error.getActualEndOffset();
 
-          return ignoreRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
-        }
+        return ignoreRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
       });
   }
 
@@ -131,23 +128,21 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
                                                    @NotNull final PsiFile file,
                                                    @NotNull final Editor editor) {
     final long stamp = editor.getDocument().getModificationStamp();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (file.getProject().isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
-        //no need to optimize imports on the fly during undo/redo
-        final UndoManager undoManager = UndoManager.getInstance(editor.getProject());
-        if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
-        PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
-        String beforeText = file.getText();
-        final long oldStamp = editor.getDocument().getModificationStamp();
-        DocumentUtil.writeInRunUndoTransparentAction(runnable);
-        if (oldStamp != editor.getDocument().getModificationStamp()) {
-          String afterText = file.getText();
-          if (Comparing.strEqual(beforeText, afterText)) {
-            String path = file.getViewProvider().getVirtualFile().getPath();
-            LOG.error("Import optimizer  hasn't optimized any imports", new Attachment(path, afterText));
-          }
+    Project project = file.getProject();
+    TransactionGuard.submitTransaction(project, () -> {
+      if (editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
+      //no need to optimize imports on the fly during undo/redo
+      final UndoManager undoManager = UndoManager.getInstance(project);
+      if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      String beforeText = file.getText();
+      final long oldStamp = editor.getDocument().getModificationStamp();
+      DocumentUtil.writeInRunUndoTransparentAction(runnable);
+      if (oldStamp != editor.getDocument().getModificationStamp()) {
+        String afterText = file.getText();
+        if (Comparing.strEqual(beforeText, afterText)) {
+          String path = file.getViewProvider().getVirtualFile().getPath();
+          LOG.error("Import optimizer  hasn't optimized any imports", new Attachment(path, afterText));
         }
       }
     });

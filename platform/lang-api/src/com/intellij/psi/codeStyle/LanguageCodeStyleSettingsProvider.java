@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -111,7 +111,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   @NotNull
   public static Language[] getLanguagesWithCodeStyleSettings() {
-    final ArrayList<Language> languages = new ArrayList<Language>();
+    final ArrayList<Language> languages = new ArrayList<>();
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
       languages.add(provider.getLanguage());
     }
@@ -198,31 +198,29 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   public Set<String> getSupportedFields() {
-    SupportedFieldCollector fieldCollector = new SupportedFieldCollector();
-    fieldCollector.collectFields();
-    return fieldCollector.getCollectedFields();
+    return new SupportedFieldCollector().collectFields();
   }
 
   public Set<String> getSupportedFields(SettingsType type) {
-    SupportedFieldCollector fieldCollector = new SupportedFieldCollector();
-    fieldCollector.collectFields(type);
-    return fieldCollector.getCollectedFields();
+    return new SupportedFieldCollector().collectFields(type);
   }
 
   private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {
-    private final Set<String> myCollectedFields = new HashSet<String>();
+    private final Set<String> myCollectedFields = new THashSet<>();
     private SettingsType myCurrSettingsType;
 
-    public void collectFields() {
+    public Set<String> collectFields() {
       for (SettingsType settingsType : SettingsType.values()) {
         myCurrSettingsType = settingsType;
-        LanguageCodeStyleSettingsProvider.this.customizeSettings(this, settingsType);
+        customizeSettings(this, settingsType);
       }
+      return myCollectedFields;
     }
 
-    public void collectFields(SettingsType type) {
+    public Set<String> collectFields(SettingsType type) {
       myCurrSettingsType = type;
-      LanguageCodeStyleSettingsProvider.this.customizeSettings(this, type);
+      customizeSettings(this, type);
+      return myCollectedFields;
     }
 
     @Override
@@ -255,7 +253,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
     @Override
     public void showStandardOptions(String... optionNames) {
-      myCollectedFields.addAll(Arrays.asList(optionNames));
+      ContainerUtil.addAll(myCollectedFields, optionNames);
     }
 
     @Override
@@ -276,20 +274,6 @@ public abstract class LanguageCodeStyleSettingsProvider {
                                  @Nullable String anchorFieldName,
                                  Object... options) {
       myCollectedFields.add(fieldName);
-    }
-
-    @Override
-    public void renameStandardOption(String fieldName, String newTitle) {
-      // Ignore
-    }
-
-    @Override
-    public void moveStandardOption(String fieldName, String newGroup) {
-      // Ignore
-    }
-
-    public Set<String> getCollectedFields() {
-      return myCollectedFields;
     }
   }
 }

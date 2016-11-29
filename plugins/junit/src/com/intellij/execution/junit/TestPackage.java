@@ -20,34 +20,27 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
-import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.ResetConfigurationModuleAdapter;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.Function;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 
 public class TestPackage extends TestObject {
-  private boolean myFoundTests = true;
 
   public TestPackage(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
@@ -60,41 +53,33 @@ public class TestPackage extends TestObject {
     return data.getScope().getSourceScope(getConfiguration());
   }
 
-  @NotNull
-  @Override
-  protected JUnitProcessHandler createJUnitHandler(Executor executor) throws ExecutionException {
-    final JUnitProcessHandler handler = super.createJUnitHandler(executor);
-    createSearchingForTestsTask().attachTaskToProcess(handler);
-    return handler;
-  }
-
   @Override
   public SearchForTestsTask createSearchingForTestsTask() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
 
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
-      private final THashSet<PsiClass> myClasses = new THashSet<PsiClass>();
+      private final THashSet<PsiClass> myClasses = new THashSet<>();
       @Override
       protected void search() {
         myClasses.clear();
-        try {
-          ConfigurationUtil.findAllTestClasses(getClassFilter(data), myClasses);
+        final SourceScope sourceScope = getSourceScope();
+        final Module module = getConfiguration().getConfigurationModule().getModule();
+        if (sourceScope != null && !ReadAction.compute(() -> isJUnit5(module, sourceScope, myProject))) {
+          try {
+            final TestClassFilter classFilter = getClassFilter(data);
+            LOG.assertTrue(classFilter.getBase() != null);
+            ConfigurationUtil.findAllTestClasses(classFilter, myClasses);
+          }
+          catch (CantRunException ignored) {}
         }
-        catch (CantRunException ignored) {}
       }
 
       @Override
       protected void onFound() {
-        myFoundTests = !myClasses.isEmpty();
 
         try {
-          addClassesListToJavaParameters(myClasses, new Function<PsiClass, String>() {
-            @Override
-            @Nullable
-            public String fun(final PsiClass psiClass) {
-              return psiClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(psiClass) : null;
-            }
-          }, getPackageName(data), createTempFiles(), getJavaParameters());
+          addClassesListToJavaParameters(myClasses,
+                                         psiClass -> psiClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(psiClass) : null, getPackageName(data), createTempFiles(), getJavaParameters());
         }
         catch (ExecutionException ignored) {}
       }
@@ -113,10 +98,14 @@ public class TestPackage extends TestObject {
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    final DumbService dumbService = DumbService.getInstance(getConfiguration().getProject());
+    final Project project = getConfiguration().getProject();
+    final DumbService dumbService = DumbService.getInstance(project);
     try {
       dumbService.setAlternativeResolveEnabled(true);
-      getClassFilter(data);//check if junit found
+      final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
+      if (sourceScope == null || !isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) { //check for junit 5
+        getClassFilter(data);//check if junit 4 found
+      }
     }
     finally {
       dumbService.setAlternativeResolveEnabled(false);
@@ -142,17 +131,14 @@ public class TestPackage extends TestObject {
   }
 
   protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
-    final Ref<CantRunException> ref = new Ref<CantRunException>();
-    final GlobalSearchScope aPackage = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
-      @Override
-      public GlobalSearchScope compute() {
-        try {
-          return PackageScope.packageScope(getPackage(data), true);
-        }
-        catch (CantRunException e) {
-          ref.set(e);
-          return null;
-        }
+    final Ref<CantRunException> ref = new Ref<>();
+    final GlobalSearchScope aPackage = ReadAction.compute(() -> {
+      try {
+        return PackageScope.packageScope(getPackage(data), true);
+      }
+      catch (CantRunException e) {
+        ref.set(e);
+        return null;
       }
     });
     final CantRunException exception = ref.get();
@@ -205,13 +191,6 @@ public class TestPackage extends TestObject {
     }
     if (getSourceScope() == null) {
       getConfiguration().getConfigurationModule().checkForWarning();
-    }
-  }
-
-  @Override
-  protected void notifyByBalloon(JUnitRunningModel model, boolean started, final JUnitConsoleProperties consoleProperties) {
-    if (myFoundTests || !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), consoleProperties.isDebug())) {
-      super.notifyByBalloon(model, started, consoleProperties);
     }
   }
 

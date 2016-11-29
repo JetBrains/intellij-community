@@ -84,47 +84,39 @@ public class ChangeSuperClassFix implements LocalQuickFix {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
 
     if (!FileModificationService.getInstance().prepareFileForWrite(aClass.getContainingFile())) return;
-    CommandProcessor.getInstance().executeCommand(newSuperClass.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-            if (aClass instanceof PsiAnonymousClass) {
-              ((PsiAnonymousClass)aClass).getBaseClassReference().replace(factory.createClassReferenceElement(newSuperClass));
-            }
-            else if (oldSuperClass.isInterface()) {
-              final PsiReferenceList interfaceList = aClass.getImplementsList();
-              if (interfaceList != null) {
-                for (final PsiJavaCodeReferenceElement interfaceRef : interfaceList.getReferenceElements()) {
-                  final PsiElement aInterface = interfaceRef.resolve();
-                  if (aInterface != null && aInterface.isEquivalentTo(oldSuperClass)) {
-                    interfaceRef.delete();
-                  }
-                }
-              }
-
-              final PsiReferenceList extendsList = aClass.getExtendsList();
-              if (extendsList != null) {
-                final PsiJavaCodeReferenceElement newClassReference = factory.createClassReferenceElement(newSuperClass);
-                if (extendsList.getReferenceElements().length == 0) {
-                  extendsList.add(newClassReference);
-                }
-              }
-            }
-            else {
-              final PsiReferenceList extendsList = aClass.getExtendsList();
-              if (extendsList != null && extendsList.getReferenceElements().length == 1) {
-                extendsList.getReferenceElements()[0].delete();
-                PsiElement ref = extendsList.add(factory.createClassReferenceElement(newSuperClass));
-                JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(ref);
-              }
+    CommandProcessor.getInstance().executeCommand(newSuperClass.getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+      if (aClass instanceof PsiAnonymousClass) {
+        ((PsiAnonymousClass)aClass).getBaseClassReference().replace(factory.createClassReferenceElement(newSuperClass));
+      }
+      else if (oldSuperClass.isInterface()) {
+        final PsiReferenceList interfaceList = aClass.getImplementsList();
+        if (interfaceList != null) {
+          for (final PsiJavaCodeReferenceElement interfaceRef : interfaceList.getReferenceElements()) {
+            final PsiElement aInterface = interfaceRef.resolve();
+            if (aInterface != null && aInterface.isEquivalentTo(oldSuperClass)) {
+              interfaceRef.delete();
             }
           }
-        });
+        }
+
+        final PsiReferenceList extendsList = aClass.getExtendsList();
+        if (extendsList != null) {
+          final PsiJavaCodeReferenceElement newClassReference = factory.createClassReferenceElement(newSuperClass);
+          if (extendsList.getReferenceElements().length == 0) {
+            extendsList.add(newClassReference);
+          }
+        }
       }
-    }, "Changing inheritance", null);
+      else {
+        final PsiReferenceList extendsList = aClass.getExtendsList();
+        if (extendsList != null && extendsList.getReferenceElements().length == 1) {
+          extendsList.getReferenceElements()[0].delete();
+          PsiElement ref = extendsList.add(factory.createClassReferenceElement(newSuperClass));
+          JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(ref);
+        }
+      }
+    }), "Changing inheritance", null);
   }
 
   public static class LowPriority extends ChangeSuperClassFix implements LowPriorityAction {

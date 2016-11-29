@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-/**
- * @author Yura Cangea
- */
 package com.intellij.openapi.fileChooser.impl;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 
 import java.util.Comparator;
 

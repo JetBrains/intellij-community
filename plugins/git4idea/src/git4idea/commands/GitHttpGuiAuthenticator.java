@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,13 @@
  */
 package git4idea.commands;
 
-import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
+import com.intellij.credentialStore.CredentialPromptDialog;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
-import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -43,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -100,8 +99,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     myPasswordKey = getUnifiedUrl(url);
-    String password = PasswordSafePromptDialog.askPassword(myProject, myTitle, "Enter the password for " + getDisplayableUrl(url),
-                                                           PASS_REQUESTER, myPasswordKey, false, null);
+    String password = CredentialPromptDialog.askPassword(myProject, myTitle, "Password for " + getDisplayableUrl(url),
+                                                         CredentialAttributes(PASS_REQUESTER, myPasswordKey));
     LOG.debug("askPassword. Password was asked and returned: " + (password == null ? "NULL" : password.isEmpty() ? "EMPTY" : "NOT EMPTY"));
     if (password == null) {
       myWasCancelled = true;
@@ -172,18 +171,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     // save password
     if (myPasswordKey != null && myPassword != null) {
-      PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-      try {
-        passwordSafe.getMemoryProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
-        if (mySaveOnDisk) {
-          passwordSafe.getMasterKeyProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
-        }
-      }
-      catch (MasterPasswordUnavailableException ignored) {
-      }
-      catch (PasswordSafeException e) {
-        LOG.error("Couldn't remember password for " + myPasswordKey, e);
-      }
+      Credentials credentials = new Credentials(myPasswordKey, myPassword);
+      PasswordSafe.getInstance().set(CredentialAttributes(PASS_REQUESTER, credentials.getUserName()), credentials, !mySaveOnDisk);
     }
   }
 
@@ -223,12 +212,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @NotNull
   private String findPresetHttpUrl() {
-    return ObjectUtils.chooseNotNull(ContainerUtil.find(myUrlsFromCommand, new Condition<String>() {
-      @Override
-      public boolean value(String url) {
-        String scheme = UriUtil.splitScheme(url).getFirst();
-        return scheme.startsWith("http");
-      }
+    return ObjectUtils.chooseNotNull(ContainerUtil.find(myUrlsFromCommand, url -> {
+      String scheme = UriUtil.splitScheme(url).getFirst();
+      return scheme.startsWith("http");
     }), ContainerUtil.getFirstItem(myUrlsFromCommand));
   }
 
@@ -295,14 +281,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       String userName = getUsername(url);
       String key = makeKey(url, userName);
       final PasswordSafe passwordSafe = PasswordSafe.getInstance();
-      try {
-        String password = passwordSafe.getPassword(myProject, PASS_REQUESTER, key);
-        return new AuthData(StringUtil.notNullize(userName), password);
-      }
-      catch (PasswordSafeException e) {
-        LOG.info("Couldn't get the password for key [" + key + "]", e);
-        return null;
-      }
+      String password = passwordSafe.getPassword(PASS_REQUESTER, key);
+      return new AuthData(StringUtil.notNullize(userName), password);
     }
 
     @Nullable
@@ -314,13 +294,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     public void forgetPassword(@NotNull String url) {
       String key = myPasswordKey != null ? myPasswordKey : makeKey(url, getUsername(url));
       LOG.debug("forgetPassword. key=" + key);
-      try {
-        PasswordSafe.getInstance().removePassword(myProject, PASS_REQUESTER, key);
-      }
-      catch (PasswordSafeException e) {
-        LOG.info("Couldn't forget the password for " + myPasswordKey);
-      }
+      PasswordSafe.getInstance().setPassword(PASS_REQUESTER, key, null);
     }
   }
-
 }

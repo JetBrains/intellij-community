@@ -23,10 +23,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -35,8 +37,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,14 +47,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
+public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiMethodReferenceExpression>>
+  implements PsiMethodReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl");
   private static final MethodReferenceResolver RESOLVER = new MethodReferenceResolver();
 
-  public PsiMethodReferenceExpressionImpl() {
-    super(JavaElementType.METHOD_REF_EXPRESSION);
+  public PsiMethodReferenceExpressionImpl(@NotNull FunctionalExpressionStub<PsiMethodReferenceExpression> stub) {
+    super(stub, JavaStubElementTypes.METHOD_REFERENCE);
   }
 
+  public PsiMethodReferenceExpressionImpl(@NotNull ASTNode node) {
+    super(node);
+  }
 
   @Override
   public PsiTypeElement getQualifierType() {
@@ -284,19 +290,6 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     }
   }
 
-  @Override
-  public int getChildRole(ASTNode child) {
-    final IElementType elType = child.getElementType();
-    if (elType == JavaTokenType.DOUBLE_COLON) {
-      return ChildRole.DOUBLE_COLON;
-    } else if (elType == JavaTokenType.IDENTIFIER) {
-      return ChildRole.REFERENCE_NAME;
-    } else if (elType == JavaElementType.REFERENCE_EXPRESSION) {
-      return ChildRole.CLASS_REFERENCE;
-    }
-    return ChildRole.EXPRESSION;
-  }
-
   @NotNull
   @Override
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
@@ -316,7 +309,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       final int offsetInParent = element.getStartOffsetInParent();
       return new TextRange(offsetInParent, offsetInParent + element.getTextLength());
     }
-    final PsiElement colons = findPsiChildByType(JavaTokenType.DOUBLE_COLON);
+    final PsiElement colons = findChildByType(JavaTokenType.DOUBLE_COLON);
     if (colons != null) {
       final int offsetInParent = colons.getStartOffsetInParent();
       return new TextRange(offsetInParent, offsetInParent + colons.getTextLength());
@@ -375,9 +368,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
+    PsiElement oldIdentifier = findChildByType(JavaTokenType.IDENTIFIER);
     if (oldIdentifier == null) {
-      oldIdentifier = findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
+      oldIdentifier = findChildByType(JavaElementType.REFERENCE_EXPRESSION);
     }
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
@@ -402,7 +395,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @Override
   public String toString() {
-    return "PsiMethodReferenceExpression:" + getText();
+    return "PsiMethodReferenceExpression";
   }
 
   @Override
@@ -478,4 +471,72 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   public Icon getIcon(int flags) {
     return AllIcons.Nodes.MethodReference;
   }
+
+  @Override
+  public PsiElement bindToElementViaStaticImport(@NotNull final PsiClass qualifierClass) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public PsiElement getElement() {
+    return this;
+  }
+
+  @Override
+  public PsiElement resolve() {
+    return advancedResolve(false).getElement();
+  }
+
+  @NotNull
+  @Override
+  public Object[] getVariants() {
+    // this reference's variants are rather obtained with processVariants()
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public boolean isSoft() {
+    return false;
+  }
+
+  @Override
+  public PsiReference getReference() {
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    final JavaResolveResult[] results = multiResolve(incompleteCode);
+    return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+  }
+
+  @Override
+  public String getReferenceName() {
+    final PsiElement element = getReferenceNameElement();
+    return element != null ? element.getText() : null;
+  }
+
+  @Override
+  public PsiReferenceParameterList getParameterList() {
+    return PsiTreeUtil.getChildOfType(this, PsiReferenceParameterList.class);
+  }
+
+  @NotNull
+  @Override
+  public PsiType[] getTypeParameters() {
+    final PsiReferenceParameterList parameterList = getParameterList();
+    return parameterList != null ? parameterList.getTypeArguments() : PsiType.EMPTY_ARRAY;
+  }
+
+  @Override
+  public boolean isQualified() {
+    return getQualifier() != null;
+  }
+
+  @Override
+  public String getQualifiedName() {
+    return getCanonicalText();
+  }
+
 }

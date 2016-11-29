@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
+import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -38,12 +39,12 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class ConstructorAnnotationsProcessor extends AstTransformContributor {
+public class ConstructorAnnotationsProcessor implements AstTransformationSupport {
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition typeDefinition, @NotNull Collection<PsiMethod> collector) {
+  public void applyTransformation(@NotNull TransformationContext context) {
+    GrTypeDefinition typeDefinition = context.getCodeClass();
     if (typeDefinition.getName() == null) return;
-
     PsiModifierList modifierList = typeDefinition.getModifierList();
     if (modifierList == null) return;
 
@@ -63,8 +64,8 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
     final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(typeDefinition, tupleConstructor, immutable, canonical);
     final GrLightMethodBuilder mapConstructor = generateMapConstructor(typeDefinition);
 
-    collector.add(fieldsConstructor);
-    collector.add(mapConstructor);
+    context.addMethod(fieldsConstructor);
+    context.addMethod(mapConstructor);
   }
 
   @NotNull
@@ -86,7 +87,7 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
     fieldsConstructor.setNavigationElement(typeDefinition);
     fieldsConstructor.setContainingClass(typeDefinition);
 
-    Set<String> excludes = new HashSet<String>();
+    Set<String> excludes = new HashSet<>();
     if (tupleConstructor != null) {
       for (String s : PsiUtil.getAnnoAttributeValue(tupleConstructor, "excludes", "").split(",")) {
         final String name = s.trim();
@@ -101,7 +102,7 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
       final boolean superFields = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperFields", false);
       final boolean superProperties = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperProperties", false);
       if (superFields || superProperties) {
-        addParametersForSuper(typeDefinition, fieldsConstructor, superFields, superProperties, new HashSet<PsiClass>(), excludes);
+        addParametersForSuper(typeDefinition, fieldsConstructor, superFields, superProperties, new HashSet<>(), excludes);
       }
     }
 

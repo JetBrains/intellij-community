@@ -95,7 +95,7 @@ class Test {
       expected: '''\
 class Test {
     /**
-     * @param i    <caret>
+     * @param i <caret>
      * @param j
      */
     void test(int i, int j) {
@@ -251,7 +251,7 @@ class Test {
       expected: '''\
 class Test {
     /**
-     * @param i    <caret>
+     * @param i <caret>
      */ 
     void test(int i) {
     }
@@ -272,7 +272,7 @@ class Test {
       expected: '''\
 class Test {
     /**
-     * @param i    <caret>
+     * @param i <caret>
      * @param j
      * @param k
      */ 
@@ -399,7 +399,7 @@ class Test<T> {<caret>
 /**
  * My description
  * @author me
- * @param <T>    <caret>
+ * @param <T> <caret>
  */
 class Test<T> {
 }''')
@@ -420,7 +420,7 @@ class Test<T, V> {
  * My description
  * @author me
  * @param <T>    type description
- * @param <V>    <caret>
+ * @param <V> <caret>
  */
 class Test<T, V> {
 }''')
@@ -467,7 +467,7 @@ class Test {
       expected: '''\
 class Test {
     /**
-     * @param i    <caret>
+     * @param i <caret>
      * @param j    
      */
     public void test(int i, int j) {
@@ -491,7 +491,7 @@ class Test {
 class Test {
   /**
    * @param <A>    A description
-   * @param <B>    <caret>
+   * @param <B> <caret>
    */
   <A, B> void test() {
   }
@@ -515,7 +515,7 @@ class Test<A, B> {<caret>
 /**
  * Class description
  * @author Zigmund
- * @param <A>    <caret>
+ * @param <A> <caret>
  * @param <B>    multi-line
  *               description
  */
@@ -575,7 +575,7 @@ class Test {
       expected: '''\
 class Test {
     /**
-     * @param i    <caret>
+     * @param i <caret>
      */ 
     void test(int i) {
     }

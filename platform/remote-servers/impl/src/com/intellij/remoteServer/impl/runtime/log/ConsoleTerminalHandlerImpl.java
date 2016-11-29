@@ -63,30 +63,26 @@ public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
 
     Disposer.register(this, myLoggingHandler);
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-
-      @Override
-      public void run() {
-        BufferedReader outputReader = new BufferedReader(new InputStreamReader(terminalOutput));
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      BufferedReader outputReader = new BufferedReader(new InputStreamReader(terminalOutput));
+      try {
+        while (!isClosed()) {
+          String line = outputReader.readLine();
+          if (line == null) {
+            break;
+          }
+          myLoggingHandler.print(line + "\n");
+        }
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+      }
+      finally {
         try {
-          while (!isClosed()) {
-            String line = outputReader.readLine();
-            if (line == null) {
-              break;
-            }
-            myLoggingHandler.print(line + "\n");
-          }
+          outputReader.close();
         }
-        catch (IOException e) {
-          LOG.debug(e);
-        }
-        finally {
-          try {
-            outputReader.close();
-          }
-          catch (IOException ignored) {
+        catch (IOException ignored) {
 
-          }
         }
       }
     });

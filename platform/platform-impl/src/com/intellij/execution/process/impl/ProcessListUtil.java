@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,10 +33,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,6 +42,7 @@ import java.util.List;
 
 public class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.impl.ProcessListUtil");
+  private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";
 
   @NotNull
   public static ProcessInfo[] getProcessList() {
@@ -55,22 +54,25 @@ public class ProcessListUtil {
   private static List<ProcessInfo> doGetProcessList() {
     List<ProcessInfo> result;
     if (SystemInfo.isWindows) {
+      result = getProcessListUsingWinNativeHelper();
+      if (result != null) return result;
+      LOG.info("Cannot get process list via " + WIN_PROCESS_LIST_HELPER_FILENAME + ", fallback to wmic");
 
-      result = getProcessList_WindowsWMIC();
+      result = getProcessListUsingWindowsWMIC();
       if (result != null) return result;
 
       LOG.info("Cannot get process list via wmic, fallback to tasklist");
-      result = getProcessList_WindowsTaskList();
+      result = getProcessListUsingWindowsTaskList();
       if (result != null) return result;
 
       LOG.error("Cannot get process list via wmic and tasklist");
     }
     else if (SystemInfo.isUnix) {
       if (SystemInfo.isMac) {
-        result = getProcessList_Mac();
+        result = getProcessListOnMac();
       }
       else {
-        result = getProcessList_Unix();
+        result = getProcessListOnUnix();
       }
       if (result != null) return result;
 
@@ -90,7 +92,7 @@ public class ProcessListUtil {
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine(command));
       int exitCode = processOutput.getExitCode();
       if (exitCode != 0) {
-        LOG.error("Cannot get process list, 'ps' exited with code " + exitCode + ", stdout:\n"
+        LOG.error("Cannot get process list, command '" + StringUtil.join(command, " ") +"' exited with code " + exitCode + ", stdout:\n"
                   + processOutput.getStdout()
                   + "\nstderr:\n"
                   + processOutput.getStderr());
@@ -105,7 +107,7 @@ public class ProcessListUtil {
   }
 
   @Nullable
-  private static List<ProcessInfo> getProcessList_Unix() {
+  private static List<ProcessInfo> getProcessListOnUnix() {
     File proc = new File("/proc");
 
     File[] processes = proc.listFiles();
@@ -114,7 +116,7 @@ public class ProcessListUtil {
       return null;
     }
 
-    List<ProcessInfo> result = new ArrayList<ProcessInfo>();
+    List<ProcessInfo> result = new ArrayList<>();
 
     for (File each : processes) {
       int pid = StringUtil.parseInt(each.getName(), -1);
@@ -159,7 +161,7 @@ public class ProcessListUtil {
   }
 
   @Nullable
-  private static List<ProcessInfo> getProcessList_Mac() {
+  private static List<ProcessInfo> getProcessListOnMac() {
     // In order to correctly determine executable file name and retrieve arguments from the command line
     // we need first to get the executable from 'comm' parameter, and then subtract it from the 'command' parameter.
     // Example:
@@ -167,20 +169,8 @@ public class ProcessListUtil {
     // 12  S user ./command argument list
 
     return parseCommandOutput(Arrays.asList("/bin/ps", "-a", "-x", "-o", "pid,state,user,comm"),
-                              new NullableFunction<String, List<ProcessInfo>>() {
-                                @Nullable
-                                @Override
-                                public List<ProcessInfo> fun(final String commandOnly) {
-                                  return parseCommandOutput(Arrays.asList("/bin/ps", "-a", "-x", "-o", "pid,state,user,command"),
-                                                            new NullableFunction<String, List<ProcessInfo>>() {
-                                                              @Nullable
-                                                              @Override
-                                                              public List<ProcessInfo> fun(String full) {
-                                                                return parseMacOutput(commandOnly, full);
-                                                              }
-                                                            });
-                                }
-                              });
+                              commandOnly -> parseCommandOutput(Arrays.asList("/bin/ps", "-a", "-x", "-o", "pid,state,user,command"),
+                                                        full -> parseMacOutput(commandOnly, full)));
   }
 
 
@@ -190,12 +180,12 @@ public class ProcessListUtil {
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
 
-    TIntObjectHashMap<String> idToCommand = new TIntObjectHashMap<String>();
+    TIntObjectHashMap<String> idToCommand = new TIntObjectHashMap<>();
     for (MacProcessInfo each : commands) {
       idToCommand.put(each.pid, each.commandLine);
     }
 
-    List<ProcessInfo> result = new ArrayList<ProcessInfo>();
+    List<ProcessInfo> result = new ArrayList<>();
     for (MacProcessInfo each : fulls) {
       if (!idToCommand.containsKey(each.pid)) continue;
 
@@ -265,16 +255,76 @@ public class ProcessListUtil {
     }
   }
 
+  private static List<ProcessInfo> getProcessListUsingWinNativeHelper() {
+    try {
+      File nativeHelper = findNativeHelper();
+      return parseCommandOutput(Collections.singletonList(nativeHelper.getAbsolutePath()), ProcessListUtil::parseWinNativeHelperOutput);
+    }
+    catch (FileNotFoundException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  private static List<ProcessInfo> parseWinNativeHelperOutput(String output) throws IllegalStateException {
+    String[] strings = StringUtil.splitByLines(output, false);
+    ArrayList<ProcessInfo> result = new ArrayList<>();
+    int processCount = strings.length / 3;
+    for (int i = 0; i < processCount; i++) {
+      int offset = i * 3;
+      int id = StringUtil.parseInt(strings[offset], -1);
+      if (id == -1 || id == 0) continue;
+
+      String name = strings[offset + 1];
+      if (StringUtil.isEmpty(name)) continue;
+
+      String commandLine = strings[offset + 2];
+      String args;
+      if (commandLine.isEmpty()) {
+        commandLine = name;
+        args = "";
+      }
+      else {
+        args = extractCommandLineArgs(commandLine, name);
+      }
+      result.add(new ProcessInfo(id, commandLine, name, args));
+    }
+    return result;
+  }
+
+  private static String extractCommandLineArgs(String fullCommandLine, String executableName) {
+    List<String> commandLineList = StringUtil.splitHonorQuotes(fullCommandLine, ' ');
+    if (commandLineList.isEmpty()) return "";
+
+    String first = StringUtil.unquoteString(commandLineList.get(0));
+    if (StringUtil.endsWithIgnoreCase(first, executableName)) {
+      List<String> argsList = commandLineList.subList(1, commandLineList.size());
+      return StringUtil.join(argsList, " ");
+    }
+    return "";
+  }
+
+  private static File findNativeHelper() throws FileNotFoundException {
+    String prefix = "win";
+    String[] dirs = {
+      PathManager.getBinPath(),
+      PathManager.getHomePath() + "/ultimate/community/bin/" + prefix,
+      PathManager.getHomePath() + "/community/bin/" + prefix,
+      PathManager.getBinPath() + '/' + prefix
+    };
+    for (String dir : dirs) {
+      File file = new File(dir, WIN_PROCESS_LIST_HELPER_FILENAME);
+      if (file.isFile()) {
+        return file;
+      }
+    }
+    throw new FileNotFoundException(String.format("%s was not found at: %s", WIN_PROCESS_LIST_HELPER_FILENAME, StringUtil.join(dirs, ",")));
+  }
+
   @Nullable
-  static List<ProcessInfo> getProcessList_WindowsWMIC() {
+  static List<ProcessInfo> getProcessListUsingWindowsWMIC() {
     return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline,ExecutablePath"),
-                              new NullableFunction<String, List<ProcessInfo>>() {
-                                @Nullable
-                                @Override
-                                public List<ProcessInfo> fun(String output) {
-                                  return parseWMICOutput(output);
-                                }
-                              });
+                              output -> parseWMICOutput(output));
   }
 
   @Nullable
@@ -305,17 +355,14 @@ public class ProcessListUtil {
       String name = line.substring(0, commandLineStart).trim();
       if (name.isEmpty()) continue;
 
-      String commandLine = line.substring(commandLineStart, pidStart).trim();
+      String commandLine = line.substring(commandLineStart, executablePathStart).trim();
       String args = "";
 
       if (commandLine.isEmpty()) {
         commandLine = name;
       }
       else {
-        int nameIndex = StringUtil.indexOfIgnoreCase(commandLine, name, 0);
-        if (nameIndex != -1) {
-          args = commandLine.substring(nameIndex + name.length()).trim();
-        }
+        args = extractCommandLineArgs(commandLine, name);
       }
 
       result.add(new ProcessInfo(pid, commandLine, name, args, executablePath));
@@ -324,15 +371,9 @@ public class ProcessListUtil {
   }
 
   @Nullable
-  static List<ProcessInfo> getProcessList_WindowsTaskList() {
+  static List<ProcessInfo> getProcessListUsingWindowsTaskList() {
     return parseCommandOutput(Arrays.asList("tasklist.exe", "/fo", "csv", "/nh", "/v"),
-                              new NullableFunction<String, List<ProcessInfo>>() {
-                                @Nullable
-                                @Override
-                                public List<ProcessInfo> fun(String output) {
-                                  return parseListTasksOutput(output);
-                                }
-                              });
+                              output -> parseListTasksOutput(output));
   }
 
   @Nullable

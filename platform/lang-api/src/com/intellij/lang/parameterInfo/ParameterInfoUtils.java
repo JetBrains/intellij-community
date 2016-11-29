@@ -42,6 +42,7 @@ public class ParameterInfoUtils {
     return findParentOfTypeWithStopElements(file, offset, parentClass);
   }
 
+  @SafeVarargs
   @Nullable
   public static <T extends PsiElement> T findParentOfTypeWithStopElements (PsiFile file, int offset, Class<T> parentClass, @NotNull Class<? extends PsiElement>... stopAt) {
     PsiElement element = file.findElementAt(offset);
@@ -100,28 +101,30 @@ public class ParameterInfoUtils {
     while(true){
       if (findArgumentListHelper.getArgumentListClass().isInstance(parent)) {
         TextRange range = parent.getTextRange();
-        if (!acceptRparenth){
-          if (offset == range.getEndOffset() - 1){
-            PsiElement[] children = parent.getChildren();
-            if (children.length == 0) return null;
-            PsiElement last = children[children.length - 1];
-            if (last.getNode().getElementType() == findArgumentListHelper.getActualParametersRBraceType()){
+        if (range != null) {
+          if (!acceptRparenth){
+            if (offset == range.getEndOffset() - 1){
+              PsiElement[] children = parent.getChildren();
+              if (children.length == 0) return null;
+              PsiElement last = children[children.length - 1];
+              if (last.getNode().getElementType() == findArgumentListHelper.getActualParametersRBraceType()){
+                parent = parent.getParent();
+                continue;
+              }
+            }
+          }
+          if (!acceptLparenth){
+            if (offset == range.getStartOffset()){
               parent = parent.getParent();
               continue;
             }
           }
-        }
-        if (!acceptLparenth){
-          if (offset == range.getStartOffset()){
+          if (lbraceOffset >= 0 && range.getStartOffset() != lbraceOffset){
             parent = parent.getParent();
             continue;
           }
+          break;
         }
-        if (lbraceOffset >= 0 && range.getStartOffset() != lbraceOffset){
-          parent = parent.getParent();
-          continue;
-        }
-        break;
       }
       if (parent instanceof PsiFile || parent == null) return null;
 

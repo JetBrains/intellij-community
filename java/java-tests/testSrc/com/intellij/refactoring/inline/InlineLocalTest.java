@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,14 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,6 +62,11 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
 
   public void testIdeaDEV9404 () throws Exception {
     doTest(false);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17(); // there is JPanel inside
   }
 
   public void testIDEADEV12244 () throws Exception {
@@ -248,13 +255,49 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testParenthesisAroundInlinedLambda() throws Exception {
+    doTest(true);
+  }
+
   public void testArrayAccessPriority() throws Exception {
     doTest(true);
+  }
+
+  public void testDecodeRefsBeforeCheckingOverRedundantCasts() throws Exception {
+    doTest(true);
+  }
+
+  public void testDontOpenMultidimensionalArrays() throws Exception {
+    doTest(false);
+  }
+
+  public void testInsertNarrowingCastToAvoidSemanticsChange() throws Exception {
+    doTest(false);
+  }
+
+  public void testInsertCastToGenericTypeToProvideValidReturnType() throws Exception {
+    doTest(false);
+  }
+
+  public void testOperationPrecedenceWhenInlineToStringConcatenation() throws Exception {
+    doTest(false);
+  }
+
+  public void testParenthesisAroundCast() throws Exception {
+    doTest(false);
   }
 
   public void testLocalVarInsideLambdaBodyWriteUsage() throws Exception {
     doTest(true, "Cannot perform refactoring.\n" +
                  "Variable 'hello' is accessed for writing");
+  }
+
+  public void testInlineVariableIntoNestedLambda() throws Exception {
+    doTest(false);
+  }
+
+  public void testAvoidTypeSpecificationWhenPossibleToAvoid() throws Exception {
+    doTest(false);
   }
 
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {

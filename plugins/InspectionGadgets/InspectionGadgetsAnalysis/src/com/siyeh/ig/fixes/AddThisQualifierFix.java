@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AddThisQualifierFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("add.this.qualifier.quickfix");
   }
 
@@ -74,7 +69,11 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
           return;
         }
       }
-      newExpression = containingClass.getQualifiedName() + ".this." + expression.getText();
+      final String qualifiedName = containingClass.getQualifiedName();
+      if (qualifiedName == null) {
+        return;
+      }
+      newExpression = qualifiedName + ".this." + expression.getText();
     }
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression);
   }

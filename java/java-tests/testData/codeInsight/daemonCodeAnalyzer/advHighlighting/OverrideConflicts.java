@@ -1,13 +1,17 @@
 // throws conflicts on overriding/ override final
 import java.io.*;
-import java.net.*;
+
 public class a extends c3 {
  public void f() throws <error descr="'f()' in 'a' clashes with 'f()' in 'c3'; overridden method does not throw 'java.lang.Exception'">Exception</error> {
  }
 }
+class SocketException extends IOException {
+}
+class ConnectException extends SocketException {
+}
 
 interface i {
- void f() throws java.net.SocketException;
+ void f() throws SocketException;
 }
 class c2 implements i {
  public void f() throws <error descr="'f()' in 'c2' clashes with 'f()' in 'i'; overridden method does not throw 'java.io.IOException'">java.io.IOException</error> {}
@@ -17,11 +21,11 @@ class c2i implements i {
 }
 
 class c3 implements i {
- public void f() throws java.net.ConnectException {}
+ public void f() throws ConnectException {}
 }
 
 class c4 extends c3 {
- public void f() throws java.net.ConnectException {}
+ public void f() throws ConnectException {}
 }
 
 interface MethodsFromObject {

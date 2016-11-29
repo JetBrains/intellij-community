@@ -52,7 +52,7 @@ public class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
 
   // we don't want test subclasses to accidentally remove allowed files, added by base classes
-  private static final Set<String> ourAdditionalRoots = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+  private static final Set<String> ourAdditionalRoots = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
   private static boolean insideGettingRoots;
 
   @TestOnly
@@ -101,7 +101,7 @@ public class VfsRootAccess {
         }
       }
 
-      assert isUnder : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<String>(allowed);
+      assert isUnder : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<>(allowed);
     }
   }
 
@@ -112,7 +112,7 @@ public class VfsRootAccess {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
 
-    final Set<String> allowed = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> allowed = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
@@ -163,7 +163,7 @@ public class VfsRootAccess {
 
   private static VirtualFile[] getAllRoots(@NotNull Project project) {
     insideGettingRoots = true;
-    final Set<VirtualFile> roots = new THashSet<VirtualFile>();
+    final Set<VirtualFile> roots = new THashSet<>();
 
     final OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries();
     ContainerUtil.addAll(roots, enumerator.getClassesRoots());

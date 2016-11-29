@@ -16,14 +16,15 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.Location;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
-import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -34,17 +35,22 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.*;
 
-public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<TestDiscoveryConfiguration> {
+public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationBase> {
   protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
     super(type);
   }
 
+
+  protected abstract void setPosition(JavaTestConfigurationBase configuration, PsiLocation<PsiMethod> position);
+  protected abstract Pair<String, String> getPosition(JavaTestConfigurationBase configuration);
+
   @Override
-  protected boolean setupConfigurationFromContext(final TestDiscoveryConfiguration configuration,
+  protected boolean setupConfigurationFromContext(final JavaTestConfigurationBase configuration,
                                                   ConfigurationContext configurationContext,
                                                   Ref<PsiElement> ref) {
     if (!Registry.is("testDiscovery.enabled")) {
@@ -54,36 +60,75 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     assert contextLocation != null;
     final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) return false;
-    final Pair<String, String> position = getPosition(location);
-    if (position != null) {
+    final PsiMethod sourceMethod = getSourceMethod(location);
+    final Pair<String, String> position = getPosition(sourceMethod);
+    if (sourceMethod != null && position != null) {
       try {
-        final Collection<String> testsByMethodName = TestDiscoveryIndex
-          .getInstance(configuration.getProject()).getTestsByMethodName(position.first, position.second);
-        if (testsByMethodName == null || ContainerUtil.filter(testsByMethodName, new Condition<String>() {
-          @Override
-          public boolean value(String s) {
-            return s.startsWith(configuration.getFrameworkPrefix());
+        final Project project = configuration.getProject();
+        final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
+        final Collection<String> testsByMethodName = testDiscoveryIndex.getTestsByMethodName(position.first, position.second);
+        if (testsByMethodName == null ||
+            ContainerUtil.filter(testsByMethodName, s -> s.startsWith(configuration.getFrameworkPrefix())).isEmpty()) {
+          return false;
+        }
+        setPosition(configuration, new PsiLocation<>(sourceMethod));
+        configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
+
+        final RunnerAndConfigurationSettings template =
+          configurationContext.getRunManager().getConfigurationTemplate(getConfigurationFactory());
+        final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+        if (predefinedModule != null) {
+          configuration.setModule(predefinedModule);
+        }
+
+        //potentially this set won't be big, it reflects modules from where user starts his tests
+        final Collection<String> modules = testDiscoveryIndex.getTestModulesByMethodName(position.first,
+                                                                                         position.second,
+                                                                                         configuration.getFrameworkPrefix());
+        if (modules.isEmpty()) return true;
+
+        final List<Module> survivedModules = new ArrayList<>();
+        final ModuleManager moduleManager = ModuleManager.getInstance(project);
+        for (String moduleName : modules) {
+          final Module moduleByName = moduleManager.findModuleByName(moduleName);
+          if (moduleByName != null) {
+            survivedModules.add(moduleByName);
           }
-        }).isEmpty()) return false;
-        
+        }
+        if (survivedModules.isEmpty()) return true;
+
+        final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
+        survivedModules
+          .forEach(module -> {
+            final List<Module> dependentModules = ModuleUtilCore.getAllDependentModules(module);
+            dependentModules.add(module);
+            allModules.retainAll(dependentModules);
+          });
+        if (!allModules.isEmpty()) {
+          Module aModule = allModules.iterator().next();
+          for (Module module : survivedModules) {
+            if (allModules.contains(module)) {
+              aModule = module;
+            }
+          }
+          configuration.setModule(aModule);
+        }
+
+        return true;
       }
       catch (IOException e) {
         return false;
       }
-      configuration.setPosition(position);
-      configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
-      setupPackageConfiguration(configurationContext, configuration, TestSearchScope.MODULE_WITH_DEPENDENCIES);
-      return true;
     }
     return false;
   }
 
   @Override
-  protected Module findModule(TestDiscoveryConfiguration configuration, Module contextModule) {
+  protected Module findModule(JavaTestConfigurationBase configuration, Module contextModule) {
     return null;
   }
 
-  private static Pair<String, String> getPosition(Location location) {
+  private static PsiMethod getSourceMethod(Location location) {
     final PsiElement psiElement = location.getPsiElement();
     final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (psiMethod != null) {
@@ -93,18 +138,30 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
         if (testFramework != null) {
           return null;
         }
-        final String qualifiedName = containingClass.getQualifiedName();
-        if (qualifiedName != null) {
-          return Pair.create(qualifiedName, psiMethod.getName());
-        }
+        return psiMethod;
       }
     }
     return null;
   }
 
+  private static Pair<String, String> getPosition(PsiMethod method) {
+    if (method == null) {
+      return null;
+    }
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) {
+      return null;
+    }
+    final String qualifiedName = containingClass.getQualifiedName();
+    if (qualifiedName != null) {
+      return Pair.create(qualifiedName, method.getName());
+    }
+    return null;
+  }
+
   @Override
-  public boolean isConfigurationFromContext(TestDiscoveryConfiguration configuration, ConfigurationContext configurationContext) {
-    final Pair<String, String> position = getPosition(configurationContext.getLocation());
-    return position != null && position.equals(configuration.getPosition());
+  public boolean isConfigurationFromContext(JavaTestConfigurationBase configuration, ConfigurationContext configurationContext) {
+    final Pair<String, String> position = getPosition(getSourceMethod(configurationContext.getLocation()));
+    return position != null && position.equals(getPosition(configuration));
   }
 }

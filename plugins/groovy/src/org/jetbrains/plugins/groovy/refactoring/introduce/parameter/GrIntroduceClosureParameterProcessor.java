@@ -126,7 +126,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     if (!mySettings.generateDelegate()) {
       detectAccessibilityConflicts(usagesIn, conflicts);
@@ -172,7 +172,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
 
     if (!mySettings.generateDelegate() && toSearchFor != null) {
       Collection<PsiReference> refs;
@@ -229,21 +229,11 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     final PsiElement parent = initializer.getParent();
     if (parent instanceof GrVariable) {
-      writeInstr = ContainerUtil.find(flow, new Condition<Instruction>() {
-        @Override
-        public boolean value(Instruction instruction) {
-          return instruction.getElement() == var;
-        }
-      });
+      writeInstr = ContainerUtil.find(flow, instruction -> instruction.getElement() == var);
     }
     else if (parent instanceof GrAssignmentExpression) {
       final GrReferenceExpression refExpr = (GrReferenceExpression)((GrAssignmentExpression)parent).getLValue();
-      final Instruction instruction = ContainerUtil.find(flow, new Condition<Instruction>() {
-        @Override
-        public boolean value(Instruction instruction) {
-          return instruction.getElement() == refExpr;
-        }
-      });
+      final Instruction instruction = ContainerUtil.find(flow, instruction1 -> instruction1.getElement() == refExpr);
 
       LOG.assertTrue(instruction != null);
       final BitSet prev = writes.get(instruction.num());
@@ -254,7 +244,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     LOG.assertTrue(writeInstr != null);
 
-    Collection<PsiReference> result = new ArrayList<PsiReference>();
+    Collection<PsiReference> result = new ArrayList<>();
     for (Instruction instruction : flow) {
       if (!(instruction instanceof ReadWriteVariableInstruction)) continue;
       if (((ReadWriteVariableInstruction)instruction).isWrite()) continue;

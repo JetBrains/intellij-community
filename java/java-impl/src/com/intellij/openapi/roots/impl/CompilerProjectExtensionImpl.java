@@ -102,7 +102,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
 
   @NotNull
   private Set<String> getRootsToWatch() {
-    final Set<String> rootsToWatch = new HashSet<String>();
+    final Set<String> rootsToWatch = new HashSet<>();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       final String compilerOutputPath = ProjectRootManagerImpl.extractLocalPath(CompilerModuleExtension.getInstance(module).getCompilerOutputUrl());

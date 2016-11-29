@@ -28,7 +28,7 @@ import java.util.Map;
  * @author yole
  */
 public class CacheBuilderRegistryImpl extends CacheBuilderRegistry {
-  private final Map<FileType, WordsScanner> myMap = new HashMap<FileType, WordsScanner>();
+  private final Map<FileType, WordsScanner> myMap = new HashMap<>();
 
   @Override
   public void registerCacheBuilder(@NotNull FileType fileType, WordsScanner cacheBuilder) {

@@ -6,7 +6,7 @@
 
 (default) 1.127 # anything not explicitly marked
 
-(built-in) 1.138 # skeletons of all built-in modules are built together
+(built-in) 1.145 # skeletons of all built-in modules are built together
 # Note: modules like itertools, etc are "(built-in)" and are ignored if given separately
 
 _fileio 1.127
@@ -45,3 +45,6 @@ _bsddb 1.127
 h5py.h5  1.127
 h5py.h5i 1.127
 h5py.h5g 1.127
+
+numpy.random.mtrand 1.140
+numpy.core.multiarray 1.143

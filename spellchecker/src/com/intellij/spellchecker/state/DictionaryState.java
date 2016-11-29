@@ -33,7 +33,7 @@ public class DictionaryState implements PersistentStateComponent<DictionaryState
   public static final String NAME_ATTRIBUTE = "name";
 
   @Tag("words") @AbstractCollection(surroundWithTag = false, elementTag = "w", elementValueAttribute = "")
-  public Set<String> words = new HashSet<String>();
+  public Set<String> words = new HashSet<>();
 
   @Attribute(NAME_ATTRIBUTE)
   public String name;
@@ -67,7 +67,7 @@ public class DictionaryState implements PersistentStateComponent<DictionaryState
 
   private void synchronizeWords() {
     if (dictionary != null) {
-      Set<String> words = new HashSet<String>();
+      Set<String> words = new HashSet<>();
       words.addAll(dictionary.getWords());
       this.words = words;
     }

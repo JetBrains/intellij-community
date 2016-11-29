@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,13 +73,12 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     return runtimeName.startsWith(SCRIPT_CLOSURE_PREFIX) || GRADLE_CLASS_PATTERN.matcher(runtimeName).matches();
   }
 
-  public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
-    return scriptFile instanceof GroovyFile &&
-           GroovyScriptUtil.isSpecificScriptFile((GroovyFile)scriptFile, GradleScriptType.INSTANCE);
+  public boolean isAppropriateScriptFile(@NotNull final GroovyFile scriptFile) {
+    return GroovyScriptUtil.isSpecificScriptFile(scriptFile, GradleScriptType.INSTANCE);
   }
 
   @NotNull
-  public String getRuntimeScriptName(@NotNull final String originalName, GroovyFile groovyFile) {
+  public String getRuntimeScriptName(@NotNull GroovyFile groovyFile) {
     VirtualFile virtualFile = groovyFile.getVirtualFile();
     if (virtualFile == null) return "";
 
@@ -94,7 +93,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     return className == null ? "" : className;
   }
 
-  public PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project, GlobalSearchScope scope) {
+  public PsiFile getExtraScriptIfNotFound(@NotNull ReferenceType refType, @NotNull String runtimeName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     String sourceFilePath = getScriptForClassName(refType);
     if (sourceFilePath == null) return null;
 
@@ -120,11 +119,8 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   @Nullable
   private ClassLoader getGradleClassLoader(@NotNull final Module module) {
     final Project project = module.getProject();
-    return CachedValuesManager.getManager(project).getCachedValue(module, GRADLE_CLASS_LOADER, new CachedValueProvider<ClassLoader>() {
-      public Result<ClassLoader> compute() {
-        return Result.create(createGradleClassLoader(module), ProjectRootManager.getInstance(project));
-        }
-      }, false);
+    return CachedValuesManager.getManager(project).getCachedValue(module, GRADLE_CLASS_LOADER,
+                                                                  () -> CachedValueProvider.Result.create(createGradleClassLoader(module), ProjectRootManager.getInstance(project)), false);
   }
 
   @Nullable
@@ -138,7 +134,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
       return null;
     }
 
-    List<URL> urls = new ArrayList<URL>();
+    List<URL> urls = new ArrayList<>();
     final VirtualFile libDir = sdkHome.findChild("lib");
     assert libDir != null;
     for (final VirtualFile child : libDir.getChildren()) {

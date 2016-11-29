@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportWizardStep;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -69,19 +70,19 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
     c.gridy = 0;
     c.weightx = 1;
     c.fill = GridBagConstraints.HORIZONTAL;
-    c.insets = new Insets(4, 4, 0, 4);
+    c.insets = JBUI.insets(4, 4, 0, 4);
 
     myPanel.add(myRootPathComponent, c);
 
     c.gridy = 1;
-    c.insets = new Insets(4, 4, 0, 4);
+    c.insets = JBUI.insets(4, 4, 0, 4);
     myPanel.add(myImportingSettingsForm.createComponent(), c);
 
     c.gridy = 2;
     c.fill = GridBagConstraints.NONE;
     c.anchor = GridBagConstraints.NORTHEAST;
     c.weighty = 1;
-    c.insets = new Insets(4 + envSettingsButton.getPreferredSize().height, 4, 4, 4);
+    c.insets = JBUI.insets(4 + envSettingsButton.getPreferredSize().height, 4, 4, 4);
     myPanel.add(envSettingsButton, c);
 
     myRootPathComponent.setNameComponentVisible(false);
@@ -115,10 +116,8 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
       else {
         path = getWizardContext().getProjectFileDirectory();
       }
-      if (path != null) {
-        myRootPathComponent.setPath(FileUtil.toSystemDependentName(path));
-        myRootPathComponent.getPathComponent().selectAll();
-      }
+      myRootPathComponent.setPath(FileUtil.toSystemDependentName(path));
+      myRootPathComponent.getPathComponent().selectAll();
     }
     myImportingSettingsForm.setData(getImportingSettings());
   }

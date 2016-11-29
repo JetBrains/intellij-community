@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntenti
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return "Convert primitive to boxed type";
   }
 
   @Override

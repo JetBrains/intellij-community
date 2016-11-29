@@ -6,7 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
-import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.learning.core.EduNames;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +33,7 @@ public class CreateCourseArchivePanel extends JPanel {
     myNameField.setText(sanitizedName.startsWith("_") ? EduNames.COURSE : sanitizedName);
     myLocationField.setText(project.getBasePath());
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myLocationField.addBrowseFolderListener("Choose location folder", null, project, descriptor);
+    myLocationField.addBrowseFolderListener("Choose Location Folder", null, project, descriptor);
     myLocationField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

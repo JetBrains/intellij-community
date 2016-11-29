@@ -34,18 +34,15 @@ import java.util.TreeSet;
  * @author peter
  */
 class ImplementationClassCache {
-  private static final Comparator<Class> CLASS_COMPARATOR = new Comparator<Class>() {
-    @Override
-    public int compare(final Class o1, final Class o2) {
-      if (o1.isAssignableFrom(o2)) return 1;
-      if (o2.isAssignableFrom(o1)) return -1;
-      if (o1.equals(o2)) return 0;
-      throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
-    }
+  private static final Comparator<Class> CLASS_COMPARATOR = (o1, o2) -> {
+    if (o1.isAssignableFrom(o2)) return 1;
+    if (o2.isAssignableFrom(o1)) return -1;
+    if (o1.equals(o2)) return 0;
+    throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
   };
 
 
-  private final MultiMap<String, DomImplementationClassEP> myImplementationClasses = new MultiMap<String, DomImplementationClassEP>();
+  private final MultiMap<String, DomImplementationClassEP> myImplementationClasses = new MultiMap<>();
   private final SofterCache<Class, Class> myCache = SofterCache.create(new NotNullFunction<Class, Class>() {
     @NotNull
     @Override
@@ -61,7 +58,7 @@ class ImplementationClassCache {
   }
 
   private Class calcImplementationClass(Class concreteInterface) {
-    final TreeSet<Class> set = new TreeSet<Class>(CLASS_COMPARATOR);
+    final TreeSet<Class> set = new TreeSet<>(CLASS_COMPARATOR);
     findImplementationClassDFS(concreteInterface, set);
     if (!set.isEmpty()) {
       return set.first();

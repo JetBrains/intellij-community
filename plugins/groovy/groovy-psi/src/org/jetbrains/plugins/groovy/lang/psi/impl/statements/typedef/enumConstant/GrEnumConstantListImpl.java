@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
@@ -53,10 +52,5 @@ public class GrEnumConstantListImpl extends GrStubElementBase<EmptyStub> impleme
   @Override
   public GrEnumConstant[] getEnumConstants() {
     return getStubOrPsiChildren(GroovyElementTypes.ENUM_CONSTANT, GrEnumConstant.ARRAY_FACTORY);
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
   }
 }

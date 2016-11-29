@@ -106,7 +106,8 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
   @Nullable
   protected Content getContentFromEvent(@NotNull AnActionEvent e) {
     Content content = getNonToolWindowContent(e);
-    return content != null ? content : getToolWindowContent(e);
+    if (content == null) content = getToolWindowContent(e);
+    return content != null && content.isValid() ? content : null;
   }
 
   @NotNull
@@ -139,7 +140,7 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(e.getDataContext(), true);
     result = contentManager != null? contentManager.getSelectedContent() : null;
     if (result != null && result.isPinnable()) return result;
-    return getToolWindowContent(e);
+    return null;
   }
 
   @Nullable

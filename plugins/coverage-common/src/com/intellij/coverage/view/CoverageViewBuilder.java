@@ -87,7 +87,7 @@ public class CoverageViewBuilder extends AbstractListBuilder {
 
   @Override
   protected List<AbstractTreeNode> getAllAcceptableNodes(Object[] childElements, VirtualFile file) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
     for (Object childElement1 : childElements) {
       CoverageListNode childElement = (CoverageListNode)childElement1;

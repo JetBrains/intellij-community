@@ -60,8 +60,8 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   private static final ArrangementSettingsToken ANON_CLASS_PARAMETER_LIST = new ArrangementSettingsToken("Dummy", "not matchable anon class argument list");
   private static final ArrangementSettingsToken ANONYMOUS_CLASS_BODY = new ArrangementSettingsToken("Dummy", "not matchable anonymous class body");
 
-  @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<JavaElementArrangementEntry>();
-  @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<PsiElement, JavaElementArrangementEntry>();
+  @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<>();
+  @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<>();
 
   @NotNull private final  JavaArrangementParseInfo      myInfo;
   @NotNull private final  Collection<TextRange>         myRanges;
@@ -85,13 +85,10 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     myGroupingRules = getGroupingRules(settings);
 
     myMethodBodyProcessor = new MethodBodyProcessor(infoHolder);
-    mySectionDetector = new ArrangementSectionDetector(document, settings, new Consumer<ArrangementSectionEntryTemplate>() {
-      @Override
-      public void consume(ArrangementSectionEntryTemplate data) {
-        TextRange range = data.getTextRange();
-        JavaSectionArrangementEntry entry = new JavaSectionArrangementEntry(getCurrent(), data.getToken(), range, data.getText(), true);
-        registerEntry(data.getElement(), entry);
-      }
+    mySectionDetector = new ArrangementSectionDetector(document, settings, data -> {
+      TextRange range = data.getTextRange();
+      JavaSectionArrangementEntry entry = new JavaSectionArrangementEntry(getCurrent(), data.getToken(), range, data.getText(), true);
+      registerEntry(data.getElement(), entry);
     });
   }
 
@@ -127,17 +124,14 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       return;
     }
 
-    processChildrenWithinEntryScope(entry, new Runnable() {
-      @Override
-      public void run() {
-        PsiElement current = lBrace;
-        while (current != rBrace) {
-          current = current.getNextSibling();
-          if (current == null) {
-            break;
-          }
-          current.accept(JavaArrangementVisitor.this);
+    processChildrenWithinEntryScope(entry, () -> {
+      PsiElement current = lBrace;
+      while (current != rBrace) {
+        current = current.getNextSibling();
+        if (current == null) {
+          break;
         }
+        current.accept(this);
       }
     });
   }
@@ -168,16 +162,13 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     if (entry == null) {
       return;
     }
-    processChildrenWithinEntryScope(entry, new Runnable() {
-      @Override
-      public void run() {
-        PsiExpressionList list = aClass.getArgumentList();
-        if (list != null && list.getTextLength() > 0) {
-          JavaElementArrangementEntry listEntry = createNewEntry(list, list.getTextRange(), ANON_CLASS_PARAMETER_LIST, aClass.getName(), true);
-          processEntry(listEntry, null, list);
-        }
-        createAndProcessAnonymousClassBodyEntry(aClass);
+    processChildrenWithinEntryScope(entry, () -> {
+      PsiExpressionList list = aClass.getArgumentList();
+      if (list != null && list.getTextLength() > 0) {
+        JavaElementArrangementEntry listEntry = createNewEntry(list, list.getTextRange(), ANON_CLASS_PARAMETER_LIST, aClass.getName(), true);
+        processEntry(listEntry, null, list);
       }
+      createAndProcessAnonymousClassBodyEntry(aClass);
     });
   }
 
@@ -257,7 +248,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   @NotNull
   private List<PsiField> getReferencedFields(@NotNull final PsiField field) {
-    final List<PsiField> referencedElements = new ArrayList<PsiField>();
+    final List<PsiField> referencedElements = new ArrayList<>();
 
     PsiExpression fieldInitializer = field.getInitializer();
     PsiClass containingClass = field.getContainingClass();
@@ -485,12 +476,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     if (nextPsiRoot == null) {
       return;
     }
-    processChildrenWithinEntryScope(entry, new Runnable() {
-      @Override
-      public void run() {
-        nextPsiRoot.acceptChildren(JavaArrangementVisitor.this);
-      }
-    });
+    processChildrenWithinEntryScope(entry, () -> nextPsiRoot.acceptChildren(this));
   }
 
   private void processChildrenWithinEntryScope(@NotNull JavaElementArrangementEntry entry, @NotNull Runnable childrenProcessing) {

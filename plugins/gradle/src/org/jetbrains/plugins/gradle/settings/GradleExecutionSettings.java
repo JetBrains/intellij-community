@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +34,8 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final long serialVersionUID = 1L;
 
+  @NotNull private final GradleExecutionWorkspace myExecutionWorkspace = new GradleExecutionWorkspace();
+
   @NotNull private final List<ClassHolder<? extends GradleProjectResolverExtension>> myResolverExtensions = ContainerUtilRt.newArrayList();
   @Nullable private final String myGradleHome;
 
@@ -48,6 +49,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable private String myJavaHome;
   @Nullable
   private String myIdeProjectPath;
+  private boolean resolveModulePerSourceSet = true;
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
@@ -95,6 +97,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     return myIsOfflineWork;
   }
 
+  public boolean isResolveModulePerSourceSet() {
+    return resolveModulePerSourceSet;
+  }
+
+  public void setResolveModulePerSourceSet(boolean resolveModulePerSourceSet) {
+    this.resolveModulePerSourceSet = resolveModulePerSourceSet;
+  }
+
   @NotNull
   public List<ClassHolder<? extends GradleProjectResolverExtension>> getResolverExtensions() {
     return myResolverExtensions;
@@ -124,6 +134,11 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @NotNull
   public DistributionType getDistributionType() {
     return myDistributionType;
+  }
+
+  @NotNull
+  public GradleExecutionWorkspace getExecutionWorkspace() {
+    return myExecutionWorkspace;
   }
 
   @Override

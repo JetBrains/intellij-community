@@ -52,7 +52,7 @@ public class JpsLibraryDelegate implements LibraryEx {
   public JpsLibraryDelegate(JpsLibrary library, JpsLibraryTableImpl table) {
     myJpsLibrary = library;
     myLibraryTable = table;
-    myRoots = new HashMap<OrderRootType, VirtualFilePointerContainer>();
+    myRoots = new HashMap<>();
   }
 
   @Override
@@ -83,7 +83,7 @@ public class JpsLibraryDelegate implements LibraryEx {
   public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     if (container == null) return VirtualFile.EMPTY_ARRAY;
-    final List<VirtualFile> expanded = new ArrayList<VirtualFile>();
+    final List<VirtualFile> expanded = new ArrayList<>();
     for (JpsLibraryRoot root : myJpsLibrary.getRoots(getJpsRootType(rootType))) {
       final VirtualFilePointer pointer = container.findByUrl(root.getUrl());
       if (pointer == null) continue;
@@ -108,7 +108,7 @@ public class JpsLibraryDelegate implements LibraryEx {
     for (VirtualFilePointer pointer : pointers) {
       if (!pointer.isValid()) {
         if (invalidPaths == null) {
-          invalidPaths = new SmartList<String>();
+          invalidPaths = new SmartList<>();
         }
         invalidPaths.add(pointer.getUrl());
       }
@@ -198,7 +198,7 @@ public class JpsLibraryDelegate implements LibraryEx {
     @NotNull
     @Override
     public String[] getUrls(@NotNull OrderRootType rootType) {
-      Set<String> originalUrls = new LinkedHashSet<String>(Arrays.asList(JpsLibraryDelegate.this.getUrls(rootType)));
+      Set<String> originalUrls = new LinkedHashSet<>(Arrays.asList(JpsLibraryDelegate.this.getUrls(rootType)));
       for (VirtualFile file : getFiles(rootType)) { // Add those expanded with jar directories.
         originalUrls.add(file.getUrl());
       }

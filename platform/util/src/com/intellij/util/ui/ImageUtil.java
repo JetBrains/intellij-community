@@ -60,6 +60,30 @@ public class ImageUtil {
     return image.getHeight(null);
   }
 
+  public static int getUserWidth(@NotNull Image image) {
+    if (image instanceof JBHiDPIScaledImage) {
+      Image img = ((JBHiDPIScaledImage)image).getDelegate();
+      if (img != null) {
+        return ((JBHiDPIScaledImage)image).getWidth();
+      } else {
+        return ((JBHiDPIScaledImage)image).getWidth() / 2;
+      }
+    }
+    return image.getWidth(null);
+  }
+
+  public static int getUserHeight(@NotNull Image image) {
+    if (image instanceof JBHiDPIScaledImage) {
+      Image img = ((JBHiDPIScaledImage)image).getDelegate();
+      if (img != null) {
+        return ((JBHiDPIScaledImage)image).getHeight();
+      } else {
+        return ((JBHiDPIScaledImage)image).getHeight() / 2;
+      }
+    }
+    return image.getHeight(null);
+  }
+
   public static Image filter(Image image, ImageFilter filter) {
     if (image == null || filter == null) return image;
     return Toolkit.getDefaultToolkit().createImage(

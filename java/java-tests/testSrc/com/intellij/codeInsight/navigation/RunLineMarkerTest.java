@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
@@ -32,9 +31,7 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("ConstantConditions")
 public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
-
   public void testRunLineMarker() throws Exception {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void <caret>foo(String[] args) {\n" +
@@ -43,7 +40,8 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
                                                "    }\n" +
                                                "}");
     assertEquals(0, myFixture.findGuttersAtCaret().size());
-    assertEquals(2, myFixture.findAllGutters().size());
+    List<GutterMark> gutters = myFixture.findAllGutters();
+    assertEquals(2, gutters.size());
   }
 
   public void testTestClassWithMain() throws Exception {
@@ -77,12 +75,7 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     GutterIconsConfigurable configurable = new GutterIconsConfigurable();
     configurable.createComponent();
     List<GutterIconDescriptor> descriptors = configurable.getDescriptors();
-    Set<String> strings = ContainerUtil.map2Set(descriptors, new Function<GutterIconDescriptor, String>() {
-      @Override
-      public String fun(GutterIconDescriptor descriptor) {
-        return descriptor.getId();
-      }
-    });
+    Set<String> strings = ContainerUtil.map2Set(descriptors, GutterIconDescriptor::getId);
     assertEquals(descriptors.size(), strings.size());
   }
 }

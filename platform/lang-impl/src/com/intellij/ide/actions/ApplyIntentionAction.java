@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class ApplyIntentionAction extends AnAction {
 
   public ApplyIntentionAction(final IntentionAction action, String text, Editor editor, PsiFile file) {
     super(text);
+    getTemplatePresentation().setText(text, false);
     myAction = action;
     myEditor = editor;
     myFile = file;
@@ -66,15 +67,10 @@ public class ApplyIntentionAction extends AnAction {
   @Nullable
   public static ApplyIntentionAction[] getAvailableIntentions(final Editor editor, final PsiFile file) {
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        ShowIntentionsPass.getActionsToShow(editor, file, info, -1);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> ShowIntentionsPass.getActionsToShow(editor, file, info, -1));
     if (info.isEmpty()) return null;
 
-    final List<HighlightInfo.IntentionActionDescriptor> actions = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    final List<HighlightInfo.IntentionActionDescriptor> actions = new ArrayList<>();
     actions.addAll(info.errorFixesToShow);
     actions.addAll(info.inspectionFixesToShow);
     actions.addAll(info.intentionsToShow);

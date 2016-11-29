@@ -37,8 +37,8 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
 
   public ProjectStartupTasksTableModel(RunManagerEx runManager) {
     myRunManager = runManager;
-    mySharedConfigurations = new HashSet<RunnerAndConfigurationSettings>();
-    myAllConfigurations = new ArrayList<RunnerAndConfigurationSettings>();
+    mySharedConfigurations = new HashSet<>();
+    myAllConfigurations = new ArrayList<>();
   }
 
   public void setData(final Collection<RunnerAndConfigurationSettings> shared,

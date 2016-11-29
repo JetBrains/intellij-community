@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ class FileGenerationTest extends LightGroovyTestCase {
 
   private void doTest() {
     final String testName = getTestName(true)
-    final PsiFile file = myFixture.configureByFile("${testName}.groovy");
+    final PsiFile file = myFixture.configureByFile("${testName}.groovy")
     assertInstanceOf file, GroovyFile
 
     new ConvertToJavaProcessor(project, file).run()

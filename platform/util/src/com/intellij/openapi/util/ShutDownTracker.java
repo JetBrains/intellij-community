@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 
 public class ShutDownTracker implements Runnable {
   private final List<Thread> myThreads = new ArrayList<Thread>();
-  private final LinkedList<Thread> myShutdownThreads = new LinkedList<Thread>();
   private final LinkedList<Runnable> myShutdownTasks = new LinkedList<Runnable>();
   private final Thread myThread;
 
@@ -54,22 +53,15 @@ public class ShutDownTracker implements Runnable {
   public void run() {
     ensureStopperThreadsFinished();
 
-    for (Runnable task = removeLast(myShutdownTasks); task != null; task = removeLast(myShutdownTasks)) {
-      //  task can change myShutdownTasks
+    Runnable task;
+    while ((task = removeLast(myShutdownTasks)) != null) {
+      // task can change myShutdownTasks
       try {
         task.run();
       }
       catch (Throwable e) {
         Logger.getInstance(ShutDownTracker.class).error(e);
       }
-    }
-
-    for (Thread thread = removeLast(myShutdownThreads); thread != null; thread = removeLast(myShutdownThreads)) {
-      thread.start();
-      try {
-        thread.join();
-      }
-      catch (InterruptedException ignored) { }
     }
   }
 
@@ -79,8 +71,7 @@ public class ShutDownTracker implements Runnable {
       try {
         myThread.join(unit.toMillis(timeout));
       }
-      catch (InterruptedException ignored) {
-      }
+      catch (InterruptedException ignored) { }
       return !myThread.isAlive();
     }
     return false;
@@ -93,7 +84,7 @@ public class ShutDownTracker implements Runnable {
       Thread thread = threads[0];
       if (!thread.isAlive()) {
         if (isRegistered(thread)) {
-          Logger.getInstance(ShutDownTracker.class).error("Thread '" + thread.getName() + "' did not unregister itself from ShutDownTracker.");
+          Logger.getInstance(ShutDownTracker.class).error("Thread '" + thread.getName() + "' did not unregister itself from ShutDownTracker");
           unregisterStopperThread(thread);
         }
       }
@@ -131,18 +122,6 @@ public class ShutDownTracker implements Runnable {
     myThreads.remove(thread);
   }
 
-  /** @deprecated to be removed in IDEA 16 */
-  @SuppressWarnings("unused")
-  public synchronized void registerShutdownThread(@NotNull Thread thread) {
-    myShutdownThreads.addLast(thread);
-  }
-
-  /** @deprecated to be removed in IDEA 16 */
-  @SuppressWarnings("unused")
-  public synchronized void registerShutdownThread(int index, @NotNull Thread thread) {
-    myShutdownThreads.add(index, thread);
-  }
-
   public synchronized void registerShutdownTask(@NotNull Runnable task) {
     myShutdownTasks.addLast(task);
   }
@@ -150,11 +129,12 @@ public class ShutDownTracker implements Runnable {
   public synchronized void unregisterShutdownTask(@NotNull Runnable task) {
     myShutdownTasks.remove(task);
   }
-  
+
   private synchronized <T> T removeLast(@NotNull LinkedList<T> list) {
-    return list.isEmpty()? null : list.removeLast();
+    return list.isEmpty() ? null : list.removeLast();
   }
 
+  /** @deprecated to be removed in IDEA 2018 */
   public static void invokeAndWait(boolean returnOnTimeout, boolean runInEdt, @NotNull final Runnable runnable) {
     if (!runInEdt) {
       if (returnOnTimeout) {

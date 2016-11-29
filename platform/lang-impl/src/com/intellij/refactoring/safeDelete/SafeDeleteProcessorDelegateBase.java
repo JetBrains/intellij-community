@@ -43,6 +43,7 @@ public abstract class SafeDeleteProcessorDelegateBase implements SafeDeleteProce
     return null;
   }
 
+  @Nullable
   public Collection<String> findConflicts(PsiElement element, PsiElement[] elements, UsageInfo[] usages) {
     return findConflicts(element, elements);
   }

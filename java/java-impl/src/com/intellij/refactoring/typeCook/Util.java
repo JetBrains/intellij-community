@@ -17,6 +17,7 @@ package com.intellij.refactoring.typeCook;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
@@ -286,7 +287,7 @@ public class Util {
 
       PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
 
-      final Set<PsiTypeVariable> cluster = new HashSet<PsiTypeVariable>();
+      final Set<PsiTypeVariable> cluster = new HashSet<>();
 
       for (final PsiTypeParameter parm : aSubst.getSubstitutionMap().keySet()) {
         final PsiType type = createParameterizedType(aSubst.substitute(parm), factory, false, context);
@@ -404,6 +405,10 @@ public class Util {
 
             list
               .add(factory.createTypeElement(aType == null ? PsiType.getJavaLangObject(list.getManager(), list.getResolveScope()) : aType));
+          }
+
+          if (PsiDiamondTypeUtil.canCollapseToDiamond(newx, newx, newx.getType())) {
+            PsiDiamondTypeUtil.replaceExplicitWithDiamond(list);
           }
         }
       }

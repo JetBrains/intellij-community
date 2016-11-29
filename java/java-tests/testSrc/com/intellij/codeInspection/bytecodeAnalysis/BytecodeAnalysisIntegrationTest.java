@@ -57,7 +57,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   private static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
 
   private MessageDigest myMessageDigest;
-  private List<String> myDiffs = new ArrayList<>();
+  private final List<String> myDiffs = new ArrayList<>();
   private boolean myNullableMethodRegistryValue;
 
   @Override
@@ -82,7 +82,6 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   private void setUpLibraries() {
     String libDir = PathManagerEx.getCommunityHomePath() + "/lib";
     PsiTestUtil.addLibrary(myModule, "velocity", libDir, new String[]{"/velocity.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
-    //PsiTestUtil.addLibrary(myModule, "velocity", libDir, "velocity.jar");
   }
 
   private void setUpExternalUpAnnotations() {
@@ -105,9 +104,17 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
         }
         Sdk sdk = modifiableRootModel.getSdk();
         if (sdk != null) {
-          SdkModificator sdkModificator = sdk.getSdkModificator();
+          Sdk clone;
+          try {
+            clone = (Sdk)sdk.clone();
+          }
+          catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+          }
+          SdkModificator sdkModificator = clone.getSdkModificator();
           sdkModificator.addRoot(annotationsDir, AnnotationOrderRootType.getInstance());
           sdkModificator.commitChanges();
+          modifiableRootModel.setSdk(clone);
         }
       }
     });
@@ -177,7 +184,6 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     assertEmpty(myDiffs);
   }
 
-  @SuppressWarnings("unused")
   public void _testExportInferredAnnotations() {
     exportInferredAnnotations();
   }

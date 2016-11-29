@@ -26,6 +26,8 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
@@ -58,6 +60,23 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
          type("expr");
        }
      });
+  }
+
+  public void testConflictingInnerClassName() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final boolean oldOption = settings.INSERT_INNER_CLASS_IMPORTS;
+    try {
+      settings.INSERT_INNER_CLASS_IMPORTS = true;
+      doTest(new Pass<AbstractInplaceIntroducer>() {
+         @Override
+         public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+           type("constants");
+         }
+       });
+    }
+    finally {
+      settings.INSERT_INNER_CLASS_IMPORTS = oldOption;
+    }
   }
 
   public void testInsideInjectedString() throws Exception {
@@ -96,7 +115,16 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       }
     });
   }
-  
+
+  public void testPlaceInsideLambdaBodyMultipleOccurrences1() throws Exception {
+    doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("expr");
+      }
+    });
+  }
+
   public void testRanges() throws Exception {
      doTest(new Pass<AbstractInplaceIntroducer>() {
        @Override
@@ -120,6 +148,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       @Override
       public void pass(AbstractInplaceIntroducer introducer) {
         type("height");
+      }
+    });
+  }
+
+  public void testConflictWithFieldNoCast() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer introducer) {
+        type("weights");
       }
     });
   }
@@ -166,6 +203,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   
   public void testAllIncomplete() throws Exception {
     doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL);
+  }
+
+  public void testBrokenFormattingWithInValidation() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer introducer) {
+        type("bool");
+      }
+    });
   }
 
   public void testStopEditing() {

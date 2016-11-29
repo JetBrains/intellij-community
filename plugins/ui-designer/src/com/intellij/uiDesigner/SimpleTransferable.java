@@ -29,7 +29,7 @@ import java.io.IOException;
  */
 public final class SimpleTransferable<T> implements Transferable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.SimpleTransferable");
-  private static final Map<String, DataFlavor> ourDataFlavorMap = new HashMap<String, DataFlavor>();
+  private static final Map<String, DataFlavor> ourDataFlavorMap = new HashMap<>();
 
   private final T myDataProxy;
   private final Class<T> myDataClass;

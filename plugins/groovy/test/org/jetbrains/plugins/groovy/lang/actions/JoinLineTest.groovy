@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType
  * @author Max Medvedev
  */
 class JoinLineTest extends GroovyEditorActionTestBase {
-  final String basePath = null
 
   void testVariable() {
     doTest('''\
@@ -132,9 +131,9 @@ if (a) <caret>print 2
 
 
   private void doTest(String before, String after) {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before);
-    performAction(IdeActions.ACTION_EDITOR_JOIN_LINES);
-    myFixture.checkResult(after);
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
+    performAction(IdeActions.ACTION_EDITOR_JOIN_LINES)
+    myFixture.checkResult(after)
 
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -90,6 +90,10 @@ public class Util {
     return PsiTreeUtil.getParentOfType(getPhysical(expr), PsiMethod.class);
   }
   public static boolean isAncestor(PsiElement ancestor, PsiElement element, boolean strict) {
+    final TextRange exprRange = ancestor.getUserData(ElementToWorkOn.EXPR_RANGE);
+    if (exprRange != null) {
+      return exprRange.contains(element.getTextRange());
+    }
     return PsiTreeUtil.isAncestor(getPhysical(ancestor), getPhysical(element), strict);
   }
 
@@ -121,7 +125,7 @@ public class Util {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return new TIntArrayList();
 
-    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
+    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
     final PsiMethod[] allMethods = ArrayUtil.append(overridingMethods, method);
 
     final TIntHashSet suspects = new TIntHashSet();
@@ -145,27 +149,25 @@ public class Util {
         PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
         if (paramNum >= psiParameters.length) continue;
         PsiParameter parameter = psiParameters[paramNum];
-        if (!ReferencesSearch.search(parameter, parameter.getResolveScope(), false).forEach(new Processor<PsiReference>() {
-          public boolean process(final PsiReference reference) {
-            PsiElement element = reference.getElement();
-            boolean stillCanBeRemoved = false;
-            if (element != null) {
-              stillCanBeRemoved = isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(getPhysical(element));
-              if (!stillCanBeRemoved && occurences != null) {
-                for (PsiExpression occurence : occurences) {
-                  if (isAncestor(occurence, element, false)) {
-                    stillCanBeRemoved = true;
-                    break;
-                  }
+        if (!ReferencesSearch.search(parameter, parameter.getResolveScope(), false).forEach(reference -> {
+          PsiElement element = reference.getElement();
+          boolean stillCanBeRemoved = false;
+          if (element != null) {
+            stillCanBeRemoved = isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(getPhysical(element));
+            if (!stillCanBeRemoved && occurences != null) {
+              for (PsiExpression occurence : occurences) {
+                if (isAncestor(occurence, element, false)) {
+                  stillCanBeRemoved = true;
+                  break;
                 }
               }
             }
-            if (!stillCanBeRemoved) {
-              iterator.remove();
-              return false;
-            }
-           return true;
           }
+          if (!stillCanBeRemoved) {
+            iterator.remove();
+            return false;
+          }
+         return true;
         })) break;
       }
     }

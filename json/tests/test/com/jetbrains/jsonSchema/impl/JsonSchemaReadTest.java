@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,8 +22,8 @@ public class JsonSchemaReadTest {
   public void testReadSchemaItself() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/schema.json");
     Assert.assertTrue(file.exists());
-    final JsonSchemaReader reader = new JsonSchemaReader();
-    final JsonSchemaObject read = reader.read(new FileReader(file));
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
+    final JsonSchemaObject read = reader.read(new FileReader(file), null);
 
     Assert.assertEquals("http://json-schema.org/draft-04/schema#", read.getId());
     Assert.assertTrue(read.getDefinitions().containsKey("positiveInteger"));
@@ -61,9 +62,30 @@ public class JsonSchemaReadTest {
   public void testReadSchemaWithCustomTags() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
     Assert.assertTrue(file.exists());
-    final JsonSchemaReader reader = new JsonSchemaReader();
-    final JsonSchemaObject read = reader.read(new FileReader(file));
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
+    final JsonSchemaObject read = reader.read(new FileReader(file), null);
     Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
+  }
+
+  @Test
+  public void testArrayItemsSchema() throws Exception {
+    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/arrayItemsSchema.json");
+    Assert.assertTrue(file.exists());
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
+    final JsonSchemaObject read = reader.read(new FileReader(file), null);
+    final Map<String, JsonSchemaObject> properties = read.getProperties();
+    Assert.assertEquals(1, properties.size());
+    final JsonSchemaObject object = properties.get("color-hex-case");
+    final List<JsonSchemaObject> oneOf = object.getOneOf();
+    Assert.assertEquals(2, oneOf.size());
+    final JsonSchemaObject second = oneOf.get(1);
+    final List<JsonSchemaObject> list = second.getItemsSchemaList();
+    Assert.assertEquals(2, list.size());
+    final JsonSchemaObject firstItem = list.get(0);
+    final List<Object> anEnum = firstItem.getEnum();
+    Assert.assertEquals(2, anEnum.size());
+    Assert.assertTrue(anEnum.contains("\"lower\""));
+    Assert.assertTrue(anEnum.contains("\"upper\""));
   }
 
   @Test
@@ -86,20 +108,17 @@ public class JsonSchemaReadTest {
     final AtomicReference<IOException> error = new AtomicReference<>();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    final Thread thread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        final JsonSchemaReader reader = new JsonSchemaReader();
-        try {
-          reader.read(new FileReader(file));
-          done.set(true);
-        }
-        catch (IOException e) {
-          error.set(e);
-        }
-        finally {
-          semaphore.up();
-        }
+    final Thread thread = new Thread(() -> {
+      final JsonSchemaReader reader = new JsonSchemaReader(null);
+      try {
+        reader.read(new FileReader(file), null);
+        done.set(true);
+      }
+      catch (IOException e) {
+        error.set(e);
+      }
+      finally {
+        semaphore.up();
       }
     }, getClass().getName() + ": read test json schema " + file.getName());
     thread.setDaemon(true);

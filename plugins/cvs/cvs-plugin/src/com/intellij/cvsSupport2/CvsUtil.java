@@ -239,13 +239,11 @@ public class CvsUtil {
     catch (Exception ex) {
       final String entries = loadFrom(dir, ENTRIES, true);
       if (entries != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            final String entriesFileRelativePath = CVS + File.separatorChar + ENTRIES;
-            Messages.showErrorDialog(
-              CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
-              CvsBundle.message("message.error.invalid.entries.title"));
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final String entriesFileRelativePath = CVS + File.separatorChar + ENTRIES;
+          Messages.showErrorDialog(
+            CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
+            CvsBundle.message("message.error.invalid.entries.title"));
         });
       }
       return entriesHandler;
@@ -570,11 +568,7 @@ public class CvsUtil {
     File ioFile = new File(file.getPath());
     final Pattern pattern = Pattern.compile("\\Q.#" + ioFile.getName() + ".\\E" + REVISION_PATTERN);
     final File dir = new File(getAdminDir(ioFile.getParentFile()), BASE_REVISIONS_DIR);
-    File[] files = dir.listFiles(new FilenameFilter() {
-      public boolean accept(final File dir, final String name) {
-        return (!storedFilename.equals(name)) && pattern.matcher(name).matches();
-      }
-    });
+    File[] files = dir.listFiles((dir1, name) -> (!storedFilename.equals(name)) && pattern.matcher(name).matches());
     if (files != null) {
       for (File oldFile : files) {
         oldFile.delete();
@@ -710,12 +704,8 @@ public class CvsUtil {
     }
 
     catch (final IOException e) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(CvsBundle.message("message.error.restore.entry", file.getPresentableUrl(), e.getLocalizedMessage()),
-                                   CvsBundle.message("message.error.restore.entry.title"));
-        }
-      });
+      SwingUtilities.invokeLater(() -> Messages.showErrorDialog(CvsBundle.message("message.error.restore.entry", file.getPresentableUrl(), e.getLocalizedMessage()),
+                                                            CvsBundle.message("message.error.restore.entry.title")));
     }
   }
 
@@ -772,7 +762,7 @@ public class CvsUtil {
 
     private Conflict(String name, String originalRevision, List<String> revisions, long time) {
       myName = name;
-      myRevisions = new ArrayList<String>();
+      myRevisions = new ArrayList<>();
       myRevisions.add(originalRevision);
       myRevisions.addAll(revisions);
       myPreviousTime = time;
@@ -780,7 +770,7 @@ public class CvsUtil {
 
     private Conflict(String name, List<String> revisions, long time) {
       myName = name;
-      myRevisions = new ArrayList<String>();
+      myRevisions = new ArrayList<>();
       myRevisions.addAll(revisions);
       myPreviousTime = time;
     }
@@ -829,7 +819,7 @@ public class CvsUtil {
     }
 
     public List<String> getRevisions() {
-      return new ArrayList<String>(myRevisions);
+      return new ArrayList<>(myRevisions);
     }
 
     public void setOriginalRevision(final String originalRevision) {
@@ -850,7 +840,7 @@ public class CvsUtil {
   }
 
   private static class Conflicts {
-    private final Map<String, Conflict> myNameToConflict = new com.intellij.util.containers.HashMap<String, Conflict>();
+    private final Map<String, Conflict> myNameToConflict = new com.intellij.util.containers.HashMap<>();
 
     @NotNull
     public static Conflicts readFrom(File file) throws IOException {
@@ -872,7 +862,7 @@ public class CvsUtil {
     }
 
     private List<String> getConflictLines() {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       for (final Conflict conflict : myNameToConflict.values()) {
         result.add((conflict).toString());
       }
@@ -896,7 +886,7 @@ public class CvsUtil {
 
     public void addConflictForFile(String name) {
       if (!myNameToConflict.containsKey(name)) {
-        myNameToConflict.put(name, new Conflict(name, "", new ArrayList<String>(), -1));
+        myNameToConflict.put(name, new Conflict(name, "", new ArrayList<>(), -1));
       }
     }
 
@@ -905,7 +895,7 @@ public class CvsUtil {
     }
 
     public List<String> getRevisionsFor(String name) {
-      if (!myNameToConflict.containsKey(name)) return new ArrayList<String>();
+      if (!myNameToConflict.containsKey(name)) return new ArrayList<>();
       return (myNameToConflict.get(name)).getRevisions();
     }
 

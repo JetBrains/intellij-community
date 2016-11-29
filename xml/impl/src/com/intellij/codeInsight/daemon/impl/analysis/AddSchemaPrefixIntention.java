@@ -79,8 +79,8 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
                                  }
                                });
       if (nsPrefix == null) return;
-      final List<XmlTag> tags = new ArrayList<XmlTag>();
-      final List<XmlAttributeValue> values = new ArrayList<XmlAttributeValue>();
+      final List<XmlTag> tags = new ArrayList<>();
+      final List<XmlAttributeValue> values = new ArrayList<>();
       new WriteCommandAction(project, NAME, tag.getContainingFile()) {
         @Override
         protected void run(@NotNull Result result) throws Throwable {

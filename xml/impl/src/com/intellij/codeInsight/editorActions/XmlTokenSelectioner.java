@@ -41,7 +41,7 @@ class XmlTokenSelectioner extends ExtendWordSelectionHandlerBase {
       return ranges;
     }
     else {
-      List<TextRange> result = new ArrayList<TextRange>();
+      List<TextRange> result = new ArrayList<>();
       SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, result);
       return result;
     }

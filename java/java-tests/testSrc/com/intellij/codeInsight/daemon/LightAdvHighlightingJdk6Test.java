@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection());
     setLanguageLevel(LanguageLevel.JDK_1_6);
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
   }
   
   private void doTest(boolean checkWarnings, boolean checkInfos) {
@@ -61,4 +61,32 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testUnreachableAssignments() { doTest(false, false); }
   public void testCompileTypeConstantsAccessibleFromStaticFieldInitializers() { doTest(false, false);}
   public void testInheritUnrelatedConcreteMethodsWithSameSignature() { doTest(false, false);}
+
+  public void testAssignmentFromStringToObject() {
+    doTest(true, false);
+  }
+
+  public void testUnhandledErrorsFromEnumConstructors() {
+    doTest(true, false);
+  }
+  public void testSkipAbstractMethodsIfTheyMustBeDeclaredInNonAbstractSuperclass() {
+    doTest(false, false);
+  }
+  public void testVariableUsedBeforeAssignmentWithParenthesis() {
+    doTest(false, false);
+  }
+  public void testThisInArgListOfAnonymous() {
+    doTest(false, false);
+  }
+
+  public void testEnumConstantWithoutInterfaceImplementation() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testAmbiguityChecksForImplicitSuperConstructorCall() {
+    doTest(false, false);
+  }
+
+  public void testSpeculateOnUnhandledExceptionsOverResolvedConstructorOnly() throws Exception {
+  }
 }

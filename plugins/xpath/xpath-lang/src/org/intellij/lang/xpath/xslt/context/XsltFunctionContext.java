@@ -31,12 +31,7 @@ public class XsltFunctionContext extends DefaultFunctionContext {
 
   private static final Map<Pair<QName, Integer>, Function> XSLT_FUNCTIONS;
 
-  private static final Factory<FunctionContext> FACTORY = new Factory<FunctionContext>() {
-    @Override
-    public FunctionContext create() {
-      return new XsltFunctionContext();
-    }
-  };
+  private static final Factory<FunctionContext> FACTORY = () -> new XsltFunctionContext();
 
   public static final String EXSLT_DATE_TIME = "http://exslt.org/dates-and-times";
   public static final String EXSLT_COMMON = "http://exslt.org/common";
@@ -49,7 +44,7 @@ public class XsltFunctionContext extends DefaultFunctionContext {
   public static final String SAXON_7 = "http://saxon.sf.net/";
 
   static {
-    final Map<Pair<QName, Integer>, Function> decls = new HashMap<Pair<QName, Integer>, Function>();
+    final Map<Pair<QName, Integer>, Function> decls = new HashMap<>();
 
     final Parameter optional_string = new Parameter(XPathType.STRING, Parameter.Kind.OPTIONAL);
     final Parameter required_string = new Parameter(XPathType.STRING, Parameter.Kind.REQUIRED);

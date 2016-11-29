@@ -62,16 +62,13 @@ public class PyUnreachableCodeInspection extends PyInspection {
       if (element instanceof ScopeOwner) {
         final ControlFlow flow = ControlFlowCache.getControlFlow((ScopeOwner)element);
         final Instruction[] instructions = flow.getInstructions();
-        final List<PsiElement> unreachable = new ArrayList<PsiElement>();
+        final List<PsiElement> unreachable = new ArrayList<>();
         if (instructions.length > 0) {
-          ControlFlowUtil.iteratePrev(instructions.length - 1, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
-            @Override
-            public ControlFlowUtil.Operation fun(Instruction instruction) {
-              if (instruction.allPred().isEmpty() && !isFirstInstruction(instruction)) {
-                unreachable.add(instruction.getElement());
-              }
-              return ControlFlowUtil.Operation.NEXT;
+          ControlFlowUtil.iteratePrev(instructions.length - 1, instructions, instruction -> {
+            if (instruction.allPred().isEmpty() && !isFirstInstruction(instruction)) {
+              unreachable.add(instruction.getElement());
             }
+            return ControlFlowUtil.Operation.NEXT;
           });
         }
         for (PsiElement e : unreachable) {
@@ -89,15 +86,12 @@ public class PyUnreachableCodeInspection extends PyInspection {
       final int start = ControlFlowUtil.findInstructionNumberByElement(instructions, element);
       if (start >= 0) {
         final Ref<Boolean> resultRef = Ref.create(false);
-        ControlFlowUtil.iteratePrev(start, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
-          @Override
-          public ControlFlowUtil.Operation fun(Instruction instruction) {
-            if (instruction.allPred().isEmpty() && !isFirstInstruction(instruction)) {
-              resultRef.set(true);
-              return ControlFlowUtil.Operation.BREAK;
-            }
-            return ControlFlowUtil.Operation.NEXT;
+        ControlFlowUtil.iteratePrev(start, instructions, instruction -> {
+          if (instruction.allPred().isEmpty() && !isFirstInstruction(instruction)) {
+            resultRef.set(true);
+            return ControlFlowUtil.Operation.BREAK;
           }
+          return ControlFlowUtil.Operation.NEXT;
         });
         return resultRef.get();
       }

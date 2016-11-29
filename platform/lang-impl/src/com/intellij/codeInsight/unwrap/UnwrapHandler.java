@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
@@ -64,7 +65,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   private List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
 
     UnwrapDescriptor d = getUnwrapDescription(file);
 
@@ -116,7 +117,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
         MyUnwrapAction a = (MyUnwrapAction)options.get(index);
 
-        List<PsiElement> toExtract = new ArrayList<PsiElement>();
+        List<PsiElement> toExtract = new ArrayList<>();
         PsiElement wholeRange = a.collectAffectedElements(toExtract);
         highlighter.highlight(wholeRange, toExtract);
       }
@@ -128,12 +129,9 @@ public class UnwrapHandler implements CodeInsightActionHandler {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            MyUnwrapAction a = (MyUnwrapAction)options.get(list.getSelectedIndex());
-            a.actionPerformed(null);
-          }
+        .setItemChoosenCallback(() -> {
+          MyUnwrapAction a = (MyUnwrapAction)options.get(list.getSelectedIndex());
+          a.actionPerformed(null);
         })
         .addListener(new JBPopupAdapter() {
           @Override
@@ -152,7 +150,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   private static class MyUnwrapAction extends AnAction {
-    private static final Key<Integer> CARET_POS_KEY = new Key<Integer>("UNWRAP_HANDLER_CARET_POSITION");
+    private static final Key<Integer> CARET_POS_KEY = new Key<>("UNWRAP_HANDLER_CARET_POSITION");
 
     private final Project myProject;
     private final Editor myEditor;
@@ -172,31 +170,23 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       final PsiFile file = myElement.getContainingFile();
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                UnwrapDescriptor d = getUnwrapDescription(file);
-                if (d.shouldTryToRestoreCaretPosition()) saveCaretPosition(file);
-                int scrollOffset = myEditor.getScrollingModel().getVerticalScrollOffset();
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          UnwrapDescriptor d = getUnwrapDescription(file);
+          if (d.shouldTryToRestoreCaretPosition()) saveCaretPosition(file);
+          int scrollOffset = myEditor.getScrollingModel().getVerticalScrollOffset();
 
-                List<PsiElement> extractedElements = myUnwrapper.unwrap(myEditor, myElement);
+          List<PsiElement> extractedElements = myUnwrapper.unwrap(myEditor, myElement);
 
-                if (d.shouldTryToRestoreCaretPosition()) restoreCaretPosition(file);
-                myEditor.getScrollingModel().scrollVertically(scrollOffset);
+          if (d.shouldTryToRestoreCaretPosition()) restoreCaretPosition(file);
+          myEditor.getScrollingModel().scrollVertically(scrollOffset);
 
-                highlightExtractedElements(extractedElements);
-              }
-              catch (IncorrectOperationException ex) {
-                throw new RuntimeException(ex);
-              }
-            }
-          });
+          highlightExtractedElements(extractedElements);
         }
-      }, null, myEditor.getDocument());
+        catch (IncorrectOperationException ex) {
+          throw new RuntimeException(ex);
+        }
+      }), null, myEditor.getDocument());
     }
 
     private void saveCaretPosition(PsiFile file) {
@@ -227,10 +217,11 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
     private void highlightExtractedElements(final List<PsiElement> extractedElements) {
       for (PsiElement each : extractedElements) {
+        final TextRange textRange = each.getTextRange();
         HighlightManager.getInstance(myProject).addRangeHighlight(
             myEditor,
-            each.getTextOffset(),
-            each.getTextOffset() + each.getTextLength(),
+            textRange.getStartOffset(),
+            textRange.getEndOffset(),
             getTestAttributesForExtract(),
             false,
             true,

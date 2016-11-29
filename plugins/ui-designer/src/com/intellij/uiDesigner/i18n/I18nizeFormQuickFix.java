@@ -79,20 +79,14 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
       }
     }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              JavaI18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        JavaI18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
       }
-    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), CodeInsightBundle.message("quickfix.i18n.command.name"), project);
 
     // saving files is necessary to ensure correct reload of properties files by UI Designer
     for (PropertiesFile file : propertiesFiles) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class UnicodeUnescapeIntention extends Intention {
   protected void processIntention(Editor editor, @NotNull PsiElement element) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
-      // does not check if octal escape is inside char or string literal (garbage in, garbage out)
+      // does not check if Unicode escape is inside char or string literal (garbage in, garbage out)
       final Document document = editor.getDocument();
       final int start = selectionModel.getSelectionStart();
       final int end = selectionModel.getSelectionEnd();
@@ -74,20 +74,43 @@ public class UnicodeUnescapeIntention extends Intention {
       final int column = caretModel.getLogicalPosition().column;
       final int index1 = indexOfUnicodeEscape(line, column);
       final int index2 = indexOfUnicodeEscape(line, column + 1);
-      final int escapeStart = index2 == column ? index2 : index1; // if caret is between two unicode escape, replace the right one
+      // if the caret is between two unicode escapes, replace the one to the right
+      final int escapeStart = index2 == column ? index2 : index1;
       int hexStart = escapeStart + 1;
       while (line.charAt(hexStart) == 'u') {
         hexStart++;
       }
-      final int c = Integer.parseInt(line.substring(hexStart, hexStart + 4), 16);
-      document.replaceString(lineStartOffset + escapeStart, lineStartOffset + hexStart + 4, String.valueOf((char) c));
+      final char c = (char)Integer.parseInt(line.substring(hexStart, hexStart + 4), 16);
+      if (Character.isHighSurrogate(c)) {
+        hexStart += 4;
+        if (line.charAt(hexStart++) == '\\' && line.charAt(hexStart++) == 'u') {
+          while (line.charAt(hexStart) == 'u') hexStart++;
+          final char d = (char)Integer.parseInt(line.substring(hexStart, hexStart + 4), 16);
+          document.replaceString(lineStartOffset + escapeStart, lineStartOffset + hexStart + 4, String.valueOf(new char[] {c, d}));
+          return;
+        }
+      }
+      else if (Character.isLowSurrogate(c)) {
+        if (escapeStart >= 6 &&
+            StringUtil.isHexDigit(line.charAt(escapeStart - 1)) && StringUtil.isHexDigit(line.charAt(escapeStart - 2)) &&
+            StringUtil.isHexDigit(line.charAt(escapeStart - 3)) && StringUtil.isHexDigit(line.charAt(escapeStart - 4))) {
+          int i = escapeStart - 5;
+          while (i > 0 && line.charAt(i) == 'u') i--;
+          if (line.charAt(i) == '\\' && (i == 0 || line.charAt(i - 1) != '\\')) {
+            final char b = (char)Integer.parseInt(line.substring(escapeStart - 4, escapeStart), 16);
+            document.replaceString(lineStartOffset + i, lineStartOffset + hexStart + 4, String.valueOf(new char[] {b, c}));
+            return;
+          }
+        }
+      }
+      document.replaceString(lineStartOffset + escapeStart, lineStartOffset + hexStart + 4, String.valueOf(c));
     }
   }
 
   /**
    * see JLS 3.3. Unicode Escapes
    */
-  private static int indexOfUnicodeEscape(@NotNull String text, int offset) {
+  static int indexOfUnicodeEscape(@NotNull String text, int offset) {
     final int length = text.length();
     for (int i = 0; i < length; i++) {
       final char c = text.charAt(i);
@@ -120,6 +143,8 @@ public class UnicodeUnescapeIntention extends Intention {
           StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
         final int escapeEnd = nextChar + 4;
         if (offset <= escapeEnd) {
+          final char d = (char)Integer.parseInt(text.substring(nextChar, nextChar + 4), 16);
+          if (d == '\r') return -1; // carriage return not allowed
           return i;
         }
       }

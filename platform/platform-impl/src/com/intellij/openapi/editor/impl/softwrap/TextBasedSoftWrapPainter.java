@@ -37,12 +37,12 @@ import java.util.Map;
  */
 public class TextBasedSoftWrapPainter implements SoftWrapPainter {
 
-  private final Map<SoftWrapDrawingType, char[]> mySymbols = new EnumMap<SoftWrapDrawingType, char[]>(SoftWrapDrawingType.class);
-  private final Map<SoftWrapDrawingType, FontInfo> myFonts = new EnumMap<SoftWrapDrawingType, FontInfo>(SoftWrapDrawingType.class);
+  private final Map<SoftWrapDrawingType, char[]> mySymbols = new EnumMap<>(SoftWrapDrawingType.class);
+  private final Map<SoftWrapDrawingType, FontInfo> myFonts = new EnumMap<>(SoftWrapDrawingType.class);
 
   /** Use array here because profiling indicates that using EnumMap here gives significant performance degradation. */
   private final int[] myWidths = new int[SoftWrapDrawingType.values().length];
-  private final Map<SoftWrapDrawingType, Integer> myVGaps = new EnumMap<SoftWrapDrawingType, Integer>(SoftWrapDrawingType.class);
+  private final Map<SoftWrapDrawingType, Integer> myVGaps = new EnumMap<>(SoftWrapDrawingType.class);
 
   private final TextDrawingCallback myDrawingCallback;
   private final ColorProvider myColorHolder;

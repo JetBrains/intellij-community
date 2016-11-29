@@ -42,8 +42,8 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   private LimitedStringsList myLimitedStringsList;
 
   public static class ConfigurationBean {
-    public List<String> myCheckoutURLs = new ArrayList<String>();
-    public List<String> myTypedURLs = new ArrayList<String>();
+    public List<String> myCheckoutURLs = new ArrayList<>();
+    public List<String> myTypedURLs = new ArrayList<>();
     public String mySvnCommandLine = "svn";
   }
 
@@ -158,7 +158,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   }
 
   public List<String> getTypedUrlsListCopy() {
-    return new ArrayList<String>(getTypedList().getList());
+    return new ArrayList<>(getTypedList().getList());
   }
 
   public void addTypedUrl(final String url) {

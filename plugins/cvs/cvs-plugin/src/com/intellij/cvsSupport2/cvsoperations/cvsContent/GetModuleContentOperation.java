@@ -126,12 +126,7 @@ public class GetModuleContentOperation extends CompositeOperation implements Dir
           options.setDoNoChanges(true);
         }
       };
-    operation.addFinishAction(new Runnable() {
-      @Override
-      public void run() {
-        myStreamingListener.consume(myStreamingDirectoryContentListener.getDirectoryContent());
-      }
-    });
+    operation.addFinishAction(() -> myStreamingListener.consume(myStreamingDirectoryContentListener.getDirectoryContent()));
     return operation;
   }
 

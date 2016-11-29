@@ -48,7 +48,7 @@ public class GuessTypeParameters {
     PsiType type = info.getType();
     int kind = info.getKind();
 
-    List<PsiType> result = new ArrayList<PsiType>();
+    List<PsiType> result = new ArrayList<>();
     for (int i = 0; i < paramVals.length; i++) {
       PsiType val = paramVals[i];
       if (val != null) {
@@ -165,7 +165,7 @@ public class GuessTypeParameters {
                                           PsiSubstitutor rawingSubstitutor,
                                           boolean toplevel) {
     PsiType type = inplaceTypeElement.getType();
-    List<PsiType> types = new ArrayList<PsiType>();
+    List<PsiType> types = new ArrayList<>();
     for (int i = 0; i < paramVals.length; i++) {
       PsiType val = paramVals[i];
       if (val == null) return SUBSTITUTED_NONE;

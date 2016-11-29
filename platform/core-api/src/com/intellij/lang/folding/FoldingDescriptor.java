@@ -59,6 +59,15 @@ public class FoldingDescriptor {
     this(ObjectUtils.assertNotNull(element.getNode()), range, null);
   }
 
+  /**
+   * Creates a folding region related to the specified AST node and covering the specified
+   * text range.
+   * @param node  The node to which the folding region is related. The node is then passed to
+   *              {@link FoldingBuilder#getPlaceholderText(com.intellij.lang.ASTNode)} and
+   *              {@link FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
+   * @param range The folded text range.
+   * @param group Regions with the same group instance expand and collapse together.
+   */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group) {
     this(node, range, group, Collections.<Object>emptySet());
   }

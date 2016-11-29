@@ -27,14 +27,11 @@ import com.intellij.ide.wizard.StepWithSubSteps;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -164,14 +161,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   @Override
   protected final void doOKAction() {
-    final Ref<Boolean> result = Ref.create(false);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        result.set(doFinishAction());
-      }
-    });
-    if (!result.get()) return;
+    if (!doFinishAction()) return;
     
     super.doOKAction();
   }
@@ -291,6 +281,11 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       ((StepWithSubSteps)step).doPreviousAction();
     }
     super.doPreviousAction();
+  }
+
+  @Override
+  protected boolean canGoNext() {
+    return myDelegate != null ? myDelegate.canProceed() : super.canGoNext();
   }
 
   @Override

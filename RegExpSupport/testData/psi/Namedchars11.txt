@@ -1,0 +1,28 @@
+REGEXP_FILE
+  RegExpPatternImpl: <[:^xdigit:]+>
+    RegExpBranchImpl: <[:^xdigit:]+>
+      RegExpClosureImpl: <[:^xdigit:]+>
+        RegExpClassImpl: <[:^xdigit:]>
+          PsiElement(CLASS_BEGIN)('[')
+          RegExpUnionImpl: <:^xdigit:>
+            RegExpCharImpl: <:>
+              PsiElement(CHARACTER)(':')
+            RegExpCharImpl: <^>
+              PsiElement(CARET)('^')
+            RegExpCharImpl: <x>
+              PsiElement(CHARACTER)('x')
+            RegExpCharImpl: <d>
+              PsiElement(CHARACTER)('d')
+            RegExpCharImpl: <i>
+              PsiElement(CHARACTER)('i')
+            RegExpCharImpl: <g>
+              PsiElement(CHARACTER)('g')
+            RegExpCharImpl: <i>
+              PsiElement(CHARACTER)('i')
+            RegExpCharImpl: <t>
+              PsiElement(CHARACTER)('t')
+            RegExpCharImpl: <:>
+              PsiElement(CHARACTER)(':')
+          PsiElement(CLASS_END)(']')
+        RegExpQuantifierImpl: <+>
+          PsiElement(PLUS)('+')

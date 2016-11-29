@@ -87,7 +87,7 @@ public class GitConfigUtil {
    * @throws VcsException an exception
    */
   public static List<Couple<String>> getAllValues(Project project, VirtualFile root, @NonNls String key) throws VcsException {
-    List<Couple<String>> result = new ArrayList<Couple<String>>();
+    List<Couple<String>> result = new ArrayList<>();
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.addParameters("--null", "--get-all", key);

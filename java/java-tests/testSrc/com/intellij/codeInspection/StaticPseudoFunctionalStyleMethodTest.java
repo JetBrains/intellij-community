@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 
 import java.io.File;
 
@@ -45,10 +39,10 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava-17.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
-                                 "guava-17.0.jar");
-    moduleBuilder.addLibraryJars("guava-17.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
-                                 "guava-17.0.jar");
+    moduleBuilder.addLibraryJars("guava-19.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
+                                 "guava-19.0.jar");
+    moduleBuilder.addLibraryJars("guava-19.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
+                                 "guava-19.0.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 

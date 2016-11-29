@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
 
   public JComponent createComponent() {
     myOptionsPanel = new ProjectSettingsPanel(project, myProfilesPanel);
-    myProfilesPanel.setUpdate(new Runnable() {
-      @Override
-      public void run() {
-        reloadProfiles();
-      }
-    });
+    myProfilesPanel.setUpdate(this::reloadProfiles);
     return myOptionsPanel.getMainComponent();
   }
 
@@ -84,10 +79,6 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
   @NotNull
   public String getId() {
     return "copyright";
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   protected Configurable[] buildConfigurables() {

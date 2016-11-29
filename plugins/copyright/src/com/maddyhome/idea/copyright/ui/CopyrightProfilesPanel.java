@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -36,14 +37,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
 import org.jetbrains.annotations.Nls;
@@ -89,14 +86,10 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Override
   protected void processRemovedItems() {
     Map<String, CopyrightProfile> profiles = getAllProfiles();
-    final List<CopyrightProfile> deleted = new ArrayList<CopyrightProfile>();
-    for (CopyrightProfile profile : myManager.getCopyrights()) {
+    for (CopyrightProfile profile : new ArrayList<>(myManager.getCopyrights())) {
       if (!profiles.containsValue(profile)) {
-        deleted.add(profile);
+        myManager.removeCopyright(profile);
       }
-    }
-    for (CopyrightProfile profile : deleted) {
-      myManager.removeCopyright(profile);
     }
   }
 
@@ -126,7 +119,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
   @Override
   public void apply() throws ConfigurationException {
-    final Set<String> profiles = new HashSet<String>();
+    final Set<String> profiles = new HashSet<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       MyNode node = (MyNode)myRoot.getChildAt(i);
       final String profileName = ((CopyrightConfigurable)node.getConfigurable()).getEditableObject().getName();
@@ -140,7 +133,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   }
 
   public Map<String, CopyrightProfile> getAllProfiles() {
-    final Map<String, CopyrightProfile> profiles = new HashMap<String, CopyrightProfile>();
+    final Map<String, CopyrightProfile> profiles = new HashMap<>();
     if (!myInitialized.get()) {
       for (CopyrightProfile profile : myManager.getCopyrights()) {
         profiles.put(profile.getName(), profile);
@@ -165,31 +158,34 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Override
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new AnAction("Add", "Add", IconUtil.getAddIcon()) {
+    ArrayList<AnAction> result = new ArrayList<>();
+    result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
       }
 
       @Override
       public void actionPerformed(AnActionEvent event) {
-        final String name = askForProfileName("Create Copyright Profile", "");
-        if (name == null) return;
-        final CopyrightProfile copyrightProfile = new CopyrightProfile(name);
-        addProfileNode(copyrightProfile);
+        String name = askForProfileName("Create Copyright Profile", "");
+        if (name != null) {
+          addProfileNode(new CopyrightProfile(name));
+        }
       }
     });
     result.add(new MyDeleteAction());
-    result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
+    result.add(new DumbAwareAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
       {
         registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
       }
 
       @Override
       public void actionPerformed(AnActionEvent event) {
-        final String profileName = askForProfileName("Copy Copyright Profile", "");
-        if (profileName == null) return;
-        final CopyrightProfile clone = new CopyrightProfile();
+        String profileName = askForProfileName("Copy Copyright Profile", "");
+        if (profileName == null) {
+          return;
+        }
+
+        CopyrightProfile clone = new CopyrightProfile();
         clone.copyFrom((CopyrightProfile)getSelectedObject());
         clone.setName(profileName);
         addProfileNode(clone);
@@ -201,52 +197,41 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
-    result.add(new AnAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
+    result.add(new DumbAwareAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
       @Override
       public void actionPerformed(AnActionEvent event) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-          .withFileFilter(new Condition<VirtualFile>() {
-            @Override
-            public boolean value(VirtualFile file) {
-              final FileType fileType = file.getFileType();
-              return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.XML);
-            }
+          .withFileFilter(file -> {
+            final FileType fileType = file.getFileType();
+            return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.XML);
           })
-          .withTitle("Choose file containing copyright notice");
-        FileChooser.chooseFile(descriptor, myProject, null, new Consumer<VirtualFile>() {
-          @Override
-          public void consume(VirtualFile file) {
-            final List<CopyrightProfile> profiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
-            if (profiles == null) return;
-            if (!profiles.isEmpty()) {
-              if (profiles.size() == 1) {
-                importProfile(profiles.get(0));
-              }
-              else {
-                JBPopupFactory.getInstance()
-                  .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", profiles) {
-                    @Override
-                    public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
-                      return doFinalStep(new Runnable() {
-                        @Override
-                        public void run() {
-                          importProfile(selectedValue);
-                        }
-                      });
-                    }
-
-                    @NotNull
-                    @Override
-                    public String getTextFor(CopyrightProfile value) {
-                      return value.getName();
-                    }
-                  })
-                  .showUnderneathOf(myNorthPanel);
-              }
+          .withTitle("Choose File Containing Copyright Notice");
+        FileChooser.chooseFile(descriptor, myProject, null, file -> {
+          final List<CopyrightProfile> profiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
+          if (profiles == null) return;
+          if (!profiles.isEmpty()) {
+            if (profiles.size() == 1) {
+              importProfile(profiles.get(0));
             }
             else {
-              Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
+              JBPopupFactory.getInstance()
+                .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", profiles) {
+                  @Override
+                  public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
+                    return doFinalStep(() -> importProfile(selectedValue));
+                  }
+
+                  @NotNull
+                  @Override
+                  public String getTextFor(CopyrightProfile value) {
+                    return value.getName();
+                  }
+                })
+                .showUnderneathOf(myNorthPanel);
             }
+          }
+          else {
+            Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
           }
         });
       }
@@ -278,7 +263,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     });
   }
 
-  private void addProfileNode(CopyrightProfile copyrightProfile) {
+  private void addProfileNode(@NotNull CopyrightProfile copyrightProfile) {
     final CopyrightConfigurable copyrightConfigurable = new CopyrightConfigurable(myProject, copyrightProfile, TREE_UPDATER);
     copyrightConfigurable.setModified(true);
     final MyNode node = new MyNode(copyrightConfigurable);
@@ -333,10 +318,5 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

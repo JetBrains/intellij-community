@@ -17,12 +17,12 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
@@ -135,7 +135,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    dbg2\n",
                 new TestDebuggerProvider(group, "dbg1"),
                 new TestDebuggerProvider(group, "dbg2"));
-  
+
     assertItems("--------\n" +
                 "1 exec1: dbg1\n" +
                 "    dbg1\n" +
@@ -221,7 +221,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "2 exec2: dbg1\n",
                 new TestDebuggerProvider(new TestAttachGroup("group", 0) {
                   @Override
-                  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b) {
+                  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
                     return a.getPid() - b.getPid();
                   }
                 }, "dbg1"));
@@ -230,12 +230,12 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "1 exec1: dbg1\n",
                 new TestDebuggerProvider(new TestAttachGroup("group", 0) {
                   @Override
-                  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b) {
+                  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
                     return b.getPid() - a.getPid();
                   }
                 }, "dbg1"));
   }
-  
+
   public void testCollectingAttachItems_Groups_CustomItemTitles() throws Exception {
     assertItems("----group----\n" +
                 "1 custom: dbg1\n" +
@@ -243,7 +243,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 new TestDebuggerProvider(new TestAttachGroup("group", 0) {
                   @NotNull
                   @Override
-                  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info) {
+                  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
                     return "custom";
                   }
                 }, "dbg1"));
@@ -257,18 +257,19 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     ProcessInfo info5 = new ProcessInfo(1, "command line 5", "exec1", "args1");
 
     List<XLocalAttachDebugger> debuggers = createDebuggers("gdb");
-    AttachItem item1 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info1, debuggers);
-    AttachItem item2 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info2, debuggers);
-    AttachItem item3 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info3, debuggers);
-    AttachItem item4 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info4, debuggers);
-    AttachItem item5 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info5, debuggers);
+    UserDataHolderBase dataHolder = new UserDataHolderBase();
+    AttachItem item1 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info1, debuggers, dataHolder);
+    AttachItem item2 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info2, debuggers, dataHolder);
+    AttachItem item3 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info3, debuggers, dataHolder);
+    AttachItem item4 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info4, debuggers, dataHolder);
+    AttachItem item5 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info5, debuggers, dataHolder);
 
     HistoryItem historyItem1 = new HistoryItem(info1, XLocalAttachGroup.DEFAULT, "gdb");
     HistoryItem historyItem2 = new HistoryItem(info2, XLocalAttachGroup.DEFAULT, "gdb");
     HistoryItem historyItem3 = new HistoryItem(info3, XLocalAttachGroup.DEFAULT, "gdb");
     HistoryItem historyItem4 = new HistoryItem(info4, XLocalAttachGroup.DEFAULT, "gdb");
     HistoryItem historyItem5 = new HistoryItem(info5, XLocalAttachGroup.DEFAULT, "gdb");
-    
+
     // empty
     assertEmpty(getHistory(getProject()));
 
@@ -286,22 +287,23 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     // limiting size to 4 items
     addToHistory(getProject(), item5);
     assertOrderedEquals(getHistory(getProject()), historyItem2, historyItem3, historyItem4, historyItem5);
-    
+
     // popping up recent items
     addToHistory(getProject(), item3);
     addToHistory(getProject(), item2);
     assertOrderedEquals(getHistory(getProject()), historyItem4, historyItem5, historyItem3, historyItem2);
   }
-  
+
   public void testHistory_UpdatingPreviousItems() throws Exception {
     TestAttachGroup group1 = new TestAttachGroup("group1", 1);
     TestAttachGroup group2 = new TestAttachGroup("group2", 2);
 
     ProcessInfo info1 = new ProcessInfo(1, "same command line", "exec1", "args1");
     ProcessInfo info2 = new ProcessInfo(2, "same command line", "exec2", "args2");
-    
-    AttachItem item1 = new AttachItem(group1, true, info1, createDebuggers("gdb1"));
-    AttachItem item2 = new AttachItem(group2, true, info2, createDebuggers("gdb2"));
+
+    UserDataHolderBase dataHolder = new UserDataHolderBase();
+    AttachItem item1 = new AttachItem(group1, true, info1, createDebuggers("gdb1"), dataHolder);
+    AttachItem item2 = new AttachItem(group2, true, info2, createDebuggers("gdb2"), dataHolder);
 
     HistoryItem historyItem1 = new HistoryItem(info1, group1, "gdb1");
     HistoryItem historyItem2 = new HistoryItem(info2, group2, "gdb2");
@@ -322,9 +324,10 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                                                         new ProcessInfo[]{
                                                           new ProcessInfo(1, "command line 1", "exec1", "args1"),
                                                           new ProcessInfo(2, "command line 2", "exec2", "args2")},
+                                                        DumbProgressIndicator.INSTANCE,
                                                         new TestDebuggerProvider(1, group1, debuggers1),
                                                         new TestDebuggerProvider(2, group2, debuggers2));
-    
+
     // one item in history
     addToHistory(getProject(), originalItems.get(0));
     assertItems("----Recent----\n" +
@@ -369,7 +372,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
-    
+
     // put most recent item on top
     addToHistory(getProject(), originalItems.get(0));
     assertItems("----Recent----\n" +
@@ -393,7 +396,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
-    
+
     // put debugger used in history item on top
     addToHistory(getProject(), originalItems.get(0).getSubItems().get(1));
     addToHistory(getProject(), originalItems.get(1).getSubItems().get(1));
@@ -474,7 +477,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
-    
+
     // filter items from history by suitable group
     assertItems("----Recent----\n" +
                 "10 exec10: lldb1\n" +
@@ -510,7 +513,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 },
                 new TestDebuggerProvider(10, group2, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
-    // filter by group equality, not by name 
+    // filter by group equality, not by name
     assertItems("----group1----\n" +
                 "10 exec10: gdb1\n" +
                 "    gdb1\n" +
@@ -545,8 +548,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers1));
-    
-    // filter debuggers by name, not by equality 
+
+    // filter debuggers by name, not by equality
     assertItems("----Recent----\n" +
                 "20 exec20: lldb2\n" +
                 "    gdb2\n" +
@@ -579,7 +582,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
   }
 
   private void assertItems(String expected, ProcessInfo[] infos, @NotNull XLocalAttachDebuggerProvider... providers) {
-    assertEquals(expected, printItems(collectAttachItems(getProject(), infos, providers)));
+    assertEquals(expected, printItems(collectAttachItems(getProject(), infos, DumbProgressIndicator.INSTANCE, providers)));
   }
 
   private void assertItems(String expected, List<AttachItem> items) {
@@ -603,22 +606,15 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
 
   @NotNull
   private static List<XLocalAttachDebugger> createDebuggers(String... names) {
-    return ContainerUtil.map(names, new Function<String, XLocalAttachDebugger>() {
+    return ContainerUtil.map(names, s -> new XLocalAttachDebugger() {
+      @NotNull
       @Override
-      public XLocalAttachDebugger fun(final String s) {
-        return new XLocalAttachDebugger() {
-          @NotNull
-          @Override
-          public String getDebuggerDisplayName() {
-            return s;
-          }
+      public String getDebuggerDisplayName() {
+        return s;
+      }
 
-          @NotNull
-          @Override
-          public XDebugSession attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
-            return null;
-          }
-        };
+      @Override
+      public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
       }
     });
   }

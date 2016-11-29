@@ -62,13 +62,8 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
       boundedComponent = new TextPanel();
     }
     boundedComponent.removeAll();
-    final Function<String, Document> factory = new Function<String, Document>() {
-      @Override
-      public Document fun(final String s) {
-        return PsiDocumentManager.getInstance(project)
-        .getDocument(PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false));
-      }
-    };
+    final Function<String, Document> factory = s -> PsiDocumentManager.getInstance(project)
+    .getDocument(PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false));
     final TextPanel boundedComponent1 = boundedComponent;
     final EditorTextField editorTextField = new EditorTextField(factory.fun(""), project, FileTypes.PLAIN_TEXT) {
       @Override

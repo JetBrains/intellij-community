@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final GrStatement[] statements = myHelper.getStatements();
 
     for (GrStatement statement : statements) {
@@ -126,7 +126,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    List<UsageInfo> result = new ArrayList<UsageInfo>();
+    List<UsageInfo> result = new ArrayList<>();
 
     final PsiMethod toSearchFor = (PsiMethod)myHelper.getToSearchFor();
 
@@ -153,7 +153,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       }
     }
 
-    Collection<PsiMethod> overridingMethods = OverridingMethodsSearch.search(toSearchFor, true).findAll();
+    Collection<PsiMethod> overridingMethods = OverridingMethodsSearch.search(toSearchFor).findAll();
 
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new UsageInfo(overridingMethod));

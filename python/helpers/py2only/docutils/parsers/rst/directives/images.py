@@ -1,4 +1,4 @@
-# $Id: images.py 5952 2009-05-19 08:45:27Z milde $
+# $Id: images.py 7753 2014-06-24 14:52:59Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,17 +8,23 @@ Directives for figures and simple images.
 
 __docformat__ = 'reStructuredText'
 
-from docutils import nodes
-from docutils.nodes import fully_normalize_name, whitespace_normalize_name
+
+import sys
+import urllib
+from docutils import nodes, utils
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives, states
+from docutils.nodes import fully_normalize_name, whitespace_normalize_name
 from docutils.parsers.rst.roles import set_classes
-
-try:
-    import Image as PIL                        # PIL
+try: # check for the Python Imaging Library
+    import PIL.Image
 except ImportError:
-    PIL = None
-
+    try:  # sometimes PIL modules are put in PYTHONPATH's root
+        import Image
+        class PIL(object): pass  # dummy wrapper
+        PIL.Image = Image
+    except ImportError:
+        PIL = None
 
 class Image(Directive):
 
@@ -40,6 +46,7 @@ class Image(Directive):
                    'width': directives.length_or_percentage_or_unitless,
                    'scale': directives.percentage,
                    'align': align,
+                   'name': directives.unchanged,
                    'target': directives.unchanged_required,
                    'class': directives.class_option}
 
@@ -83,6 +90,7 @@ class Image(Directive):
             del self.options['target']
         set_classes(self.options)
         image_node = nodes.image(self.block_text, **self.options)
+        self.add_name(image_node)
         if reference_node:
             reference_node += image_node
             return messages + [reference_node]
@@ -117,15 +125,17 @@ class Figure(Image):
         figure_node = nodes.figure('', image_node)
         if figwidth == 'image':
             if PIL and self.state.document.settings.file_insertion_enabled:
-                # PIL doesn't like Unicode paths:
+                imagepath = urllib.url2pathname(image_node['uri'])
                 try:
-                    i = PIL.open(str(image_node['uri']))
-                except (IOError, UnicodeError):
-                    pass
+                    img = PIL.Image.open(
+                            imagepath.encode(sys.getfilesystemencoding()))
+                except (IOError, UnicodeEncodeError):
+                    pass # TODO: warn?
                 else:
                     self.state.document.settings.record_dependencies.add(
-                        image_node['uri'])
-                    figure_node['width'] = i.size[0]
+                        imagepath.replace('\\', '/'))
+                    figure_node['width'] = '%dpx' % img.size[0]
+                    del img
         elif figwidth is not None:
             figure_node['width'] = figwidth
         if figclasses:
@@ -139,6 +149,8 @@ class Figure(Image):
             if isinstance(first_node, nodes.paragraph):
                 caption = nodes.caption(first_node.rawsource, '',
                                         *first_node.children)
+                caption.source = first_node.source
+                caption.line = first_node.line
                 figure_node += caption
             elif not (isinstance(first_node, nodes.comment)
                       and len(first_node) == 0):

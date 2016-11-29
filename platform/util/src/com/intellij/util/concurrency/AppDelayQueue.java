@@ -16,6 +16,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
+import sun.awt.AWTAutoShutdown;
 
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,7 +33,7 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
   private final AtomicBoolean shutdown = new AtomicBoolean();
 
   AppDelayQueue() {
-    /** this thread takes the ready-to-execute scheduled tasks off the queue and passes them for immediate execution to {@link SchedulingWrapper#backendExecutorService} */
+    /* this thread takes the ready-to-execute scheduled tasks off the queue and passes them for immediate execution to {@link SchedulingWrapper#backendExecutorService} */
     scheduledToPooledTransferer = new Thread(new Runnable() {
       @Override
       public void run() {
@@ -42,7 +43,9 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
             if (LOG.isTraceEnabled()) {
               LOG.trace("Took "+BoundedTaskExecutor.info(task));
             }
-            task.getBackendExecutorService().execute(task);
+            if (!task.isDone()) {  // can be cancelled already
+              task.getBackendExecutorService().execute(task);
+            }
           }
           catch (InterruptedException e) {
             if (!shutdown.get()) {
@@ -54,6 +57,7 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
       }
     }, "Periodic tasks thread");
     scheduledToPooledTransferer.start();
+    AWTAutoShutdown.getInstance().notifyThreadBusy(scheduledToPooledTransferer); // needed for EDT not to exit suddenly
   }
 
   void shutdown() {
@@ -68,5 +72,6 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+    AWTAutoShutdown.getInstance().notifyThreadFree(scheduledToPooledTransferer);
   }
 }

@@ -20,13 +20,21 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,11 +42,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CreateClassQuickFix implements LocalQuickFix {
   private final String myClassName;
-  private final PsiElement myAnchor;
+  private final SmartPsiElementPointer<PsiElement> myAnchor;
 
   public CreateClassQuickFix(String className, PsiElement anchor) {
     myClassName = className;
-    myAnchor = anchor;
+
+    final Project project = anchor.getProject();
+    final PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(project).getInjectionHost(anchor);
+    final PsiElement notInjectedAnchor = injectionHost != null ? injectionHost : anchor;
+    
+    myAnchor = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(notInjectedAnchor);
   }
 
   @NotNull
@@ -51,21 +64,22 @@ public class CreateClassQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return "Create Class";
+    return "Create class";
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement anchor = myAnchor;
-    if (!anchor.isValid()) {
+    PsiElement anchor = myAnchor.getElement();
+    if (anchor == null || !anchor.isValid()) {
       return;
     }
+
     if (!(anchor instanceof PyFile)) {
-      while(!(anchor.getParent() instanceof PyFile)) {
-        anchor = anchor.getParent();
-      }
+      anchor = PyPsiUtils.getParentRightBefore(anchor, anchor.getContainingFile());
+      assert anchor != null;
     }
+
     PyClass pyClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class,
-                                                                                           "class " + myClassName + "(object):\n    pass");
+                                                                             "class " + myClassName + "(object):\n    pass");
     if (anchor instanceof PyFile) {
       pyClass = (PyClass) anchor.add(pyClass);
     }
@@ -73,10 +87,17 @@ public class CreateClassQuickFix implements LocalQuickFix {
       pyClass = (PyClass) anchor.getParent().addBefore(pyClass, anchor);
     }
     pyClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(pyClass);
-    TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(pyClass);
+    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(pyClass);
     builder.replaceElement(pyClass.getSuperClassExpressions() [0], "object");
     builder.replaceElement(pyClass.getStatementList(), PyNames.PASS);
-    builder.run();
+    
+
+    final FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(anchor.getContainingFile().getVirtualFile());
+    if (!(editor instanceof TextEditor)) {
+      return;
+    }
+    
+    builder.run(((TextEditor)editor).getEditor(), false);
   }
 
 }

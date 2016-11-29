@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,9 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -50,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -71,7 +70,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   }
 
   private static List<GrExpression> collectExpressions(final PsiFile file, final int offset) {
-    final List<GrExpression> expressions = new ArrayList<GrExpression>();
+    final List<GrExpression> expressions = new ArrayList<>();
 
     _collect(file, offset, expressions);
     if (expressions.isEmpty()) _collect(file, offset, expressions);
@@ -90,13 +89,19 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return file;
+  }
+
   @Override
   public boolean startInWriteAction() {
     return false;
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final PsiFile file = element.getContainingFile();
     final int offset = editor.getCaretModel().getOffset();
     final AccessToken accessToken = ReadAction.start();
@@ -123,12 +128,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
                                              invokeImpl(selectedValue, document);
                                            }
                                          },
-                                         new Function<GrExpression, String>() {
-                                           @Override
-                                           public String fun(GrExpression grExpression) {
-                                             return grExpression.getText();
-                                           }
-                                         }
+                                         grExpression -> grExpression.getText()
       );
     }
   }
@@ -151,35 +151,26 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(text, true));
 
-    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        final AccessToken accessToken = WriteAction.start();
-        try {
-          final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
-          if (expression instanceof GrString) {
-            GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
-          }
-        }
-        finally {
-          accessToken.finish();
-        }
+    CommandProcessor.getInstance().executeCommand(element.getProject(), () -> WriteAction.run(() -> {
+      final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
+      if (expression instanceof GrString) {
+        GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
       }
-    }, null, null, document);
+    }), null, null, document);
   }
 
   private static boolean containsMultilineStrings(GrExpression expr) {
     final Ref<Boolean> result = Ref.create(false);
     expr.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitLiteralExpression(GrLiteral literal) {
+      public void visitLiteralExpression(@NotNull GrLiteral literal) {
         if (GrStringUtil.isMultilineStringLiteral(literal) && literal.getText().contains("\n")) {
           result.set(true);
         }
       }
 
       @Override
-      public void visitElement(GroovyPsiElement element) {
+      public void visitElement(@NotNull GroovyPsiElement element) {
         if (!result.get()) {
           super.visitElement(element);
         }

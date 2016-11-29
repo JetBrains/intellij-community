@@ -54,7 +54,7 @@ public class DetectedFrameworksComponent {
       }
     };
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
-    myGroupByComboBox.setModel(new EnumComboBoxModel<GroupByOption>(GroupByOption.class));
+    myGroupByComboBox.setModel(new EnumComboBoxModel<>(GroupByOption.class));
     myGroupByComboBox.setRenderer(new GroupByListCellRenderer());
     myGroupByComboBox.addActionListener(new ActionListener() {
       @Override
@@ -98,12 +98,7 @@ public class DetectedFrameworksComponent {
   }
 
   public void processUncheckedNodes(final DetectionExcludesConfiguration excludesConfiguration) {
-    getTree().processUncheckedNodes(new Consumer<DetectedFrameworkTreeNodeBase>() {
-      @Override
-      public void consume(DetectedFrameworkTreeNodeBase node) {
-        node.disableDetection(excludesConfiguration);
-      }
-    });
+    getTree().processUncheckedNodes(node -> node.disableDetection(excludesConfiguration));
   }
 
   public enum GroupByOption { TYPE, DIRECTORY }

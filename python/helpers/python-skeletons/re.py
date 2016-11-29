@@ -34,6 +34,17 @@ def match(pattern, string, flags=0):
     pass
 
 
+def fullmatch(pattern, string, flags=0):
+    """Matches the whole string.
+
+    :type pattern: bytes | unicode | __Regex
+    :type string: T <= bytes | unicode
+    :type flags: int
+    :rtype: __Match[T] | None
+    """
+    pass
+
+
 def split(pattern, string, maxsplit=0, flags=0):
     """Split string by the occurrences of pattern.
 
@@ -136,6 +147,16 @@ class __Regex(object):
 
     def match(self, string, pos=0, endpos=-1):
         """Matches zero | more characters at the beginning of the string.
+
+        :type string: T <= bytes | unicode
+        :type pos: int
+        :type endpos: int
+        :rtype: __Match[T] | None
+        """
+        pass
+
+    def fullmatch(self, string, pos=0, endpos=-1):
+        """Matches the whole string.
 
         :type string: T <= bytes | unicode
         :type pos: int

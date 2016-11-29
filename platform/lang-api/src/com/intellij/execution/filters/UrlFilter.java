@@ -32,6 +32,8 @@ public class UrlFilter implements Filter {
   @Nullable
   @Override
   public Result applyFilter(String line, int entireLength) {
+    if (!URLUtil.canContainUrl(line)) return null;
+
     int textStartOffset = entireLength - line.length();
     Matcher m = URLUtil.URL_PATTERN.matcher(line);
     ResultItem item = null;
@@ -41,7 +43,7 @@ public class UrlFilter implements Filter {
         item = new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group()));
       } else {
         if (items == null) {
-          items = new ArrayList<ResultItem>(2);
+          items = new ArrayList<>(2);
           items.add(item);
         }
         items.add(new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group())));

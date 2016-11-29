@@ -1,2 +1,2 @@
-public abstract class TestSubclass extends Runnable {
+public abstract class TestSubclass implements Runnable {
 }

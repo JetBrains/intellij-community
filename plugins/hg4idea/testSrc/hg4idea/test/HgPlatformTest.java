@@ -21,9 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
@@ -47,58 +45,35 @@ import static hg4idea.test.HgExecutor.hg;
  * or create another one.</li>
  * <li>Initially one repository is created with the project dir as its root. I. e. all project is under Mercurial.</li>
  * </ul>
- *
- * @author Kirill Likhodedov
  */
-public abstract class HgPlatformTest extends UsefulTestCase {
+public abstract class HgPlatformTest extends VcsPlatformTest {
 
-  protected Project myProject;
   protected VirtualFile myRepository;
   protected VirtualFile myChildRepo;
   protected HgVcs myVcs;
 
   protected static final String COMMIT_MESSAGE = "text";
 
-  private IdeaProjectTestFixture myProjectFixture;
-
-
   @Override
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     super.setUp();
-    try {
-      myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
-      myProjectFixture.setUp();
-    }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
-    }
-    try {
-      myProject = myProjectFixture.getProject();
-      VirtualFile projectRoot = myProject.getBaseDir();
 
-      cd(projectRoot);
-      hg("version");
-
-      createRepository(projectRoot);
-      myVcs = HgVcs.getInstance(myProject);
-      assertNotNull(myVcs);
-      myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
-      myVcs.checkVersion();
-      myRepository = projectRoot;
-      setUpHgrc(myRepository);
-    }
-    catch (Exception e) {
-      tearDown();
-      throw e;
-    }
+    cd(myProjectRoot);
+    myVcs = HgVcs.getInstance(myProject);
+    assertNotNull(myVcs);
+    myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
+    myVcs.getProjectSettings().setCheckIncomingOutgoing(false);
+    myVcs.checkVersion();
+    hg("version");
+    createRepository(myProjectRoot);
+    myRepository = myProjectRoot;
+    setUpHgrc(myRepository);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
       ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).waitEverythingDoneInTestMode();
-      myProjectFixture.tearDown();
     }
     finally {
       try {
@@ -146,7 +121,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     hg("init");
     touch("file.txt");
     hg("add file.txt");
-    hg("commit -m initial");
+    hg("commit -m initial -u asd");
   }
 
   public void prepareSecondRepository() throws IOException {

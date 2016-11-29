@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -32,6 +31,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private boolean myLoaded = false;
   private boolean isModuleAdded = false;
   private final OrderRootsCache myOrderRootsCache;
-  private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<RootModelImpl, Throwable>();
+  private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
 
   public ModuleRootManagerImpl(Module module,
@@ -97,7 +97,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
     if (Disposer.isDebugMode()) {
       final Set<Map.Entry<RootModelImpl, Throwable>> entries = myModelCreations.entrySet();
-      for (final Map.Entry<RootModelImpl, Throwable> entry : new ArrayList<Map.Entry<RootModelImpl, Throwable>>(entries)) {
+      for (final Map.Entry<RootModelImpl, Throwable> entry : new ArrayList<>(entries)) {
         System.err.println("***********************************************************************************************");
         System.err.println("***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***");
         System.err.println("***********************************************************************************************");
@@ -346,17 +346,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   protected void loadState(ModuleRootManagerState object, boolean throwEvent) {
-    AccessToken token = throwEvent ? WriteAction.start() : ReadAction.start();
-    try {
+    ThrowableRunnable<RuntimeException> r = () -> {
       final RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager, throwEvent);
 
       if (throwEvent) {
-        makeRootsChange(new Runnable() {
-          @Override
-          public void run() {
-            doCommit(newModel);
-          }
-        });
+        makeRootsChange(() -> doCommit(newModel));
       }
       else {
         myRootModel.dispose();
@@ -364,12 +358,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       }
 
       assert !myRootModel.isOrderEntryDisposed();
+    };
+    try {
+      if (throwEvent) WriteAction.run(r);
+      else ReadAction.run(r);
     }
     catch (InvalidDataException e) {
       LOG.error(e);
-    }
-    finally {
-      token.finish();
     }
   }
 

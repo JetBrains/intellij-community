@@ -62,6 +62,10 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     if (element instanceof SchemaPrefix) {
       return ((SchemaPrefix)element).getQuickNavigateInfo();
     }
+    if (element instanceof XmlEntityDecl) {
+      final XmlAttributeValue value = ((XmlEntityDecl)element).getValueElement();
+      return value != null ? value.getText() : null;
+    }
     return null;
   }
 
@@ -176,16 +180,13 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   private static XmlTag findEnumerationValue(final String text, XmlTag tag) {
-    final Ref<XmlTag> enumerationTag = new Ref<XmlTag>();
+    final Ref<XmlTag> enumerationTag = new Ref<>();
 
-    Processor<XmlTag> processor = new Processor<XmlTag>() {
-      @Override
-      public boolean process(XmlTag xmlTag) {
-        if (text.equals(xmlTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME))) {
-          enumerationTag.set(xmlTag);
-        }
-        return true;
+    Processor<XmlTag> processor = xmlTag -> {
+      if (text.equals(xmlTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME))) {
+        enumerationTag.set(xmlTag);
       }
+      return true;
     };
     XmlUtil.processEnumerationValues(tag, processor);
 

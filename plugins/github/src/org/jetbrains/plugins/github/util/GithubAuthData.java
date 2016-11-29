@@ -18,7 +18,6 @@ package org.jetbrains.plugins.github.util;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 /**
  * Container for authentication data:
@@ -58,7 +57,7 @@ public class GithubAuthData {
   }
 
   public static GithubAuthData createAnonymous() {
-    return createAnonymous(GithubApiUtil.DEFAULT_GITHUB_HOST);
+    return createAnonymous(GithubSettings.getInstance().getHost());
   }
 
   public static GithubAuthData createAnonymous(@NotNull String host) {

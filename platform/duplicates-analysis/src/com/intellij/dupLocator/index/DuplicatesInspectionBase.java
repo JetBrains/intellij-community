@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.dupLocator.index;
 
 import com.intellij.codeInspection.*;
@@ -15,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -50,7 +66,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final DuplicatesProfile profile = DuplicatesIndex.findDuplicatesProfile(psiFile.getFileType());
     if (profile == null) return ProblemDescriptor.EMPTY_ARRAY;
 
-    final Ref<DuplicatedCodeProcessor> myProcessorRef = new Ref<DuplicatedCodeProcessor>();
+    final Ref<DuplicatedCodeProcessor> myProcessorRef = new Ref<>();
 
     final FileASTNode node = psiFile.getNode();
     boolean usingLightProfile = profile instanceof LightDuplicateProfile &&
@@ -165,7 +181,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
     DuplicatedCodeProcessor<?> processor = myProcessorRef.get();
 
-    final SmartList<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
+    final SmartList<ProblemDescriptor> descriptors = new SmartList<>();
 
     if (processor != null) {
       final VirtualFile baseDir = psiFile.getProject().getBaseDir();
@@ -210,9 +226,9 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
   }
 
   static abstract class DuplicatedCodeProcessor<T> implements FileBasedIndex.ValueProcessor<TIntArrayList> {
-    final TreeMap<Integer, TextRange> reportedRanges = new TreeMap<Integer, TextRange>();
-    final TIntObjectHashMap<VirtualFile> reportedFiles = new TIntObjectHashMap<VirtualFile>();
-    final TIntObjectHashMap<PsiElement> reportedPsi = new TIntObjectHashMap<PsiElement>();
+    final TreeMap<Integer, TextRange> reportedRanges = new TreeMap<>();
+    final TIntObjectHashMap<VirtualFile> reportedFiles = new TIntObjectHashMap<>();
+    final TIntObjectHashMap<PsiElement> reportedPsi = new TIntObjectHashMap<>();
     final TIntIntHashMap reportedOffsetInOtherFiles = new TIntIntHashMap();
     final TIntIntHashMap fragmentSize = new TIntIntHashMap();
     final TIntLongHashMap fragmentHash = new TIntLongHashMap();
@@ -251,7 +267,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
         if (myFileIndex.isInSourceContent(virtualFile)) {
           if (!myFileIndex.isInSourceContent(file)) return true;
-          if (!myFileIndex.isInTestSourceContent(virtualFile) && myFileIndex.isInTestSourceContent(file)) return true;
+          if (!TestSourcesFilter.isTestSources(virtualFile, project) && TestSourcesFilter.isTestSources(file, project)) return true;
           if (mySkipGeneratedCode) {
             if (!myFileWithinGeneratedCode && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) return true;
           }

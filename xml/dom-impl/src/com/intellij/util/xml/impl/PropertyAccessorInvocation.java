@@ -44,7 +44,7 @@ class PropertyAccessorInvocation implements Invocation {
     if (i == myLastElement) return o;
 
     if (o instanceof List) {
-      List<Object> result = new ArrayList<Object>();
+      List<Object> result = new ArrayList<>();
       for (Object o1 : (List)o) {
         result.add(invoke(i + 1, o1));
       }

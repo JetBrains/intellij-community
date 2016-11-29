@@ -33,7 +33,7 @@ public class TreeStructureUtil {
 
   public static Object[] getChildElementsFromTreeStructure(AbstractTreeStructure treeStructure, Object element) {
     final Object[] items = treeStructure.getChildElements(element);
-    HashSet<Object> viewedItems = new HashSet<Object>();
+    HashSet<Object> viewedItems = new HashSet<>();
 
     for (Object item : items) {
       if (viewedItems.contains(item)) continue;

@@ -8,6 +8,8 @@ Standalone file Reader for the reStructuredText markup syntax.
 
 __docformat__ = 'reStructuredText'
 
+
+import sys
 from docutils import frontend, readers
 from docutils.transforms import frontmatter, references, misc
 

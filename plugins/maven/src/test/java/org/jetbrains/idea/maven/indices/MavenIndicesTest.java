@@ -453,7 +453,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   }
 
   private static void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
-    List<String> actualArtifacts = new ArrayList<String>();
+    List<String> actualArtifacts = new ArrayList<>();
     for (MavenArtifactInfo each : i.search(query, 100)) {
       actualArtifacts.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());
     }

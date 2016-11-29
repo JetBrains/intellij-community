@@ -20,6 +20,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -27,11 +28,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class PushDownDelegate {
-  public static final LanguageExtension<PushDownDelegate> EP_NAME = new LanguageExtension<PushDownDelegate>("com.intellij.refactoring.pushDown");
+public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>,
+                                      Member extends PsiElement> {
+  public static final LanguageExtension<PushDownDelegate> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.pushDown");
 
   @Nullable
-  protected static PushDownDelegate findDelegate(@NotNull PsiElement sourceClass) {
+  protected static <MemberInfo extends MemberInfoBase<Member>, Member extends PsiElement> PushDownDelegate<MemberInfo, Member> findDelegate(@NotNull PsiElement sourceClass) {
     return EP_NAME.forLanguage(sourceClass.getLanguage());
   }
 
@@ -52,7 +54,7 @@ public abstract class PushDownDelegate {
    * Implementations are supposed to override this method when overriding default behaviour for the language, 
    * e.g. pushing members from groovy class to java, groovy could provide additional delegate which inherits delegate for java and accepts groovy sources.
    * Methods to process target class should be updated to cope with source of another language (e.g. calling super on PushDownData translated to java): 
-   * {@link #checkTargetClassConflicts(PsiElement, PushDownData, boolean, PsiElement, MultiMap)}, 
+   * {@link #checkTargetClassConflicts(PsiElement, PushDownData, MultiMap, NewSubClassData) },
    * {@link #pushDownToClass(PsiElement, PushDownData)}
    */
   protected abstract boolean isApplicableForSource(@NotNull PsiElement sourceClass);
@@ -60,7 +62,7 @@ public abstract class PushDownDelegate {
   /**
    * Find classes to push members down.
    */
-  protected abstract List<PsiElement> findInheritors(PushDownData pushDownData);
+  protected abstract List<PsiElement> findInheritors(PushDownData<MemberInfo, Member> pushDownData);
 
   protected UsageInfo createUsageInfo(PsiElement element) {
     return new UsageInfo(element);
@@ -70,39 +72,40 @@ public abstract class PushDownDelegate {
    * Collect conflicts inside sourceClass assuming members would be removed,
    * e.g. check if members remaining in source class do not depend on moved members
    */
-  protected abstract void checkSourceClassConflicts(PushDownData pushDownData, MultiMap<PsiElement, String> conflicts);
+  protected abstract void checkSourceClassConflicts(PushDownData<MemberInfo, Member> pushDownData, MultiMap<PsiElement, String> conflicts);
 
   /**
    * Collect conflicts inside targetClass assuming methods would be pushed,
    * e.g. check if target class already has field with the same name, some references types
    * won't be accessible anymore, etc
+   *
+   * If <code>targetClass == null</code> (target class should be created), then subClassData would be not null
    */
-  protected abstract void checkTargetClassConflicts(PsiElement targetClass,
-                                                    PushDownData pushDownData,
-                                                    boolean checkStatic,
-                                                    PsiElement context,
-                                                    MultiMap<PsiElement, String> conflicts);
+  protected abstract void checkTargetClassConflicts(@Nullable PsiElement targetClass,
+                                                    PushDownData<MemberInfo, Member> pushDownData,
+                                                    MultiMap<PsiElement, String> conflicts,
+                                                    @Nullable NewSubClassData subClassData);
 
   /**
    * Could be used e.g. to encode mutual references between moved members 
    */
-  protected void prepareToPush(PushDownData pushDownData) {}
+  protected void prepareToPush(PushDownData<MemberInfo, Member> pushDownData) {}
 
   /**
    * Push members to the target class adjusting visibility, comments according to the policy, etc
    */
-  protected abstract void pushDownToClass(PsiElement targetClass, PushDownData pushDownData);
+  protected abstract void pushDownToClass(PsiElement targetClass, PushDownData<MemberInfo, Member> pushDownData);
 
   /**
    * Remove members from the source class according to the abstract flag. 
    */
-  protected abstract void removeFromSourceClass(PushDownData pushDownData);
+  protected abstract void removeFromSourceClass(PushDownData<MemberInfo, Member> pushDownData);
 
   /**
    * Called if no inheritors were found in {@link #findInheritors(PushDownData)}. Should warn that members would be deleted and 
    * suggest to create new target class if applicable
    * 
-   * @return NewSubClassData.EMPTY if refactoring should be aborted
+   * @return NewSubClassData.ABORT_REFACTORING if refactoring should be aborted
    *         null to proceed without inheritors (members would be deleted from the source class and not added to the target)
    *         new NewSubClassData(context, name) if new inheritor should be created with {@link #createSubClass(PsiElement, NewSubClassData)} 
    */
@@ -111,7 +114,7 @@ public abstract class PushDownDelegate {
                            RefactoringBundle.message("push.down.will.delete.members");
     final int answer = Messages.showYesNoDialog(message, conflictDialogTitle, Messages.getWarningIcon());
     if (answer != Messages.YES) {
-      return NewSubClassData.EMPTY;
+      return NewSubClassData.ABORT_REFACTORING;
     }
     return null;
   }

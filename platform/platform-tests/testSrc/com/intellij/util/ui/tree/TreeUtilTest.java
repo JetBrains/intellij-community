@@ -138,23 +138,15 @@ public class TreeUtilTest extends PlatformTestCase {
     DefaultMutableTreeNode node1_1 = new DefaultMutableTreeNode("1_1");
     node1.add(node1_1);
     DefaultTreeModel model = new DefaultTreeModel(root);
-    TreeUtil.sort(model, new Comparator() {
-      @Override
-      public int compare(Object o1, Object o2) {
-        return o1.toString().compareTo(o2.toString());
-      }
-    });
+    TreeUtil.sort(model, (o1, o2) -> o1.toString().compareTo(o2.toString()));
     assertEquals(node1, root.getChildAt(0));
     assertEquals(node2, root.getChildAt(1));
     assertEquals(node1_1, node1.getChildAt(0));
     assertEquals(node1_2, node1.getChildAt(1));
-    TreeUtil.sort(model, new Comparator() {
-      @Override
-      public int compare(Object o1, Object o2) {
-        TreeNode n1 = (TreeNode) o1;
-        TreeNode n2 = (TreeNode) o2;
-        return n1.getChildCount() - n2.getChildCount();
-      }
+    TreeUtil.sort(model, (o1, o2) -> {
+      TreeNode n1 = (TreeNode) o1;
+      TreeNode n2 = (TreeNode) o2;
+      return n1.getChildCount() - n2.getChildCount();
     });
     assertEquals(node2, root.getChildAt(0));
     assertEquals(node1, root.getChildAt(1));
@@ -168,12 +160,9 @@ public class TreeUtilTest extends PlatformTestCase {
     node.add(new DefaultMutableTreeNode("001"));
     root.add(new DefaultMutableTreeNode("01"));
     final ArrayList order = new ArrayList();
-    TreeUtil.traverseDepth(root, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        order.add(node.toString());
-        return true;
-      }
+    TreeUtil.traverseDepth(root, node1 -> {
+      order.add(node1.toString());
+      return true;
     });
     CHECK.compareAll(new String[]{"0", "00", "000", "001","01"}, order);
   }

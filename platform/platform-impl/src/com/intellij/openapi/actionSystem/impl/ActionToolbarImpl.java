@@ -25,11 +25,10 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -39,12 +38,9 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +51,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -64,11 +62,21 @@ import java.util.List;
 public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
 
-  private static final List<ActionToolbarImpl> ourToolbars = new LinkedList<ActionToolbarImpl>();
+  private static final List<ActionToolbarImpl> ourToolbars = new LinkedList<>();
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
 
+  static {
+    JBUI.addPropertyChangeListener(JBUI.SCALE_FACTOR_PROPERTY, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent e) {
+        ((JBDimension)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).update();
+        ((JBDimension)ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE).update();
+      }
+    });
+  }
+
   public static void updateAllToolbarsImmediately() {
-    for (ActionToolbarImpl toolbar : new ArrayList<ActionToolbarImpl>(ourToolbars)) {
+    for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
       toolbar.updateActionsImmediately();
       for (Component c : toolbar.getComponents()) {
         if (c instanceof ActionButton) {
@@ -85,7 +93,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    * Rectangle objects that are used in calculation of preferred sizes and
    * components layout.
    */
-  private final List<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
+  private final List<Rectangle> myComponentBounds = new ArrayList<>();
 
   private Dimension myMinimumButtonSize = JBUI.emptySize();
 
@@ -164,7 +172,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myActionManager = actionManager;
     myPlace = place;
     myActionGroup = actionGroup;
-    myVisibleActions = new ArrayList<AnAction>();
+    myVisibleActions = new ArrayList<>();
     myDataManager = dataManager;
     myDecorateButtons = decorateButtons;
     myUpdater = new ToolbarUpdater(actionManager, keymapManager, this) {
@@ -244,6 +252,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Override
   protected void paintComponent(final Graphics g) {
     if (doMacEnhancementsForMainToolbar()) {
       final Rectangle r = getBounds();
@@ -271,7 +284,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private void fillToolBar(final List<AnAction> actions, boolean layoutSecondaries) {
-    final List<AnAction> rightAligned = new ArrayList<AnAction>();
+    final List<AnAction> rightAligned = new ArrayList<>();
     if (myAddSeparatorFirst) {
       add(new MySeparator());
     }
@@ -774,7 +787,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   @Override
   public Dimension getPreferredSize() {
-    final ArrayList<Rectangle> bounds = new ArrayList<Rectangle>();
+    final ArrayList<Rectangle> bounds = new ArrayList<>();
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
     if (bounds.isEmpty()) return JBUI.emptySize();
     int xLeft = Integer.MAX_VALUE;
@@ -823,7 +836,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private static class ToolbarReference extends WeakReference<ActionToolbarImpl> {
-    private static final ReferenceQueue<ActionToolbarImpl> ourQueue = new ReferenceQueue<ActionToolbarImpl>();
+    private static final ReferenceQueue<ActionToolbarImpl> ourQueue = new ReferenceQueue<>();
     private volatile Disposable myDisposable;
     
     ToolbarReference(ActionToolbarImpl toolbar) {
@@ -933,7 +946,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     List<AnAction> newVisibleActions = ContainerUtil.newArrayListWithCapacity(myVisibleActions.size());
     DataContext dataContext = getDataContext();
 
-    Utils.expandActionGroup(myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
+    Utils.expandActionGroup(LaterInvocator.isInModalContext(), myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
                             myPlace, myActionManager, transparentOnly);
 
     if (forced || !newVisibleActions.equals(myVisibleActions)) {
@@ -1017,12 +1030,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       return;
     }
     if (myAutoPopupRec != null && myAutoPopupRec.contains(e.getPoint())) {
-      IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          showAutoPopup();
-        }
-      });
+      IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(() -> showAutoPopup());
     }
   }
 
@@ -1072,15 +1080,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       .setTitle(null)
       .setCancelOnClickOutside(true)
       .setCancelOnOtherWindowOpen(true)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          final boolean toClose = myActionManager.isActionPopupStackEmpty();
-          if (toClose) {
-            myUpdater.updateActions(false, true);
-          }
-          return toClose;
+      .setCancelCallback(() -> {
+        final boolean toClose = myActionManager.isActionPopupStackEmpty();
+        if (toClose) {
+          myUpdater.updateActions(false, true);
         }
+        return toClose;
       })
       .setCancelOnMouseOutCallback(new MouseChecker() {
         @Override
@@ -1232,70 +1237,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     mySecondaryActions.getTemplatePresentation().setDescription(secondaryActionsTooltip);
   }
 
+  @NotNull
   @Override
-  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
+  public List<AnAction> getActions() {
+    ArrayList<AnAction> result = new ArrayList<>();
 
-    if (getBounds().width * getBounds().height <= 0) return result;
-
-    for (int i = 0; i < getComponentCount(); i++) {
-      Component each = getComponent(i);
-      if (each instanceof ActionButton) {
-        result.add(new ActionTarget((ActionButton)each));
-      }
-    }
-    return result;
-  }
-
-  private static class ActionTarget implements SwitchTarget {
-    private final ActionButton myButton;
-
-    private ActionTarget(ActionButton button) {
-      myButton = button;
-    }
-
-    @Override
-    public ActionCallback switchTo(boolean requestFocus) {
-      myButton.click();
-      return ActionCallback.DONE;
-    }
-
-    @Override
-    public boolean isVisible() {
-      return myButton.isVisible();
-    }
-
-    @Override
-    public RelativeRectangle getRectangle() {
-      return new RelativeRectangle(myButton.getParent(), myButton.getBounds());
-    }
-
-    @Override
-    public Component getComponent() {
-      return myButton;
-    }
-
-    @Override
-    public String toString() {
-      return myButton.getAction().toString();
-    }
-  }
-
-  @Override
-  public SwitchTarget getCurrentTarget() {
-    return null;
-  }
-
-  @Override
-  public boolean isCycleRoot() {
-    return false;
-  }
-
-  @Override
-  public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>();
-
-    ArrayList<AnAction> secondary = new ArrayList<AnAction>();
+    ArrayList<AnAction> secondary = new ArrayList<>();
     AnAction[] kids = myActionGroup.getChildren(null);
     for (AnAction each : kids) {
       if (myActionGroup.isPrimary(each)) {

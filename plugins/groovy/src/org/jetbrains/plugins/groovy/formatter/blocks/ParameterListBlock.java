@@ -53,7 +53,7 @@ public class ParameterListBlock extends GroovyBlock {
     final ASTNode rightParenth = methodNode.findChildByType(GroovyTokenTypes.mRPAREN);
 
     final GroovyWrappingProcessor wrappingProcessor = new GroovyWrappingProcessor(this);
-    mySubBlocks = new ArrayList<Block>();
+    mySubBlocks = new ArrayList<>();
     if (leftParenth != null) {
       mySubBlocks.add(new GroovyBlock(leftParenth, Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext));
     }

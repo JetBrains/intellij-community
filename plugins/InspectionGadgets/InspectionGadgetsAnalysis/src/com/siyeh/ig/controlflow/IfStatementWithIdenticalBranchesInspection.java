@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
-import com.intellij.refactoring.util.duplicates.ConditionalReturnStatementValue;
-import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
-import com.intellij.refactoring.util.duplicates.Match;
-import com.intellij.refactoring.util.duplicates.ReturnValue;
+import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -68,15 +65,9 @@ public class IfStatementWithIdenticalBranchesInspection
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "if.statement.with.identical.branches.collapse.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override
@@ -163,6 +154,17 @@ public class IfStatementWithIdenticalBranchesInspection
 
   private static class IfStatementWithIdenticalBranchesVisitor extends BaseInspectionVisitor {
 
+    private static PsiStatement unwrap(PsiStatement statement) {
+      if (statement == null) {
+        return null;
+      }
+      final PsiElement[] children = DuplicatesFinder.getFilteredChildren(statement);
+      if (children.length == 1 && children[0] instanceof PsiStatement) {
+        return (PsiStatement) children[0];
+      }
+      return statement;
+    }
+
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
       super.visitIfStatement(ifStatement);
@@ -171,45 +173,39 @@ public class IfStatementWithIdenticalBranchesInspection
       if (thenBranch == null) {
         return;
       }
-      final Project project = ifStatement.getProject();
-      final InputVariables inputVariables =
-        new InputVariables(Collections.<PsiVariable>emptyList(),
-                           project, new LocalSearchScope(thenBranch), false);
-      final DuplicatesFinder finder =
-        new DuplicatesFinder(new PsiElement[]{thenBranch},
-                             inputVariables, null,
-                             Collections.<PsiVariable>emptyList());
       if (elseBranch instanceof PsiIfStatement) {
         final PsiIfStatement statement = (PsiIfStatement)elseBranch;
-        final PsiStatement branch = statement.getThenBranch();
-        if (branch == null) {
-          return;
-        }
-        final Match match = finder.isDuplicate(branch, true);
-        if (match != null) {
-          final ReturnValue matchReturnValue = match.getReturnValue();
-          if (matchReturnValue instanceof ConditionalReturnStatementValue &&
-              !matchReturnValue.isEquivalent(buildReturnValue(thenBranch))) {
-            return;
-          }
-          registerStatementError(ifStatement, statement);
-          return;
-        }
-      }
-      if (elseBranch == null) {
-        checkIfStatementWithoutElseBranch(ifStatement);
-      }
-      else {
-        final Match match = finder.isDuplicate(elseBranch, true);
-        if (match != null) {
-          final ReturnValue matchReturnValue = match.getReturnValue();
-          if (matchReturnValue instanceof ConditionalReturnStatementValue &&
-              !matchReturnValue.isEquivalent(buildReturnValue(thenBranch))) {
-            return;
-          }
+        final PsiStatement branch = unwrap(statement.getThenBranch());
+        if (branch != null && isDuplicate(thenBranch, branch)) {
           registerStatementError(ifStatement);
         }
       }
+      else if (elseBranch == null) {
+        checkIfStatementWithoutElseBranch(ifStatement);
+      }
+      else if (isDuplicate(thenBranch, elseBranch)) {
+        registerStatementError(ifStatement);
+      }
+    }
+
+    private boolean isDuplicate(@NotNull PsiStatement element1, @NotNull PsiStatement element2) {
+      element1 = unwrap(element1);
+      element2 = unwrap(element2);
+      final InputVariables inputVariables =
+        new InputVariables(Collections.emptyList(), element1.getProject(), new LocalSearchScope(element1), false);
+      final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{element1}, inputVariables, null, Collections.emptyList());
+      final Match match = finder.isDuplicate(element2, true);
+      if (match == null) {
+        return false;
+      }
+      final ReturnValue matchReturnValue = match.getReturnValue();
+      if (matchReturnValue instanceof ConditionalReturnStatementValue && !matchReturnValue.isEquivalent(buildReturnValue(element1))) {
+        return false;
+      }
+      else if (matchReturnValue instanceof ExpressionReturnValue) {
+        return false;
+      }
+      return true;
     }
 
     @Nullable
@@ -263,14 +259,14 @@ public class IfStatementWithIdenticalBranchesInspection
             }
             return;
           }
-          else if (!EquivalenceChecker.statementsAreEquivalent(
+          else if (!EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(
             statement, nextStatement)) {
             return;
           }
           nextStatement = getNextStatement(nextStatement);
         }
       }
-      else if (!EquivalenceChecker.statementsAreEquivalent(
+      else if (!EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(
         thenBranch, nextStatement)) {
         return;
       }

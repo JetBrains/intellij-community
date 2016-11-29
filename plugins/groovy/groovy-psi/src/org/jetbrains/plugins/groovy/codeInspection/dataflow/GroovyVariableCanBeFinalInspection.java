@@ -44,13 +44,10 @@ import java.util.List;
 public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBase {
 
   private static final Function<ProblemDescriptor, PsiModifierList> ID_MODIFIER_LIST_PROVIDER =
-    new Function<ProblemDescriptor, PsiModifierList>() {
-      @Override
-      public PsiModifierList fun(ProblemDescriptor descriptor) {
-        final PsiElement identifier = descriptor.getPsiElement();
-        final PsiVariable variable = PsiTreeUtil.getParentOfType(identifier, PsiVariable.class);
-        return variable == null ? null : variable.getModifierList();
-      }
+    descriptor -> {
+      final PsiElement identifier = descriptor.getPsiElement();
+      final PsiVariable variable = PsiTreeUtil.getParentOfType(identifier, PsiVariable.class);
+      return variable == null ? null : variable.getModifierList();
     };
 
   private static void process(@NotNull GrControlFlowOwner owner, @NotNull GrVariable variable, @NotNull ProblemsHolder problemsHolder) {
@@ -98,10 +95,10 @@ public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBas
   @Override
   public void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
-    final DFAEngine<TObjectIntHashMap<GrVariable>> engine = new DFAEngine<TObjectIntHashMap<GrVariable>>(
+    final DFAEngine<TObjectIntHashMap<GrVariable>> engine = new DFAEngine<>(
       flow,
       new WritesCounterDFAInstance(),
-      new WritesCounterSemilattice<GrVariable>()
+      new WritesCounterSemilattice<>()
     );
     final List<TObjectIntHashMap<GrVariable>> dfaResult = engine.performDFAWithTimeout();
     if (dfaResult == null || dfaResult.isEmpty()) return;

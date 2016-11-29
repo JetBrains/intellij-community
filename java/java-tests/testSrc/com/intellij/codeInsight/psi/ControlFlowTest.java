@@ -76,12 +76,7 @@ public class ControlFlowTest extends LightCodeInsightTestCase {
   private static void doAllTests() throws Exception {
     final String testDirPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + BASE_PATH;
     File testDir = new File(testDirPath);
-    final File[] files = testDir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".java");
-      }
-    });
+    final File[] files = testDir.listFiles((dir, name) -> name.endsWith(".java"));
     for (int i = 0; i < files.length; i++) {
       File file = files[i];
       doTestFor(file);

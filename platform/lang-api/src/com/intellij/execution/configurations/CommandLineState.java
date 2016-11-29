@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ public abstract class CommandLineState implements RunProfileState {
 
   protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler, Executor executor) {
     if (console == null || !console.canPause() || (executor != null && !DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId()))) {
-      return new AnAction[0];
+      return AnAction.EMPTY_ARRAY;
     }
     return new AnAction[]{new PauseOutputAction(console, processHandler)};
   }
@@ -139,12 +139,7 @@ public abstract class CommandLineState implements RunProfileState {
     @Override
     public void setSelected(final AnActionEvent event, final boolean flag) {
       myConsole.setOutputPaused(flag);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          update(event);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> update(event));
     }
 
     @Override
@@ -165,12 +160,7 @@ public abstract class CommandLineState implements RunProfileState {
         }
         else {
           presentation.setEnabled(true);
-          myConsole.performWhenNoDeferredOutput(new Runnable() {
-            @Override
-            public void run() {
-              update(event);
-            }
-          });
+          myConsole.performWhenNoDeferredOutput(() -> update(event));
         }
       }
     }

@@ -63,7 +63,8 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     return new PsiClassReferenceListStubImpl(type, parentStub, getTexts(tree, node), elementTypeToRole(type));
   }
 
-  private static String[] getTexts(LighterAST tree, LighterASTNode node) {
+  @NotNull
+  private static String[] getTexts(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
     List<LighterASTNode> refs = LightTreeUtil.getChildrenOfType(tree, node, JavaElementType.JAVA_CODE_REFERENCE);
     String[] texts = ArrayUtil.newStringArray(refs.size());
     for (int i = 0; i < refs.size(); i++) {
@@ -126,15 +127,17 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     }
   }
 
-  private static PsiReferenceList.Role elementTypeToRole(IElementType type) {
+  @NotNull
+  public static PsiReferenceList.Role elementTypeToRole(@NotNull IElementType type) {
     if (type == JavaStubElementTypes.EXTENDS_BOUND_LIST) return PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
-    else if (type == JavaStubElementTypes.EXTENDS_LIST) return PsiReferenceList.Role.EXTENDS_LIST;
-    else if (type == JavaStubElementTypes.IMPLEMENTS_LIST) return PsiReferenceList.Role.IMPLEMENTS_LIST;
-    else if (type == JavaStubElementTypes.THROWS_LIST) return PsiReferenceList.Role.THROWS_LIST;
+    if (type == JavaStubElementTypes.EXTENDS_LIST) return PsiReferenceList.Role.EXTENDS_LIST;
+    if (type == JavaStubElementTypes.IMPLEMENTS_LIST) return PsiReferenceList.Role.IMPLEMENTS_LIST;
+    if (type == JavaStubElementTypes.THROWS_LIST) return PsiReferenceList.Role.THROWS_LIST;
     throw new RuntimeException("Unknown element type: " + type);
   }
 
-  private static JavaClassReferenceListElementType roleToElementType(PsiReferenceList.Role role) {
+  @NotNull
+  private static JavaClassReferenceListElementType roleToElementType(@NotNull PsiReferenceList.Role role) {
     switch (role) {
       case EXTENDS_BOUNDS_LIST: return JavaStubElementTypes.EXTENDS_BOUND_LIST;
       case EXTENDS_LIST:        return JavaStubElementTypes.EXTENDS_LIST;

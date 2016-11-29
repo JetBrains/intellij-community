@@ -20,7 +20,6 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -38,12 +37,7 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     super(delegate);
 
     Project project = getProject();
-    if (project != null) {
-      myIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    }
-    else {
-      myIndex = null;
-    }
+    myIndex = project == null ? null : ProjectRootManager.getInstance(project).getFileIndex();
   }
 
   @Override

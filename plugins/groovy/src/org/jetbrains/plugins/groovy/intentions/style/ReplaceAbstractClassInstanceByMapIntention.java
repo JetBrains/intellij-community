@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement psiElement, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement psiElement, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     GrCodeReferenceElement ref = (GrCodeReferenceElement)psiElement;
@@ -67,15 +67,15 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
     GrTypeDefinitionBody body = anonymous.getBody();
     assert body != null;
 
-    List<Pair<PsiMethod, GrOpenBlock>> methods = new ArrayList<Pair<PsiMethod, GrOpenBlock>>();
+    List<Pair<PsiMethod, GrOpenBlock>> methods = new ArrayList<>();
     for (GrMethod method : body.getMethods()) {
-      methods.add(new Pair<PsiMethod, GrOpenBlock>(method, method.getBlock()));
+      methods.add(new Pair<>(method, method.getBlock()));
     }
 
     final PsiClass iface = (PsiClass)resolved;
     final Collection<CandidateInfo> collection = OverrideImplementExploreUtil.getMethodsToOverrideImplement(anonymous, true);
     for (CandidateInfo info : collection) {
-      methods.add(new Pair<PsiMethod, GrOpenBlock>((PsiMethod)info.getElement(), null));
+      methods.add(new Pair<>((PsiMethod)info.getElement(), null));
     }
 
     StringBuilder buffer = new StringBuilder();
@@ -122,7 +122,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
     final PsiParameterList list = method.getParameterList();
     buffer.append("{ ");
     final PsiParameter[] parameters = list.getParameters();
-    Set<String> generatedNames = new HashSet<String>();
+    Set<String> generatedNames = new HashSet<>();
     if (parameters.length > 0) {
       final PsiParameter first = parameters[0];
       final PsiType type = first.getType();
@@ -168,8 +168,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
     public boolean satisfiedBy(PsiElement element) {
       if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrAnonymousClassDefinition) {
         final GrAnonymousClassDefinition anonymous = ((GrAnonymousClassDefinition)element.getParent());
-        GrNewExpression newExpression = (GrNewExpression)anonymous.getParent();
-        if (newExpression.getQualifier() == null && anonymous.getFields().length == 0) {
+        if (anonymous.getFields().length == 0) {
           return true;
         }
       }

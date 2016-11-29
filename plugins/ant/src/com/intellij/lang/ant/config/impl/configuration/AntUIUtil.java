@@ -37,6 +37,7 @@ import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 import icons.AntIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -66,7 +67,7 @@ public class AntUIUtil {
       };
     }
 
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       AntInstallation ant = (AntInstallation)value;
       if (ant == null) return;
       AbstractProperty.AbstractPropertyContainer container = myEditor.getProperties(ant);
@@ -81,7 +82,7 @@ public class AntUIUtil {
       myConfiguration = configuration;
     }
 
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value == null) return;
       customizeReference((AntReference)value, this, myConfiguration);
     }
@@ -107,7 +108,7 @@ public class AntUIUtil {
 
 
   public static class ClasspathRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       AntClasspathEntry entry = (AntClasspathEntry)value;
       entry.getAppearance().customize(this);
     }
@@ -117,7 +118,7 @@ public class AntUIUtil {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
 
     public PropertyValueCellEditor() {
-      myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(), this);
+      myComponent = new CellEditorComponentWithBrowseButton<>(new TextFieldWithBrowseButton(), this);
       getChildComponent().setBorder(BorderFactory.createLineBorder(Color.black));
 
       FixedSizeButton button = myComponent.getComponentWithButton().getButton();
@@ -171,7 +172,7 @@ public class AntUIUtil {
       myProjectJdkName = projectJdkName != null ? projectJdkName : "";
     }
 
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       String jdkName = (String)value;
       if (jdkName == null || jdkName.length() == 0) jdkName = "";
       Sdk jdk = GlobalAntConfiguration.findJdk(jdkName);

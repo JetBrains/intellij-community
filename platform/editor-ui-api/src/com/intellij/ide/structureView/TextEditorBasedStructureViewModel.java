@@ -46,7 +46,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   private final Editor myEditor;
   private final PsiFile myPsiFile;
   private final List<FileEditorPositionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private List<ModelListener> myModelListeners = new ArrayList<ModelListener>(2);
+  private List<ModelListener> myModelListeners = new ArrayList<>(2);
   private CaretAdapter myEditorCaretListener;
   private Disposable myEditorCaretListenerDisposable;
 

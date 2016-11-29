@@ -109,6 +109,18 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+  
+  public void test_format_only_selected_range() {
+    myTextRange = new TextRange(18, 19);
+    doTextTest(
+      "public class X {\n" +
+      " public int a =       2;\n" +
+      "}",
+      "public class X {\n" +
+      "    public int a =       2;\n" +
+      "}"
+    );
+  }
 
   public void testNew() throws Exception {
     final CommonCodeStyleSettings settings = getSettings();
@@ -1203,22 +1215,14 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     final PsiCodeFragment fragment = factory.createCodeBlockCodeFragment("a=1;int b=2;", null, true);
     final PsiElement[] result = new PsiElement[1];
 
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          @Override
-          public void run() {
-            try {
-              result[0] = CodeStyleManager.getInstance(getProject()).reformat(fragment);
-            }
-            catch (IncorrectOperationException e) {
-              fail(e.getLocalizedMessage());
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
+      try {
+        result[0] = CodeStyleManager.getInstance(getProject()).reformat(fragment);
       }
-    }, null, null);
+      catch (IncorrectOperationException e) {
+        fail(e.getLocalizedMessage());
+      }
+    }), null, null);
 
     assertEquals("a = 1;\n" + "int b = 2;", result[0].getText());
   }

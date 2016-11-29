@@ -99,7 +99,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     if (ourColors == null) {
       synchronized (ColorSampleLookupValue.class) {
         if (ourColors == null) {
-          List<ColorSampleLookupValue> colorsList = new LinkedList<ColorSampleLookupValue>();
+          List<ColorSampleLookupValue> colorsList = new LinkedList<>();
           StringTokenizer tokenizer = new StringTokenizer(ColorMap.systemColorsString, "\n");
 
           while (tokenizer.hasMoreTokens()) {
@@ -109,7 +109,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
           }
 
           tokenizer = new StringTokenizer(ColorMap.standardColorsString, ", \n");
-          HashMap<String, String> standardColors = new HashMap<String, String>();
+          HashMap<String, String> standardColors = new HashMap<>();
 
           while (tokenizer.hasMoreTokens()) {
             String name = tokenizer.nextToken();

@@ -142,43 +142,35 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     if (vFile == null) return;
     if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
 
-    final Ref<SmartPsiElementPointer> refMethod = new Ref<SmartPsiElementPointer>();
+    final Ref<SmartPsiElementPointer> refMethod = new Ref<>();
     CommandProcessor.getInstance().executeCommand(
       aClass.getProject(),
-      new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-              try {
-                PsiMethod method = factory.createMethodFromText("private void " +
-                                                                AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME +
-                                                                "() { \n // TODO: place custom component creation code here \n }", aClass);
-                final PsiMethod psiMethod = (PsiMethod)aClass.add(method);
-                refMethod.set(SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(psiMethod));
-                CodeStyleManager.getInstance(aClass.getProject()).reformat(psiMethod);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
-            }
-          });
+      () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+        try {
+          PsiMethod method = factory.createMethodFromText("private void " +
+                                                          AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME +
+                                                          "() { \n // TODO: place custom component creation code here \n }", aClass);
+          final PsiMethod psiMethod = (PsiMethod)aClass.add(method);
+          refMethod.set(SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(psiMethod));
+          CodeStyleManager.getInstance(aClass.getProject()).reformat(psiMethod);
         }
-      }, null, null
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }), null, null
     );
 
     if (!refMethod.isNull()) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          final PsiMethod element = (PsiMethod) refMethod.get().getElement();
-          if (element != null) {
-            final PsiCodeBlock body = element.getBody();
-            assert body != null;
-            final PsiComment comment = PsiTreeUtil.getChildOfType(body, PsiComment.class);
-            if (comment != null) {
-              new OpenFileDescriptor(comment.getProject(), vFile,
-                                     comment.getTextOffset()).navigate(true);
-            }
+      SwingUtilities.invokeLater(() -> {
+        final PsiMethod element = (PsiMethod) refMethod.get().getElement();
+        if (element != null) {
+          final PsiCodeBlock body = element.getBody();
+          assert body != null;
+          final PsiComment comment = PsiTreeUtil.getChildOfType(body, PsiComment.class);
+          if (comment != null) {
+            new OpenFileDescriptor(comment.getProject(), vFile,
+                                   comment.getTextOffset()).navigate(true);
           }
         }
       });

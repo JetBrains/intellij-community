@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.testFramework.UsefulTestCase;
@@ -30,6 +31,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings({"SSBasedInspection", "SynchronizeOnThis"})
 @SkipInHeadlessEnvironment
@@ -77,7 +81,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     final Exception[] exception = {null};
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
-        LaterInvocatorTest.super.setUp();
+        super.setUp();
         final Object[] modalEntities = LaterInvocator.getCurrentModalEntities();
         if (modalEntities.length > 0) {
           LOG.error(
@@ -202,35 +206,6 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testRunQueuedRunnablesOnLeavingModality() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        LaterInvocator.invokeLater(ENTER_MODAL, ModalityState.NON_MODAL);
-        LaterInvocator.invokeLater(new MyRunnable("3"), ModalityState.NON_MODAL);
-        flushSwingQueue();
-        checkOrder(0);
-
-        final ModalityState modalityState = ModalityState.stateForComponent(myWindow1);
-        LaterInvocator.invokeLater(new MyRunnable("1") {
-          @Override
-          public void run() {
-            super.run();
-            checkOrder(1);
-            LaterInvocator.invokeLater(new MyRunnable("2"), modalityState);
-            checkOrder(1);
-            LaterInvocator.leaveModal(myWindow1);
-            checkOrder(2);
-          }
-        }, modalityState);
-        flushSwingQueue(); // let "1" run
-
-        flushSwingQueue(); // let "3" run
-        checkOrder(3);
-      }
-    });
-  }
-
   public void testStress() throws Exception {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       int N = 1000;
@@ -317,9 +292,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
       synchronized (this) {
         blockSwingThread();
         SwingUtilities.invokeLater(new MyRunnable("1"));
-        ApplicationManager.getApplication().invokeLater(() -> {
-          ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.NON_MODAL);
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(new MyRunnable("3"), ModalityState.NON_MODAL), ModalityState.NON_MODAL);
         SwingUtilities.invokeLater(LEAVE_MODAL);
         ApplicationManager.getApplication().invokeLater(new MyRunnable("2"), ModalityState.NON_MODAL);
       }
@@ -420,7 +393,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     thread.join();
   }
 
-  private static void flushSwingQueue() {
+  static void flushSwingQueue() {
 
     try {
       Thread.sleep(10);
@@ -533,5 +506,75 @@ public class LaterInvocatorTest extends PlatformTestCase {
       flushSwingQueue();
       checkOrder(2);
     });
+  }
+
+  public void testModalityStateStaysTheSameBetweenInvocations() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      Object modal1 = new Object();
+      Object modal2 = new Object();
+
+      LaterInvocator.enterModal(modal1);
+      ModalityState modalityState1 = ModalityState.current();
+      assertSame(modalityState1, ModalityState.current());
+
+      LaterInvocator.enterModal(modal2);
+      assertNotSame(modalityState1, ModalityState.current());
+      LaterInvocator.leaveModal(modal2);
+
+      assertSame(modalityState1, ModalityState.current());
+    });
+  }
+
+  public void testNonNestedModalityState() { //happens with per-project modality
+    Object modal1 = new Object();
+    Object modal2 = new Object();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      LaterInvocator.enterModal(modal1); // [modal1]
+      ModalityState ms_1 = ModalityState.current();
+      ApplicationManager.getApplication().invokeLater(new MyRunnable("m1"), ms_1);
+
+
+      LaterInvocator.enterModal(modal2); //[modal1, modal2]
+      ModalityState ms_12 = ModalityState.current();
+      assertNotSame(ms_1, ms_12);
+      assertTrue(ms_12.dominates(ms_1));
+
+      UIUtil.dispatchAllInvocationEvents();
+      assertEmpty(myOrder);
+
+      ApplicationManager.getApplication().invokeLater(new MyRunnable("m12"), ms_12);
+
+
+      LaterInvocator.leaveModal(modal1); // [modal2]
+      assertEmpty(myOrder);
+      UIUtil.dispatchAllInvocationEvents();
+      assertOrderedEquals(myOrder, "m12");
+
+      ModalityState ms_2 = ModalityState.current();
+      assertSame(ms_12, ms_2);
+      assertTrue(ms_2.dominates(ms_1));
+
+      ApplicationManager.getApplication().invokeLater(new MyRunnable("m1x"), ms_1);
+      ApplicationManager.getApplication().invokeLater(new MyRunnable("m2"), ms_2);
+      UIUtil.dispatchAllInvocationEvents();
+      assertOrderedEquals(myOrder, "m12", "m2");
+
+
+      LaterInvocator.leaveModal(modal2); // NON_MODAL
+      UIUtil.dispatchAllInvocationEvents();
+      assertOrderedEquals(myOrder, "m12", "m2", "m1", "m1x");
+    });
+  }
+
+  public void testModalityStateCurrentAllowedOnlyFromEDT() throws Exception {
+    LoggedErrorProcessor.getInstance().disableStderrDumping(getTestRootDisposable());
+    Future<ModalityState> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ModalityState.current());
+    try {
+      future.get(1000, TimeUnit.MILLISECONDS);
+      fail("should fail");
+    }
+    catch (ExecutionException e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Access is allowed from event dispatch thread only"));
+    }
   }
 }

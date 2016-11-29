@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public abstract class GroovyExpressionSurrounder implements Surrounder {
     return surroundExpression((GrExpression) element, element.getParent());
   }
 
-  protected abstract TextRange surroundExpression(GrExpression expression, PsiElement context);
+  protected abstract TextRange surroundExpression(@NotNull GrExpression expression, @Nullable PsiElement context);
 
   @Override
   public boolean isApplicable(@NotNull PsiElement[] elements) {

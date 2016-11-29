@@ -29,7 +29,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class CompositePackagingElement<S> extends PackagingElement<S> implements RenameablePackagingElement {
-  private final List<PackagingElement<?>> myChildren = new ArrayList<PackagingElement<?>>();
+  private final List<PackagingElement<?>> myChildren = new ArrayList<>();
   private List<PackagingElement<?>> myUnmodifiableChildren;
 
   protected CompositePackagingElement(PackagingElementType type) {
@@ -66,7 +66,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
   }
 
   public List<? extends PackagingElement<?>> addOrFindChildren(Collection<? extends PackagingElement<?>> children) {
-    List<PackagingElement<?>> added = new ArrayList<PackagingElement<?>>();
+    List<PackagingElement<?>> added = new ArrayList<>();
     for (PackagingElement<?> child : children) {
       added.add(addOrFindChild(child));
     }
@@ -109,7 +109,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
   protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,
                                                                 final AntCopyInstructionCreator copyInstructionCreator,
                                                                 final ArtifactAntGenerationContext generationContext, ArtifactType artifactType) {
-    final List<Generator> generators = new ArrayList<Generator>();
+    final List<Generator> generators = new ArrayList<>();
     for (PackagingElement<?> child : myChildren) {
       generators.addAll(child.computeAntInstructions(resolvingContext, copyInstructionCreator, generationContext, artifactType));
     }

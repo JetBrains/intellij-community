@@ -59,7 +59,7 @@ public abstract class CodeStyleDeriveProcessor {
 
   @NotNull
   private Collection<Value.VAR_KIND> getVarKinds() {
-    List<Value.VAR_KIND> varKinds = new LinkedList<Value.VAR_KIND>();
+    List<Value.VAR_KIND> varKinds = new LinkedList<>();
     varKinds.addAll(myLangExtractor.getCustomVarKinds());
     varKinds.addAll(Arrays.asList(Value.VAR_KIND.defaultKinds));
     return varKinds;
@@ -78,7 +78,7 @@ public abstract class CodeStyleDeriveProcessor {
   @NotNull
   private List<Value> readAll(@NotNull String instanceName, @NotNull Object instance) {
     Class<?> cls = instance.getClass();
-    List<Value> ret = new ArrayList<Value>();
+    List<Value> ret = new ArrayList<>();
     ClassSerializer serializer = new ClassSerializer(instanceName, instance);
     for (Field field : cls.getDeclaredFields()) {
       field = ClassSerializer.getPreparedField(field);
@@ -121,7 +121,7 @@ public abstract class CodeStyleDeriveProcessor {
     final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
     if (provider != null) {
       final Set<String> supportedFields = provider.getSupportedFields();
-      List<Value> cvalues = new ArrayList<Value>(values.size());
+      List<Value> cvalues = new ArrayList<>(values.size());
       for (Value value : values) {
         if (supportedFields.contains(value.name)) {
           cvalues.add(value);

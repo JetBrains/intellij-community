@@ -31,7 +31,6 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
@@ -120,12 +119,14 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
   }
 
+  @Override
   public boolean isMakeStatic() {
     if (myStaticFlag) return true;
     if (!myCanBeStatic) return false;
     return myCbMakeStatic.isSelected();
   }
 
+  @Override
   public boolean isChainedConstructor() {
     return false;
   }
@@ -135,29 +136,35 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     return null;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   public String getChosenMethodName() {
     return myCreateInnerClassRb.isSelected() ? myInnerClassName.getText() : myMethodName.getText();
   }
 
+  @Override
   public VariableData[] getChosenParameters() {
     return myInputVariables;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myInnerClassName;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_METHOD_OBJECT);
   }
 
+  @Override
   protected void doOKAction() {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (myCreateInnerClassRb.isSelected()) {
       final PsiClass innerClass = myTargetClass.findInnerClassByName(myInnerClassName.getText(), false);
       if (innerClass != null) {
@@ -199,6 +206,8 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
                         (!myCreateInnerClassRb.isSelected() && helper.isIdentifier(myMethodName.getText())));
   }
 
+  @Override
+  @NotNull
   public String getVisibility() {
     if (myPublicRadioButton.isSelected()) {
       return PsiModifier.PUBLIC;
@@ -209,18 +218,17 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     if (myProtectedRadioButton.isSelected()) {
       return PsiModifier.PROTECTED;
     }
-    if (myPrivateRadioButton.isSelected()) {
-      return PsiModifier.PRIVATE;
-    }
-    return null;
+    return PsiModifier.PRIVATE;
   }
 
 
+  @Override
   protected JComponent createCenterPanel() {
     mySignatureArea.setEditable(false);
     myCreateInnerClassRb.setSelected(true);
 
     final ActionListener enableDisableListener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         enable(myCreateInnerClassRb.isSelected());
       }
@@ -234,6 +242,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     myVariableData.setFoldingAvailable(myFoldCb.isSelected());
     myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
     myFoldCb.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myVariableData.setFoldingAvailable(myFoldCb.isSelected());
         myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
@@ -247,6 +256,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
 
     final ActionListener updateSugnatureListener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         updateSignature();
         IdeFocusManager.getInstance(myProject).requestFocus(myCreateInnerClassRb.isSelected() ? myInnerClassName :  myMethodName, false);
@@ -302,15 +312,18 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
   private JComponent createParametersPanel() {
     return new ParameterTablePanel(myProject, myInputVariables, myElementsToExtract) {
+      @Override
       protected void updateSignature() {
         updateVarargsEnabled();
         ExtractMethodObjectDialog.this.updateSignature();
       }
 
+      @Override
       protected void doEnterAction() {
         clickDefaultButton();
       }
 
+      @Override
       protected void doCancelAction() {
         ExtractMethodObjectDialog.this.doCancelAction();
       }
@@ -367,11 +380,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
       buffer.append("\n}.");
       buffer.append(myMethodName.getText());
       buffer.append("(");
-      buffer.append(StringUtil.join(myInputVariables, new Function<VariableData, String>() {
-        public String fun(final VariableData variableData) {
-          return variableData.name;
-        }
-      }, ", "));
+      buffer.append(StringUtil.join(myInputVariables, variableData -> variableData.name, ", "));
       buffer.append(")");
     }
 

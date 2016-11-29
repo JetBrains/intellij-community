@@ -102,7 +102,7 @@ public class ShareProjectAction extends BasicAction {
 
     final String parent = shareDialog.getSelectedURL();
     if (shareDialog.isOK() && parent != null) {
-      final Ref<Boolean> actionStarted = new Ref<Boolean>(Boolean.TRUE);
+      final Ref<Boolean> actionStarted = new Ref<>(Boolean.TRUE);
       final Exception[] error = new Exception[1];
 
       final ShareDialog.ShareTarget shareTarget = shareDialog.getShareTarget();

@@ -48,12 +48,10 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.ApplyDefaultStateMode.*;
-
 public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent {
   private final Project myProject;
 
-  private final List<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
+  private final List<Document> myDocumentsWithFoldingInfo = new WeakList<>();
 
   private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
@@ -83,8 +81,8 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   @Override
   public void projectOpened() {
     final EditorMouseMotionAdapter myMouseMotionListener = new EditorMouseMotionAdapter() {
-      LightweightHint myCurrentHint = null;
-      FoldRegion myCurrentFold = null;
+      LightweightHint myCurrentHint;
+      FoldRegion myCurrentFold;
 
       @Override
       public void mouseMoved(EditorMouseEvent e) {
@@ -169,12 +167,8 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       }
     };
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(myMouseMotionListener, myProject);
-      }
-    });
+    StartupManager.getInstance(myProject).registerPostStartupActivity(
+      (DumbAwareRunnable)() -> EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(myMouseMotionListener, myProject));
   }
 
   @Override
@@ -186,7 +180,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file == null || !file.getViewProvider().isPhysical() || !file.isValid()) return;
-    PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
     Editor[] otherEditors = EditorFactory.getInstance().getEditors(document, myProject);
     if (otherEditors.length == 0 && !editor.isDisposed()) {
@@ -231,40 +224,35 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
     final FoldingUpdate.FoldingMap foldingMap = FoldingUpdate.getFoldingsFor(file, document, true);
 
-    return new CodeFoldingState() {
-      @Override
-      public void setToEditor(@NotNull final Editor editor) {
-        ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
-        if (myProject.isDisposed() || editor.isDisposed()) return;
-        final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
-        if (!foldingModel.isFoldingEnabled()) return;
-        if (isFoldingsInitializedInEditor(editor)) return;
-        if (DumbService.isDumb(myProject) && !FoldingUpdate.supportsDumbModeFolding(editor)) return;
+    return editor -> {
+      ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
+      if (myProject.isDisposed() || editor.isDisposed()) return;
+      final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
+      if (!foldingModel.isFoldingEnabled()) return;
+      if (isFoldingsInitializedInEditor(editor)) return;
+      if (DumbService.isDumb(myProject) && !FoldingUpdate.supportsDumbModeFolding(editor)) return;
 
-        foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap, YES, 
-                                                                                               false, false));
-        initFolding(editor);
-      }
+      foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap,
+                                                                                             UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
+                                                                                             false, false));
+      initFolding(editor);
     };
   }
 
   private void initFolding(@NotNull final Editor editor) {
     final Document document = editor.getDocument();
-    editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-        Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-        for (Editor otherEditor : editors) {
-          if (otherEditor == editor || !isFoldingsInitializedInEditor(otherEditor)) continue;
-          documentFoldingInfo.loadFromEditor(otherEditor);
-          break;
-        }
-        documentFoldingInfo.setToEditor(editor);
-        documentFoldingInfo.clear();
-
-        editor.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
+    editor.getFoldingModel().runBatchFoldingOperation(() -> {
+      DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+      Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+      for (Editor otherEditor : editors) {
+        if (otherEditor == editor || !isFoldingsInitializedInEditor(otherEditor)) continue;
+        documentFoldingInfo.loadFromEditor(otherEditor);
+        break;
       }
+      documentFoldingInfo.setToEditor(editor);
+      documentFoldingInfo.clear();
+
+      editor.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
     });
   }
 
@@ -306,15 +294,12 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     }
 
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
-    editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        EditorFoldingInfo foldingInfo = EditorFoldingInfo.get(editor);
-        for (FoldRegion region : regions) {
-          PsiElement element = foldingInfo.getPsiElement(region);
-          if (element != null) {
-            region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
-          }
+    editor.getFoldingModel().runBatchFoldingOperation(() -> {
+      EditorFoldingInfo foldingInfo = EditorFoldingInfo.get(editor);
+      for (FoldRegion region : regions) {
+        PsiElement element = foldingInfo.getPsiElement(region);
+        if (element != null) {
+          region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
         }
       }
     });
@@ -325,15 +310,12 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   public Runnable updateFoldRegionsAsync(@NotNull final Editor editor, final boolean firstTime) {
     if (!editor.getSettings().isAutoCodeFoldingEnabled()) return null;
     final Runnable runnable = updateFoldRegions(editor, firstTime, false);
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (runnable != null) {
-          runnable.run();
-        }
-        if (firstTime && !isFoldingsInitializedInEditor(editor)) {
-          initFolding(editor);
-        }
+    return () -> {
+      if (runnable != null) {
+        runnable.run();
+      }
+      if (firstTime && !isFoldingsInitializedInEditor(editor)) {
+        initFolding(editor);
       }
     };
   }
@@ -341,12 +323,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   @Nullable
   private Runnable updateFoldRegions(@NotNull Editor editor, boolean applyDefaultState, boolean quick) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-    if (file != null) {
-      return FoldingUpdate.updateFoldRegions(editor, file, applyDefaultState, quick);
-    }
-    else {
-      return null;
-    }
+    return file == null ? null : FoldingUpdate.updateFoldRegions(editor, file, applyDefaultState, quick);
   }
 
   @Override
@@ -400,7 +377,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     return info;
   }
 
-  static boolean isFoldingsInitializedInEditor(@NotNull Editor editor) {
+  private static boolean isFoldingsInitializedInEditor(@NotNull Editor editor) {
     return Boolean.TRUE.equals(editor.getUserData(FOLDING_STATE_KEY));
   }
 }

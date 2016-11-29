@@ -61,19 +61,49 @@ public abstract class Task implements TaskInfo, Progressive {
 
   /**
    * This callback will be invoked on AWT dispatch thread.
+   *
+   * Callback executed when run() throws {@link ProcessCanceledException} or if its {@link ProgressIndicator} was canceled.
    */
   public void onCancel() {
-    onFinished();
   }
 
   /**
    * This callback will be invoked on AWT dispatch thread.
    */
   public void onSuccess() {
-    onFinished();
   }
 
-  protected void onFinished() {}
+  /**
+   * This callback will be invoked on AWT dispatch thread.
+   * <p>
+   * Callback executed when run() throws an exception (except PCE).
+   *
+   * @deprecated use {@link #onThrowable(Throwable)} instead
+   */
+  @Deprecated
+  public void onError(@NotNull Exception error) {
+    LOG.error(error);
+  }
+
+  /**
+   * This callback will be invoked on AWT dispatch thread.
+   * <p>
+   * Callback executed when run() throws an exception (except PCE).
+   */
+  public void onThrowable(@NotNull Throwable error) {
+    if (error instanceof Exception) {
+      onError((Exception)error);
+    }
+    else {
+      LOG.error(error);
+    }
+  }
+
+  /**
+   * This callback will be invoked on AWT dispatch thread, after other specific handlers
+   */
+  public void onFinished() {
+  }
 
   public final Project getProject() {
     return myProject;
@@ -213,7 +243,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class Modal extends Task {
-    public Modal(@Nullable Project project, @NotNull String title, boolean canBeCancelled) {
+    public Modal(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
     }
 
@@ -225,7 +255,10 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class ConditionalModal extends Backgroundable {
-    public ConditionalModal(@Nullable Project project, @NotNull String title, boolean canBeCancelled, @NotNull PerformInBackgroundOption backgroundOption) {
+    public ConditionalModal(@Nullable Project project,
+                            @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                            boolean canBeCancelled,
+                            @NotNull PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled, backgroundOption);
     }
 

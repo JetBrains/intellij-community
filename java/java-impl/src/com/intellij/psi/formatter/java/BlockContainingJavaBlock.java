@@ -43,7 +43,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   private static final int BEFORE_BLOCK = 1;
   private static final int AFTER_ELSE = 2;
 
-  private final List<Indent> myIndentsBefore = new ArrayList<Indent>();
+  private final List<Indent> myIndentsBefore = new ArrayList<>();
 
   public BlockContainingJavaBlock(ASTNode node,
                                   Wrap wrap,
@@ -60,7 +60,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
   @Override
   protected List<Block> buildChildren() {
-    final ArrayList<Block> result = new ArrayList<Block>();
+    final ArrayList<Block> result = new ArrayList<>();
     Alignment childAlignment = createChildAlignment();
     Wrap childWrap = createChildWrap();
 

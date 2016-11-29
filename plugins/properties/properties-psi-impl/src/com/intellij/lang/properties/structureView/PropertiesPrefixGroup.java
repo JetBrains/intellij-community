@@ -20,7 +20,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.editor.PropertiesAnchorizer;
 import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.navigation.ItemPresentation;
@@ -89,16 +88,13 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
 
   @NotNull
   public Collection<TreeElement> getChildren() {
-    Collection<TreeElement> result = new ArrayList<TreeElement>();
+    Collection<TreeElement> result = new ArrayList<>();
     List<String> prefixWords = StringUtil.split(myPrefix, mySeparator);
     for (TreeElement treeElement : myProperties) {
       if (!(treeElement instanceof StructureViewTreeElement)) {
         continue;
       }
       Object value = ((StructureViewTreeElement)treeElement).getValue();
-      if (value instanceof PropertiesAnchorizer.PropertyAnchor) {
-        value = ((PropertiesAnchorizer.PropertyAnchor)value).getRepresentative();
-      }
       if (!(value instanceof IProperty)) {
         continue;
       }
@@ -141,19 +137,15 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
   @NotNull
   @Override
   public IProperty[] getProperties() {
-    final List<IProperty> elements = ContainerUtil.mapNotNull(getChildren(), new NullableFunction<TreeElement, IProperty>() {
-      @Nullable
-      @Override
-      public IProperty fun(final TreeElement treeElement) {
-        if (treeElement instanceof PropertiesStructureViewElement) {
-          PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
-          return propertiesElement.getValue();
-        }
-        else if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
-          return ((ResourceBundlePropertyStructureViewElement)treeElement).getProperties()[0];
-        }
-        return null;
+    final List<IProperty> elements = ContainerUtil.mapNotNull(getChildren(), (NullableFunction<TreeElement, IProperty>)treeElement -> {
+      if (treeElement instanceof PropertiesStructureViewElement) {
+        PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
+        return propertiesElement.getValue();
       }
+      else if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
+        return ((ResourceBundlePropertyStructureViewElement)treeElement).getProperties()[0];
+      }
+      return null;
     });
     return elements.toArray(new IProperty[elements.size()]);
   }

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,13 +51,12 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
 
   @Override
   public void setRequest(@Nullable DiffRequest request) {
-    myProcessor.setRequest(request);
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myProcessor.updateRequest();
-      }
-    });
+    setRequest(request, null);
+  }
+
+  @Override
+  public void setRequest(@Nullable DiffRequest request, @Nullable Object identity) {
+    myProcessor.setRequest(request, identity);
   }
 
   @Override
@@ -85,18 +85,25 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
     @Nullable private final Window myWindow;
 
     @NotNull private DiffRequest myRequest = NoDiffRequest.INSTANCE;
+    @Nullable private Object myRequestIdentity = null;
 
     public MyDiffRequestProcessor(@Nullable Project project, @Nullable Window window) {
       super(project);
       myWindow = window;
     }
 
-    public void setRequest(@Nullable DiffRequest request) {
+    public synchronized void setRequest(@Nullable DiffRequest request, @Nullable Object identity) {
+      if (myRequestIdentity != null && identity != null && myRequestIdentity.equals(identity)) return;
+
       myRequest = request != null ? request : NoDiffRequest.INSTANCE;
+      myRequestIdentity = identity;
+
+      UIUtil.invokeLaterIfNeeded(() -> updateRequest());
     }
 
     @Override
-    public void updateRequest(boolean force, @Nullable DiffUserDataKeysEx.ScrollToPolicy scrollToChangePolicy) {
+    @CalledInAwt
+    public synchronized void updateRequest(boolean force, @Nullable DiffUserDataKeysEx.ScrollToPolicy scrollToChangePolicy) {
       applyRequest(myRequest, force, scrollToChangePolicy);
     }
 

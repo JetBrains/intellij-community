@@ -52,12 +52,6 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
   private File myOutputsDir;
   private List<HgAnnotationLine> myAnnotations;
 
-  @BeforeMethod
-  @Override
-  protected void setUp(Method testMethod) throws Exception {
-    super.setUp(testMethod);
-  }
-  
   @BeforeClass
   private void loadEthalonAnnotations() throws IOException {
     myPluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
@@ -107,7 +101,7 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
     File outputFile = new File(myOutputsDir, "hg_1.9.0");
     String output = FileUtil.loadFile(outputFile);
     String[] split = output.split("(\n|\r|\r\n)");
-    List<HgAnnotationLine> annotationLines = new ArrayList<HgAnnotationLine>(split.length);
+    List<HgAnnotationLine> annotationLines = new ArrayList<>(split.length);
     
     Pattern pattern = Pattern.compile("\\s*(.+)\\s+(\\d+)\\s+([a-fA-F0-9]+)\\s+(\\d{4}-\\d{2}-\\d{2}):\\s*(\\d+): ?(.*)");
     for (String line : split) {

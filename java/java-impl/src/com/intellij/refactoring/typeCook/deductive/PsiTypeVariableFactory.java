@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ import java.util.*;
  * @author db
  */
 public class PsiTypeVariableFactory {
-  private int myCurrent = 0;
-  private final List<Set<PsiTypeVariable>> myClusters = new LinkedList<Set<PsiTypeVariable>>();
-  private final Map<Integer, Set<PsiTypeVariable>> myVarCluster = new HashMap<Integer, Set<PsiTypeVariable>>();
+  private int myCurrent;
+  private final List<Set<PsiTypeVariable>> myClusters = new LinkedList<>();
+  private final Map<Integer, Set<PsiTypeVariable>> myVarCluster = new HashMap<>();
 
   public final int getNumber() {
     return myCurrent;
@@ -156,12 +156,6 @@ public class PsiTypeVariableFactory {
       @NotNull
       public String getCanonicalText() {
         return getPresentableText();
-      }
-
-      @Override
-      @NotNull
-      public String getInternalCanonicalText() {
-        return getCanonicalText();
       }
 
       @Override

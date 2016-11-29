@@ -36,7 +36,6 @@ import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.ui.roots.ResizingWrapper;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,29 +60,18 @@ import java.util.Map;
  */
 public abstract class ContentRootPanel extends JPanel {
   private static final Color EXCLUDED_COLOR = new JBColor(new Color(0x992E00), DarculaColors.RED);
-  private static final Color SELECTED_HEADER_COLOR = new JBColor(new NotNullProducer<Color>() {
-    @NotNull
-    @Override
-    public Color produce() {
-      return  UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground().darker() : new Color(0xDEF2FF);
-    }
-  });
+  private static final Color SELECTED_HEADER_COLOR = new JBColor(
+    () -> UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground().darker() : new Color(0xDEF2FF));
   private static final Color HEADER_COLOR = new JBColor(new Color(0xF5F5F5), Gray._82);
   private static final Color SELECTED_CONTENT_COLOR = new Color(0xF0F9FF);
-  private static final Color CONTENT_COLOR = new JBColor(new NotNullProducer<Color>() {
-    @NotNull
-    @Override
-    public Color produce() {
-      return UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Gray._255;
-    }
-  });
+  private static final Color CONTENT_COLOR = new JBColor(() -> UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Gray._255);
   private static final Color UNSELECTED_TEXT_COLOR = Gray._51;
 
   protected final ActionCallback myCallback;
   private final List<ModuleSourceRootEditHandler<?>> myModuleSourceRootEditHandlers;
   private JComponent myHeader;
   private JComponent myBottom;
-  private final Map<JComponent, Color> myComponentToForegroundMap = new HashMap<JComponent, Color>();
+  private final Map<JComponent, Color> myComponentToForegroundMap = new HashMap<>();
 
   public interface ActionCallback {
     void deleteContentEntry();
@@ -117,16 +105,11 @@ public abstract class ContentRootPanel extends JPanel {
 
   protected void addFolderGroupComponents() {
     final SourceFolder[] sourceFolders = getContentEntry().getSourceFolders();
-    MultiMap<JpsModuleSourceRootType<?>, SourceFolder> folderByType = new MultiMap<JpsModuleSourceRootType<?>, SourceFolder>();
+    MultiMap<JpsModuleSourceRootType<?>, SourceFolder> folderByType = new MultiMap<>();
     for (SourceFolder folder : sourceFolders) {
-      if (folder.isSynthetic()) {
-        continue;
+      if (!folder.isSynthetic()) {
+        folderByType.putValue(folder.getRootType(), folder);
       }
-      final VirtualFile folderFile = folder.getFile();
-      if (folderFile != null && isExcludedOrUnderExcludedDirectory(folderFile)) {
-        continue;
-      }
-      folderByType.putValue(folder.getRootType(), folder);
     }
 
     Insets insets = new Insets(0, 0, 10, 0);
@@ -159,12 +142,8 @@ public abstract class ContentRootPanel extends JPanel {
     }
     final IconActionComponent deleteIconComponent = new IconActionComponent(AllIcons.Modules.DeleteContentRoot,
                                                                             AllIcons.Modules.DeleteContentRootRollover,
-                                                                            ProjectBundle.message("module.paths.remove.content.tooltip"), new Runnable() {
-      @Override
-      public void run() {
-        myCallback.deleteContentEntry();
-      }
-    });
+                                                                            ProjectBundle.message("module.paths.remove.content.tooltip"),
+                                                                            () -> myCallback.deleteContentEntry());
     final ResizingWrapper wrapper = new ResizingWrapper(headerLabel);
     panel.add(wrapper, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 2, 0, 0), 0, 0));
     panel.add(deleteIconComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 2), 0, 0));
@@ -264,12 +243,8 @@ public abstract class ContentRootPanel extends JPanel {
     else {
       tooltipText = ProjectBundle.message("module.paths.remove.tooltip");
     }
-    return new IconActionComponent(AllIcons.Modules.DeleteContentFolder, AllIcons.Modules.DeleteContentFolderRollover, tooltipText, new Runnable() {
-      @Override
-      public void run() {
-        myCallback.deleteContentFolder(getContentEntry(), folder);
-      }
-    });
+    return new IconActionComponent(AllIcons.Modules.DeleteContentFolder, AllIcons.Modules.DeleteContentFolderRollover, tooltipText,
+                                   () -> myCallback.deleteContentFolder(getContentEntry(), folder));
   }
 
   public boolean isExcludedOrUnderExcludedDirectory(final VirtualFile file) {

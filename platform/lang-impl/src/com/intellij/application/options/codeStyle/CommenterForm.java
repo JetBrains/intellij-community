@@ -17,11 +17,13 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -99,36 +101,6 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
     myLineCommentAtFirstColumnCb.setVisible(isVisible);
     myLineCommentAddSpaceCb.setVisible(isVisible);
     myBlockCommentAtFirstJBCheckBox.setVisible(isVisible);
-  }
-
-  @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                               String fieldName,
-                               String title,
-                               @Nullable String groupName,
-                               Object... options) {
-    // ignore, no custom options possible
-  }
-
-  @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                               String fieldName,
-                               String title,
-                               @Nullable String groupName,
-                               @Nullable OptionAnchor anchor,
-                               @Nullable String anchorFieldName,
-                               Object... options) {
-    // ignore, no custom options possible
-  }
-
-  @Override
-  public void renameStandardOption(String fieldName, String newTitle) {
-    // ignore for now
-  }
-
-  @Override
-  public void moveStandardOption(String fieldName, String newGroup) {
-    // ignore, unsupported
   }
   
   private void customizeSettings() {

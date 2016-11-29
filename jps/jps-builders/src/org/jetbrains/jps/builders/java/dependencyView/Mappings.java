@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.storage.FileKeyDescriptor;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
@@ -184,12 +185,10 @@ public class Mappings {
     }
   }
 
-  private void compensateRemovedContent(final Collection<File> compiled) {
-    if (compiled != null) {
-      for (final File file : compiled) {
-        if (!mySourceFileToClasses.containsKey(file)) {
-          mySourceFileToClasses.put(file, new HashSet<ClassRepr>());
-        }
+  private void compensateRemovedContent(final @NotNull Collection<File> compiled, final @NotNull Collection<File> compiledWithErrors) {
+    for (final File file : compiled) {
+      if (!compiledWithErrors.contains(file) && !mySourceFileToClasses.containsKey(file)) {
+        mySourceFileToClasses.put(file, new HashSet<ClassRepr>());
       }
     }
   }
@@ -944,6 +943,7 @@ public class Mappings {
     final Mappings myDelta;
     final Collection<File> myFilesToCompile;
     final Collection<File> myCompiledFiles;
+    final Collection<File> myCompiledWithErrors;
     final Collection<File> myAffectedFiles;
     @Nullable
     final DependentFilesFilter myFilter;
@@ -954,6 +954,9 @@ public class Mappings {
     final Util myPresent;
 
     final boolean myEasyMode; // true means: no need to search for affected files, only preprocess data for integrate
+
+    private final Iterable<AnnotationsChangeTracker> myAnnotationChangeTracker =
+      JpsServiceManager.getInstance().getExtensions(AnnotationsChangeTracker.class);
 
     private class DelayedWorks {
       class Triple {
@@ -1056,9 +1059,9 @@ public class Mappings {
       final public Set<UsageRepr.AnnotationUsage> myAnnotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
       final public Map<UsageRepr.Usage, Util.UsageConstraint> myUsageConstraints = new HashMap<UsageRepr.Usage, Util.UsageConstraint>();
 
-      final Difference.Specifier<ClassRepr> myClassDiff;
+      final Difference.Specifier<ClassRepr, ClassRepr.Diff> myClassDiff;
 
-      private DiffState(Difference.Specifier<ClassRepr> classDiff) {
+      private DiffState(Difference.Specifier<ClassRepr, ClassRepr.Diff> classDiff) {
         this.myClassDiff = classDiff;
       }
     }
@@ -1067,6 +1070,7 @@ public class Mappings {
       this.myDelta = delta;
       this.myFilesToCompile = null;
       this.myCompiledFiles = null;
+      this.myCompiledWithErrors = null;
       this.myAffectedFiles = null;
       this.myFilter = null;
       this.myConstantSearch = null;
@@ -1087,6 +1091,7 @@ public class Mappings {
       this.myDelta = delta;
       this.myFilesToCompile = filesToCompile;
       this.myCompiledFiles = null;
+      this.myCompiledWithErrors = null;
       this.myAffectedFiles = null;
       this.myFilter = null;
       this.myConstantSearch = null;
@@ -1101,6 +1106,7 @@ public class Mappings {
     private Differential(final Mappings delta,
                          final Collection<String> removed,
                          final Collection<File> filesToCompile,
+                         final Collection<File> compiledWithErrors,
                          final Collection<File> compiledFiles,
                          final Collection<File> affectedFiles,
                          @NotNull final DependentFilesFilter filter,
@@ -1110,6 +1116,7 @@ public class Mappings {
       this.myDelta = delta;
       this.myFilesToCompile = filesToCompile;
       this.myCompiledFiles = compiledFiles;
+      this.myCompiledWithErrors = compiledWithErrors;
       this.myAffectedFiles = affectedFiles;
       this.myFilter = filter;
       this.myConstantSearch = constantSearch;
@@ -1123,7 +1130,11 @@ public class Mappings {
     }
 
     private void processDisappearedClasses() {
-      myDelta.compensateRemovedContent(myFilesToCompile);
+      if (myFilesToCompile != null) {
+        myDelta.compensateRemovedContent(
+          myFilesToCompile, myCompiledWithErrors != null ? myCompiledWithErrors : Collections.<File>emptySet()
+        );
+      }
 
       if (!myEasyMode) {
         final Collection<String> removed = myDelta.myRemovedFiles;
@@ -1388,7 +1399,7 @@ public class Mappings {
     }
 
     private void processChangedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
-      final Collection<Pair<MethodRepr, Difference>> changed = diff.methods().changed();
+      final Collection<Pair<MethodRepr, MethodRepr.Diff>> changed = diff.methods().changed();
       if (changed.isEmpty()) {
         return;
       }
@@ -1397,9 +1408,9 @@ public class Mappings {
       assert myFuture != null;
       assert myAffectedFiles != null;
 
-      for (final Pair<MethodRepr, Difference> mr : changed) {
+      for (final Pair<MethodRepr, MethodRepr.Diff> mr : changed) {
         final MethodRepr m = mr.first;
-        final MethodRepr.Diff d = (MethodRepr.Diff)mr.second;
+        final MethodRepr.Diff d = mr.second;
         final boolean throwsChanged = !d.exceptions().unchanged();
 
         debug("Method: ", m.name);
@@ -1420,10 +1431,10 @@ public class Mappings {
           boolean affected = false;
           boolean constrained = false;
 
-          final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+          final Set<UsageRepr.Usage> usages = new THashSet<UsageRepr.Usage>();
 
           if (d.packageLocalOn()) {
-            debug("Method became package-local, affecting method usages outside the package");
+            debug("Method became package-private, affecting method usages outside the package");
             myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
 
             for (final UsageRepr.Usage usage : usages) {
@@ -1456,6 +1467,7 @@ public class Mappings {
               }
 
               state.myAffectedUsages.addAll(usages);
+              affected = true;
             }
           }
           else if ((d.base() & Difference.ACCESS) > 0) {
@@ -1466,6 +1478,7 @@ public class Mappings {
                 debug("Added static or private specifier or removed static specifier --- affecting method usages");
                 myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
+                affected = true;
               }
 
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
@@ -1483,18 +1496,52 @@ public class Mappings {
 
               if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
                 if (!constrained) {
-                  debug("Added public or package-local method became protected --- affect method usages with protected constraint");
+                  debug("Added public or package-private method became protected --- affect method usages with protected constraint");
                   if (!affected) {
                     myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
                     state.myAffectedUsages.addAll(usages);
+                    affected = true;
                   }
 
                   for (final UsageRepr.Usage usage : usages) {
                     state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
                   }
+                  constrained = true;
                 }
               }
             }
+          }
+
+          if ((d.base() & Difference.ANNOTATIONS) > 0) {
+            final Set<AnnotationsChangeTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationsChangeTracker.Recompile.class);
+            for (AnnotationsChangeTracker extension : myAnnotationChangeTracker) {
+              if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
+                break;
+              }
+              final Set<AnnotationsChangeTracker.Recompile> actions = extension.methodAnnotationsChanged(myContext, m, d.annotations(), d.parameterAnnotations());
+              if (actions.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting method usages");
+              }
+              if (actions.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in method annotations or method parameter annotations list --- affecting subclasses");
+              }
+              toRecompile.addAll(actions);
+            }
+
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+              myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+              state.myAffectedUsages.addAll(usages);
+              if (constrained) {
+                // remove any constraints so that all usages of this method are recompiled
+                for (UsageRepr.Usage usage : usages) {
+                  state.myUsageConstraints.remove(usage);
+                }
+              }
+            }
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+              myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
+            }
+
           }
         }
       }
@@ -1677,11 +1724,13 @@ public class Mappings {
 
         if (d.base() != Difference.NONE) {
           final TIntHashSet propagated = myFuture.propagateFieldAccess(field.name, it.name);
+          boolean affected = false;
 
           if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
             debug("Type or signature changed --- affecting field usages");
             myFuture
               .affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+            affected = true;
           }
           else if ((d.base() & Difference.ACCESS) > 0) {
             if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
@@ -1691,10 +1740,10 @@ public class Mappings {
               debug("Added/removed static modifier or added private/volatile modifier --- affecting field usages");
               myFuture
                 .affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              affected = true;
             }
             else {
-              boolean affected = false;
-              final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+              final Set<UsageRepr.Usage> usages = new THashSet<UsageRepr.Usage>();
 
               if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
                 debug("Added final modifier --- affecting field assign usages");
@@ -1708,6 +1757,7 @@ public class Mappings {
                 if (!affected) {
                   myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
                   state.myAffectedUsages.addAll(usages);
+                  affected = true;
                 }
 
                 for (final UsageRepr.Usage usage : usages) {
@@ -1721,6 +1771,36 @@ public class Mappings {
               }
             }
           }
+
+          if ((d.base() & Difference.ANNOTATIONS) > 0) {
+            final Set<AnnotationsChangeTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationsChangeTracker.Recompile.class);
+            for (AnnotationsChangeTracker extension : myAnnotationChangeTracker) {
+              if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
+                break;
+              }
+              final Set<AnnotationsChangeTracker.Recompile> res = extension.fieldAnnotationsChanged(myContext, field, d.annotations());
+              if (res.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting field usages");
+              }
+              if (res.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in field annotations list --- affecting subclasses");
+              }
+              toRecompile.addAll(res);
+            }
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+              final Set<UsageRepr.Usage> usages = new THashSet<UsageRepr.Usage>();
+              myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
+              state.myAffectedUsages.addAll(usages);
+              // remove any constraints to ensure all field usages are recompiled
+              for (UsageRepr.Usage usage : usages) {
+                state.myUsageConstraints.remove(usage);
+              }
+            }
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+              myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
+            }
+          }
+
         }
       }
       debug("End of changed fields processing");
@@ -1729,7 +1809,7 @@ public class Mappings {
     }
 
     private boolean processChangedClasses(final DiffState state) {
-      final Collection<Pair<ClassRepr, Difference>> changedClasses = state.myClassDiff.changed();
+      final Collection<Pair<ClassRepr, ClassRepr.Diff>> changedClasses = state.myClassDiff.changed();
       if (!changedClasses.isEmpty()) {
         debug("Processing changed classes:");
         assert myFuture != null;
@@ -1737,9 +1817,9 @@ public class Mappings {
 
         final Util.FileFilterConstraint fileFilterConstraint = myFilter != null? myPresent.new FileFilterConstraint(myFilter) : null;
 
-        for (final Pair<ClassRepr, Difference> changed : changedClasses) {
+        for (final Pair<ClassRepr, ClassRepr.Diff> changed : changedClasses) {
           final ClassRepr changedClass = changed.first;
-          final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
+          final ClassRepr.Diff diff = changed.second;
 
           myDelta.addChangedClass(changedClass.name);
 
@@ -1909,6 +1989,30 @@ public class Mappings {
 
           if (!processChangedFields(state, diff, changedClass)) {
             return false;
+          }
+
+          if ((diff.base() & Difference.ANNOTATIONS) > 0) {
+            final Set<AnnotationsChangeTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationsChangeTracker.Recompile.class);
+            for (AnnotationsChangeTracker extension : myAnnotationChangeTracker) {
+              if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
+                break;
+              }
+              final Set<AnnotationsChangeTracker.Recompile> res = extension.classAnnotationsChanged(myContext, changedClass, diff.annotations());
+              if (res.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
+                debug("Extension "+extension.getClass().getName()+" requested class usages recompilation because of changes in annotations list --- adding class usage to affected usages");
+              }
+              if (res.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+                debug("Extension "+extension.getClass().getName()+" requested subclasses recompilation because of changes in annotations list --- adding subclasses to affected usages");
+              }
+              toRecompile.addAll(res);
+            }
+            final boolean recompileUsages = toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES);
+            if (recompileUsages) {
+              state.myAffectedUsages.add(changedClass.createUsage());
+            }
+            if (toRecompile.contains(AnnotationsChangeTracker.Recompile.SUBCLASSES)) {
+              myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, recompileUsages, myCompiledFiles, null);
+            }
           }
         }
         debug("End of changed classes processing");
@@ -2147,7 +2251,7 @@ public class Mappings {
             final File fileName = compiledFile.myFileName;
             final Set<ClassRepr> classes = compiledFile.myFileClasses;
             final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
-            final DiffState state = new DiffState(Difference.make(pastClasses, classes));
+            final DiffState state = new DiffState(Difference.<ClassRepr, ClassRepr.Diff>make(pastClasses, classes));
   
             if (!processChangedClasses(state)) {
               if (!myEasyMode) {
@@ -2161,6 +2265,31 @@ public class Mappings {
   
             if (!myEasyMode) {
               calculateAffectedFiles(state);
+            }
+          }
+
+          // Now that the list of added classes is complete,
+          // check that super-classes of compiled classes are among newly added ones.
+          // Even if compiled class did not change, we should register 'added' superclass
+          // Consider situation for class B extends A:
+          // 1. file A is removed, make fails with error in file B
+          // 2. A is added back, B and A are compiled together in the second make session
+          // 3. Even if B did not change, A is considered as newly added and should be registered again in ClassToSubclasses dependencies
+          //    Without this code such registration will not happen because list of B's parents did not change
+          final Set<ClassRepr> addedClasses = myDelta.getAddedClasses();
+          if (!addedClasses.isEmpty()) {
+            final TIntHashSet addedNames = new TIntHashSet();
+            for (ClassRepr repr : addedClasses) {
+              addedNames.add(repr.name);
+            }
+            for (FileClasses compiledFile : newClasses) {
+              for (ClassRepr aClass : compiledFile.myFileClasses) {
+                for (int parent : aClass.getSupers()) {
+                  if (addedNames.contains(parent)) {
+                    myDelta.registerAddedSuperClass(aClass.name, parent);
+                  }
+                }
+              }
             }
           }
 
@@ -2206,11 +2335,12 @@ public class Mappings {
     (final Mappings delta,
      final Collection<String> removed,
      final Collection<File> filesToCompile,
+     final Collection<File> compiledWithErrors,
      final Collection<File> compiledFiles,
      final Collection<File> affectedFiles,
      @NotNull final DependentFilesFilter filter,
      @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
-    return new Differential(delta, removed, filesToCompile, compiledFiles, affectedFiles, filter, constantSearch).differentiate();
+    return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter, constantSearch).differentiate();
   }
 
   private void cleanupBackDependency(final int className,

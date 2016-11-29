@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class MatchContext {
   private MatchResultSink sink;
-  private final Stack<MatchResultImpl> previousResults = new Stack<MatchResultImpl>();
+  private final Stack<MatchResultImpl> previousResults = new Stack<>();
   private MatchResultImpl result;
   private CompiledPattern pattern;
   private MatchOptions options;

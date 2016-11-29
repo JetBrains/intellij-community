@@ -31,7 +31,7 @@ public class ResourceUtil {
       final String[] patterns = annotation.value();
       for (String pattern : patterns) {
         final File root = new File(HighlightingTestBase.getTestDataBasePath() + test.getTestDataPath());
-        final ArrayList<File> files = new ArrayList<File>();
+        final ArrayList<File> files = new ArrayList<>();
         FileUtil.collectMatchedFiles(root, Pattern.compile(FileUtil.convertAntToRegexp(pattern)), files);
 
         final File temp = new File(test.getFixture().getTempDirPath());

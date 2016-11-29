@@ -43,7 +43,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -113,8 +112,8 @@ public class PySkeletonRefresher {
                                            String skeletonsPath,
                                            @NotNull Sdk sdk)
     throws InvalidSdkException {
-    final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
-    final List<String> failedSdks = new SmartList<String>();
+    final Map<String, List<String>> errors = new TreeMap<>();
+    final List<String> failedSdks = new SmartList<>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final String homePath = sdk.getHomePath();
     if (skeletonsPath == null) {
@@ -238,27 +237,23 @@ public class PySkeletonRefresher {
     final VirtualFile remoteSourcesDir = PySdkUtil.findAnyRemoteLibrary(sdk);
     final File remoteSources = remoteSourcesDir != null ? new File(remoteSourcesDir.getPath()) : null;
 
-    final List<VirtualFile> paths = new ArrayList<VirtualFile>();
+    final List<VirtualFile> paths = new ArrayList<>();
 
     paths.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
     paths.addAll(BuildoutFacet.getExtraPathForAllOpenModules());
 
-    return Joiner.on(File.pathSeparator).join(ContainerUtil.mapNotNull(paths, new Function<VirtualFile, Object>() {
-
-      @Override
-      public Object fun(VirtualFile file) {
-        if (file.isInLocalFileSystem()) {
-          // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
-          final File canonicalFile = new File(file.getPath());
-          if (canonicalFile.exists() &&
-              !FileUtil.filesEqual(canonicalFile, skeletons) &&
-              !FileUtil.filesEqual(canonicalFile, userSkeletons) &&
-              !FileUtil.filesEqual(canonicalFile, remoteSources)) {
-            return file.getPath();
-          }
+    return Joiner.on(File.pathSeparator).join(ContainerUtil.mapNotNull(paths, (Function<VirtualFile, Object>)file -> {
+      if (file.isInLocalFileSystem()) {
+        // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
+        final File canonicalFile = new File(file.getPath());
+        if (canonicalFile.exists() &&
+            !FileUtil.filesEqual(canonicalFile, skeletons) &&
+            !FileUtil.filesEqual(canonicalFile, userSkeletons) &&
+            !FileUtil.filesEqual(canonicalFile, remoteSources)) {
+          return file.getPath();
         }
-        return null;
       }
+      return null;
     }));
   }
 
@@ -280,7 +275,7 @@ public class PySkeletonRefresher {
   }
 
   public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cachedChecker) throws InvalidSdkException {
-    final List<String> errorList = new SmartList<String>();
+    final List<String> errorList = new SmartList<>();
     final String homePath = mySdk.getHomePath();
     final String skeletonsPath = getSkeletonsPath();
     final File skeletonsDir = new File(skeletonsPath);
@@ -333,7 +328,7 @@ public class PySkeletonRefresher {
         indicateMinor(BLACKLIST_FILE_NAME);
         for (UpdateResult error : updateErrors) {
           if (error.isFresh()) errorList.add(error.getName());
-          myBlacklist.put(error.getPath(), new Pair<Integer, Long>(myGeneratorVersion, error.getTimestamp()));
+          myBlacklist.put(error.getPath(), new Pair<>(myGeneratorVersion, error.getTimestamp()));
         }
         storeBlacklist(skeletonsDir, myBlacklist);
       }
@@ -349,23 +344,9 @@ public class PySkeletonRefresher {
       indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));
       cleanUpSkeletons(skeletonsDir);
     }
-    if (PySdkUtil.isRemote(mySdk)) {
-      try {
-        // Force loading packages
-        PyPackageManager.getInstance(mySdk).getPackages(false);
-      }
-      catch (ExecutionException e) {
-        // ignore - already logged
-      }
-    }
 
     if ((builtinsUpdated || PySdkUtil.isRemote(mySdk)) && myProject != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          DaemonCodeAnalyzer.getInstance(myProject).restart();
-        }
-      }, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
     }
 
     return errorList;
@@ -489,7 +470,7 @@ public class PySkeletonRefresher {
   }
 
   private Map<String, Pair<Integer, Long>> loadBlacklist() {
-    Map<String, Pair<Integer, Long>> ret = new HashMap<String, Pair<Integer, Long>>();
+    Map<String, Pair<Integer, Long>> ret = new HashMap<>();
     File blacklistFile = new File(mySkeletonsPath, BLACKLIST_FILE_NAME);
     if (blacklistFile.exists() && blacklistFile.canRead()) {
       Reader input;
@@ -509,7 +490,7 @@ public class PySkeletonRefresher {
                   try {
                     final long timestamp = Long.parseLong(matcher.group(3));
                     final String filename = matcher.group(1);
-                    ret.put(filename, new Pair<Integer, Long>(version, timestamp));
+                    ret.put(filename, new Pair<>(version, timestamp));
                     notParsed = false;
                   }
                   catch (NumberFormatException ignore) {
@@ -662,7 +643,7 @@ public class PySkeletonRefresher {
 
     final List<String> names = Lists.newArrayList(modules.keySet());
     Collections.sort(names);
-    final List<UpdateResult> results = new ArrayList<UpdateResult>();
+    final List<UpdateResult> results = new ArrayList<>();
     final int count = names.size();
     for (int i = 0; i < count; i++) {
       checkCanceled();
@@ -737,12 +718,9 @@ public class PySkeletonRefresher {
       }
       LOG.info("Skeleton for " + moduleName);
 
-      generateSkeleton(moduleName, binaryItem.getPath(), null, new Consumer<Boolean>() {
-        @Override
-        public void consume(Boolean generated) {
-          if (!generated) {
-            errorList.add(new UpdateResult(moduleName, binaryItem.getPath(), binaryItem.lastModified(), true));
-          }
+      generateSkeleton(moduleName, binaryItem.getPath(), null, generated -> {
+        if (!generated) {
+          errorList.add(new UpdateResult(moduleName, binaryItem.getPath(), binaryItem.lastModified(), true));
         }
       });
     }

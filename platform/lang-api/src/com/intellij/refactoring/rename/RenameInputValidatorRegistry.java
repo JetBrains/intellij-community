@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Dmitry Avdeev
- */
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.extensions.Extensions;
@@ -27,38 +24,32 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class RenameInputValidatorRegistry {
   private RenameInputValidatorRegistry() {
   }
 
   @Nullable
   public static Condition<String> getInputValidator(final PsiElement element) {
-    final LinkedHashMap<RenameInputValidator, ProcessingContext> acceptedValidators = new LinkedHashMap<RenameInputValidator, ProcessingContext>();
+    final LinkedHashMap<RenameInputValidator, ProcessingContext> acceptedValidators = new LinkedHashMap<>();
     for(final RenameInputValidator validator: Extensions.getExtensions(RenameInputValidator.EP_NAME)) {
       final ProcessingContext context = new ProcessingContext();
       if (validator.getPattern().accepts(element, context)) {
         acceptedValidators.put(validator, context);
       }
     }
-    return acceptedValidators.isEmpty() ? null : new Condition<String>() {
-      @Override
-      public boolean value(final String s) {
-        for (RenameInputValidator validator : acceptedValidators.keySet()) {
-          if (!validator.isInputValid(s, element, acceptedValidators.get(validator))) {
-            return false;
-          }
+    return acceptedValidators.isEmpty() ? null : (Condition<String>)s -> {
+      for (RenameInputValidator validator : acceptedValidators.keySet()) {
+        if (!validator.isInputValid(s, element, acceptedValidators.get(validator))) {
+          return false;
         }
-        return true;
       }
+      return true;
     };
   }
 
   @Nullable
   public static Function<String, String> getInputErrorValidator(final PsiElement element) {
-    final LinkedHashMap<RenameInputValidatorEx, ProcessingContext> acceptedValidators = new LinkedHashMap<RenameInputValidatorEx, ProcessingContext>();
+    final LinkedHashMap<RenameInputValidatorEx, ProcessingContext> acceptedValidators = new LinkedHashMap<>();
     for(final RenameInputValidator validator: Extensions.getExtensions(RenameInputValidator.EP_NAME)) {
       final ProcessingContext context = new ProcessingContext();
       if (validator instanceof RenameInputValidatorEx && validator.getPattern().accepts(element, context)) {
@@ -66,17 +57,14 @@ public class RenameInputValidatorRegistry {
       }
     }
 
-    return acceptedValidators.isEmpty() ? null : new Function<String, String>() {
-      @Override
-      public String fun(String newName) {
-        for (RenameInputValidatorEx validator : acceptedValidators.keySet()) {
-          final String message = validator.getErrorMessage(newName, element.getProject());
-          if (message != null) {
-            return message;
-          }
+    return acceptedValidators.isEmpty() ? null : (Function<String, String>)newName -> {
+      for (RenameInputValidatorEx validator : acceptedValidators.keySet()) {
+        final String message = validator.getErrorMessage(newName, element.getProject());
+        if (message != null) {
+          return message;
         }
-        return null;
       }
+      return null;
     };
   }
 }

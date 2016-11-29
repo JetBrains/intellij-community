@@ -7,6 +7,6 @@ class Example {
   }
 
   {
-    Function<String, String> r = (s) -> m(s, s);
+    Function<String, String> r = (s) -> <caret>m(s, s);
   }
 }

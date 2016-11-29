@@ -100,4 +100,8 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
     doTestFieldType("a",
                     PsiType.INT.createArrayType());
   }
+
+  public void testChainedInitialization() {
+    doTestFieldType("a", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicInteger", null));
+  }
 }

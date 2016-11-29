@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -93,17 +92,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     protected void levelDown() {
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
-        AccessToken token = WriteAction.start();
         try {
-          fireChange();
+          WriteAction.run(() -> fireChange());
         }
         finally {
-          try {
-            myChanged = false;
-          }
-          finally {
-            token.finish();
-          }
+          myChanged = false;
         }
       }
     }
@@ -151,7 +144,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @Override
   @NotNull
   public List<String> getContentRootUrls() {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       final String[] urls = ModuleRootManager.getInstance(module).getContentRootUrls();
       ContainerUtil.addAll(result, urls);
@@ -162,7 +155,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @Override
   @NotNull
   public VirtualFile[] getContentRoots() {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final List<VirtualFile> result = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       ContainerUtil.addAll(result, contentRoots);
@@ -173,7 +166,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @NotNull
   @Override
   public VirtualFile[] getContentSourceRoots() {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final List<VirtualFile> result = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       ContainerUtil.addAll(result, sourceRoots);
@@ -184,7 +177,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @NotNull
   @Override
   public List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       roots.addAll(ModuleRootManager.getInstance(module).getSourceRoots(rootTypes));
     }
@@ -205,13 +198,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public VirtualFile[] getContentRootsFromAllModules() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     final Module[] modules = getModuleManager().getSortedModules();
     for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       ContainerUtil.addAll(result, files);
     }
-    ContainerUtil.addIfNotNull(myProject.getBaseDir(), result);
+    ContainerUtil.addIfNotNull(result, myProject.getBaseDir());
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
@@ -240,12 +233,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   private void projectJdkChanged() {
-    mergeRootsChangesDuring(new Runnable() {
-      @Override
-      public void run() {
-        myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
-      }
-    });
+    mergeRootsChangesDuring(() -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged());
     Sdk sdk = getProjectSdk();
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.projectSdkChanged(sdk);
@@ -349,8 +337,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
     if (myProject.isDisposed()) return;
     BatchSession session = getBatchSession(fileTypes);
-    if (fireEvents) session.beforeRootsChanged();
     try {
+      if (fireEvents) session.beforeRootsChanged();
       runnable.run();
     }
     finally {
@@ -452,7 +440,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   void subscribeToRootProvider(OrderEntry owner, final RootProvider provider) {
     Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
     if (owners == null) {
-      owners = new HashSet<OrderEntry>();
+      owners = new HashSet<>();
       myRegisteredRootProviders.put(provider, owners);
       provider.addRootSetChangedListener(myRootProviderChangeListener);
     }
@@ -498,10 +486,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   private final Object myLibraryTableListenersLock = new Object();
-  private final Map<LibraryTable, LibraryTableMultiListener> myLibraryTableMultiListeners = new HashMap<LibraryTable, LibraryTableMultiListener>();
+  private final Map<LibraryTable, LibraryTableMultiListener> myLibraryTableMultiListeners = new HashMap<>();
 
   private class LibraryTableMultiListener implements LibraryTable.Listener {
-    private final Set<LibraryTable.Listener> myListeners = new LinkedHashSet<LibraryTable.Listener>();
+    private final Set<LibraryTable.Listener> myListeners = new LinkedHashSet<>();
     private LibraryTable.Listener[] myListenersArray;
 
     private synchronized void addListener(LibraryTable.Listener listener) {
@@ -518,12 +506,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     @Override
     public void afterLibraryAdded(final Library newLibrary) {
       incModificationCount();
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (LibraryTable.Listener listener : getListeners()) {
-            listener.afterLibraryAdded(newLibrary);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (LibraryTable.Listener listener : getListeners()) {
+          listener.afterLibraryAdded(newLibrary);
         }
       });
     }
@@ -538,12 +523,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     @Override
     public void afterLibraryRenamed(final Library library) {
       incModificationCount();
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (LibraryTable.Listener listener : getListeners()) {
-            listener.afterLibraryRenamed(library);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (LibraryTable.Listener listener : getListeners()) {
+          listener.afterLibraryRenamed(library);
         }
       });
     }
@@ -551,12 +533,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     @Override
     public void beforeLibraryRemoved(final Library library) {
       incModificationCount();
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (LibraryTable.Listener listener : getListeners()) {
-            listener.beforeLibraryRemoved(library);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (LibraryTable.Listener listener : getListeners()) {
+          listener.beforeLibraryRemoved(library);
         }
       });
     }
@@ -564,12 +543,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     @Override
     public void afterLibraryRemoved(final Library library) {
       incModificationCount();
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (LibraryTable.Listener listener : getListeners()) {
-            listener.afterLibraryRemoved(library);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (LibraryTable.Listener listener : getListeners()) {
+          listener.afterLibraryRemoved(library);
         }
       });
     }
@@ -578,7 +554,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final JdkTableMultiListener myJdkTableMultiListener;
 
   private class JdkTableMultiListener implements ProjectJdkTable.Listener {
-    private final Set<ProjectJdkTable.Listener> myListeners = new LinkedHashSet<ProjectJdkTable.Listener>();
+    private final Set<ProjectJdkTable.Listener> myListeners = new LinkedHashSet<>();
     private final MessageBusConnection listenerConnection;
     private ProjectJdkTable.Listener[] myListenersArray;
 
@@ -606,36 +582,27 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     @Override
     public void jdkAdded(final Sdk jdk) {
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (ProjectJdkTable.Listener listener : getListeners()) {
-            listener.jdkAdded(jdk);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (ProjectJdkTable.Listener listener : getListeners()) {
+          listener.jdkAdded(jdk);
         }
       });
     }
 
     @Override
     public void jdkRemoved(final Sdk jdk) {
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (ProjectJdkTable.Listener listener : getListeners()) {
-            listener.jdkRemoved(jdk);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (ProjectJdkTable.Listener listener : getListeners()) {
+          listener.jdkRemoved(jdk);
         }
       });
     }
 
     @Override
     public void jdkNameChanged(final Sdk jdk, final String previousName) {
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (ProjectJdkTable.Listener listener : getListeners()) {
-            listener.jdkNameChanged(jdk, previousName);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (ProjectJdkTable.Listener listener : getListeners()) {
+          listener.jdkNameChanged(jdk, previousName);
         }
       });
       String currentName = getProjectSdkName();
@@ -647,7 +614,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = new HashMap<RootProvider, Set<OrderEntry>>();
+  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = new HashMap<>();
 
   void addJdkTableListener(ProjectJdkTable.Listener jdkTableListener) {
     myJdkTableMultiListener.addListener(jdkTableListener);

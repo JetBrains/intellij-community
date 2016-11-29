@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.Extensions;
@@ -27,7 +26,7 @@ public class ElementDescriptionUtil {
 
   @NotNull
   public static String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
-    for(ElementDescriptionProvider provider: Extensions.getExtensions(ElementDescriptionProvider.EP_NAME)) {
+    for (ElementDescriptionProvider provider : Extensions.getExtensions(ElementDescriptionProvider.EP_NAME)) {
       String result = provider.getElementDescription(element, location);
       if (result != null) {
         return result;

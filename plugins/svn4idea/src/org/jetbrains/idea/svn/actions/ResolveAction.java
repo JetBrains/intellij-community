@@ -62,7 +62,7 @@ public class ResolveAction extends BasicAction {
         hasDirs = true;
       }
     }
-    final List<VirtualFile> fileList = new ArrayList<VirtualFile>();
+    final List<VirtualFile> fileList = new ArrayList<>();
     if (!hasDirs) {
       Collections.addAll(fileList, files);
     }

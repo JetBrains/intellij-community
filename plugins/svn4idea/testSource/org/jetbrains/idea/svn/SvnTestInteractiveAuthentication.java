@@ -40,7 +40,7 @@ public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvi
   public SvnTestInteractiveAuthentication(SvnAuthenticationManager manager) {
     myManager = manager;
     mySaveData = true;
-    myData = new HashMap<String, Convertor<SVNURL, SVNAuthentication>>();
+    myData = new HashMap<>();
   }
 
   public void setSaveData(boolean saveData) {

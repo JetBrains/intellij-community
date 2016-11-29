@@ -189,7 +189,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent implement
   }
 
   private class MyProjectsTreeListener extends MavenProjectsTree.ListenerAdapter implements MavenProjectsManager.Listener {
-    private final Map<MavenProject, Boolean> mySheduledProjects = new THashMap<MavenProject, Boolean>();
+    private final Map<MavenProject, Boolean> mySheduledProjects = new THashMap<>();
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue(getComponentName() + ": Keymap Update",
                                                                                  500, true, myProject);
 
@@ -255,12 +255,8 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent implement
     }
 
     private List<MavenProject> selectScheduledProjects(final boolean forUpdate) {
-      return ContainerUtil.mapNotNull(mySheduledProjects.entrySet(), new Function<Map.Entry<MavenProject, Boolean>, MavenProject>() {
-        @Override
-        public MavenProject fun(Map.Entry<MavenProject, Boolean> eachEntry) {
-          return forUpdate == eachEntry.getValue() ? eachEntry.getKey() : null;
-        }
-      });
+      return ContainerUtil.mapNotNull(mySheduledProjects.entrySet(),
+                                      eachEntry -> forUpdate == eachEntry.getValue() ? eachEntry.getKey() : null);
     }
   }
 }

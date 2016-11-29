@@ -51,7 +51,7 @@ public class MetaRegistry extends MetaDataRegistrar {
 
   private static final Logger LOG = Logger.getInstance(MetaRegistry.class);
   private static final List<MyBinding> ourBindings = ContainerUtil.createLockFreeCopyOnWriteList();
-  private static volatile boolean ourContributorsLoaded = false;
+  private static volatile boolean ourContributorsLoaded;
 
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
 

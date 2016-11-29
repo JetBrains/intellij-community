@@ -16,15 +16,18 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.surroundWith.SurroundDescriptor;
+import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -40,6 +43,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -63,15 +67,11 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       }
     }
 
-    return type != null && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
+    return type != null && rightType(type);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) {
-      return;
-    }
-
     PsiLocalVariable variable = findVariable(element);
     if (variable != null) {
       processVariable(project, editor, variable);
@@ -124,6 +124,10 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     }
 
     return null;
+  }
+
+  private static boolean rightType(PsiType type) {
+    return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
   private static void processVariable(Project project, Editor editor, PsiLocalVariable variable) {
@@ -243,7 +247,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
         type = initializer.getType();
         String[] names = IntroduceVariableBase.getSuggestedName(type, initializer).names;
         PsiType[] types = Stream.of(new TypeSelectorManagerImpl(project, type, initializer, PsiExpression.EMPTY_ARRAY).getTypesForAll())
-            .filter(t -> InheritanceUtil.isInheritor(t, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE))
+            .filter(SurroundAutoCloseableAction::rightType)
             .toArray(PsiType[]::new);
         TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(var);
         builder.replaceElement(id, new NamesExpression(names));
@@ -285,6 +289,51 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       return Stream.of(myNames).map(LookupElementBuilder::create).toArray(LookupElement[]::new);
+    }
+  }
+
+  public static class Template implements SurroundDescriptor, Surrounder {
+    private Surrounder[] mySurrounders = {this};
+
+    @NotNull
+    @Override
+    public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+      PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
+      if (expr == null) {
+        expr = findExpression(file.findElementAt(endOffset));
+      }
+      return expr != null && rightType(expr.getType()) ? new PsiElement[]{expr} : PsiElement.EMPTY_ARRAY;
+    }
+
+    @NotNull
+    @Override
+    public Surrounder[] getSurrounders() {
+      return mySurrounders;
+    }
+
+    @Override
+    public boolean isExclusive() {
+      return false;
+    }
+
+    @Override
+    public String getTemplateDescription() {
+      return CodeInsightBundle.message("intention.surround.with.ARM.block.template");
+    }
+
+    @Override
+    public boolean isApplicable(@NotNull PsiElement[] elements) {
+      return true;
+    }
+
+    @Nullable
+    @Override
+    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) {
+      if (elements.length == 1 && elements[0] instanceof PsiExpression) {
+        processExpression(project, editor, (PsiExpression)elements[0]);
+      }
+
+      return null;
     }
   }
 }

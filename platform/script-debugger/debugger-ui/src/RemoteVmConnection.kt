@@ -21,32 +21,39 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
+import com.intellij.util.io.connect
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.rejectedPromise
-import org.jetbrains.concurrency.resolvedPromise
+import io.netty.channel.ChannelFuture
+import io.netty.util.concurrent.GenericFutureListener
+import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
-import org.jetbrains.io.addChannelListener
-import org.jetbrains.io.connect
 import org.jetbrains.rpc.LOG
 import java.net.ConnectException
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JList
 
 abstract class RemoteVmConnection : VmConnection<Vm>() {
+  @Deprecated("Use address")
   var port = -1
+  var address: InetSocketAddress? = null
 
   private val connectCancelHandler = AtomicReference<() -> Unit>()
+
+  protected val channelCloseListener = GenericFutureListener<ChannelFuture> {
+    close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
+  }
 
   abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
 
   @JvmOverloads
   fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null): Promise<Vm> {
+    this.address = address
+    @Suppress("DEPRECATION")
     port = address.port
-    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostName}:${port}")
+    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostString}:${address.port}")
     val result = AsyncPromise<Vm>()
     val future = ApplicationManager.getApplication().executeOnPooledThread {
       if (Thread.interrupted()) {
@@ -66,7 +73,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
         }
         .rejected {
           if (it !is ConnectException) {
-            Promise.logError(LOG, it)
+            LOG.errorIfNotMessage(it)
           }
           setState(ConnectionStatus.CONNECTION_FAILED, it.message)
         }
@@ -74,11 +81,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
 
       createBootstrap(address, result)
           .connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
-          ?.let {
-            it.closeFuture().addChannelListener {
-              close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
-            }
-          }
+          ?.let { it.closeFuture().addListener(channelCloseListener) }
     }
 
     connectCancelHandler.set {
@@ -106,7 +109,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
 
 fun RemoteVmConnection.open(address: InetSocketAddress, processHandler: ProcessHandler) = open(address, Condition<java.lang.Void> { processHandler.isProcessTerminating || processHandler.isProcessTerminated })
 
-fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T, ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<*>) -> Unit): Promise<T> {
+fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T, ColoredListCellRenderer<*>) -> Unit): Promise<T> {
   if (targets.size == 1) {
     return resolvedPromise(targets.first())
   }
@@ -117,8 +120,8 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
   val result = org.jetbrains.concurrency.AsyncPromise<T>()
   ApplicationManager.getApplication().invokeLater {
     val list = JBList(targets)
-    list.cellRenderer = object : ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<T>() {
-      override fun customizeCellRenderer(value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
+    list.cellRenderer = object : ColoredListCellRenderer<T>() {
+      override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
         renderer(value, this)
       }
     }
@@ -129,9 +132,10 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Choose Page to Debug")
+      .setCancelOnWindowDeactivation(false)
       .setItemChoosenCallback {
         @Suppress("UNCHECKED_CAST")
-        val value = list.selectedValue as T
+        val value = list.selectedValue
         if (value == null) {
           result.setError("No target to inspect")
         }

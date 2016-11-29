@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class ElementStub extends DomStub {
 
-  private final List<DomStub> myChildren = new SmartList<DomStub>();
+  private final List<DomStub> myChildren = new SmartList<>();
   private final int myIndex;
   private final boolean myCustom;
 
@@ -56,6 +56,7 @@ public class ElementStub extends DomStub {
     myChildren.add(child);
   }
 
+  @NotNull
   @Override
   public List<DomStub> getChildrenStubs() {
     return myChildren;

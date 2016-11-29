@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.naming.ConventionInspection;
@@ -82,12 +84,12 @@ public class JUnitTestClassNamingConventionInspectionBase extends ConventionInsp
       if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      if (!InheritanceUtil.isInheritor(aClass,
-                                       "junit.framework.TestCase")) {
-        if (!hasJUnit4TestMethods(aClass)) {
-          return;
-        }
+
+      final TestFramework framework = TestFrameworks.detectFramework(aClass);
+      if (framework == null || !framework.getName().startsWith("JUnit") || !framework.isTestClass(aClass)) {
+        return;
       }
+
       final String name = aClass.getName();
       if (name == null) {
         return;
@@ -95,21 +97,17 @@ public class JUnitTestClassNamingConventionInspectionBase extends ConventionInsp
       if (isValid(name)) {
         return;
       }
-      registerClassError(aClass, name);
-    }
-
-    private boolean hasJUnit4TestMethods(@NotNull PsiClass aClass) {
-      //use this if this method turns out to have bad performance:
-      //if (!TestUtils.isTest(aClass)) {
-      //    return false;
-      //}
-      final PsiMethod[] methods = aClass.getMethods();
-      for (PsiMethod method : methods) {
-        if (TestUtils.isJUnit4TestMethod(method)) {
-          return true;
-        }
+      final PsiIdentifier identifier = aClass.getNameIdentifier();
+      if (identifier == null) {
+        return;
       }
-      return false;
+      if (!identifier.isPhysical()) {
+        final PsiElement navigationElement = identifier.getNavigationElement();
+        registerError(navigationElement, name);
+      }
+      else {
+        registerClassError(aClass, name);
+      }
     }
   }
 }

@@ -115,8 +115,8 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
   }
 
   static class MyValidationMessageConsumer  {
-    final List<Pair<PsiElement, String >> errors = new ArrayList<Pair<PsiElement, String>>();
-    final List<Pair<PsiElement, String >> warnings = new ArrayList<Pair<PsiElement, String>>();
+    final List<Pair<PsiElement, String >> errors = new ArrayList<>();
+    final List<Pair<PsiElement, String >> warnings = new ArrayList<>();
     ValidationMessageConsumer error() {
       return new ValidationMessageConsumer() {
         @Override
@@ -260,7 +260,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
       if (MISSING_START_ELEMENT.equals(message)) {
         final PsiFile psiFile = node.getPsi().getContainingFile();
         if (psiFile instanceof XmlFile) {
-          final PsiElementProcessor.FindElement<XmlFile> processor = new PsiElementProcessor.FindElement<XmlFile>();
+          final PsiElementProcessor.FindElement<XmlFile> processor = new PsiElementProcessor.FindElement<>();
           RelaxIncludeIndex.processBackwardDependencies((XmlFile)psiFile, processor);
           if (processor.isFound()) {
             // files that are included from other files do not need a <start> element.

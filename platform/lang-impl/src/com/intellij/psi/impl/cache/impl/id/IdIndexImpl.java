@@ -43,12 +43,7 @@ public class IdIndexImpl extends IdIndex implements CustomInputsIndexFileBasedIn
   @Override
   public int getVersion() {
     FileType[] types = myFileTypeManager.getRegisteredFileTypes();
-    Arrays.sort(types, new Comparator<FileType>() {
-      @Override
-      public int compare(FileType o1, FileType o2) {
-        return Comparing.compare(o1.getName(), o2.getName());
-      }
-    });
+    Arrays.sort(types, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
 
     int version = super.getVersion();
     for(FileType fileType:types) {
@@ -84,7 +79,7 @@ public class IdIndexImpl extends IdIndex implements CustomInputsIndexFileBasedIn
       @Override
       public Collection<IdIndexEntry> read(@NotNull DataInput in) throws IOException {
         int length = DataInputOutputUtil.readINT(in);
-        ArrayList<IdIndexEntry> entries = new ArrayList<IdIndexEntry>(length);
+        ArrayList<IdIndexEntry> entries = new ArrayList<>(length);
         int prev = 0;
         while(length-- > 0) {
           final int l = (int)(DataInputOutputUtil.readLONG(in) + prev);

@@ -13,7 +13,7 @@
   <path id="junit">
     <file name="${basedir}/../../../lib/junit-4.12.jar"/>
     <file name="${basedir}/../../../lib/hamcrest-core-1.3.jar"/>
-    <file name="${basedir}/../../../lib/hamcrest-library-1.3.jar"/>
+    <file name="${basedir}/../../../lib/dev/assertj-core-3.4.1.jar"/>
   </path>
 
   <target name="clean" depends="init">
@@ -39,7 +39,7 @@
 
   <target name="test-compile" depends="init,compile">
     <mkdir dir="${test-out}"/>
-    <javac srcdir="${test-src}" destdir="${test-out}" source="1.6" target="1.6" encoding="UTF-8" debug="true" includeantruntime="false">
+    <javac srcdir="${test-src}" destdir="${test-out}" source="1.8" target="1.8" encoding="UTF-8" debug="true" includeantruntime="false">
       <classpath path="${out}"/>
       <classpath refid="junit"/>
     </javac>

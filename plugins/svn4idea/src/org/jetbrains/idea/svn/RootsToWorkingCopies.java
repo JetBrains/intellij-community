@@ -54,8 +54,8 @@ public class RootsToWorkingCopies implements VcsListener {
     myProject = vcs.getProject();
     myQueue = new BackgroundTaskQueue(myProject, "SVN VCS roots authorization checker");
     myLock = new Object();
-    myRootMapping = new HashMap<VirtualFile, WorkingCopy>();
-    myUnversioned = new HashSet<VirtualFile>();
+    myRootMapping = new HashMap<>();
+    myUnversioned = new HashSet<>();
     myVcs = vcs;
     myRechecker = new Runnable() {
       public void run() {

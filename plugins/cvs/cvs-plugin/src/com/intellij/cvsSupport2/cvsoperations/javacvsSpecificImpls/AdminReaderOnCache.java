@@ -70,7 +70,7 @@ public class AdminReaderOnCache implements IAdminReader {
     ProgressManager.checkCanceled();
     File parent = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
     Collection<Entry> entries = myCvsEntriesManager.getEntriesIn(CvsVfsUtil.findFileByIoFile(parent));
-    ArrayList<Entry> copy = new ArrayList<Entry>();
+    ArrayList<Entry> copy = new ArrayList<>();
     for (final Entry entry : entries) {
       try {
         copy.add((Entry)entry.clone());

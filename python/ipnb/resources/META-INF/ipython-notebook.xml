@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <project-components>
     <component>
       <implementation-class>org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager</implementation-class>
@@ -9,7 +9,7 @@
     <fileTypeFactory implementation="org.jetbrains.plugins.ipnb.IpnbFileTypeFactory"/>
 
     <projectConfigurable groupId="language"  instance="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable"
-                         id="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable" displayName="IPython Notebook"
+                         id="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable" displayName="Jupyter Notebook"
                          nonDefaultProject="true"/>
     <projectService serviceInterface="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"
                     serviceImplementation="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"/>
@@ -18,6 +18,8 @@
   <extensions defaultExtensionNs="Pythonid">
     <dialectsTokenSetContributor implementation="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenSetContributor"/>
     <visitorFilter language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.IpnbVisitorFilter"/>
+    <pep8ProblemSuppressor implementation="org.jetbrains.plugins.ipnb.IpnbPep8ProblemSuppressor"/>
+    <unresolvedReferenceSkipper implementation="org.jetbrains.plugins.ipnb.psi.IpnbUnresolvedReferenceSkipper"/>
   </extensions>
   <actions>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction" id="IpnbRunCellInplaceAction"

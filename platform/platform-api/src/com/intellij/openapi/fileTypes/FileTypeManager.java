@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
@@ -36,18 +35,13 @@ import java.util.List;
 
 public abstract class FileTypeManager extends FileTypeRegistry {
   static {
-    FileTypeRegistry.ourInstanceGetter = new Getter<FileTypeRegistry>() {
-      @Override
-      public FileTypeRegistry get() {
-        return FileTypeManager.getInstance();
-      }
-    };
+    FileTypeRegistry.ourInstanceGetter = () -> getInstance();
   }
 
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
 
   @NotNull
-  public static final Topic<FileTypeListener> TOPIC = new Topic<FileTypeListener>("File types change", FileTypeListener.class);
+  public static final Topic<FileTypeListener> TOPIC = new Topic<>("File types change", FileTypeListener.class);
 
   /**
    * Returns the singleton instance of the FileTypeManager component.
@@ -64,7 +58,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   }
 
   /**
-   * @deprecated use {@link com.intellij.openapi.fileTypes.FileTypeFactory} instead
+   * @deprecated use {@link FileTypeFactory} instead
    */
   public abstract void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations);
 
@@ -74,10 +68,10 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @param type                        The file type to register.
    * @param defaultAssociatedExtensions The list of extensions which cause the file to be
    *                                    treated as the specified file type. The extensions should not start with '.'.
-   * @deprecated use {@link com.intellij.openapi.fileTypes.FileTypeFactory} instead
+   * @deprecated use {@link FileTypeFactory} instead
    */
   public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String... defaultAssociatedExtensions) {
-    List<FileNameMatcher> matchers = new ArrayList<FileNameMatcher>();
+    List<FileNameMatcher> matchers = new ArrayList<>();
     if (defaultAssociatedExtensions != null) {
       for (String extension : defaultAssociatedExtensions) {
         matchers.add(new ExtensionFileNameMatcher(extension));

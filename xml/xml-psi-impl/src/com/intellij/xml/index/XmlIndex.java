@@ -40,8 +40,6 @@ import java.util.List;
  */
 public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
 
-  protected static final EnumeratorStringDescriptor KEY_DESCRIPTOR = new EnumeratorStringDescriptor();
-
   protected static GlobalSearchScope createFilter(final Project project) {
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
     return new GlobalSearchScope(project) {
@@ -101,7 +99,7 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
   @Override
   @NotNull
   public KeyDescriptor<String> getKeyDescriptor() {
-    return KEY_DESCRIPTOR;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @Override

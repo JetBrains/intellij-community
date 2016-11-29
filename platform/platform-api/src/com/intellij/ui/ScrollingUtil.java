@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -288,8 +289,10 @@ public class ScrollingUtil {
     installMoveDownAction(list, focusParent);
     installMovePageUpAction(list, focusParent);
     installMovePageDownAction(list, focusParent);
-    installMoveHomeAction(list, focusParent);
-    installMoveEndAction(list, focusParent);
+    if (!(focusParent instanceof JTextComponent)) {
+      installMoveHomeAction(list, focusParent);
+      installMoveEndAction(list, focusParent);
+    }
   }
 
   public static void installMoveEndAction(final JList list, @Nullable JComponent focusParent) {
@@ -428,7 +431,13 @@ public class ScrollingUtil {
     } else {
       return Math.min(row + 1, table.getRowCount() - 1); // just in case
     }
+  }
 
+  public static boolean isVisible(JTable table, int row) {
+    Rectangle visibleRect = table.getVisibleRect();
+    int start = getLeadingRow(table, visibleRect);
+    int end = getTrailingRow(table, visibleRect);
+    return row >= start && row <= end;
   }
 
   private static int getTrailingRow(JTable table, Rectangle visibleRect) {

@@ -3,8 +3,8 @@ package com.jetbrains.edu.learning;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +21,7 @@ public class StudyState {
     myEditor = studyEditor != null ? studyEditor.getEditor() : null;
     myTaskFile = studyEditor != null ? studyEditor.getTaskFile() : null;
     myVirtualFile = myEditor != null ? FileDocumentManager.getInstance().getFile(myEditor.getDocument()) : null;
-    myTaskDir = myVirtualFile != null ? myVirtualFile.getParent() : null;
+    myTaskDir = myVirtualFile != null ? StudyUtils.getTaskDir(myVirtualFile) : null;
     myTask = myTaskFile != null ? myTaskFile.getTask() : null;
   }
 

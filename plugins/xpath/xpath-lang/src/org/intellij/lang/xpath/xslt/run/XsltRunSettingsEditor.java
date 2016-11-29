@@ -289,12 +289,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         }
       });
 
-      final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), new Condition<Sdk>() {
-        @Override
-        public boolean value(Sdk sdk) {
-          return sdk.getSdkType() instanceof JavaSdkType;
-        }
-      });
+      final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(),
+                                                     sdk -> sdk.getSdkType() instanceof JavaSdkType);
       myJDK.setModel(new DefaultComboBoxModel(allJdks.toArray()));
       if (allJdks.size() > 0) {
         myJDK.setSelectedIndex(0);
@@ -351,7 +347,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
     private static Vector<FileType> getFileTypes(Project project) {
-      final Vector<FileType> v = new Vector<FileType>();
+      final Vector<FileType> v = new Vector<>();
 
       final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
       for (FileType fileType : fileTypes) {
@@ -377,11 +373,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
           Logger.getInstance(XsltRunSettingsEditor.class.getName()).info("Encountered incompatible FileType: " + fileType.getName(), e);
         }
       }
-      Collections.sort(v, new Comparator<FileType>() {
-        public int compare(FileType o1, FileType o2) {
-          return o1.getDescription().compareTo(o2.getDescription());
-        }
-      });
+      Collections.sort(v, (o1, o2) -> o1.getDescription().compareTo(o2.getDescription()));
 
       // off
       v.insertElementAt(null, 0);
@@ -525,7 +517,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         }
       }
 
-      private final List<Param> myParams = new ArrayList<Param>();
+      private final List<Param> myParams = new ArrayList<>();
 
       public ParamTableModel() {
       }
@@ -587,7 +579,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
       }
 
       public List<Pair<String, String>> getParams() {
-        final ArrayList<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(myParams.size());
+        final ArrayList<Pair<String, String>> pairs = new ArrayList<>(myParams.size());
         for (Param param : myParams) {
           pairs.add(Pair.create(param.name, param.value));
         }

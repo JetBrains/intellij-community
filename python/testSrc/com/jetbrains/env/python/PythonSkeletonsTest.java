@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
@@ -9,11 +24,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
@@ -27,9 +42,12 @@ import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Set;
+
+import static org.junit.Assert.*;
 
 /**
  * Heavyweight integration tests of skeletons of Python binary modules.
@@ -42,6 +60,7 @@ import java.util.Set;
 public class PythonSkeletonsTest extends PyEnvTestCase {
   public static final ImmutableSet<String> TAGS = ImmutableSet.of("skeletons");
 
+  @Test
   public void testBuiltins() {
     runTest(new SkeletonsTask() {
       @Override
@@ -61,7 +80,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         assertEquals(SkeletonVersionChecker.BUILTIN_NAME, header.getBinaryFile());
 
         // Run inspections on a file that uses builtins
-        edt(() -> myFixture.configureByFile(getTestName(false) + ".py"));
+        EdtTestUtil.runInEdtAndWait((() -> myFixture.configureByFile(getTestName(false) + ".py")));
 
         PsiFile expr = myFixture.getFile();
 
@@ -81,12 +100,13 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         assertEquals(builtins, builtinsFromPsi);
 
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-        edt(() -> myFixture.checkHighlighting(true, false, false));
+        EdtTestUtil.runInEdtAndWait((() -> myFixture.checkHighlighting(true, false, false)));
       }
     });
   }
 
   // PY-4349
+  @Test
   public void testFakeNamedTuple() {
     runTest(new SkeletonsTask() {
       @Override
@@ -101,14 +121,15 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         LocalFileSystem.getInstance().refresh(false);
 
         // Run inspections on code that uses named tuples
-        edt(() -> myFixture.configureByFile(getTestName(false) + ".py"));
+        EdtTestUtil.runInEdtAndWait(() -> myFixture.configureByFile(getTestName(false) + ".py"));
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
 
-        edt(() -> myFixture.checkHighlighting(true, false, false));
+        EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting(true, false, false));
       }
     });
   }
 
+  @Test
   public void testKnownPropertiesTypes() {
     runTest(new SkeletonsTask() {
       @Override
@@ -128,6 +149,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
   }
 
   // PY-9797
+  @Test
   public void testReadWriteDeletePropertyDefault() {
     runTest(new SkeletonsTask() {
       @Override
@@ -160,14 +182,15 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
   }
 
   // PY-17282
+  @Test
   public void testBinaryStandardModule() {
     runTest(new SkeletonsTask() {
       @Override
       protected void runTestOn(@NotNull Sdk sdk) {
-        edt(() -> myFixture.configureByFile(getTestName(false) + ".py"));
+        EdtTestUtil.runInEdtAndWait((() -> myFixture.configureByFile(getTestName(false) + ".py")));
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
 
-        edt(() -> myFixture.checkHighlighting(true, false, false));
+        EdtTestUtil.runInEdtAndWait((() -> myFixture.checkHighlighting(true, false, false)));
       }
     });
   }
@@ -179,10 +202,10 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
 
   private abstract static class SkeletonsTask extends PyExecutionFixtureTestTask {
-    @Override
-    protected String getTestDataPath() {
-      return PythonTestUtil.getTestDataPath() + "/skeletons/";
+    SkeletonsTask() {
+      super("/skeletons/");
     }
+
 
     @Override
     public void runTestOn(String sdkHome) throws Exception {

@@ -204,25 +204,23 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       FileDocumentManager.getInstance().saveAllDocuments();
       final GradleProjectSettings gradleProjectSettings = getExternalProjectSettings();
       final VirtualFile finalBuildScriptFile = buildScriptFile;
-      Runnable runnable = new Runnable() {
-        public void run() {
-          if (myParentProject == null) {
-            gradleProjectSettings.setExternalProjectPath(rootProjectPath);
-            AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
-            //noinspection unchecked
-            settings.linkProject(gradleProjectSettings);
-          }
+      Runnable runnable = () -> {
+        if (myParentProject == null) {
+          gradleProjectSettings.setExternalProjectPath(rootProjectPath);
+          AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
+          //noinspection unchecked
+          settings.linkProject(gradleProjectSettings);
+        }
 
-          ExternalSystemUtil.refreshProject(
-            project, GradleConstants.SYSTEM_ID, rootProjectPath, false,
-            ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+        ExternalSystemUtil.refreshProject(
+          project, GradleConstants.SYSTEM_ID, rootProjectPath, false,
+          ProgressExecutionMode.IN_BACKGROUND_ASYNC);
 
-          final PsiFile psiFile;
-          if (finalBuildScriptFile != null) {
-            psiFile = PsiManager.getInstance(project).findFile(finalBuildScriptFile);
-            if (psiFile != null) {
-              EditorHelper.openInEditor(psiFile);
-            }
+        final PsiFile psiFile;
+        if (finalBuildScriptFile != null) {
+          psiFile = PsiManager.getInstance(project).findFile(finalBuildScriptFile);
+          if (psiFile != null) {
+            EditorHelper.openInEditor(psiFile);
           }
         }
       };
@@ -237,7 +235,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     myWizardContext = wizardContext;
     return new ModuleWizardStep[]{
       new GradleModuleWizardStep(this, wizardContext),
-      new ExternalModuleSettingsStep<GradleProjectSettings>(
+      new ExternalModuleSettingsStep<>(
         wizardContext, this, new GradleProjectSettingsControl(getExternalProjectSettings()))
     };
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-10397
   public void testSlotsAndListedAttrAccess() {
+    doTest();
+  }
+
+  // PY-18422
+  public void testSlotsAndClassAttr() {
     doTest();
   }
 
@@ -229,32 +234,17 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-6745
   public void testQualNameAttribute() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
   }
 
   // PY-7389
   public void testComprehensionScope27() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   // PY-7389
   public void testComprehensionScope33() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
   }
 
   // PY-7516
@@ -343,7 +333,12 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest("a.py");
   }
 
-  public void testBytesIORead() {
+  public void testBytesIOMethods() {
+    doTest();
+  }
+
+  // PY-18322
+  public void testFileMethods() {
     doTest();
   }
 
@@ -536,6 +531,157 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testPropertyNotListedInSlots() {
     doTest();
   }
+  
+  // PY-2748
+  public void testFormatStringPositional() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringKeyword() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringPositional() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringKeyword() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringPackedFunctionCall() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringFunctionCall() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringPackedReference() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringReference() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testFormatStringDictLiteralArgumentWithReferenceExprKeys() {
+    doTest();
+  }
+
+  // PY-2748
+  public void testPercentStringDictLiteralArgumentWithReferenceExprKeys() {
+    doTest();
+  }
+  
+  // PY-2748
+  public void testFormatStringDictLiteralArgumentWithNumericExprKeys() {
+    doTest();
+  }
+  
+  // PY-18769
+  public void testFormatStringInRegularExpressions() {
+    doTest();
+  }
+  
+  // PY-18751
+  public void testFormatStringInMapExpression() {
+    doTest();
+  }
+
+  // PY-18751
+  public void testStringWithFormatSyntax() {
+    doTest();
+  }
+
+  // PY-18751
+  public void testStringWithPercentSyntax() {
+    doTest();
+  }
+
+  // PY-18751
+  public void testPercentStringWithFormatStringReplacementSymbols() {
+    doTest();
+  }
+
+  // PY-18751, PY-18824
+  public void testFormatStringWithPercentStringReplacementSymbols() {
+    doTest();
+  }
+  
+  // PY-18837
+  public void testPercentStringWithDictArgument() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithDictCallArgument() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithTupleSlicing() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithDictElement() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithEmptyDict() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithDictCall() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringPositionalSubstitutionWithDictArg() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithCallArgument() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringWithEmptyDictArg() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringWithDictLiteralExprInsideDictCall() {
+    doTest();
+  }
+  
+  // PY-18115
+  public void testFormatStringWithDictArgWithCallExprKey() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringWithPackedAndNonPackedArgs() {
+    doTest();
+  }
+  
+  
+  // PY-18950
+  public void testPercentStringKeywordArgumentWithReferenceKeyDictArgument() {
+    doTest();
+  }
 
   // PY-18254
   public void testVarargsAnnotatedWithFunctionComment() {
@@ -545,6 +691,51 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-18521
   public void testFunctionTypeCommentUsesImportsFromTyping() {
     myFixture.copyDirectoryToProject("typing", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+  
+  // PY-19084
+  public void testPercentStringPositionalListArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringPositionalSetArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringPositionalDictArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringKeywordListArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringKeywordSetArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringKeywordTupleArgument() {
+    doTest();
+  }
+
+  // PY-13734
+  public void testDunderClass() {
+    doTest();
+  }
+
+  // PY-20071
+  public void testNonexistentLoggerMethod() {
+    doMultiFileTest();
+  }
+
+  // PY-21224
+  public void testSixWithMetaclass() {
     doTest();
   }
 

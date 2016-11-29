@@ -17,16 +17,14 @@ package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,31 +36,23 @@ import java.util.List;
  * @author peter
 */
 public class ExplicitlyImportedWeigher extends ProximityWeigher {
-  private static final NullableLazyKey<PsiPackage, ProximityLocation>
-    PLACE_PACKAGE = NullableLazyKey.create("placePackage", new NullableFunction<ProximityLocation, PsiPackage>() {
-    @Override
-    public PsiPackage fun(ProximityLocation location) {
-      PsiElement position = location.getPosition();
-      if (position == null) return null;
-
-      return getContextPackage(position);
-    }
+  private static final NullableLazyKey<PsiPackage, ProximityLocation> PLACE_PACKAGE = NullableLazyKey.create("placePackage", location -> {
+    PsiElement position = location.getPosition();
+    return position == null ? null : getContextPackage(position);
   });
   private static final NotNullLazyKey<List<String>, ProximityLocation> PLACE_IMPORTED_NAMES =
-    NotNullLazyKey.create("importedNames", new NotNullFunction<ProximityLocation, List<String>>() {
-      @NotNull
-      @Override
-      public List<String> fun(ProximityLocation location) {
-        final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(location.getPosition(), PsiJavaFile.class, false);
-        final PsiImportList importList = psiJavaFile == null ? null : psiJavaFile.getImportList();
-        if (importList == null) return Collections.emptyList();
+    NotNullLazyKey.create("importedNames", location -> {
+      final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(location.getPosition(), PsiJavaFile.class, false);
+      final PsiImportList importList = psiJavaFile == null ? null : psiJavaFile.getImportList();
+      if (importList == null) return Collections.emptyList();
 
-        List<String> importedNames = ContainerUtil.newArrayList();
-        for (final PsiImportStatement importStatement : importList.getImportStatements()) {
-          ContainerUtil.addIfNotNull(importedNames, importStatement.getQualifiedName());
-        }
-        return importedNames;
+      List<String> importedNames = ContainerUtil.newArrayList();
+      for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
+        PsiJavaCodeReferenceElement reference = statement.getImportReference();
+        ContainerUtil.addIfNotNull(importedNames, reference == null ? null : reference.getQualifiedName());
       }
+
+      return importedNames;
     });
 
   @Nullable
@@ -111,21 +101,20 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
           return 100;
         }
 
-        String pkg = StringUtil.getPackageName(qname);
-
-        // check if anything from the parent packages is already imported in the file:
+        // check if anything from the same package is already imported in the file:
         //    people are likely to refer to the same subsystem as they're already working
-        while (!pkg.isEmpty()) {
-          if (containsImport(importedNames, pkg)) {
-            // more specific already imported packages get more weight
-            return StringUtil.countChars(pkg, '.') + 1;
-          }
-          pkg = StringUtil.getPackageName(pkg);
+        if (containsImport(importedNames, StringUtil.getPackageName(qname))) {
+          return 50;
         }
       }
 
     }
     if (element instanceof PsiMember) {
+      String qname = PsiUtil.getMemberQualifiedName((PsiMember)element);
+      if (qname != null && PLACE_IMPORTED_NAMES.getValue(location).contains(qname)) {
+        return 400;
+      }
+
       final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
       if (placePackage != null) {
         Module elementModule = ModuleUtilCore.findModuleForPsiElement(element);
@@ -138,11 +127,6 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
   }
 
   private static boolean containsImport(List<String> importedNames, final String pkg) {
-    return ContainerUtil.or(importedNames, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return s.startsWith(pkg + '.') || s.equals(pkg);
-      }
-    });
+    return ContainerUtil.or(importedNames, s -> s.startsWith(pkg + '.') || s.equals(pkg));
   }
 }

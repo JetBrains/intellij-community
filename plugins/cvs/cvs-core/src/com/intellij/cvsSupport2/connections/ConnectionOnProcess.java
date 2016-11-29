@@ -162,16 +162,14 @@ public abstract class ConnectionOnProcess implements IConnection {
   private void waitForProcess(Application application) {
     myWaitSemaphore = new Semaphore();
     myWaitSemaphore.down();
-    myWaitForThreadFuture = application.executeOnPooledThread(new Runnable() {
-      public void run() {
-        try {
-          myProcess.waitFor();
-        }
-        catch (InterruptedException ignored) {
-        }
-        finally {
-          myWaitSemaphore.up();
-        }
+    myWaitForThreadFuture = application.executeOnPooledThread(() -> {
+      try {
+        myProcess.waitFor();
+      }
+      catch (InterruptedException ignored) {
+      }
+      finally {
+        myWaitSemaphore.up();
       }
     });
   }

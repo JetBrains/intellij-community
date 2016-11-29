@@ -32,6 +32,18 @@ class JointCompilationClassLoader extends UrlClassLoader {
     myClassPath = super.getClassPath();
   }
 
+  @Override
+  protected Class _defineClass(String name, byte[] b) {
+    try {
+      return super._defineClass(name, b);
+    }
+    catch (NoClassDefFoundError e) {
+      NoClassDefFoundError wrap = new NoClassDefFoundError(e.getMessage() + " needed for " + name);
+      wrap.initCause(e);
+      throw wrap;
+    }
+  }
+
   @NotNull
   @Override
   protected ClassPath getClassPath() {

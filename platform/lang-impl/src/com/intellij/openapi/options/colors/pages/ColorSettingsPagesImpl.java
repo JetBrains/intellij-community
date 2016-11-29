@@ -26,10 +26,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ColorSettingsPagesImpl extends ColorSettingsPages {
-  private final List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
+  private final List<ColorSettingsPage> myPages = new ArrayList<>();
   private boolean myExtensionsLoaded = false;
   private final Map<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>> myKeyToDescriptorMap =
-    new HashMap<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>>();
+    new HashMap<>();
 
   @Override
   public void registerPage(ColorSettingsPage page) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.io.StringRef;
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements PsiClassStub<T> {
-  private final StringRef myQualifiedName;
-  private final StringRef myName;
-  private final StringRef myBaseRefText;
-  private final byte myFlags;
-
   private static final int DEPRECATED = 0x01;
   private static final int INTERFACE = 0x02;
   private static final int ENUM = 0x04;
@@ -44,23 +40,17 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int IN_QUALIFIED_NEW = 0x40;
   private static final int DEPRECATED_ANNOTATION = 0x80;
 
-  private LanguageLevel myLanguageLevel = null;
-  private StringRef mySourceFileName = null;
+  private final String myQualifiedName;
+  private final String myName;
+  private final String myBaseRefText;
+  private final byte myFlags;
+  private String mySourceFileName;
 
   public PsiClassStubImpl(final JavaClassElementType type,
                           final StubElement parent,
-                          final String qualifiedName,
-                          final String name,
+                          @Nullable final String qualifiedName,
+                          @Nullable final String name,
                           @Nullable final String baseRefText,
-                          final byte flags) {
-    this(type, parent, StringRef.fromString(qualifiedName), StringRef.fromString(name), StringRef.fromString(baseRefText), flags);
-  }
-
-  public PsiClassStubImpl(final JavaClassElementType type,
-                          final StubElement parent,
-                          final StringRef qualifiedName,
-                          final StringRef name,
-                          final StringRef baseRefText,
                           final byte flags) {
     super(parent, type);
     myQualifiedName = qualifiedName;
@@ -75,37 +65,37 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   @Override
   public String getName() {
-    return StringRef.toString(myName);
+    return myName;
   }
 
   @Override
   public String getQualifiedName() {
-    return StringRef.toString(myQualifiedName);
+    return myQualifiedName;
   }
 
   @Override
   public String getBaseClassReferenceText() {
-    return StringRef.toString(myBaseRefText);
+    return myBaseRefText;
   }
 
   @Override
   public boolean isDeprecated() {
-    return (myFlags & DEPRECATED) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED);
   }
 
   @Override
   public boolean hasDeprecatedAnnotation() {
-    return (myFlags & DEPRECATED_ANNOTATION) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED_ANNOTATION);
   }
 
   @Override
   public boolean isInterface() {
-    return (myFlags & INTERFACE) != 0;
+    return BitUtil.isSet(myFlags, INTERFACE);
   }
 
   @Override
   public boolean isEnum() {
-    return (myFlags & ENUM) != 0;
+    return BitUtil.isSet(myFlags, ENUM);
   }
 
   @Override
@@ -114,7 +104,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   public static boolean isEnumConstInitializer(final byte flags) {
-    return (flags & ENUM_CONSTANT_INITIALIZER) != 0;
+    return BitUtil.isSet(flags, ENUM_CONSTANT_INITIALIZER);
   }
 
   @Override
@@ -123,39 +113,38 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   public static boolean isAnonymous(final byte flags) {
-    return (flags & ANONYMOUS) != 0;
+    return BitUtil.isSet(flags, ANONYMOUS);
   }
 
   @Override
   public boolean isAnnotationType() {
-    return (myFlags & ANON_TYPE) != 0;
+    return BitUtil.isSet(myFlags, ANON_TYPE);
   }
 
   @Override
   public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel != null ? myLanguageLevel : LanguageLevel.HIGHEST;
+    StubElement parent = getParentStub();
+    if (parent instanceof PsiJavaFileStub) {
+      LanguageLevel level = ((PsiJavaFileStub)parent).getLanguageLevel();
+      if (level != null) {
+        return level;
+      }
+    }
+    return LanguageLevel.HIGHEST;
   }
 
   @Override
   public String getSourceFileName() {
-    return StringRef.toString(mySourceFileName);
+    return mySourceFileName;
   }
 
-  public void setLanguageLevel(final LanguageLevel languageLevel) {
-    myLanguageLevel = languageLevel;
-  }
-
-  public void setSourceFileName(final StringRef sourceFileName) {
+  public void setSourceFileName(String sourceFileName) {
     mySourceFileName = sourceFileName;
-  }
-
-  public void setSourceFileName(final String sourceFileName) {
-    mySourceFileName = StringRef.fromString(sourceFileName);
   }
 
   @Override
   public boolean isAnonymousInQualifiedNew() {
-    return (myFlags & IN_QUALIFIED_NEW) != 0;
+    return BitUtil.isSet(myFlags, IN_QUALIFIED_NEW);
   }
 
   public byte getFlags() {
@@ -182,7 +171,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return flags;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
+  @SuppressWarnings("SpellCheckingInspection")
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("PsiClassStub[");

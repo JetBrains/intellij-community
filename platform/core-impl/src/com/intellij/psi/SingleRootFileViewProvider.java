@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,13 +128,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull final FileType fileType) {
-    if (file instanceof LightVirtualFile) {
-      final Language language = ((LightVirtualFile)file).getLanguage();
-      if (language != null) {
-        return language;
-      }
-    }
-
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
@@ -363,7 +356,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return new PsiPlainTextFileImpl(this);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public static boolean isTooLarge(@NotNull VirtualFile vFile) {
     return isTooLargeForIntelligence(vFile);
@@ -487,7 +479,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  private static PsiReference findReferenceAt(@Nullable final PsiFile psiFile, final int offset) {
+  protected static PsiReference findReferenceAt(@Nullable final PsiFile psiFile, final int offset) {
     if (psiFile == null) return null;
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
@@ -566,6 +558,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     for (FileElement fileElement : knownTreeRoots) {
       int nodeLength = fileElement.getTextLength();
       if (nodeLength != fileLength) {
+        PsiUtilCore.ensureValid(fileElement.getPsi());
         // exceptions here should be assigned to peter
         LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength);
       }

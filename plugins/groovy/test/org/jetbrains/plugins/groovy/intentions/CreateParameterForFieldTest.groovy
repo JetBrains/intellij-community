@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions;
+package org.jetbrains.plugins.groovy.intentions
 
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Maxim.Medvedev
  */
-public class CreateParameterForFieldTest extends GrIntentionTestCase {
+class CreateParameterForFieldTest extends GrIntentionTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "intentions/createParameterForField/";
+    return TestUtils.getTestDataPath() + "intentions/createParameterForField/"
   }
 
-  public void testFromConstructor() {doTest();}
-  public void testFromField() {doTest();}
+  void testFromConstructor() { doTest() }
+
+  void testFromField() { doTest() }
 
   protected void doTest() {
-    doTest("Add constructor parameter for field", true);
+    doTest("Add constructor parameter for field", true)
   }
 }

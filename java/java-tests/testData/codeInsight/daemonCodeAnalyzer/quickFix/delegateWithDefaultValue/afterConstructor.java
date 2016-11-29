@@ -1,4 +1,4 @@
-// "Generate overloaded constructor with default parameter value" "true"
+// "Generate overloaded constructor with default parameter values" "true"
 class Test {
     Test() {
       this(<caret>);

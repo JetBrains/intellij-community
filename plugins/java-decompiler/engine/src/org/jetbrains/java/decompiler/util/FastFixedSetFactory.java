@@ -19,7 +19,7 @@ import java.util.*;
 
 public class FastFixedSetFactory<E> {
 
-  private final VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<int[], E>();
+  private final VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<>();
 
   private final int dataLength;
 
@@ -46,7 +46,7 @@ public class FastFixedSetFactory<E> {
   }
 
   public FastFixedSet<E> spawnEmptySet() {
-    return new FastFixedSet<E>(this);
+    return new FastFixedSet<>(this);
   }
 
   private int getDataLength() {
@@ -74,7 +74,7 @@ public class FastFixedSetFactory<E> {
 
     public FastFixedSet<E> getCopy() {
 
-      FastFixedSet<E> copy = new FastFixedSet<E>(factory);
+      FastFixedSet<E> copy = new FastFixedSet<>(factory);
 
       int arrlength = data.length;
       int[] cpdata = new int[arrlength];
@@ -201,15 +201,15 @@ public class FastFixedSetFactory<E> {
     }
 
     public Iterator<E> iterator() {
-      return new FastFixedSetIterator<E>(this);
+      return new FastFixedSetIterator<>(this);
     }
 
     public Set<E> toPlainSet() {
-      return toPlainCollection(new HashSet<E>());
+      return toPlainCollection(new HashSet<>());
     }
 
     public List<E> toPlainList() {
-      return toPlainCollection(new ArrayList<E>());
+      return toPlainCollection(new ArrayList<>());
     }
 
 

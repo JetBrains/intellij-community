@@ -32,6 +32,15 @@ public class JavaExpectedHighlightingData extends ExpectedHighlightingData {
                                       boolean checkInfos, @Nullable PsiFile file) {
     super(document, checkWarnings, checkWeakWarnings, checkInfos, file);
   }
+  
+  public JavaExpectedHighlightingData(@NotNull Document document,
+                                      boolean checkWarnings,
+                                      boolean checkWeakWarnings,
+                                      boolean checkInfos,
+                                      boolean ignoreExtraHighlighting,
+                                      @Nullable PsiFile file) {
+    super(document, checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, file);
+  }
 
   @Override
   protected HighlightInfoType getTypeByName(String typeString) throws Exception {

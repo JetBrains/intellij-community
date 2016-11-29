@@ -4,5 +4,6 @@ public class ObsoleteAssert {
 
   public void testMe(int s) {
     junit.framework.Assert.<warning descr="Call to 'assertEquals()' from 'junit.framework.Assert' should be replaced with call to method from 'org.junit.Assert'">assertEquals</warning>("asdfasd", -1, s);
+    junit.framework.TestCase.<warning descr="Call to 'assertEquals()' from 'junit.framework.TestCase' should be replaced with call to method from 'org.junit.Assert'">assertEquals</warning>("asdfasd", -1, s);
   }
 }

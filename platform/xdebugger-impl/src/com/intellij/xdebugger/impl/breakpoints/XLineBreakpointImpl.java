@@ -36,8 +36,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
@@ -59,7 +61,6 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   @Nullable private RangeHighlighter myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
-  private boolean myDisposed;
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type,
                              XBreakpointManagerImpl breakpointManager,
@@ -76,7 +77,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   public void updateUI() {
-    if (myDisposed || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
@@ -207,9 +208,8 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   @Override
-  public void dispose() {
+  protected void doDispose() {
     removeHighlighter();
-    myDisposed = true;
   }
 
   private void removeHighlighter() {
@@ -230,6 +230,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
           return true;
         }
         return false;
+      }
+
+      public void remove () {
+        final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+        ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(XLineBreakpointImpl.this));
       }
 
       @Override
@@ -293,12 +298,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   @Override
   protected void updateIcon() {
-    final Icon icon = calculateSpecialIcon();
-    if (icon != null) {
-      setIcon(icon);
-      return;
+    Icon icon = calculateSpecialIcon();
+    if (icon == null) {
+      icon = isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon();
     }
-    setIcon(isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon());
+    setIcon(icon);
   }
 
   @Override

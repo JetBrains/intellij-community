@@ -85,10 +85,10 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
 
   private static ArrayList<PsiClass> createSuperClasses(PsiClass aClass) {
     if (!aClass.isValid()) {
-      return new ArrayList<PsiClass>();
+      return new ArrayList<>();
     }
 
-    final ArrayList<PsiClass> superClasses = new ArrayList<PsiClass>();
+    final ArrayList<PsiClass> superClasses = new ArrayList<>();
     while (!isJavaLangObject(aClass)) {
       final PsiClass aClass1 = aClass;
       final PsiClass[] superTypes = aClass1.getSupers();
@@ -160,7 +160,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     final PsiClass psiClass = (PsiClass)psiElement;
     final Collection<PsiClass> subclasses = getSubclasses(psiClass);
 
-    final List<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>(subclasses.size());
+    final List<HierarchyNodeDescriptor> descriptors = new ArrayList<>(subclasses.size());
     for (final PsiClass aClass : subclasses) {
       if (HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED) {
         if (shouldHideClass(aClass)) {
@@ -174,12 +174,9 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
 
     final PsiMethod existingMethod = ((MethodHierarchyNodeDescriptor)descriptor).getMethod(psiClass, false);
     if (existingMethod != null) {
-      FunctionalExpressionSearch.search(existingMethod).forEach(new Processor<PsiFunctionalExpression>() {
-        @Override
-        public boolean process(PsiFunctionalExpression expression) {
-          descriptors.add(new MethodHierarchyNodeDescriptor(myProject, descriptor, expression, false, MethodHierarchyTreeStructure.this));
-          return true;
-        }
+      FunctionalExpressionSearch.search(existingMethod).forEach(expression -> {
+        descriptors.add(new MethodHierarchyNodeDescriptor(myProject, descriptor, expression, false, this));
+        return true;
       });
     }
 

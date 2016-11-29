@@ -19,11 +19,15 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaders
 
 abstract class WebServerFileHandler {
   companion object {
     internal val EP_NAME = ExtensionPointName.create<WebServerFileHandler>("org.jetbrains.webServerFileHandler")
   }
+
+  open val pageFileExtensions: Array<String>
+    get() = emptyArray()
 
   /**
    * canonicalRequestPath contains index file name (if not specified in the request)
@@ -33,8 +37,8 @@ abstract class WebServerFileHandler {
                        project: Project,
                        request: FullHttpRequest,
                        channel: Channel,
-                       projectNameIfNotCustomHost: String?): Boolean
-
+                       projectNameIfNotCustomHost: String?,
+                       extraHeaders: HttpHeaders): Boolean
 }
 
 fun getRequestPath(canonicalPath: CharSequence, projectNameIfNotCustomHost: String?) = if (projectNameIfNotCustomHost == null) "/$canonicalPath" else "/$projectNameIfNotCustomHost/$canonicalPath"

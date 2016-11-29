@@ -112,7 +112,7 @@ public class DtdCompletionData extends CompletionData {
 
     @Override
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
-      final List<String> results = new LinkedList<String>();
+      final List<String> results = new LinkedList<>();
 
       final PsiElementProcessor processor = new PsiElementProcessor() {
         @Override

@@ -36,7 +36,7 @@ public class Modifier implements ChangeListsWriteOperations {
   public Modifier(final ChangeListWorker worker, final DelayedNotificator notificator) {
     myWorker = worker;
     myNotificator = notificator;
-    myCommandQueue = new LinkedList<ChangeListCommand>();
+    myCommandQueue = new LinkedList<>();
   }
 
   public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable Object data) {

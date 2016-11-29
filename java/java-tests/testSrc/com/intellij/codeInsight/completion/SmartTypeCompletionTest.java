@@ -1,9 +1,23 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
@@ -12,7 +26,6 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -453,6 +466,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNoFieldsInSuperConstructorCall() throws Throwable { doTest(); }
 
+  public void testChainMethodsInSuperConstructorCall() throws Throwable { doTest(); }
+
   public void testNoUninitializedFieldsInConstructor() throws Throwable {
     configureByTestName();
     assertStringItems("aac", "aab", "hashCode");
@@ -654,7 +669,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     final SmartCompletionContextType completionContextType =
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), SmartCompletionContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(completionContextType, true);
-    CodeInsightTestUtil.addTemplate(template, myTestRootDisposable);
+    CodeInsightTestUtil.addTemplate(template, getTestRootDisposable());
     doTest();
   }
 
@@ -1078,6 +1093,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testArrayInitializerBeforeVarargs() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
   public void testInnerAfterNew() throws Throwable { doTest(); }
+  public void testOuterAfterNew() { doTest(); }
   public void testEverythingInStringConcatenation() throws Throwable { doTest(); }
   public void testGetClassWhenClassExpected() { doTest(); }
 
@@ -1129,12 +1145,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testInnerEnum() throws Exception {
     configureByTestName();
 
-    getLookup().setCurrentItem(ContainerUtil.find(myItems, new Condition<LookupElement>() {
-      @Override
-      public boolean value(final LookupElement lookupItem) {
-        return "Bar.Fubar.Bar".equals(lookupItem.getLookupString());
-      }
-    }));
+    getLookup().setCurrentItem(ContainerUtil.find(myItems, lookupItem -> "Bar.Fubar.Bar".equals(lookupItem.getLookupString())));
     select('\n');
     checkResultByTestName();
   }
@@ -1166,7 +1177,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testLocalClassInExpectedTypeArguments() { doTest(); }
 
-  private void doActionTest() throws Exception {
+  private void doActionTest() {
     configureByTestName();
     checkResultByTestName();
   }
@@ -1237,4 +1248,6 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
   }
+
+  public void testQualifyOuterClassCall() { doActionTest(); }
 }

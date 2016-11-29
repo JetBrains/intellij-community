@@ -59,7 +59,6 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -109,12 +108,7 @@ public final class PythonSdkType extends SdkType {
   private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
-  public static final Predicate<Sdk> REMOTE_SDK_PREDICATE = new Predicate<Sdk>() {
-    @Override
-    public boolean test(Sdk sdk) {
-      return isRemote(sdk);
-    }
-  };
+  public static final Predicate<Sdk> REMOTE_SDK_PREDICATE = sdk -> isRemote(sdk);
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -123,7 +117,6 @@ public final class PythonSdkType extends SdkType {
   private PythonSdkType() {
     super("Python SDK");
   }
-
 
   public Icon getIcon() {
     return PythonIcons.Python.Python;
@@ -194,7 +187,7 @@ public final class PythonSdkType extends SdkType {
   @NotNull
   @Override
   public Collection<String> suggestHomePaths() {
-    List<String> candidates = new ArrayList<String>();
+    List<String> candidates = new ArrayList<>();
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
       candidates.addAll(flavor.suggestHomePaths());
     }
@@ -202,11 +195,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   private static TreeSet<String> createVersionSet() {
-    return new TreeSet<String>(new Comparator<String>() {
-      public int compare(String o1, String o2) {
-        return findDigits(o1).compareTo(findDigits(o2));
-      }
-    });
+    return new TreeSet<>((o1, o2) -> findDigits(o1).compareTo(findDigits(o2)));
   }
 
   private static String findDigits(String s) {
@@ -306,19 +295,20 @@ public final class PythonSdkType extends SdkType {
     if (pointerInfo == null) return;
     final Point point = pointerInfo.getLocation();
     PythonSdkDetailsStep
-      .show(project, sdkModel.getSdks(), null, parentComponent, point, new NullableConsumer<Sdk>() {
-        @Override
-        public void consume(@Nullable Sdk sdk) {
-          if (sdk != null) {
-            sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<Component>(parentComponent));
-            sdkCreatedCallback.consume(sdk);
-          }
+      .show(project, sdkModel.getSdks(), null, parentComponent, point, sdk -> {
+        if (sdk != null) {
+          sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
+          sdkCreatedCallback.consume(sdk);
         }
       });
   }
 
-  public static boolean isVirtualEnv(Sdk sdk) {
+  public static boolean isVirtualEnv(@NotNull Sdk sdk) {
     final String path = sdk.getHomePath();
+    return isVirtualEnv(path);
+  }
+
+  public static boolean isVirtualEnv(String path) {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 
@@ -334,9 +324,11 @@ public final class PythonSdkType extends SdkType {
       final String version = getVersionString(sdk);
       if (flavor != null && version != null) {
         for (Sdk baseSdk : getAllSdks()) {
-          final PythonSdkFlavor baseFlavor = PythonSdkFlavor.getFlavor(baseSdk);
-          if (!isVirtualEnv(baseSdk) && flavor.equals(baseFlavor) && version.equals(getVersionString(baseSdk))) {
-            return baseSdk;
+          if (!isRemote(baseSdk)) {
+            final PythonSdkFlavor baseFlavor = PythonSdkFlavor.getFlavor(baseSdk);
+            if (!isVirtualEnv(baseSdk) && flavor.equals(baseFlavor) && version.equals(getVersionString(baseSdk))) {
+              return baseSdk;
+            }
           }
         }
       }
@@ -435,7 +427,7 @@ public final class PythonSdkType extends SdkType {
     return suggestSdkNameFromVersion(sdkHome, name);
   }
 
-  public static String suggestSdkNameFromVersion(String sdkHome, String version) {
+  private static String suggestSdkNameFromVersion(String sdkHome, String version) {
     sdkHome = FileUtil.toSystemDependentName(sdkHome);
     final String shortHomeName = FileUtil.getLocationRelativeToUserHome(sdkHome);
     if (version != null) {
@@ -614,7 +606,7 @@ public final class PythonSdkType extends SdkType {
       return getSysPathsFromScript(bin_path);
     }
     else { // mock sdk
-      List<String> ret = new ArrayList<String>(1);
+      List<String> ret = new ArrayList<>(1);
       ret.add(working_dir);
       return ret;
     }
@@ -916,6 +908,16 @@ public final class PythonSdkType extends SdkType {
       return null;
     }
     return ModuleRootManager.getInstance(module).getSdk();
+  }
+
+  @NotNull
+  public static String getSdkKey(@NotNull Sdk sdk) {
+    return sdk.getName();
+  }
+
+  @Nullable
+  public static Sdk findSdkByKey(@NotNull String key) {
+    return ProjectJdkTable.getInstance().findJdk(key);
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,21 @@
  * limitations under the License.
  */
 
+package com.intellij.execution.process;
+
+import com.intellij.execution.process.impl.ProcessListUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.pty4j.windows.WinPtyProcess;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jvnet.winp.WinProcess;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /******************************************************************************
  * Copyright (C) 2013  Fabio Zadrozny
  *
@@ -25,19 +40,6 @@
  * Contributors:
  *     Fabio Zadrozny <fabiofz@gmail.com> - initial API and implementation
  ******************************************************************************/
-package com.intellij.execution.process;
-
-import com.intellij.execution.process.impl.ProcessListUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jvnet.winp.WinProcess;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 public class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
 
@@ -49,9 +51,18 @@ public class OSProcessUtil {
   public static boolean killProcessTree(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.killRecursively();
-        return true;
+        if (process instanceof WinPtyProcess) {
+          boolean res = WinProcessManager.kill(((WinPtyProcess)process).getChildProcessId(), true);
+          process.destroy();
+          return res;
+        }
+        if (Registry.is("disable.winp")) {
+          return WinProcessManager.kill(process, true);
+        }
+        else {
+          createWinProcess(process).killRecursively();
+          return true;
+        }
       }
       catch (Throwable e) {
         LOG.info("Cannot kill process tree", e);
@@ -66,8 +77,12 @@ public class OSProcessUtil {
   public static void killProcess(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.kill();
+        if (Registry.is("disable.winp")) {
+          WinProcessManager.kill(process, false);
+        }
+        else {
+          createWinProcess(process).kill();
+        }
       }
       catch (Throwable e) {
         LOG.info("Cannot kill process", e);
@@ -77,11 +92,16 @@ public class OSProcessUtil {
       UnixProcessManager.sendSignal(UnixProcessManager.getProcessPid(process), UnixProcessManager.SIGKILL);
     }
   }
-  
+
   public static int getProcessID(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        return createWinProcess(process).getPid();
+        if (Registry.is("disable.winp")) {
+          return WinProcessManager.getProcessPid(process);
+        }
+        else {
+          return createWinProcess(process).getPid();
+        }
       }
       catch (Throwable e) {
         LOG.info("Cannot get process id", e);
@@ -103,7 +123,7 @@ public class OSProcessUtil {
   
   @Nullable
   public static List<String> getCommandLinesOfRunningProcesses() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (ProcessInfo each : getProcessList()) {
       result.add(each.getCommandLine());
     }

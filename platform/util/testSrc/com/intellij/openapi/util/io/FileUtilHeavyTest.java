@@ -69,14 +69,11 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testProcessSimple() {
-    final Map<String, Integer> result = new HashMap<String, Integer>();
-    FileUtil.processFilesRecursively(myVisitorTestDirectory, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        Integer integer = result.get(file.getName());
-        result.put(file.getName(), integer == null ? 1 : (integer + 1));
-        return true;
-      }
+    final Map<String, Integer> result = new HashMap<>();
+    FileUtil.processFilesRecursively(myVisitorTestDirectory, file -> {
+      Integer integer = result.get(file.getName());
+      result.put(file.getName(), integer == null ? 1 : (integer + 1));
+      return true;
     });
 
     assertEquals(6, result.size());
@@ -89,12 +86,9 @@ public class FileUtilHeavyTest {
   @Test
   public void testProcessStops() {
     final int[] cnt = new int[]{0};
-    FileUtil.processFilesRecursively(myVisitorTestDirectory, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        ++cnt[0];
-        return false;
-      }
+    FileUtil.processFilesRecursively(myVisitorTestDirectory, file -> {
+      ++cnt[0];
+      return false;
     });
 
     assertEquals(1, cnt[0]);
@@ -102,20 +96,12 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testProcessDirectoryFilter() {
-    final Map<String, Integer> result = new HashMap<String, Integer>();
-    FileUtil.processFilesRecursively(myVisitorTestDirectory, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        Integer integer = result.get(file.getName());
-        result.put(file.getName(), integer == null ? 1 : (integer + 1));
-        return true;
-      }
-    }, new Processor<File>() {
-                                       @Override
-                                       public boolean process(File file) {
-                                         return ! "dir2".equals(file.getName());
-                                       }
-                                     });
+    final Map<String, Integer> result = new HashMap<>();
+    FileUtil.processFilesRecursively(myVisitorTestDirectory, file -> {
+      Integer integer = result.get(file.getName());
+      result.put(file.getName(), integer == null ? 1 : (integer + 1));
+      return true;
+    }, file -> ! "dir2".equals(file.getName()));
 
     assertEquals(5, result.size());
     assertEquals(1, result.get(myVisitorTestDirectory.getName()).intValue());

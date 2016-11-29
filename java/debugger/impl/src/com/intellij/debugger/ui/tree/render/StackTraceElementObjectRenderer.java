@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.Collections;
 /**
 * @author egor
 */
-class StackTraceElementObjectRenderer extends ToStringBasedRenderer implements FullValueEvaluatorProvider {
+class StackTraceElementObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(StackTraceElementObjectRenderer.class);
 
   public StackTraceElementObjectRenderer(final NodeRendererSettings rendererSettings) {
@@ -63,21 +63,13 @@ class StackTraceElementObjectRenderer extends ToStringBasedRenderer implements F
             if (res instanceof StringReference) {
               callback.evaluated("");
               final String line = ((StringReference)res).value();
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  ExceptionFilter filter = new ExceptionFilter(evaluationContext.getDebugProcess().getSession().getSearchScope());
-                  Filter.Result result = filter.applyFilter(line, line.length());
-                  if (result != null) {
-                    final HyperlinkInfo info = result.getFirstHyperlinkInfo();
-                    if (info != null) {
-                      DebuggerUIUtil.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                          info.navigate(valueDescriptor.getProject());
-                        }
-                      });
-                    }
+              ApplicationManager.getApplication().runReadAction(() -> {
+                ExceptionFilter filter = new ExceptionFilter(evaluationContext.getDebugProcess().getSession().getSearchScope());
+                Filter.Result result = filter.applyFilter(line, line.length());
+                if (result != null) {
+                  final HyperlinkInfo info = result.getFirstHyperlinkInfo();
+                  if (info != null) {
+                    DebuggerUIUtil.invokeLater(() -> info.navigate(valueDescriptor.getProject()));
                   }
                 }
               });

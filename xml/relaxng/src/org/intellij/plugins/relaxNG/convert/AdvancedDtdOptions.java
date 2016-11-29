@@ -116,7 +116,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
 
   @Override
   public Map<String, ?> getOptions() {
-    final HashMap<String, Object> map = new LinkedHashMap<String, Object>();
+    final HashMap<String, Object> map = new LinkedHashMap<>();
 
     map.put(INLINE_ATTLIST, myInlineAttlistCheckBox.isSelected());
 
@@ -193,7 +193,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
       return Collections.emptyMap();
     }
 
-    final HashMap<String, Object> map = new LinkedHashMap<String, Object>();
+    final HashMap<String, Object> map = new LinkedHashMap<>();
     file.accept(new PsiRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -222,7 +222,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
   }
 
   private static class NamespaceMapModel extends AbstractTableModel {
-    private final List<String[]> myList = new ArrayList<String[]>();
+    private final List<String[]> myList = new ArrayList<>();
 
     @Override
     public String getColumnName(int column) {

@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class IOUtil {
   public static final boolean ourByteBuffersUseNativeByteOrder = SystemProperties.getBooleanProperty("idea.bytebuffers.use.native.byte.order", true);
@@ -235,5 +238,21 @@ public class IOUtil {
     }
 
     return null;
+  }
+
+  public static void writeStringList(final DataOutput out, final Collection<String> list) throws IOException {
+    DataInputOutputUtil.writeINT(out, list.size());
+    for (final String s : list) {
+      writeUTF(out, s);
+    }
+  }
+
+  public static List<String> readStringList(final DataInput in) throws IOException {
+    final int size = DataInputOutputUtil.readINT(in);
+    final ArrayList<String> strings = new ArrayList<String>(size);
+    for (int i = 0; i < size; i++) {
+      strings.add(readUTF(in));
+    }
+    return strings;
   }
 }

@@ -13,7 +13,7 @@
     <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction"/>
     <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>
     <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction"/>
-    <action id="AnnotateDiffViewer" class="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction">
+    <action id="AnnotateDiffViewer" class="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction" use-shortcut-of="Annotate">
       <add-to-group group-id="Diff.EditorPopupMenu"/>
       <add-to-group group-id="Diff.EditorGutterPopupMenu"/>
     </action>
@@ -64,7 +64,8 @@
         <separator/>
         <action id="ChangesView.CreatePatch" class="com.intellij.openapi.vcs.changes.actions.CreatePatchAction"/>
         <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction"/>
-        <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction"/>
+        <action id="ChangesView.ApplyPatchFromClipboard" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchFromClipboardAction"/>
+        <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction" icon="AllIcons.Vcs.Shelve"/>
       </group>
 
       <separator/>
@@ -92,6 +93,10 @@
               icon="AllIcons.Actions.Submit1"/>
       <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
               icon="AllIcons.Actions.MoveToAnotherChangelist"/>
+      <action id="ChangesView.ShelveSilently" class="com.intellij.openapi.vcs.changes.actions.ShelveSilentlyAction"
+              text="Shelve Silently" description="Shelve changes to appropriate shelved changelists" icon="AllIcons.Vcs.SilentShelve">
+        <keyboard-shortcut first-keystroke="control alt H" keymap="$default"/>
+      </action>
       <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction"
               icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
     </group>
@@ -110,7 +115,7 @@
       <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
-      <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction"/>
+      <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction" icon="AllIcons.Actions.Properties"/>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
               icon="AllIcons.Actions.Exclude"/>
       <action id="ChangesView.Edit" class="com.intellij.openapi.vcs.changes.actions.EditAction"/>
@@ -138,7 +143,7 @@
 
     <group id="ShelvedChangesPopupMenu" popup="true">
       <action id="ShelveChanges.UnshelveWithDialog" class="com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction"
-              text="Unshelve..." description="Correct paths where to apply patches and unshelve"/>
+              text="Unshelve..." description="Correct paths where to apply patches and unshelve" icon="AllIcons.Vcs.Unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
       <action id="ShelvedChanges.Diff" class="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesAction"
           icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
@@ -158,6 +163,10 @@
 
     <group id="ShelvedChangesToolbar">
       <reference ref="ShelvedChanges.Diff"/>
+      <action id="ChangesView.UnshelveSilently" class="com.intellij.openapi.vcs.changes.actions.UnshelveSilentlyAction"
+              text="Unshelve Silently" description="Unshelve changes to appropriate changelists" icon="AllIcons.Vcs.SilentUnshelve">
+        <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
+      </action>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="ShelvedChanges.ShowHideDeleted" />
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
@@ -212,12 +221,12 @@
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
 
-    <action id="Diff.PrevChange" class="com.intellij.openapi.vcs.changes.actions.ShowPrevChangeAction"
-      icon="AllIcons.Actions.Prevfile" use-shortcut-of="PreviousTab"/>
-    <action id="Diff.NextChange" class="com.intellij.openapi.vcs.changes.actions.ShowNextChangeAction"
-      icon="AllIcons.Actions.Nextfile" use-shortcut-of="NextTab"/>
-    <action id="Diff.SelectedChange" class="com.intellij.openapi.vcs.changes.actions.ShowSelectedChangeAction"
-      icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="GotoChangedFile"/>
+    <action id="Diff.PrevChange" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Actions.Prevfile" use-shortcut-of="PreviousTab"/>
+    <action id="Diff.NextChange" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Actions.Nextfile" use-shortcut-of="NextTab"/>
+    <action id="Diff.SelectedChange" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="GotoChangedFile"/>
 
     <group id="EditorGutterVcsPopupMenu">
       <separator/>
@@ -240,9 +249,6 @@
     </group>
 
     <group id="Vcs.MessageActionGroup">
-      <action id="Vcs.CheckCommitMessageSpelling"
-              class="com.intellij.openapi.vcs.actions.CheckCommitMessageSpellingAction"
-              icon="AllIcons.Vcs.CheckSpelling"/>
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
               icon="AllIcons.General.MessageHistory"/>
@@ -290,7 +296,9 @@
 
     <group id="Shelve.KeymapGroup" text="Shelve">
       <reference ref="ChangesView.Shelve"/>
+      <reference ref="ChangesView.ShelveSilently"/>
       <reference ref="ShelveChanges.UnshelveWithDialog"/>
+      <reference ref="ChangesView.UnshelveSilently"/>
       <reference ref="ShelvedChanges.Restore"/>
       <reference ref="ShelvedChanges.ImportPatches"/>
       <separator/>
@@ -334,6 +342,7 @@
       <reference ref="ChangesView.Browse"/>
       <reference ref="ChangesView.CreatePatch"/>
       <reference ref="ChangesView.ApplyPatch"/>
+      <reference ref="ChangesView.ApplyPatchFromClipboard"/>
       <reference ref="ChangesView.Revert"/>
       <reference ref="ChangesView.Refresh"/>
       <reference ref="ChangesView.Commit"/>
@@ -358,7 +367,6 @@
       <reference ref="CommittedChanges.Clear"/>
       <reference ref="IncomingChanges.Refresh"/>
       <separator/>
-      <reference ref="Vcs.CheckCommitMessageSpelling"/>
       <reference ref="Vcs.ShowMessageHistory"/>
       <reference ref="CloseAllUnmodifiedEditors"/>
       <reference ref="Vcs.RollbackChangedLines"/>
@@ -380,7 +388,7 @@
       <reference ref="Diff.SelectedChange"/>
       <separator/>
 
-      <add-to-group group-id="Diff.KeymapGroup"/>
+      <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>
     </group>
 
     <group id="Vcs.Show.Toolwindow.Tab">

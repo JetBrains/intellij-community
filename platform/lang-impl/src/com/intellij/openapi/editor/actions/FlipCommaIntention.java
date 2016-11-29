@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,23 +43,14 @@ public class FlipCommaIntention implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement comma = currentCommaElement(editor, file);
-    return comma != null && smartAdvanceAsExpr(comma, true) != null && smartAdvance(comma, false) != null;
+    return comma != null && smartAdvance(comma, true) != null && smartAdvance(comma, false) != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     final PsiElement element = currentCommaElement(editor, file);
     if (element != null) {
-      new WriteCommandAction(project, file) {
-        protected void run(@NotNull Result result) throws Throwable {
-          PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(new Runnable() {
-            @Override
-            public void run() {
-              swapAtComma(editor, element);
-            }
-          });
-        }
-      }.execute();
+      swapAtComma(element);
     }
   }
 
@@ -72,18 +59,35 @@ public class FlipCommaIntention implements IntentionAction {
     return true;
   }
 
-  private static void swapAtComma(@NotNull Editor editor, @NotNull PsiElement comma) {
-    PsiElement prev = smartAdvanceAsExpr(comma, false);
-    PsiElement next = smartAdvanceAsExpr(comma, true);
+  private static void swapAtComma(@NotNull PsiElement comma) {
+    PsiElement prev = smartAdvance(comma, false);
+    PsiElement next = smartAdvance(comma, true);
     if (prev != null && next != null) {
-      boolean caretBeforeComma = editor.getCaretModel().getOffset() <= comma.getTextRange().getStartOffset();
-      PsiElement nextAnchor = next.getPrevSibling();
-      PsiElement prevAnchor = prev.getNextSibling();
-      comma.getParent().addBefore(next, prevAnchor);
-      comma.getParent().addAfter(prev, nextAnchor);
-      next.delete();
-      prev.delete();
-      editor.getCaretModel().moveToOffset(caretBeforeComma ? comma.getTextRange().getStartOffset() : comma.getTextRange().getEndOffset());
+      if (Flipper.tryFlip(prev, next)) {
+        return;
+      }
+      PsiElement copy = prev.copy();
+      prev.replace(next);
+      next.replace(copy);
+    }
+  }
+
+  public interface Flipper {
+    LanguageExtension<Flipper> EXTENSION = new LanguageExtension<>("com.intellij.flipCommaIntention.flipper");
+
+    /**
+     * @return true, if elements were flipped; false, if default flip implementation should be used.
+     */
+    boolean flip(PsiElement left, PsiElement right);
+
+    static boolean tryFlip(PsiElement left, PsiElement right) {
+      final Language language = left.getLanguage();
+      for (Flipper handler : EXTENSION.allForLanguage(language)) {
+        if (handler.flip(left, right)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
@@ -109,15 +113,23 @@ public class FlipCommaIntention implements IntentionAction {
     return element != null && element.getText().equals(",");
   }
 
-  @Nullable
-  private static PsiElement smartAdvance(PsiElement element, boolean fwd) {
-    Class[] skipTypes = {PsiWhiteSpace.class, PsiComment.class};
-    return fwd ? PsiTreeUtil.skipSiblingsForward(element, skipTypes)
-               : PsiTreeUtil.skipSiblingsBackward(element, skipTypes);
+  @NotNull
+  private static JBIterable<PsiElement> getSiblings(PsiElement element, boolean fwd) {
+    SyntaxTraverser.ApiEx<PsiElement> api = fwd ? SyntaxTraverser.psiApi() : SyntaxTraverser.psiApiReversed();
+    JBIterable<PsiElement> flatSiblings = JBIterable.generate(element, api::next).skip(1);
+    return SyntaxTraverser.syntaxTraverser(api)
+      .withRoots(flatSiblings)
+      .expandAndSkip(e -> api.typeOf(e) == GeneratedParserUtilBase.DUMMY_BLOCK)
+      .traverse();
+  }
+
+  private static boolean isFlippable(PsiElement e) {
+    if (e instanceof PsiWhiteSpace || e instanceof PsiComment) return false;
+    return StringUtil.isNotEmpty(e.getText());
   }
 
   @Nullable
-  static private PsiElement smartAdvanceAsExpr(PsiElement element, boolean fwd) {
-    return ObjectUtils.tryCast(smartAdvance(element, fwd), PsiElement.class);
+  private static PsiElement smartAdvance(PsiElement element, boolean fwd) {
+    return getSiblings(element, fwd).filter(e -> isFlippable(e)).first();
   }
 }

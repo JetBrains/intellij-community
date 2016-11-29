@@ -45,8 +45,8 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
 
     setTitle(SvnBundle.message("dialog.title.edit.http.proxies.settings"));
 
-    final Ref<SvnServerFileManager> systemManager = new Ref<SvnServerFileManager>();
-    final Ref<SvnServerFileManager> userManager = new Ref<SvnServerFileManager>();
+    final Ref<SvnServerFileManager> systemManager = new Ref<>();
+    final Ref<SvnServerFileManager> userManager = new Ref<>();
 
     SvnConfiguration.getInstance(project).getServerFilesManagers(systemManager, userManager);
 
@@ -122,7 +122,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     if(! applyImpl()) {
       return;
     }
-    final Ref<Exception> excRef = new Ref<Exception>();
+    final Ref<Exception> excRef = new Ref<>();
     final ProgressManager pm = ProgressManager.getInstance();
     pm.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {

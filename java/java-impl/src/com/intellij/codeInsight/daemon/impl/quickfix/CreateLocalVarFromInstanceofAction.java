@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -33,21 +32,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -106,7 +101,10 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
         PsiExpression initializer = ((PsiLocalVariable)element).getInitializer();
         if (!(initializer instanceof PsiTypeCastExpression)) continue;
 
-        PsiTypeElement castTypeElement = ((PsiTypeCastExpression)initializer).getCastType();
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)initializer;
+        final PsiExpression operand = typeCastExpression.getOperand();
+        if (operand != null && !PsiEquivalenceUtil.areElementsEquivalent(operand, instanceOfExpression.getOperand())) continue;
+        PsiTypeElement castTypeElement = typeCastExpression.getCastType();
         if (castTypeElement == null) continue;
         PsiType castType = castTypeElement.getType();
         if (castType.equals(type)) return true;
@@ -198,8 +196,6 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
     assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
     try {
@@ -223,19 +219,16 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       CreateFromUsageBaseFix.startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
         @Override
         public void templateFinished(Template template, boolean brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-              CaretModel caretModel = editor.getCaretModel();
-              PsiElement elementAt = file.findElementAt(caretModel.getOffset());
-              PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementAt, PsiDeclarationStatement.class);
-              if (declarationStatement != null) {
-                caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
-              }
-              new EnterAction().actionPerformed(editor, DataManager.getInstance().getDataContext());
+            CaretModel caretModel = editor.getCaretModel();
+            PsiElement elementAt = file.findElementAt(caretModel.getOffset());
+            PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementAt, PsiDeclarationStatement.class);
+            if (declarationStatement != null) {
+              caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
             }
+            new EnterAction().actionPerformed(editor, DataManager.getInstance().getDataContext());
           });
         }
       });
@@ -343,11 +336,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
           anchorAfter = newBranch.getCodeBlock().getLBrace();
         }
         else {
-          final PsiJavaToken lBrace = ((PsiBlockStatement)thenBranch).getCodeBlock().getLBrace();
-          if (lBrace != null) {
-            final PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(lBrace, PsiWhiteSpace.class);
-            anchorAfter = nextSibling instanceof PsiComment ? PsiTreeUtil.skipSiblingsForward(nextSibling, PsiComment.class) : lBrace;
-          } 
+          anchorAfter = ((PsiBlockStatement)thenBranch).getCodeBlock().getLBrace();
         }
       }
     }
@@ -377,6 +366,13 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     if (anchorAfter == null) {
       return null;
     }
+    PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(anchorAfter, PsiWhiteSpace.class);
+    anchorAfter = nextSibling instanceof PsiComment ? PsiTreeUtil.skipSiblingsForward(nextSibling, PsiComment.class) : anchorAfter;
+    nextSibling = PsiTreeUtil.getNextSiblingOfType(anchorAfter, PsiStatement.class);
+    while (nextSibling instanceof PsiDeclarationStatement) {
+      anchorAfter = nextSibling;
+      nextSibling = PsiTreeUtil.getNextSiblingOfType(anchorAfter, PsiStatement.class);
+    }
     return anchorAfter.getParent().addAfter(toInsert, anchorAfter);
   }
 
@@ -400,26 +396,14 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     final Template template = templateManager.createTemplate("", "");
     template.setToReformat(true);
 
-    SuggestedNameInfo suggestedNameInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.LOCAL_VARIABLE, null,
-                                                                                                    initializer, type);
-    List<String> uniqueNames = new ArrayList<String>();
-    for (String name : suggestedNameInfo.names) {
-      if (PsiUtil.isVariableNameUnique(name, initializer)) {
-        uniqueNames.add(name);
-      }
-    }
-    if (uniqueNames.isEmpty() && suggestedNameInfo.names.length != 0) {
-      String baseName = suggestedNameInfo.names[0];
-      String name = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(baseName, initializer, true);
-      uniqueNames.add(name);
-    }
+    final SuggestedNameInfo suggestedNameInfo = IntroduceVariableBase.getSuggestedName(type, initializer, initializer);
 
-    Set<LookupElement> itemSet = new LinkedHashSet<LookupElement>();
-    for (String name : uniqueNames) {
+    Set<LookupElement> itemSet = new LinkedHashSet<>();
+    for (String name : suggestedNameInfo.names) {
       itemSet.add(LookupElementBuilder.create(name));
     }
     final LookupElement[] lookupItems = itemSet.toArray(new LookupElement[itemSet.size()]);
-    final Result result = uniqueNames.isEmpty() ? null : new TextResult(uniqueNames.get(0));
+    final Result result = suggestedNameInfo.names.length == 0 ? null : new TextResult(suggestedNameInfo.names[0]);
 
     Expression expr = new Expression() {
       @Override

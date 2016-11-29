@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.css;
 
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +30,6 @@ public class MinifiedFilesUtil {
   private static final int MAX_OFFSET = 2048; // this is how far we look through the file
 
   private static final int MIN_SIZE = 150; // file should be large enough to be considered as minified (only non-comment text counts)
-
-  private static final int MIN_LINE_LENGTH = 100; // if there's compact line that is long enough, file is considered to be minified
 
   private static final double MAX_UNNEEDED_OFFSET_PERCENTAGE = 0.01;
   
@@ -46,10 +45,30 @@ public class MinifiedFilesUtil {
    */
   public static boolean isMinified(@NotNull CharSequence fileContent,
                                    @NotNull ParserDefinition parserDefinition,
+                                   @NotNull TokenSet noWSRequireBeforeTokenSet,
                                    @NotNull TokenSet noWSRequireAfterTokenSet) {
+    return isMinified(fileContent, parserDefinition, noWSRequireBeforeTokenSet, noWSRequireAfterTokenSet,
+                      parserDefinition.getStringLiteralElements());
+  }
+
+
+    /**
+     * Finds out whether the file minified by using common (not language-specific) heuristics.
+     * Can be used for checking of css/less/scss/sass and js files.
+     *
+     * @param fileContent              target file content
+     * @param parserDefinition         Parser definition of target language
+     * @param noWSRequireAfterTokenSet TokenSet of types that doesn't require whitespaces after them.
+     * @param stringsTokenSet TokenSet of types considered as string elements
+     */
+  public static boolean isMinified(@NotNull CharSequence fileContent,
+                                   @NotNull ParserDefinition parserDefinition,
+                                   @NotNull TokenSet noWSRequireBeforeTokenSet,
+                                   @NotNull TokenSet noWSRequireAfterTokenSet,
+                                   @NotNull TokenSet stringsTokenSet) {
     Lexer lexer = parserDefinition.createLexer(null);
     lexer.start(fileContent);
-    if (!isMinified(lexer, parserDefinition, noWSRequireAfterTokenSet)) {
+    if (!isMinified(lexer, parserDefinition, noWSRequireBeforeTokenSet, noWSRequireAfterTokenSet, stringsTokenSet)) {
       return false;
     }
     else if (lexer.getTokenType() == null) {
@@ -62,34 +81,42 @@ public class MinifiedFilesUtil {
       return true;
     }
     lexer.start(fileContent, startOffset, fileContent.length());
-    return isMinified(lexer, parserDefinition, noWSRequireAfterTokenSet);
+    return isMinified(lexer, parserDefinition, noWSRequireBeforeTokenSet, noWSRequireAfterTokenSet, stringsTokenSet);
   }
 
-  protected static boolean isMinified(Lexer lexer, ParserDefinition parserDefinition, TokenSet noWSRequireAfterTokenSet) {
+  protected static boolean isMinified(@NotNull Lexer lexer,
+                                      @NotNull ParserDefinition parserDefinition,
+                                      @NotNull TokenSet noWSRequireBeforeTokenSet,
+                                      @NotNull TokenSet noWSRequireAfterTokenSet,
+                                      @NotNull TokenSet stringLiteralElements) {
     int offsetIgnoringComments = 0;
     int offsetIgnoringCommentsAndStrings = 0;
-    int lineLength = 0;
     int unneededWhitespaceCount = 0;
+    String lastTokenText = null;
     IElementType lastTokenType = null;
     TokenSet whitespaceTokens = parserDefinition.getWhitespaceTokens();
-    TokenSet stringLiteralElements = parserDefinition.getStringLiteralElements();
     TokenSet commentTokens = parserDefinition.getCommentTokens();
+    boolean lastWhiteSpaceWasHandled = false;
     for (IElementType tokenType = lexer.getTokenType(); tokenType != null; lexer.advance(), tokenType = lexer.getTokenType()) {
       if (commentTokens.contains(tokenType)) {
         lastTokenType = tokenType;
+        lastTokenText = lexer.getTokenText();
         continue;
       }
 
       int tokenLength = lexer.getTokenEnd() - lexer.getTokenStart();
-      offsetIgnoringComments += tokenLength;
-      if (stringLiteralElements.contains(tokenType)) {
-        lineLength += tokenLength;
-        lastTokenType = tokenType;
+      if (isNewLine(lexer, tokenLength) && commentTokens.contains(lastTokenType) && !noWSRequireAfterTokenSet.contains(lastTokenType)) {
+        // do not count new line after line comment token since it's required and it's part of comment
         continue;
       }
-      offsetIgnoringCommentsAndStrings += tokenLength;
+
+      offsetIgnoringComments += tokenLength;
+      if (!stringLiteralElements.contains(tokenType)) {
+        offsetIgnoringCommentsAndStrings += tokenLength;
+      }
 
       if (whitespaceTokens.contains(tokenType)) {
+        lastWhiteSpaceWasHandled = false;
         if (!commentTokens.contains(lastTokenType) && tokenLength > 1) {
           lexer.advance();
           if (lexer.getTokenType() == null) {
@@ -100,32 +127,41 @@ public class MinifiedFilesUtil {
           }
         }
 
-        if (lexer.getTokenText().contains("\n")) {
-          if (lineLength > MIN_LINE_LENGTH) {
-            break;
-          }
-          lineLength = 0;
-        }
-
-        if (" ".equals(lexer.getTokenText()) && noWSRequireAfterTokenSet.contains(lastTokenType)) {
+        if (isNewLine(lexer, tokenLength) && StringUtil.equals(lastTokenText, "\n") ||
+            tokenLength > 0 && noWSRequireAfterTokenSet.contains(lastTokenType)) {
           unneededWhitespaceCount++;
+          lastWhiteSpaceWasHandled = true;
         }
       }
       else {
-        lineLength += tokenLength;
+        if (!lastWhiteSpaceWasHandled && whitespaceTokens.contains(lastTokenType) 
+            && StringUtil.isNotEmpty(lastTokenText) && noWSRequireBeforeTokenSet.contains(tokenType)) {
+          unneededWhitespaceCount++;
+        }
+      }
+
+      if (stringLiteralElements.contains(tokenType)) {
+        lastTokenType = tokenType;
+        lastTokenText = lexer.getTokenText();
+        continue;
       }
 
       if (offsetIgnoringComments >= MAX_OFFSET) {
         break;
       }
       lastTokenType = tokenType;
+      lastTokenText = lexer.getTokenText();
     }
 
     return offsetIgnoringComments >= MIN_SIZE &&
            (unneededWhitespaceCount + 0.0d) / offsetIgnoringCommentsAndStrings < MAX_UNNEEDED_OFFSET_PERCENTAGE;
   }
 
+  private static boolean isNewLine(@NotNull Lexer lexer, int tokenLength) {
+    return tokenLength == 1 && StringUtil.equals(lexer.getTokenText(), "\n");
+  }
+
   public static boolean isMinified(@NotNull CharSequence fileContent, @NotNull ParserDefinition parserDefinition) {
-    return isMinified(fileContent, parserDefinition, TokenSet.EMPTY);
+    return isMinified(fileContent, parserDefinition, TokenSet.EMPTY, TokenSet.EMPTY);
   }
 }

@@ -21,22 +21,32 @@ package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.EventListener;
-import java.util.Set;
+import java.util.*;
 
 public class HeavyProcessLatch {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.HeavyProcessLatch");
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
   private final Set<String> myHeavyProcesses = new THashSet<String>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
+
   private final EventDispatcher<HeavyProcessListener> myUIProcessDispatcher = EventDispatcher.create(HeavyProcessListener.class);
   private volatile Thread myUiActivityThread;
-  private volatile long myPrioritizingDeadLine;
+  /**
+   Don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
+   wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
+   */
+  private static final int MAX_PRIORITIZATION_MILLIS = 12 * 1000;
+  private volatile long myPrioritizingStarted;
+
+  private final List<Runnable> toExecuteOutOfHeavyActivity = new ArrayList<Runnable>();
 
   private HeavyProcessLatch() {
   }
@@ -68,6 +78,24 @@ public class HeavyProcessLatch {
       myHeavyProcesses.remove(operationName);
     }
     myEventDispatcher.getMulticaster().processFinished();
+    List<Runnable> toRunNow;
+    synchronized (myHeavyProcesses) {
+      if (isRunning()) {
+        toRunNow = Collections.emptyList();
+      }
+      else {
+        toRunNow = new ArrayList<Runnable>(toExecuteOutOfHeavyActivity);
+        toExecuteOutOfHeavyActivity.clear();
+      }
+    }
+    for (Runnable runnable : toRunNow) {
+      try {
+        runnable.run();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public boolean isRunning() {
@@ -88,32 +116,48 @@ public class HeavyProcessLatch {
     void processFinished();
   }
 
-  public void addListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
+  public void addListener(@NotNull HeavyProcessListener listener,
+                          @NotNull Disposable parentDisposable) {
     myEventDispatcher.addListener(listener, parentDisposable);
   }
 
-  public void addUIActivityListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
+  public void addUIActivityListener(@NotNull HeavyProcessListener listener,
+                                    @NotNull Disposable parentDisposable) {
     myUIProcessDispatcher.addListener(listener, parentDisposable);
+  }
+
+  public void executeOutOfHeavyProcess(@NotNull Runnable runnable) {
+    boolean runNow;
+    synchronized (myHeavyProcesses) {
+      if (isRunning()) {
+        runNow = false;
+        toExecuteOutOfHeavyActivity.add(runnable);
+      }
+      else {
+        runNow = true;
+      }
+    }
+    if (runNow) {
+      runnable.run();
+    }
   }
 
   /**
    * Gives current event processed on Swing thread higher priority
+   * by letting other threads to sleep a bit whenever they call checkCanceled.
    * @see #stopThreadPrioritizing()
    */
   public void prioritizeUiActivity() {
-    // don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
-    // wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
-    myPrioritizingDeadLine = System.currentTimeMillis() + 12 * 1000;
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+
+    if (!Registry.is("ide.prioritize.ui.thread", false)) {
+      return;
+    }
+
+    myPrioritizingStarted = System.currentTimeMillis();
 
     myUiActivityThread = Thread.currentThread();
     myUIProcessDispatcher.getMulticaster().processStarted();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        stopThreadPrioritizing();
-      }
-    });
   }
 
   /**
@@ -122,6 +166,8 @@ public class HeavyProcessLatch {
    * @see #prioritizeUiActivity()
    */
   public void stopThreadPrioritizing() {
+    if (myUiActivityThread == null) return;
+
     myUiActivityThread = null;
     myUIProcessDispatcher.getMulticaster().processFinished();
   }
@@ -130,9 +176,19 @@ public class HeavyProcessLatch {
    * @return whether there is a prioritized thread, but not the current one
    */
   public boolean isInsideLowPriorityThread() {
-    Thread thread = myUiActivityThread;
-    if (thread != null && thread != Thread.currentThread()) {
-      if (System.currentTimeMillis() > myPrioritizingDeadLine) {
+    Thread uiThread = myUiActivityThread;
+    if (uiThread != null && uiThread != Thread.currentThread()) {
+      Thread.State state = uiThread.getState();
+      if (state == Thread.State.WAITING || state == Thread.State.TIMED_WAITING || state == Thread.State.BLOCKED) {
+        return false;
+      }
+
+      long time = System.currentTimeMillis() - myPrioritizingStarted;
+      if (time < 5) {
+        return false; // don't sleep when EDT activities are very short (e.g. empty processing of mouseMoved events)
+      }
+
+      if (time > MAX_PRIORITIZATION_MILLIS) {
         stopThreadPrioritizing();
         return false;
       }

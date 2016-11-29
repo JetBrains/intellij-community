@@ -15,12 +15,17 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author max
@@ -139,4 +144,49 @@ public class DataInputOutputUtil {
       return ((((long)((first << 8) | second)) << 24) | (third | fourth | fifth)) + timeBase;
     }
   }
+
+  /**
+   * Writes the given collection to the output using the given procedure to write each element.
+   * Should be coupled with {@link #readSeq}
+   */
+  public static <T> void writeSeq(@NotNull DataOutput out, @NotNull Collection<T> collection, @NotNull ThrowableConsumer<T, IOException> writeElement) throws IOException {
+    writeINT(out, collection.size());
+    for (T t : collection) {
+      writeElement.consume(t);
+    }
+  }
+
+  /**
+   * Reads a collection using the given function to read each element.
+   * Should be coupled with {@link #writeSeq}
+   */
+  @NotNull
+  public static <T> List<T> readSeq(@NotNull DataInput in, @NotNull ThrowableComputable<T, IOException> readElement) throws IOException {
+    int size = readINT(in);
+    List<T> result = new ArrayList<T>(size);
+    for (int i = 0; i < size; i++) {
+      result.add(readElement.compute());
+    }
+    return result;
+  }
+
+  /**
+   * Writes the given (possibly null) element to the output using the given procedure to write the element if it's not null.
+   * Should be coupled with {@link #readNullable}
+   */
+  public static <T> void writeNullable(@NotNull DataOutput out, @Nullable T value, @NotNull ThrowableConsumer<T, IOException> writeValue)
+    throws IOException {
+    out.writeBoolean(value != null);
+    if (value != null) writeValue.consume(value);
+  }
+
+  /**
+   * Reads an element from the stream, using the given function to read it when a not-null element is expected, or returns null otherwise.
+   * Should be coupled with {@link #writeNullable}
+   */
+  @Nullable
+  public static <T> T readNullable(@NotNull DataInput in, @NotNull ThrowableComputable<T, IOException> readValue) throws IOException {
+    return in.readBoolean() ? readValue.compute() : null;
+  }
+
 }

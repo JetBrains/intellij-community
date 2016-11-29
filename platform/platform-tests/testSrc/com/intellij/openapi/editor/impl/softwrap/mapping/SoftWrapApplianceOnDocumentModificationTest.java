@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -672,7 +673,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
 
     CaretModel caretModel = myEditor.getCaretModel();
     caretModel.moveToOffset(text.indexOf("2.") + 2);
-    lineComment();
+    new CommentByLineCommentAction().actionPerformedImpl(getProject(), getEditor());
     
     assertEquals(myEditor.offsetToLogicalPosition(text.indexOf("3.") + 2), caretModel.getLogicalPosition());
   }
@@ -727,12 +728,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
     
     // Simulate addition of the new import that modifies existing fold region.
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myEditor.getDocument().insertString(foldEndOffset, "\nimport java.util.Date;\n");
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().insertString(foldEndOffset, "\nimport java.util.Date;\n"));
 
     final FoldingModel foldingModel = myEditor.getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> {
@@ -764,12 +760,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
 
     int modificationOffset = text.indexOf("java.util.Set");
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myEditor.getDocument().insertString(modificationOffset, "import java.util.HashSet;\n");
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().insertString(modificationOffset, "import java.util.HashSet;\n"));
 
     // Used to get StackOverflowError here, hence, no additional checking is performed.
   }
@@ -846,12 +837,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     final EditorSettings settings = getEditor().getSettings();
     settings.setUseSoftWraps(false);
     int startOffset = text.indexOf("\t third") - 1;
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        getEditor().getDocument().deleteString(startOffset, text.length());
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(startOffset, text.length()));
 
 
     // Enable soft wraps and ensure that the cache is correctly re-built.
@@ -1063,12 +1049,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     addCollapsedFoldRegion(4, 8, "...");
     addCollapsedFoldRegion(13, 15, "...");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myEditor.getDocument().insertString(10, "C");
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().insertString(10, "C"));
 
 
     // verify that cached layout data is intact after document change and position recalculation is done correctly
@@ -1145,12 +1126,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     configureSoftWraps(100);
     addCollapsedFoldRegion(0, 4, "...");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ((DocumentEx)myEditor.getDocument()).moveText(0, 4, 12);
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((DocumentEx)myEditor.getDocument()).moveText(0, 4, 12));
 
 
     assertEquals(new LogicalPosition(2, 0), myEditor.visualToLogicalPosition(new VisualPosition(2, 1)));

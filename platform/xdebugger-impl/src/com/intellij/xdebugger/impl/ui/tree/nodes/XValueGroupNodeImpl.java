@@ -38,12 +38,9 @@ public class XValueGroupNodeImpl extends XValueContainerNode<XValueGroup> implem
     }
 
     if (group.isAutoExpand()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!isObsolete()) {
-            myTree.expandPath(getPath());
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!isObsolete()) {
+          myTree.expandPath(getPath());
         }
       });
     }

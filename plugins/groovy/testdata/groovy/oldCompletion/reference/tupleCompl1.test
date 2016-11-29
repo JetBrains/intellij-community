@@ -1,4 +1,4 @@
-def (street, home, postCode)
+def (street, home, postCode) = []
 def s = str<caret>
 -----
 street

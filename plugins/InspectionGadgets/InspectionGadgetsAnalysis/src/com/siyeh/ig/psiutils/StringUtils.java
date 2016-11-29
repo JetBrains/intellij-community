@@ -25,7 +25,7 @@ import java.util.Set;
 public class StringUtils {
 
   @NonNls private static final Set<String> keywordTable =
-    new HashSet<String>();
+    new HashSet<>();
   @NonNls private static final String AN = "an";
 
   static {

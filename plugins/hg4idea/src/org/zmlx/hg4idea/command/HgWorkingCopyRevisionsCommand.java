@@ -182,7 +182,7 @@ public class HgWorkingCopyRevisionsCommand {
                                               @Nullable FilePath file,
                                               @Nullable HgRevisionNumber revision,
                                               boolean silent) {
-    final List<String> args = new LinkedList<String>();
+    final List<String> args = new LinkedList<>();
     args.add("--template");
     args.add(HgChangesetUtil.makeTemplate("{rev}", "{node}"));
     if (revision != null) {
@@ -197,20 +197,20 @@ public class HgWorkingCopyRevisionsCommand {
     final HgCommandResult result = executor.executeInCurrentThread(repo, command, args);
 
     if (result == null) {
-      return new ArrayList<HgRevisionNumber>(0);
+      return new ArrayList<>(0);
     }
 
-    final List<String> lines = new ArrayList<String>();
+    final List<String> lines = new ArrayList<>();
     for (String line : result.getRawOutput().split(HgChangesetUtil.CHANGESET_SEPARATOR)) {
       if (!line.trim().isEmpty()) {     // filter out empty lines
         lines.add(line);
       }
     }
     if (lines.isEmpty()) {
-      return new ArrayList<HgRevisionNumber>();
+      return new ArrayList<>();
     }
 
-    final List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(lines.size());
+    final List<HgRevisionNumber> revisions = new ArrayList<>(lines.size());
     for(String line: lines) {
       final List<String> parts = StringUtil.split(line, HgChangesetUtil.ITEM_SEPARATOR);
       if (parts.size() < 2) {

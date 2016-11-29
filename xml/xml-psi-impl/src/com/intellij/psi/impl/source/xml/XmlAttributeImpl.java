@@ -87,7 +87,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   public void setValue(String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute("a", valueText);
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute("a", valueText, this);
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
@@ -163,9 +163,9 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     return valueElement != null ? valueElement.getValue() : null;
   }
 
-  private volatile String myDisplayText = null;
-  private volatile int[] myGapDisplayStarts = null;
-  private volatile int[] myGapPhysicalStarts = null;
+  private volatile String myDisplayText;
+  private volatile int[] myGapDisplayStarts;
+  private volatile int[] myGapPhysicalStarts;
   private volatile TextRange myValueTextRange; // text inside quotes, if there are any
 
   protected void appendChildToDisplayValue(StringBuilder buffer, ASTNode child) {
@@ -392,7 +392,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   @Nullable
   public XmlAttributeDescriptor getDescriptor() {
     final PsiElement parentElement = getParent();
-    if (parentElement instanceof XmlDecl) return null;
+    if (parentElement == null) return null; // e.g. XmlDecl or PI
     final XmlTag tag = (XmlTag)parentElement;
     final XmlElementDescriptor descr = tag.getDescriptor();
     if (descr == null) return null;

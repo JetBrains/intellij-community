@@ -117,21 +117,11 @@ public class SdkConfigurationUtil {
   }
 
   public static void addSdk(@NotNull final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().addJdk(sdk);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
   }
 
   public static void removeSdk(final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().removeJdk(sdk);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
   }
 
   @Nullable
@@ -141,25 +131,10 @@ public class SdkConfigurationUtil {
                              final boolean silent,
                              @Nullable final SdkAdditionalData additionalData,
                              @Nullable final String customSdkSuggestedName) {
-    final List<Sdk> sdksList = Arrays.asList(allSdks);
-
     final ProjectJdkImpl sdk;
     try {
-      String sdkPath = sdkType.sdkPath(homeDir);
+      sdk = createSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
 
-      final String sdkName = customSdkSuggestedName == null
-                             ? createUniqueSdkName(sdkType, sdkPath, sdksList)
-                             : createUniqueSdkName(customSdkSuggestedName, sdksList);
-      sdk = new ProjectJdkImpl(sdkName, sdkType);
-
-      if (additionalData != null) {
-        // additional initialization.
-        // E.g. some ruby sdks must be initialized before
-        // setupSdkPaths() method invocation
-        sdk.setSdkAdditionalData(additionalData);
-      }
-
-      sdk.setHomePath(sdkPath);
       sdkType.setupSdkPaths(sdk);
     }
     catch (Exception e) {
@@ -175,15 +150,38 @@ public class SdkConfigurationUtil {
     return sdk;
   }
 
+  @NotNull
+  public static ProjectJdkImpl createSdk(@NotNull Sdk[] allSdks,
+                                          @NotNull VirtualFile homeDir,
+                                          SdkType sdkType,
+                                          @Nullable SdkAdditionalData additionalData, @Nullable String customSdkSuggestedName) {
+    final List<Sdk> sdksList = Arrays.asList(allSdks);
+
+    String sdkPath = sdkType.sdkPath(homeDir);
+
+    final String sdkName = customSdkSuggestedName == null
+                           ? createUniqueSdkName(sdkType, sdkPath, sdksList)
+                           : createUniqueSdkName(customSdkSuggestedName, sdksList);
+
+    ProjectJdkImpl sdk = new ProjectJdkImpl(sdkName, sdkType);
+
+    if (additionalData != null) {
+      // additional initialization.
+      // E.g. some ruby sdks must be initialized before
+      // setupSdkPaths() method invocation
+      sdk.setSdkAdditionalData(additionalData);
+    }
+
+    sdk.setHomePath(sdkPath);
+    return sdk;
+  }
+
   public static void setDirectoryProjectSdk(@NotNull final Project project, @Nullable final Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectRootManager.getInstance(project).setProjectSdk(sdk);
-        final Module[] modules = ModuleManager.getInstance(project).getModules();
-        if (modules.length > 0) {
-          ModuleRootModificationUtil.setSdkInherited(modules[0]);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      if (modules.length > 0) {
+        ModuleRootModificationUtil.setSdkInherited(modules[0]);
       }
     });
   }
@@ -241,12 +239,8 @@ public class SdkConfigurationUtil {
    */
   @Nullable
   public static Sdk createAndAddSDK(final String path, SdkType sdkType) {
-    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      }
-    });
+    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(
+      (Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     if (sdkHome != null) {
       final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
       if (newSdk != null) {
@@ -264,7 +258,7 @@ public class SdkConfigurationUtil {
 
   @NotNull
   public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<Sdk> sdks) {
-    final Set<String> names = new HashSet<String>();
+    final Set<String> names = new HashSet<>();
     for (Sdk jdk : sdks) {
       names.add(jdk.getName());
     }
@@ -284,19 +278,16 @@ public class SdkConfigurationUtil {
       consumer.consume(sdk.getHomePath());
       return;
     }
-    FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(final List<VirtualFile> chosen) {
-        final String path = chosen.get(0).getPath();
-        if (sdkType.isValidSdkHome(path)) {
-          consumer.consume(path);
-          return;
-        }
+    FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), chosen -> {
+      final String path = chosen.get(0).getPath();
+      if (sdkType.isValidSdkHome(path)) {
+        consumer.consume(path);
+        return;
+      }
 
-        final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-        if (sdkType.isValidSdkHome(adjustedPath)) {
-          consumer.consume(adjustedPath);
-        }
+      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
+      if (sdkType.isValidSdkHome(adjustedPath)) {
+        consumer.consume(adjustedPath);
       }
     });
   }
@@ -309,7 +300,7 @@ public class SdkConfigurationUtil {
 
   @NotNull
   public static List<String> filterExistingPaths(@NotNull SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String sdkHome : sdkHomes) {
       if (findByPath(sdkType, sdks, sdkHome) == null) {
         result.add(sdkHome);

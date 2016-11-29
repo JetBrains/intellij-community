@@ -15,12 +15,23 @@
  */
 package org.jetbrains.jps.gradle.model.impl;
 
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.gradle.model.JpsGradleExtensionService;
+import org.jetbrains.jps.gradle.model.artifacts.JpsGradleArtifactExtension;
+import org.jetbrains.jps.gradle.model.impl.artifacts.GradleArtifactExtensionProperties;
+import org.jetbrains.jps.gradle.model.impl.artifacts.JpsGradleArtifactExtensionImpl;
+import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.artifact.JpsArtifactExtensionSerializer;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -32,7 +43,7 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
   @Override
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
     if ("GRADLE".equals(rootElement.getAttributeValue("external.system.id"))) {
-      JpsGradleExtensionService.getInstance().getOrCreateExtension(module);
+      JpsGradleExtensionService.getInstance().getOrCreateExtension(module, rootElement);
     }
   }
 
@@ -54,6 +65,32 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
   public void saveModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
     if (JpsGradleExtensionService.getInstance().isProductionOnTestDependency(dependency)) {
       orderEntry.setAttribute(PRODUCTION_ON_TEST_ATTRIBUTE, "");
+    }
+  }
+
+  @NotNull
+  @Override
+  public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
+    return Collections.singletonList(
+      new JpsGradleArtifactExtensionSerializer("gradle-properties", JpsGradleArtifactExtensionImpl.ROLE));
+  }
+
+  private static class JpsGradleArtifactExtensionSerializer extends JpsArtifactExtensionSerializer<JpsGradleArtifactExtension> {
+    private JpsGradleArtifactExtensionSerializer(final String id, final JpsElementChildRole<JpsGradleArtifactExtension> role) {
+      super(id, role);
+    }
+
+    @Override
+    public JpsGradleArtifactExtension loadExtension(@Nullable Element optionsTag) {
+      GradleArtifactExtensionProperties properties =
+        optionsTag != null ? XmlSerializer.deserialize(optionsTag, GradleArtifactExtensionProperties.class) : null;
+      return new JpsGradleArtifactExtensionImpl(properties != null ? properties : null);
+    }
+
+    @Override
+    public void saveExtension(@NotNull JpsGradleArtifactExtension extension, @NotNull Element optionsTag) {
+      GradleArtifactExtensionProperties properties = extension.getProperties();
+      XmlSerializer.serializeInto(properties, optionsTag, new SkipDefaultValuesSerializationFilters());
     }
   }
 }

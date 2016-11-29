@@ -56,7 +56,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   @NotNull
   public AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
-    final HashSet<Module> modules = new HashSet<Module>();
+    final HashSet<Module> modules = new HashSet<>();
     if (myType == FILE) {
       if (myElement instanceof PsiJavaFile && !FileTypeUtils.isInServerPageFile(myElement)) {
         PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
@@ -107,7 +107,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   @Override
   protected void initFilesSet() {
     if (myType == PACKAGE) {
-      myFilesSet = new HashSet<VirtualFile>();
+      myFilesSet = new HashSet<>();
       accept(createFileSearcher());
       return;
     }
@@ -118,12 +118,9 @@ public class JavaAnalysisScope extends AnalysisScope {
   public boolean accept(@NotNull Processor<VirtualFile> processor) {
     if (myElement instanceof PsiPackage) {
       final PsiPackage pack = (PsiPackage)myElement;
-      final Set<PsiDirectory> dirs = new HashSet<PsiDirectory>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          ContainerUtil.addAll(dirs, pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject())));
-        }
+      final Set<PsiDirectory> dirs = new HashSet<>();
+      ApplicationManager.getApplication().runReadAction(() -> {
+        ContainerUtil.addAll(dirs, pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject())));
       });
       for (PsiDirectory dir : dirs) {
         if (!accept(dir, processor)) return false;

@@ -1,5 +1,5 @@
 PsiJavaFile:MethodRef3.java
-  PsiMethodReferenceExpression:a[i]::m
+  PsiMethodReferenceExpression
     PsiArrayAccessExpression:a[i]
       PsiReferenceExpression:a
         PsiReferenceParameterList

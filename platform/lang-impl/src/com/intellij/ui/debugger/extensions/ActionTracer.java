@@ -81,7 +81,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
     final String id = actionManager.getId(action);
     out.append("id=").append(id);
     if (id != null) {
-      out.append(" shortcuts:");
+      out.append("; shortcuts:");
       final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(id);
       for (int i = 0; i < shortcuts.length; i++) {
         Shortcut shortcut = shortcuts[i];
@@ -91,16 +91,14 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
         }
       }
     }
+    out.append("; class: ").append(action.getClass().getName());
     out.append("\n");
     final Document doc = myText.getDocument();
     try {
       doc.insertString(doc.getLength(), out.toString(), null);
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final int y = (int)myText.getBounds().getMaxY();
-          myText.scrollRectToVisible(new Rectangle(0, y, myText.getBounds().width, 0));
-        }
+      SwingUtilities.invokeLater(() -> {
+        final int y = (int)myText.getBounds().getMaxY();
+        myText.scrollRectToVisible(new Rectangle(0, y, myText.getBounds().width, 0));
       });
     }
     catch (BadLocationException e) {

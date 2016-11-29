@@ -18,6 +18,7 @@ package git4idea.stash;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -25,7 +26,6 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.rollback.GitRollbackEnvironment;
@@ -35,31 +35,34 @@ import java.util.*;
 
 public class GitShelveChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitShelveChangesSaver.class);
+
   private final ShelveChangesManager myShelveManager;
   private final ShelvedChangesViewManager myShelveViewManager;
+  private final ProjectLevelVcsManager myVcsManager;
+
   private Map<String, ShelvedChangeList> myShelvedLists;
 
-  public GitShelveChangesSaver(@NotNull Project project, GitPlatformFacade platformFacade, @NotNull Git git,
-                               @NotNull ProgressIndicator indicator, String stashMessage) {
-    super(project, platformFacade, git, indicator, stashMessage);
+  public GitShelveChangesSaver(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator indicator, String stashMessage) {
+    super(project, git, indicator, stashMessage);
     myShelveManager = ShelveChangesManager.getInstance(myProject);
     myShelveViewManager = ShelvedChangesViewManager.getInstance(myProject);
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
   @Override
   protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
     final Map<String, Map<VirtualFile, Collection<Change>>> lists =
-      new LocalChangesUnderRoots(myChangeManager, myPlatformFacade.getVcsManager(myProject)).getChangesByLists(rootsToSave);
+      new LocalChangesUnderRoots(myChangeManager, myVcsManager).getChangesByLists(rootsToSave);
 
     String oldProgressTitle = myProgressIndicator.getText();
     myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
-    List<VcsException> exceptions = new ArrayList<VcsException>(1);
-    myShelvedLists = new HashMap<String, ShelvedChangeList>();
+    List<VcsException> exceptions = new ArrayList<>(1);
+    myShelvedLists = new HashMap<>();
 
     for (Map.Entry<String, Map<VirtualFile, Collection<Change>>> entry : lists.entrySet()) {
       final Map<VirtualFile, Collection<Change>> map = entry.getValue();
-      final Set<Change> changes = new HashSet<Change>();
+      final Set<Change> changes = new HashSet<>();
       for (Collection<Change> changeCollection : map.values()) {
         changes.addAll(changeCollection);
       }

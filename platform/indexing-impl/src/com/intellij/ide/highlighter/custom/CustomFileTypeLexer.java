@@ -60,7 +60,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
         table.isHasStringEscapes()
     );
 
-    ArrayList<TokenParser> tokenParsers = new ArrayList<TokenParser>();
+    ArrayList<TokenParser> tokenParsers = new ArrayList<>();
     tokenParsers.add(new WhitespaceParser());
     if (lineCommentParser != null) {
       tokenParsers.add(lineCommentParser);
@@ -70,11 +70,11 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
     }
     tokenParsers.add(quotedStringParser);
     tokenParsers.add(quotedStringParser2);
-    tokenParsers.add(numberParser);
     tokenParsers.add(new PunctuationParser());
     if (hexNumberParser != null) {
       tokenParsers.add(hexNumberParser);
     }
+    tokenParsers.add(numberParser);
     tokenParsers.add(keywordParser);
     tokenParsers.add(identifierParser);
 

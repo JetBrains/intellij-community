@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,21 @@ public abstract class PathMacroMap {
 
   public abstract String substitute(String text, boolean caseSensitive);
 
+  public final String substitute(String text, boolean caseSensitive, boolean recursively) {
+    return recursively
+           ? substituteRecursively(text, caseSensitive)
+           : substitute(text, caseSensitive);
+  }
+
   public final void substitute(@NotNull Element e, boolean caseSensitive) {
     substitute(e, caseSensitive, false);
   }
 
   public final void substitute(@NotNull Element e, boolean caseSensitive, boolean recursively, @Nullable PathMacroFilter filter) {
+    if (filter != null && filter.skipPathMacros(e)) {
+      return;
+    }
+
     for (Content child : e.getContent()) {
       if (child instanceof Element) {
         substitute((Element)child, caseSensitive, recursively, filter);

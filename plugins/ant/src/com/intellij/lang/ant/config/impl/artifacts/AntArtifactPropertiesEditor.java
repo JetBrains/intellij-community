@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
@@ -79,12 +78,8 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       }
     };
   private static final ColumnInfo[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
-  private static final Condition<BuildFileProperty> USER_PROPERTY_CONDITION = new Condition<BuildFileProperty>() {
-    @Override
-    public boolean value(BuildFileProperty property) {
-      return !AntArtifactProperties.isPredefinedProperty(property.getPropertyName());
-    }
-  };
+  private static final Condition<BuildFileProperty> USER_PROPERTY_CONDITION =
+    property -> !AntArtifactProperties.isPredefinedProperty(property.getPropertyName());
   private final AntArtifactProperties myProperties;
   private final ArtifactEditorContext myContext;
   private final AntConfigurationListener myAntConfigurationListener;
@@ -130,7 +125,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
               return;
             }
             BuildFileProperty item = new BuildFileProperty();
-            ArrayList<BuildFileProperty> items = new ArrayList<BuildFileProperty>(model.getItems());
+            ArrayList<BuildFileProperty> items = new ArrayList<>(model.getItems());
             items.add(item);
             model.setItems(items);
             int newIndex = model.indexOf(item);
@@ -179,18 +174,6 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
           updatePanel();
         }
       }
-
-      @Override
-      public void buildFileChanged(AntBuildFile buildFile) {
-      }
-
-      @Override
-      public void buildFileAdded(AntBuildFile buildFile) {
-      }
-
-      @Override
-      public void buildFileRemoved(AntBuildFile buildFile) {
-      }
     };
     antConfiguration.addAntConfigurationListener(myAntConfigurationListener);
   }
@@ -235,7 +218,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   }
 
   private List<BuildFileProperty> getUserProperties() {
-    final SinglePropertyContainer<ListProperty> container = new SinglePropertyContainer<ListProperty>(ANT_PROPERTIES, null);
+    final SinglePropertyContainer<ListProperty> container = new SinglePropertyContainer<>(ANT_PROPERTIES, null);
     myBinding.apply(container);
     final List<BuildFileProperty> allProperties = (List<BuildFileProperty>)container.getValueOf(ANT_PROPERTIES);
     return ContainerUtil.filter(allProperties, USER_PROPERTY_CONDITION);
@@ -261,11 +244,11 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   public void reset() {
     myRunTargetCheckBox.setSelected(myProperties.isEnabled());
     myTarget = myProperties.findTarget(AntConfiguration.getInstance(myContext.getProject()));
-    final List<BuildFileProperty> properties = new ArrayList<BuildFileProperty>();
+    final List<BuildFileProperty> properties = new ArrayList<>();
     for (BuildFileProperty property : myProperties.getAllProperties(myContext.getArtifact())) {
       properties.add(new BuildFileProperty(property.getPropertyName(), property.getPropertyValue()));
     }
-    myContainer = new SinglePropertyContainer<ListProperty>(ANT_PROPERTIES, properties);
+    myContainer = new SinglePropertyContainer<>(ANT_PROPERTIES, properties);
     myBinding.loadValues(myContainer);
     updatePanel();
   }

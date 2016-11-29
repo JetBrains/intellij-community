@@ -42,6 +42,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -70,12 +71,14 @@ public class PyQualifiedReference extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
+    PyPsiUtils.assertValid(myElement);
     ResolveResultList ret = new ResolveResultList();
 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
     final PyExpression qualifier = myElement.getQualifier();
+    PyPsiUtils.assertValid(qualifier);
     if (qualifier == null) {
       return ret;
     }
@@ -168,7 +171,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   private static List<QualifiedName> collectImports(PyFile containingFile) {
-    List<QualifiedName> imports = new ArrayList<QualifiedName>();
+    List<QualifiedName> imports = new ArrayList<>();
     for (PyFromImportStatement anImport : containingFile.getFromImports()) {
       final QualifiedName source = anImport.getImportSourceQName();
       if (source != null) {
@@ -270,9 +273,9 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
     PyType qualifierType = TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()).getType(qualifier);
     ProcessingContext ctx = new ProcessingContext();
-    final Set<String> namesAlready = new HashSet<String>();
+    final Set<String> namesAlready = new HashSet<>();
     ctx.put(PyType.CTX_NAMES, namesAlready);
-    final Collection<Object> variants = new ArrayList<Object>();
+    final Collection<Object> variants = new ArrayList<>();
     if (qualifierType != null) {
       Collections.addAll(variants, getVariantFromHasAttr(qualifier));
       if (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages()) {
@@ -327,7 +330,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   private Object[] getVariantFromHasAttr(PyExpression qualifier) {
-    Collection<Object> variants = new ArrayList<Object>();
+    Collection<Object> variants = new ArrayList<>();
     PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(myElement, PyIfStatement.class);
     while (ifStatement != null) {
       PyExpression condition = ifStatement.getIfPart().getCondition();
@@ -364,7 +367,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (classes.size() <= 1) {
       return classes;
     }
-    List<PyClass> result = new ArrayList<PyClass>();
+    List<PyClass> result = new ArrayList<>();
     for (PyClass pyClass : classes) {
       if (pyClass.getContainingFile() == containingFile) {
         result.add(pyClass);
@@ -380,7 +383,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   private Object[] collectSeenMembers(final String text) {
-    final Set<String> members = new HashSet<String>();
+    final Set<String> members = new HashSet<>();
     myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
@@ -406,7 +409,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         }
       }
     });
-    List<LookupElement> results = new ArrayList<LookupElement>(members.size());
+    List<LookupElement> results = new ArrayList<>(members.size());
     for (String member : members) {
       results.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(LookupElementBuilder.create(member)));
     }
@@ -416,8 +419,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
   @NotNull
   public static Collection<PyExpression> collectAssignedAttributes(@NotNull final QualifiedName qualifierQName,
                                                                    @NotNull final PsiElement anchor) {
-    final Set<String> names = new HashSet<String>();
-    final List<PyExpression> results = new ArrayList<PyExpression>();
+    final Set<String> names = new HashSet<>();
+    final List<PyExpression> results = new ArrayList<>();
     for (ScopeOwner owner = ScopeUtil.getScopeOwner(anchor); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
       final Scope scope = ControlFlowCache.getScope(owner);
       for (final PyTargetExpression target : scope.getTargetExpressions()) {
@@ -498,8 +501,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       PyClass aClass = PsiTreeUtil.getParentOfType(resolveResult, PyClass.class);
       PyClass bClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
 
-      if (isSubclass(aClass, bClass)
-          || (isSubclass(bClass, aClass))) {
+      if (aClass != null && bClass != null && bClass.isSubclass(aClass, myContext.getTypeEvalContext())) {
         return true;
       }
     }
@@ -508,13 +510,6 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return true;
     }
     return false;
-  }
-
-  private static boolean isSubclass(@Nullable PyClass aClass, @Nullable PyClass bClass) {
-    if (aClass == null || bClass == null) {
-      return false;
-    }
-    return bClass.isSubclass(aClass, null);
   }
 
   private static boolean isLocalScope(PsiElement element) {

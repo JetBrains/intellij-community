@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,46 +15,49 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.ProjectTopics;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.roots.ModuleRootAdapter;
-import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.NotNullFunction;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.project.ProjectKt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
-  public enum AccessStatus {REQUESTED, ALLOWED}
-
   private static final Key<Boolean> ENABLE_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_ENABLE_IN_TESTS");
-  private static final Key<Boolean> ALL_ACCESS_ALLOWED = Key.create("NON_PROJECT_FILE_ALL_ACCESS_STATUS");
-  private static final NotNullLazyKey<Map<VirtualFile, AccessStatus>, Project> ACCESS_STATUS
-    = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS_STATUS", new NotNullFunction<Project, Map<VirtualFile, AccessStatus>>() {
-    @NotNull
-    @Override
-    public Map<VirtualFile, AccessStatus> fun(Project project) {
-      return new HashMap<VirtualFile, AccessStatus>();
-    }
-  });
+  private static final NotNullLazyKey<AtomicInteger, UserDataHolder> ACCESS_ALLOWED
+    = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS", holder -> new AtomicInteger());
+
+  private static final AtomicBoolean myInitialized = new AtomicBoolean(); 
 
   @NotNull private final Project myProject;
   @Nullable private static NullableFunction<List<VirtualFile>, UnlockOption> ourCustomUnlocker;
@@ -64,28 +67,12 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     ourCustomUnlocker = unlocker;
   }
 
-  public NonProjectFileWritingAccessProvider(@NotNull final Project project) {
+  public NonProjectFileWritingAccessProvider(@NotNull Project project) {
     myProject = project;
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      @Override
-      public void fileDeleted(@NotNull VirtualFileEvent event) {
-        getRegisteredFiles(project).remove(event.getFile());
-      }
-    }, project);
-
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
-      @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        Map<VirtualFile, AccessStatus> files = getRegisteredFiles(project);
-        
-        // reset access status and notifications for files that became project files  
-        for (VirtualFile each : new ArrayList<VirtualFile>(files.keySet())) {
-          if (isProjectFile(each, project)) {
-            files.remove(each);
-          }
-        }
-      }
-    });
+    
+    if (myInitialized.compareAndSet(false, true)) {
+      VirtualFileManager.getInstance().addVirtualFileListener(new OurVirtualFileAdapter());
+    }
   }
 
   @Override
@@ -96,24 +83,9 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   @NotNull
   @Override
   public Collection<VirtualFile> requestWriting(VirtualFile... files) {
-    if (allAccessAllowed(myProject)) return Collections.emptyList();
+    if (isAllAccessAllowed()) return Collections.emptyList();
 
-    List<VirtualFile> deniedFiles = new SmartList<VirtualFile>();
-
-    Map<VirtualFile, AccessStatus> statuses = getRegisteredFiles(myProject);
-    for (VirtualFile each : files) {
-      if (statuses.get(each) == AccessStatus.ALLOWED) continue;
-
-      if (!(each.getFileSystem() instanceof LocalFileSystem)) continue; // do not block e.g., HttpFileSystem, LightFileSystem etc.  
-      if (isProjectFile(each, myProject)) {
-        statuses.remove(each);
-        continue;
-      }
-
-      statuses.put(each, AccessStatus.REQUESTED);
-      deniedFiles.add(each);
-    }
-
+    List<VirtualFile> deniedFiles = Stream.of(files).filter(o -> !isWriteAccessAllowed(o, myProject)).collect(Collectors.toList());
     if (deniedFiles.isEmpty()) return Collections.emptyList();
 
     UnlockOption unlockOption = askToUnlock(deniedFiles);
@@ -122,12 +94,13 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
     switch (unlockOption) {
       case UNLOCK:
-        for (VirtualFile eachAllowed : deniedFiles) {
-          statuses.put(eachAllowed, AccessStatus.ALLOWED);
-        }
+        allowWriting(deniedFiles);
+        break;
+      case UNLOCK_DIR:
+        allowWriting(ContainerUtil.map(deniedFiles, VirtualFile::getParent));
         break;
       case UNLOCK_ALL:
-        myProject.putUserData(ALL_ACCESS_ALLOWED, Boolean.TRUE);
+        ACCESS_ALLOWED.getValue(getApp()).incrementAndGet();
         break;
     }
 
@@ -143,67 +116,115 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     return dialog.getUnlockOption();
   }
 
-  public static boolean isWriteAccessAllowedExplicitly(@NotNull VirtualFile file, @NotNull Project project) {
-    if (!(file.getFileSystem() instanceof LocalFileSystem)) return false;
-    Map<VirtualFile, AccessStatus> statuses = getRegisteredFiles(project);
-    return statuses.get(file) == AccessStatus.ALLOWED ||
-           isProjectFile(file, project);
+  public static boolean isWriteAccessAllowed(@NotNull VirtualFile file, @NotNull Project project) {
+    if (isAllAccessAllowed()) return true;
+    if (file.isDirectory()) return true;
+
+    if (!(file.getFileSystem() instanceof LocalFileSystem)) return true; // do not block e.g., HttpFileSystem, LightFileSystem etc.
+    if (file.getFileSystem() instanceof TempFileSystem) return true;
+    
+    if (ArrayUtil.contains(file, IdeDocumentHistory.getInstance(project).getChangedFiles())) return true;
+    
+    if (!getApp().isUnitTestMode()
+        && FileUtil.isAncestor(new File(FileUtil.getTempDirectory()), VfsUtilCore.virtualToIoFile(file), true)) {
+      return true;
+    }
+    
+    VirtualFile each = file;
+    while (each != null) {
+      if (ACCESS_ALLOWED.getValue(each).get() > 0) return true;
+      each = each.getParent();
+    }
+    
+    return isProjectFile(file, project);
   }
 
   private static boolean isProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
+    for (NonProjectFileWritingAccessExtension each : Extensions.getExtensions(NonProjectFileWritingAccessExtension.EP_NAME, project)) {
+      if(each.isWritable(file)) return true;
+      if(each.isNotWritable(file)) return false;
+    }
+
     ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     if (fileIndex.isInContent(file)) return true;
     if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
     
     if (project instanceof ProjectEx && !project.isDefault()) {
-      if (ProjectUtil.isDirectoryBased(project)) {
-        VirtualFile baseDir = project.getBaseDir();
-        VirtualFile dotIdea = baseDir == null ? null : baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-        if (dotIdea != null && VfsUtilCore.isAncestor(dotIdea, file, false)) return true;
-      }
-
-      IProjectStore store = (IProjectStore)ServiceKt.getStateStore(project);
-      String filePath = file.getPath();
-      if (FileUtil.namesEqual(filePath, store.getWorkspaceFilePath()) || FileUtil.namesEqual(filePath, store.getProjectFilePath())) {
+      if (ProjectKt.getStateStore(project).isProjectFile(file)) {
         return true;
       }
+
+      String filePath = file.getPath();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         if (FileUtil.namesEqual(filePath, module.getModuleFilePath())) {
           return true;
         }
       }
     }
-
-    for (NonProjectFileWritingAccessExtension each : Extensions.getExtensions(NonProjectFileWritingAccessExtension.EP_NAME, project)) {
-      if(each.isWritable(file)) return true;
-    }
-
     return false;
   }
 
-  @TestOnly
-  public static void enableChecksInTests(@NotNull Project project, boolean enable) {
-    project.putUserData(ENABLE_IN_TESTS, enable ? Boolean.TRUE : null);
-  } 
+  public static void allowWriting(VirtualFile... allowedFiles) {
+    allowWriting(Arrays.asList(allowedFiles));
+  }
 
-  private static boolean allAccessAllowed(@NotNull Project project) {
+  public static void allowWriting(Iterable<VirtualFile> allowedFiles) {
+    for (VirtualFile eachAllowed : allowedFiles) {
+      ACCESS_ALLOWED.getValue(eachAllowed).incrementAndGet();
+    }
+  }
+
+  public static void disableChecksDuring(@NotNull Runnable runnable) {
+    Application app = getApp();
+    ACCESS_ALLOWED.getValue(app).incrementAndGet();
+    try {
+      runnable.run();
+    }
+    finally {
+      ACCESS_ALLOWED.getValue(app).decrementAndGet();
+    }
+  }
+
+  @TestOnly
+  public static void enableChecksInTests(@NotNull Disposable disposable) {
+    getApp().putUserData(ENABLE_IN_TESTS, Boolean.TRUE);
+    getApp().putUserData(ACCESS_ALLOWED, null);
+    
+    Disposer.register(disposable, () -> {
+      getApp().putUserData(ENABLE_IN_TESTS, null);
+      getApp().putUserData(ACCESS_ALLOWED, null);
+    });
+  }
+
+  private static boolean isAllAccessAllowed() {
+    Application app = getApp();
+    
     // disable checks in tests, if not asked
-    if (ApplicationManager.getApplication().isUnitTestMode() && project.getUserData(ENABLE_IN_TESTS) != Boolean.TRUE) {
+    if (app.isUnitTestMode() && app.getUserData(ENABLE_IN_TESTS) != Boolean.TRUE) {
       return true;
     }
-    
-    return project.getUserData(ALL_ACCESS_ALLOWED) == Boolean.TRUE;
+    return ACCESS_ALLOWED.getValue(app).get() > 0;
   }
 
-  @Nullable
-  public static AccessStatus getAccessStatus(@NotNull Project project, @NotNull VirtualFile file) {
-    return allAccessAllowed(project) ? AccessStatus.ALLOWED : getRegisteredFiles(project).get(file);
+  private static Application getApp() {
+    return ApplicationManager.getApplication();
   }
 
-  @NotNull
-  private static Map<VirtualFile, AccessStatus> getRegisteredFiles(@NotNull Project project) {
-    return ACCESS_STATUS.getValue(project);
-  }
+  public enum UnlockOption {UNLOCK, UNLOCK_DIR, UNLOCK_ALL}
 
-  public enum UnlockOption {UNLOCK, UNLOCK_ALL}
+  private static class OurVirtualFileAdapter extends VirtualFileAdapter {
+    @Override
+    public void fileCreated(@NotNull VirtualFileEvent event) {
+      unlock(event);
+    }
+
+    @Override
+    public void fileCopied(@NotNull VirtualFileCopyEvent event) {
+      unlock(event);
+    }
+
+    private static void unlock(@NotNull VirtualFileEvent event) {
+      if (!event.isFromRefresh() && !event.getFile().isDirectory()) allowWriting(event.getFile());
+    }
+  }
 }

@@ -37,9 +37,10 @@ import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -57,6 +58,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class ScopeEditorPanel {
 
@@ -75,7 +79,7 @@ public class ScopeEditorPanel {
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
   private String myErrorMessage;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Future<?> myUpdateAlarm = CompletableFuture.completedFuture(null);
 
   private JLabel myCaretPositionLabel;
   private int myCaretPosition = 0;
@@ -153,8 +157,8 @@ public class ScopeEditorPanel {
         cancelCurrentProgress();
       }
     });
-    myPartiallyIncluded.setIcon(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED));
-    myRecursivelyIncluded.setIcon(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED));
+    myPartiallyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
+    myRecursivelyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
   }
 
   private void updateCaretPositionText() {
@@ -186,7 +190,7 @@ public class ScopeEditorPanel {
 
   private void onTextChange() {
     if (!myIsInUpdate) {
-      myUpdateAlarm.cancelAllRequests();
+      myUpdateAlarm.cancel(false);
       cancelCurrentProgress();
       final String text = myPatternField.getText();
       myCurrentScope = new InvalidPackageSet(text);
@@ -380,7 +384,7 @@ public class ScopeEditorPanel {
   private ArrayList<PackageSet> getSelectedSets(boolean recursively) {
     int[] rows = myPackageTree.getSelectionRows();
     if (rows == null) return null;
-    final ArrayList<PackageSet> result = new ArrayList<PackageSet>();
+    final ArrayList<PackageSet> result = new ArrayList<>();
     for (int row : rows) {
       final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
       final PackageSet set = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, recursively);
@@ -394,12 +398,7 @@ public class ScopeEditorPanel {
 
   private JComponent createTreeToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
-    final Runnable update = new Runnable() {
-      @Override
-      public void run() {
-        rebuild(true);
-      }
-    };
+    final Runnable update = () -> rebuild(true);
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
       group.add(new FlattenPackagesAction(update));
     }
@@ -426,45 +425,34 @@ public class ScopeEditorPanel {
   }
 
   private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis){
-    myUpdateAlarm.cancelAllRequests();
-    final Runnable request = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            if (updateText) {
-              final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  try {
-                    myIsInUpdate = true;
-                    myPatternField.setText(text);
-                  }
-                  finally {
-                    myIsInUpdate = false;
-                  }
-                }
-              });
-            }
-
-            try {
-              if (!myProject.isDisposed()) {
-                updateTreeModel(requestFocus);
-              }
-            }
-            catch (ProcessCanceledException e) {
-              return;
-            }
-            if (runnable != null) {
-              runnable.run();
-            }
+    myUpdateAlarm.cancel(false);
+    final Runnable request = () -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (updateText) {
+        final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
+        SwingUtilities.invokeLater(() -> {
+          try {
+            myIsInUpdate = true;
+            myPatternField.setText(text);
+          }
+          finally {
+            myIsInUpdate = false;
           }
         });
       }
-    };
-    myUpdateAlarm.addRequest(request, delayMillis);
+
+      try {
+        if (!myProject.isDisposed()) {
+          updateTreeModel(requestFocus);
+        }
+      }
+      catch (ProcessCanceledException e) {
+        return;
+      }
+      if (runnable != null) {
+        runnable.run();
+      }
+    });
+    myUpdateAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(request, delayMillis, TimeUnit.MILLISECONDS);
   }
 
   private void rebuild(final boolean updateText) {
@@ -543,50 +531,41 @@ public class ScopeEditorPanel {
     PanelProgressIndicator progress = createProgressIndicator(requestFocus);
     progress.setBordersVisible(false);
     myCurrentProgress = progress;
-    Runnable updateModel = new Runnable() {
-      @Override
-      public void run() {
-        final ProcessCanceledException [] ex = new ProcessCanceledException[1];
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            try {
-              myTreeExpansionMonitor.freeze();
-              final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
-              ((PackageDependenciesNode)model.getRoot()).sortChildren();
-              if (myErrorMessage == null) {
-                String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
-                if (FilePatternPackageSet.SCOPE_FILE.equals(DependencyUISettings.getInstance().SCOPE_TYPE)) {
-                  message = UIUtil.toHtml(message + "<br/>(Non-project files are not shown)");
-                }
-                myMatchingCountLabel.setText(message);
-                myMatchingCountLabel.setForeground(new JLabel().getForeground());
-              }
-              else {
-                showErrorMessage();
-              }
-
-              SwingUtilities.invokeLater(new Runnable(){
-                @Override
-                public void run() { //not under progress
-                  myPackageTree.setModel(model);
-                  myTreeExpansionMonitor.restore();
-                }
-              });
-            } catch (ProcessCanceledException e) {
-              ex[0] = e;
+    Runnable updateModel = () -> {
+      final ProcessCanceledException [] ex = new ProcessCanceledException[1];
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (myProject.isDisposed()) return;
+        try {
+          myTreeExpansionMonitor.freeze();
+          final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
+          ((PackageDependenciesNode)model.getRoot()).sortChildren();
+          if (myErrorMessage == null) {
+            String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
+            if (FilePatternPackageSet.SCOPE_FILE.equals(DependencyUISettings.getInstance().SCOPE_TYPE)) {
+              message = UIUtil.toHtml(message + "<br/>(Non-project files are not shown)");
             }
-            finally {
-              myCurrentProgress = null;
-              //update label
-              setToComponent(myMatchingCountLabel, requestFocus);
-            }
+            myMatchingCountLabel.setText(message);
+            myMatchingCountLabel.setForeground(new JLabel().getForeground());
           }
-        });
-        if (ex[0] != null) {
-          throw ex[0];
+          else {
+            showErrorMessage();
+          }
+
+          SwingUtilities.invokeLater(() -> { //not under progress
+            myPackageTree.setModel(model);
+            myTreeExpansionMonitor.restore();
+          });
+        } catch (ProcessCanceledException e) {
+          ex[0] = e;
         }
+        finally {
+          myCurrentProgress = null;
+          //update label
+          setToComponent(myMatchingCountLabel, requestFocus);
+        }
+      });
+      if (ex[0] != null) {
+        throw ex[0];
       }
     };
     ProgressManager.getInstance().runProcess(updateModel, progress);
@@ -625,12 +604,7 @@ public class ScopeEditorPanel {
     myMatchingCountPanel.revalidate();
     myMatchingCountPanel.repaint();
     if (requestFocus) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myPatternField.getTextField().requestFocusInWindow();
-        }
-      });
+      SwingUtilities.invokeLater(() -> myPatternField.getTextField().requestFocusInWindow());
     }
   }
 
@@ -731,6 +705,7 @@ public class ScopeEditorPanel {
     private final boolean myRequestFocus;
 
     public MyPanelProgressIndicator(final boolean requestFocus) {
+      //noinspection Convert2Lambda
       super(new Consumer<JComponent>() {
         @Override
         public void consume(final JComponent component) {

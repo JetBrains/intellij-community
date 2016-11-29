@@ -198,13 +198,20 @@ public interface CaretModel {
   Caret getCaretAt(@NotNull VisualPosition pos);
 
   /**
-   * Adds a new caret at the given position, and returns corresponding Caret instance. Locations outside of possible values for the given
-   * document are trimmed automatically.
-   * Does nothing if multiple carets are not supporeted, a caret already exists at specified location or selection of existing caret
-   * includes the specified location, <code>null</code> is returned in this case.
+   * Same as {@link #addCaret(VisualPosition, boolean)} with <code>true</code> as a <code>makePrimary</code> boolean parameter value.
    */
   @Nullable
   Caret addCaret(@NotNull VisualPosition pos);
+
+  /**
+   * Adds a new caret at the given position, and returns corresponding {@link Caret} instance. Locations outside of possible values
+   * for the given document are trimmed automatically.
+   * Newly added caret will become a primary caret if and only if <code>makePrimary</code> value is <code>true</code>.
+   * Does nothing if multiple carets are not supported, a caret already exists at specified location or selection of existing caret
+   * includes the specified location, <code>null</code> is returned in this case.
+   */
+  @Nullable
+  Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary);
 
   /**
    * Removes a given caret if it's recognized by the model and is not the only existing caret in the document, returning <code>true</code>.

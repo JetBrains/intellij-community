@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.DocumentEvent;
 import java.awt.event.MouseAdapter;
@@ -37,7 +38,7 @@ import java.awt.event.MouseEvent;
 import java.util.Set;
 
 abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
-  final OptionsEditorContext myContext = new OptionsEditorContext(this);
+  final OptionsEditorContext myContext = new OptionsEditorContext();
   final Project myProject;
 
   boolean myDocumentWasChanged;
@@ -115,7 +116,13 @@ abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
 
   String getFilterText() {
     String text = mySearch.getText();
-    return text == null ? "" : text.trim();
+    if (text != null) {
+      text = text.trim();
+      if (1 < text.length()) {
+        return text;
+      }
+    }
+    return "";
   }
 
   void setHoldingFilter(boolean holding) {
@@ -127,10 +134,6 @@ abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
     return myHits != null && myHits.getNameHits().contains(configurable);
   }
 
-  ActionCallback update(boolean adjustSelection, boolean now) {
-    return update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
-  }
-
   ActionCallback update(String text, boolean adjustSelection, boolean now) {
     try {
       myUpdateRejected = true;
@@ -139,10 +142,10 @@ abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
     finally {
       myUpdateRejected = false;
     }
-    return update(adjustSelection, now);
+    return update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
   }
 
-  private ActionCallback update(DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
+  private ActionCallback update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
     if (myUpdateRejected) {
       return ActionCallback.REJECTED;
     }

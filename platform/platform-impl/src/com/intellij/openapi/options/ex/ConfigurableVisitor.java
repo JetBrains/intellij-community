@@ -65,7 +65,7 @@ public abstract class ConfigurableVisitor {
   }
 
   public final List<Configurable> findAll(@NotNull ConfigurableGroup... groups) {
-    List<Configurable> list = new ArrayList<Configurable>();
+    List<Configurable> list = new ArrayList<>();
     for (ConfigurableGroup group : groups) {
       add(list, group.getConfigurables());
     }
@@ -73,7 +73,7 @@ public abstract class ConfigurableVisitor {
   }
 
   public final List<Configurable> findAll(@NotNull Configurable... configurables) {
-    List<Configurable> list = new ArrayList<Configurable>();
+    List<Configurable> list = new ArrayList<>();
     add(list, configurables);
     return list;
   }

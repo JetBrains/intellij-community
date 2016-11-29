@@ -21,7 +21,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
@@ -58,12 +57,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(member);
     List<String> urls = JavaDocumentationProvider.getExternalJavaDocUrl(member);
     assertNotNull(urls);
-    List<String> actual = ContainerUtil.map(urls, new Function<String, String>() {
-      @Override
-      public String fun(String url) {
-        return url.substring(url.indexOf('#') + 1);
-      }
-    });
+    List<String> actual = ContainerUtil.map(urls, url -> url.substring(url.indexOf('#') + 1));
     assertOrderedEquals(actual, expected);
   }
 }

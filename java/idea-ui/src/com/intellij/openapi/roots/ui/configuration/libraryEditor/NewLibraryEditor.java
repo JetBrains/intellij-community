@@ -21,10 +21,9 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.ui.LightFilePointer;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +49,8 @@ public class NewLibraryEditor extends LibraryEditorBase {
   public NewLibraryEditor(@Nullable LibraryType type, @Nullable LibraryProperties properties) {
     myType = type;
     myProperties = properties;
-    myRoots = new MultiMap<OrderRootType, LightFilePointer>();
-    myExcludedRoots = new LinkedHashSet<LightFilePointer>();
+    myRoots = new MultiMap<>();
+    myExcludedRoots = new LinkedHashSet<>();
   }
 
   @Override
@@ -91,7 +90,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   private static String[] pointersToUrls(Collection<LightFilePointer> pointers) {
-    List<String> urls = new ArrayList<String>(pointers.size());
+    List<String> urls = new ArrayList<>(pointers.size());
     for (LightFilePointer pointer : pointers) {
       urls.add(pointer.getUrl());
     }
@@ -100,7 +99,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
   @Override
   public VirtualFile[] getFiles(OrderRootType rootType) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     for (LightFilePointer pointer : myRoots.get(rootType)) {
       final VirtualFile file = pointer.getFile();
       if (file == null) {
@@ -116,7 +115,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
       }
       result.add(file);
     }
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override
@@ -149,6 +148,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
     myExcludedRoots.add(new LightFilePointer(url));
   }
 
+  @Override
   public void removeExcludedRoot(@NotNull String url) {
     myExcludedRoots.remove(new LightFilePointer(url));
   }

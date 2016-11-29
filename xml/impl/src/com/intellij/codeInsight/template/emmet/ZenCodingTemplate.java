@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
@@ -119,7 +118,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       return;
     }
     try {
-      expand(key, callback, defaultGenerator, Collections.<ZenCodingFilter>emptyList(), true, Registry.intValue("emmet.segments.limit"));
+      expand(key, callback, defaultGenerator, Collections.emptyList(), true, Registry.intValue("emmet.segments.limit"));
     }
     catch (EmmetException e) {
       CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
@@ -152,19 +151,16 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
 
   private static List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
-    List<ZenCodingFilter> result = new ArrayList<ZenCodingFilter>();
+    List<ZenCodingFilter> result = new ArrayList<>();
 
     while (node instanceof FilterNode) {
       FilterNode filterNode = (FilterNode)node;
       String filterSuffix = filterNode.getFilter();
-      boolean filterFound = false;
       for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
         if (filter.isMyContext(context) && filter.getSuffix().equals(filterSuffix)) {
-          filterFound = true;
           result.add(filter);
         }
       }
-      assert filterFound;
       node = filterNode.getNode();
     }
 
@@ -316,40 +312,30 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public static void doWrap(@NotNull final String abbreviation, @NotNull final CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), true);
     assert defaultGenerator != null;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(callback.getProject(), () -> callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
       @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(callback.getProject(), new Runnable() {
-          @Override
-          public void run() {
-            callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
-              @Override
-              public void perform(Caret caret) {
-                String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
-                if (selectedText != null) {
-                  String selection = selectedText.trim();
-                  ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selection);
-                  assert node != null;
-                  PsiElement context = callback.getContext();
-                  ZenCodingGenerator generator = findApplicableGenerator(node, context, true);
-                  List<ZenCodingFilter> filters = getFilters(node, context);
+      public void perform(Caret caret) {
+        String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
+        if (selectedText != null) {
+          String selection = selectedText.trim();
+          ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selection);
+          assert node != null;
+          PsiElement context = callback.getContext();
+          ZenCodingGenerator generator = findApplicableGenerator(node, context, true);
+          List<ZenCodingFilter> filters = getFilters(node, context);
 
-                  EditorModificationUtil.deleteSelectedText(callback.getEditor());
-                  PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
+          EditorModificationUtil.deleteSelectedText(callback.getEditor());
+          PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
 
-                  try {
-                    expand(node, generator, filters, selection, callback, true, Registry.intValue("emmet.segments.limit"));
-                  }
-                  catch (EmmetException e) {
-                    CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
-                  }
-                }
-              }
-            });
+          try {
+            expand(node, generator, filters, selection, callback, true, Registry.intValue("emmet.segments.limit"));
           }
-        }, CodeInsightBundle.message("insert.code.template.command"), null);
+          catch (EmmetException e) {
+            CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
+          }
+        }
       }
-    });
+    }), CodeInsightBundle.message("insert.code.template.command"), null));
   }
 
   @Override
@@ -393,13 +379,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
       if (templatePrefix != null) {
         List<TemplateImpl> regularTemplates = TemplateManagerImpl.listApplicableTemplates(file, offset, false);
-        boolean regularTemplateWithSamePrefixExists = !ContainerUtil.filter(regularTemplates, new Condition<TemplateImpl>() {
-          @Override
-          public boolean value(TemplateImpl template) {
-            return templatePrefix.equals(template.getKey());
-          }
-        }).isEmpty();
-        
+        boolean regularTemplateWithSamePrefixExists = !ContainerUtil.filter(regularTemplates,
+                                                                            template -> templatePrefix.equals(template.getKey())).isEmpty();
         result = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
         result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
         if (!regularTemplateWithSamePrefixExists) {

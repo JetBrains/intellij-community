@@ -16,7 +16,7 @@ public class ApplyPatchContext {
   private final int mySkipTopDirs;
   private final boolean myCreateDirectories;
   private final boolean myAllowRename;
-  private final Map<VirtualFile, FilePath> myPathsBeforeRename = new HashMap<VirtualFile, FilePath>();
+  private final Map<VirtualFile, FilePath> myPathsBeforeRename = new HashMap<>();
 
   public ApplyPatchContext(final VirtualFile baseDir, final int skipTopDirs, final boolean createDirectories, final boolean allowRename) {
     myBaseDir = baseDir;

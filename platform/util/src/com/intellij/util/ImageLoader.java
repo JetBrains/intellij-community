@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -36,13 +37,17 @@ import java.awt.image.ImageFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
-@Deprecated
 public class ImageLoader implements Serializable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
+
+  private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private static class ImageDesc {
     public enum Type {
@@ -66,27 +71,48 @@ public class ImageLoader implements Serializable {
     public final @Nullable Class cls; // resource class if present
     public final float scale; // initial scale factor
     public final Type type;
+    public final boolean original; // path is not altered
 
     public ImageDesc(String path, Class cls, float scale, Type type) {
+      this(path, cls, scale, type, false);
+    }
+
+    public ImageDesc(String path, Class cls, float scale, Type type, boolean original) {
       this.path = path;
       this.cls = cls;
       this.scale = scale;
       this.type = type;
+      this.original = original;
     }
 
     @Nullable
     public Image load() throws IOException {
+      String cacheKey = null;
       InputStream stream = null;
       URL url = null;
       if (cls != null) {
+        //noinspection IOResourceOpenedButNotSafelyClosed
         stream = cls.getResourceAsStream(path);
         if (stream == null) return null;
       }
       if (stream == null) {
+        cacheKey = path;
+        Image image = ourCache.get(cacheKey);
+        if (image != null) return image;
+
         url = new URL(path);
-        stream = url.openStream();
+        URLConnection connection = url.openConnection();
+        if (connection instanceof HttpURLConnection) {
+          if (!original) return null;
+          connection.addRequestProperty("User-Agent", "IntelliJ");
+        }
+        stream = connection.getInputStream();
       }
-      return type.load(url, stream, scale);
+      Image image = type.load(url, stream, scale);
+      if (image != null && cacheKey != null) {
+        ourCache.put(cacheKey, image);
+      }
+      return image;
     }
 
     @Override
@@ -153,7 +179,7 @@ public class ImageLoader implements Serializable {
           vars.add(new ImageDesc(name + "@2x." + ext, cls, 2f, ImageDesc.Type.PNG));
         }
       }
-      vars.add(new ImageDesc(file, cls, 1f, ImageDesc.Type.PNG));
+      vars.add(new ImageDesc(file, cls, 1f, ImageDesc.Type.PNG, true));
       return vars;
     }
   }
@@ -167,6 +193,14 @@ public class ImageLoader implements Serializable {
 
     public static ImageConverterChain create() {
       return new ImageConverterChain();
+    }
+
+    public ImageConverterChain withFilter(final ImageFilter[] filters) {
+      ImageConverterChain chain = this;
+      for (ImageFilter filter : filters) {
+        chain = chain.withFilter(filter);
+      }
+      return chain;
     }
 
     public ImageConverterChain withFilter(final ImageFilter filter) {
@@ -227,11 +261,16 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling) {
-    return loadFromUrl(url, allowFloatScaling, null);
+    return loadFromUrl(url, allowFloatScaling, (ImageFilter)null);
   }
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling, ImageFilter filter) {
+    return loadFromUrl(url, allowFloatScaling, new ImageFilter[] {filter});
+  }
+
+  @Nullable
+  public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling, ImageFilter[] filters) {
     final float scaleFactor = calcScaleFactor(allowFloatScaling);
 
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
@@ -245,7 +284,7 @@ public class ImageLoader implements Serializable {
 
     return ImageDescList.create(url.toString(), null, UIUtil.isUnderDarcula(), loadRetinaImages, allowFloatScaling).load(
       ImageConverterChain.create().
-        withFilter(filter).
+        withFilter(filters).
         withRetina().
         with(new ImageConverter() {
               public Image convert(Image source, ImageDesc desc) {
@@ -268,8 +307,13 @@ public class ImageLoader implements Serializable {
 
   @NotNull
   private static Image scaleImage(Image image, float scale) {
-    int width = (int)(scale * image.getWidth(null));
-    int height = (int)(scale * image.getHeight(null));
+    int w = image.getWidth(null);
+    int h = image.getHeight(null);
+    if (w <= 0 || h <= 0) {
+      return image;
+    }
+    int width = (int)(scale * w);
+    int height = (int)(scale * h);
     // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
     // because ultra quality performs a few more passes when scaling, which introduces blurriness
     // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
@@ -278,13 +322,18 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(URL url, boolean dark, boolean retina) {
-    return loadFromUrl(url, dark, retina, null);
+    return loadFromUrl(url, dark, retina, (ImageFilter[])null);
   }
 
   @Nullable
   public static Image loadFromUrl(URL url, boolean dark, boolean retina, ImageFilter filter) {
+    return loadFromUrl(url, dark, retina, new ImageFilter[] {filter});
+  }
+
+  @Nullable
+  public static Image loadFromUrl(URL url, boolean dark, boolean retina, ImageFilter[] filters) {
     return ImageDescList.create(url.toString(), null, dark, retina, true).
-      load(ImageConverterChain.create().withFilter(filter).withRetina());
+      load(ImageConverterChain.create().withFilter(filters).withRetina());
   }
 
   @Nullable

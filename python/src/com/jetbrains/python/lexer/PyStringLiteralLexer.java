@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,6 +49,7 @@ public class PyStringLiteralLexer extends LexerBase {
 
   private boolean myIsRaw;
   private boolean myIsTriple;
+  private boolean myIsFormatted;
   private final IElementType myOriginalLiteralToken;
   private boolean mySeenEscapedSpacesOnly;
 
@@ -68,42 +70,21 @@ public class PyStringLiteralLexer extends LexerBase {
     myBufferEnd = endOffset;
 
     // the following could be parsing steps if we wanted this info as tokens
-    int i = myStart;
+    final String prefix = PyStringLiteralUtil.getPrefix(buffer, myStart);
 
-    i = skipEncodingPrefix(buffer, i);
-    int offset = skipRawPrefix(buffer, i);
-    if (offset > i) myIsRaw = true;
-    i = offset;
-    i = skipEncodingPrefix(buffer, i);
-    offset = skipRawPrefix(buffer, i);
-    if (offset > i) myIsRaw = true;
-    i = offset;
+    myIsFormatted = PyStringLiteralUtil.isFormattedPrefix(prefix);
+    myIsRaw = PyStringLiteralUtil.isRawPrefix(prefix);
 
+    final int quoteOffset = myStart + prefix.length();
     // which quote char?
-    char c = buffer.charAt(i);
+    char c = buffer.charAt(quoteOffset);
     assert (c == '"') || (c == '\'') : "String must be quoted by single or double quote. Found '" + c + "' in string " + buffer;
     myQuoteChar = c;
 
-    myIsTriple = (buffer.length() > i + 2) && (buffer.charAt(i + 1) == c) && (buffer.charAt(i + 2) == c);
+    myIsTriple = (buffer.length() > quoteOffset + 2) && (buffer.charAt(quoteOffset + 1) == c) && (buffer.charAt(quoteOffset + 2) == c);
 
     // calculate myEnd at last
     myEnd = locateToken(myStart);
-  }
-
-  public static int skipRawPrefix(CharSequence text, int startOffset) {
-    char c = Character.toUpperCase(text.charAt(startOffset));
-    if (c == 'R') {
-      startOffset++;
-    }
-    return startOffset;
-  }
-
-  public static int skipEncodingPrefix(CharSequence text, int startOffset) {
-    char c = Character.toUpperCase(text.charAt(startOffset));
-    if (c == 'U' || c == 'B' || c == 'C') {
-      startOffset++;
-    }
-    return startOffset;
   }
 
   public int getState() {
@@ -245,7 +226,7 @@ public class PyStringLiteralLexer extends LexerBase {
       if (myBuffer.charAt(i) == 'x') {
         i++;
         for (; i < start + 4; i++) {
-          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar) {
+          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar || myBuffer.charAt(i) == '\\') {
             return i;
           }
         }
@@ -257,7 +238,7 @@ public class PyStringLiteralLexer extends LexerBase {
         final int width = myBuffer.charAt(i) == 'u'? 4 : 8; // is it uNNNN or Unnnnnnnn
         i++;
         for (; i < start + width + 2; i++) {
-          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar) {
+          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar || myBuffer.charAt(i) == '\\') {
             return i;
           }
         }
@@ -266,10 +247,10 @@ public class PyStringLiteralLexer extends LexerBase {
 
       if (myBuffer.charAt(i) == 'N' && isUnicodeMode()) {
         i++;
-        while(i < myBufferEnd && myBuffer.charAt(i) != '}') {
+        while(i < myBufferEnd && myBuffer.charAt(i) != '}' && myBuffer.charAt(i) != '\\') {
           i++;
         }
-        if (i < myBufferEnd) {
+        if (i < myBufferEnd && myBuffer.charAt(i) == '}') {
           i++;
         }
         return i;

@@ -25,7 +25,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -108,9 +107,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
       });
     }
     else {
-      ((JBComboBoxTableCellEditorComponent)component).setToString(new Function<Object, String>() {
-        @Override public String fun(Object o) { return o == null ? "" : ((NamedScope)o).getName(); }
-      });
+      ((JBComboBoxTableCellEditorComponent)component).setToString(o -> o == null ? "" : ((NamedScope)o).getName());
     }
 
     rebuild();
@@ -156,7 +153,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
   }
 
   protected NamedScope[] createModel() {
-    final Collection<NamedScope> model = new ArrayList<NamedScope>();
+    final Collection<NamedScope> model = new ArrayList<>();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(myProject);
     model.addAll(Arrays.asList(manager.getScopes()));
     for (PackageSet unnamedScope : manager.getUnnamedScopes().values()) {

@@ -42,7 +42,7 @@ public class DuplicatedDataProviderNamesInspection extends BaseJavaLocalInspecti
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final String dataProviderFqn = DataProvider.class.getCanonicalName();
 
-    final MultiMap<String, PsiMethod> dataProvidersByName = new MultiMap<String, PsiMethod>();
+    final MultiMap<String, PsiMethod> dataProvidersByName = new MultiMap<>();
     for (PsiMethod method : aClass.getMethods()) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
       if (annotation != null) {
@@ -57,7 +57,7 @@ public class DuplicatedDataProviderNamesInspection extends BaseJavaLocalInspecti
       }
     }
 
-    final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
+    final List<ProblemDescriptor> descriptors = new SmartList<>();
     for (Map.Entry<String, Collection<PsiMethod>> entry : dataProvidersByName.entrySet()) {
       if (entry.getValue().size() > 1) {
         for (PsiMethod method : entry.getValue()) {

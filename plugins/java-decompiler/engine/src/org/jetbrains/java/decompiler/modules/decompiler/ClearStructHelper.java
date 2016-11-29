@@ -25,7 +25,7 @@ public class ClearStructHelper {
 
   public static void clearStatements(RootStatement root) {
 
-    LinkedList<Statement> stack = new LinkedList<Statement>();
+    LinkedList<Statement> stack = new LinkedList<>();
     stack.add(root);
 
     while (!stack.isEmpty()) {

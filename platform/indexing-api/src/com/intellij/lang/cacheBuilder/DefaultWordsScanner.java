@@ -33,6 +33,7 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
   private final TokenSet myCommentTokenSet;
   private final TokenSet myLiteralTokenSet;
   private final TokenSet mySkipCodeContextTokenSet;
+  private final TokenSet myProcessAsWordTokenSet;
   private boolean myMayHaveFileRefsInLiterals;
 
   /**
@@ -58,12 +59,29 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
    * @param skipCodeContextTokenSet the set of token types which should not be considered as code context.
    */
   public DefaultWordsScanner(final Lexer lexer, final TokenSet identifierTokenSet, final TokenSet commentTokenSet,
-                             final TokenSet literalTokenSet, @NotNull TokenSet skipCodeContextTokenSet) {
+                             final TokenSet literalTokenSet, final @NotNull TokenSet skipCodeContextTokenSet) {
+    this(lexer, identifierTokenSet, commentTokenSet, literalTokenSet, skipCodeContextTokenSet, TokenSet.EMPTY);
+  }
+
+  /**
+   * Creates a new instance of the words scanner.
+   *
+   * @param lexer              the lexer used for breaking the text into tokens.
+   * @param identifierTokenSet the set of token types which represent identifiers.
+   * @param commentTokenSet    the set of token types which represent comments.
+   * @param literalTokenSet    the set of token types which represent literals.
+   * @param skipCodeContextTokenSet the set of token types which should not be considered as code context.
+   * @param processAsWordTokenSet   the set of token types which represent overload operators.
+   */
+  public DefaultWordsScanner(final Lexer lexer, final TokenSet identifierTokenSet, final TokenSet commentTokenSet,
+                             final TokenSet literalTokenSet, @NotNull TokenSet skipCodeContextTokenSet,
+                             final @NotNull TokenSet processAsWordTokenSet) {
     myLexer = lexer;
     myIdentifierTokenSet = identifierTokenSet;
     myCommentTokenSet = commentTokenSet;
     myLiteralTokenSet = literalTokenSet;
     mySkipCodeContextTokenSet = skipCodeContextTokenSet;
+    myProcessAsWordTokenSet = processAsWordTokenSet;
   }
 
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
@@ -72,7 +90,11 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
 
     IElementType type;
     while ((type = myLexer.getTokenType()) != null) {
-      if (myIdentifierTokenSet.contains(type)) {
+      if (myProcessAsWordTokenSet.contains(type)) {
+        occurrence.init(fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+        processor.process(occurrence);
+      }
+      else if (myIdentifierTokenSet.contains(type)) {
         //occurrence.init(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         //if (!processor.process(occurrence)) return;
         if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;      }

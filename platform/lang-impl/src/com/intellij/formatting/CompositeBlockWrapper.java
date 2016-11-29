@@ -16,7 +16,6 @@
 
 package com.intellij.formatting;
 
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,22 +25,10 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
   private List<AbstractBlockWrapper> myChildren;
   private ProbablyIncreasingLowerboundAlgorithm<AbstractBlockWrapper> myPrevBlockCalculator = null;
 
-  /**
-   * Shortcut for calling {@link #CompositeBlockWrapper(Block, WhiteSpace, CompositeBlockWrapper, TextRange)} with
-   * {@link Block#getTextRange() text range associated with the given block}.
-   *
-   * @param block         block to wrap
-   * @param whiteSpaceBefore    white space before the block
-   * @param parent        wrapped block parent
-   */
   public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpaceBefore, @Nullable final CompositeBlockWrapper parent) {
     super(block, whiteSpaceBefore, parent, block.getTextRange());
   }
-
-  public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpaceBefore, final CompositeBlockWrapper parent, TextRange textRange) {
-    super(block, whiteSpaceBefore, parent, textRange);
-  }
-
+  
   public List<AbstractBlockWrapper> getChildren() {
     return myChildren;
   }
@@ -75,7 +62,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
   }
 
   @Override
-  protected IndentData getNumberOfSymbolsBeforeBlock() {
+  public IndentData getNumberOfSymbolsBeforeBlock() {
     if (myChildren == null || myChildren.isEmpty()) {
       return new IndentData(0, 0);
     }
@@ -123,7 +110,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
   @Nullable
   private AbstractBlockWrapper getPrevIndentedSiblingFast(@NotNull final AbstractBlockWrapper current) {
     if (myPrevBlockCalculator == null) {
-      myPrevBlockCalculator = new ProbablyIncreasingLowerboundAlgorithm<AbstractBlockWrapper>(myChildren);
+      myPrevBlockCalculator = new ProbablyIncreasingLowerboundAlgorithm<>(myChildren);
     }
 
     final List<AbstractBlockWrapper> leftBlocks = myPrevBlockCalculator.getLeftSubList(current);
@@ -135,14 +122,4 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
     }
     return null;
   }
-
-  /*
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    for (AbstractBlockWrapper child : myChildren) {
-      result.append(child.getWhiteSpace().generateWhiteSpace(DEF_OPTIONS)).append(child.toString());
-    }
-    return result.toString();
-  } */
 }

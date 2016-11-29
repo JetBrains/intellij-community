@@ -36,7 +36,7 @@ public class SuperfluousRemover {
 
   SuperfluousRemover(boolean checkBefore) {
     myCheckBefore = checkBefore;
-    myParentPaths = new HashSet<File>();
+    myParentPaths = new HashSet<>();
   }
 
   protected boolean accept(@NotNull Change change) {

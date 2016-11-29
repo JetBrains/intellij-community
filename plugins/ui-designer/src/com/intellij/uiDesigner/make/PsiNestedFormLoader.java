@@ -35,7 +35,7 @@ import java.util.HashMap;
  */
 public class PsiNestedFormLoader implements NestedFormLoader {
   protected Module myModule;
-  private final Map<String, LwRootContainer> myFormCache = new HashMap<String, LwRootContainer>();
+  private final Map<String, LwRootContainer> myFormCache = new HashMap<>();
 
   public PsiNestedFormLoader(final Module module) {
     myModule = module;

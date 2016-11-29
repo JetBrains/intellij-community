@@ -17,12 +17,13 @@ package org.jetbrains.debugger
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.io.CharSequenceBackedByChars
+import com.intellij.util.io.addChannelListener
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.io.CharSequenceBackedByChars
-import org.jetbrains.io.addChannelListener
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.CharBuffer
@@ -69,11 +70,15 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
   if (!suffix.isNullOrEmpty()) {
     debugFile = debugFile.replace(".json", suffix + ".json")
   }
+  return createDebugLoggerWithFile(debugFile)
+}
 
+fun createDebugLoggerWithFile(debugFile: String): MessagingLogger? {
   val queue = ConcurrentLinkedQueue<LogEntry>()
   val logger = MessagingLogger(queue)
   ApplicationManager.getApplication().executeOnPooledThread {
     val file = File(FileUtil.expandUserHome(debugFile))
+    FileUtilRt.createParentDirs(file)
     val out = FileOutputStream(file)
     val writer = out.writer()
     writer.write("[\n")

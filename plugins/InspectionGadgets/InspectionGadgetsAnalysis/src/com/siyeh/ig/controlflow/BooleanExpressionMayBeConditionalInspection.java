@@ -62,14 +62,8 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("if.may.be.conditional.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("if.may.be.conditional.quickfix");
     }
 
     @Override
@@ -144,11 +138,11 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
           ParenthesesUtils.stripParentheses(rBinaryExpression.getROperand()) == null) {
         return;
       }
-      if (EquivalenceChecker.expressionsAreEquivalent(BoolUtils.getNegated(expression1), expression2) &&
+      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(BoolUtils.getNegated(expression1), expression2) &&
           !SideEffectChecker.mayHaveSideEffects(expression2)) {
         registerError(expression);
       }
-      else if (EquivalenceChecker.expressionsAreEquivalent(expression1, BoolUtils.getNegated(expression2)) &&
+      else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, BoolUtils.getNegated(expression2)) &&
                !SideEffectChecker.mayHaveSideEffects(expression1)) {
         registerError(expression);
       }

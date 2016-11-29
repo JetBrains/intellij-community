@@ -18,12 +18,19 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -33,13 +40,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +69,10 @@ public final class EditorUtil {
    */
   public static boolean isRealFileEditor(@Nullable Editor editor) {
     return editor != null && TextEditorProvider.getInstance().getTextEditor(editor) instanceof TextEditorImpl;
+  }
+
+  public static boolean isPasswordEditor(@Nullable Editor editor) {
+    return editor != null && editor.getContentComponent() instanceof JPasswordField;
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
@@ -448,9 +458,9 @@ public final class EditorUtil {
       }
     }
 
-    if (editor == null || useOptimization) {
-      Document document = editor == null ? null : editor.getDocument();
-      if (document != null && start < offset-1 && document.getLineNumber(start) != document.getLineNumber(offset-1)) {
+    if (editor != null && useOptimization) {
+      Document document = editor.getDocument();
+      if (start < offset - 1 && document.getLineNumber(start) != document.getLineNumber(offset - 1)) {
         String editorInfo = editor instanceof EditorImpl ? ". Editor info: " + ((EditorImpl)editor).dumpState() : "";
         String documentInfo;
         if (text instanceof Dumpable) {
@@ -463,20 +473,18 @@ public final class EditorUtil {
           LOG, "detected incorrect offset -> column number calculation",
           "start: " + start + ", given offset: " + offset+", given tab size: " + tabSize + ". "+documentInfo+ editorInfo);
       }
-      int shift = 0;
-      if (hasTabs) {
-        for (int i = start; i < offset; i++) {
-          char c = text.charAt(i);
-          if (c == '\t') {
-            shift += getTabLength(i + shift - start, tabSize) - 1;
-          }
-        }
-      }
-      return offset - start + shift;
     }
 
-    EditorEx editorImpl = (EditorEx) editor;
-    return editorImpl.calcColumnNumber(text, start, offset, tabSize);
+    int shift = 0;
+    if (hasTabs) {
+      for (int i = start; i < offset; i++) {
+        char c = text.charAt(i);
+        if (c == '\t') {
+          shift += getTabLength(i + shift - start, tabSize) - 1;
+        }
+      }
+    }
+    return offset - start + shift;
   }
 
   public static void setHandCursor(@NotNull Editor view) {
@@ -668,6 +676,10 @@ public final class EditorUtil {
     return calcSurroundingRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
   }
 
+  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Caret caret) {
+    return calcSurroundingRange(caret.getEditor(), caret.getVisualPosition(), caret.getVisualPosition());
+  }
+
   /**
    * Calculates logical positions that surround given visual positions and conform to the following criteria:
    * <pre>
@@ -792,6 +804,7 @@ public final class EditorUtil {
   }
 
   public static boolean isChangeFontSize(@NotNull MouseWheelEvent e) {
+    if (e.getWheelRotation() == 0) return false;
     return SystemInfo.isMac
            ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
@@ -856,12 +869,9 @@ public final class EditorUtil {
     if (startFoldRegion != null || endFoldRegion != null) {
       final FoldRegion finalStartFoldRegion = startFoldRegion;
       final FoldRegion finalEndFoldRegion = endFoldRegion;
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          if (finalStartFoldRegion != null) finalStartFoldRegion.setExpanded(true);
-          if (finalEndFoldRegion != null) finalEndFoldRegion.setExpanded(true);
-        }
+      foldingModel.runBatchFoldingOperation(() -> {
+        if (finalStartFoldRegion != null) finalStartFoldRegion.setExpanded(true);
+        if (finalEndFoldRegion != null) finalEndFoldRegion.setExpanded(true);
       });
     }
     editor.getSelectionModel().setSelection(startOffset, endOffset);
@@ -889,9 +899,52 @@ public final class EditorUtil {
     return editor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).size();
   }
 
-  public static boolean attributesImpactFontStyle(@Nullable TextAttributes attributes) {
-    return attributes == TextAttributes.ERASE_MARKER || (attributes != null && attributes.getFontType() != Font.PLAIN);
+  public static boolean attributesImpactFontStyleOrColor(@Nullable TextAttributes attributes) {
+    return attributes == TextAttributes.ERASE_MARKER ||
+           (attributes != null && (attributes.getFontType() != Font.PLAIN || attributes.getForegroundColor() != null));
+  }
+
+  public static boolean isCurrentCaretPrimary(@NotNull Editor editor) {
+    return editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret();
+  }
+
+  public static void disposeWithEditor(@NotNull Editor editor, @NotNull Disposable disposable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (Disposer.isDisposed(disposable)) return;
+    if (editor.isDisposed()) {
+      Disposer.dispose(disposable);
+      return;
+    }
+    // for injected editors disposal will happen only when host editor is disposed,
+    // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
+    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        if (event.getEditor() == hostEditor) {
+          Disposer.dispose(disposable);
+        }
+      }
+    }, disposable);
+  }
+
+  public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {
+    DocumentEx document = ObjectUtils.tryCast(editor.getDocument(), DocumentEx.class);
+    if (document != null && document.isInBulkUpdate()) {
+      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+      disposeWithEditor(editor, connection);
+      connection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+        @Override
+        public void updateFinished(@NotNull Document doc) {
+          if (doc == editor.getDocument()) {
+            editor.getFoldingModel().runBatchFoldingOperation(operation);
+            connection.disconnect();
+          }
+        }
+      });
+    }
+    else {
+      editor.getFoldingModel().runBatchFoldingOperation(operation);
+    }
   }
 }
-
-

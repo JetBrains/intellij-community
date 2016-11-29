@@ -51,7 +51,7 @@ public class HeaderParserRepository {
     @NotNull
     @Override
     protected Map<String, HeaderParser> compute() {
-      Map<String, HeaderParser> map = new THashMap<String, HeaderParser>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      Map<String, HeaderParser> map = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
       for (HeaderParserProvider provider : Extensions.getExtensions(HeaderParserProvider.EP_NAME)) {
         map.putAll(provider.getHeaderParsers());
       }

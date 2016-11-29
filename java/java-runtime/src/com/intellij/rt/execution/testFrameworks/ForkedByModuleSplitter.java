@@ -27,23 +27,20 @@ public abstract class ForkedByModuleSplitter {
   protected final ForkedDebuggerHelper myForkedDebuggerHelper = new ForkedDebuggerHelper();
   protected final String myWorkingDirsPath;
   protected final String myForkMode;
-  protected final PrintStream myOut;
-  protected final PrintStream myErr;
   protected final List   myNewArgs;
   protected String myDynamicClasspath;
   protected List myVMParameters;
 
-  public ForkedByModuleSplitter(String workingDirsPath, String forkMode, PrintStream out, PrintStream err, List newArgs) {
+  public ForkedByModuleSplitter(String workingDirsPath, String forkMode, List newArgs) {
     myWorkingDirsPath = workingDirsPath;
     myForkMode = forkMode;
-    myOut = out;
-    myErr = err;
     myNewArgs = newArgs;
   }
 
   public int startSplitting(String[] args,
                             String configName,
-                            String commandLinePath) throws Exception {
+                            String commandLinePath,
+                            String repeatCount) throws Exception {
     args = myForkedDebuggerHelper.excludeDebugPortFromArgs(args);
 
     myVMParameters = new ArrayList();
@@ -59,23 +56,16 @@ public abstract class ForkedByModuleSplitter {
       bufferedReader.close();
     }
 
-    long time = System.currentTimeMillis();
-    int result = startSplitting(args, configName);
+    int result = startSplitting(args, configName, repeatCount);
     myForkedDebuggerHelper.closeDebugSocket();
-    sendTime(time);
     return result;
   }
 
   //read output from wrappers
-  protected int startChildFork(List args, File workingDir, String classpath) throws IOException, InterruptedException {
+  protected int startChildFork(final List args, File workingDir, String classpath, String repeatCount) throws IOException, InterruptedException {
     List vmParameters = new ArrayList(myVMParameters);
 
     myForkedDebuggerHelper.setupDebugger(vmParameters);
-    //noinspection SSBasedInspection
-    final File tempFile = File.createTempFile("fork", "test");
-    tempFile.deleteOnExit();
-    final String testOutputPath = tempFile.getAbsolutePath();
-
     final ProcessBuilder builder = new ProcessBuilder();
     builder.add(vmParameters);
     builder.add("-classpath");
@@ -92,18 +82,57 @@ public abstract class ForkedByModuleSplitter {
     }
 
     builder.add(getStarterName());
-    builder.add(testOutputPath);
     builder.add(args);
+    if (repeatCount != null) {
+      builder.add(repeatCount);
+    }
     builder.setWorkingDir(workingDir);
 
     final Process exec = builder.createProcess();
-    final int result = exec.waitFor();
-    ForkedVMWrapper.readWrapped(testOutputPath, myOut, myErr);
-    return result;
+    final boolean[] stopped = new boolean[1];
+
+    new Thread(createInputReader(exec.getErrorStream(), System.err, stopped), "Read forked error output").start();
+    new Thread(createInputReader(exec.getInputStream(), System.out, stopped), "Read forked output").start();
+    final int i = exec.waitFor();
+    stopped[0] = true;
+    return i;
+  }
+
+  private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream, final boolean[] stopped) {
+    return new Runnable() {
+      char[] buf = new char[8192];
+
+      public void run() {
+        final InputStreamReader inputReader = new InputStreamReader(inputStream);
+        try {
+          while (true) {
+            if (stopped[0]) break;
+
+            int n;
+            try {
+              while (inputReader.ready() && (n = inputReader.read(buf)) > 0) {
+                outputStream.print(new String(buf, 0, n));
+              }
+            }
+            catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+        }
+        finally {
+          try {
+            inputReader.close();
+          }
+          catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    };
   }
 
   //read file with classes grouped by module
-  protected int splitPerModule() throws IOException {
+  protected int splitPerModule(String repeatCount) throws IOException {
     int result = 0;
     final BufferedReader perDirReader = new BufferedReader(new FileReader(myWorkingDirsPath));
     try {
@@ -126,7 +155,7 @@ public abstract class ForkedByModuleSplitter {
             classNames.add(className);
           }
 
-          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, result);
+          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, repeatCount, result);
           result = Math.min(childResult, result);
         }
         catch (Exception e) {
@@ -140,19 +169,16 @@ public abstract class ForkedByModuleSplitter {
     return result;
   }
 
-  protected abstract int startSplitting(String[] args, String configName) throws Exception;
+  protected abstract int startSplitting(String[] args, String configName, String repeatCount) throws Exception;
 
   protected abstract int startPerModuleFork(String moduleName,
                                             List classNames,
                                             String packageName,
                                             String workingDir,
                                             String classpath,
-                                            int result) throws Exception;
+                                            String repeatCount, int result) throws Exception;
 
   protected abstract String getStarterName();
-  
-  protected void sendTime(long time) {}
-  protected void sendTree(Object rootDescription) {}
 
   public static File createClasspathJarFile(Manifest manifest, String classpath) throws IOException {
     final Attributes attributes = manifest.getMainAttributes();

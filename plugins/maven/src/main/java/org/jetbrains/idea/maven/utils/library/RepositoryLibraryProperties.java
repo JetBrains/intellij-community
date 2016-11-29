@@ -19,38 +19,30 @@ import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.maven.model.RepositoryLibraryDescriptor;
+
+import java.util.function.Function;
 
 /**
  * @author nik
  */
 public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLibraryProperties> {
-  private String mavenId;
-  private String groupId;
-  private String artifactId;
-  private String version;
+  private RepositoryLibraryDescriptor myDescriptor;
 
   public RepositoryLibraryProperties() {
   }
 
   public RepositoryLibraryProperties(String mavenId) {
-    setMavenId(mavenId);
+    myDescriptor = new RepositoryLibraryDescriptor(mavenId);
   }
 
   public RepositoryLibraryProperties(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
-    this.groupId = groupId;
-    this.artifactId = artifactId;
-    this.version = version;
-    this.mavenId = groupId + ":" + artifactId + ":" + version;
+    myDescriptor = new RepositoryLibraryDescriptor(groupId,  artifactId, version);
   }
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof RepositoryLibraryProperties)) {
-      return false;
-    }
-    RepositoryLibraryProperties other = (RepositoryLibraryProperties)obj;
-    return Comparing.equal(mavenId, other.mavenId);
-
+    return obj instanceof RepositoryLibraryProperties && Comparing.equal(myDescriptor, ((RepositoryLibraryProperties)obj).myDescriptor);
   }
 
   @Override
@@ -65,41 +57,36 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   @Override
   public void loadState(RepositoryLibraryProperties state) {
-    setMavenId(state.mavenId);
+    myDescriptor = state.myDescriptor;
   }
 
   @Attribute("maven-id")
   public String getMavenId() {
-    return mavenId;
+    return call(RepositoryLibraryDescriptor::getMavenId);
   }
 
   public void setMavenId(String mavenId) {
-    this.mavenId = mavenId;
-    if (mavenId == null) {
-      groupId = artifactId = version = null;
-    }
-    else {
-      String[] parts = mavenId.split(":");
-      groupId = parts.length > 0 ? parts[0] : null;
-      artifactId = parts.length > 1 ? parts[1] : null;
-      version = parts.length > 2 ? parts[2] : null;
-    }
+    myDescriptor = new RepositoryLibraryDescriptor(mavenId);
   }
 
   public String getGroupId() {
-    return groupId;
+    return call(RepositoryLibraryDescriptor::getGroupId);
   }
 
   public String getArtifactId() {
-    return artifactId;
+    return call(RepositoryLibraryDescriptor::getArtifactId);
   }
 
   public String getVersion() {
-    return version;
+    return call(RepositoryLibraryDescriptor::getVersion);
   }
 
   public void changeVersion(String version) {
-    this.version = version;
-    this.mavenId = groupId + ":" + artifactId + ":" + version;
+    myDescriptor = new RepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version);
+  }
+
+  private String call(Function<RepositoryLibraryDescriptor, String> method) {
+    final RepositoryLibraryDescriptor descriptor = myDescriptor;
+    return descriptor != null ? method.apply(descriptor) : null;
   }
 }

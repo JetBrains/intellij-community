@@ -17,10 +17,11 @@ package com.intellij.ide.scratch;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,7 +94,8 @@ public abstract class RootType {
   @Nullable
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
     Language language = substituteLanguage(project, file);
-    LanguageFileType fileType = language != null ? language.getAssociatedFileType() : null;
+    FileType fileType = LanguageUtil.getLanguageFileType(language);
+    if (fileType == null) fileType = ScratchUtil.getFileTypeFromName(file);
     return fileType != null ? fileType.getIcon() : null;
   }
 

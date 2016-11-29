@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.Application;
@@ -55,7 +54,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * User: dcheryasov
  * Date: Oct 9, 2009 6:07:19 PM
  */
-public class ImportToggleAliasIntention implements IntentionAction {
+public class ImportToggleAliasIntention extends PyBaseIntentionAction {
   private static class IntentionState {
     private PyImportElement myImportElement;
     private PyFromImportStatement myFromImportStatement;
@@ -65,9 +64,11 @@ public class ImportToggleAliasIntention implements IntentionAction {
     private static IntentionState fromContext(Editor editor, PsiFile file) {
       IntentionState state = new IntentionState();
       state.myImportElement  = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyImportElement.class);
-      if (state.myImportElement != null && state.myImportElement.isValid()) {
+      PyPsiUtils.assertValid(state.myImportElement);
+      if (state.myImportElement != null) {
         PyTargetExpression target = state.myImportElement.getAsNameElement();
-        if (target != null && target.isValid()) state.myAlias = target.getName();
+        PyPsiUtils.assertValid(target);
+        if (target != null) state.myAlias = target.getName();
         else state.myAlias = null;
         state.myFromImportStatement = PsiTreeUtil.getParentOfType(state.myImportElement, PyFromImportStatement.class);
         state.myImportStatement = PsiTreeUtil.getParentOfType(state.myImportElement, PyImportStatement.class);
@@ -77,11 +78,13 @@ public class ImportToggleAliasIntention implements IntentionAction {
 
     public boolean isAvailable() {
       if (myFromImportStatement != null) {
+        PyPsiUtils.assertValid(myFromImportStatement);
         if (!myFromImportStatement.isValid() || myFromImportStatement.isFromFuture()) {
           return false;
         }
       }
       else {
+        PyPsiUtils.assertValid(myImportStatement);
         if (myImportStatement == null || !myImportStatement.isValid()) {
           return false;
         }
@@ -105,14 +108,6 @@ public class ImportToggleAliasIntention implements IntentionAction {
     }
   }
 
-  private String myLastText;
-
-
-  @NotNull
-  public String getText() {
-    return myLastText;
-  }
-
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.Family.toggle.import.alias");
@@ -124,11 +119,12 @@ public class ImportToggleAliasIntention implements IntentionAction {
     }
 
     IntentionState state = IntentionState.fromContext(editor, file);
-    myLastText = state.getText();
+    setText(state.getText());
     return state.isAvailable();
   }
 
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     // sanity check: isAvailable must have set it.
     final IntentionState state = IntentionState.fromContext(editor, file);
     //
@@ -171,7 +167,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
       }
       final PsiElement referee = reference.getReference().resolve();
       if (referee != null && imported_name != null) {
-        final Collection<PsiReference> references = new ArrayList<PsiReference>();
+        final Collection<PsiReference> references = new ArrayList<>();
         final ScopeOwner scope = PsiTreeUtil.getParentOfType(state.myImportElement, ScopeOwner.class);
         PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
           public boolean execute(@NotNull PsiElement element) {
@@ -253,9 +249,5 @@ public class ImportToggleAliasIntention implements IntentionAction {
     catch (IncorrectOperationException ignored) {
       PyUtil.showBalloon(project, PyBundle.message("QFIX.action.failed"), MessageType.WARNING);
     }
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

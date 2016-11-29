@@ -108,12 +108,7 @@ public abstract class ToolbarUpdater implements Activatable {
           fm.doWhenFocusSettlesDown(updateRunnable);
         }
         else {
-          UiNotifyConnector.doWhenFirstShown(myComponent, new Runnable() {
-            @Override
-            public void run() {
-              fm.doWhenFocusSettlesDown(updateRunnable);
-            }
-          });
+          UiNotifyConnector.doWhenFirstShown(myComponent, () -> fm.doWhenFocusSettlesDown(updateRunnable));
         }
       }
     }
@@ -122,7 +117,7 @@ public abstract class ToolbarUpdater implements Activatable {
   protected abstract void updateActionsImpl(boolean transparentOnly, boolean forced);
 
   protected void updateActionTooltips() {
-    for (ActionButton actionButton : UIUtil.uiTraverser().withRoot(myComponent).preOrderDfsTraversal().filter(ActionButton.class)) {
+    for (ActionButton actionButton : UIUtil.uiTraverser(myComponent).preOrderDfsTraversal().filter(ActionButton.class)) {
       actionButton.updateToolTipText();
     }
   }
@@ -176,7 +171,7 @@ public abstract class ToolbarUpdater implements Activatable {
       myForced = forced;
       myHash = updater.hashCode();
 
-      myUpdaterRef = new WeakReference<ToolbarUpdater>(updater);
+      myUpdaterRef = new WeakReference<>(updater);
     }
 
     @Override

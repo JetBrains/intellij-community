@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
@@ -34,6 +33,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -49,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Objects;
 
 public class ShelvedChange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChange");
@@ -58,7 +58,6 @@ public class ShelvedChange {
   private final String myBeforePath;
   private final String myAfterPath;
   private final FileStatus myFileStatus;
-  private final AtomicReference<Boolean> myIsConflicting;
   private Change myChange;
 
   public ShelvedChange(final String patchPath, final String beforePath, final String afterPath, final FileStatus fileStatus) {
@@ -67,25 +66,19 @@ public class ShelvedChange {
     // optimisation: memory
     myAfterPath = Comparing.equal(beforePath, afterPath) ? beforePath : afterPath;
     myFileStatus = fileStatus;
-    myIsConflicting = new AtomicReference<Boolean>();
   }
 
   public boolean isConflictingChange(final Project project) {
-    Boolean isConflicting = myIsConflicting.get();
-    if (isConflicting != null) return isConflicting;
-
     ContentRevision afterRevision = getChange(project).getAfterRevision();
     if (afterRevision == null) return false;
     try {
       afterRevision.getContent();
     }
-    catch(VcsException e) {
+    catch (VcsException e) {
       if (e.getCause() instanceof ApplyPatchException) {
-        myIsConflicting.set(true);
         return true;
       }
     }
-    myIsConflicting.set(false);
     return false;
   }
 
@@ -197,14 +190,13 @@ public class ShelvedChange {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myPatchPath, myBeforePath, myAfterPath, myFileStatus);
+    return Objects.hash(myPatchPath, myBeforePath, myAfterPath, myFileStatus);
   }
 
   private class PatchedContentRevision implements ContentRevision {
     private final Project myProject;
     private final FilePath myBeforeFilePath;
     private final FilePath myAfterFilePath;
-    private String myContent;
 
     public PatchedContentRevision(Project project, final FilePath beforeFilePath, final FilePath afterFilePath) {
       myProject = project;
@@ -215,16 +207,13 @@ public class ShelvedChange {
     @Override
     @Nullable
     public String getContent() throws VcsException {
-      if (myContent == null) {
-        try {
-          myContent = loadContent();
-        }
-        catch (Exception e) {
-          throw new VcsException(e);
-        }
+      try {
+        // content based on local shouldn't be cached because local file may be changed (during show diff also)
+        return loadContent();
       }
-
-      return myContent;
+      catch (Exception e) {
+        throw new VcsException(e);
+      }
     }
 
     @Nullable
@@ -276,5 +265,9 @@ public class ShelvedChange {
 
   public String getPatchPath() {
     return myPatchPath;
+  }
+
+  public String toString() {
+    return FileUtil.toSystemDependentName(myBeforePath == null ? myAfterPath : myBeforePath);
   }
 }

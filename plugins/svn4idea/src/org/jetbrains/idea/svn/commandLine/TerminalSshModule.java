@@ -30,14 +30,13 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.ssh.SSHUtil.PASSPHRASE_PROMPT;
+import static com.intellij.ssh.SSHUtil.PASSWORD_PROMPT;
+
 /**
  * @author Konstantin Kolosovsky.
  */
 public class TerminalSshModule extends BaseTerminalModule {
-
-  private static final Pattern PASSPHRASE_PROMPT = Pattern.compile("Enter passphrase for key \\'(.*)\\':\\s?");
-  private static final Pattern PASSWORD_PROMPT = Pattern.compile("(.*)\\'s password:\\s?");
-
   private static final Pattern UNKNOWN_HOST_MESSAGE =
     Pattern.compile("The authenticity of host \\'((.*) \\((.*)\\))\\' can\\'t be established\\.\\s?");
   private static final Pattern HOST_FINGERPRINT_MESSAGE = Pattern.compile("(\\w+) key fingerprint is (.*)\\.\\s?");
@@ -89,7 +88,7 @@ public class TerminalSshModule extends BaseTerminalModule {
 
   private void handleUnknownHost() {
     final Project project = myRuntime.getVcs().getProject();
-    final Ref<Integer> answer = new Ref<Integer>();
+    final Ref<Integer> answer = new Ref<>();
 
     Runnable command = new Runnable() {
       @Override

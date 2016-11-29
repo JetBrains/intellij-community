@@ -40,12 +40,7 @@ import java.util.List;
  */
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
   private Boolean myHidden = null;
-  private final Condition<RefactoringSupportProvider> myCondition = new Condition<RefactoringSupportProvider>() {
-    @Override
-    public boolean value(RefactoringSupportProvider provider) {
-      return getRefactoringHandler(provider) != null;
-    }
-  };
+  private final Condition<RefactoringSupportProvider> myCondition = provider -> getRefactoringHandler(provider) != null;
 
   public BasePlatformRefactoringAction() {
     LanguageRefactoringSupport.INSTANCE.addListener(new ExtensionPointListener<RefactoringSupportProvider>() {

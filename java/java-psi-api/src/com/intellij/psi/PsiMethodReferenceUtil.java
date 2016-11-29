@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.*;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  */
 public class PsiMethodReferenceUtil {
-  public static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceUtil.class.getName());
 
   public static boolean isSecondSearchPossible(PsiType[] parameterTypes,
                                                QualifierResolveResult qualifierResolveResult,
@@ -57,25 +58,20 @@ public class PsiMethodReferenceUtil {
 
   @Nullable
   public static PsiType getQualifierType(PsiMethodReferenceExpression expression) {
-    PsiType qualifierType = null;
     final PsiTypeElement typeElement = expression.getQualifierType();
     if (typeElement != null) {
-      qualifierType = typeElement.getType();
+      return typeElement.getType();
     } else {
+      PsiType qualifierType = null;
       final PsiElement qualifier = expression.getQualifier();
       if (qualifier instanceof PsiExpression) {
         qualifierType = ((PsiExpression)qualifier).getType();
       }
-    }
-    if (qualifierType == null) {
-      final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(expression);
-      final PsiClass containingClass = qualifierResolveResult.getContainingClass();
-      if (containingClass == null) {
-        return null;
+      if (qualifierType == null && qualifier instanceof PsiReferenceExpression) {
+        return JavaPsiFacade.getElementFactory(expression.getProject()).createType((PsiReferenceExpression)qualifier);
       }
-      qualifierType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass);
+      return qualifierType;
     }
-    return qualifierType;
   }
 
   public static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
@@ -122,7 +118,7 @@ public class PsiMethodReferenceUtil {
         }
       }
       else if (resolve instanceof PsiClass) {
-        if (resolve == JavaPsiFacade.getElementFactory(expression.getProject()).getArrayClass(PsiUtil.getLanguageLevel(resolve))) {
+        if (PsiEquivalenceUtil.areElementsEquivalent(resolve, JavaPsiFacade.getElementFactory(expression.getProject()).getArrayClass(PsiUtil.getLanguageLevel(expression)))) {
           final PsiTypeParameter[] typeParameters = ((PsiClass)resolve).getTypeParameters();
           if (typeParameters.length == 1) {
             final PsiType arrayComponentType = subst.substitute(typeParameters[0]);

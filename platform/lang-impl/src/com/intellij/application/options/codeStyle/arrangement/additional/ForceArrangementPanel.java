@@ -32,7 +32,7 @@ public class ForceArrangementPanel {
 
   public ForceArrangementPanel() {
     myForceRearrangeComboBox = new JComboBox();
-    myForceRearrangeComboBox.setModel(new EnumComboBoxModel<SelectedMode>(SelectedMode.class));
+    myForceRearrangeComboBox.setModel(new EnumComboBoxModel<>(SelectedMode.class));
     myForceRearrangeComboBox.setMaximumSize(myForceRearrangeComboBox.getPreferredSize());
     myPanel = createPanel();
   }

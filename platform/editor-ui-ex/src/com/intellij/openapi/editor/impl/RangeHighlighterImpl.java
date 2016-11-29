@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
-import com.intellij.ui.Gray;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -38,7 +37,8 @@ import java.awt.*;
  * @author max
  */
 class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
-  private static final Color NULL_COLOR = Gray._0;
+  @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
+  private static final Color NULL_COLOR = new Color(0, 0, 0); // must be new instance to work as a sentinel
 
   private final MarkupModel myModel;
   private TextAttributes myTextAttributes;
@@ -60,13 +60,13 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   private static final byte IN_BATCH_CHANGE_MASK = 8;
   static final byte CHANGED_MASK = 16;
   static final byte RENDERERS_CHANGED_MASK = 32;
-  static final byte FONT_STYLE_CHANGED_MASK = 64;
+  static final byte FONT_STYLE_OR_COLOR_CHANGED_MASK = 64;
 
   @MagicConstant(intValues = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK, 
-    CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK})
+    CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_OR_COLOR_CHANGED_MASK})
   private @interface FlagConstant {}
 
-  @MagicConstant(flags = {CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK})
+  @MagicConstant(flags = {CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_OR_COLOR_CHANGED_MASK})
   private @interface ChangeStatus {}
 
   RangeHighlighterImpl(@NotNull MarkupModel model,
@@ -107,12 +107,17 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
       fireChanged(false, true);
     }
     else if (!Comparing.equal(old, textAttributes)) {
-      fireChanged(false, getFontStyle(old) != getFontStyle(textAttributes));
+      fireChanged(false, getFontStyle(old) != getFontStyle(textAttributes) ||
+                         !Comparing.equal(getForegroundColor(old), getForegroundColor(textAttributes)));
     }
   }
   
   private static int getFontStyle(TextAttributes textAttributes) {
     return textAttributes == null ? Font.PLAIN : textAttributes.getFontType();
+  }
+
+  private static Color getForegroundColor(TextAttributes textAttributes) {
+    return textAttributes == null ? null : textAttributes.getForegroundColor();
   }
 
   @Override
@@ -265,15 +270,15 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     }
   }
 
-  private void fireChanged(boolean renderersChanged, boolean fontStyleChanged) {
+  private void fireChanged(boolean renderersChanged, boolean fontStyleOrColorChanged) {
     if (myModel instanceof MarkupModelEx) {
       if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
         setFlag(CHANGED_MASK, true);
         if (renderersChanged) setFlag(RENDERERS_CHANGED_MASK, true);
-        if (fontStyleChanged) setFlag(FONT_STYLE_CHANGED_MASK, true);
+        if (fontStyleOrColorChanged) setFlag(FONT_STYLE_OR_COLOR_CHANGED_MASK, true);
       }
       else {
-        ((MarkupModelEx)myModel).fireAttributesChanged(this, renderersChanged, fontStyleChanged);
+        ((MarkupModelEx)myModel).fireAttributesChanged(this, renderersChanged, fontStyleOrColorChanged);
       }
     }
   }
@@ -317,7 +322,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     assert !isFlagSet(CHANGED_MASK);
     setFlag(IN_BATCH_CHANGE_MASK, true);
     setFlag(RENDERERS_CHANGED_MASK, false);
-    setFlag(FONT_STYLE_CHANGED_MASK, false);
+    setFlag(FONT_STYLE_OR_COLOR_CHANGED_MASK, false);
     byte result = 0;
     try {
       change.consume(this);
@@ -327,11 +332,11 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
       if (isFlagSet(CHANGED_MASK)) {
         result |= CHANGED_MASK;
         if (isFlagSet(RENDERERS_CHANGED_MASK)) result |= RENDERERS_CHANGED_MASK;
-        if (isFlagSet(FONT_STYLE_CHANGED_MASK)) result |= FONT_STYLE_CHANGED_MASK;
+        if (isFlagSet(FONT_STYLE_OR_COLOR_CHANGED_MASK)) result |= FONT_STYLE_OR_COLOR_CHANGED_MASK;
       }
       setFlag(CHANGED_MASK, false);
       setFlag(RENDERERS_CHANGED_MASK, false);
-      setFlag(FONT_STYLE_CHANGED_MASK, false);
+      setFlag(FONT_STYLE_OR_COLOR_CHANGED_MASK, false);
     }
     return result;
   }

@@ -42,7 +42,7 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
-    final ArrayList<FoldingData> list = new ArrayList<FoldingData>();
+    final ArrayList<FoldingData> list = new ArrayList<>();
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     for (final FoldRegion region : regions) {
       if (!region.isValid()) continue;
@@ -99,14 +99,11 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor, true);
 
-    Runnable operation = new Runnable() {
-      @Override
-      public void run() {
-        for (FoldingData data : value.getData()) {
-          FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
-          if (region != null) {
-            region.setExpanded(data.isExpanded);
-          }
+    Runnable operation = () -> {
+      for (FoldingData data : value.getData()) {
+        FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
+        if (region != null) {
+          region.setExpanded(data.isExpanded);
         }
       }
     };

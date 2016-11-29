@@ -37,14 +37,14 @@ public class RTagOperation extends LocalPathIndifferentOperation {
   private final boolean myOverrideExistings;
 
   public static RTagOperation[] createOn(FilePath[] files, String tagName, boolean overrideExisting) {
-    Map<CvsEnvironment, List<File>> envToFiles = new HashMap<CvsEnvironment, List<File>>();
+    Map<CvsEnvironment, List<File>> envToFiles = new HashMap<>();
     for (FilePath file : files) {
       CvsConnectionSettings cvsConnectionSettings = CvsUtil.getCvsConnectionSettings(file);
-      if (!envToFiles.containsKey(cvsConnectionSettings)) envToFiles.put(cvsConnectionSettings, new ArrayList<File>());
+      if (!envToFiles.containsKey(cvsConnectionSettings)) envToFiles.put(cvsConnectionSettings, new ArrayList<>());
       envToFiles.get(cvsConnectionSettings).add(file.getIOFile());
     }
 
-    ArrayList<RTagOperation> result = new ArrayList<RTagOperation>();
+    ArrayList<RTagOperation> result = new ArrayList<>();
     for (CvsEnvironment cvsEnvironment : envToFiles.keySet()) {
       RTagOperation rTagOperation = new RTagOperation(cvsEnvironment, tagName, overrideExisting);
       result.add(rTagOperation);

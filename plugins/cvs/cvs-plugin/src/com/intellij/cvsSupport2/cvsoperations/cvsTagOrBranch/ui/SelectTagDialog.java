@@ -34,7 +34,7 @@ import java.util.Collection;
  * author: lesya
  */
 public class SelectTagDialog extends DialogWrapper {
-  private final Collection<JList> myLists =  new ArrayList<JList>();
+  private final Collection<JList> myLists = new ArrayList<>();
   private final JPanel myPanel;
   public static final String EXISTING_REVISIONS = CvsBundle.message("label.existing.revisions");
   public static final String EXISTING_TAGS = CvsBundle.message("label.existing.tags");

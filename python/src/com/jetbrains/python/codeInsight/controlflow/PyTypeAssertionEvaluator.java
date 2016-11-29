@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,21 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.types.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.function.Function;
 
 /**
  * @author traff
  */
 public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
-  private Stack<Assertion> myStack = new Stack<Assertion>();
+  private Stack<Assertion> myStack = new Stack<>();
   private boolean myPositive;
 
   public PyTypeAssertionEvaluator() {
@@ -64,89 +67,89 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (args.length == 2 && args[0] instanceof PyReferenceExpression) {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
         final PyExpression typeElement = args[1];
-        final boolean positive = myPositive;
-        pushAssertion(target, new InstructionTypeCallback() {
-          @Override
-          public PyType getType(TypeEvalContext context, PsiElement anchor) {
-            final List<PyType> types = new ArrayList<PyType>();
-            types.add(context.getType(typeElement));
-            return createAssertionType(context.getType(target), types, positive, context);
-          }
-        });
+
+        pushAssertion(target, myPositive, context -> context.getType(typeElement));
       }
     }
     else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
       final PyExpression[] args = node.getArguments();
       if (args.length == 1 && args[0] instanceof PyReferenceExpression) {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
-        final boolean positive = myPositive;
-        pushAssertion(target, new InstructionTypeCallback() {
-          @Override
-          public PyType getType(TypeEvalContext context, PsiElement anchor) {
-            final List<PyType> types = new ArrayList<PyType>();
-            types.add(PyTypeParser.getTypeByName(target, "collections." + PyNames.CALLABLE));
-            return createAssertionType(context.getType(target), types, positive, context);
-          }
-        });
+
+        pushAssertion(target, myPositive, context -> PyTypeParser.getTypeByName(target, "collections." + PyNames.CALLABLE));
       }
     }
   }
 
   @Override
   public void visitPyReferenceExpression(final PyReferenceExpression node) {
-    if (node.getParent() instanceof PyIfPart) {
-      final boolean positive = myPositive;
-      pushAssertion(node, new InstructionTypeCallback() {
-        @Override
-        public PyType getType(TypeEvalContext context, PsiElement anchor) {
-          final List<PyType> types = new ArrayList<PyType>();
-          types.add(PyNoneType.INSTANCE);
-          return createAssertionType(context.getType(node), types, !positive, context);
-        }
-      });
+    if (isUnderIf(node)) {
+      pushAssertion(node, !myPositive, context -> PyNoneType.INSTANCE);
       return;
     }
+
     super.visitPyReferenceExpression(node);
   }
 
   @Override
   public void visitPyBinaryExpression(PyBinaryExpression node) {
-    if (node.isOperator("isnot")) {
-      final PyExpression lhs = node.getLeftExpression();
-      final PyExpression rhs = node.getRightExpression();
-      if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression) {
-        final PyReferenceExpression target = (PyReferenceExpression)lhs;
-        if (PyNames.NONE.equals(rhs.getName())) {
-          final boolean positive = myPositive;
-          pushAssertion(target, new InstructionTypeCallback() {
-            @Override
-            public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-              final List<PyType> types = new ArrayList<PyType>();
-              types.add(PyNoneType.INSTANCE);
-              return createAssertionType(context.getType(target), types, !positive, context);
-            }
-          });
-          return;
-        }
+    final PyExpression lhs = node.getLeftExpression();
+    final PyExpression rhs = node.getRightExpression();
+
+    if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression ||
+        lhs instanceof PyReferenceExpression && rhs instanceof PyNoneLiteralExpression ||
+        lhs instanceof PyNoneLiteralExpression && rhs instanceof PyReferenceExpression) {
+      final boolean leftIsNone = lhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(lhs.getName());
+      final boolean rightIsNone = rhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(rhs.getName());
+
+      if (leftIsNone && rightIsNone) {
+        return;
+      }
+
+      final PyReferenceExpression target = (PyReferenceExpression)(rightIsNone ? lhs : rhs);
+
+      if (node.isOperator(PyNames.IS)) {
+        pushAssertion(target, myPositive, context -> PyNoneType.INSTANCE);
+        return;
+      }
+
+      if (node.isOperator("isnot")) {
+        pushAssertion(target, !myPositive, context -> PyNoneType.INSTANCE);
+        return;
       }
     }
+
+    final Object leftValue = PyConstantExpressionEvaluator.evaluate(lhs);
+    final Object rightValue = PyConstantExpressionEvaluator.evaluate(rhs);
+
+    if (leftValue instanceof Boolean && rightValue instanceof Boolean) {
+      return;
+    }
+
+    if (node.isOperator(PyNames.IS) && (leftValue == Boolean.FALSE || rightValue == Boolean.FALSE) ||
+        node.isOperator("isnot") && (leftValue == Boolean.TRUE || rightValue == Boolean.TRUE)) {
+      myPositive = !myPositive;
+      super.visitPyBinaryExpression(node);
+      myPositive = !myPositive;
+      return;
+    }
+
     super.visitPyBinaryExpression(node);
   }
 
   @Nullable
-  private static PyType createAssertionType(PyType initial, List<PyType> types, boolean positive, TypeEvalContext context) {
-    final List<PyType> members = new ArrayList<PyType>();
-    for (PyType t : types) {
-      members.add(transformTypeFromAssertion(t));
-    }
-    final PyType union = PyUnionType.union(members);
+  private static PyType createAssertionType(@Nullable PyType initial,
+                                            @Nullable PyType suggested,
+                                            boolean positive,
+                                            @NotNull TypeEvalContext context) {
+    final PyType transformedType = transformTypeFromAssertion(suggested);
     if (positive) {
-      return union;
+      return transformedType;
     }
     else if (initial instanceof PyUnionType) {
-      return ((PyUnionType)initial).exclude(union, context);
+      return ((PyUnionType)initial).exclude(transformedType, context);
     }
-    else if (PyTypeChecker.match(union, initial, context)) {
+    else if (PyTypeChecker.match(transformedType, initial, context)) {
       return null;
     }
     return initial;
@@ -155,7 +158,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   @Nullable
   private static PyType transformTypeFromAssertion(@Nullable PyType type) {
     if (type instanceof PyTupleType) {
-      final List<PyType> members = new ArrayList<PyType>();
+      final List<PyType> members = new ArrayList<>();
       final PyTupleType tupleType = (PyTupleType)type;
       final int count = tupleType.getElementCount();
       for (int i = 0; i < count; i++) {
@@ -169,8 +172,33 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     return type;
   }
 
-  private void pushAssertion(PyReferenceExpression element, InstructionTypeCallback getType) {
-    myStack.push(new Assertion(element, getType));
+  private void pushAssertion(@NotNull PyReferenceExpression target,
+                             boolean positive,
+                             @NotNull Function<TypeEvalContext, PyType> suggestedType) {
+    final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
+      @Override
+      public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+        final PyType initial = context.getType(target);
+        final PyType suggested = suggestedType.apply(context);
+
+        if (!PyUnionType.class.isInstance(initial) &&
+            !PyTypeChecker.isUnknown(initial) &&
+            PyTypeChecker.match(suggested, initial, context)) {
+          return initial;
+        }
+        else {
+          return createAssertionType(initial, suggested, positive, context);
+        }
+      }
+    };
+
+    myStack.push(new Assertion(target, typeCallback));
+  }
+
+  private static boolean isUnderIf(@NotNull PyReferenceExpression node) {
+    final PsiElement parent = node.getParent();
+    return parent instanceof PyIfPart ||
+           parent instanceof PyConditionalExpression && node == ((PyConditionalExpression)parent).getCondition();
   }
 
   static class Assertion {

@@ -4,7 +4,8 @@
       <!-- these must be declared before standard EnterAction and TabAction -->
       <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$FocusedOnly"/>
       <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Replacing"/>
-      <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$CompletingStatement"/>
+      <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$CompletingStatement"
+              use-shortcut-of="EditorCompleteStatement"/>
       <action id="EditorChooseLookupItemDot" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$ChooseWithDot"/>
 
       <action id="ExpandLiveTemplateByTab" class="com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction"/>
@@ -47,6 +48,11 @@
       <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction" />
       <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+
+      <separator/>
+      <reference id="SliceBackward"/>
+      <reference id="SliceForward"/>
+      <separator/>
 
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </group>

@@ -17,18 +17,12 @@ package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
-import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.fragments.LineFragmentImpl;
-import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.fragments.MergeLineFragmentImpl;
-import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.diff.comparison.ComparisonPolicy.IGNORE_WHITESPACES;
 import static com.intellij.diff.comparison.TrimUtil.trimEnd;
 import static com.intellij.diff.comparison.TrimUtil.trimStart;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
@@ -43,55 +38,61 @@ import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
 public class ByLine {
   @NotNull
-  public static List<LineFragment> compare(@NotNull CharSequence text1,
-                                           @NotNull CharSequence text2,
-                                           @NotNull ComparisonPolicy policy,
-                                           @NotNull ProgressIndicator indicator) {
+  public static FairDiffIterable compare(@NotNull List<? extends CharSequence> lines1,
+                                         @NotNull List<? extends CharSequence> lines2,
+                                         @NotNull ComparisonPolicy policy,
+                                         @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
-
-    List<Line> lines1 = getLines(text1, policy);
-    List<Line> lines2 = getLines(text2, policy);
-
-    FairDiffIterable changes = compareSmart(lines1, lines2, indicator);
-    changes = optimizeLineChunks(lines1, lines2, changes, indicator);
-    changes = expandRanges(lines1, lines2, changes, indicator);
-    return convertIntoFragments(lines1, lines2, changes);
+    return doCompare(getLines(lines1, policy), getLines(lines2, policy), policy, indicator);
   }
 
   @NotNull
-  public static List<LineFragment> compareTwoStep(@NotNull CharSequence text1,
-                                                  @NotNull CharSequence text2,
-                                                  @NotNull ComparisonPolicy policy,
-                                                  @NotNull ProgressIndicator indicator) {
+  public static List<MergeRange> compare(@NotNull List<? extends CharSequence> lines1,
+                                         @NotNull List<? extends CharSequence> lines2,
+                                         @NotNull List<? extends CharSequence> lines3,
+                                         @NotNull ComparisonPolicy policy,
+                                         @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+    return doCompare(getLines(lines1, policy), getLines(lines2, policy), getLines(lines3, policy), policy, indicator);
+  }
+
+  //
+  // Impl
+  //
+
+  @NotNull
+  static FairDiffIterable doCompare(@NotNull List<Line> lines1,
+                                    @NotNull List<Line> lines2,
+                                    @NotNull ComparisonPolicy policy,
+                                    @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
 
-    List<Line> lines1 = getLines(text1, policy);
-    List<Line> lines2 = getLines(text2, policy);
+    if (policy == IGNORE_WHITESPACES) {
+      FairDiffIterable changes = compareSmart(lines1, lines2, indicator);
+      changes = optimizeLineChunks(lines1, lines2, changes, indicator);
+      return expandRanges(lines1, lines2, changes);
+    }
+    else {
+      List<Line> iwLines1 = convertMode(lines1, IGNORE_WHITESPACES);
+      List<Line> iwLines2 = convertMode(lines2, IGNORE_WHITESPACES);
 
-    List<Line> iwLines1 = convertToIgnoreWhitespace(lines1);
-    List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
-
-    FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
-    iwChanges = optimizeLineChunks(lines1, lines2, iwChanges, indicator);
-    FairDiffIterable changes = correctChangesSecondStep(lines1, lines2, iwChanges);
-    return convertIntoFragments(lines1, lines2, changes);
+      FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
+      iwChanges = optimizeLineChunks(lines1, lines2, iwChanges, indicator);
+      return correctChangesSecondStep(lines1, lines2, iwChanges);
+    }
   }
 
   @NotNull
-  public static List<MergeLineFragment> compareTwoStep(@NotNull CharSequence text1,
-                                                       @NotNull CharSequence text2,
-                                                       @NotNull CharSequence text3,
-                                                       @NotNull ComparisonPolicy policy,
-                                                       @NotNull ProgressIndicator indicator) {
+  static List<MergeRange> doCompare(@NotNull List<Line> lines1,
+                                    @NotNull List<Line> lines2,
+                                    @NotNull List<Line> lines3,
+                                    @NotNull ComparisonPolicy policy,
+                                    @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
 
-    List<Line> lines1 = getLines(text1, policy);
-    List<Line> lines2 = getLines(text2, policy);
-    List<Line> lines3 = getLines(text3, policy);
-
-    List<Line> iwLines1 = convertToIgnoreWhitespace(lines1);
-    List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
-    List<Line> iwLines3 = convertToIgnoreWhitespace(lines3);
+    List<Line> iwLines1 = convertMode(lines1, IGNORE_WHITESPACES);
+    List<Line> iwLines2 = convertMode(lines2, IGNORE_WHITESPACES);
+    List<Line> iwLines3 = convertMode(lines3, IGNORE_WHITESPACES);
 
     FairDiffIterable iwChanges1 = compareSmart(iwLines2, iwLines1, indicator);
     iwChanges1 = optimizeLineChunks(lines2, lines1, iwChanges1, indicator);
@@ -101,18 +102,13 @@ public class ByLine {
     iwChanges2 = optimizeLineChunks(lines2, lines3, iwChanges2, indicator);
     FairDiffIterable iterable2 = correctChangesSecondStep(lines2, lines3, iwChanges2);
 
-    List<MergeRange> conflicts = ComparisonMergeUtil.buildFair(iterable1, iterable2, indicator);
-    return convertIntoFragments(conflicts);
+    return ComparisonMergeUtil.buildFair(iterable1, iterable2, indicator);
   }
-
-  //
-  // Impl
-  //
 
   @NotNull
   private static FairDiffIterable correctChangesSecondStep(@NotNull final List<Line> lines1,
-                                                           @NotNull final List<Line> lines2,
-                                                           @NotNull final FairDiffIterable changes) {
+                                                             @NotNull final List<Line> lines2,
+                                                             @NotNull final FairDiffIterable changes) {
     /*
      * We want to fix invalid matching here:
      *
@@ -144,8 +140,8 @@ public class ByLine {
     final ExpandChangeBuilder builder = new ExpandChangeBuilder(lines1, lines2);
     new Object() {
       private CharSequence sample = null;
-      private int last1 = -1;
-      private int last2 = -1;
+      private int last1 = 0;
+      private int last2 = 0;
 
       public void run() {
         for (Range range : changes.iterateUnchanged()) {
@@ -164,8 +160,6 @@ public class ByLine {
               else {
                 flush(index1, index2);
                 sample = line1.getContent();
-                last1 = index1;
-                last2 = index2;
               }
             }
           }
@@ -176,16 +170,21 @@ public class ByLine {
       private void flush(int line1, int line2) {
         if (sample == null) return;
 
+        int start1 = Math.max(last1, builder.getIndex1());
+        int start2 = Math.max(last2, builder.getIndex2());
+
         TIntArrayList subLines1 = new TIntArrayList();
         TIntArrayList subLines2 = new TIntArrayList();
-        for (int i = last1; i < line1; i++) {
+        for (int i = start1; i < line1; i++) {
           if (StringUtil.equalsIgnoreWhitespaces(sample, lines1.get(i).getContent())) {
             subLines1.add(i);
+            last1 = i + 1;
           }
         }
-        for (int i = last2; i < line2; i++) {
+        for (int i = start2; i < line2; i++) {
           if (StringUtil.equalsIgnoreWhitespaces(sample, lines2.get(i).getContent())) {
             subLines2.add(i);
+            last2 = i + 1;
           }
         }
 
@@ -193,15 +192,24 @@ public class ByLine {
         alignExactMatching(subLines1, subLines2);
 
         sample = null;
-        last1 = -1;
-        last2 = -1;
       }
 
       private void alignExactMatching(TIntArrayList subLines1, TIntArrayList subLines2) {
-        if (subLines1.size() == subLines2.size()) return;
-
         int n = Math.max(subLines1.size(), subLines2.size());
-        if (n > 10) return; // we use brute-force algorithm (C_n_k). This will limit search space by ~250 cases.
+        boolean skipAligning = n > 10 || // we use brute-force algorithm (C_n_k). This will limit search space by ~250 cases.
+                               subLines1.size() == subLines2.size(); // nothing to do
+
+        if (skipAligning) {
+          int count = Math.min(subLines1.size(), subLines2.size());
+          for (int i = 0; i < count; i++) {
+            int index1 = subLines1.get(i);
+            int index2 = subLines2.get(i);
+            if (lines1.get(index1).equals(lines2.get(index2))) {
+              builder.markEqual(index1, index2);
+            }
+          }
+          return;
+        }
 
         if (subLines1.size() < subLines2.size()) {
           int[] matching = getBestMatchingAlignment(subLines1, subLines2, lines1, lines2);
@@ -289,50 +297,6 @@ public class ByLine {
     return new ChunkOptimizer.LineChunkOptimizer(lines1, lines2, iterable, indicator).build();
   }
 
-  @NotNull
-  private static List<LineFragment> convertIntoFragments(@NotNull List<Line> lines1,
-                                                         @NotNull List<Line> lines2,
-                                                         @NotNull FairDiffIterable changes) {
-    List<LineFragment> fragments = new ArrayList<LineFragment>();
-    for (Range ch : changes.iterateChanges()) {
-      IntPair offsets1 = getOffsets(lines1, ch.start1, ch.end1);
-      IntPair offsets2 = getOffsets(lines2, ch.start2, ch.end2);
-
-      fragments.add(new LineFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2,
-                                         offsets1.val1, offsets1.val2, offsets2.val1, offsets2.val2));
-    }
-    return fragments;
-  }
-
-  @NotNull
-  private static List<MergeLineFragment> convertIntoFragments(@NotNull List<MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, new Function<MergeRange, MergeLineFragment>() {
-      @Override
-      public MergeLineFragment fun(MergeRange ch) {
-        return new MergeLineFragmentImpl(ch);
-      }
-    });
-  }
-
-  @NotNull
-  private static IntPair getOffsets(@NotNull List<Line> lines, int startIndex, int endIndex) {
-    if (startIndex == endIndex) {
-      int offset;
-      if (startIndex < lines.size()) {
-        offset = lines.get(startIndex).getOffset1();
-      }
-      else {
-        offset = lines.get(lines.size() - 1).getOffset2();
-      }
-      return new IntPair(offset, offset);
-    }
-    else {
-      int offset1 = lines.get(startIndex).getOffset1();
-      int offset2 = lines.get(endIndex - 1).getOffset2();
-      return new IntPair(offset1, offset2);
-    }
-  }
-
   /*
    * Compare lines in two steps:
    *  - compare ignoring "unimportant" lines
@@ -354,7 +318,7 @@ public class ByLine {
 
   @NotNull
   private static Pair<List<Line>, TIntArrayList> getBigLines(@NotNull List<Line> lines, int threshold) {
-    List<Line> bigLines = new ArrayList<Line>(lines.size());
+    List<Line> bigLines = new ArrayList<>(lines.size());
     TIntArrayList indexes = new TIntArrayList(lines.size());
 
     for (int i = 0; i < lines.size(); i++) {
@@ -370,9 +334,8 @@ public class ByLine {
   @NotNull
   private static FairDiffIterable expandRanges(@NotNull List<Line> lines1,
                                                @NotNull List<Line> lines2,
-                                               @NotNull FairDiffIterable iterable,
-                                               @NotNull ProgressIndicator indicator) {
-    List<Range> changes = new ArrayList<Range>();
+                                               @NotNull FairDiffIterable iterable) {
+    List<Range> changes = new ArrayList<>();
 
     for (Range ch : iterable.iterateChanges()) {
       Range expanded = TrimUtil.expand(lines1, lines2, ch.start1, ch.start2, ch.end1, ch.end2);
@@ -387,70 +350,39 @@ public class ByLine {
   //
 
   @NotNull
-  private static List<Line> getLines(@NotNull CharSequence text, @NotNull ComparisonPolicy policy) {
-    List<Line> lines = new ArrayList<Line>();
-
-    int offset = 0;
-    while (true) {
-      Line line = createLine(text, offset, policy);
-      lines.add(line);
-      offset = line.getOffset2();
-      if (!line.hasNewline()) break;
-    }
-
-    return lines;
+  private static List<Line> getLines(@NotNull List<? extends CharSequence> text, @NotNull ComparisonPolicy policy) {
+    return ContainerUtil.map(text, (line) -> new Line(line, policy));
   }
 
   @NotNull
-  private static Line createLine(@NotNull CharSequence text, int offset, @NotNull ComparisonPolicy policy) {
-    switch (policy) {
-      case DEFAULT:
-        return Line.createDefault(text, offset);
-      case IGNORE_WHITESPACES:
-        return Line.createIgnore(text, offset);
-      case TRIM_WHITESPACES:
-        return Line.createTrim(text, offset);
-      default:
-        throw new IllegalArgumentException(policy.name());
-    }
-  }
-
-  @NotNull
-  private static List<Line> convertToIgnoreWhitespace(@NotNull List<Line> original) {
-    List<Line> result = new ArrayList<Line>(original.size());
-
+  private static List<Line> convertMode(@NotNull List<Line> original, @NotNull ComparisonPolicy policy) {
+    List<Line> result = new ArrayList<>(original.size());
     for (Line line : original) {
-      result.add(Line.createIgnore(line.getOriginalText(), line.getOffset1()));
+      result.add(new Line(line.getContent(), policy));
     }
-
     return result;
   }
 
-  static class Line extends TextChunk {
-    enum Mode {DEFAULT, TRIM, IGNORE}
-
-    @NotNull private final Mode myMode;
+  static class Line {
+    @NotNull private final CharSequence myText;
+    @NotNull private final ComparisonPolicy myPolicy;
     private final int myHash;
     private final int myNonSpaceChars;
-    private final boolean myNewline;
 
-    public Line(@NotNull CharSequence text, int offset1, int offset2,
-                @NotNull Mode mode, int hash, int nonSpaceChars, boolean newline) {
-      super(text, offset1, offset2);
-      myMode = mode;
-      myHash = hash;
-      myNonSpaceChars = nonSpaceChars;
-      myNewline = newline;
-    }
-
-    public boolean hasNewline() {
-      return myNewline;
+    public Line(@NotNull CharSequence text, @NotNull ComparisonPolicy policy) {
+      myText = text;
+      myPolicy = policy;
+      myHash = hashCode(text, policy);
+      myNonSpaceChars = countNonSpaceChars(text);
     }
 
     @NotNull
-    @Override
     public CharSequence getContent() {
-      return getOriginalText().subSequence(getOffset1(), getOffset2() - (myNewline ? 1 : 0));
+      return myText;
+    }
+
+    public int getNonSpaceChars() {
+      return myNonSpaceChars;
     }
 
     @Override
@@ -459,20 +391,11 @@ public class ByLine {
       if (o == null || getClass() != o.getClass()) return false;
 
       Line line = (Line)o;
-      assert myMode == line.myMode;
+      assert myPolicy == line.myPolicy;
 
       if (hashCode() != line.hashCode()) return false;
 
-      switch (myMode) {
-        case DEFAULT:
-          return StringUtil.equals(getContent(), line.getContent());
-        case TRIM:
-          return StringUtil.equalsTrimWhitespaces(getContent(), line.getContent());
-        case IGNORE:
-          return StringUtil.equalsIgnoreWhitespaces(getContent(), line.getContent());
-        default:
-          throw new IllegalArgumentException(myMode.toString());
-      }
+      return equals(getContent(), line.getContent(), myPolicy);
     }
 
     @Override
@@ -480,87 +403,47 @@ public class ByLine {
       return myHash;
     }
 
-    public int getNonSpaceChars() {
-      return myNonSpaceChars;
-    }
-
-    public static Line createDefault(@NotNull CharSequence text, int startOffset) {
-      int len = text.length();
-
-      int h = 0;
+    private static int countNonSpaceChars(@NotNull CharSequence text) {
       int nonSpace = 0;
-      boolean newline = false;
 
-      int offset = startOffset;
+      int len = text.length();
+      int offset = 0;
+
       while (offset < len) {
         char c = text.charAt(offset);
-        if (c == '\n') {
-          offset++;
-          newline = true;
-          break;
-        }
-        if (!isWhiteSpace(c)) nonSpace++;
-        h = 31 * h + c;
-        offset++;
-      }
-
-      return new Line(text, startOffset, offset, Mode.DEFAULT, h, nonSpace, newline);
-    }
-
-    public static Line createIgnore(@NotNull CharSequence text, int startOffset) {
-      int len = text.length();
-
-      int h = 0;
-      int nonSpace = 0;
-      boolean newline = false;
-
-      int offset = startOffset;
-      while (offset < len) {
-        char c = text.charAt(offset);
-        if (c == '\n') {
-          offset++;
-          newline = true;
-          break;
-        }
-        if (!isWhiteSpace(c)) {
-          nonSpace++;
-          h = 31 * h + c;
-        }
-        offset++;
-      }
-
-      return new Line(text, startOffset, offset, Mode.IGNORE, h, nonSpace, newline);
-    }
-
-    public static Line createTrim(@NotNull CharSequence text, int startOffset) {
-      int len = text.length();
-
-      int nonSpace = 0;
-      boolean newline = false;
-
-      int offset = startOffset;
-      while (offset < len) {
-        char c = text.charAt(offset);
-        if (c == '\n') {
-          offset++;
-          newline = true;
-          break;
-        }
         if (!isWhiteSpace(c)) nonSpace++;
         offset++;
       }
 
-      int h = calcTrimHash(text, startOffset, offset);
-
-      return new Line(text, startOffset, offset, Mode.TRIM, h, nonSpace, newline);
+      return nonSpace;
     }
 
+    private static boolean equals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
+      switch (policy) {
+        case DEFAULT:
+          return StringUtil.equals(text1, text2);
+        case TRIM_WHITESPACES:
+          return StringUtil.equalsTrimWhitespaces(text1, text2);
+        case IGNORE_WHITESPACES:
+          return StringUtil.equalsIgnoreWhitespaces(text1, text2);
+        default:
+          throw new IllegalArgumentException(policy.toString());
+      }
+    }
 
-    private static int calcTrimHash(@NotNull CharSequence text, int offset1, int offset2) {
-      offset1 = trimStart(text, offset1, offset2);
-      offset2 = trimEnd(text, offset1, offset2);
-
-      return StringUtil.stringHashCode(text, offset1, offset2);
+    private static int hashCode(@NotNull CharSequence text, @NotNull ComparisonPolicy policy) {
+      switch (policy) {
+        case DEFAULT:
+          return StringUtil.stringHashCode(text);
+        case TRIM_WHITESPACES:
+          int offset1 = trimStart(text, 0, text.length());
+          int offset2 = trimEnd(text, offset1, text.length());
+          return StringUtil.stringHashCode(text, offset1, offset2);
+        case IGNORE_WHITESPACES:
+          return StringUtil.stringHashCodeIgnoreWhitespaces(text);
+        default:
+          throw new IllegalArgumentException(policy.name());
+      }
     }
   }
 }

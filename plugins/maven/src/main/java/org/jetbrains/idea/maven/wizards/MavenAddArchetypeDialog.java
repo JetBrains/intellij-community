@@ -69,7 +69,7 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
   }
 
   private void doValidateInput() {
-    List<String> errors = new ArrayList<String>();
+    List<String> errors = new ArrayList<>();
     if (StringUtil.isEmptyOrSpaces(myGroupIdField.getText())) errors.add("GroupId");
     if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) errors.add("ArtifactId");
     if (StringUtil.isEmptyOrSpaces(myVersionField.getText())) errors.add("Version");

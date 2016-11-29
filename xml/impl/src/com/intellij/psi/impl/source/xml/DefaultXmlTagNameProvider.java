@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -59,15 +60,15 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
   public void addTagNameVariants(List<LookupElement> elements, @NotNull XmlTag tag, String prefix) {
     final List<String> namespaces;
     if (prefix.isEmpty()) {
-      namespaces = new ArrayList<String>(Arrays.asList(tag.knownNamespaces()));
+      namespaces = new ArrayList<>(Arrays.asList(tag.knownNamespaces()));
       namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
     }
     else {
-      namespaces = new ArrayList<String>(Collections.singletonList(tag.getNamespace()));
+      namespaces = new ArrayList<>(Collections.singletonList(tag.getNamespace()));
     }
     PsiFile psiFile = tag.getContainingFile();
     XmlExtension xmlExtension = XmlExtension.getExtension(psiFile);
-    List<String> nsInfo = new ArrayList<String>();
+    List<String> nsInfo = new ArrayList<>();
     List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(tag, namespaces, nsInfo);
 
     if (variants.isEmpty() && psiFile instanceof XmlFile && ((XmlFile)psiFile).getRootTag() == tag) {
@@ -75,7 +76,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       return;
     }
 
-    final Set<String> visited = new HashSet<String>();
+    final Set<String> visited = new HashSet<>();
     for (int i = 0; i < variants.size(); i++) {
       XmlElementDescriptor descriptor = variants.get(i);
       String qname = descriptor.getName(tag);
@@ -120,12 +121,12 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
         }
       }));
     final FileBasedIndex fbi = FileBasedIndex.getInstance();
-    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<String>();
+    Collection<String> result = new ArrayList<>();
+    Processor<String> processor = Processors.cancelableCollectProcessor(result);
     fbi.processAllKeys(XmlNamespaceIndex.NAME, processor, tag.getProject());
-    Collection<String> results = processor.getResults();
 
     final GlobalSearchScope scope = new EverythingGlobalScope();
-    for (final String ns : results) {
+    for (final String ns : result) {
       if (ns.startsWith("file://")) continue;
       fbi.processValues(XmlNamespaceIndex.NAME, ns, null, new FileBasedIndex.ValueProcessor<XsdNamespaceBuilder>() {
         @Override

@@ -30,7 +30,7 @@ import java.util.Map;
 
 public abstract class XmlFormattingPolicy {
 
-  private Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<Pair<PsiElement, Language>, Block>();
+  private Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<>();
   private boolean myProcessJsp = true;
   protected final FormattingDocumentModel myDocumentModel;
   private boolean myProcessJavaTree = true;
@@ -160,5 +160,24 @@ public abstract class XmlFormattingPolicy {
 
   public void dontProcessJavaTree() {
     myProcessJavaTree = false;
+  }
+
+  /**
+   * Inline tags are the ones which:
+   * <ul>
+   *   <li>Have no line breaks around them,</li>
+   *   <li>Do not contain any another nested tags.</li>
+   * </ul> F
+   * or example:
+   * <pre>
+   *   &lt;para&gt;
+   *     Some &lt;em&gt;emphasized&lt;/em&gt; text.
+   *   &lt;/para&gt;
+   * </pre>
+   * If true, spaces around such tags will be preserved, no line breaks inserted. 
+   * @return <code>false</code> by default.
+   */
+  public boolean isKeepSpacesAroundInlineTags() {
+    return false;
   }
 }

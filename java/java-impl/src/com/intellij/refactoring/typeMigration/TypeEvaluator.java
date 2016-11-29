@@ -50,12 +50,12 @@ public class TypeEvaluator {
   public TypeEvaluator(final LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> types, final TypeMigrationLabeler labeler) {
     myLabeler = labeler;
     myRules = labeler == null ? new TypeMigrationRules() : labeler.getRules();
-    myTypeMap = new HashMap<TypeMigrationUsageInfo, LinkedList<PsiType>>();
+    myTypeMap = new HashMap<>();
 
     if (types != null) {
       for (final Pair<TypeMigrationUsageInfo, PsiType> p : types) {
         if (!(p.getFirst().getElement() instanceof PsiExpression)) {
-          final LinkedList<PsiType> e = new LinkedList<PsiType>();
+          final LinkedList<PsiType> e = new LinkedList<>();
           e.addFirst(p.getSecond());
           myTypeMap.put(p.getFirst(), e);
         }
@@ -85,7 +85,7 @@ public class TypeEvaluator {
       }
     }
     else {
-      final LinkedList<PsiType> e = new LinkedList<PsiType>();
+      final LinkedList<PsiType> e = new LinkedList<>();
 
       e.addFirst(type);
 
@@ -146,7 +146,7 @@ public class TypeEvaluator {
       if (method != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         final PsiExpression[] actualParms = call.getArgumentList().getExpressions();
-        return PsiImplUtil.normalizeWildcardTypeByPosition(createMethodSubstitution(parameters, actualParms, method, call, resolveResult.getSubstitutor(), false).substitute(evaluateType(call.getMethodExpression())), expr);
+        return PsiUtil.captureToplevelWildcards(createMethodSubstitution(parameters, actualParms, method, call, resolveResult.getSubstitutor(), false).substitute(evaluateType(call.getMethodExpression())), expr);
       }
     }
     else if (expr instanceof PsiPolyadicExpression) {
@@ -348,23 +348,19 @@ public class TypeEvaluator {
   }
 
   public String getReport() {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
 
     final String[] t = new String[myTypeMap.size()];
     int k = 0;
 
     for (final TypeMigrationUsageInfo info : myTypeMap.keySet()) {
       final LinkedList<PsiType> types = myTypeMap.get(info);
-      final StringBuffer b = new StringBuffer();
+      final StringBuilder b = new StringBuilder();
 
       if (types != null) {
         b.append(info.getElement()).append(" : ");
 
-        b.append(StringUtil.join(types, new Function<PsiType, String>() {
-          public String fun(final PsiType psiType) {
-            return psiType.getCanonicalText();
-          }
-        }, " "));
+        b.append(StringUtil.join(types, psiType -> psiType.getCanonicalText(), " "));
 
         b.append("\n");
       }
@@ -382,7 +378,7 @@ public class TypeEvaluator {
   }
 
   public LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> getMigratedDeclarations() {
-    final LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> list = new LinkedList<Pair<TypeMigrationUsageInfo, PsiType>>();
+    final LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> list = new LinkedList<>();
 
     for (final TypeMigrationUsageInfo usageInfo : myTypeMap.keySet()) {
       final LinkedList<PsiType> types = myTypeMap.get(usageInfo);
@@ -447,6 +443,11 @@ public class TypeEvaluator {
     return migrationTtype;
   }
 
+  @Nullable
+  public <T> T getSettings(Class<T> aClass) {
+    return myRules.getConversionSettings(aClass);
+  }
+
   private class SubstitutorBuilder {
     private final Map<PsiTypeParameter, PsiType> myMapping;
     private final PsiMethod myMethod;
@@ -456,7 +457,7 @@ public class TypeEvaluator {
 
     public SubstitutorBuilder(PsiMethod method, PsiExpression call, PsiSubstitutor subst) {
       mySubst = subst;
-      myMapping = new HashMap<PsiTypeParameter, PsiType>();
+      myMapping = new HashMap<>();
       myMethod = method;
       myCall = call;
     }

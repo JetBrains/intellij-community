@@ -140,7 +140,7 @@ public class PyBlock implements ASTBlock {
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       mySubBlockByNode = buildSubBlocks();
-      mySubBlocks = new ArrayList<PyBlock>(mySubBlockByNode.values());
+      mySubBlocks = new ArrayList<>(mySubBlockByNode.values());
     }
     return Collections.<Block>unmodifiableList(mySubBlocks);
   }
@@ -157,7 +157,7 @@ public class PyBlock implements ASTBlock {
 
   @NotNull
   private Map<ASTNode, PyBlock> buildSubBlocks() {
-    final Map<ASTNode, PyBlock> blocks = new LinkedHashMap<ASTNode, PyBlock>();
+    final Map<ASTNode, PyBlock> blocks = new LinkedHashMap<>();
     for (ASTNode child = myNode.getFirstChildNode(); child != null; child = child.getTreeNext()) {
 
       final IElementType childType = child.getElementType();

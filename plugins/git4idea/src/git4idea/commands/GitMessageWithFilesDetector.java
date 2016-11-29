@@ -39,7 +39,7 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   private final Event myEvent;
   private final VirtualFile myRoot;
 
-  protected final Set<String> myAffectedFiles = new HashSet<String>();
+  protected final Set<String> myAffectedFiles = new HashSet<>();
   protected boolean myMessageDetected;
   private boolean myFilesAreDisplayed;
 
@@ -87,7 +87,7 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   
   @NotNull
   public Collection<VirtualFile> getFiles() {
-    Collection<VirtualFile> files = new ArrayList<VirtualFile>(myAffectedFiles.size());
+    Collection<VirtualFile> files = new ArrayList<>(myAffectedFiles.size());
     for (String affectedFile : myAffectedFiles) {
       VirtualFile file = myRoot.findFileByRelativePath(FileUtil.toSystemIndependentName(affectedFile));
       if (file != null) {

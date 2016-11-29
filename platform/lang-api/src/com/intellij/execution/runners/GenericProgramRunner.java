@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,12 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class GenericProgramRunner<Settings extends RunnerSettings> extends BaseProgramRunner<Settings> {
   @Deprecated
   public static final DataKey<RunContentDescriptor> CONTENT_TO_REUSE_DATA_KEY = DataKey.create("contentToReuse");
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"}) @Deprecated @NonNls
-  public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
 
   @Override
   protected void execute(@NotNull ExecutionEnvironment environment, @Nullable final Callback callback, @NotNull RunProfileState state)
@@ -47,14 +44,16 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> exte
 
   @Nullable
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    //noinspection deprecation
     return doExecute(environment.getProject(), state, environment.getContentToReuse(), environment);
   }
 
-  @Deprecated
-  @Nullable
   /**
    * @deprecated to remove in IDEA 16
    */
+  @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
+  @Deprecated
+  @Nullable
   protected RunContentDescriptor doExecute(@NotNull Project project,
                                            @NotNull RunProfileState state,
                                            @Nullable RunContentDescriptor contentToReuse,

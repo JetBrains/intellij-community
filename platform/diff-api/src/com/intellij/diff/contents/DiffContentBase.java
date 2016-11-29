@@ -15,20 +15,7 @@
  */
 package com.intellij.diff.contents;
 
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class DiffContentBase extends UserDataHolderBase implements DiffContent {
-  @Nullable
-  @Override
-  public OpenFileDescriptor getOpenFileDescriptor() {
-    return null;
-  }
-
-  @Override
-  @CalledInAwt
-  public void onAssigned(boolean isAssigned) {
-  }
 }

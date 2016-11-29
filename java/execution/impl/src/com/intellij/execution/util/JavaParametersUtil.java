@@ -139,7 +139,7 @@ public class JavaParametersUtil {
     parameters.configureByProject(project, classPathType, createProjectJdk(project, jreHome));
   }
 
-  private static Sdk createModuleJdk(final Module module, boolean productionOnly, @Nullable String jreHome) throws CantRunException {
+  public static Sdk createModuleJdk(final Module module, boolean productionOnly, @Nullable String jreHome) throws CantRunException {
     return jreHome == null ? JavaParameters.getValidJdkToRunModule(module, productionOnly) : createAlternativeJdk(jreHome);
   }
 
@@ -165,7 +165,9 @@ public class JavaParametersUtil {
       throw new CantRunException(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.message", jreHome));
     }
 
-    final Sdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
+    final JavaSdk javaSdk = JavaSdk.getInstance();
+    final String versionString = javaSdk.getVersionString(jreHome);
+    final Sdk jdk = javaSdk.createJdk(versionString != null ? versionString : "", jreHome);
     if (jdk == null) throw CantRunException.noJdkConfigured();
     return jdk;
   }

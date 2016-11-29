@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtil;
@@ -61,6 +60,12 @@ public class SuppressAllForClassFix extends SuppressFix {
   @Override
   @NotNull
   public String getText() {
+    return getFamilyName();
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
     return InspectionsBundle.message("suppress.all.for.class");
   }
 
@@ -68,7 +73,6 @@ public class SuppressAllForClassFix extends SuppressFix {
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
     final PsiDocCommentOwner container = getContainer(element);
     LOG.assertTrue(container != null);
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return;
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {

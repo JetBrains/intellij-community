@@ -161,7 +161,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return;
     }
 
-    final LinkedHashMap<Executor, ProgramRunner> availableRunners = new LinkedHashMap<Executor, ProgramRunner>();
+    final LinkedHashMap<Executor, ProgramRunner> availableRunners = new LinkedHashMap<>();
     for (Executor ex : new Executor[] {DefaultRunExecutor.getRunExecutorInstance(), DefaultDebugExecutor.getDebugExecutorInstance()}) {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(ex.getId(), profile);
       if (runner != null) {
@@ -198,14 +198,11 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            final Object value = list.getSelectedValue();
-            if (value instanceof Executor) {
-              //noinspection ConstantConditions
-              performAction(environmentBuilder.runner(availableRunners.get(value)).executor((Executor)value));
-            }
+        .setItemChoosenCallback(() -> {
+          final Object value = list.getSelectedValue();
+          if (value instanceof Executor) {
+            //noinspection ConstantConditions
+            performAction(environmentBuilder.runner(availableRunners.get(value)).executor((Executor)value));
           }
         }).createPopup().showUnderneathOf(event.getComponent());
     }

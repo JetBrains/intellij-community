@@ -22,81 +22,140 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-public class EnterActionTest extends GroovyFormatterTestCase {
+class EnterActionTest extends GroovyFormatterTestCase {
 
   final String basePath = TestUtils.testDataPath + 'groovy/enterAction/'
 
   void doTest() throws Throwable {
-    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
-    doEnter();
-    myFixture.checkResult(data.get(1));
+    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test")
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0))
+    doEnter()
+    myFixture.checkResult(data.get(1))
   }
 
   private def doEnter() {
     myFixture.type('\n' as char)
   }
 
-  public void testClos1() throws Throwable { doTest(); }
-  public void testClos2() throws Throwable { doTest(); }
-  public void testComment1() throws Throwable { doTest(); }
-  public void testComment2() throws Throwable { doTest(); }
-  public void testComment3() throws Throwable { doTest(); }
-  public void testComment4() throws Throwable { doTest(); }
-  public void testDef() throws Throwable { doTest(); }
-  public void testDef2() throws Throwable { doTest(); }
-  public void testGdoc1() throws Throwable { doTest(); }
-  public void testGdoc2() throws Throwable { doTest(); }
-  public void testGdoc3() throws Throwable { doTest(); }
-  public void testGdoc4() throws Throwable { doTest(); }
-  public void testGdoc5() throws Throwable { doTest(); }
-  public void testGdoc6() throws Throwable { doTest(); }
-  public void testGdoc7() throws Throwable { doTest(); }
-  public void testGdoc8() throws Throwable { doTest(); }
-  public void testGdoc9() throws Throwable { doTest(); }
-  public void testGdoc10() throws Throwable { doTest(); }
-  public void testGdoc11() throws Throwable { doTest(); }
-  public void testBuildGdocPrecededByGNewLine() throws Throwable { doTest(); }
-  public void testGRVY_953() throws Throwable { doTest(); }
-  public void testGstring1() throws Throwable { doTest(); }
-  public void testGstring10() throws Throwable { doTest(); }
-  public void testGstring11() throws Throwable { doTest(); }
-  public void testGstring12() throws Throwable { doTest(); }
-  public void testGstring13() throws Throwable { doTest(); }
-  public void testGstring14() throws Throwable { doTest(); }
-  public void testGstring15() throws Throwable { doTest(); }
-  public void testGstring16() throws Throwable { doTest(); }
-  public void testGstring2() throws Throwable { doTest(); }
-  public void testGstring3() throws Throwable { doTest(); }
-  public void testGstring4() throws Throwable { doTest(); }
-  public void testGstring5() throws Throwable { doTest(); }
-  public void testGstring6() throws Throwable { doTest(); }
-  public void testGstring7() throws Throwable { doTest(); }
-  public void testGstring8() throws Throwable { doTest(); }
-  public void testGstring9() throws Throwable { doTest(); }
-  public void testMultilineIndent() throws Throwable { doTest(); }
-  public void testMultilineIndent2() throws Throwable { doTest(); }
-  public void testSpaces1() throws Throwable { doTest(); }
-  public void testString1() throws Throwable { doTest(); }
-  public void testString2() throws Throwable { doTest(); }
-  public void testString3() throws Throwable { doTest(); }
-  public void testString4() throws Throwable { doTest(); }
-  public void testString5() throws Throwable { doTest(); }
-  public void testString6() throws Throwable { doTest(); }
-  public void testString7() throws Throwable { doTest(); }
-  public void testString8() throws Throwable { doTest(); }
-  public void testString9() throws Throwable { doTest(); }
-  public void testString10() throws Throwable { doTest(); }
-  public void testRegex1() {doTest()}
-  public void testRegex2() {doTest()}
-  public void testRegex3() {doTest()}
-  public void testRegex4() {doTest()}
-  public void testRegex5() {doTest()}
-  public void testRegex6() {doTest()}
-  public void testRegex7() {doTest()}
-  public void testRegex8() {doTest()}
-  public void testRegex9() {doTest()}
-  public void testRegex10() {doTest()}
+  void testClos1() throws Throwable { doTest() }
+
+  void testClos2() throws Throwable { doTest() }
+
+  void testComment1() throws Throwable { doTest() }
+
+  void testComment2() throws Throwable { doTest() }
+
+  void testComment3() throws Throwable { doTest() }
+
+  void testComment4() throws Throwable { doTest() }
+
+  void testDef() throws Throwable { doTest() }
+
+  void testDef2() throws Throwable { doTest() }
+
+  void testGdoc1() throws Throwable { doTest() }
+
+  void testGdoc2() throws Throwable { doTest() }
+
+  void testGdoc3() throws Throwable { doTest() }
+
+  void testGdoc4() throws Throwable { doTest() }
+
+  void testGdoc5() throws Throwable { doTest() }
+
+  void testGdoc6() throws Throwable { doTest() }
+
+  void testGdoc7() throws Throwable { doTest() }
+
+  void testGdoc8() throws Throwable { doTest() }
+
+  void testGdoc9() throws Throwable { doTest() }
+
+  void testGdoc10() throws Throwable { doTest() }
+
+  void testGdoc11() throws Throwable { doTest() }
+
+  void testBuildGdocPrecededByGNewLine() throws Throwable { doTest() }
+
+  void testGRVY_953() throws Throwable { doTest() }
+
+  void testGstring1() throws Throwable { doTest() }
+
+  void testGstring10() throws Throwable { doTest() }
+
+  void testGstring11() throws Throwable { doTest() }
+
+  void testGstring12() throws Throwable { doTest() }
+
+  void testGstring13() throws Throwable { doTest() }
+
+  void testGstring14() throws Throwable { doTest() }
+
+  void testGstring15() throws Throwable { doTest() }
+
+  void testGstring16() throws Throwable { doTest() }
+
+  void testGstring2() throws Throwable { doTest() }
+
+  void testGstring3() throws Throwable { doTest() }
+
+  void testGstring4() throws Throwable { doTest() }
+
+  void testGstring5() throws Throwable { doTest() }
+
+  void testGstring6() throws Throwable { doTest() }
+
+  void testGstring7() throws Throwable { doTest() }
+
+  void testGstring8() throws Throwable { doTest() }
+
+  void testGstring9() throws Throwable { doTest() }
+
+  void testMultilineIndent() throws Throwable { doTest() }
+
+  void testMultilineIndent2() throws Throwable { doTest() }
+
+  void testSpaces1() throws Throwable { doTest() }
+
+  void testString1() throws Throwable { doTest() }
+
+  void testString2() throws Throwable { doTest() }
+
+  void testString3() throws Throwable { doTest() }
+
+  void testString4() throws Throwable { doTest() }
+
+  void testString5() throws Throwable { doTest() }
+
+  void testString6() throws Throwable { doTest() }
+
+  void testString7() throws Throwable { doTest() }
+
+  void testString8() throws Throwable { doTest() }
+
+  void testString9() throws Throwable { doTest() }
+
+  void testString10() throws Throwable { doTest() }
+
+  void testRegex1() { doTest() }
+
+  void testRegex2() { doTest() }
+
+  void testRegex3() { doTest() }
+
+  void testRegex4() { doTest() }
+
+  void testRegex5() { doTest() }
+
+  void testRegex6() { doTest() }
+
+  void testRegex7() { doTest() }
+
+  void testRegex8() { doTest() }
+
+  void testRegex9() { doTest() }
+
+  void testRegex10() { doTest() }
 
   def doTest(String before, String after) {
     myFixture.configureByText("a.groovy", before)
@@ -104,7 +163,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
     myFixture.checkResult(after, true)
   }
 
-  public void testAfterClosureArrow() throws Throwable {
+  void testAfterClosureArrow() throws Throwable {
     doTest """
 def c = { a -><caret> }
 """, """
@@ -113,7 +172,8 @@ def c = { a ->
 }
 """
   }
-  public void testAfterClosureArrowWithBody() throws Throwable {
+
+  void testAfterClosureArrowWithBody() throws Throwable {
     doTest """
 def c = { a -><caret> zzz }
 """, """
@@ -121,7 +181,8 @@ def c = { a ->
 <caret>  zzz }
 """
   }
-  public void testAfterClosureArrowWithBody2() throws Throwable {
+
+  void testAfterClosureArrowWithBody2() throws Throwable {
     doTest """
 def c = { a -> <caret>zzz }
 """, """
@@ -130,7 +191,7 @@ def c = { a ->
 """
   }
 
-  public void testBeforeClosingClosureBrace() throws Throwable {
+  void testBeforeClosingClosureBrace() throws Throwable {
     doTest """
 def c = { a ->
   zzz <caret>}
@@ -141,7 +202,7 @@ def c = { a ->
 """
   }
 
-  public void testAfterCase() {
+  void testAfterCase() {
     doTest """
 switch(x) {
   case 0: return x
@@ -154,7 +215,7 @@ switch(x) {
 }"""
   }
 
-  public void testCaseBeforeReturn() {
+  void testCaseBeforeReturn() {
     doTest """
 switch(x) {
   case 0: <caret>
@@ -167,7 +228,7 @@ switch(x) {
 }"""
   }
 
-  public void testCaseAfterBreak() {
+  void testCaseAfterBreak() {
     doTest """
 switch(x) {
   case 0:
@@ -180,7 +241,7 @@ switch(x) {
 }"""
   }
 
-  public void testCaseAfterCall() {
+  void testCaseAfterCall() {
     doTest """
 switch(x) {
   case 0:
@@ -193,7 +254,7 @@ switch(x) {
 }"""
   }
 
-  public void testCaseAfterReturn() {
+  void testCaseAfterReturn() {
     doTest """
 switch(x) {
   case 0:
@@ -206,7 +267,7 @@ switch(x) {
 }"""
   }
 
-  public void testAlmostBeforeClosingClosureBrace() throws Throwable {
+  void testAlmostBeforeClosingClosureBrace() throws Throwable {
     doTest  """
 def c = { a ->
   zzz<caret> }
@@ -217,7 +278,7 @@ def c = { a ->
 """
   }
 
-  public void testEnterWithAlignedParameters() {
+  void testEnterWithAlignedParameters() {
     groovySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
     doTest """foo(2,<caret>)
 """, """foo(2,
@@ -226,7 +287,7 @@ def c = { a ->
 
   }
 
-  public void testEnterWithAlignedParameters2() {
+  void testEnterWithAlignedParameters2() {
       groovySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
     doTest """foo(2,<caret>
 """, """foo(2,
@@ -235,21 +296,22 @@ def c = { a ->
 
   }
 
-  public void testEnterAfterAssignmentInDeclaration() {
+  void testEnterAfterAssignmentInDeclaration() {
     doTest """def greeting = <caret>
 """, """def greeting =
     <caret>
 """
   }
 
-  public void testEnterInAssignment() {
+  void testEnterInAssignment() {
     doTest """greeting = <caret>
 """, """greeting =
     <caret>
 """
 
   }
-  public void testEnterInIf() {
+
+  void testEnterInIf() {
     doTest """if (2==2) <caret>
 """, """if (2==2)
   <caret>
@@ -257,7 +319,7 @@ def c = { a ->
 
   }
 
-  public void testGeese1() {
+  void testGeese1() {
     myTempSettings.getCustomSettings(GroovyCodeStyleSettings).USE_FLYING_GEESE_BRACES = true
     doTest '''[1, 2, 3, 4].
     toSet().
@@ -275,7 +337,7 @@ def c = { a ->
 
   }
 
-  public void testGeese2() {
+  void testGeese2() {
     myTempSettings.getCustomSettings(GroovyCodeStyleSettings).USE_FLYING_GEESE_BRACES = true
     doTest '''foo {
   bar {<caret>}
@@ -319,7 +381,7 @@ print "\\
 '''
   }
 
-  public void "test enter after doc with wrong braces"() {
+  void "test enter after doc with wrong braces"() {
     doTest '''
 /**
  * {@link #z

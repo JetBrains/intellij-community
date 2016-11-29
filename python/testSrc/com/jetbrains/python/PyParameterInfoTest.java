@@ -408,6 +408,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("<no parameters>", new String[0], new String[]{"<no parameters>"});
   }
 
+  public void testMultilineStringDefault() {
+    Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("length=12, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'",
+                                                          new String[]{"allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'"},
+                                                          new String[0]);
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where ^P is pressed.
@@ -582,7 +589,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       Assert.assertEquals("Signature", text, StringUtil.join(myTexts, ""));
       StringBuilder wrongs = new StringBuilder();
       // see if highlighted matches
-      Set<String> highlightSet = new HashSet<String>();
+      Set<String> highlightSet = new HashSet<>();
       ContainerUtil.addAll(highlightSet, highlighted);
       for (int i = 0; i < myTexts.length; i += 1) {
         if (myFlags[i].contains(Flag.HIGHLIGHT) && !highlightSet.contains(myTexts[i])) {
@@ -595,7 +602,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         }
       }
       // see if disabled matches
-      Set<String> disabledSet = new HashSet<String>();
+      Set<String> disabledSet = new HashSet<>();
       ContainerUtil.addAll(disabledSet, disabled);
       for (int i = 0; i < myTexts.length; i += 1) {
         if (myFlags[i].contains(Flag.DISABLE) && !disabledSet.contains(myTexts[i])) {

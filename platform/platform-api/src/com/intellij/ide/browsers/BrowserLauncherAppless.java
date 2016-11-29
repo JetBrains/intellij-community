@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
   static final Logger LOG = Logger.getInstance(BrowserLauncherAppless.class);
 
   private static boolean isDesktopActionSupported(Desktop.Action action) {
-    return !Patches.SUN_BUG_ID_6457572 && !Patches.SUN_BUG_ID_6486393 &&
-           Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action);
+    return !Patches.SUN_BUG_ID_6486393 && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action);
   }
 
   public static boolean canUseSystemDefaultBrowserPolicy() {
@@ -198,12 +197,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     Runnable launchTask = null;
     if (browserPath == null && browser != null) {
       browserPath = PathUtil.toSystemDependentName(browser.getPath());
-      launchTask = new Runnable() {
-        @Override
-        public void run() {
-          browseUsingPath(url, null, browser, project, additionalParameters);
-        }
-      };
+      launchTask = () -> browseUsingPath(url, null, browser, project, additionalParameters);
     }
     return doLaunch(url, browserPath, browser, project, additionalParameters, launchTask);
   }
@@ -279,7 +273,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
   }
 
   private static void addArgs(@NotNull GeneralCommandLine command, @Nullable BrowserSpecificSettings settings, @NotNull String[] additional) {
-    List<String> specific = settings == null ? Collections.<String>emptyList() : settings.getAdditionalParameters();
+    List<String> specific = settings == null ? Collections.emptyList() : settings.getAdditionalParameters();
     if (specific.size() + additional.length > 0) {
       if (isOpenCommandUsed(command)) {
         if (BrowserUtil.isOpenCommandSupportArgs()) {

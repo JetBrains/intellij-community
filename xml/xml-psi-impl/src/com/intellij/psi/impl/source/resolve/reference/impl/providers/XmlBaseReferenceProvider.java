@@ -46,12 +46,7 @@ public class XmlBaseReferenceProvider extends PsiReferenceProvider {
     PsiReference reference = URIReferenceProvider.getUrlReference(element, ElementManipulators.getValueText(element));
     if (reference != null) return new PsiReference[] { reference };
     FileReferenceSet referenceSet = FileReferenceSet.createSet(element, false, false, false);
-    referenceSet.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, new Function<PsiFile, Collection<PsiFileSystemItem>>() {
-      @Override
-      public Collection<PsiFileSystemItem> fun(PsiFile file) {
-        return getContext(element, file);
-      }
-    });
+    referenceSet.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, file -> getContext(element, file));
     return referenceSet.getAllReferences();
   }
 
@@ -68,12 +63,7 @@ public class XmlBaseReferenceProvider extends PsiReferenceProvider {
           PsiReference reference = value.getReference();
           if (reference instanceof PsiPolyVariantReference) {
             ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
-            return ContainerUtil.map(results, new Function<ResolveResult, PsiFileSystemItem>() {
-              @Override
-              public PsiFileSystemItem fun(ResolveResult result) {
-                return (PsiFileSystemItem)result.getElement();
-              }
-            });
+            return ContainerUtil.map(results, result -> (PsiFileSystemItem)result.getElement());
           }
         }
       }

@@ -34,7 +34,7 @@ import java.io.*;
  * @author: db
  * Date: 08.03.11
  */
-class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
+public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final TIntHashSet NULL_COLLECTION = new TIntHashSet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<Integer, TIntHashSet> myMap;

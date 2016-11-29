@@ -61,7 +61,7 @@ public class FocusTracesAction extends AnAction implements DumbAware {
 
     if (!myActive) {
       final List<FocusRequestInfo> requests = focusManager.getRequests();
-      new FocusTracesDialog(project, new ArrayList<FocusRequestInfo>(requests)).show();
+      new FocusTracesDialog(project, new ArrayList<>(requests)).show();
       Toolkit.getDefaultToolkit().removeAWTEventListener(myFocusTracker);
       myFocusTracker = null;
       requests.clear();

@@ -111,12 +111,9 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
 
   public void addRequest(final Runnable runnable) {
     clear();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (myRunState && myInitialize && !myDesigner.isProjectClosed()) {
-          runnable.run();
-        }
+    myAlarm.addRequest(() -> {
+      if (myRunState && myInitialize && !myDesigner.isProjectClosed()) {
+        runnable.run();
       }
     }, myDelayMillis, ModalityState.stateForComponent(myDesigner));
   }

@@ -1,0 +1,35 @@
+package pkg;
+
+public class TestExtendingSubclass {
+   class Subclass2 extends TestExtendingSubclass.Subclass1 {
+      Subclass2(String name) {
+         super(name);// 14
+      }// 15
+   }
+
+   class Subclass1 {
+      Subclass1(String name) {
+      }// 9
+   }
+}
+
+class 'pkg/TestExtendingSubclass$Subclass2' {
+   method '<init> (Lpkg/TestExtendingSubclass;Ljava/lang/String;)V' {
+      8      5
+      b      6
+   }
+}
+
+class 'pkg/TestExtendingSubclass$Subclass1' {
+   method '<init> (Lpkg/TestExtendingSubclass;Ljava/lang/String;)V' {
+      9      11
+   }
+}
+
+Lines mapping:
+9 <-> 12
+14 <-> 6
+15 <-> 7
+Not mapped:
+8
+13

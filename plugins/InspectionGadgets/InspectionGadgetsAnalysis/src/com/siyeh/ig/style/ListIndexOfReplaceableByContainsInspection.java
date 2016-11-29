@@ -74,11 +74,6 @@ public class ListIndexOfReplaceableByContainsInspection
 
   private static class IndexOfReplaceableByContainsFix
     extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -108,7 +103,7 @@ public class ListIndexOfReplaceableByContainsInspection
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "replace.indexof.with.contains.quickfix");
     }

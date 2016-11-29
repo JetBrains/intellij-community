@@ -40,14 +40,11 @@ public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandle
     CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor);
     final FoldRegion[] allFoldRegions = editor.getFoldingModel().getAllFoldRegions();
-    Runnable processor = new Runnable() {
-      @Override
-      public void run() {
-        for (FoldRegion region : allFoldRegions) {
-          PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
-          if (element instanceof PsiDocCommentBase) {
-            region.setExpanded(myExpand);
-          }
+    Runnable processor = () -> {
+      for (FoldRegion region : allFoldRegions) {
+        PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
+        if (element instanceof PsiDocCommentBase) {
+          region.setExpanded(myExpand);
         }
       }
     };

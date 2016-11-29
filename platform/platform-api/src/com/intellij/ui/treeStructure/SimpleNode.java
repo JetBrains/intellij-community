@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   protected SimpleTextAttributes getPlainAttributes() {
-    return new SimpleTextAttributes(Font.PLAIN, getColor());
+    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor());
   }
 
   private FileStatus getFileStatus() {
@@ -95,7 +95,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     Color oldColor = myColor;
     String oldName = myName;
     Icon oldIcon = getIcon();
-    List<ColoredFragment> oldFragments = new ArrayList<ColoredFragment>(presentation.getColoredText());
+    List<ColoredFragment> oldFragments = new ArrayList<>(presentation.getColoredText());
 
     myColor = UIUtil.getTreeTextForeground();
     updateFileStatus();

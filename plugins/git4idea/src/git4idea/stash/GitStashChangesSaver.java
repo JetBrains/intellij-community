@@ -28,7 +28,7 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitPlatformFacade;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitHandlerUtil;
@@ -55,12 +55,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
   @NotNull private final Set<VirtualFile> myStashedRoots = ContainerUtil.newHashSet(); // save stashed roots to unstash only them
 
   public GitStashChangesSaver(@NotNull Project project,
-                              @NotNull GitPlatformFacade platformFacade,
                               @NotNull Git git,
                               @NotNull ProgressIndicator progressIndicator,
                               @NotNull String stashMessage) {
-    super(project, platformFacade, git, progressIndicator, stashMessage);
-    myRepositoryManager = platformFacade.getRepositoryManager(project);
+    super(project, git, progressIndicator, stashMessage);
+    myRepositoryManager = GitUtil.getRepositoryManager(project);
   }
 
   @Override
@@ -106,7 +105,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
       loadRoot(root);
     }
 
-    boolean conflictsResolved = new UnstashConflictResolver(myProject, myPlatformFacade, myGit, myStashedRoots, myParams).merge();
+    boolean conflictsResolved = new UnstashConflictResolver(myProject, myGit, myStashedRoots, myParams).merge();
     LOG.info("load: conflicts resolved status is " + conflictsResolved + " in roots " + myStashedRoots);
   }
 
@@ -128,7 +127,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   public void showSavedChanges() {
-    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next());
+    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
   }
 
   /**
@@ -170,9 +169,9 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(@NotNull Project project, GitPlatformFacade platformFacade, @NotNull Git git,
+    public UnstashConflictResolver(@NotNull Project project, @NotNull Git git,
                                    @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
-      super(project, git, platformFacade, stashedRoots, makeParamsOrUse(params));
+      super(project, git, stashedRoots, makeParamsOrUse(params));
       myStashedRoots = stashedRoots;
     }
 
@@ -202,7 +201,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
                                                                       if (event.getDescription().equals("saver")) {
                                                                         // we don't use #showSavedChanges to specify unmerged root first
                                                                         GitUnstashDialog.showUnstashDialog(myProject,
-                                                                                                           new ArrayList<VirtualFile>(
+                                                                                                           new ArrayList<>(
                                                                                                              myStashedRoots),
                                                                                                            myStashedRoots.iterator().next()
                                                                         );

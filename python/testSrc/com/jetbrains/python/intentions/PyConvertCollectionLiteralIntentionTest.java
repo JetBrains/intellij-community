@@ -52,11 +52,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-9419
   public void testConvertTupleToSetNotAvailableWithoutSetLiterals() {
-    runWithLanguageLevel(LanguageLevel.PYTHON25, new Runnable() {
-      public void run() {
-        doNegativeTest(CONVERT_TUPLE_TO_SET);
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> doNegativeTest(CONVERT_TUPLE_TO_SET));
   }
 
   // PY-9419
@@ -107,5 +103,50 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
   // PY-16335
   public void testConvertLiteralPreservesFormattingAndComments() {
     doIntentionTest(CONVERT_TUPLE_TO_LIST);
+  }
+
+  // PY-16553
+  public void testConvertOneElementListToTuple() {
+    doIntentionTest(CONVERT_LIST_TO_TUPLE);
+  }
+  
+  // PY-16553
+  public void testConvertOneElementIncompleteListToTuple() {
+    doIntentionTest(CONVERT_LIST_TO_TUPLE);
+  }
+
+  // PY-16553
+  public void testConvertOneElementListWithCommentToTuple() {
+    doIntentionTest(CONVERT_LIST_TO_TUPLE);
+  }
+  
+  // PY-16553
+  public void testConvertOneElementListWithCommaAfterCommentToTuple() {
+    doIntentionTest(CONVERT_LIST_TO_TUPLE);
+  }
+
+  // PY-16553
+  public void testConvertOneElementTupleToList() {
+    doIntentionTest(CONVERT_TUPLE_TO_LIST);
+  }
+
+  // PY-16553
+  public void testConvertOneElementTupleWithoutParenthesesToSet() {
+    doIntentionTest(CONVERT_TUPLE_TO_SET);
+  }
+
+  // PY-16553
+  public void testConvertOneElementTupleWithCommentToList() {
+    doIntentionTest(CONVERT_TUPLE_TO_LIST);
+  }
+
+  // PY-19399
+  public void testCannotConvertEmptyTupleToSet() {
+    doNegativeTest(CONVERT_TUPLE_TO_SET);
+  }
+  
+  // PY-19399
+  public void testCannotConvertEmptyListToSet() {
+    doNegativeTest(CONVERT_LIST_TO_SET);
   }
 }

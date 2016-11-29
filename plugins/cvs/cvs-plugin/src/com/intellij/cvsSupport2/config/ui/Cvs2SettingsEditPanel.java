@@ -51,7 +51,7 @@ import java.awt.event.ActionListener;
 public class Cvs2SettingsEditPanel {
 
   private JPanel myPanel;
-  private final Ref<Boolean> myIsUpdating = new Ref<Boolean>();
+  private final Ref<Boolean> myIsUpdating = new Ref<>();
   private final CvsRootAsStringConfigurationPanel myCvsRootConfigurationPanelView;
   private JPanel myCvsRootConfigurationPanel;
 
@@ -194,7 +194,7 @@ public class Cvs2SettingsEditPanel {
 
   private static void testConnection(final CvsRootConfiguration configuration, final Component component, Project project) {
     final CvsLoginWorker loginWorker = configuration.getLoginWorker(project);
-    final Ref<Boolean> success = new Ref<Boolean>();
+    final Ref<Boolean> success = new Ref<>();
     ProgressManager.getInstance().run(new Task.Modal(project, CvsBundle.message("message.connecting.to.cvs.server"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -228,22 +228,13 @@ public class Cvs2SettingsEditPanel {
   }
 
   private static void showConnectionFailedMessage(final Component parent, final String message) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showMessageDialog(parent, message, CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(
+      () -> Messages.showMessageDialog(parent, message, CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon()));
   }
 
   private static void showSuccessfulConnectionMessage(final Component component) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showMessageDialog(component, CvsBundle.message("operation.status.connection.successful"),
-                                   CvsBundle.message("operation.name.test.connection"), Messages.getInformationIcon());
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> Messages.showMessageDialog(component, CvsBundle.message("operation.status.connection.successful"),
+                                                            CvsBundle.message("operation.name.test.connection"), Messages.getInformationIcon()));
   }
 
   public JComponent getPanel() {

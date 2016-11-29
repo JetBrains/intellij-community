@@ -31,7 +31,12 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
 
   public MavenWorkspaceSettingsComponent(Project project) {
     myProject = project;
-    applyDefaults(mySettings);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      mySettings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
+    }
+    else {
+      applyDefaults(mySettings);
+    }
   }
 
   public static MavenWorkspaceSettingsComponent getInstance(Project project) {
@@ -56,12 +61,15 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
   }
 
   private static void applyDefaults(MavenWorkspaceSettings settings) {
-    if(StringUtil.isEmptyOrSpaces(settings.generalSettings.getMavenHome())) {
-      if(MavenServerManager.getInstance().isUsedMaven2ForProjectImport() || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (StringUtil.isEmptyOrSpaces(settings.generalSettings.getMavenHome())) {
+      if (MavenServerManager.getInstance().isUsedMaven2ForProjectImport() || ApplicationManager.getApplication().isUnitTestMode()) {
         settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
-      } else {
+      }
+      else {
         settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
       }
+    } else {
+      MavenServerManager.getInstance().setMavenHome(settings.generalSettings.getMavenHome());
     }
   }
 }

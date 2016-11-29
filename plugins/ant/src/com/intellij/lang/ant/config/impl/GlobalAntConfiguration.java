@@ -20,7 +20,6 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
-import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -60,7 +59,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     }
   };
 
-  public static final AbstractProperty<GlobalAntConfiguration> INSTANCE = new ValueProperty<GlobalAntConfiguration>(
+  public static final AbstractProperty<GlobalAntConfiguration> INSTANCE = new ValueProperty<>(
     "$GlobalAntConfiguration.INSTANCE", null);
   @NonNls public static final String ANT_FILE = "ant";
   @NonNls public static final String LIB_DIR = "lib";
@@ -125,11 +124,6 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     return myProperties;
   }
 
-  public AbstractProperty.AbstractPropertyContainer getProperties(Project project) {
-    return new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{
-      myProperties, AntConfigurationBase.getInstance(project).getProperties()});
-  }
-
   public void addConfiguration(final AntInstallation ant) {
     if (getConfiguredAnts().containsKey(ant.getReference())) {
       LOG.error("Duplicate name: " + ant.getName());
@@ -158,7 +152,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
       return null;
     }
     final AntConfigurationImpl antConfiguration = (AntConfigurationImpl)AntConfiguration.getInstance(project);
-    for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+    for (AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       if (vFile.equals(buildFile.getVirtualFile())) {
         final AntBuildTarget target = buildFile.getModel().findTarget(targetName);
         if (target != null) {

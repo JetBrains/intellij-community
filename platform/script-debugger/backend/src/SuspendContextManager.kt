@@ -38,7 +38,7 @@ interface SuspendContextManager<CALL_FRAME : CallFrame> {
    * *
    * @param stepCount steps to perform (not used if `stepAction == CONTINUE`)
    */
-  fun continueVm(stepAction: StepAction, stepCount: Int): Promise<*>
+  fun continueVm(stepAction: StepAction, stepCount: Int = 1): Promise<*>
 
   val isRestartFrameSupported: Boolean
 
@@ -67,12 +67,6 @@ enum class StepAction {
    * Step into the current statement.
    */
   IN,
-
-  /**
-   * Step into first scheduled async handler.
-   * @see <a href="https://groups.google.com/a/chromium.org/forum/#!topic/blink-reviews-bindings/LRAHGXErvOc">Chrome debugger suggestion</a>
-   */
-  IN_ASYNC,
 
   /**
    * Step over the current statement.

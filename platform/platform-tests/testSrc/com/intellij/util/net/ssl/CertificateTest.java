@@ -123,48 +123,39 @@ public class CertificateTest extends LightPlatformTestCase {
   }
 
   public void testDeadlockDetection() throws Exception {
-    final Ref<Throwable> throwableRef = new Ref<Throwable>();
+    final Ref<Throwable> throwableRef = new Ref<>();
 
     final long interruptionTimeout = CertificateManager.DIALOG_VISIBILITY_TIMEOUT + 1000;
     // Will be interrupted after at most interruptionTimeout (6 seconds originally)
     Thread[] t = {null};
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        final Thread thread = new Thread(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              boolean accepted = CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
-                @Override
-                public DialogWrapper call() throws Exception {
-                  // this dialog will be attempted to show only if blocking thread was forcibly interrupted after timeout
-                  throw new AssertionError("Deadlock was not detected in time");
-                }
-              });
-              // should be rejected after 5 seconds
-              assertFalse("Certificate should be rejected", accepted);
-            }
-            catch (Throwable e) {
-              throwableRef.set(e);
-            }
-          }
-        }, "Test EDT-blocking thread");
-        thread.start();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      final Thread thread = new Thread(() -> {
         try {
-          thread.join(interruptionTimeout);
+          boolean accepted = CertificateManager.showAcceptDialog(() -> {
+            // this dialog will be attempted to show only if blocking thread was forcibly interrupted after timeout
+            throw new AssertionError("Deadlock was not detected in time");
+          });
+          // should be rejected after 5 seconds
+          assertFalse("Certificate should be rejected", accepted);
         }
-        catch (InterruptedException ignored) {
-          // No one will attempt to interrupt EDT, right?
+        catch (Throwable e) {
+          throwableRef.set(e);
         }
-        finally {
-          if (thread.isAlive()) {
-            thread.interrupt();
-            fail("Deadlock was not detected in time");
-          }
-        }
-        t[0] = thread;
+      }, "Test EDT-blocking thread");
+      thread.start();
+      try {
+        thread.join(interruptionTimeout);
       }
+      catch (InterruptedException ignored) {
+        // No one will attempt to interrupt EDT, right?
+      }
+      finally {
+        if (thread.isAlive()) {
+          thread.interrupt();
+          fail("Deadlock was not detected in time");
+        }
+      }
+      t[0] = thread;
     }, ModalityState.any());
     if (!throwableRef.isNull()) {
       throw new AssertionError(throwableRef.get());

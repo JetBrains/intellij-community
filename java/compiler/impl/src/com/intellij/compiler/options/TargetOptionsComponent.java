@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class TargetOptionsComponent extends JPanel {
   private final Project myProject;
   
   static {
-    List<String> targets = new ArrayList<String>();
+    List<String> targets = new ArrayList<>();
     targets.add("1.1");
     targets.add("1.2");
     for (LanguageLevel level : LanguageLevel.values()) {
@@ -120,8 +121,8 @@ public class TargetOptionsComponent extends JPanel {
 
   private void addModules() {
     final TargetLevelTableModel model = (TargetLevelTableModel)myTable.getModel();
-    final List<Module> items = new ArrayList<Module>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
-    Set<Module> alreadyAdded = new HashSet<Module>();
+    final List<Module> items = new ArrayList<>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
+    Set<Module> alreadyAdded = new HashSet<>();
     for (TargetLevelTableModel.Item item : model.getItems()) {
       alreadyAdded.add(item.module);
     }
@@ -131,12 +132,7 @@ public class TargetOptionsComponent extends JPanel {
         it.remove();
       }
     }
-    Collections.sort(items, new Comparator<Module>() {
-      @Override
-      public int compare(Module o1, Module o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Collections.sort(items, (o1, o2) -> o1.getName().compareTo(o2.getName()));
     final ChooseModulesDialog chooser = new ChooseModulesDialog(this, items, "Choose module");
     chooser.show();
     final List<Module> elements = chooser.getChosenElements();
@@ -162,7 +158,7 @@ public class TargetOptionsComponent extends JPanel {
 
   public Map<String, String> getModulesBytecodeTargetMap() {
     TargetLevelTableModel model = (TargetLevelTableModel)myTable.getModel();
-    final Map<String, String> map = new HashMap<String, String>();
+    final Map<String, String> map = new HashMap<>();
     for (TargetLevelTableModel.Item item : model.getItems()) {
       map.put(item.module.getName(), item.targetLevel);
     }
@@ -170,7 +166,7 @@ public class TargetOptionsComponent extends JPanel {
   }
 
   public void setModuleTargetLevels(Map<String, String> moduleLevels) {
-    final Map<Module, String> map = new HashMap<Module, String>();
+    final Map<Module, String> map = new HashMap<>();
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       final String target = moduleLevels.get(module.getName());
       if (target != null) {
@@ -181,11 +177,11 @@ public class TargetOptionsComponent extends JPanel {
   }
 
   private static GridBagConstraints constraints(final int gridx, final int gridy, final int gridwidth, final int gridheight, final double weightx, final double weighty, final int fill) {
-    return new GridBagConstraints(gridx, gridy, gridwidth, gridheight, weightx, weighty, GridBagConstraints.WEST, fill, new Insets(5, 5, 0, 0), 0, 0);
+    return new GridBagConstraints(gridx, gridy, gridwidth, gridheight, weightx, weighty, GridBagConstraints.WEST, fill, JBUI.insets(5, 5, 0, 0), 0, 0);
   }
 
   private static final class TargetLevelTableModel extends AbstractTableModel implements ItemRemovable{
-    private final List<Item> myItems = new ArrayList<Item>();
+    private final List<Item> myItems = new ArrayList<>();
     @Override
     public int getRowCount() {
       return myItems.size();
@@ -229,12 +225,7 @@ public class TargetOptionsComponent extends JPanel {
     }
 
     private void sorItems() {
-      Collections.sort(myItems, new Comparator<Item>() {
-        @Override
-        public int compare(Item o1, Item o2) {
-          return o1.module.getName().compareTo(o2.module.getName());
-        }
-      });
+      Collections.sort(myItems, (o1, o2) -> o1.module.getName().compareTo(o2.module.getName()));
     }
 
     public List<Item> getItems() {
@@ -282,7 +273,7 @@ public class TargetOptionsComponent extends JPanel {
 
   private static final class TargetLevelComboboxModel extends AbstractListModel implements ComboBoxModel{
 
-    private final List<String> myOptions = new ArrayList<String>();
+    private final List<String> myOptions = new ArrayList<>();
     private String mySelectedItem = "";
 
     TargetLevelComboboxModel() {

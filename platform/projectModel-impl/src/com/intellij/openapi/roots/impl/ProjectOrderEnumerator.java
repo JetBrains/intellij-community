@@ -51,13 +51,10 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   protected void forEach(@NotNull final PairProcessor<OrderEntry, List<OrderEnumerationHandler>> processor) {
     myRecursively = false;
     myWithoutDepModules = true;
-    final THashSet<Module> processed = new THashSet<Module>();
-    processRootModules(new Processor<Module>() {
-      @Override
-      public boolean process(Module module) {
-        processEntries(getRootModel(module), processor, processed, true, getCustomHandlers(module));
-        return true;
-      }
+    final THashSet<Module> processed = new THashSet<>();
+    processRootModules(module -> {
+      processEntries(getRootModel(module), processor, processed, true, getCustomHandlers(module));
+      return true;
     });
   }
 

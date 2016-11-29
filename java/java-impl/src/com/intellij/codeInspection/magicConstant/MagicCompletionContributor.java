@@ -125,7 +125,7 @@ public class MagicCompletionContributor extends CompletionContributor {
         PsiParameter[] params = method.getParameterList().getParameters();
         if (i >= params.length) continue;
         PsiParameter parameter = params[i];
-        result.add(new Pair<PsiModifierListOwner, PsiType>(parameter, parameter.getType()));
+        result.add(new Pair<>(parameter, parameter.getType()));
       }
     }
     else if (IN_BINARY_COMPARISON.accepts(pos)) {
@@ -168,7 +168,7 @@ public class MagicCompletionContributor extends CompletionContributor {
         PsiReference ref = pair.getReference();
         PsiMethod method = ref == null ? null : (PsiMethod)ref.resolve();
         if (method != null) {
-          result.add(new Pair<PsiModifierListOwner, PsiType>(method, method.getReturnType()));
+          result.add(new Pair<>(method, method.getReturnType()));
         }
       }
     }
@@ -179,7 +179,7 @@ public class MagicCompletionContributor extends CompletionContributor {
                                             @NotNull final CompletionResultSet result,
                                             PsiElement pos,
                                             MagicConstantInspection.AllowedValues allowedValues) {
-    final Set<PsiElement> allowed = new THashSet<PsiElement>(new TObjectHashingStrategy<PsiElement>() {
+    final Set<PsiElement> allowed = new THashSet<>(new TObjectHashingStrategy<PsiElement>() {
       @Override
       public int computeHashCode(PsiElement object) {
         return 0;
@@ -222,16 +222,13 @@ public class MagicCompletionContributor extends CompletionContributor {
       allowed.add(value);
     }
 
-    result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(CompletionResult completionResult) {
-        LookupElement element = completionResult.getLookupElement();
-        Object object = element.getObject();
-        if (object instanceof PsiElement && allowed.contains(object)) {
-          return;
-        }
-        result.passResult(completionResult);
+    result.runRemainingContributors(parameters, completionResult -> {
+      LookupElement element = completionResult.getLookupElement();
+      Object object = element.getObject();
+      if (object instanceof PsiElement && allowed.contains(object)) {
+        return;
       }
+      result.passResult(completionResult);
     });
   }
 

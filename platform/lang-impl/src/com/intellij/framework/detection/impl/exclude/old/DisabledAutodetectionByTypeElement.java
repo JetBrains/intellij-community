@@ -34,14 +34,10 @@ import java.util.List;
 */
 @Tag("facet-type")
 public class DisabledAutodetectionByTypeElement {
-  public static final Comparator<DisabledAutodetectionByTypeElement> COMPARATOR = new Comparator<DisabledAutodetectionByTypeElement>() {
-    @Override
-    public int compare(DisabledAutodetectionByTypeElement o1, DisabledAutodetectionByTypeElement o2) {
-      return StringUtil.compare(o1.getFacetTypeId(), o2.getFacetTypeId(), true);
-    }
-  };
+  public static final Comparator<DisabledAutodetectionByTypeElement> COMPARATOR =
+    (o1, o2) -> StringUtil.compare(o1.getFacetTypeId(), o2.getFacetTypeId(), true);
   private String myFacetTypeId;
-  private List<DisabledAutodetectionInModuleElement> myModuleElements = new SortedList<DisabledAutodetectionInModuleElement>(DisabledAutodetectionInModuleElement.COMPARATOR);
+  private List<DisabledAutodetectionInModuleElement> myModuleElements = new SortedList<>(DisabledAutodetectionInModuleElement.COMPARATOR);
   
   public DisabledAutodetectionByTypeElement() {
   }

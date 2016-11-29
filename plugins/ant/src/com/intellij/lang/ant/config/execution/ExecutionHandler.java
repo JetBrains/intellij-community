@@ -20,8 +20,6 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.junit.JUnitProcessHandler;
-import com.intellij.execution.junit2.segments.OutputPacketProcessor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
@@ -33,6 +31,7 @@ import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
+import com.intellij.lang.ant.segments.OutputPacketProcessor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,12 +116,12 @@ public final class ExecutionHandler {
       final AntCommandLineBuilder builder = new AntCommandLineBuilder();
 
       builder.setBuildFile(buildFile.getAllOptions(), VfsUtilCore.virtualToIoFile(buildFile.getVirtualFile()));
-      builder.calculateProperties(dataContext, additionalProperties);
+      builder.calculateProperties(dataContext, buildFile.getProject(), additionalProperties);
       builder.addTargets(targets);
 
       builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());
 
-      messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets);
+      messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
       commandLine = CommandLineBuilder.createFromJavaParameters(builder.getCommandLine());
       messageView.setBuildCommandLine(commandLine.getCommandLineString());
     }
@@ -145,7 +144,7 @@ public final class ExecutionHandler {
       LOG.error(e);
       return null;
     }
-    final FutureResult<ProcessHandler> future = new FutureResult<ProcessHandler>();
+    final FutureResult<ProcessHandler> future = new FutureResult<>();
     new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
 
       public boolean shouldStartInBackground() {
@@ -183,16 +182,13 @@ public final class ExecutionHandler {
 
     final long startTime = System.currentTimeMillis();
     LocalHistory.getInstance().putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
-    final JUnitProcessHandler handler;
+    final AntProcessHandler handler;
     try {
-      handler = JUnitProcessHandler.runCommandLine(commandLine);
+      handler = AntProcessHandler.runCommandLine(commandLine);
     }
     catch (final ExecutionException e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          ExecutionErrorDialog.show(e, AntBundle.message("could.not.start.process.error.dialog.title"), project);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> ExecutionErrorDialog.show(e, AntBundle.message("could.not.start.process.error.dialog.title"), project));
       antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
       return null;
     }
@@ -202,7 +198,7 @@ public final class ExecutionHandler {
   }
 
   private static void processRunningAnt(final ProgressIndicator progress,
-                                        final JUnitProcessHandler handler,
+                                        final AntProcessHandler handler,
                                         final AntBuildMessageView errorView,
                                         final AntBuildFileBase buildFile,
                                         final long startTime,
@@ -300,14 +296,14 @@ public final class ExecutionHandler {
 
   private static AntBuildMessageView prepareMessageView(@Nullable AntBuildMessageView buildMessageViewToReuse,
                                                         AntBuildFileBase buildFile,
-                                                        String[] targets) throws RunCanceledException {
+                                                        String[] targets, List<BuildFileProperty> additionalProperties) throws RunCanceledException {
     AntBuildMessageView messageView;
     if (buildMessageViewToReuse != null) {
       messageView = buildMessageViewToReuse;
       messageView.emptyAll();
     }
     else {
-      messageView = AntBuildMessageView.openBuildMessageView(buildFile.getProject(), buildFile, targets);
+      messageView = AntBuildMessageView.openBuildMessageView(buildFile.getProject(), buildFile, targets, additionalProperties);
       if (messageView == null) {
         throw new RunCanceledException(AntBundle.message("canceled.by.user.error.message"));
       }

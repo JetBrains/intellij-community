@@ -10,7 +10,7 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntry type="library" name="asm5" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="xpath" />
     <orderEntry type="module" module-name="platform-api" />
@@ -23,4 +23,3 @@
     </Base>
   </component>
 </module>
-

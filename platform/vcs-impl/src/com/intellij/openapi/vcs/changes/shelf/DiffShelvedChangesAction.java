@@ -51,6 +51,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,12 +74,8 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   public static boolean isEnabled(final DataContext dc) {
     final Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) return false;
-
-    ShelvedChangeList[] changeLists = ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY.getData(dc);
-    if (changeLists == null) changeLists = ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY.getData(dc);
-    if (changeLists == null || changeLists.length != 1) return false;
-
-    return true;
+    List<ShelvedChangeList> changeLists = ShelvedChangesViewManager.getShelvedLists(dc);
+    return changeLists.size() == 1;
   }
 
   public static void showShelvedChangesDiff(final DataContext dc) {
@@ -86,14 +83,13 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-    ShelvedChangeList[] changeLists = ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY.getData(dc);
-    if (changeLists == null) changeLists = ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY.getData(dc);
-    if (changeLists == null || changeLists.length != 1) return;
+    List<ShelvedChangeList> changeLists = ShelvedChangesViewManager.getShelvedLists(dc);
+    ShelvedChangeList changeList = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(changeLists));
 
-    final List<ShelvedChange> textChanges = changeLists[0].getChanges(project);
-    final List<ShelvedBinaryFile> binaryChanges = changeLists[0].getBinaryFiles();
+    final List<ShelvedChange> textChanges = changeList.getChanges(project);
+    final List<ShelvedBinaryFile> binaryChanges = changeList.getBinaryFiles();
 
-    final List<MyDiffRequestProducer> diffRequestProducers = new ArrayList<MyDiffRequestProducer>();
+    final List<MyDiffRequestProducer> diffRequestProducers = new ArrayList<>();
 
     processTextChanges(project, textChanges, diffRequestProducers);
     processBinaryFiles(project, binaryChanges, diffRequestProducers);
@@ -101,9 +97,9 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     Collections.sort(diffRequestProducers, ChangeDiffRequestComparator.getInstance());
 
     // selected changes inside lists
-    final Set<Object> selectedChanges = new HashSet<Object>();
-    selectedChanges.addAll(ContainerUtil.notNullize(ShelvedChangesViewManager.SHELVED_CHANGE_KEY.getData(dc)));
-    selectedChanges.addAll(ContainerUtil.notNullize(ShelvedChangesViewManager.SHELVED_BINARY_FILE_KEY.getData(dc)));
+    final Set<Object> selectedChanges = new HashSet<>();
+    selectedChanges.addAll(ShelvedChangesViewManager.getShelveChanges(dc));
+    selectedChanges.addAll(ShelvedChangesViewManager.getBinaryShelveChanges(dc));
 
     int index = 0;
     for (int i = 0; i < diffRequestProducers.size(); i++) {
@@ -212,7 +208,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
                 }
               };
 
-              return PatchDiffRequestFactory.createConflictDiffRequest(project, file, "Shelved Version", getter, getName(), context, indicator);
+              return PatchDiffRequestFactory.createConflictDiffRequest(project, file, patch, "Shelved Version", getter, getName(), context, indicator);
             }
             catch (VcsException e) {
               throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
@@ -233,7 +229,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
 
     private PatchesPreloader(final Project project) {
       myProject = project;
-      myFilePatchesMap = new HashMap<String, List<TextFilePatch>>();
+      myFilePatchesMap = new HashMap<>();
     }
 
     @NotNull

@@ -37,8 +37,8 @@ import java.util.List;
 public class ArtifactValidationManagerImpl implements Disposable {
   private final ArtifactErrorPanel myErrorPanel;
   private final ArtifactEditorImpl myArtifactEditor;
-  private final MultiValuesMap<PackagingElementNode<?>, ArtifactProblemDescription> myProblemsForNodes = new MultiValuesMap<PackagingElementNode<?>, ArtifactProblemDescription>(true);
-  private final List<ArtifactProblemDescription> myProblems = new ArrayList<ArtifactProblemDescription>();
+  private final MultiValuesMap<PackagingElementNode<?>, ArtifactProblemDescription> myProblemsForNodes = new MultiValuesMap<>(true);
+  private final List<ArtifactProblemDescription> myProblems = new ArrayList<>();
 
   ArtifactValidationManagerImpl(ArtifactEditorImpl artifactEditor) {
     Disposer.register(artifactEditor, this);

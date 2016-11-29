@@ -7,7 +7,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -21,15 +20,14 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationReplacementUtil;
 import com.intellij.refactoring.typeMigration.rules.AtomicConversionRule;
-import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.*;
@@ -107,7 +105,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
     final Query<PsiReference> refs = ReferencesSearch.search(psiVariable);
 
-    final Set<PsiElement> elements = new HashSet<PsiElement>();
+    final Set<PsiElement> elements = new HashSet<>();
     elements.add(element);
     for (PsiReference reference : refs) {
       elements.add(reference.getElement());
@@ -160,7 +158,8 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
     try {
       for (PsiReference reference : refs) {
-        PsiElement psiElement = reference.getElement();
+        PsiElement refElement = reference.getElement();
+        PsiElement psiElement = refElement;
         if (psiElement instanceof PsiExpression) {
           final PsiElement parent = psiElement.getParent();
           if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression || parent instanceof PsiPolyadicExpression)) {
@@ -168,14 +167,14 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
           }
           if (psiElement instanceof PsiBinaryExpression) {
             PsiBinaryExpression binary = (PsiBinaryExpression)psiElement;
-            if (isBinaryOperatorApplicable(binary.getOperationTokenType(), binary.getLOperand(), binary.getROperand(), true)) {
+            if (isBinaryOpApplicable(binary.getOperationTokenType(), binary.getLOperand(), binary.getROperand(), refElement, toType)) {
               continue;
             }
           }
           else if (psiElement instanceof PsiAssignmentExpression) {
             final PsiAssignmentExpression assignment = (PsiAssignmentExpression)psiElement;
             final IElementType opSign = TypeConversionUtil.convertEQtoOperation(assignment.getOperationTokenType());
-            if (opSign != null && isBinaryOperatorApplicable(opSign, assignment.getLExpression(), assignment.getRExpression(), true)) {
+            if (isBinaryOpApplicable(opSign, assignment.getLExpression(), assignment.getRExpression(), refElement, toType)) {
               continue;
             }
           }
@@ -226,5 +225,16 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  private static boolean isBinaryOpApplicable(@Nullable IElementType opSign,
+                                              @NotNull PsiExpression lExpr,
+                                              @Nullable PsiExpression rExpr,
+                                              @NotNull PsiElement varElement,
+                                              @NotNull PsiType migrationType) {
+    if (opSign == null || rExpr == null) return false;
+    PsiType lType = lExpr == varElement ? migrationType : lExpr.getType();
+    PsiType rType = rExpr == varElement ? migrationType : rExpr.getType();
+    return isBinaryOperatorApplicable(opSign, lType, rType, true);
   }
 }

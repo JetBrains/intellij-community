@@ -16,18 +16,15 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.BreakpointStepMethodFilter;
-import com.intellij.debugger.engine.CompoundPositionManager;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.LambdaMethodFilter;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
-import com.sun.jdi.request.BreakpointRequest;
+import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +37,8 @@ import java.util.List;
  */
 public class StepIntoBreakpoint extends RunToCursorBreakpoint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint");
-  @NotNull
-  private final BreakpointStepMethodFilter myFilter;
+  @NotNull private final BreakpointStepMethodFilter myFilter;
+  @Nullable private RequestHint myHint;
 
   StepIntoBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, @NotNull BreakpointStepMethodFilter filter) {
     super(project, pos, false);
@@ -92,11 +89,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
             }
           }
         }
-        if (location != null) {
-          final RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-          final BreakpointRequest request = requestsManager.createBreakpointRequest(this, location);
-          requestsManager.enableRequest(request);
-        }
+        createLocationBreakpointRequest(location, debugProcess);
       }
     }
     catch (ClassNotPreparedException ex) {
@@ -136,5 +129,23 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
       return breakpoint;
     }
     return null;
+  }
+
+  @Override
+  public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event)
+    throws EventProcessingException {
+    boolean res = super.processLocatableEvent(action, event);
+    if (res && myHint != null && myHint.isResetIgnoreFilters()) {
+      SuspendContextImpl context = action.getSuspendContext();
+      if (context != null) {
+        DebugProcessImpl process = context.getDebugProcess();
+        process.checkPositionNotFiltered(context.getThread(), f -> process.getSession().resetIgnoreStepFiltersFlag());
+      }
+    }
+    return res;
+  }
+
+  public void setRequestHint(RequestHint hint) {
+    myHint = hint;
   }
 }

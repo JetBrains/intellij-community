@@ -21,7 +21,7 @@
 
     <intentionAction>
       <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>
-      <category>RegExp/Declaration</category>
+      <category>RegExp</category>
     </intentionAction>
   </extensions>
 </idea-plugin>

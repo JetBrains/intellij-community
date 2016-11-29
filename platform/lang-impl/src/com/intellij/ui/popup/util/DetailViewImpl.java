@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.SettingsImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -136,10 +138,14 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
         ((EditorEx)getEditor()).setFile(file);
         ((EditorEx)getEditor()).setHighlighter(highlighter);
 
-        getEditor().getSettings().setAnimatedScrolling(false);
-        getEditor().getSettings().setRefrainFromScrolling(false);
-        getEditor().getSettings().setLineNumbersShown(true);
-        getEditor().getSettings().setFoldingOutlineShown(false);
+        EditorSettings settings = getEditor().getSettings();
+        settings.setAnimatedScrolling(false);
+        settings.setRefrainFromScrolling(false);
+        settings.setLineNumbersShown(true);
+        settings.setFoldingOutlineShown(false);
+        if (settings instanceof SettingsImpl) {
+          ((SettingsImpl)settings).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
+        }
         ((EditorEx)getEditor()).getFoldingModel().setFoldingEnabled(false);
 
         add(getEditor().getComponent(), BorderLayout.CENTER);
@@ -149,6 +155,9 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
         getEditor().getCaretModel().moveToLogicalPosition(positionToNavigate);
         validate();
         getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      } else {
+        revalidate();
+        repaint();
       }
 
       getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));

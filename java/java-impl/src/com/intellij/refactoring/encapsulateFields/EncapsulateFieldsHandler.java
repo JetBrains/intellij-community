@@ -71,7 +71,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
    */
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, DataContext dataContext) {
     PsiClass aClass = null;
-    final HashSet<PsiField> preselectedFields = new HashSet<PsiField>();
+    final HashSet<PsiField> preselectedFields = new HashSet<>();
     if (elements.length == 1) {
       if (elements[0] instanceof PsiClass) {
         aClass = (PsiClass) elements[0];
@@ -108,12 +108,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     }
 
     LOG.assertTrue(aClass != null);
-    final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), new Condition<PsiField>() {
-      @Override
-      public boolean value(PsiField field) {
-        return !(field instanceof PsiEnumConstant);
-      }
-    });
+    final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), field -> !(field instanceof PsiEnumConstant));
     if (fields.isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, CommonDataKeys.EDITOR.getData(dataContext), "Class has no fields to encapsulate",
                                           REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);

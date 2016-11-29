@@ -27,8 +27,6 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.InputValidator;
@@ -43,10 +41,6 @@ import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author lene
- *         Date: 30.09.11
- */
 public class RenameProjectHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#" + RenameProjectHandler.class.getName());
 
@@ -104,57 +98,48 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
 
     @Override
     public boolean canClose(final String inputString) {
-      if (shouldRenameProject(inputString)) {
-        myProject.setProjectName(inputString);
-        myProject.save();
-      }
+      return renameProject(myProject, myModule, inputString);
+    }
+  }
 
-      if (myModule != null && !inputString.equals(myModule.getName())) {
-        final ModifiableModuleModel modifiableModel = ModuleManager.getInstance(myProject).getModifiableModel();
-        try {
-          modifiableModel.renameModule(myModule, inputString);
-        }
-        catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-          Messages.showErrorDialog(myProject, IdeBundle.message("error.module.already.exists", inputString),
-                                   IdeBundle.message("title.rename.module"));
-          return false;
-        }
-        final Ref<Boolean> success = Ref.create(Boolean.TRUE);
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-                  @Override
-                  public void run() {
-                    modifiableModel.commit();
-                  }
-                });
-              }
-            });
-          }
-        }, IdeBundle.message("command.renaming.module", myModule.getName()), null);
-        return success.get().booleanValue();
+  public static boolean renameProject(@NotNull ProjectEx project, @Nullable Module module, String newName){
+    if (shouldRenameProject(project, module, newName)) {
+      project.setProjectName(newName);
+      project.save();
+    }
+
+    if (module != null && !newName.equals(module.getName())) {
+      final ModifiableModuleModel modifiableModel = ModuleManager.getInstance(project).getModifiableModel();
+      try {
+        modifiableModel.renameModule(module, newName);
       }
+      catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
+        Messages.showErrorDialog(project, IdeBundle.message("error.module.already.exists", newName),
+                                 IdeBundle.message("title.rename.module"));
+        return false;
+      }
+      final Ref<Boolean> success = Ref.create(Boolean.TRUE);
+      CommandProcessor.getInstance().executeCommand(project,
+                                                    () -> ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.commit()),
+                                                    IdeBundle.message("command.renaming.module", module.getName()), null);
+      return success.get().booleanValue();
+    }
+    return true;
+  }
+
+  private static boolean shouldRenameProject(@NotNull Project project, @Nullable Module module, String inputString) {
+    if (inputString.equals(project.getName())) {
+      return false;
+    }
+
+    if (module == null) {
       return true;
     }
 
-    private boolean shouldRenameProject(String inputString) {
-      if (inputString.equals(myProject.getName())) {
-        return false;
-      }
-
-      if (myModule == null) {
-        return true;
-      }
-
-      if (ProjectAttachProcessor.canAttachToProject()) {
-        return myModule == ModuleAttachProcessor.getPrimaryModule(myProject);
-      }
-
-      return myModule == ModuleAttachProcessor.findModuleInBaseDir(myProject);
+    if (ProjectAttachProcessor.canAttachToProject()) {
+      return module == ModuleAttachProcessor.getPrimaryModule(project);
     }
+
+    return module == ModuleAttachProcessor.findModuleInBaseDir(project);
   }
 }

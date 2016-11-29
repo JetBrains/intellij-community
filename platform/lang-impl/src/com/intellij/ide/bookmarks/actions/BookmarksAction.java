@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -67,7 +68,10 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     final Project project = e.getProject();
     if (project == null) return;
 
-    if (myPopup != null && myPopup.isVisible()) return;
+    if (myPopup != null && myPopup.isVisible()) {
+      myPopup.cancel();
+      return;
+    }
 
     final JBList list = new JBList(buildModel(project));
 
@@ -86,18 +90,8 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       setDimensionServiceKey(DIMENSION_SERVICE_KEY).
       setAddDetailViewToEast(true).
       setActionsGroup(actions).
-      setPopupTuner(new Consumer<PopupChooserBuilder>() {
-        @Override
-        public void consume(PopupChooserBuilder builder) {
-          builder.setCloseOnEnter(false).setCancelOnClickOutside(false);
-        }
-      }).
-      setDoneRunnable(new Runnable() {
-        @Override
-        public void run() {
-          myPopup.cancel();
-        }
-      }).
+      setPopupTuner(builder -> builder.setCloseOnEnter(false).setCancelOnClickOutside(false)).
+      setDoneRunnable(() -> myPopup.cancel()).
       createMasterDetailPopup();
 
     new AnAction() {
@@ -175,12 +169,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     final Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic(mnemonic);
     if (bookmark != null) {
       popup.cancel();
-      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          bookmark.navigate(true);
-        }
-      });
+      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> bookmark.navigate(true));
     }
   }
 
@@ -192,7 +181,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     }
 
     JLabel mnemonicLabel = new JLabel();
-    mnemonicLabel.setFont(Bookmark.MNEMONIC_FONT);
+    mnemonicLabel.setFont(Bookmark.getBookmarkFont());
     mnemonicLabel.setPreferredSize(new JLabel("W.").getPreferredSize());
     mnemonicLabel.setOpaque(false);
     return mnemonicLabel;
@@ -246,13 +235,23 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       myLine = -1;
 
       BookmarkManager bookmarkManager = BookmarkManager.getInstance(myProject);
-      if (ToolWindowManager.getInstance(myProject).isEditorComponentActive()) {
-        Editor editor = CommonDataKeys.EDITOR.getData(myDataContext);
-        if (editor != null) {
+      Editor editor = CommonDataKeys.EDITOR.getData(myDataContext);
+      if (editor != null) {
+        if (ToolWindowManager.getInstance(myProject).isEditorComponentActive()) {
           Document document = editor.getDocument();
           myLine = editor.getCaretModel().getLogicalPosition().line;
           myFile = FileDocumentManager.getInstance().getFile(document);
           myBookmarkAtPlace = bookmarkManager.findEditorBookmark(document, myLine);
+        }
+        else {
+          myFile = CommonDataKeys.VIRTUAL_FILE.getData(myDataContext);
+          if (myFile != null) {
+            Document document = editor.getDocument();
+            if (Comparing.equal(myFile, FileDocumentManager.getInstance().getFile(document))) {
+              myLine = editor.getCaretModel().getLogicalPosition().line;
+              myBookmarkAtPlace = bookmarkManager.findEditorBookmark(document, myLine);
+            }
+          }
         }
       }
 
@@ -269,7 +268,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   }
 
   static List<Bookmark> getSelectedBookmarks(JList list) {
-    List<Bookmark> answer = new ArrayList<Bookmark>();
+    List<Bookmark> answer = new ArrayList<>();
 
     //noinspection deprecation
     for (Object value : list.getSelectedValues()) {

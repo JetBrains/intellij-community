@@ -105,32 +105,31 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
   public boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
-    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<BaseInjection, Pair<PsiMethod, Integer>>();
-    final ArrayList<PsiElement> annotations = new ArrayList<PsiElement>();
+    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<>();
+    final ArrayList<PsiElement> annotations = new ArrayList<>();
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
     collectInjections(host, configuration, this, injectionsMap, annotations);
 
     if (injectionsMap.isEmpty() && annotations.isEmpty()) return false;
-    final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>(injectionsMap.keySet());
-    final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections, new NullableFunction<BaseInjection, BaseInjection>() {
-      public BaseInjection fun(final BaseInjection injection) {
-        final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);
-        final String placeText = getPatternStringForJavaPlace(pair.first, pair.second);
-        final BaseInjection newInjection = injection.copy();
-        newInjection.setPlaceEnabled(placeText, false);
-        return InjectorUtils.canBeRemoved(newInjection)? null : newInjection;
-      }
-    });
+    final ArrayList<BaseInjection> originalInjections = new ArrayList<>(injectionsMap.keySet());
+    final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections,
+                                                                       (NullableFunction<BaseInjection, BaseInjection>)injection -> {
+                                                                         final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);
+                                                                         final String placeText = getPatternStringForJavaPlace(pair.first, pair.second);
+                                                                         final BaseInjection newInjection = injection.copy();
+                                                                         newInjection.setPlaceEnabled(placeText, false);
+                                                                         return InjectorUtils.canBeRemoved(newInjection)? null : newInjection;
+                                                                       });
     configuration.replaceInjectionsWithUndo(project, newInjections, originalInjections, annotations);
     return true;
   }
 
   public boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
-    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<BaseInjection, Pair<PsiMethod, Integer>>();
-    final ArrayList<PsiElement> annotations = new ArrayList<PsiElement>();
+    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<>();
+    final ArrayList<PsiElement> annotations = new ArrayList<>();
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
@@ -161,11 +160,9 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     builder.addCancelAction();
     builder.setCenterPanel(panel.getComponent());
     builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
-    builder.setOkOperation(new Runnable() {
-      public void run() {
-        panel.apply();
-        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-      }
+    builder.setOkOperation(() -> {
+      panel.apply();
+      builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
       return new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection);
@@ -213,18 +210,15 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                                 final PsiModifierListOwner modifierListOwner,
                                                 @NotNull PsiLanguageInjectionHost host,
                                                 final String languageId) {
-    return doAddLanguageAnnotation(project, modifierListOwner, host, languageId, new Processor<PsiLanguageInjectionHost>() {
-      @Override
-      public boolean process(PsiLanguageInjectionHost host) {
-        final Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
-        boolean allowed = configuration.isSourceModificationAllowed();
-        configuration.setSourceModificationAllowed(true);
-        try {
-          return doInjectInJava(project, host, host, languageId);
-        }
-        finally {
-          configuration.setSourceModificationAllowed(allowed);
-        }
+    return doAddLanguageAnnotation(project, modifierListOwner, host, languageId, host1 -> {
+      final Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
+      boolean allowed = configuration.isSourceModificationAllowed();
+      configuration.setSourceModificationAllowed(true);
+      try {
+        return doInjectInJava(project, host1, host1, languageId);
+      }
+      finally {
+        configuration.setSourceModificationAllowed(allowed);
       }
     });
   }
@@ -345,7 +339,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       first = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false);
     }
     if (first == null || first.getContainingClass() == null) return null;
-    final LinkedList<PsiMethod> methods = new LinkedList<PsiMethod>();
+    final LinkedList<PsiMethod> methods = new LinkedList<>();
     methods.add(first);
     while (!methods.isEmpty()) {
       final PsiMethod method = methods.removeFirst();
@@ -457,9 +451,9 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     result.copyFrom(injection);
     result.setInjectionPlaces(InjectionPlace.EMPTY_ARRAY);
     result.setClassName(className);
-    final ArrayList<MethodInfo> infos = new ArrayList<MethodInfo>();
+    final ArrayList<MethodInfo> infos = new ArrayList<>();
     if (classes.length > 0) {
-      final THashSet<String> visitedSignatures = new THashSet<String>();
+      final THashSet<String> visitedSignatures = new THashSet<>();
       final PatternCompiler<PsiElement> compiler = injection.getCompiler();
       for (PsiClass psiClass : classes) {
         for (PsiMethod method : psiClass.getMethods()) {

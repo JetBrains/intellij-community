@@ -17,11 +17,11 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IdSet;
+import com.intellij.util.indexing.containers.IntIdsIterator;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashMap;
@@ -32,7 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -67,6 +68,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   }
 
   private void resetFileSetForValue(Value value, Object fileSet) {
+    if (value == null) value = (Value)myNullValue;
     if (!(myInputIdMapping instanceof THashMap)) myInputIdMappingValue = fileSet;
     else ((THashMap<Value, Object>)myInputIdMapping).put(value, fileSet);
   }
@@ -76,20 +78,20 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return myInputIdMapping != null ? myInputIdMapping instanceof THashMap ? ((THashMap)myInputIdMapping).size(): 1 : 0;
   }
 
-  static final ThreadLocal<ID> ourDebugIndexInfo = new ThreadLocal<ID>();
+  static final ThreadLocal<ID> ourDebugIndexInfo = new ThreadLocal<>();
 
   @Override
   public void removeAssociatedValue(int inputId) {
     if (myInputIdMapping == null) return;
     List<Object> fileSetObjects = null;
     List<Value> valueObjects = null;
-    for (final ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
 
       if (valueIterator.getValueAssociationPredicate().contains(inputId)) {
         if (fileSetObjects == null) {
-          fileSetObjects = new SmartList<Object>();
-          valueObjects = new SmartList<Value>();
+          fileSetObjects = new SmartList<>();
+          valueObjects = new SmartList<>();
         }
         else if (DebugAssertions.DEBUG) {
           LOG.error("Expected only one value per-inputId for " + ourDebugIndexInfo.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
@@ -141,10 +143,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @NotNull
   @Override
-  public ValueIterator<Value> getValueIterator() {
+  public InvertedIndexValueIterator<Value> getValueIterator() {
     if (myInputIdMapping != null) {
       if (!(myInputIdMapping instanceof THashMap)) {
-        return new ValueIterator<Value>() {
+        return new InvertedIndexValueIterator<Value>() {
           private Value value = (Value)myInputIdMapping;
 
           @NotNull
@@ -183,7 +185,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           }
         };
       } else {
-        return new ValueIterator<Value>() {
+        return new InvertedIndexValueIterator<Value>() {
           private Value current;
           private Object currentValue;
           private final THashMap<Value, Object> myMapping = ((THashMap<Value, Object>)myInputIdMapping);
@@ -232,7 +234,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  static class EmptyValueIterator<Value> extends EmptyIterator<Value> implements ValueIterator<Value> {
+  static class EmptyValueIterator<Value> extends EmptyIterator<Value> implements InvertedIndexValueIterator<Value> {
 
     @NotNull
     @Override
@@ -254,24 +256,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   private static final EmptyValueIterator emptyIterator = new EmptyValueIterator();
 
-  @NotNull
-  @Override
-  public List<Value> toValueList() {
-    if (myInputIdMapping == null) {
-      return Collections.emptyList();
-    } else if (myInputIdMapping instanceof THashMap) {
-      return new ArrayList<Value>(((THashMap<Value, Object>)myInputIdMapping).keySet());
-    } else {
-      return new SmartList<Value>((Value)myInputIdMapping);
-    }
-  }
-
-  @NotNull
-  @Override
-  public IntPredicate getValueAssociationPredicate(Value value) {
-    return getPredicateOutOfFileSetObject(getFileSetObject(value));
-  }
-
   private static @NotNull IntPredicate getPredicateOutOfFileSetObject(@Nullable Object input) {
     if (input == null) return EMPTY_PREDICATE;
 
@@ -286,12 +270,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       };
     }
     return ((ChangeBufferingList)input).intPredicate();
-  }
-
-  @NotNull
-  @Override
-  public IntIterator getInputIdsIterator(Value value) {
-    return getIntIteratorOutOfFileSetObject(getFileSetObject(value));
   }
 
   private static @NotNull IntIterator getIntIteratorOutOfFileSetObject(@Nullable Object input) {
@@ -334,7 +312,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  private static final IntIterator EMPTY_ITERATOR = new IntIterator() {
+  private static final IntIterator EMPTY_ITERATOR = new IntIdsIterator() {
     @Override
     public boolean hasNext() {
       return false;
@@ -356,18 +334,18 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
 
     @Override
-    public IntIterator createCopyInInitialState() {
+    public IntIdsIterator createCopyInInitialState() {
       return this;
     }
   };
 
   @NotNull
   public ValueContainerImpl<Value> copy() {
-    ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
+    ValueContainerImpl<Value> container = new ValueContainerImpl<>();
 
     if (myInputIdMapping instanceof THashMap) {
       final THashMap<Value, Object> mapping = (THashMap<Value, Object>)myInputIdMapping;
-      final THashMap<Value, Object> newMapping = new THashMap<Value, Object>(mapping.size());
+      final THashMap<Value, Object> newMapping = new THashMap<>(mapping.size());
       container.myInputIdMapping = newMapping;
 
       mapping.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
@@ -429,33 +407,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  private static final ThreadLocalCachedIntArray ourSpareBuffer = new ThreadLocalCachedIntArray();
-
-  private static final int INT_BITS_SHIFT = 5;
-  private static int nextSetBit(int bitIndex, int[] bits, int bitsLength) {
-    int wordIndex = bitIndex >> INT_BITS_SHIFT;
-    if (wordIndex >= bitsLength) {
-      return -1;
-    }
-
-    int word = bits[wordIndex] & (-1 << bitIndex);
-
-    while (true) {
-      if (word != 0) {
-        return (wordIndex << INT_BITS_SHIFT) + Long.numberOfTrailingZeros(word);
-      }
-      if (++wordIndex == bitsLength) {
-        return -1;
-      }
-      word = bits[wordIndex];
-    }
-  }
-
   @Override
   public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
     DataInputOutputUtil.writeINT(out, size());
 
-    for (final ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
       externalizer.save(out, value);
       Object fileSetObject = valueIterator.getFileSetObject();
@@ -465,10 +421,13 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       } else {
         // serialize positive file ids with delta encoding
         ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
-        IntIterator intIterator = originalInput.rawIntIterator();
-        DataInputOutputUtil.writeINT(out, -intIterator.size());
+        IntIdsIterator intIterator = originalInput.sortedIntIterator();
+        if (DebugAssertions.DEBUG) DebugAssertions.assertTrue(intIterator.hasAscendingOrder());
 
-        if (intIterator.hasAscendingOrder()) {
+        if (intIterator.size() == 1) {
+          DataInputOutputUtil.writeINT(out, intIterator.next());
+        } else {
+          DataInputOutputUtil.writeINT(out, -intIterator.size());
           IdSet checkSet = originalInput.getCheckSet();
           if (checkSet != null && checkSet.size() != intIterator.size()) {  // debug code
             int a = 1; assert false;
@@ -478,41 +437,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           while (intIterator.hasNext()) {
             int fileId = intIterator.next();
             if (checkSet != null && !checkSet.contains(fileId)) { // debug code
-              int a = 1; assert false;
+              int a = 1;
+              assert false;
             }
             DataInputOutputUtil.writeINT(out, fileId - prev);
             prev = fileId;
-          }
-        } else {
-          // sorting numbers via bitset before writing deltas
-          int max = 0, min = Integer.MAX_VALUE;
-
-          while(intIterator.hasNext()) {
-            int nextInt = intIterator.next();
-            max = Math.max(max, nextInt);
-            min = Math.min(min, nextInt);
-          }
-
-          assert min > 0;
-
-          final int offset = (min >> INT_BITS_SHIFT) << INT_BITS_SHIFT;
-          final int bitsLength = ((max - offset) >> INT_BITS_SHIFT) + 1;
-          final int[] bits = ourSpareBuffer.getBuffer(bitsLength);
-          for(int i = 0; i < bitsLength; ++i) bits[i] = 0;
-
-          intIterator = originalInput.rawIntIterator();
-          while(intIterator.hasNext()) {
-            final int id = intIterator.next() - offset;
-            bits[id >> INT_BITS_SHIFT] |= (1 << (id));
-          }
-
-          int pos = nextSetBit(0, bits, bitsLength);
-          int prev = 0;
-
-          while (pos != -1) {
-            DataInputOutputUtil.writeINT(out, pos + offset - prev);
-            prev = pos + offset;
-            pos = nextSetBit(pos + 1, bits, bitsLength);
           }
         }
       }
@@ -531,7 +460,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         final int inputId = -valueCount;
 
         if (mapping == null && size() > NUMBER_OF_VALUES_THRESHOLD) { // avoid O(NumberOfValues)
-          mapping = new FileId2ValueMapping<Value>(this);
+          mapping = new FileId2ValueMapping<>(this);
         }
 
         boolean doCompact;
@@ -570,7 +499,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  private static class SingleValueIterator implements IntIterator {
+  private static class SingleValueIterator implements IntIdsIterator {
     private final int myValue;
     private boolean myValueRead = false;
 
@@ -601,7 +530,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
 
     @Override
-    public IntIterator createCopyInInitialState() {
+    public IntIdsIterator createCopyInInitialState() {
       return new SingleValueIterator(myValue);
     }
   }

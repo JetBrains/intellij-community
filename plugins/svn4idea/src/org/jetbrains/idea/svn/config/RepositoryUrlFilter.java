@@ -35,7 +35,7 @@ public class RepositoryUrlFilter implements PatternsListener {
 
   public void onChange(final String patterns, final String exceptions) {
     final Collection<String> urls = SvnApplicationSettings.getInstance().getCheckoutURLs();
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
 
     for (String url : urls) {
       if (SvnAuthenticationManager.checkHostGroup(url, patterns, exceptions)) {

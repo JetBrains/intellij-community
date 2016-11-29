@@ -21,8 +21,6 @@ import com.google.common.collect.Collections2;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction;
@@ -95,28 +93,17 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
     return defaultGroup;
   }
 
-  @Override
-  public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        SelectFilesDialog.super.show();
-      }
-    });
-  }
-
   public static class VirtualFileList extends ChangesTreeList<VirtualFile> {
-    private final Project myProject;
+
     @Nullable private final DeleteProvider myDeleteProvider;
 
     public VirtualFileList(Project project, List<VirtualFile> originalFiles, boolean selectableFiles, boolean deletableFiles) {
       super(project, originalFiles, selectableFiles, true, null, null);
-      myProject = project;
       myDeleteProvider = (deletableFiles ?  new VirtualFileDeleteProvider() : null);
     }
 
     protected DefaultTreeModel buildTreeModel(final List<VirtualFile> changes, ChangeNodeDecorator changeNodeDecorator) {
-      return new TreeModelBuilder(myProject, false).buildModelFromFiles(changes);
+      return new TreeModelBuilder(myProject, isShowFlatten()).buildModelFromFiles(changes);
     }
 
     protected List<VirtualFile> getSelectedObjects(final ChangesBrowserNode node) {
@@ -143,7 +130,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
     }
 
     public void refresh() {
-      setChangesToDisplay(new ArrayList<VirtualFile>(Collections2.filter(getIncludedChanges(), new Predicate<VirtualFile>() {
+      setChangesToDisplay(new ArrayList<>(Collections2.filter(getIncludedChanges(), new Predicate<VirtualFile>() {
         @Override
         public boolean apply(@Nullable VirtualFile input) {
           return input != null && input.isValid();

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class RunLineMarkerContributor {
-  static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<RunLineMarkerContributor>("com.intellij.runLineMarkerContributor");
+  static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<>("com.intellij.runLineMarkerContributor");
 
   public static class Info {
     public final Icon icon;
@@ -41,12 +41,7 @@ public abstract class RunLineMarkerContributor {
     }
 
     public Info(@NotNull final AnAction action) {
-      this(action.getTemplatePresentation().getIcon(), new Function<PsiElement, String>() {
-        @Override
-        public String fun(PsiElement element) {
-          return getText(action, element);
-        }
-      }, action);
+      this(action.getTemplatePresentation().getIcon(), element -> getText(action, element), action);
     }
   }
 

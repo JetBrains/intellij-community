@@ -33,6 +33,7 @@ public class EditorMouseFixture {
   private int myModifiers;
   private int myButton = MouseEvent.BUTTON1;
   private int myLastId;
+  private Component myLastComponent;
 
   public EditorMouseFixture(EditorImpl editor) {
     myEditor = editor;
@@ -46,9 +47,18 @@ public class EditorMouseFixture {
     return pressAt(1, getPoint(visualLine, visualColumn));
   }
 
+  public EditorMouseFixture pressAtLineNumbers(int visualLine) {
+    assert myEditor.getSettings().isLineNumbersShown();
+    return pressAt(myEditor.getGutterComponentEx(), 1, new Point(0, myEditor.visibleLineToY(visualLine)));
+  }
+
   private EditorMouseFixture pressAt(int clickCount, Point p) {
     JComponent component = myEditor.getContentComponent();
-    component.dispatchEvent(new MouseEvent(component,
+    return pressAt(component, clickCount, p);
+  }
+
+  private EditorMouseFixture pressAt(Component component, int clickCount, Point p) {
+    component.dispatchEvent(new MouseEvent(myLastComponent = component,
                                            myLastId = MouseEvent.MOUSE_PRESSED,
                                            System.currentTimeMillis(),
                                            getModifiers(),
@@ -66,27 +76,27 @@ public class EditorMouseFixture {
 
   private EditorMouseFixture release(int clickCount) {
     int oldLastId = myLastId;
-    JComponent component = myEditor.getContentComponent();
-    component.dispatchEvent(new MouseEvent(component,
-                                           myLastId = MouseEvent.MOUSE_RELEASED,
-                                           System.currentTimeMillis(),
-                                           getModifiers(),
-                                           myX,
-                                           myY,
-                                           clickCount,
-                                           false,
-                                           myButton));
+    myLastComponent.dispatchEvent(new MouseEvent(myLastComponent,
+                                                 myLastId = MouseEvent.MOUSE_RELEASED,
+                                                 System.currentTimeMillis(),
+                                                 getModifiers(),
+                                                 myX,
+                                                 myY,
+                                                 clickCount,
+                                                 false,
+                                                 myButton));
     if (oldLastId == MouseEvent.MOUSE_PRESSED) {
-      component.dispatchEvent(new MouseEvent(component,
-                                             myLastId = MouseEvent.MOUSE_CLICKED,
-                                             System.currentTimeMillis(),
-                                             getModifiers(),
-                                             myX,
-                                             myY,
-                                             clickCount,
-                                             false,
-                                             myButton));
+      myLastComponent.dispatchEvent(new MouseEvent(myLastComponent,
+                                                   myLastId = MouseEvent.MOUSE_CLICKED,
+                                                   System.currentTimeMillis(),
+                                                   getModifiers(),
+                                                   myX,
+                                                   myY,
+                                                   clickCount,
+                                                   false,
+                                                   myButton));
     }
+    myLastComponent = null;
     return this;
   }
 
@@ -107,10 +117,19 @@ public class EditorMouseFixture {
     return dragToXY(p.x, p.y);
   }
   
+  public EditorMouseFixture dragToLineNumbers(int visualLine) {
+    assert myEditor.getSettings().isLineNumbersShown();
+    return dragToXY(myEditor.getGutterComponentEx(), 0, myEditor.visibleLineToY(visualLine));
+  }
+
   public EditorMouseFixture dragToXY(int x, int y) {
     Assert.assertFalse("Cannot test mouse dragging: editor visible size is not set. Use EditorTestUtil.setEditorVisibleSize(width, height)", 
                        myEditor.getScrollingModel().getVisibleArea().isEmpty());
     JComponent component = myEditor.getContentComponent();
+    return dragToXY(component, x, y);
+  }
+
+  private EditorMouseFixture dragToXY(JComponent component, int x, int y) {
     component.dispatchEvent(new MouseEvent(component,
                                            myLastId = MouseEvent.MOUSE_DRAGGED,
                                            System.currentTimeMillis(),
@@ -135,6 +154,11 @@ public class EditorMouseFixture {
 
   public EditorMouseFixture shift() {
     myModifiers |= InputEvent.SHIFT_DOWN_MASK;
+    return this;
+  }
+
+  public EditorMouseFixture noModifiers() {
+    myModifiers = 0;
     return this;
   }
 

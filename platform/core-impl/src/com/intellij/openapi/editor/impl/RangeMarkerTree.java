@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
@@ -38,9 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * User: cdr
  */
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerTree");
-  private static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal());
-
   private final PrioritizedDocumentListener myListener;
   private final Document myDocument;
 
@@ -159,12 +155,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     private static final byte EXPAND_TO_LEFT_FLAG = VALID_FLAG<<1;
     private static final byte EXPAND_TO_RIGHT_FLAG = EXPAND_TO_LEFT_FLAG<<1;
 
-    public RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
-                  @NotNull T key,
-                  int start,
-                  int end,
-                  boolean greedyToLeft,
-                  boolean greedyToRight) {
+    RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
+           @NotNull T key,
+           int start,
+           int end,
+           boolean greedyToLeft,
+           boolean greedyToRight) {
       super(rangeMarkerTree, key, start, end);
       setFlag(EXPAND_TO_LEFT_FLAG, greedyToLeft);
       setFlag(EXPAND_TO_RIGHT_FLAG, greedyToRight);
@@ -377,10 +373,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       List<IntervalNode<T>> affected = new ArrayList<IntervalNode<T>>();
       collectNodesToRetarget(getRoot(), start, end, affected);
       if (affected.isEmpty()) return;
-
-      int shift = newBase - start;
+      // remove all first because findOrInsert can remove gced nodes which could interfere with not-yet-removed nodes
       for (IntervalNode<T> node : affected) {
         removeNode(node);
+      }
+      int shift = newBase - start;
+      for (IntervalNode<T> node : affected) {
         node.setLeft(null);
         node.setRight(null);
         node.setParent(null);

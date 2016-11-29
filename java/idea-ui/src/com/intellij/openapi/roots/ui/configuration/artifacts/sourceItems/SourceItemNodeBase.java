@@ -60,7 +60,7 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
   protected SimpleNode[] buildChildren() {
     final PackagingSourceItemsProvider[] providers = PackagingSourceItemsProvider.EP_NAME.getExtensions();
     PackagingSourceItemFilter[] filters = PackagingSourceItemFilter.EP_NAME.getExtensions();
-    List<SimpleNode> children = new ArrayList<SimpleNode>();
+    List<SimpleNode> children = new ArrayList<>();
     for (PackagingSourceItemsProvider provider : providers) {
       final Collection<? extends PackagingSourceItem> items = provider.getSourceItems(myContext, myArtifact, getSourceItem());
       for (PackagingSourceItem item : items) {

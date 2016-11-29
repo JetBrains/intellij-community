@@ -65,7 +65,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   @Override
   public void update(AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE);
-    e.getPresentation().setEnabled(module != null && PyPackageUtil.findSetupPy(module) == null);
+    e.getPresentation().setEnabled(module != null && !PyPackageUtil.hasSetupPy(module));
   }
 
   @Override

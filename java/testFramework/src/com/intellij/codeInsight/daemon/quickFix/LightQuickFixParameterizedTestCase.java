@@ -44,11 +44,6 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
   @SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
   @Test
   public void runSingle() throws Throwable {
-    runSingleTest(new Runnable() {
-      @Override
-      public void run() {
-        doSingleTest(myFileSuffix, myTestDataPath);
-      }
-    });
+    runSingleTest(() -> doSingleTest(myFileSuffix, myTestDataPath));
   }
 }

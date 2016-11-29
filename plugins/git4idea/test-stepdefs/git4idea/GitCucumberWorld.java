@@ -37,6 +37,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitHttpAuthTestService;
 import git4idea.test.GitTestUtil;
@@ -74,11 +75,11 @@ public class GitCucumberWorld {
   public static VirtualFile myProjectDir;
   public static Project myProject;
 
-  public static GitPlatformFacade myPlatformFacade;
   public static Git myGit;
   public static GitRepository myRepository;
   public static GitVcsSettings mySettings;
   public static ChangeListManagerImpl myChangeListManager;
+  public static GitRepositoryManager myRepositoryManager;
   public static GitVcs myVcs;
 
   public static MockVcsHelper myVcsHelper;
@@ -114,20 +115,20 @@ public class GitCucumberWorld {
     myProjectDir = myProject.getBaseDir();
     myTestRoot = myProjectRoot;
 
-    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
     myGit = ServiceManager.getService(myProject, Git.class);
-    mySettings = myPlatformFacade.getSettings(myProject);
+    mySettings = GitVcsSettings.getInstance(myProject);
     mySettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
 
     // dynamic overriding is used instead of making it in plugin.xml,
     // because MockVcsHelper is not ready to be a full featured implementation for all tests.
     myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
-    myChangeListManager = (ChangeListManagerImpl)myPlatformFacade.getChangeListManager(myProject);
+    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     myNotificator = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
     myVcs = GitVcs.getInstance(myProject);
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
 
     virtualCommits = new GitTestVirtualCommitsHolder();
-    myAsyncTasks = new ArrayList<Future>();
+    myAsyncTasks = new ArrayList<>();
 
     cd(myProjectRoot);
     myRepository = GitTestUtil.createRepository(myProject, myProjectRoot);
@@ -208,7 +209,7 @@ public class GitCucumberWorld {
   }
 
   private static void edt(@NotNull final ThrowableRunnable<Exception> runnable) throws Exception {
-    final AtomicReference<Exception> exception = new AtomicReference<Exception>();
+    final AtomicReference<Exception> exception = new AtomicReference<>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {

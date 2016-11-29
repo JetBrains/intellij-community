@@ -116,7 +116,7 @@ public class ModifierListGenerator {
       return;
     }
 
-    List<String> allowedModifiers = new ArrayList<String>();
+    List<String> allowedModifiers = new ArrayList<>();
     allowedModifiers.add(PsiModifier.PUBLIC);
     if (!isEnum) allowedModifiers.add(PsiModifier.FINAL);
     if (!toplevel) {

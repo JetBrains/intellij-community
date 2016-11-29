@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@ package com.intellij.ui.components.labels;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Action;
-import javax.swing.Icon;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.beans.EventHandler;
 import java.beans.PropertyChangeListener;
-
-import static java.beans.EventHandler.create;
 
 /**
  * @author Sergey.Malenkov
@@ -35,7 +33,7 @@ public class SwingActionLink extends LinkLabel<Action> implements LinkListener<A
     setToolTipText((String)action.getValue(Action.SHORT_DESCRIPTION));
     setVisible(action.isEnabled());
     setListener(this, action);
-    action.addPropertyChangeListener(create(PropertyChangeListener.class, this, "visible", "source.enabled"));
+    action.addPropertyChangeListener(EventHandler.create(PropertyChangeListener.class, this, "visible", "source.enabled"));
   }
 
   @Override

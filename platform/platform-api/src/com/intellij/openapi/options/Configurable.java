@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,15 +153,6 @@ public interface Configurable extends UnnamedConfigurable {
   String getHelpTopic();
 
   /**
-   * @deprecated
-   * This marker interface was intended to hide a configurable component from the Settings dialog.
-   * However, it makes no sense to register it as extension if you don't want to see it.
-   */
-  @Deprecated
-  interface Assistant extends Configurable {
-  }
-
-  /**
    * This interface represents a configurable component that has child components.
    * It is not recommended to use this approach to specify children of a configurable component,
    * because it causes loading additional classes during the building a setting tree.
@@ -185,5 +176,17 @@ public interface Configurable extends UnnamedConfigurable {
    */
   interface NoMargin {
     // see ConfigurableCardPanel#create(Configurable)
+  }
+
+  /**
+   * Allows to dynamically define if current configurable settings apply to current project or to the IDE and update "For current project" 
+   * indicator accordingly.
+   */
+  interface VariableProjectAppLevel {
+    /**
+     * @return True if current settings apply to the current project (enable "For current project" indicator), false for application-level
+     *         (IDE) settings.
+     */
+    boolean isProjectLevel();
   }
 }

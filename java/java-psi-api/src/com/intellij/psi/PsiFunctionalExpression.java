@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ public interface PsiFunctionalExpression extends PsiExpression, Iconable, Naviga
   PsiFunctionalExpression[] EMPTY_ARRAY = new PsiFunctionalExpression[0];
   /**
    * @return SAM type the lambda expression corresponds to
-   *         null when no SAM type could be found
+   *         or null when no SAM type could be found
    */
   @Nullable
   PsiType getFunctionalInterfaceType();

@@ -22,9 +22,11 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.net.NetUtils;
 
 import java.lang.management.ManagementFactory;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -40,14 +42,10 @@ public class DebugAttachDetector {
   private boolean myAttached;
   private boolean myReady;
 
-  public DebugAttachDetector() {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (!app.isInternal()
-        || app.isUnitTestMode()
-        || app.isHeadlessEnvironment()
-        || "true".equals(System.getProperty("idea.debug.mode"))) return;
-
-    for (String argument : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+  public static Pair<String, Integer> getAttachAddress(List<String> arguments) {
+    String host = null;
+    int port = -1;
+    for (String argument : arguments) {
       if (argument.startsWith("-agentlib:jdwp") && argument.contains("transport=dt_socket")) {
         String[] params = argument.split(",");
         for (String param : params) {
@@ -55,16 +53,16 @@ public class DebugAttachDetector {
             try {
               String[] address = param.split("=")[1].split(":");
               if (address.length == 1) {
-                myPort = Integer.parseInt(address[0]);
+                port = Integer.parseInt(address[0]);
               }
               else {
-                myHost = address[0];
-                myPort = Integer.parseInt(address[1]);
+                host = address[0];
+                port = Integer.parseInt(address[1]);
               }
             }
             catch (Exception e) {
               LOG.error(e);
-              return;
+              return null;
             }
             break;
           }
@@ -72,25 +70,37 @@ public class DebugAttachDetector {
         break;
       }
     }
+    if (port > -1) {
+      return Pair.create(host, port);
+    }
+    return null;
+  }
 
-    if (myPort < 0) return;
+  public DebugAttachDetector() {
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    if (!app.isInternal()
+        || app.isUnitTestMode()
+        || app.isHeadlessEnvironment()
+        || "true".equals(System.getProperty("idea.debug.mode"))) return;
 
-    myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
-          if (!myReady) {
-            myAttached = attached;
-            myReady = true;
-          }
-          else if (attached != myAttached) {
-            myAttached = attached;
-            Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                                      "Remote debugger",
-                                                      myAttached ? "attached" : "detached",
-                                                      NotificationType.WARNING));
-          }
-        }
-      }, 5, 5, TimeUnit.SECONDS);
+    Pair<String, Integer> attachAddress = getAttachAddress(ManagementFactory.getRuntimeMXBean().getInputArguments());
+    if (attachAddress == null) return;
+    myHost = attachAddress.first;
+    myPort = attachAddress.second;
+
+    myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+      boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
+      if (!myReady) {
+        myAttached = attached;
+        myReady = true;
+      }
+      else if (attached != myAttached) {
+        myAttached = attached;
+        Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                                                  "Remote debugger",
+                                                  myAttached ? "attached" : "detached",
+                                                  NotificationType.WARNING));
+      }
+    }, 5, 5, TimeUnit.SECONDS);
   }
 }

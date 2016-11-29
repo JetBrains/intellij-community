@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class RemoveInitializerFix implements LocalQuickFix {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionsBundle.message("inspection.unused.assignment.remove.quickfix");
   }
 
@@ -49,29 +49,36 @@ public class RemoveInitializerFix implements LocalQuickFix {
     sideEffectAwareRemove(project, (PsiExpression)psiInitializer, psiInitializer, variable);
   }
 
-  protected static void sideEffectAwareRemove(Project project,
-                                              PsiExpression psiInitializer,
-                                              PsiElement elementToDelete,
-                                              PsiVariable variable) {
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  public static void sideEffectAwareRemove(Project project,
+                                           PsiExpression psiInitializer,
+                                           PsiElement elementToDelete,
+                                           PsiVariable variable) {
     if (!FileModificationService.getInstance().prepareFileForWrite(elementToDelete.getContainingFile())) return;
 
     final PsiElement declaration = variable.getParent();
-    final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+    final List<PsiElement> sideEffects = new ArrayList<>();
     boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(psiInitializer, variable, sideEffects);
-    RemoveUnusedVariableUtil.RemoveMode res = RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
+    RemoveUnusedVariableUtil.RemoveMode res;
     if (hasSideEffects) {
       hasSideEffects = PsiUtil.isStatement(psiInitializer);
+      PsiTypeElement typeElement = variable.getTypeElement();
       res = RemoveUnusedVariableFix.showSideEffectsWarning(sideEffects, variable,
                                                            FileEditorManager.getInstance(project).getSelectedTextEditor(),
                                                            hasSideEffects, sideEffects.get(0).getText(),
-                                                           variable.getTypeElement().getText() +
-                                                           " " +
-                                                           variable.getName() +
-                                                           ";<br>" +
+                                                           (typeElement != null ? typeElement.getText() + " " + variable.getName() + ";<br>"
+                                                                                : "") +
                                                            PsiExpressionTrimRenderer.render(psiInitializer)
       );
     }
-    try {
+    else {
+      res = RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
+    }
+    WriteAction.run(() -> {
       if (res == RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL) {
         elementToDelete.delete();
       }
@@ -81,20 +88,12 @@ public class RemoveInitializerFix implements LocalQuickFix {
         final PsiElement parent = elementToDelete.getParent();
         if (parent instanceof PsiExpressionStatement) {
           parent.replace(statementFromText);
-        } else {
-          declaration.getParent().addAfter(statementFromText, declaration);
+        }
+        else {
+          declaration.getParent().addBefore(statementFromText, declaration);
           elementToDelete.delete();
         }
       }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-  }
-  
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
+    });
   }
 }

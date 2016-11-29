@@ -25,7 +25,7 @@ import java.text.MessageFormat;
  * Created by Maxim.Mossienko on 11/23/2015.
  */
 public class IndexAccessValidator {
-  private final ThreadLocal<ID<?, ?>> ourAlreadyProcessingIndices = new ThreadLocal<ID<?, ?>>();
+  private final ThreadLocal<ID<?, ?>> ourAlreadyProcessingIndices = new ThreadLocal<>();
 
   public void checkAccessingIndexDuringOtherIndexProcessing(@NotNull ID<?, ?> indexKey) {
     final ID<?, ?> alreadyProcessingIndex = ourAlreadyProcessingIndices.get();

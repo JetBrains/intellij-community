@@ -59,21 +59,15 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
                                                          NotificationType.WARNING, new NotificationListener.Adapter() {
               @Override
               protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  public void run() {
-                    FileTypeManager.getInstance().associate(PlainTextFileType.INSTANCE, matcher);
-                    map.put(matcher, Pair.create(fileType, true));
-                  }
+                ApplicationManager.getApplication().runWriteAction(() -> {
+                  FileTypeManager.getInstance().associate(PlainTextFileType.INSTANCE, matcher);
+                  map.put(matcher, Pair.create(fileType, true));
                 });
                 notification.expire();
               }
             });
             Notifications.Bus.notify(notification, project);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                FileTypeManager.getInstance().associate(fileType, matcher);
-              }
-            });
+            ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().associate(fileType, matcher));
             iterator.remove();
           }
         }

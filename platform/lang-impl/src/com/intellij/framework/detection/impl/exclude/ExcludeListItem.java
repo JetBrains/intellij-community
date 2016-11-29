@@ -25,12 +25,8 @@ import java.util.Comparator;
 * @author nik
 */
 abstract class ExcludeListItem {
-  public static final Comparator<ExcludeListItem> COMPARATOR = new Comparator<ExcludeListItem>() {
-    @Override
-    public int compare(ExcludeListItem o1, ExcludeListItem o2) {
-      return StringUtil.comparePairs(o1.getPresentableFrameworkName(), o1.getFileUrl(), o2.getPresentableFrameworkName(), o2.getFileUrl(), true);
-    }
-  };
+  public static final Comparator<ExcludeListItem> COMPARATOR =
+    (o1, o2) -> StringUtil.comparePairs(o1.getPresentableFrameworkName(), o1.getFileUrl(), o2.getPresentableFrameworkName(), o2.getFileUrl(), true);
 
   public abstract void renderItem(ColoredListCellRenderer renderer);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,34 +23,34 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestCase {
+abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestCase {
 
   String getBasePath() {
     TestUtils.testDataPath + "parsing/groovy/"
   }
 
-  public void doTest() {
-    doTest(getTestName(true).replace('$', '/') + ".test");
+  void doTest() {
+    doTest(getTestName(true).replace('$', '/') + ".test")
   }
 
   protected void doTest(String fileName) {
     String path = testDataPath + "/" + fileName
-    def (String input) = TestUtils.readInput(path);
-    checkParsing(input, fileName);
+    def (String input) = TestUtils.readInput(path)
+    checkParsing(input, fileName)
   }
 
   protected void checkParsing(String input, String path) {
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input);
-    final String psiTree = DebugUtil.psiToString(psiFile, false);
-    final String prefix = input + '\n-----\n';
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input)
+    final String psiTree = DebugUtil.psiToString(psiFile, false)
+    final String prefix = input + '\n-----\n'
     myFixture.configureByText('test.txt', prefix + psiTree.trim())
     myFixture.checkResultByFile(path, false)
   }
 
   protected checkParsingByText(String input, String output) {
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input);
-    final String psiTree = DebugUtil.psiToString(psiFile, false);
-    final String prefix = input.trim() + '\n-----\n';
-    assertEquals(prefix + output.trim(), prefix + psiTree.trim());
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input)
+    final String psiTree = DebugUtil.psiToString(psiFile, false)
+    final String prefix = input.trim() + '\n-----\n'
+    assertEquals(prefix + output.trim(), prefix + psiTree.trim())
   }
 }

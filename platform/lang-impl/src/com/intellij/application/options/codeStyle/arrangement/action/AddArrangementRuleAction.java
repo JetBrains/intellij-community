@@ -35,6 +35,13 @@ public class AddArrangementRuleAction extends AbstractArrangementRuleAction impl
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.add.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.add.description"));
     getTemplatePresentation().setIcon(IconUtil.getAddIcon());
+    setEnabledInModalContext(true);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    ArrangementMatchingRulesControl control = getRulesControl(e);
+    e.getPresentation().setEnabled(control != null);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
  */
 class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
 
-  public void "test inspection outside source root"() {
+  void "test inspection outside source root"() {
     PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).sdk)
     PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("src"))
     
@@ -57,7 +57,7 @@ class SomeClass {
     assertEmpty InspectionEngine.runInspectionOnFile(file, wrapper, context)
   }
 
-  public void "test resolve super constructor reference"() {
+  void "test resolve super constructor reference"() {
     PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).sdk)
     PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("src"))
 

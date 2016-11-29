@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -120,12 +119,7 @@ public class ControlFlowUtils {
 
     final GrCaseSection[] caseClauses = switchStatement.getCaseSections();
 
-    if (ContainerUtil.find(caseClauses, new Condition<GrCaseSection>() {
-      @Override
-      public boolean value(GrCaseSection section) {
-        return section.isDefault();
-      }
-    }) == null) {
+    if (ContainerUtil.find(caseClauses, section -> section.isDefault()) == null) {
       return true;
     }
 
@@ -434,9 +428,13 @@ public class ControlFlowUtils {
     return false;
   }
 
+
+  @NotNull
   public static List<GrStatement> collectReturns(@Nullable PsiElement element) {
     return collectReturns(element, element instanceof GrCodeBlock || element instanceof GroovyFile);
   }
+
+  @NotNull
   public static List<GrStatement> collectReturns(@Nullable PsiElement element, final boolean allExitPoints) {
     if (element == null) return Collections.emptyList();
 
@@ -450,9 +448,10 @@ public class ControlFlowUtils {
     return collectReturns(flow, allExitPoints);
   }
 
+  @NotNull
   public static List<GrStatement> collectReturns(@NotNull Instruction[] flow, final boolean allExitPoints) {
     boolean[] visited = new boolean[flow.length];
-    final List<GrStatement> res = new ArrayList<GrStatement>();
+    final List<GrStatement> res = new ArrayList<>();
     visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, new ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
@@ -504,7 +503,7 @@ public class ControlFlowUtils {
 
   @Nullable
   public static Instruction findNearestInstruction(PsiElement place, Instruction[] flow) {
-    List<Instruction> applicable = new ArrayList<Instruction>();
+    List<Instruction> applicable = new ArrayList<>();
     for (Instruction instruction : flow) {
       final PsiElement element = instruction.getElement();
       if (element == null) continue;
@@ -517,23 +516,20 @@ public class ControlFlowUtils {
     }
     if (applicable.isEmpty()) return null;
 
-    Collections.sort(applicable, new Comparator<Instruction>() {
-      @Override
-      public int compare(Instruction o1, Instruction o2) {
-        PsiElement e1 = o1.getElement();
-        PsiElement e2 = o2.getElement();
-        LOG.assertTrue(e1 != null);
-        LOG.assertTrue(e2 != null);
-        final TextRange t1 = e1.getTextRange();
-        final TextRange t2 = e2.getTextRange();
-        final int s1 = t1.getStartOffset();
-        final int s2 = t2.getStartOffset();
+    Collections.sort(applicable, (o1, o2) -> {
+      PsiElement e1 = o1.getElement();
+      PsiElement e2 = o2.getElement();
+      LOG.assertTrue(e1 != null);
+      LOG.assertTrue(e2 != null);
+      final TextRange t1 = e1.getTextRange();
+      final TextRange t2 = e2.getTextRange();
+      final int s1 = t1.getStartOffset();
+      final int s2 = t2.getStartOffset();
 
-        if (s1 == s2) {
-          return t1.getEndOffset() - t2.getEndOffset();
-        }
-        return s2 - s1;
+      if (s1 == s2) {
+        return t1.getEndOffset() - t2.getEndOffset();
       }
+      return s2 - s1;
     });
 
     return applicable.get(0);
@@ -547,8 +543,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitReturnStatement(
-        @NotNull GrReturnStatement returnStatement) {
+    public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
       if (m_found) {
         return;
       }
@@ -571,8 +566,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitBreakStatement(
-        @NotNull GrBreakStatement breakStatement) {
+    public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
       if (m_found) {
         return;
       }
@@ -601,8 +595,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitContinueStatement(
-        @NotNull GrContinueStatement continueStatement) {
+    public void visitContinueStatement(@NotNull GrContinueStatement continueStatement) {
       if (m_found) {
         return;
       }
@@ -624,19 +617,16 @@ public class ControlFlowUtils {
   }
 
   public static Set<GrExpression> getAllReturnValues(@NotNull final GrControlFlowOwner block) {
-    return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Set<GrExpression>>() {
-      @Override
-      public Result<Set<GrExpression>> compute() {
-        final Set<GrExpression> result = new HashSet<GrExpression>();
-        visitAllExitPoints(block, new ExitPointVisitor() {
-          @Override
-          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-            ContainerUtil.addIfNotNull(result, returnValue);
-            return true;
-          }
-        });
-        return Result.create(result, block);
-      }
+    return CachedValuesManager.getCachedValue(block, () -> {
+      final Set<GrExpression> result = new HashSet<>();
+      visitAllExitPoints(block, new ExitPointVisitor() {
+        @Override
+        public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+          ContainerUtil.addIfNotNull(result, returnValue);
+          return true;
+        }
+      });
+      return CachedValueProvider.Result.create(result, block);
     });
   }
 
@@ -736,12 +726,12 @@ public class ControlFlowUtils {
   public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, boolean ahead, boolean writeAccessOnly, Instruction cur) {
     String name = local.getName();
 
-    final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
-    final HashSet<Instruction> visited = new HashSet<Instruction>();
+    final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<>();
+    final HashSet<Instruction> visited = new HashSet<>();
 
     visited.add(cur);
 
-    Queue<Instruction> queue = new ArrayDeque<Instruction>();
+    Queue<Instruction> queue = new ArrayDeque<>();
 
     for (Instruction i : ahead ? cur.allSuccessors() : cur.allPredecessors()) {
       if (visited.add(i)) {
@@ -779,21 +769,11 @@ public class ControlFlowUtils {
 
   @Nullable
   public static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
-    return ContainerUtil.find(controlFlow, new Condition<Instruction>() {
-      @Override
-      public boolean value(Instruction instruction) {
-        return instruction.getElement() == place;
-      }
-    });
+    return ContainerUtil.find(controlFlow, instruction -> instruction.getElement() == place);
   }
 
   public static List<Instruction> findAllInstructions(final PsiElement place, Instruction[] controlFlow) {
-    return ContainerUtil.findAll(controlFlow, new Condition<Instruction>() {
-      @Override
-      public boolean value(Instruction instruction) {
-        return instruction.getElement() == place;
-      }
-    });
+    return ContainerUtil.findAll(controlFlow, instruction -> instruction.getElement() == place);
   }
 
   @NotNull
@@ -850,7 +830,7 @@ public class ControlFlowUtils {
       }
     };
 
-    return new DFAEngine<BitSet>(flow, dfa, sem).performForceDFA();
+    return new DFAEngine<>(flow, dfa, sem).performForceDFA();
   }
 
 }

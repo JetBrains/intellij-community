@@ -25,9 +25,9 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.utils.XMLChar;
@@ -117,11 +117,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
       List<Element> children = element.getChildren("issue");
 
-      final List<Task> tasks = ContainerUtil.mapNotNull(children, new NullableFunction<Element, Task>() {
-        public Task fun(Element o) {
-          return createIssue(o);
-        }
-      });
+      final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
       return tasks.toArray(new Task[tasks.size()]);
     }
     finally {
@@ -152,7 +148,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     String response;
     try {
       if (method.getStatusCode() != 200) {
-        throw new Exception("Cannot login: HTTP status code " + method.getStatusCode());
+        throw new HttpRequests.HttpStatusException("Cannot login", method.getStatusCode(), method.getPath());
       }
       response = method.getResponseBodyAsString(1000);
     }
@@ -218,16 +214,13 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   @NotNull
   @Override
   public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
-    final HttpMethod method = doREST("/rest/issue/" + task.getId() + "/execute/intellisense?command=" + encodeUrl("state "), false);
+    final HttpMethod method = doREST("/rest/issue/" + task.getId() + "/execute/intellisense?command=" + encodeUrl("state: "), false);
     try {
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
-      return ContainerUtil.map2Set(element.getChild("suggest").getChildren("item"), new Function<Element, CustomTaskState>() {
-        @Override
-        public CustomTaskState fun(Element element) {
-          final String stateName = element.getChildText("option");
-          return new CustomTaskState(stateName, stateName);
-        }
+      return ContainerUtil.map2Set(element.getChild("suggest").getChildren("item"), element1 -> {
+        final String stateName = element1.getChildText("option");
+        return new CustomTaskState(stateName, stateName);
       });
     }
     finally {

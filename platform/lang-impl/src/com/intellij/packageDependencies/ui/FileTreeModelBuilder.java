@@ -71,9 +71,9 @@ public class FileTreeModelBuilder {
   private final Marker myMarker;
   private final boolean myAddUnmarkedFiles;
   private final PackageDependenciesNode myRoot;
-  private final Map<VirtualFile,DirectoryNode> myModuleDirNodes = new HashMap<VirtualFile, DirectoryNode>();
-  private final Map<Module, ModuleNode> myModuleNodes = new HashMap<Module, ModuleNode>();
-  private final Map<String, ModuleGroupNode> myModuleGroupNodes = new HashMap<String, ModuleGroupNode>();
+  private final Map<VirtualFile,DirectoryNode> myModuleDirNodes = new HashMap<>();
+  private final Map<Module, ModuleNode> myModuleNodes = new HashMap<>();
+  private final Map<String, ModuleGroupNode> myModuleGroupNodes = new HashMap<>();
   private GeneralGroupNode myExternalNode;
 
   private int myScannedFileCount = 0;
@@ -144,20 +144,17 @@ public class FileTreeModelBuilder {
   }
 
   public TreeModel build(final Project project, final boolean showProgress, @Nullable final Runnable successRunnable) {
-    final Runnable buildingRunnable = new Runnable() {
-      @Override
-      public void run() {
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          indicator.setText(SCANNING_PACKAGES_MESSAGE);
-          indicator.setIndeterminate(true);
-        }
-        countFiles(project);
-        if (indicator != null) {
-          indicator.setIndeterminate(false);
-        }
-        myFileIndex.iterateContent(new MyContentIterator());
+    final Runnable buildingRunnable = () -> {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText(SCANNING_PACKAGES_MESSAGE);
+        indicator.setIndeterminate(true);
       }
+      countFiles(project);
+      if (indicator != null) {
+        indicator.setIndeterminate(false);
+      }
+      myFileIndex.iterateContent(new MyContentIterator());
     };
     final TreeModel treeModel = new TreeModel(myRoot);
     if (showProgress) {
@@ -213,13 +210,10 @@ public class FileTreeModelBuilder {
       myShowFiles = true;
     }
 
-    Runnable buildingRunnable = new Runnable() {
-      @Override
-      public void run() {
-        for (final PsiFile file : files) {
-          if (file != null) {
-            buildFileNode(file.getVirtualFile(), null);
-          }
+    Runnable buildingRunnable = () -> {
+      for (final PsiFile file : files) {
+        if (file != null) {
+          buildFileNode(file.getVirtualFile(), null);
         }
       }
     };
@@ -425,7 +419,7 @@ public class FileTreeModelBuilder {
 
   @Nullable
   public static PackageDependenciesNode[] findNodeForPsiElement(PackageDependenciesNode parent, PsiElement element){
-    final Set<PackageDependenciesNode> result = new HashSet<PackageDependenciesNode>();
+    final Set<PackageDependenciesNode> result = new HashSet<>();
     for (int i = 0; i < parent.getChildCount(); i++){
       final TreeNode treeNode = parent.getChildAt(i);
       if (treeNode instanceof PackageDependenciesNode){
@@ -475,12 +469,7 @@ public class FileTreeModelBuilder {
           parentWrapper.add(nestedNode);
           nestedNode.removeUpReference();
           if (myTree != null && expand) {
-            final Runnable expandRunnable = new Runnable() {
-              @Override
-              public void run() {
-                myTree.expandPath(new TreePath(nestedNode.getPath()));
-              }
-            };
+            final Runnable expandRunnable = () -> myTree.expandPath(new TreePath(nestedNode.getPath()));
             SwingUtilities.invokeLater(expandRunnable);
           }
           return parentWrapper;

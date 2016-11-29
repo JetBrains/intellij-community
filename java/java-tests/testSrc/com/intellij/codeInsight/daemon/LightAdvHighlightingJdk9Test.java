@@ -19,7 +19,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 
@@ -32,11 +31,6 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
     enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new RedundantCastInspection());
     setLanguageLevel(LanguageLevel.JDK_1_9);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, getModule(), getTestRootDisposable());
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {

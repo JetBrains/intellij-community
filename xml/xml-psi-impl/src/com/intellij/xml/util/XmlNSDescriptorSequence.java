@@ -36,7 +36,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class XmlNSDescriptorSequence implements XmlNSDescriptor{
-  final List<XmlNSDescriptor> sequence = new ArrayList<XmlNSDescriptor>();
+  final List<XmlNSDescriptor> sequence = new ArrayList<>();
 
   public XmlNSDescriptorSequence(){
   }
@@ -63,7 +63,7 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
   @Override
   @NotNull
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
-    final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
+    final List<XmlElementDescriptor> descriptors = new ArrayList<>();
     for (XmlNSDescriptor descriptor : sequence) {
       ContainerUtil.addAll(descriptors, descriptor.getRootElementsDescriptors(document));
     }
@@ -120,7 +120,7 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
 
   @Override
   public Object[] getDependences(){
-    final List<Object> ret = new ArrayList<Object>();
+    final List<Object> ret = new ArrayList<>();
     for (XmlNSDescriptor descriptor : sequence) {
       ContainerUtil.addAll(ret, descriptor.getDependences());
     }

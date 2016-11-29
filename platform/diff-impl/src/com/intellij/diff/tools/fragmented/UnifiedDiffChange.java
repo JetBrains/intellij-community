@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUtil.UpdatedLineRange;
@@ -23,7 +22,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +44,8 @@ public class UnifiedDiffChange {
 
   @NotNull private final LineFragment myLineFragment;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
+  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   public UnifiedDiffChange(@NotNull UnifiedDiffViewer viewer, @NotNull ChangedBlock block) {
     myViewer = viewer;
@@ -74,12 +76,7 @@ public class UnifiedDiffChange {
   private void installHighlighter(@NotNull LineRange deleted, @NotNull LineRange inserted) {
     assert myHighlighters.isEmpty();
 
-    if (myLineFragment.getInnerFragments() != null) {
-      doInstallHighlighterWithInner(deleted, inserted);
-    }
-    else {
-      doInstallHighlighterSimple(deleted, inserted);
-    }
+    doInstallHighlighters(deleted, inserted);
     doInstallActionHighlighters();
   }
 
@@ -96,58 +93,8 @@ public class UnifiedDiffChange {
     }
   }
 
-  private void doInstallHighlighterSimple(@NotNull LineRange deleted, @NotNull LineRange inserted) {
-    createLineHighlighters(deleted, inserted, false);
-  }
-
-  private void doInstallHighlighterWithInner(@NotNull LineRange deleted, @NotNull LineRange inserted) {
-    List<DiffFragment> innerFragments = myLineFragment.getInnerFragments();
-    assert innerFragments != null;
-
-    int deletedStartOffset = myEditor.getDocument().getLineStartOffset(deleted.start);
-    int insertedStartOffset = myEditor.getDocument().getLineStartOffset(inserted.start);
-
-    createLineHighlighters(deleted, inserted, true);
-
-    for (DiffFragment fragment : innerFragments) {
-      createInlineHighlighter(TextDiffType.DELETED,
-                              deletedStartOffset + fragment.getStartOffset1(),
-                              deletedStartOffset + fragment.getEndOffset1());
-      createInlineHighlighter(TextDiffType.INSERTED,
-                              insertedStartOffset + fragment.getStartOffset2(),
-                              insertedStartOffset + fragment.getEndOffset2());
-    }
-  }
-
-  private void createLineHighlighters(@NotNull LineRange deleted, @NotNull LineRange inserted, boolean ignored) {
-    if (!inserted.isEmpty() && !deleted.isEmpty()) {
-      createLineMarker(TextDiffType.DELETED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.DELETED, deleted.start, deleted.end, ignored);
-      createHighlighter(TextDiffType.INSERTED, inserted.start, inserted.end, ignored);
-      createLineMarker(TextDiffType.INSERTED, getLine2() - 1, SeparatorPlacement.BOTTOM);
-    }
-    else if (!inserted.isEmpty()) {
-      createLineMarker(TextDiffType.INSERTED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.INSERTED, inserted.start, inserted.end, ignored);
-      createLineMarker(TextDiffType.INSERTED, getLine2() - 1, SeparatorPlacement.BOTTOM);
-    }
-    else if (!deleted.isEmpty()) {
-      createLineMarker(TextDiffType.DELETED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.DELETED, deleted.start, deleted.end, ignored);
-      createLineMarker(TextDiffType.DELETED, getLine2() - 1, SeparatorPlacement.BOTTOM);
-    }
-  }
-
-  private void createHighlighter(@NotNull TextDiffType type, int startLine, int endLine, boolean ignored) {
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(myEditor, startLine, endLine, type, ignored));
-  }
-
-  private void createInlineHighlighter(@NotNull TextDiffType type, int start, int end) {
-    myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(myEditor, start, end, type));
-  }
-
-  private void createLineMarker(@NotNull TextDiffType type, int line, @NotNull SeparatorPlacement placement) {
-    myHighlighters.addAll(DiffDrawUtil.createLineMarker(myEditor, line, type, placement));
+  private void doInstallHighlighters(@NotNull LineRange deleted, @NotNull LineRange inserted) {
+    myHighlighters.addAll(DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, deleted, inserted, myLineFragment.getInnerFragments()));
   }
 
   public int getLine1() {
@@ -238,12 +185,9 @@ public class UnifiedDiffChange {
         final Project project = e.getProject();
         final Document document = myViewer.getDocument(sourceSide.other());
 
-        DiffUtil.executeWriteCommand(document, project, "Replace change", new Runnable() {
-          @Override
-          public void run() {
-            myViewer.replaceChange(UnifiedDiffChange.this, sourceSide);
-            myViewer.scheduleRediff();
-          }
+        DiffUtil.executeWriteCommand(document, project, "Replace change", () -> {
+          myViewer.replaceChange(UnifiedDiffChange.this, sourceSide);
+          myViewer.scheduleRediff();
         });
         // applyChange() will schedule rediff, but we want to try to do it in sync
         // and we can't do it inside write action

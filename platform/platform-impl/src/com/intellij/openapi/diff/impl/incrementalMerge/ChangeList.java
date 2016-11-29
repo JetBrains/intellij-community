@@ -61,7 +61,7 @@ public class ChangeList {
 
   public void setChanges(@NotNull ArrayList<Change> changes) {
     if (myChanges != null) {
-      HashSet<Change> newChanges = new HashSet<Change>(changes);
+      HashSet<Change> newChanges = new HashSet<>(changes);
       LOG.assertTrue(newChanges.size() == changes.size());
       for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext();) {
         Change oldChange = iterator.next();
@@ -74,8 +74,8 @@ public class ChangeList {
     for (Change change : changes) {
       LOG.assertTrue(change.isValid());
     }
-    myChanges = new ArrayList<Change>(changes);
-    myAppliedChanges = new ArrayList<Change>();
+    myChanges = new ArrayList<>(changes);
+    myAppliedChanges = new ArrayList<>();
   }
 
   @Nullable
@@ -85,7 +85,7 @@ public class ChangeList {
 
   @NotNull
   public List<Change> getChanges() {
-    return new ArrayList<Change>(myChanges);
+    return new ArrayList<>(myChanges);
   }
 
   public static ChangeList build(@NotNull Document base, @NotNull Document version, @NotNull Project project) throws FilesTooBigForDiffException {
@@ -120,7 +120,7 @@ public class ChangeList {
     Document version = getDocument(FragmentSide.SIDE2);
     DiffString[] versionLines = DiffUtil.convertToLines(version.getText());
     DiffFragment[] fragments = ComparisonPolicy.DEFAULT.buildDiffFragmentsFromLines(baseLines, versionLines);
-    final ArrayList<Change> result = new ArrayList<Change>();
+    final ArrayList<Change> result = new ArrayList<>();
     new DiffFragmentsEnumerator(fragments) {
       @Override
       protected void process(DiffFragment fragment) {
@@ -201,12 +201,12 @@ public class ChangeList {
   }
 
   public LineBlocks getNonAppliedLineBlocks() {
-    ArrayList<Change> changes = new ArrayList<Change>(myChanges);
+    ArrayList<Change> changes = new ArrayList<>(myChanges);
     return LineBlocks.fromChanges(changes);
   }
 
   public LineBlocks getLineBlocks() {
-    ArrayList<Change> changes = new ArrayList<Change>(myChanges);
+    ArrayList<Change> changes = new ArrayList<>(myChanges);
     changes.addAll(myAppliedChanges);
     return LineBlocks.fromChanges(changes);
   }

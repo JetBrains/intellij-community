@@ -15,15 +15,7 @@
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="module" module-name="platform-resources-en" exported="" />
     <orderEntry type="module" module-name="icons" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../lib/automaton.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="automaton" level="project" />
     <orderEntry type="module" module-name="projectModel-api" exported="" />
   </component>
 </module>

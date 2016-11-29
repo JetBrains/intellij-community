@@ -657,4 +657,68 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                  "});");
   }
   
+  
+  public void testDisableWrapLongLinesInFormatterMarkers() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
+    getSettings().RIGHT_MARGIN = 80;
+    
+    doTextTest(
+      "package com.acme;\n" +
+      "\n" +
+      "public class Test {\n" +
+      "    @Override\n" +
+      "    public boolean equals(Object obj) {\n" +
+      "\n" +
+      "        String direction = \" \";\n" +
+      "        String humanId = \" \";\n" +
+      "        String instrument = \" \";\n" +
+      "        String price = \" \";\n" +
+      "        String quantity = \" \";\n" +
+      "        String stopLoss = \" \";\n" +
+      "        String thatsDirection = \"\";\n" +
+      "\n" +
+      "        return 0 < 0\n" +
+      "                + (direction != null && thatsDirection != null ? direction.equalsIgnoreCase(thatsDirection)          ? 1 : -100 : 0)\n" +
+      "                // @formatter:off\n" +
+      "                + (humanId      != null && thatsDirection  != null ? humanId.equalsIgnoreCase(thatsDirection)        ? 1 : -100 : 0)\n" +
+      "                + (instrument   != null && thatsDirection  != null ? instrument.equals(thatsDirection)               ? 1 : -100 : 0)\n" +
+      "                + (price        != null && thatsDirection  != null ? price.equals(thatsDirection)                    ? 1 : -100 : 0)\n" +
+      "                // @formatter:on\n" +
+      "                + (quantity     != null && thatsDirection  != null ? quantity.equals(thatsDirection)                 ? 1 : -100 : 0)\n" +
+      "                + (stopLoss     != null && thatsDirection  != null ? stopLoss.equals(thatsDirection)                 ? 1 : -100 : 0);\n" +
+      "    }\n" +
+      "}",
+      
+      "package com.acme;\n" +
+      "\n" +
+      "public class Test {\n" +
+      "    @Override\n" +
+      "    public boolean equals(Object obj) {\n" +
+      "\n" +
+      "        String direction = \" \";\n" +
+      "        String humanId = \" \";\n" +
+      "        String instrument = \" \";\n" +
+      "        String price = \" \";\n" +
+      "        String quantity = \" \";\n" +
+      "        String stopLoss = \" \";\n" +
+      "        String thatsDirection = \"\";\n" +
+      "\n" +
+      "        return 0 < 0\n" +
+      "                + (direction != null && thatsDirection != null ? direction\n" +
+      "                .equalsIgnoreCase(thatsDirection) ? 1 : -100 : 0)\n" +
+      "                // @formatter:off\n" +
+      "                + (humanId      != null && thatsDirection  != null ? humanId.equalsIgnoreCase(thatsDirection)        ? 1 : -100 : 0)\n" +
+      "                + (instrument   != null && thatsDirection  != null ? instrument.equals(thatsDirection)               ? 1 : -100 : 0)\n" +
+      "                + (price        != null && thatsDirection  != null ? price.equals(thatsDirection)                    ? 1 : -100 : 0)\n" +
+      "                // @formatter:on\n" +
+      "                + (quantity != null && thatsDirection != null ? quantity\n" +
+      "                .equals(thatsDirection) ? 1 : -100 : 0)\n" +
+      "                + (stopLoss != null && thatsDirection != null ? stopLoss\n" +
+      "                .equals(thatsDirection) ? 1 : -100 : 0);\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+  
 }

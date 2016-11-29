@@ -65,7 +65,7 @@ class VcsLogJoinerTest {
       val vcsNewRefs = newRefs!!.map { HashImpl.build(it) }
 
       val result = VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(vcsFullLog, vcsOldRefs, vcsRecentCommits, vcsNewRefs).getFirst()!!
-      val actual = result.map { it.getId().asString() }.joinToString(separator = "\n")
+      val actual = result.map { it.id.asString() }.joinToString(separator = "\n")
       assertEquals(expected, actual)
     }
   }

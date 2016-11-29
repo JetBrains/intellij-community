@@ -18,6 +18,7 @@ package com.intellij.diff.tools.util;
 import com.intellij.diff.tools.util.DiffSplitter.Painter;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,11 +26,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
 
 public class ThreeDiffSplitter extends JPanel {
-  private static final int DIVIDER_WIDTH = 30;
-
   @NotNull private final List<? extends JComponent> myContents;
   @NotNull private final Divider myDivider1;
   @NotNull private final Divider myDivider2;
@@ -75,6 +75,17 @@ public class ThreeDiffSplitter extends JPanel {
     myProportion1 = myProportion2 = 1f / 3;
   }
 
+  private void expandMiddlePanel() {
+    myProportion1 = myProportion2 = 0f;
+  }
+
+  private boolean areDefaultProportions() {
+    int width = getWidth();
+    int[] widths1 = calcComponentsWidths(width, myProportion1, myProportion2);
+    int[] widths2 = calcComponentsWidths(width, 1f / 3, 1f / 3);
+    return Arrays.equals(widths1, widths2);
+  }
+
   private void setProportion(float proportion, @NotNull Side side) {
     proportion = Math.min(1f, Math.max(0f, proportion));
     float otherProportion = side.select(myProportion2, myProportion1);
@@ -89,16 +100,8 @@ public class ThreeDiffSplitter extends JPanel {
     int width = getWidth();
     int height = getHeight();
 
-    int dividersTotalWidth = DIVIDER_WIDTH * 2;
-    int contentsTotalWidth = Math.max(width - dividersTotalWidth, 0);
-
     JComponent[] components = new JComponent[]{myContents.get(0), myDivider1, myContents.get(1), myDivider2, myContents.get(2)};
-    int[] contentWidths = new int[5];
-    contentWidths[1] = DIVIDER_WIDTH; // divider1
-    contentWidths[3] = DIVIDER_WIDTH; // divider2
-    contentWidths[0] = (int)(contentsTotalWidth * myProportion1); // content1
-    contentWidths[4] = (int)(contentsTotalWidth * myProportion2); // content3
-    contentWidths[2] = Math.max(contentsTotalWidth - contentWidths[0] - contentWidths[4], 0); // content2
+    int[] contentWidths = calcComponentsWidths(width, myProportion1, myProportion2);
 
     int x = 0;
     for (int i = 0; i < 5; i++) {
@@ -109,9 +112,23 @@ public class ThreeDiffSplitter extends JPanel {
     }
   }
 
+  @NotNull
+  private static int[] calcComponentsWidths(int width, float proportion1, float proportion2) {
+    int dividersTotalWidth = getDividerWidth() * 2;
+    int contentsTotalWidth = Math.max(width - dividersTotalWidth, 0);
+
+    int[] contentWidths = new int[5];
+    contentWidths[1] = getDividerWidth(); // divider1
+    contentWidths[3] = getDividerWidth(); // divider2
+    contentWidths[0] = (int)(contentsTotalWidth * proportion1); // content1
+    contentWidths[4] = (int)(contentsTotalWidth * proportion2); // content3
+    contentWidths[2] = Math.max(contentsTotalWidth - contentWidths[0] - contentWidths[4], 0); // content2
+    return contentWidths;
+  }
+
   @Override
   public Dimension getMinimumSize() {
-    int width = DIVIDER_WIDTH * 2;
+    int width = getDividerWidth() * 2;
     int height = 0;
     for (JComponent content : myContents) {
       Dimension size = content.getMinimumSize();
@@ -123,7 +140,7 @@ public class ThreeDiffSplitter extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    int width = DIVIDER_WIDTH * 2;
+    int width = getDividerWidth() * 2;
     int height = 0;
     for (JComponent content : myContents) {
       Dimension size = content.getPreferredSize();
@@ -131,6 +148,10 @@ public class ThreeDiffSplitter extends JPanel {
       height = Math.max(height, size.height);
     }
     return new Dimension(width, height);
+  }
+
+  private static int getDividerWidth() {
+    return JBUI.scale(30);
   }
 
   private class Divider extends JPanel {
@@ -176,7 +197,12 @@ public class ThreeDiffSplitter extends JPanel {
     protected void processMouseEvent(MouseEvent e) {
       super.processMouseEvent(e);
       if (e.getID() == MouseEvent.MOUSE_CLICKED && e.getClickCount() == 2) {
-        resetProportions();
+        if (areDefaultProportions()) {
+          expandMiddlePanel();
+        }
+        else {
+          resetProportions();
+        }
 
         revalidate();
         repaint();

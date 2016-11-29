@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +30,7 @@ public class ExceptionUtils {
 
   private ExceptionUtils() { }
 
-  private static final Set<String> s_genericExceptionTypes = new HashSet<String>(4);
+  private static final Set<String> s_genericExceptionTypes = new HashSet<>(4);
 
   static {
     s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_THROWABLE);
@@ -38,18 +40,17 @@ public class ExceptionUtils {
   }
 
   @NotNull
-  public static Set<PsiType> calculateExceptionsThrown(@Nullable PsiElement element) {
-    return calculateExceptionsThrown(element, new LinkedHashSet<PsiType>(5));
+  public static Set<PsiClassType> calculateExceptionsThrown(@Nullable PsiElement element) {
+    return calculateExceptionsThrown(element, new LinkedHashSet<>(5));
   }
 
   @NotNull
-  public static Set<PsiType> calculateExceptionsThrown(@Nullable PsiElement element, @NotNull Set<PsiType> out) {
+  public static Set<PsiClassType> calculateExceptionsThrown(@Nullable PsiElement element, @NotNull Set<PsiClassType> out) {
     if (element == null) return out;
     if (element instanceof PsiResourceList) {
       final PsiResourceList resourceList = (PsiResourceList)element;
       for (PsiResourceListElement resource : resourceList) {
-        final PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
-        collectExceptionsThrown(method, out);
+        out.addAll(ExceptionUtil.getCloserExceptions(resource));
       }
     }
     final ExceptionsThrownVisitor visitor = new ExceptionsThrownVisitor(out);
@@ -202,21 +203,8 @@ public class ExceptionUtils {
     return false;
   }
 
-  private static void collectExceptionsThrown(@Nullable PsiMethod method, @NotNull Set<PsiType> out) {
-    if (method == null) {
-      return;
-    }
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-    for (PsiJavaCodeReferenceElement referenceElement : method.getThrowsList().getReferenceElements()) {
-      final PsiClass exceptionClass = (PsiClass)referenceElement.resolve();
-      if (exceptionClass != null) {
-        out.add(factory.createType(exceptionClass));
-      }
-    }
-  }
-
   public static Set<PsiType> getExceptionTypesHandled(PsiTryStatement statement) {
-    final Set<PsiType> out = new HashSet<PsiType>(5);
+    final Set<PsiType> out = new HashSet<>(5);
     for (PsiParameter parameter : statement.getCatchBlockParameters()) {
       final PsiType type = parameter.getType();
       if (type instanceof PsiDisjunctionType) {
@@ -229,11 +217,29 @@ public class ExceptionUtils {
     return out;
   }
 
+  public static boolean isExceptionArgument(@NotNull PsiExpression expression) {
+    final PsiNewExpression newExpression =
+      PsiTreeUtil.getParentOfType(expression, PsiNewExpression.class, true, PsiCodeBlock.class, PsiClass.class);
+    if (newExpression != null) {
+      final PsiType newExpressionType = newExpression.getType();
+      if (com.intellij.psi.util.InheritanceUtil.isInheritor(newExpressionType, CommonClassNames.JAVA_LANG_THROWABLE)) {
+        return true;
+      }
+    } else {
+      final PsiMethodCallExpression methodCallExpression =
+        PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class, PsiClass.class);
+      if (RefactoringChangeUtil.isSuperOrThisMethodCall(methodCallExpression)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static class ExceptionsThrownVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private final Set<PsiType> m_exceptionsThrown;
+    private final Set<PsiClassType> m_exceptionsThrown;
 
-    private ExceptionsThrownVisitor(Set<PsiType> thrownTypes) {
+    private ExceptionsThrownVisitor(Set<PsiClassType> thrownTypes) {
       m_exceptionsThrown = thrownTypes;
     }
 
@@ -246,7 +252,13 @@ public class ExceptionUtils {
     @Override
     public void visitCallExpression(PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
-      collectExceptionsThrown(callExpression.resolveMethod(), m_exceptionsThrown);
+      final JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
+      final PsiElement target = resolveResult.getElement();
+      if (!(target instanceof PsiMethod)) {
+        return;
+      }
+      final PsiClassType[] referencedTypes = ((PsiMethod)target).getThrowsList().getReferencedTypes();
+      m_exceptionsThrown.addAll(ExceptionUtil.collectSubstituted(resolveResult.getSubstitutor(), referencedTypes, callExpression.getResolveScope()));
     }
 
     @Override
@@ -257,8 +269,8 @@ public class ExceptionUtils {
         return;
       }
       final PsiType type = exception.getType();
-      if (type != null) {
-        m_exceptionsThrown.add(type);
+      if (type instanceof PsiClassType) {
+        m_exceptionsThrown.add((PsiClassType)type);
       }
     }
 
@@ -266,12 +278,12 @@ public class ExceptionUtils {
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       final Set<PsiType> exceptionsHandled = getExceptionTypesHandled(statement);
 
-      for (PsiType resourceException : calculateExceptionsThrown(statement.getResourceList())) {
+      for (PsiClassType resourceException : calculateExceptionsThrown(statement.getResourceList())) {
         if (!isExceptionHandled(exceptionsHandled, resourceException)) {
           m_exceptionsThrown.add(resourceException);
         }
       }
-      for (PsiType tryException : calculateExceptionsThrown(statement.getTryBlock())) {
+      for (PsiClassType tryException : calculateExceptionsThrown(statement.getTryBlock())) {
         if (!isExceptionHandled(exceptionsHandled, tryException)) {
           m_exceptionsThrown.add(tryException);
         }

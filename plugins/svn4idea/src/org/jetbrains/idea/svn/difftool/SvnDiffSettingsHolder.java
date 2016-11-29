@@ -99,7 +99,7 @@ public class SvnDiffSettingsHolder implements PersistentStateComponent<SvnDiffSe
 
   public static class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    public Map<String, PlaceSettings> PLACES_MAP = new HashMap<String, PlaceSettings>();
+    public Map<String, PlaceSettings> PLACES_MAP = new HashMap<>();
     public SharedSettings SHARED_SETTINGS = new SharedSettings();
   }
 

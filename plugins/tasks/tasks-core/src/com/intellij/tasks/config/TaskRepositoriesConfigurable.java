@@ -57,8 +57,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   private Splitter mySplitter;
   private JPanel myEmptyPanel;
 
-  private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
-  private final List<TaskRepositoryEditor> myEditors = new ArrayList<TaskRepositoryEditor>();
+  private final List<TaskRepository> myRepositories = new ArrayList<>();
+  private final List<TaskRepositoryEditor> myEditors = new ArrayList<>();
   private final Project myProject;
 
   private final Consumer<TaskRepository> myChangeListener;
@@ -85,7 +85,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
     TaskRepositoryType[] groups = TaskRepositoryType.getRepositoryTypes();
 
-    final List<AnAction> createActions = new ArrayList<AnAction>();
+    final List<AnAction> createActions = new ArrayList<>();
     for (final TaskRepositoryType repositoryType : groups) {
       for (final TaskRepositorySubtype subtype : (List<TaskRepositorySubtype>)repositoryType.getAvailableSubtypes()) {
         createActions.add(new AddServerAction(subtype) {
@@ -165,18 +165,14 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
     myRepositoriesList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         TaskRepository repository = (TaskRepository)value;
         setIcon(repository.getIcon());
         append(repository.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     });
 
-    myChangeListener = new Consumer<TaskRepository>() {
-      public void consume(TaskRepository repository) {
-        ((CollectionListModel)myRepositoriesList.getModel()).contentsChanged(repository);
-      }
-    };
+    myChangeListener = repository -> ((CollectionListModel)myRepositoriesList.getModel()).contentsChanged(repository);
   }
 
   private void addRepository(TaskRepository repository) {
@@ -223,11 +219,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   }
 
   public void apply() throws ConfigurationException {
-    List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, new Function<TaskRepository, TaskRepository>() {
-      public TaskRepository fun(TaskRepository taskRepository) {
-        return taskRepository.clone();
-      }
-    });
+    List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, taskRepository -> taskRepository.clone());
     myManager.setRepositories(newRepositories);
     myManager.updateIssues(null);
     RecentTaskRepositories.getInstance().addRepositories(myRepositories);

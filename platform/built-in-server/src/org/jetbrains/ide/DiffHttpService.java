@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,8 +71,8 @@ final class DiffHttpService extends RestService {
   @Override
   @Nullable
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
-    final List<DiffContent> contents = new ArrayList<DiffContent>();
-    final List<String> titles = new ArrayList<String>();
+    final List<DiffContent> contents = new ArrayList<>();
+    final List<String> titles = new ArrayList<>();
     boolean focused = true;
     String windowTitle = null;
     JsonReader reader = createJsonReader(request);
@@ -115,14 +116,11 @@ final class DiffHttpService extends RestService {
     final boolean finalFocused = focused;
     final String finalWindowTitle = windowTitle;
     final Project finalProject = project;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (finalFocused) {
-          ProjectUtil.focusProjectWindow(finalProject, true);
-        }
-        DiffManager.getInstance().showDiff(finalProject, new SimpleDiffRequest(StringUtil.notNullize(finalWindowTitle, "Diff Service"), contents, titles));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (finalFocused) {
+        ProjectUtil.focusProjectWindow(finalProject, true);
       }
+      DiffManager.getInstance().showDiff(finalProject, new SimpleDiffRequest(StringUtil.notNullize(finalWindowTitle, "Diff Service"), contents, titles));
     }, project.getDisposed());
 
     sendOk(request, context);
@@ -168,5 +166,10 @@ final class DiffHttpService extends RestService {
     }
     reader.endArray();
     return null;
+  }
+
+  @Override
+  public boolean isAccessible(@NotNull HttpRequest request) {
+    return true;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,19 @@ import java.awt.*;
 import java.util.Set;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
+  private final boolean myRequestFocus;
+
+  public ShowParameterInfoHandler() {
+    this(false);
+  }
+
+  public ShowParameterInfoHandler(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
+
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    invoke(project, editor, file, -1, null);
+    invoke(project, editor, file, -1, null, myRequestFocus);
   }
 
   @Override
@@ -58,7 +68,14 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return element;
   }
 
+  /**
+   * @deprecated use {@link #invoke(Project, Editor, PsiFile, int, PsiElement, boolean)} instead
+   */
   public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
+    invoke(project, editor, file, lbraceOffset, highlightedElement, false);
+  }
+
+  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement, boolean requestFocus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -70,6 +87,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       .SERVICE.getInstance().createShowParameterInfoContext(project, editor, file, lbraceOffset, offset);
 
     context.setHighlightedElement(highlightedElement);
+    context.setRequestFocus(requestFocus);
 
     final Language language = psiElement.getLanguage();
     ParameterInfoHandler[] handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
@@ -85,7 +103,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
           if (handler.couldShowInLookup()) {
             final Object[] items = handler.getParametersForLookup(item, context);
             if (items != null && items.length > 0) {
-              showLookupEditorHint(items, editor, project, handler);
+              showLookupEditorHint(items, editor, project, handler, requestFocus);
             }
             return;
           }
@@ -108,28 +126,29 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static void showLookupEditorHint(Object[] descriptors, final Editor editor, final Project project, ParameterInfoHandler handler) {
-    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler);
+  private static void showLookupEditorHint(Object[] descriptors,
+                                           final Editor editor,
+                                           final Project project,
+                                           ParameterInfoHandler handler,
+                                           boolean requestFocus) {
+    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler, requestFocus);
     component.update();
 
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true, HintManager.DEFAULT);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!editor.getComponent().isShowing()) return;
-        hintManager.showEditorHint(hint, editor, pos.getFirst(),
-                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
-                                   0, false, pos.getSecond());
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!editor.getComponent().isShowing()) return;
+      hintManager.showEditorHint(hint, editor, pos.getFirst(),
+                                 HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
+                                 0, false, pos.getSecond());
     });
   }
 
   @Nullable
   public static ParameterInfoHandler[] getHandlers(Project project, final Language... languages) {
-    Set<ParameterInfoHandler> handlers = new THashSet<ParameterInfoHandler>();
+    Set<ParameterInfoHandler> handlers = new THashSet<>();
     for (final Language language : languages) {
       handlers.addAll(DumbService.getInstance(project).filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
     }

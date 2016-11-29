@@ -57,7 +57,7 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
 
 
   private static class Visitor extends PyInspectionVisitor {
-    private final Map<PyFunction, Boolean> myHasInheritors = new HashMap<PyFunction, Boolean>();
+    private final Map<PyFunction, Boolean> myHasInheritors = new HashMap<>();
 
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);

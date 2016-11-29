@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.module.impl;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -25,11 +26,14 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * @author nik
  */
 public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkReferencesTableImpl> implements JpsSdkReferencesTable {
   public static final JpsSdkReferencesTableRole ROLE = new JpsSdkReferencesTableRole();
+  private static final ConcurrentMap<JpsSdkType, JpsSdkReferenceRole> ourReferenceRoles = ContainerUtil.newConcurrentMap();
 
   public JpsSdkReferencesTableImpl() {
     super();
@@ -47,7 +51,7 @@ public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkRef
 
   @Override
   public <P extends JpsElement> void setSdkReference(@NotNull JpsSdkType<P> type, @Nullable JpsSdkReference<P> sdkReference) {
-    JpsSdkReferenceRole<P> role = new JpsSdkReferenceRole<P>(type);
+    JpsSdkReferenceRole<P> role = getSdkReferenceRole(type);
     if (sdkReference != null) {
       myContainer.setChild(role, sdkReference);
     }
@@ -58,7 +62,16 @@ public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkRef
 
   @Override
   public <P extends JpsElement> JpsSdkReference<P> getSdkReference(@NotNull JpsSdkType<P> type) {
-    return myContainer.getChild(new JpsSdkReferenceRole<P>(type));
+    return myContainer.getChild(getSdkReferenceRole(type));
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  private static <P extends JpsElement> JpsSdkReferenceRole<P> getSdkReferenceRole(@NotNull JpsSdkType<P> type) {
+    JpsSdkReferenceRole<P> role = ourReferenceRoles.get(type);
+    if (role != null) return role;
+    ourReferenceRoles.putIfAbsent(type, new JpsSdkReferenceRole<P>(type));
+    return ourReferenceRoles.get(type);
   }
 
   private static class JpsSdkReferencesTableRole extends JpsElementChildRoleBase<JpsSdkReferencesTable> implements JpsElementCreator<JpsSdkReferencesTable> {

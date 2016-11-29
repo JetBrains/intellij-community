@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,10 @@ import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.*;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
 
 public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   @Override
@@ -39,12 +38,16 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-    assertNotNull(settings);
-    settings.setLangDisabledTemplates(ContainerUtil.<String, Set<String>>newHashMap());
-    settings.setPostfixTemplatesEnabled(true);
-    settings.setTemplatesCompletionEnabled(true);
-    super.tearDown();
+    try {
+      PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
+      assertNotNull(settings);
+      settings.setLangDisabledTemplates(ContainerUtil.newHashMap());
+      settings.setPostfixTemplatesEnabled(true);
+      settings.setTemplatesCompletionEnabled(true);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testSimpleCompletionList() {
@@ -237,12 +240,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   private void configureByFile() {
-    edt(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.configureByFile(getTestName(true) + ".java");
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.configureByFile(getTestName(true) + ".java"));
   }
 
   private void checkResultByFile() {

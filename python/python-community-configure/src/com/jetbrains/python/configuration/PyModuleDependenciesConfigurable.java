@@ -48,7 +48,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
 
   public PyModuleDependenciesConfigurable(Module module) {
     myModule = module;
-    myDependenciesList = new CheckBoxList<Module>();
+    myDependenciesList = new CheckBoxList<>();
     resetModel();
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myDependenciesList,
                                                                   new EditableListModelDecorator((DefaultListModel) myDependenciesList.getModel()));
@@ -57,7 +57,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   }
 
   private void resetModel() {
-    List<Module> possibleDependencies = new ArrayList<Module>();
+    List<Module> possibleDependencies = new ArrayList<>();
     myInitialDependencies = Arrays.asList(ModuleRootManager.getInstance(myModule).getDependencies());
     possibleDependencies.addAll(myInitialDependencies);
     for (Module otherModule : ModuleManager.getInstance(myModule.getProject()).getModules()) {
@@ -65,12 +65,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
         possibleDependencies.add(otherModule);
       }
     }
-    myDependenciesList.setItems(possibleDependencies, new Function<Module, String>() {
-      @Override
-      public String fun(Module module) {
-        return module.getName();
-      }
-    });
+    myDependenciesList.setItems(possibleDependencies, module -> module.getName());
     myDependenciesList.setBorder(null);
     for (Module dependency : myInitialDependencies) {
       myDependenciesList.setItemSelected(dependency, true);
@@ -89,7 +84,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   }
 
   private List<Module> collectDependencies() {
-    List<Module> result = new ArrayList<Module>();
+    List<Module> result = new ArrayList<>();
     for (int i = 0; i < myDependenciesList.getItemsCount(); i++) {
       Module module = (Module)myDependenciesList.getItemAt(i);
       if (myDependenciesList.isItemSelected(module)) {
@@ -101,24 +96,21 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        List<ModuleOrderEntry> entries = new ArrayList<ModuleOrderEntry>();
-        for (OrderEntry entry : model.getOrderEntries()) {
-          if (entry instanceof ModuleOrderEntry) {
-            entries.add((ModuleOrderEntry) entry);
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+      List<ModuleOrderEntry> entries = new ArrayList<>();
+      for (OrderEntry entry : model.getOrderEntries()) {
+        if (entry instanceof ModuleOrderEntry) {
+          entries.add((ModuleOrderEntry) entry);
         }
-        for (ModuleOrderEntry entry : entries) {
-          model.removeOrderEntry(entry);
-        }
-        for (Module module : collectDependencies()) {
-          model.addModuleOrderEntry(module);
-        }
-        model.commit();
       }
+      for (ModuleOrderEntry entry : entries) {
+        model.removeOrderEntry(entry);
+      }
+      for (Module module : collectDependencies()) {
+        model.addModuleOrderEntry(module);
+      }
+      model.commit();
     });
   }
 

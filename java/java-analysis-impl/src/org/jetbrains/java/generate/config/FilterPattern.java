@@ -36,7 +36,7 @@ import java.util.regex.PatternSyntaxException;
 public class FilterPattern {
 
     private static final Logger LOG = Logger.getInstance("#FilterPattern");
-    private static final Set<String> loggerNames = new THashSet<String>();
+    private static final Set<String> loggerNames = new THashSet<>();
     static {
       Collections.addAll(loggerNames,
                          "org.apache.log4j.Logger", "java.util.logging.Logger", "org.apache.commons.logging.Log", "org.slf4j.Logger");
@@ -51,10 +51,10 @@ public class FilterPattern {
     private boolean transientModifier;
     private boolean enumField;
     private boolean loggers;
-    private Pattern methodNamePattern = null;
-    private Pattern methodTypePattern = null;
-    private Pattern fieldNamePattern = null;
-    private Pattern fieldTypePattern = null;
+    private Pattern methodNamePattern;
+    private Pattern methodTypePattern;
+    private Pattern fieldNamePattern;
+    private Pattern fieldTypePattern;
 
   public boolean fieldMatches(PsiField field) {
     if (isConstantField() && PsiAdapter.isConstantField(field)) {

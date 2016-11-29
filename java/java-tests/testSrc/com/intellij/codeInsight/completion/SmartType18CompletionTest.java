@@ -85,6 +85,25 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(false);
   }
 
+  public void testInnerArrayConstructorRef() { doTest(true); }
+
+  public void testNoConstraintsWildcard() throws Exception {
+    doTest();
+  }
+
+  public void testInheritorConstructorRef() {
+    myFixture.addClass("package intf; public interface Intf<T> {}");
+    myFixture.addClass("package foo; public class ImplBar implements intf.Intf<String> {}");
+    myFixture.addClass("package foo; public class ImplFoo<T> implements intf.Intf<T> {}");
+    myFixture.addClass("package foo; public class ImplIncompatible implements intf.Intf<Integer> {}");
+    myFixture.addClass("package foo; class ImplInaccessible implements intf.Intf<String> {}");
+
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "ImplBar::new", "ImplFoo::new", "()");
+    myFixture.type('\n');
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
   public void testFilteredMethodReference() throws Exception {
     doTest(false);
   }
@@ -127,6 +146,13 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(true);
   }
 
+  public void testStaticMethodReference() { doTest(false); }
+
+  public void testOuterMethodReference() { doTest(true); }
+  public void testNoAnonymousOuterMethodReference() { doAntiTest(); }
+
+  public void testMethodReferenceOnAncestor() { doTest(true); }
+
   public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() throws Exception {
     configureByFile("/" + getTestName(false) + ".java");
     assertEmpty(myItems);
@@ -153,6 +179,19 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  public void testInferThrowableBoundInCompletion() {
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 1);
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
+  public void testInsideNewExpressionWithDiamondAndOverloadConstructors() throws Exception {
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 1);
+    myFixture.type('\n');
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
   public void testCollectorsToList() {
     doTest(false);
   }
@@ -163,9 +202,9 @@ public void testConvertToObjectStream() {
     doTest(true);
   }
 
-  private void doTest(boolean checkItems) {
+  private void doTest(boolean insertSelectedItem) {
     configureByFile("/" + getTestName(false) + ".java");
-    if (checkItems) {
+    if (insertSelectedItem) {
       assertNotNull(myItems);
       assertTrue(myItems.length > 0);
       final Lookup lookup = getLookup();
@@ -180,4 +219,10 @@ public void testConvertToObjectStream() {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
   }
+
+  public void testSuggestMapInheritors() { doTest(); }
+
+  public void testUnboundTypeArgs() { doTest(); }
+
+  public void testCallBeforeLambda() { doTest(false); }
 }

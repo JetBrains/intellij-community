@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,14 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.MethodMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,10 +78,7 @@ public class SubtractionInCompareToInspectionBase extends BaseInspection {
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.MINUS)) {
-        return;
-      }
-      if (isSafeSubtraction(expression)) {
+      if (!tokenType.equals(JavaTokenType.MINUS) || isSafeSubtraction(expression)) {
         return;
       }
       final PsiLambdaExpression lambdaExpression =
@@ -95,22 +90,8 @@ public class SubtractionInCompareToInspectionBase extends BaseInspection {
           return;
         }
       }
-
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-      if (method == null) {
-        return;
-      }
-      if (MethodUtils.isCompareTo(method)) {
-        registerError(expression);
-      }
-      final PsiClass comparatorClass = ClassUtils.findClass(CommonClassNames.JAVA_UTIL_COMPARATOR, expression);
-      if (comparatorClass == null) {
-        return;
-      }
-      final PsiMethod[] methods = comparatorClass.findMethodsByName("compare", false);
-      assert methods.length == 1;
-      final PsiMethod compareMethod = methods[0];
-      if (!PsiSuperMethodUtil.isSuperMethod(method, compareMethod)) {
+      if (!MethodUtils.isCompareTo(method) && !MethodUtils.isComparatorCompare(method)) {
         return;
       }
       registerError(expression);

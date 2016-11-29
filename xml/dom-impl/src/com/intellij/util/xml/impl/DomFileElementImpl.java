@@ -144,7 +144,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private final Class<T> myRootElementClass;
   private final EvaluatedXmlNameImpl myRootTagName;
   private final DomManagerImpl myManager;
-  private final Map<Key,Object> myUserData = new HashMap<Key, Object>();
+  private final Map<Key,Object> myUserData = new HashMap<>();
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
@@ -286,13 +286,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @Override
   public final <T extends DomElement> T createStableCopy() {
-    return myManager.createStableValue(new Factory<T>() {
-      @Override
-      @Nullable
-      public T create() {
-        return (T)myManager.getFileElement(myFile);
-      }
-    });
+    return myManager.createStableValue(() -> (T)myManager.getFileElement(myFile));
   }
 
   @Override

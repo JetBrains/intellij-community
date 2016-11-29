@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
@@ -26,12 +25,15 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 
 public class MergeInfoUpdatesListener {
   private final static int DELAY = 300;
@@ -41,15 +43,15 @@ public class MergeInfoUpdatesListener {
   private List<RootsAndBranches> myMergeInfoRefreshActions;
   private final ZipperUpdater myUpdater;
 
-  public MergeInfoUpdatesListener(final Project project, final MessageBusConnection connection) {
+  public MergeInfoUpdatesListener(@NotNull Project project, final MessageBusConnection connection) {
     myConnection = connection;
     myProject = project;
-    myUpdater = new ZipperUpdater(DELAY, myProject);
+    myUpdater = new ZipperUpdater(DELAY, project);
   }
 
   public void addPanel(final RootsAndBranches action) {
     if (myMergeInfoRefreshActions == null) {
-      myMergeInfoRefreshActions = new ArrayList<RootsAndBranches>();
+      myMergeInfoRefreshActions = new ArrayList<>();
       myMergeInfoRefreshActions.add(action);
 
       myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
@@ -76,7 +78,7 @@ public class MergeInfoUpdatesListener {
 
       myConnection.subscribe(SvnVcs.ROOTS_RELOADED, reloadConsumer);
 
-      ProjectLevelVcsManager.getInstance(myProject).addVcsListener(new VcsListener() {
+      myConnection.subscribe(VCS_CONFIGURATION_CHANGED, new VcsListener() {
         public void directoryMappingChanged() {
           callReloadMergeInfo();
         }

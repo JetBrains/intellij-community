@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,30 +50,17 @@ import static com.intellij.util.BitUtil.isSet;
 public class TypeInfo {
   private static final String[] ourIndexFrequentType;
   private static final TObjectIntHashMap<String> ourFrequentTypeIndex;
-
   static {
     ourIndexFrequentType = new String[]{
       "",
-      "boolean",
-      "byte",
-      "char",
-      "double",
-      "float",
-      "int",
-      "long",
-      "null",
-      "short",
-      "void",
-      CommonClassNames.JAVA_LANG_OBJECT_SHORT,
-      CommonClassNames.JAVA_LANG_OBJECT,
-      CommonClassNames.JAVA_LANG_STRING_SHORT,
-      CommonClassNames.JAVA_LANG_STRING
+      "boolean", "byte", "char", "double", "float", "int", "long", "null", "short", "void",
+      CommonClassNames.JAVA_LANG_OBJECT_SHORT, CommonClassNames.JAVA_LANG_OBJECT,
+      CommonClassNames.JAVA_LANG_STRING_SHORT, CommonClassNames.JAVA_LANG_STRING
     };
 
     ourFrequentTypeIndex = new TObjectIntHashMap<String>();
     for (int i = 0; i < ourIndexFrequentType.length; i++) {
-      String type = ourIndexFrequentType[i];
-      ourFrequentTypeIndex.put(type, i);
+      ourFrequentTypeIndex.put(ourIndexFrequentType[i], i);
     }
   }
 
@@ -214,15 +201,15 @@ public class TypeInfo {
 
   @NotNull
   public static TypeInfo readTYPE(@NotNull StubInputStream record) throws IOException {
-    int flags = 0xFF & record.readByte();
+    int flags = record.readByte() & 0xFF;
     if (flags == FREQUENT_INDEX_MASK) {
       return NULL;
     }
 
-    int frequentIndex = FREQUENT_INDEX_MASK & flags;
     byte arrayCount = isSet(flags, HAS_ARRAY_COUNT) ? record.readByte() : 0;
     boolean hasEllipsis = isSet(flags, HAS_ELLIPSIS);
 
+    int frequentIndex = FREQUENT_INDEX_MASK & flags;
     String text = frequentIndex == 0 ? StringRef.toString(record.readName()) : ourIndexFrequentType[frequentIndex];
 
     return new TypeInfo(text, arrayCount, hasEllipsis, PsiAnnotationStub.EMPTY_ARRAY);

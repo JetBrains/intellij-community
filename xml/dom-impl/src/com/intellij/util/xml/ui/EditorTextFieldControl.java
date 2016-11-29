@@ -119,19 +119,14 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
 
   @Override
   protected void setValue(final String value) {
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> new WriteAction() {
       @Override
-      public void run() {
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            final T component = getComponent();
-            final Document document = getEditorTextField(component).getDocument();
-            document.replaceString(0, document.getTextLength(), value == null ? "" : value);
-          }
-        }.execute();
+      protected void run(@NotNull Result result) throws Throwable {
+        final T component = getComponent();
+        final Document document = getEditorTextField(component).getDocument();
+        document.replaceString(0, document.getTextLength(), value == null ? "" : value);
       }
-    });
+    }.execute());
   }
 
   @Override
@@ -141,44 +136,42 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
 
     final EditorTextField textField = getEditorTextField(getComponent());
     final Project project = getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!project.isOpen()) return;
-        if (!getDomWrapper().isValid()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!project.isOpen()) return;
+      if (!getDomWrapper().isValid()) return;
 
-        final DomElement domElement = getDomElement();
-        if (domElement == null || !domElement.isValid()) return;
+      final DomElement domElement1 = getDomElement();
+      if (domElement1 == null || !domElement1.isValid()) return;
 
-        final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
-        final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
-        final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement);
-        final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(domElement, true, HighlightSeverity.WARNING));
-        warningProblems.removeAll(errorProblems);
+      final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
+      final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement1);
+      final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement1);
+      final List<DomElementProblemDescriptor> warningProblems =
+        new ArrayList<>(holder.getProblems(domElement1, true, HighlightSeverity.WARNING));
+      warningProblems.removeAll(errorProblems);
 
-        Color background = getDefaultBackground();
-        if (errorProblems.size() > 0 && textField.getText().trim().length() == 0) {
-          background = getErrorBackground();
-        }
-        else if (warningProblems.size() > 0) {
-          background = getWarningBackground();
-        }
-
-        final Editor editor = textField.getEditor();
-        if (editor != null) {
-          final MarkupModel markupModel = editor.getMarkupModel();
-          markupModel.removeAllHighlighters();
-          if (!errorProblems.isEmpty() && editor.getDocument().getLineCount() > 0) {
-            final TextAttributes attributes = SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes();
-            attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-            attributes.setEffectColor(attributes.getForegroundColor());
-            markupModel.addLineHighlighter(0, 0, attributes);
-            editor.getContentComponent().setToolTipText(errorProblems.get(0).getDescriptionTemplate());
-          }
-        }
-
-        textField.setBackground(background);
+      Color background = getDefaultBackground();
+      if (errorProblems.size() > 0 && textField.getText().trim().length() == 0) {
+        background = getErrorBackground();
       }
+      else if (warningProblems.size() > 0) {
+        background = getWarningBackground();
+      }
+
+      final Editor editor = textField.getEditor();
+      if (editor != null) {
+        final MarkupModel markupModel = editor.getMarkupModel();
+        markupModel.removeAllHighlighters();
+        if (!errorProblems.isEmpty() && editor.getDocument().getLineCount() > 0) {
+          final TextAttributes attributes = SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes();
+          attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
+          attributes.setEffectColor(attributes.getForegroundColor());
+          markupModel.addLineHighlighter(0, 0, attributes);
+          editor.getContentComponent().setToolTipText(errorProblems.get(0).getDescriptionTemplate());
+        }
+      }
+
+      textField.setBackground(background);
     });
 
   }
@@ -191,12 +184,9 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
   @Override
   public void navigate(final DomElement element) {
     final EditorTextField field = getEditorTextField(getComponent());
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        field.requestFocus();
-        field.selectAll();
-      }
+    SwingUtilities.invokeLater(() -> {
+      field.requestFocus();
+      field.selectAll();
     });
   }
 }

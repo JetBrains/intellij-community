@@ -391,7 +391,7 @@ public interface TreeConflictData {
 
     public Data(String patch, String file, FileData... fileData) {
       myConflictFile = file;
-      myFileData = new ArrayList<FileData>(Arrays.asList(fileData));
+      myFileData = new ArrayList<>(Arrays.asList(fileData));
       myPatch = patch;
       afterInit();
     }

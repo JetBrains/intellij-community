@@ -86,7 +86,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   public void addOutTypeRefernce(RefClass refClass){
     if (myOutTypeReferences == null){
-      myOutTypeReferences = new THashSet<RefClass>();
+      myOutTypeReferences = new THashSet<>();
     }
     myOutTypeReferences.add(refClass);
   }
@@ -191,7 +191,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   public boolean isSuspiciousRecursive() {
-    return isCalledOnlyFrom(this, new Stack<RefJavaElement>());
+    return isCalledOnlyFrom(this, new Stack<>());
   }
 
   private boolean isCalledOnlyFrom(RefJavaElement refElement, Stack<RefJavaElement> callStack) {

@@ -37,7 +37,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -115,8 +118,11 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
     }
 
-    return new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
-                                  propagateParametersMethods, propagateExceptionsMethods);
+    final JavaChangeInfoImpl javaChangeInfo =
+      new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
+                             propagateParametersMethods, propagateExceptionsMethods);
+    javaChangeInfo.setCheckUnusedParameter();
+    return javaChangeInfo;
   }
 
   @NotNull
@@ -139,23 +145,16 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
       if (!processor.setupDefaultValues(myChangeInfo, refUsages, myProject)) return false;
     }
-    MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<PsiElement, String>();
-    for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
-      final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(myChangeInfo, refUsages);
-      for (PsiElement key : conflicts.keySet()) {
-        Collection<String> collection = conflictDescriptions.get(key);
-        if (collection.size() == 0) collection = new HashSet<String>();
-        collection.addAll(conflicts.get(key));
-        conflictDescriptions.put(key, collection);
-      }
-    }
+    MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<>();
+    collectConflictsFromExtensions(refUsages, conflictDescriptions, myChangeInfo);
 
     final UsageInfo[] usagesIn = refUsages.get();
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
-    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
+    Set<UsageInfo> usagesSet = new HashSet<>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (!conflictDescriptions.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (ConflictsInTestsException.isTestIgnore()) return true;
         throw new ConflictsInTestsException(conflictDescriptions.values());
       }
       if (myPrepareSuccessfulSwingThreadCallback != null) {
@@ -178,7 +177,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
   private void askToRemoveCovariantOverriders(Set<UsageInfo> usages) {
     if (PsiUtil.isLanguageLevel5OrHigher(myChangeInfo.getMethod())) {
-      List<UsageInfo> covariantOverriderInfos = new ArrayList<UsageInfo>();
+      List<UsageInfo> covariantOverriderInfos = new ArrayList<>();
       for (UsageInfo usageInfo : usages) {
         if (usageInfo instanceof OverriderUsageInfo) {
           final OverriderUsageInfo info = (OverriderUsageInfo)usageInfo;

@@ -109,7 +109,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   }
 
   private static void showNavigationPopup(final Project project, final List<String> fileNames, final RelativePoint point) {
-    List<String> listPaths = new ArrayList<String>(fileNames);
+    List<String> listPaths = new ArrayList<>(fileNames);
     final String CREATE_MISSING_OPTION = "Create Missing Files";
     if (fileNames.size() == 2) {
       VirtualFile file1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(0));
@@ -121,7 +121,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     final JList list = new JBList(ArrayUtil.toStringArray(listPaths));
     list.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         String path = (String)value;
         String fileName = PathUtil.getFileName(path);
         if (!fileName.equals(CREATE_MISSING_OPTION)) {
@@ -132,16 +132,14 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
       }
     });
     PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    builder.setItemChoosenCallback(new Runnable() {
-      public void run() {
-        final int[] indices = list.getSelectedIndices();
-        if (ArrayUtil.indexOf(indices, fileNames.size()) >= 0) {
-          createMissingFiles(project, fileNames);
-        }
-        else {
-          for (int index : indices) {
-            openFileByIndex(project, fileNames, index);
-          }
+    builder.setItemChoosenCallback(() -> {
+      final int[] indices = list.getSelectedIndices();
+      if (ArrayUtil.indexOf(indices, fileNames.size()) >= 0) {
+        createMissingFiles(project, fileNames);
+      }
+      else {
+        for (int index : indices) {
+          openFileByIndex(project, fileNames, index);
         }
       }
     }).createPopup().show(point);

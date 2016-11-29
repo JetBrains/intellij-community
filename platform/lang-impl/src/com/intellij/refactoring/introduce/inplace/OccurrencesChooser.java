@@ -67,7 +67,7 @@ public abstract class OccurrencesChooser<T> {
     };
   }
 
-  private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<RangeHighlighter>();
+  private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<>();
   private final Editor myEditor;
   private final TextAttributes myAttributes;
 
@@ -140,12 +140,7 @@ public abstract class OccurrencesChooser<T> {
       .setMovable(true)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          callback.pass((ReplaceChoice)list.getSelectedValue());
-        }
-      })
+      .setItemChoosenCallback(() -> callback.pass((ReplaceChoice)list.getSelectedValue()))
       .addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {

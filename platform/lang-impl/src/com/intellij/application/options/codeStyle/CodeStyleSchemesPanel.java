@@ -17,7 +17,9 @@
 
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,7 @@ public class CodeStyleSchemesPanel {
   private final CodeStyleSchemesModel myModel;
   private JPanel myPanel;
   private JButton myManageButton;
+  private JButton myResetButton;
 
   private boolean myIsReset = false;
   private final Font myDefaultComboFont;
@@ -50,12 +53,7 @@ public class CodeStyleSchemesPanel {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         if (!myIsReset) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  onCombo();
-                }
-              });
+          ApplicationManager.getApplication().invokeLater(() -> onCombo());
         }
       }
     });
@@ -77,6 +75,13 @@ public class CodeStyleSchemesPanel {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         showManageSchemesDialog();
+      }
+    });
+
+    myResetButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        resetCurrentSchemeToDefaults();
       }
     });
   }
@@ -110,7 +115,7 @@ public class CodeStyleSchemesPanel {
   public void resetSchemesCombo() {
     myIsReset = true;
     try {
-      List<CodeStyleScheme> schemes = new ArrayList<CodeStyleScheme>();
+      List<CodeStyleScheme> schemes = new ArrayList<>();
       schemes.addAll(myModel.getAllSortedSchemes());
       DefaultComboBoxModel model = new DefaultComboBoxModel(schemes.toArray());
       myCombo.setModel(model);
@@ -159,6 +164,18 @@ public class CodeStyleSchemesPanel {
     }
     else {
       myCombo.setSelectedItem(myModel.getSelectedScheme());
+    }
+  }
+
+  private void resetCurrentSchemeToDefaults() {
+    CodeStyleScheme selectedScheme = getSelectedScheme();
+    if (selectedScheme != null) {
+      if (Messages
+            .showOkCancelDialog(ApplicationBundle.message("settings.code.style.reset.to.defaults.message"),
+                                ApplicationBundle.message("settings.code.style.reset.to.defaults.title"), Messages.getQuestionIcon()) == Messages.OK) {
+        selectedScheme.resetToDefaults();
+        myModel.fireSchemeChanged(selectedScheme);
+      }
     }
   }
 }

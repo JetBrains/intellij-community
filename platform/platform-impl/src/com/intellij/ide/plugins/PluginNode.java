@@ -231,7 +231,7 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public void addDepends(String id) {
     if (this.myDependencies == null) {
-      this.myDependencies = new ArrayList<PluginId>();
+      this.myDependencies = new ArrayList<>();
     }
     this.myDependencies.add(PluginId.getId(id));
   }

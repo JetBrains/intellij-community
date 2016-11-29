@@ -28,7 +28,7 @@ public class CredentialsManagerImpl extends CredentialsManager {
 
   @Override
   public List<CredentialsType> getAllTypes() {
-    List<CredentialsType> result = new ArrayList<CredentialsType>();
+    List<CredentialsType> result = new ArrayList<>();
     result.add(CredentialsType.SSH_HOST);
     result.add(CredentialsType.VAGRANT);
     result.add(CredentialsType.WEB_DEPLOYMENT);
@@ -48,7 +48,12 @@ public class CredentialsManagerImpl extends CredentialsManager {
         Object credentials = type.createCredentials();
         type.getHandler(credentials).load(element);
         data.setCredentials(type.getCredentialsKey(), credentials);
+        return;
       }
     }
+    final UnknownCredentialsHolder credentials = CredentialsType.UNKNOWN.createCredentials();
+    credentials.setInterpreterPath(interpreterPath);
+    credentials.load(element);
+    data.setCredentials(CredentialsType.UNKNOWN_CREDENTIALS, credentials);
   }
 }

@@ -33,7 +33,7 @@ public class MaxSizeTreeSet<E> implements NavigableSet<E> {
     if (myMaxSize < 1) {
       throw new IllegalArgumentException();
     }
-    myUnderlying = new TreeSet<E>();
+    myUnderlying = new TreeSet<>();
   }
 
   public E lower(final E e) {

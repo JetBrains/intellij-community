@@ -129,12 +129,12 @@ BaseServer:
 __version__ = "0.4"
 
 
-from _pydev_imps import _pydev_socket as socket
-from _pydev_imps import _pydev_select as select
+from _pydev_imps._pydev_saved_modules import socket
+from _pydev_imps._pydev_saved_modules import select
 import sys
 import os
 try:
-    from _pydev_imps import _pydev_threading as threading
+    from _pydev_imps._pydev_saved_modules import threading
 except ImportError:
     import dummy_threading as threading
 

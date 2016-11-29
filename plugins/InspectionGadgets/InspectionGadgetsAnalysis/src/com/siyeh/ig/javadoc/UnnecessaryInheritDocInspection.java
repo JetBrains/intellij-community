@@ -75,14 +75,9 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.inherit.doc.quickfix");
-    }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override
@@ -133,7 +128,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
       if (docComment == null) {
         return;
       }
-      final PsiDocCommentOwner owner = docComment.getOwner();
+      final PsiJavaDocumentedElement owner = docComment.getOwner();
       if (owner instanceof PsiField) {
         registerError(tag, WarningType.FIELD);
         return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Parame
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -55,10 +56,10 @@ public class CompileScopeUtil {
     if (scopes2.isEmpty()) return scopes1;
     if (scopes1.isEmpty()) return scopes2;
 
-    Map<String, TargetTypeBuildScope> scopeById = new HashMap<String, TargetTypeBuildScope>();
+    Map<String, TargetTypeBuildScope> scopeById = new HashMap<>();
     mergeScopes(scopeById, scopes1);
     mergeScopes(scopeById, scopes2);
-    return new ArrayList<TargetTypeBuildScope>(scopeById.values());
+    return new ArrayList<>(scopeById.values());
   }
 
   private static void mergeScopes(Map<String, TargetTypeBuildScope> scopeById, List<TargetTypeBuildScope> scopes) {
@@ -95,7 +96,7 @@ public class CompileScopeUtil {
   }
 
   public static boolean allProjectModulesAffected(CompileContextImpl compileContext) {
-    final Set<Module> allModules = new HashSet<Module>(Arrays.asList(compileContext.getProjectCompileScope().getAffectedModules()));
+    final Set<Module> allModules = new HashSet<>(Arrays.asList(compileContext.getProjectCompileScope().getAffectedModules()));
     allModules.removeAll(Arrays.asList(compileContext.getCompileScope().getAffectedModules()));
     return allModules.isEmpty();
   }
@@ -106,11 +107,7 @@ public class CompileScopeUtil {
     }
     final CompileScope scope = context.getCompileScope();
     if (shouldFetchFiles(scope)) {
-      final List<String> paths = new ArrayList<String>();
-      for (VirtualFile file : scope.getFiles(null, true)) {
-        paths.add(file.getPath());
-      }
-      return paths;
+      return Arrays.stream(scope.getFiles(null, true)).map(VirtualFile::getPath).collect(Collectors.toList());
     }
     return Collections.emptyList();
   }

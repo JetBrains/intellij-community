@@ -21,7 +21,7 @@ public final class MantisProject {
     return new MantisProject(0, "-- from all projects --");
   }
 
-  private List<MantisFilter> myFilters = new ArrayList<MantisFilter>();
+  private List<MantisFilter> myFilters = new ArrayList<>();
 
   private int myId;
   private String myName;

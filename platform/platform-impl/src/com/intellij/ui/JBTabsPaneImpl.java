@@ -35,7 +35,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   private final JBTabsImpl myTabs;
-  private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
+  private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
     myTabs = new JBEditorTabs(project, ActionManager.getInstance(), project == null ? null : IdeFocusManager.getInstance(project), parent) {
@@ -142,6 +142,12 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
 
   public void setSelectedIndex(int index) {
     myTabs.select(getTabAt(index), false);
+  }
+
+  @Override
+  public Component getTabComponentAt(int index) {
+    final TabInfo tabInfo = myTabs.getTabAt(index);
+    return myTabs.getTabLabel(tabInfo);
   }
 
   public void removeTabAt(int index) {

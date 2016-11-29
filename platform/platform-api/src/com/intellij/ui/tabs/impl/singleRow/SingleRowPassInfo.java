@@ -56,8 +56,8 @@ public class SingleRowPassInfo extends LayoutPassInfo {
     JBTabsImpl tabs = layout.myTabs;
     layoutSize = tabs.getSize();
     contentCount = tabs.getTabCount();
-    toLayout = new ArrayList<TabInfo>();
-    toDrop = new ArrayList<TabInfo>();
+    toLayout = new ArrayList<>();
+    toDrop = new ArrayList<>();
     moreRectAxisSize = layout.getStrategy().getMoreRectAxisSize();
     scrollOffset = layout.getScrollOffset();
   }

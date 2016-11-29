@@ -38,11 +38,11 @@ import java.util.*;
 public class CompletionVariant {
   protected static final TailType DEFAULT_TAIL_TYPE = TailType.SPACE;
 
-  private final Set<Scope> myScopeClasses = new HashSet<Scope>();
+  private final Set<Scope> myScopeClasses = new HashSet<>();
   private ElementFilter myPosition;
-  private final List<CompletionVariantItem> myCompletionsList = new ArrayList<CompletionVariantItem>();
+  private final List<CompletionVariantItem> myCompletionsList = new ArrayList<>();
   private InsertHandler myInsertHandler = null;
-  private final Map<Object, Object> myItemProperties = new HashMap<Object, Object>();
+  private final Map<Object, Object> myItemProperties = new HashMap<>();
 
   public CompletionVariant() {
   }

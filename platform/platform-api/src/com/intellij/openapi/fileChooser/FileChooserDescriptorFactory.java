@@ -58,21 +58,12 @@ public class FileChooserDescriptorFactory {
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType) {
-    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return file.getFileType() == fileType;
-      }
-    });
+    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(file -> file.getFileType() == fileType);
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(final String extension) {
-    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return Comparing.equal(file.getExtension(), extension, SystemInfo.isFileSystemCaseSensitive);
-      }
-    });
+    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(
+      file -> Comparing.equal(file.getExtension(), extension, SystemInfo.isFileSystemCaseSensitive));
   }
 
   public static FileChooserDescriptor createSingleFolderDescriptor() {
@@ -88,12 +79,7 @@ public class FileChooserDescriptorFactory {
   }
 
   public static FileChooserDescriptor createSingleFileOrFolderDescriptor(final FileType fileType) {
-    return new FileChooserDescriptor(true, true, false, false, false, false).withFileFilter(new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return file.getFileType() == fileType;
-      }
-    });
+    return new FileChooserDescriptor(true, true, false, false, false, false).withFileFilter(file -> file.getFileType() == fileType);
   }
 
   /**

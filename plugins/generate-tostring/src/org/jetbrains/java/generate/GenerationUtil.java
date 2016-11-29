@@ -23,11 +23,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -106,7 +107,7 @@ public class GenerationUtil {
       if (classMemberList == null || classMemberList.isEmpty()) {
         return Collections.emptyList();
       }
-      List<PsiMember> psiMemberList = new ArrayList<PsiMember>();
+      List<PsiMember> psiMemberList = new ArrayList<>();
 
       for (PsiElementClassMember classMember : classMemberList) {
           psiMemberList.add(classMember.getElement());
@@ -216,6 +217,7 @@ public class GenerationUtil {
 
       vc.put("helper", GenerationHelper.class);
       vc.put("StringUtil", StringUtil.class);
+      vc.put("NameUtil", NameUtil.class);
 
       for (String paramName : contextMap.keySet()) {
         vc.put(paramName, contextMap.get(paramName));

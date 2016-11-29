@@ -59,15 +59,12 @@ public class IgnoredJUnitTestInspection extends BaseInspection {
     @Override
     public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
-      final PsiModifierListOwner modifierListOwner =
-        PsiTreeUtil.getParentOfType(annotation,
-                                    PsiModifierListOwner.class);
+      final PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
       if (!(modifierListOwner instanceof PsiClass ||
             modifierListOwner instanceof PsiMethod)) {
         return;
       }
-      final PsiJavaCodeReferenceElement nameReferenceElement =
-        annotation.getNameReferenceElement();
+      final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       if (nameReferenceElement == null) {
         return;
       }
@@ -77,7 +74,7 @@ public class IgnoredJUnitTestInspection extends BaseInspection {
       }
       final PsiClass aClass = (PsiClass)target;
       @NonNls final String qualifiedName = aClass.getQualifiedName();
-      if (!"org.junit.Ignore".equals(qualifiedName)) {
+      if (!"org.junit.Ignore".equals(qualifiedName) && !"org.junit.jupiter.api.Disabled".equals(qualifiedName)) {
         return;
       }
       registerError(annotation, modifierListOwner);

@@ -22,6 +22,7 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.tree.TreePath;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is a wrapper class takes a TreeTableModel and implements
@@ -35,6 +36,9 @@ import javax.swing.tree.TreePath;
  * @author Scott Violet
  */
 public class TreeTableModelAdapter extends AbstractTableModel {
+
+  private final AtomicInteger modificationStamp = new AtomicInteger();
+
   private final JTree tree;
   private final TreeTableModel treeTableModel;
   private final JTable table;
@@ -123,10 +127,11 @@ public class TreeTableModelAdapter extends AbstractTableModel {
    * processed. SwingUtilities.invokeLater is used to handle this.
    */
   protected void delayedFireTableDataChanged() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        fireTableDataChanged();
-      }
+    long stamp = modificationStamp.incrementAndGet();
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(() -> {
+      if (stamp != modificationStamp.get()) return;
+      fireTableDataChanged();
     });
   }
 

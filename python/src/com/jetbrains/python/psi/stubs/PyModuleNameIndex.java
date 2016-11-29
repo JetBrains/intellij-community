@@ -39,7 +39,6 @@ import java.util.*;
 public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("Py.module.name");
 
-  private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private final DataIndexer<String, Void, FileContent> myDataIndexer = new DataIndexer<String, Void, FileContent>() {
     @NotNull
     @Override
@@ -74,7 +73,7 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull
@@ -100,7 +99,7 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   public static List<PyFile> find(@NotNull String name, @NotNull Project project, boolean includeNonProjectItems) {
-    final List<PyFile> results = new ArrayList<PyFile>();
+    final List<PyFile> results = new ArrayList<>();
     final GlobalSearchScope scope = includeNonProjectItems
                                     ? PyProjectScopeBuilder.excludeSdkTestsScope(project)
                                     : GlobalSearchScope.projectScope(project);

@@ -179,7 +179,6 @@ public class CreateFormAction extends AbstractCreateFormAction {
       if (myValidator.checkInput(inputString) && myValidator.canClose(inputString)) {
         close(OK_EXIT_CODE);
       }
-      close(OK_EXIT_CODE);
     }
 
     public JComponent getPreferredFocusedComponent() {

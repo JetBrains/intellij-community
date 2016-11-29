@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNException;
@@ -39,7 +40,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
 
   public AddRepositoryLocationDialog(final Project project, final List<String> values) {
     super(project, true);
-    myPreviousLocations = new ArrayList<String>(values);
+    myPreviousLocations = new ArrayList<>(values);
     Collections.sort(myPreviousLocations);
 
     setTitle(getTitle());
@@ -75,7 +76,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
 
     myCombo = new JComboBox(ArrayUtil.toObjectArray(myPreviousLocations));
     myCombo.setEditable(true);
-    myCombo.setMinimumSize(new Dimension(250, 20));
+    myCombo.setMinimumSize(new JBDimension(250, 20));
     gb.fill = GridBagConstraints.HORIZONTAL;
     mainPanel.add(myCombo, gb);
     gb.fill = GridBagConstraints.NONE;

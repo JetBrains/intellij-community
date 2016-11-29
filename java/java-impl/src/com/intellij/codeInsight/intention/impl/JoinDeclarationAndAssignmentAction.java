@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.RemoveInitializerFix;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -70,7 +72,7 @@ public class JoinDeclarationAndAssignmentAction extends PsiElementBaseIntentionA
           if (ReferencesSearch.search(variable, new LocalSearchScope(rExpression), false).findFirst() != null) {
             return null;
           }
-          return Pair.create(variable, assignmentExpression);
+          return Pair.createNonNull(variable, assignmentExpression);
         }
       }
     }
@@ -100,16 +102,26 @@ public class JoinDeclarationAndAssignmentAction extends PsiElementBaseIntentionA
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     final Pair<PsiLocalVariable, PsiAssignmentExpression> pair = getPair(element);
+    if (pair == null) return;
     final PsiLocalVariable variable = pair.getFirst();
     final PsiAssignmentExpression assignmentExpression = pair.getSecond();
-    final PsiExpression initializerExpression = DeclarationJoinLinesHandler.getInitializerExpression(variable, assignmentExpression);
-    variable.setInitializer(initializerExpression);
-    assignmentExpression.delete();
+    final PsiExpression initializer = variable.getInitializer();
+    if (initializer != null && assignmentExpression.getOperationTokenType() == JavaTokenType.EQ) {
+      RemoveInitializerFix.sideEffectAwareRemove(project, initializer, initializer, variable);
+    }
+    WriteAction.run(() -> {
+      final PsiExpression initializerExpression = DeclarationJoinLinesHandler.getInitializerExpression(variable, assignmentExpression);
+      variable.setInitializer(initializerExpression);
+      assignmentExpression.delete();
+    });
   }
-
-  
 }

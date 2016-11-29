@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.ide.todo.configurable;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
@@ -29,8 +28,9 @@ import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.Table;
+import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.IconTableCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,8 +62,8 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
    * Invoked by reflection
    */
   public TodoConfigurable() {
-    myPatterns = new ArrayList<TodoPattern>();
-    myFilters = new ArrayList<TodoFilter>();
+    myPatterns = new ArrayList<>();
+    myFilters = new ArrayList<>();
     myFiltersModel = new FiltersTableModel(myFilters);
     myPatternsModel = new PatternsTableModel(myPatterns);
   }
@@ -129,104 +129,92 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
 
   @Override
   public JComponent createComponent() {
-    // Panel with patterns
-    PanelWithButtons patternsPanel = new PanelWithButtons() {
-      {
-        initPanel();
+    myPatternsTable = new JBTable(myPatternsModel);
+    myPatternsTable.getEmptyText().setText(IdeBundle.message("text.todo.no.patterns"));
+    TableColumn typeColumn = myPatternsTable.getColumnModel().getColumn(0);
+    int width = myPatternsTable.getFontMetrics(myPatternsTable.getFont()).stringWidth(myPatternsTable.getColumnName(0)) + 10;
+    typeColumn.setPreferredWidth(width);
+    typeColumn.setMaxWidth(width);
+    typeColumn.setMinWidth(width);
+    typeColumn.setCellRenderer(new IconTableCellRenderer<Icon>() {
+      @Nullable
+      @Override
+      protected Icon getIcon(@NotNull Icon value, JTable table, int row) {
+        return value;
       }
 
       @Override
-      protected String getLabelText() {
-        return IdeBundle.message("label.todo.patterns");
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int column) {
+        super.getTableCellRendererComponent(table, value, selected, focus, row, column);
+        setText("");
+        return this;
       }
 
       @Override
-      protected JComponent createMainComponent() {
-        // JTable with TodoPaterns
-        myPatternsTable = new Table(myPatternsModel);
-        myPatternsTable.getEmptyText().setText(IdeBundle.message("text.todo.no.patterns"));
-        myPatternsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        // Column "Icon"
-        JComboBox todoTypeCombo =
-          new JComboBox(new Icon[]{AllIcons.General.TodoDefault, AllIcons.General.TodoQuestion, AllIcons.General.TodoImportant});
-        todoTypeCombo.setRenderer(new TodoTypeListCellRenderer());
-        TableColumn typeColumn = myPatternsTable.getColumnModel().getColumn(0);
-        DefaultCellEditor todoTypeEditor = new DefaultCellEditor(todoTypeCombo);
-        todoTypeEditor.setClickCountToStart(1);
-        typeColumn.setCellEditor(todoTypeEditor);
-        TodoTypeTableCellRenderer todoTypeRenderer = new TodoTypeTableCellRenderer();
-        typeColumn.setCellRenderer(todoTypeRenderer);
-
-        int width = myPatternsTable.getFontMetrics(myPatternsTable.getFont()).stringWidth(myPatternsTable.getColumnName(0)) + 10;
-        typeColumn.setPreferredWidth(width);
-        typeColumn.setMaxWidth(width);
-        typeColumn.setMinWidth(width);
-
-        // Column "Case Sensitive"
-        TableColumn todoCaseSensitiveColumn = myPatternsTable.getColumnModel().getColumn(1);
-        width = myPatternsTable.getFontMetrics(myPatternsTable.getFont()).stringWidth(myPatternsTable.getColumnName(1)) + 10;
-        todoCaseSensitiveColumn.setPreferredWidth(width);
-        todoCaseSensitiveColumn.setMaxWidth(width);
-        todoCaseSensitiveColumn.setMinWidth(width);
-
-        // Column "Pattern"
-        TodoPatternTableCellRenderer todoPatternRenderer = new TodoPatternTableCellRenderer(myPatterns);
-        TableColumn patternColumn = myPatternsTable.getColumnModel().getColumn(2);
-        patternColumn.setCellRenderer(todoPatternRenderer);
-
-        ((DefaultCellEditor)myPatternsTable.getDefaultEditor(String.class)).setClickCountToStart(2);
-
-        JPanel panel = ToolbarDecorator.createDecorator(myPatternsTable)
-          .setAddAction(new AnActionButtonRunnable() {
-            @Override
-            public void run(AnActionButton button) {
-              stopEditing();
-              TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());
-              PatternDialog dialog = new PatternDialog(myPanel, pattern);
-              dialog.setTitle(IdeBundle.message("title.add.todo.pattern"));
-              if (!dialog.showAndGet()) {
-                return;
-              }
-              myPatterns.add(pattern);
-              int index = myPatterns.size() - 1;
-              myPatternsModel.fireTableRowsInserted(index, index);
-              myPatternsTable.getSelectionModel().setSelectionInterval(index, index);
-              myPatternsTable.scrollRectToVisible(myPatternsTable.getCellRect(index, 0, true));
-            }
-          }).setEditAction(new AnActionButtonRunnable() {
-            @Override
-            public void run(AnActionButton button) {
-              editSelectedPattern();
-            }
-          }).setRemoveAction(new AnActionButtonRunnable() {
-            @Override
-            public void run(AnActionButton button) {
-              stopEditing();
-              int selectedIndex = myPatternsTable.getSelectedRow();
-              if (selectedIndex < 0 || selectedIndex >= myPatternsModel.getRowCount()) {
-                return;
-              }
-              TodoPattern patternToBeRemoved = myPatterns.get(selectedIndex);
-              TableUtil.removeSelectedItems(myPatternsTable);
-              for (int i = 0; i < myFilters.size(); i++) {
-                TodoFilter filter = myFilters.get(i);
-                if (filter.contains(patternToBeRemoved)) {
-                  filter.removeTodoPattern(patternToBeRemoved);
-                  myFiltersModel.fireTableRowsUpdated(i, i);
-                }
-              }
-            }
-          }).disableUpDownActions().createPanel();
-
-        return panel;
+      protected boolean isCenterAlignment() {
+        return true;
       }
+    });
 
-      @Override
-      protected JButton[] createButtons() {
-        return new JButton[]{};
-      }
-    };
+    // Column "Case Sensitive"
+    TableColumn todoCaseSensitiveColumn = myPatternsTable.getColumnModel().getColumn(1);
+    width = myPatternsTable.getFontMetrics(myPatternsTable.getFont()).stringWidth(myPatternsTable.getColumnName(1)) + 10;
+    todoCaseSensitiveColumn.setPreferredWidth(width);
+    todoCaseSensitiveColumn.setMaxWidth(width);
+    todoCaseSensitiveColumn.setMinWidth(width);
+    todoCaseSensitiveColumn.setCellRenderer(new BooleanTableCellRenderer());
+    todoCaseSensitiveColumn.setCellEditor(new BooleanTableCellEditor());
+
+    // Column "Pattern"
+    TodoPatternTableCellRenderer todoPatternRenderer = new TodoPatternTableCellRenderer(myPatterns);
+    TableColumn patternColumn = myPatternsTable.getColumnModel().getColumn(2);
+    patternColumn.setCellRenderer(todoPatternRenderer);
+
+    JPanel patternsPanel = new JPanel(new BorderLayout());
+    patternsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("label.todo.patterns"), false));
+    patternsPanel.add(ToolbarDecorator.createDecorator(myPatternsTable)
+                        .setAddAction(new AnActionButtonRunnable() {
+                          @Override
+                          public void run(AnActionButton button) {
+                            stopEditing();
+                            TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());
+                            PatternDialog dialog = new PatternDialog(myPanel, pattern);
+                            if (!dialog.showAndGet()) {
+                              return;
+                            }
+                            myPatterns.add(pattern);
+                            int index = myPatterns.size() - 1;
+                            myPatternsModel.fireTableRowsInserted(index, index);
+                            myPatternsTable.getSelectionModel().setSelectionInterval(index, index);
+                            myPatternsTable.scrollRectToVisible(myPatternsTable.getCellRect(index, 0, true));
+                          }
+                        })
+                        .setEditAction(new AnActionButtonRunnable() {
+                          @Override
+                          public void run(AnActionButton button) {
+                            editSelectedPattern();
+                          }
+                        })
+                        .setRemoveAction(new AnActionButtonRunnable() {
+                          @Override
+                          public void run(AnActionButton button) {
+                            stopEditing();
+                            int selectedIndex = myPatternsTable.getSelectedRow();
+                            if (selectedIndex < 0 || selectedIndex >= myPatternsModel.getRowCount()) {
+                              return;
+                            }
+                            TodoPattern patternToBeRemoved = myPatterns.get(selectedIndex);
+                            TableUtil.removeSelectedItems(myPatternsTable);
+                            for (int i = 0; i < myFilters.size(); i++) {
+                              TodoFilter filter = myFilters.get(i);
+                              if (filter.contains(patternToBeRemoved)) {
+                                filter.removeTodoPattern(patternToBeRemoved);
+                                myFiltersModel.fireTableRowsUpdated(i, i);
+                              }
+                            }
+                          }
+                        })
+                        .disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     // double click in "Patterns" table should also start editing of selected pattern
     new DoubleClickListener() {
@@ -238,72 +226,50 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }.installOn(myPatternsTable);
 
     // Panel with filters
-    PanelWithButtons filtersPanel = new PanelWithButtons() {
-      {
-        initPanel();
-      }
+    myFiltersTable = new JBTable(myFiltersModel);
+    myFiltersTable.getEmptyText().setText(IdeBundle.message("text.todo.no.filters"));
 
-      @Override
-      protected String getLabelText() {
-        return IdeBundle.message("label.todo.filters");
-      }
+    // Column "Name"
+    TableColumn nameColumn = myFiltersTable.getColumnModel().getColumn(0);
+    width = myPatternsTable.getColumnModel().getColumn(0).getPreferredWidth()/*typeColumn*/ +
+            myPatternsTable.getColumnModel().getColumn(1).getPreferredWidth()/*todoCaseSensitiveColumn*/;
+    nameColumn.setPreferredWidth(width);
+    nameColumn.setMaxWidth(width);
+    nameColumn.setMinWidth(width);
+    nameColumn.setCellRenderer(new MyFilterNameTableCellRenderer());
 
-      @Override
-      protected JComponent createMainComponent() {
-        myFiltersTable = new Table(myFiltersModel);
-        myFiltersTable.getEmptyText().setText(IdeBundle.message("text.todo.no.filters"));
-        myFiltersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    JPanel filtersPanel = new JPanel(new BorderLayout());
+    filtersPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("label.todo.filters"), false));
+    filtersPanel.add(ToolbarDecorator.createDecorator(myFiltersTable)
+                        .setAddAction(new AnActionButtonRunnable() {
+                          @Override
+                          public void run(AnActionButton button) {
+                            stopEditing();
+                            TodoFilter filter = new TodoFilter();
+                            FilterDialog dialog = new FilterDialog(myPanel, filter, -1, myFilters, myPatterns);
+                            if (dialog.showAndGet()) {
+                              myFilters.add(filter);
+                              int index = myFilters.size() - 1;
+                              myFiltersModel.fireTableRowsInserted(index, index);
+                              myFiltersTable.getSelectionModel().setSelectionInterval(index, index);
+                              myFiltersTable.scrollRectToVisible(myFiltersTable.getCellRect(index, 0, true));
+                            }
+                          }
+                        })
+                        .setEditAction(new AnActionButtonRunnable() {
+                          @Override
+                          public void run(AnActionButton button) {
+                            editSelectedFilter();
+                          }
+                        })
+                        .setRemoveAction(new AnActionButtonRunnable() {
+                          @Override
+                          public void run(AnActionButton button) {
+                            stopEditing();
+                            TableUtil.removeSelectedItems(myFiltersTable);
+                          }
+                        }).disableUpDownActions().createPanel());
 
-        // Column "Name"
-
-        TableColumn nameColumn = myFiltersTable.getColumnModel().getColumn(0);
-        int width = myPatternsTable.getColumnModel().getColumn(0).getPreferredWidth()/*typeColumn*/ +
-                    myPatternsTable.getColumnModel().getColumn(1).getPreferredWidth()/*todoCaseSensitiveColumn*/;
-        nameColumn.setPreferredWidth(width);
-        nameColumn.setMaxWidth(width);
-        nameColumn.setMinWidth(width);
-        nameColumn.setCellRenderer(new MyFilterNameTableCellRenderer());
-
-        JPanel panel = ToolbarDecorator.createDecorator(myFiltersTable)
-          .setAddAction(new AnActionButtonRunnable() {
-            @Override
-            public void run(AnActionButton button) {
-              stopEditing();
-              TodoFilter filter = new TodoFilter();
-              FilterDialog dialog = new FilterDialog(myPanel, filter, -1, myFilters, myPatterns);
-              dialog.setTitle(IdeBundle.message("title.add.todo.filter"));
-              dialog.show();
-              int exitCode = dialog.getExitCode();
-              if (DialogWrapper.OK_EXIT_CODE == exitCode) {
-                myFilters.add(filter);
-                int index = myFilters.size() - 1;
-                myFiltersModel.fireTableRowsInserted(index, index);
-                myFiltersTable.getSelectionModel().setSelectionInterval(index, index);
-                myFiltersTable.scrollRectToVisible(myFiltersTable.getCellRect(index, 0, true));
-              }
-            }
-          }).setEditAction(new AnActionButtonRunnable() {
-            @Override
-            public void run(AnActionButton button) {
-              editSelectedFilter();
-            }
-          }).setRemoveAction(new AnActionButtonRunnable() {
-            @Override
-            public void run(AnActionButton button) {
-              stopEditing();
-              TableUtil.removeSelectedItems(myFiltersTable);
-            }
-          }).disableUpDownActions().createPanel();
-
-        return panel;
-      }
-
-      @Override
-      protected JButton[] createButtons() {
-        return new JButton[]{};
-      }
-    };
-    // double click in "Filters" table should also start editing of selected filter
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
@@ -312,12 +278,8 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
       }
     }.installOn(myFiltersTable);
 
-    myPanel = new JPanel(new GridBagLayout());
-    myPanel.add(patternsPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                                                      new Insets(0,0,0,0), 0, 0));
-    myPanel.add(filtersPanel, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                                                     new Insets(0,0,0,0), 0, 0));
-
+    myPanel = FormBuilder.createFormBuilder().addComponentFillVertically(patternsPanel, 0)
+      .addComponentFillVertically(filtersPanel, 0).getPanel();
     return myPanel;
   }
 
@@ -438,9 +400,4 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     return getHelpTopic();
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
 }

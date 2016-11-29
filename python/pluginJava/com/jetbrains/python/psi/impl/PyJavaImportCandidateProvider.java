@@ -41,7 +41,11 @@ public class PyJavaImportCandidateProvider implements PyImportCandidateProvider 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiClass[] classesByName = cache.getClassesByName(name, scope);
     for (PsiClass psiClass : classesByName) {
-      final QualifiedName packageQName = QualifiedName.fromDottedString(psiClass.getQualifiedName()).removeLastComponent();
+      final String qualifiedName = psiClass.getQualifiedName();
+      if (qualifiedName == null) {
+        continue;
+      }
+      final QualifiedName packageQName = QualifiedName.fromDottedString(qualifiedName).removeLastComponent();
       quickFix.addImport(psiClass, psiClass.getContainingFile(), packageQName);
     }
   }

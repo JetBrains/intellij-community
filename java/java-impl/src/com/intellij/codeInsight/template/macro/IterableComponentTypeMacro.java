@@ -16,10 +16,10 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,38 +52,10 @@ public class IterableComponentTypeMacro extends Macro {
 
     PsiExpression expr = MacroUtil.resultToPsiExpression(result, context);
     if (expr == null) return null;
-    PsiType type = expr.getType();
 
-
-    if (type instanceof PsiArrayType) {
-      return new PsiTypeResult(((PsiArrayType)type).getComponentType(), project);
-    }
-
-    if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-      PsiClass aClass = resolveResult.getElement();
-
-      if (aClass != null) {
-        PsiClass iterableClass = JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", aClass.getResolveScope());
-        if (iterableClass != null) {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterableClass, aClass, resolveResult.getSubstitutor());
-          if (substitutor != null) {
-            PsiType parameterType = substitutor.substitute(iterableClass.getTypeParameters()[0]);
-            if (parameterType instanceof PsiCapturedWildcardType) {
-              return new PsiTypeResult(((PsiCapturedWildcardType)parameterType).getUpperBound(), project);
-            }
-            if (parameterType != null) {
-              if (parameterType instanceof PsiWildcardType) {
-                if (((PsiWildcardType)parameterType).isExtends()) {
-                  return new PsiTypeResult(((PsiWildcardType)parameterType).getBound(), project);
-                }
-                else return null;
-              }
-              return new PsiTypeResult(parameterType, project);
-            }
-          }
-        }
-      }
+    PsiType component = JavaGenericsUtil.getCollectionItemType(expr);
+    if (component != null) {
+      return new PsiTypeResult(GenericsUtil.getVariableTypeByExpressionType(component), project);
     }
 
     return null;

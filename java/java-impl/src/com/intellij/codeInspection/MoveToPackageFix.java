@@ -18,7 +18,6 @@ package com.intellij.codeInspection;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -61,6 +60,11 @@ public class MoveToPackageFix implements LocalQuickFix {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
@@ -68,15 +72,6 @@ public class MoveToPackageFix implements LocalQuickFix {
 
     if (!FileModificationService.getInstance().prepareFileForWrite(myFile)) return;
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        chooseDirectoryAndMove(project, myFile);
-      }
-    });
-  }
-
-  private void chooseDirectoryAndMove(Project project, PsiFile myFile) {
     try {
       String error;
       PsiDirectory directory = null;

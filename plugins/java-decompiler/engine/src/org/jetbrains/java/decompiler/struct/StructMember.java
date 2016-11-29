@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class StructMember {
   }
 
   protected VBStyleCollection<StructGeneralAttribute, String> readAttributes(DataInputFullStream in, ConstantPool pool) throws IOException {
-    VBStyleCollection<StructGeneralAttribute, String> attributes = new VBStyleCollection<StructGeneralAttribute, String>();
+    VBStyleCollection<StructGeneralAttribute, String> attributes = new VBStyleCollection<>();
 
     int length = in.readUnsignedShort();
     for (int i = 0; i < length; i++) {
@@ -73,12 +73,12 @@ public class StructMember {
 
   protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
     StructGeneralAttribute attribute = StructGeneralAttribute.createAttribute(name);
+    int length = in.readInt();
     if (attribute == null) {
-      in.discard(in.readInt());
+      in.discard(length);
     }
     else {
-      byte[] data = new byte[in.readInt()];
-      in.readFull(data);
+      byte[] data = in.read(length);
       attribute.setInfo(data);
       attribute.initContent(pool);
     }

@@ -27,6 +27,7 @@ public class IpnbPyTargetExpressionElementType extends PyTargetExpressionElement
     super("IPNB_TARGET_EXPRESSION");
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new IpnbPyTargetExpression(node);
   }
@@ -34,5 +35,4 @@ public class IpnbPyTargetExpressionElementType extends PyTargetExpressionElement
   public PyTargetExpression createPsi(@NotNull final PyTargetExpressionStub stub) {
     return new IpnbPyTargetExpression(stub);
   }
-
 }

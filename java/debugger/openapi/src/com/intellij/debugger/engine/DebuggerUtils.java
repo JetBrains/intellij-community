@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,9 +54,9 @@ import java.util.*;
 
 public abstract class DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerUtils");
-  private static final Key<Method> TO_STRING_METHOD_KEY = new Key<Method>("CachedToStringMethod");
-  public static final Set<String> ourPrimitiveTypeNames = new HashSet<String>(Arrays.asList(
-      "byte", "short", "int", "long", "float", "double", "boolean", "char"
+  private static final Key<Method> TO_STRING_METHOD_KEY = new Key<>("CachedToStringMethod");
+  public static final Set<String> ourPrimitiveTypeNames = new HashSet<>(Arrays.asList(
+    "byte", "short", "int", "long", "float", "double", "boolean", "char"
   ));
 
   public static void cleanupAfterProcessFinish(DebugProcess debugProcess) {
@@ -107,7 +108,7 @@ public abstract class DebuggerUtils {
         Method toStringMethod = debugProcess.getUserData(TO_STRING_METHOD_KEY);
         if (toStringMethod == null) {
           try {
-            ReferenceType refType = objRef.virtualMachine().classesByName(CommonClassNames.JAVA_LANG_OBJECT).get(0);
+            ReferenceType refType = getObjectClassType(objRef.virtualMachine());
             toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
             debugProcess.putUserData(TO_STRING_METHOD_KEY, toStringMethod);
           }
@@ -153,9 +154,16 @@ public abstract class DebuggerUtils {
   public static Method findMethod(@NotNull ReferenceType refType, @NonNls String methodName, @Nullable @NonNls String methodSignature) {
     if (refType instanceof ArrayType) {
       // for array types methodByName() in JDI always returns empty list
-      final Method method = findMethod(refType.virtualMachine().classesByName(CommonClassNames.JAVA_LANG_OBJECT).get(0), methodName, methodSignature);
+      Method method = findMethod(getObjectClassType(refType.virtualMachine()), methodName, methodSignature);
       if (method != null) {
         return method;
+      }
+      // for arrays, clone signature may return array of objects, there is no such method in Object class
+      if ("clone".equals(methodName) && "()[Ljava/lang/Object;".equals(methodSignature)) {
+        method = findMethod(getObjectClassType(refType.virtualMachine()), "clone", null);
+        if (method != null) {
+          return method;
+        }
       }
     }
 
@@ -258,19 +266,37 @@ public abstract class DebuggerUtils {
     return false;
   }
 
-  @Nullable
-  public static Type getSuperType(@Nullable Type subType, @NotNull String superType) {
-    if (subType == null) return null;
+  public static boolean instanceOf(@Nullable Type subType, @NotNull String superType) {
+    if (subType == null || subType instanceof VoidType) {
+      return false;
+    }
+
+    if (subType instanceof PrimitiveType) {
+      return superType.equals(subType.name());
+    }
 
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(superType)) {
-      List list = subType.virtualMachine().classesByName(CommonClassNames.JAVA_LANG_OBJECT);
-      if(list.size() > 0) {
-        return (ReferenceType)list.get(0);
-      }
+      return true;
+    }
+
+    return getSuperTypeInt(subType, superType) != null;
+  }
+
+  @Nullable
+  public static Type getSuperType(@Nullable Type subType, @NotNull String superType) {
+    if (subType == null || subType instanceof PrimitiveType || subType instanceof VoidType) {
       return null;
     }
 
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(superType)) {
+      return getObjectClassType(subType.virtualMachine());
+    }
+
     return getSuperTypeInt(subType, superType);
+  }
+
+  private static ReferenceType getObjectClassType(VirtualMachine virtualMachine) {
+    return ContainerUtil.getFirstItem(virtualMachine.classesByName(CommonClassNames.JAVA_LANG_OBJECT));
   }
 
   private static boolean typeEquals(@NotNull Type type, @NotNull String typeName) {
@@ -332,25 +358,8 @@ public abstract class DebuggerUtils {
         }
       }
     }
-    else if (subType instanceof PrimitiveType) {
-      //noinspection HardCodedStringLiteral
-      if(superType.equals("java.lang.Primitive")) {
-        return subType;
-      }
-    }
 
-    //only for interfaces and arrays
-    if(CommonClassNames.JAVA_LANG_OBJECT.equals(superType)) {
-      List list = subType.virtualMachine().classesByName(CommonClassNames.JAVA_LANG_OBJECT);
-      if(list.size() > 0) {
-        return (ReferenceType)list.get(0);
-      }
-    }
     return null;
-  }
-
-  public static boolean instanceOf(@Nullable Type subType, @NotNull String superType) {
-    return getSuperType(subType, superType) != null;
   }
 
   @Nullable
@@ -385,18 +394,16 @@ public abstract class DebuggerUtils {
   public static PsiType getType(@NotNull String className, @NotNull Project project) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    final PsiManager psiManager = PsiManager.getInstance(project);
     try {
       if (getArrayClass(className) != null) {
-        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createTypeFromText(className, null);
+        return JavaPsiFacade.getInstance(project).getElementFactory().createTypeFromText(className, null);
       }
-      if(project.isDefault()) {
+      if (project.isDefault()) {
         return null;
       }
-      final PsiClass aClass =
-        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
+      PsiClass aClass = findClass(className, project, GlobalSearchScope.allScope(project));
       if (aClass != null) {
-        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(aClass);
+        return PsiTypesUtil.getClassType(aClass);
       }
     }
     catch (IncorrectOperationException e) {
@@ -416,12 +423,15 @@ public abstract class DebuggerUtils {
     }
   }
 
-  public static boolean hasSideEffects(PsiElement element) {
+  public static boolean hasSideEffects(@Nullable PsiElement element) {
     return hasSideEffectsOrReferencesMissingVars(element, null);
   }
   
-  public static boolean hasSideEffectsOrReferencesMissingVars(PsiElement element, @Nullable final Set<String> visibleLocalVariables) {
-    final Ref<Boolean> rv = new Ref<Boolean>(Boolean.FALSE);
+  public static boolean hasSideEffectsOrReferencesMissingVars(@Nullable PsiElement element, @Nullable final Set<String> visibleLocalVariables) {
+    if (element == null) {
+      return false;
+    }
+    final Ref<Boolean> rv = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override 
       public void visitPostfixExpression(final PsiPostfixExpression expression) {
@@ -487,10 +497,7 @@ public abstract class DebuggerUtils {
     if (typeComponent == null) {
       return false;
     }
-    for (SyntheticTypeComponentProvider provider : SyntheticTypeComponentProvider.EP_NAME.getExtensions()) {
-      if (provider.isSynthetic(typeComponent)) return true;
-    }
-    return false;
+    return Arrays.stream(SyntheticTypeComponentProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSynthetic(typeComponent));
   }
 
   /**
@@ -498,10 +505,7 @@ public abstract class DebuggerUtils {
    */
   @Deprecated
   public static boolean isSimpleGetter(PsiMethod method) {
-    for (SimpleGetterProvider provider : SimpleGetterProvider.EP_NAME.getExtensions()) {
-      if (provider.isSimpleGetter(method)) return true;
-    }
-    return false;
+    return Arrays.stream(SimpleGetterProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSimpleGetter(method));
   }
 
   public static boolean isInsideSimpleGetter(@NotNull PsiElement contextElement) {
@@ -509,10 +513,8 @@ public abstract class DebuggerUtils {
       PsiMethod psiMethod = PsiTreeUtil.getParentOfType(contextElement, PsiMethod.class);
       if (psiMethod != null && provider.isSimpleGetter(psiMethod)) return true;
     }
-    for (SimplePropertyGetterProvider provider : SimplePropertyGetterProvider.EP_NAME.getExtensions()) {
-      if (provider.isInsideSimpleGetter(contextElement)) return true;
-    }
-    return false;
+    return Arrays.stream(SimplePropertyGetterProvider.EP_NAME.getExtensions())
+      .anyMatch(provider -> provider.isInsideSimpleGetter(contextElement));
   }
 
   public static boolean isPrimitiveType(final String typeName) {
@@ -568,11 +570,7 @@ public abstract class DebuggerUtils {
       return true;
     }
 
-    for (JavaDebugAware provider : JavaDebugAware.EP_NAME.getExtensions()) {
-      if (breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file)) {
-        return true;
-      }
-    }
-    return false;
+    return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions())
+      .anyMatch(provider -> breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file));
   }
 }

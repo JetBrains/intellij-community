@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import javax.swing.*;
 /**
 * Created by Egor on 04.10.2014.
 */
-class IconObjectRenderer extends ToStringBasedRenderer implements FullValueEvaluatorProvider {
+class IconObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   public IconObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Icon", null, null);
     setClassName("javax.swing.Icon");

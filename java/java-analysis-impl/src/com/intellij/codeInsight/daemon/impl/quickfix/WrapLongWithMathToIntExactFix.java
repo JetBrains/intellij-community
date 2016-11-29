@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -113,11 +112,11 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
     @Nullable
     @Override
     protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
-      return areSameTypes(toType, PsiType.INT) ? (PsiExpression)getModifiedExpression(expression) : null;
+      return areSameTypes(expression.getType(), PsiType.LONG) && areSameTypes(toType, PsiType.INT) ? (PsiExpression)getModifiedExpression(expression) : null;
     }
 
     @Override
-    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, @NotNull final PsiElement context) {
+    public boolean areTypesConvertible(@NotNull final PsiType exprType, @NotNull final PsiType parameterType, @NotNull final PsiElement context) {
       return parameterType.isConvertibleFrom(exprType) || (areSameTypes(parameterType, PsiType.INT) && areSameTypes(exprType, PsiType.LONG));
     }
 

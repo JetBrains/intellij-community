@@ -49,7 +49,7 @@ public class JavaCharFilter extends CharFilter {
     }
 
     LookupElement item = lookup.getCurrentItem();
-    if (item == null) return null;
+    if (item == null || !item.isValid()) return null;
 
     final Object o = item.getObject();
     if (c == '!') {

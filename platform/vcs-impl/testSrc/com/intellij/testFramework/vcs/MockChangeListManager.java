@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   public static final String DEFAULT_CHANGE_LIST_NAME = "Default";
 
-  private final Map<String, MockChangeList> myChangeLists = new HashMap<String, MockChangeList>();
+  private final Map<String, MockChangeList> myChangeLists = new HashMap<>();
   private LocalChangeList myActiveChangeList;
   private final MockChangeList myDefaultChangeList;
 
@@ -95,7 +95,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public List<LocalChangeList> getChangeListsCopy() {
-    return new ArrayList<LocalChangeList>(myChangeLists.values());
+    return new ArrayList<>(myChangeLists.values());
   }
 
   @NotNull
@@ -123,7 +123,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @NotNull
   @Override
   public Collection<Change> getAllChanges() {
-    Collection<Change> changes = new ArrayList<Change>();
+    Collection<Change> changes = new ArrayList<>();
     for (MockChangeList list : myChangeLists.values()) {
       changes.addAll(list.getChanges());
     }
@@ -208,7 +208,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @NotNull
   @Override
   public Collection<Change> getChangesIn(FilePath path) {
-    List<Change> changes = new ArrayList<Change>();
+    List<Change> changes = new ArrayList<>();
     for (Change change : getAllChanges()) {
       ContentRevision before = change.getBeforeRevision();
       ContentRevision after = change.getAfterRevision();
@@ -217,6 +217,12 @@ public class MockChangeListManager extends ChangeListManagerEx {
       }
     }
     return changes;
+  }
+
+  @Nullable
+  @Override
+  public AbstractVcs getVcsFor(@NotNull Change change) {
+    return null;
   }
 
   @NotNull
@@ -276,6 +282,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void setFilesToIgnore(IgnoredFileBean... ignoredFiles) {
     throw new UnsupportedOperationException();
   }
@@ -297,11 +308,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public String getDefaultListName() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void freeze(ContinuationPause context, String reason) {
     throw new UnsupportedOperationException();
   }
 
@@ -350,7 +356,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void moveChangesTo(LocalChangeList list, Change[] changes) {
+  public void moveChangesTo(LocalChangeList list, Change... changes) {
   }
 
   @Override
@@ -382,10 +388,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @Override
   public Collection<LocalChangeList> getInvolvedListsFilterChanges(Collection<Change> changes, List<Change> validChanges) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void freezeImmediately(@Nullable String reason) {
   }
 
   @Override

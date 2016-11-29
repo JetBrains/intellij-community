@@ -85,7 +85,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
     if (referenceTypes.isEmpty()) throw NoDataException.INSTANCE;
 
-    Set<ReferenceType> res = new HashSet<ReferenceType>();
+    Set<ReferenceType> res = new HashSet<>();
 
     for (ReferenceType referenceType : referenceTypes) {
       findNested(res, referenceType, line);
@@ -95,7 +95,7 @@ public class SpringLoadedPositionManager implements PositionManager {
       throw NoDataException.INSTANCE;
     }
 
-    return new ArrayList<ReferenceType>(res);
+    return new ArrayList<>(res);
   }
 
   @NotNull

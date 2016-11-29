@@ -25,40 +25,42 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
+import java.util.stream.Stream;
+
+import static com.intellij.util.containers.UtilKt.concat;
+import static com.intellij.util.containers.UtilKt.stream;
 
 public class VcsContextWrapper implements VcsContext {
-  protected final DataContext myContext;
+  @NotNull protected final DataContext myContext;
   protected final int myModifiers;
-  private final String myPlace;
-  private final String myActionName;
+  @NotNull private final String myPlace;
+  @Nullable private final String myActionName;
 
-  public VcsContextWrapper(DataContext context, int modifiers, String place, String actionName) {
+  public VcsContextWrapper(@NotNull DataContext context, int modifiers, @NotNull String place, @Nullable String actionName) {
     myContext = context;
     myModifiers = modifiers;
     myPlace = place;
     myActionName = actionName;
   }
 
+  @NotNull
   @Override
   public String getPlace() {
     return myPlace;
   }
 
+  @Nullable
   @Override
-  public
-  String getActionName() {
+  public String getActionName() {
     return myActionName;
   }
 
@@ -72,45 +74,36 @@ public class VcsContextWrapper implements VcsContext {
     return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace(), event.getPresentation().getText());
   }
 
+  @Nullable
   @Override
   public Project getProject() {
     return CommonDataKeys.PROJECT.getData(myContext);
   }
 
+  @Nullable
   @Override
   public VirtualFile getSelectedFile() {
-    VirtualFile[] files = getSelectedFiles();
-    return files.length == 0 ? null : files[0];
+    return getSelectedFilesStream().findFirst().orElse(null);
   }
 
-  @Override
   @NotNull
+  @Override
   public VirtualFile[] getSelectedFiles() {
     VirtualFile[] fileArray = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
     if (fileArray != null) {
-      return filterLocalFiles(fileArray);
+      return Stream.of(fileArray).filter(VirtualFile::isInLocalFileSystem).toArray(VirtualFile[]::new);
     }
 
-    VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(myContext);
-    if (virtualFile != null && isLocal(virtualFile)) {
-      return new VirtualFile[]{virtualFile};
-    }
-
-    return VirtualFile.EMPTY_ARRAY;
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(myContext);
+    return file != null && file.isInLocalFileSystem() ? new VirtualFile[]{file} : VirtualFile.EMPTY_ARRAY;
   }
 
-  private static boolean isLocal(VirtualFile virtualFile) {
-    return virtualFile.isInLocalFileSystem();
-  }
+  @NotNull
+  @Override
+  public Stream<VirtualFile> getSelectedFilesStream() {
+    Stream<VirtualFile> result = VcsDataKeys.VIRTUAL_FILE_STREAM.getData(myContext);
 
-  private static VirtualFile[] filterLocalFiles(VirtualFile[] fileArray) {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (VirtualFile virtualFile : fileArray) {
-      if (isLocal(virtualFile)) {
-        result.add(virtualFile);
-      }
-    }
-    return VfsUtilCore.toVirtualFileArray(result);
+    return result != null ? result.filter(VirtualFile::isInLocalFileSystem) : VcsContext.super.getSelectedFilesStream();
   }
 
   @Override
@@ -123,23 +116,22 @@ public class VcsContextWrapper implements VcsContext {
     return Arrays.asList(getSelectedFiles());
   }
 
+  @Nullable
   @Override
   public File getSelectedIOFile() {
     File file = VcsDataKeys.IO_FILE.getData(myContext);
-    if (file != null) return file;
-    File[] files = VcsDataKeys.IO_FILE_ARRAY.getData(myContext);
-    if (files == null) return null;
-    if (files.length == 0) return null;
-    return files[0];
+
+    return file != null ? file : ArrayUtil.getFirstElement(VcsDataKeys.IO_FILE_ARRAY.getData(myContext));
   }
 
+  @Nullable
   @Override
   public File[] getSelectedIOFiles() {
     File[] files = VcsDataKeys.IO_FILE_ARRAY.getData(myContext);
-    if (files != null && files.length > 0) return files;
-    File file = getSelectedIOFile();
-    if (file != null) return new File[]{file};
-    return null;
+    if (!ArrayUtil.isEmpty(files)) return files;
+
+    File file = VcsDataKeys.IO_FILE.getData(myContext);
+    return file != null ? new File[]{file} : null;
   }
 
   @Override
@@ -155,51 +147,26 @@ public class VcsContextWrapper implements VcsContext {
   @NotNull
   @Override
   public FilePath[] getSelectedFilePaths() {
-    Set<FilePath> result = new THashSet<FilePath>();
+    return getSelectedFilePathsStream().toArray(FilePath[]::new);
+  }
+
+  @NotNull
+  @Override
+  public Stream<FilePath> getSelectedFilePathsStream() {
     FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
-    if (path != null) {
-      result.add(path);
-    }
 
-    FilePath[] paths = VcsDataKeys.FILE_PATH_ARRAY.getData(myContext);
-    if (paths != null) {
-      for (FilePath filePath : paths) {
-        if (!result.contains(filePath)) {
-          result.add(filePath);
-        }
-      }
-    }
-
-    VirtualFile[] selectedFiles = getSelectedFiles();
-    for (VirtualFile selectedFile : selectedFiles) {
-      FilePath filePath = VcsUtil.getFilePath(selectedFile);
-      result.add(filePath);
-    }
-
-    File[] selectedIOFiles = getSelectedIOFiles();
-    if (selectedIOFiles != null){
-      for (File selectedFile : selectedIOFiles) {
-        FilePath filePath = VcsUtil.getFilePath(selectedFile);
-        if (filePath != null) {
-          result.add(filePath);
-        }
-      }
-
-    }
-
-    return result.toArray(new FilePath[result.size()]);
+    return concat(
+      path != null ? Stream.of(path) : Stream.empty(),
+      stream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)),
+      getSelectedFilesStream().map(VcsUtil::getFilePath),
+      stream(getSelectedIOFiles()).map(VcsUtil::getFilePath)
+    );
   }
 
   @Nullable
   @Override
   public FilePath getSelectedFilePath() {
-    FilePath[] selectedFilePaths = getSelectedFilePaths();
-    if (selectedFilePaths.length == 0) {
-      return null;
-    }
-    else {
-      return selectedFilePaths[0];
-    }
+    return ArrayUtil.getFirstElement(getSelectedFilePaths());
   }
 
   @Nullable

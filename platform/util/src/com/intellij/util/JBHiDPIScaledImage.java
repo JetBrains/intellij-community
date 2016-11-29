@@ -67,7 +67,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
   public Graphics2D createGraphics() {
     Graphics2D g = super.createGraphics();
     if (myImage == null) {
-      return new HiDPIScaledGraphics(g, this);
+      return new HiDPIScaledGraphics(g);
     }
     return g;
   }

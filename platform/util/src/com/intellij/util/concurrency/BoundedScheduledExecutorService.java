@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
  * and execute them in parallel in the {@code backendExecutor} with not more than at {@code maxSimultaneousTasks} at a time.
  */
 class BoundedScheduledExecutorService extends SchedulingWrapper {
-  BoundedScheduledExecutorService(@NotNull ExecutorService backendExecutor, int maxSimultaneousTasks) {
-    super(new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks),
+  BoundedScheduledExecutorService(@NotNull String name, @NotNull ExecutorService backendExecutor, int maxSimultaneousTasks) {
+    super(new BoundedTaskExecutor(name, backendExecutor, maxSimultaneousTasks),
           ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).delayQueue);
     assert !(backendExecutor instanceof ScheduledExecutorService) : "backendExecutor is already ScheduledExecutorService: " + backendExecutor;
   }
@@ -55,10 +55,5 @@ class BoundedScheduledExecutorService extends SchedulingWrapper {
   @Override
   public boolean isTerminated() {
     return super.isTerminated() && backendExecutorService.isTerminated();
-  }
-
-  @Override
-  public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-    return super.awaitTermination(timeout, unit) && backendExecutorService.awaitTermination(timeout, unit);
   }
 }

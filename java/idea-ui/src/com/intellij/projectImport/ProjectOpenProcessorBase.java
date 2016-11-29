@@ -213,20 +213,17 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
 
         projectToOpen.save();
 
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Sdk jdk = wizardContext.getProjectJdk();
-            if (jdk != null) {
-              NewProjectUtil.applyJdkToProject(projectToOpen, jdk);
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          Sdk jdk1 = wizardContext.getProjectJdk();
+          if (jdk1 != null) {
+            NewProjectUtil.applyJdkToProject(projectToOpen, jdk1);
+          }
 
-            String projectDirPath = wizardContext.getProjectFileDirectory();
-            String path = StringUtil.endsWithChar(projectDirPath, '/') ? projectDirPath + "classes" : projectDirPath + "/classes";
-            CompilerProjectExtension extension = CompilerProjectExtension.getInstance(projectToOpen);
-            if (extension != null) {
-              extension.setCompilerOutputUrl(getUrl(path));
-            }
+          String projectDirPath = wizardContext.getProjectFileDirectory();
+          String path = StringUtil.endsWithChar(projectDirPath, '/') ? projectDirPath + "classes" : projectDirPath + "/classes";
+          CompilerProjectExtension extension = CompilerProjectExtension.getInstance(projectToOpen);
+          if (extension != null) {
+            extension.setCompilerOutputUrl(getUrl(path));
           }
         });
 

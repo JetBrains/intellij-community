@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -40,8 +41,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +62,13 @@ import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
+import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeSchemaTable;
+import org.tmatesoft.sqljet.core.internal.table.SqlJetBtreeSchemaTable;
+import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.sqljet.core.table.engine.ISqlJetEngineSynchronized;
+import org.tmatesoft.sqljet.core.table.engine.SqlJetEngine;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -75,6 +84,10 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.net.URI;
 import java.nio.channels.NonWritableChannelException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -131,7 +144,7 @@ public class SvnUtil {
   }
 
   private static Collection<VirtualFile> crawlWCRoots(final Project project, VirtualFile vf, SvnWCRootCrawler callback, ProgressIndicator progress) {
-    final Collection<VirtualFile> result = new HashSet<VirtualFile>();
+    final Collection<VirtualFile> result = new HashSet<>();
     final boolean isDirectory = vf.isDirectory();
     VirtualFile parent = ! isDirectory || !vf.exists() ? vf.getParent() : vf;
 
@@ -185,7 +198,7 @@ public class SvnUtil {
     }
 
     final VcsException[] exception = new VcsException[1];
-    final Collection<String> failedLocks = new ArrayList<String>();
+    final Collection<String> failedLocks = new ArrayList<>();
     final int[] count = new int[]{ioFiles.length};
     final ProgressTracker eventHandler = new ProgressTracker() {
       public void consume(ProgressEvent event) {
@@ -228,7 +241,7 @@ public class SvnUtil {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.lock.files"), false, project);
     if (!failedLocks.isEmpty()) {
       String[] failedFiles = ArrayUtil.toStringArray(failedLocks);
-      List<VcsException> exceptions = new ArrayList<VcsException>();
+      List<VcsException> exceptions = new ArrayList<>();
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
       }
@@ -250,7 +263,7 @@ public class SvnUtil {
   public static void doUnlockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles) throws VcsException {
     final boolean force = true;
     final VcsException[] exception = new VcsException[1];
-    final Collection<String> failedUnlocks = new ArrayList<String>();
+    final Collection<String> failedUnlocks = new ArrayList<>();
     final int[] count = new int[]{ioFiles.length};
     final ProgressTracker eventHandler = new ProgressTracker() {
       public void consume(ProgressEvent event) {
@@ -293,7 +306,7 @@ public class SvnUtil {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.unlock.files"), false, project);
     if (!failedUnlocks.isEmpty()) {
       String[] failedFiles = ArrayUtil.toStringArray(failedUnlocks);
-      List<VcsException> exceptions = new ArrayList<VcsException>();
+      List<VcsException> exceptions = new ArrayList<>();
 
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.failed.to.unlock.file", file)));
@@ -308,7 +321,7 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static Map<Pair<SVNURL, WorkingCopyFormat>, Set<Change>> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<Change> changes) {
+  public static MultiMap<Pair<SVNURL, WorkingCopyFormat>, Change> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<Change> changes) {
     return splitIntoRepositoriesMap(vcs, changes, new Convertor<Change, FilePath>() {
       @Override
       public FilePath convert(@NotNull Change change) {
@@ -318,12 +331,13 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static <T> Map<Pair<SVNURL, WorkingCopyFormat>, Set<T>> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
-                                                                                          @NotNull List<T> items,
+  public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
+                                                                                          @NotNull Collection<T> items,
                                                                                           @NotNull final Convertor<T, FilePath> converter) {
-    return ContainerUtil.classify(items.iterator(), new Convertor<T, Pair<SVNURL, WorkingCopyFormat>>() {
+    return ContainerUtil.groupBy(items, new NotNullFunction<T, Pair<SVNURL, WorkingCopyFormat>>() {
+      @NotNull
       @Override
-      public Pair<SVNURL, WorkingCopyFormat> convert(@NotNull T item) {
+      public Pair<SVNURL, WorkingCopyFormat> fun(@NotNull T item) {
         RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item).getIOFile());
 
         return path == null ? UNKNOWN_REPOSITORY_AND_FORMAT : Pair.create(path.getRepositoryUrlUrl(), path.getFormat());
@@ -343,7 +357,8 @@ public class SvnUtil {
     File dbFile = resolveDatabase(path);
 
     if (dbFile != null) {
-      result = FileUtilRt.doIOOperation(new WorkingCopyFormatOperation(dbFile));
+      result = FileUtilRt.doIOOperation(
+        Registry.is("svn.use.sqlite.jdbc") ? new SqLiteJdbcWorkingCopyFormatOperation(dbFile) : new WorkingCopyFormatOperation(dbFile));
 
       if (result == null) {
         notifyDatabaseError();
@@ -571,7 +586,7 @@ public class SvnUtil {
 
   public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws VcsException {
     SvnTarget target = SvnTarget.fromURL(createUrl(url));
-    final Ref<Boolean> result = new Ref<Boolean>(true);
+    final Ref<Boolean> result = new Ref<>(true);
     DirectoryEntryConsumer handler = new DirectoryEntryConsumer() {
 
       @Override
@@ -743,6 +758,7 @@ public class SvnUtil {
     }
   }
 
+  @NotNull
   public static SVNURL parseUrl(@NotNull String url) {
     try {
       return SVNURL.parseURIEncoded(url);
@@ -752,12 +768,13 @@ public class SvnUtil {
     }
   }
 
-  public static SVNURL append(@NotNull SVNURL parent, String child) {
+  @NotNull
+  public static SVNURL append(@NotNull SVNURL parent, @NotNull String child) throws SvnBindException {
     try {
       return parent.appendPath(child, false);
     }
     catch (SVNException e) {
-      throw createIllegalArgument(e);
+      throw new SvnBindException(e);
     }
   }
 
@@ -842,15 +859,15 @@ public class SvnUtil {
     @Nullable
     @Override
     public WorkingCopyFormat execute(boolean lastAttempt) {
-      // TODO: rewrite it using sqlite jdbc driver
-      SqlJetDb db = null;
-      WorkingCopyFormat result = null;
+      SqLiteDb db = null;
+      int userVersion = 0;
+
       try {
         // "write" access is requested here for now as workaround - see some details
         // in https://code.google.com/p/sqljet/issues/detail?id=25 and http://issues.tmatesoft.com/issue/SVNKIT-418.
         // BUSY error is currently handled same way as others.
-        db = SqlJetDb.open(myDbFile, true);
-        result = WorkingCopyFormat.getInstance(db.getOptions().getUserVersion());
+        db = SqLiteDb.open(myDbFile, true);
+        userVersion = db.getOptions().getUserVersion();
       }
       catch (NonWritableChannelException e) {
         // Such exceptions could be thrown when db is opened in "read" mode, but the db file is readonly (for instance, locked
@@ -860,11 +877,156 @@ public class SvnUtil {
       }
       catch (SqlJetException e) {
         LOG.info(e);
+        if (db != null) {
+          // Even if there is an error in db schema, db options could already be read successfully - so we just use them
+          userVersion = db.getUserVersion();
+          LOG.debug("Working copy database schema: " + db.getDbSchema());
+        }
       }
       finally {
         close(db);
       }
+
+      WorkingCopyFormat format = WorkingCopyFormat.getInstance(userVersion);
+
+      return !WorkingCopyFormat.UNKNOWN.equals(format) ? format : null;
+    }
+  }
+
+  private static class SqLiteJdbcWorkingCopyFormatOperation
+    implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
+    @NotNull private final File myDbFile;
+
+    public SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
+      myDbFile = dbFile;
+    }
+
+    @Nullable
+    @Override
+    public WorkingCopyFormat execute(boolean lastAttempt) {
+      Connection connection = null;
+      int userVersion = 0;
+
+      try {
+        Class.forName("org.sqlite.JDBC");
+        connection = DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(myDbFile.getPath()));
+        ResultSet resultSet = connection.createStatement().executeQuery("pragma user_version");
+
+        if (resultSet.next()) {
+          userVersion = resultSet.getInt(1);
+        }
+        else {
+          LOG.info("No result while getting user version for " + myDbFile.getPath());
+        }
+      }
+      catch (ClassNotFoundException | SQLException e) {
+        LOG.info(e);
+      }
+      finally {
+        close(connection);
+      }
+
+      WorkingCopyFormat format = WorkingCopyFormat.getInstance(userVersion);
+
+      return !WorkingCopyFormat.UNKNOWN.equals(format) ? format : null;
+    }
+
+    private static void close(@Nullable Connection connection) {
+      if (connection != null) {
+        try {
+          connection.close();
+        }
+        catch (SQLException e) {
+          notifyDatabaseError();
+        }
+      }
+    }
+  }
+
+  private static class SqLiteDb extends SqlJetDb {
+
+    private SqLiteDb(@NotNull File file, boolean writable) {
+      super(file, writable);
+    }
+
+    @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+    @NotNull
+    public static SqLiteDb open(@NotNull File file, boolean write) throws SqlJetException {
+      final SqLiteDb db = new SqLiteDb(file, write);
+      db.open();
+      return db;
+    }
+
+    private int getUserVersion() {
+      int result = 0;
+      ISqlJetOptions options = dbHandle.getOptions();
+
+      if (options != null) {
+        try {
+          result = options.getUserVersion();
+        }
+        catch (SqlJetException ignore) {
+        }
+      }
+
       return result;
+    }
+
+    /**
+     * See {@link SqlJetEngine#readSchema()} for reference.
+     */
+    @NotNull
+    private String getDbSchema() {
+      String result = "";
+
+      try {
+        result = (String)runSynchronized(new ISqlJetEngineSynchronized() {
+          public Object runSynchronized(SqlJetEngine engine) throws SqlJetException {
+            btree.enter();
+            try {
+              return readDbSchema();
+            }
+            finally {
+              btree.leave();
+            }
+          }
+        });
+      }
+      catch (SqlJetException ignore) {
+      }
+
+      return result;
+    }
+
+    /**
+     * See {@link SqlJetSchema#init()} for reference.
+     */
+    @NotNull
+    private String readDbSchema() throws SqlJetException {
+      StringBuilder result = new StringBuilder();
+      ISqlJetBtreeSchemaTable table = new SqlJetBtreeSchemaTable(btree, false);
+
+      try {
+        table.lock();
+        try {
+          for (table.first(); !table.eof(); table.next()) {
+            String sql = table.getSqlField();
+
+            if (sql != null) {
+              result.append(sql);
+              result.append("\n");
+            }
+          }
+        }
+        finally {
+          table.unlock();
+        }
+      }
+      finally {
+        table.close();
+      }
+
+      return result.toString();
     }
   }
 }

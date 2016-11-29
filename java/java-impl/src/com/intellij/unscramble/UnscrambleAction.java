@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    final Project project = event.getProject();
     presentation.setEnabled(project != null);
   }
 }

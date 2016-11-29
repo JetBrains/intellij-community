@@ -38,7 +38,7 @@ public class SearchInitializer {
                            final ChainCompletionContext context) {
     myContext = context;
     final int size = indexValues.size();
-    myChains = new LinkedHashMap<MethodIncompleteSignature, Pair<MethodsChain, Integer>>(size);
+    myChains = new LinkedHashMap<>(size);
     add(indexValues, MethodChainsSearchUtil.joinToHashSet(excludedParamsTypesQNames, targetQName));
   }
 
@@ -72,13 +72,13 @@ public class SearchInitializer {
 
   public InitResult init(final Set<String> excludedEdgeNames) {
     final int size = myChains.size();
-    final List<WeightAware<MethodIncompleteSignature>> initedVertexes = new ArrayList<WeightAware<MethodIncompleteSignature>>(size);
+    final List<WeightAware<MethodIncompleteSignature>> initedVertexes = new ArrayList<>(size);
     final LinkedHashMap<MethodIncompleteSignature, MethodsChain> initedChains =
-      new LinkedHashMap<MethodIncompleteSignature, MethodsChain>(size);
+      new LinkedHashMap<>(size);
     for (final Map.Entry<MethodIncompleteSignature, Pair<MethodsChain, Integer>> entry : myChains.entrySet()) {
       final MethodIncompleteSignature signature = entry.getKey();
       if (!excludedEdgeNames.contains(signature.getName())) {
-        initedVertexes.add(new WeightAware<MethodIncompleteSignature>(entry.getKey(), entry.getValue().getSecond()));
+        initedVertexes.add(new WeightAware<>(entry.getKey(), entry.getValue().getSecond()));
         final MethodsChain methodsChain = entry.getValue().getFirst();
         initedChains.put(signature, methodsChain);
       }

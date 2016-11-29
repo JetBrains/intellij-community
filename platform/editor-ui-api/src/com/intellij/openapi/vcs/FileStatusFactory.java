@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -26,19 +27,17 @@ import java.util.List;
 
 public class FileStatusFactory {
   private static final FileStatusFactory ourInstance = new FileStatusFactory();
-  private final List<FileStatus> myStatuses = new ArrayList<FileStatus>();
+  private final List<FileStatus> myStatuses = new ArrayList<>();
 
   private FileStatusFactory() {
   }
 
-  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @NotNull String description, Color color) {
-    FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey("FILESTATUS_" + id, color), description);
-    myStatuses.add(result);
-    return result;
+  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @NotNull String description) {
+    return createFileStatus(id, description, null);
   }
 
-  public synchronized FileStatus createOnlyColorForFileStatus(@NonNls @NotNull String id, final Color color) {
-    FileStatus result = new FileStatusImpl.OnlyColorFileStatus(id, ColorKey.createColorKey("FILESTATUS_" + id, color), null);
+  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @NotNull String description, @Nullable Color color) {
+    FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey("FILESTATUS_" + id, color), description);
     myStatuses.add(result);
     return result;
   }
@@ -76,7 +75,7 @@ public class FileStatusFactory {
 
     @Override
     public Color getColor() {
-      return EditorColorsManager.getInstance().getGlobalScheme().getColor(getColorKey());
+      return EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(getColorKey());
     }
 
     @NotNull
@@ -89,23 +88,6 @@ public class FileStatusFactory {
     @Override
     public String getId() {
       return myStatus;
-    }
-
-    private static class OnlyColorFileStatus extends FileStatusImpl {
-      public OnlyColorFileStatus(@NotNull String status, @NotNull ColorKey key, String text) {
-        super(status, key, text);
-      }
-
-      @NotNull
-      @Override
-      public String getId() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public String getText() {
-        throw new UnsupportedOperationException();
-      }
     }
   }
 }

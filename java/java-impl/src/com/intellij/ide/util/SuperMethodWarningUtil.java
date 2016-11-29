@@ -59,7 +59,7 @@ public class SuperMethodWarningUtil {
     if (superMethods.isEmpty()) return new PsiMethod[]{method};
 
 
-    Set<String> superClasses = new HashSet<String>();
+    Set<String> superClasses = new HashSet<>();
     boolean superAbstract = false;
     boolean parentInterface = false;
     for (final PsiMethod superMethod : superMethods) {
@@ -165,13 +165,10 @@ public class SuperMethodWarningUtil {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          final Object value = list.getSelectedValue();
-          if (value instanceof String) {
-            processor.execute(methods[value.equals(renameBase) ? 0 : 1]);
-          }
+      .setItemChoosenCallback(() -> {
+        final Object value = list.getSelectedValue();
+        if (value instanceof String) {
+          processor.execute(methods[value.equals(renameBase) ? 0 : 1]);
         }
       }).createPopup().showInBestPositionFor(editor);
   }

@@ -82,7 +82,7 @@ class LinearBekGraphBuilder {
     int rowsCount = 1;
     int blockSize = 1;
 
-    PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE, new GraphEdgeComparator());
+    PriorityQueue<GraphEdge> queue = new PriorityQueue<>(MAX_BLOCK_SIZE, new GraphEdgeComparator());
     queue.addAll(myLinearBekGraph.getAdjacentEdges(rightChild, EdgeFilter.NORMAL_DOWN));
 
     @Nullable Set<Integer> magicSet = null;
@@ -180,7 +180,7 @@ class LinearBekGraphBuilder {
     Set<Integer> magicSet;
     magicSet = ContainerUtil.newHashSet(MAGIC_SET_SIZE);
 
-    PriorityQueue<Integer> magicQueue = new PriorityQueue<Integer>(MAGIC_SET_SIZE);
+    PriorityQueue<Integer> magicQueue = new PriorityQueue<>(MAGIC_SET_SIZE);
     magicQueue.addAll(ContainerUtil.map(myLinearBekGraph.getAdjacentEdges(node, EdgeFilter.NORMAL_DOWN), GRAPH_EDGE_TO_DOWN_NODE));
     while (!magicQueue.isEmpty()) {
       Integer i = magicQueue.poll();

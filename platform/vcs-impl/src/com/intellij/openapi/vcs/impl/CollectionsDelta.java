@@ -31,7 +31,7 @@ public class CollectionsDelta {
     for (T topItem : first) {
       if (! second.contains(topItem)) {
         if (notInSecond == null) {
-          notInSecond = new HashSet<T>();
+          notInSecond = new HashSet<>();
         }
         notInSecond.add(topItem);
       }

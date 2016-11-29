@@ -26,7 +26,7 @@ import java.util.Map;
  * @author nik
  */
 public class JpsSdkManagerImpl extends JpsSdkManager {
-  private final Map<JpsLibrary, Sdk> mySdks = new HashMap<JpsLibrary, Sdk>();
+  private final Map<JpsLibrary, Sdk> mySdks = new HashMap<>();
 
   @Override
   public Sdk getSdk(JpsLibrary library) {

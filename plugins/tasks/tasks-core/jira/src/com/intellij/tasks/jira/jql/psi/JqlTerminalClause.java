@@ -36,7 +36,7 @@ public interface JqlTerminalClause extends JqlClause {
       myListOperator = listOperator;
     }
 
-    private final static IdentityHashMap<IElementType, Type> MAP = new IdentityHashMap<IElementType, Type>();
+    private final static IdentityHashMap<IElementType, Type> MAP = new IdentityHashMap<>();
 
     static {
       MAP.put(JqlTokenTypes.EQ, EQ);

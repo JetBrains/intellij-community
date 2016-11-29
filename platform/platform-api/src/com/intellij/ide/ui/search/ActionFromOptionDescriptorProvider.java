@@ -24,7 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * @author ignatov
  */
 public abstract class ActionFromOptionDescriptorProvider {
-  public static final ExtensionPointName<ActionFromOptionDescriptorProvider> EP = new ExtensionPointName<ActionFromOptionDescriptorProvider>("com.intellij.actionFromOptionDescriptorProvider");
+  public static final ExtensionPointName<ActionFromOptionDescriptorProvider> EP =
+    new ExtensionPointName<>("com.intellij.actionFromOptionDescriptorProvider");
 
   @Nullable
   public abstract AnAction provide(@NotNull OptionDescription description);

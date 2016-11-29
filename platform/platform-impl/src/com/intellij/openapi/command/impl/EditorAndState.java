@@ -25,7 +25,7 @@ class EditorAndState {
   private final WeakReference<FileEditor> myEditor;
 
   public EditorAndState(FileEditor editor, FileEditorState state) {
-    myEditor = new WeakReference<FileEditor>(editor);
+    myEditor = new WeakReference<>(editor);
     myState = state;
   }
 

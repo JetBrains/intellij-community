@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.ActionPlan;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -42,6 +43,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -56,17 +58,17 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TypedHandler extends TypedActionHandlerBase {
+  private static final Set<Character> COMPLEX_CHARS =
+    new HashSet<>(Arrays.asList('\n', '\t', '(', ')', '<', '>', '[', ']', '{', '}', '"', '\''));
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
-  private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<FileType, QuoteHandler>();
+  private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<>();
 
-  private static final Map<Class<? extends Language>, QuoteHandler> ourBaseLanguageQuoteHandlers = new HashMap<Class<? extends Language>, QuoteHandler>();
+  private static final Map<Class<? extends Language>, QuoteHandler> ourBaseLanguageQuoteHandlers = new HashMap<>();
 
   public TypedHandler(TypedActionHandler originalHandler){
     super(originalHandler);
@@ -83,15 +85,18 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
     }
     if (quoteHandler == null) {
-      final Language baseLanguage = file.getViewProvider().getBaseLanguage();
-      for (Map.Entry<Class<? extends Language>, QuoteHandler> entry : ourBaseLanguageQuoteHandlers.entrySet()) {
-        if (entry.getKey().isInstance(baseLanguage)) {
-          return entry.getValue();
-        }
-      }
-      return LanguageQuoteHandling.INSTANCE.forLanguage(baseLanguage);
+      return getLanguageQuoteHandler(file.getViewProvider().getBaseLanguage());
     }
     return quoteHandler;
+  }
+
+  public static QuoteHandler getLanguageQuoteHandler(Language baseLanguage) {
+    for (Map.Entry<Class<? extends Language>, QuoteHandler> entry : ourBaseLanguageQuoteHandlers.entrySet()) {
+      if (entry.getKey().isInstance(baseLanguage)) {
+        return entry.getValue();
+      }
+    }
+    return LanguageQuoteHandling.INSTANCE.forLanguage(baseLanguage);
   }
 
   private static FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
@@ -130,6 +135,18 @@ public class TypedHandler extends TypedActionHandlerBase {
   }
 
   @Override
+  public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
+    if (COMPLEX_CHARS.contains(c)) return;
+
+    if (editor.isInsertMode()) {
+      int offset = plan.getCaretOffset();
+      plan.replace(offset, offset, String.valueOf(c));
+    }
+
+    super.beforeExecute(editor, c, context, plan);
+  }
+
+  @Override
   public void execute(@NotNull final Editor originalEditor, final char charTyped, @NotNull final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final PsiFile originalFile;
@@ -158,23 +175,35 @@ public class TypedHandler extends TypedActionHandlerBase {
 
         final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
 
-        boolean handled = false;
-        for (TypedHandlerDelegate delegate : delegates) {
-          final TypedHandlerDelegate.Result result = delegate.checkAutoPopup(charTyped, project, editor, file);
-          handled = result == TypedHandlerDelegate.Result.STOP;
-          if (result != TypedHandlerDelegate.Result.CONTINUE) {
-            break;
+        if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
+          boolean handled = false;
+          for (TypedHandlerDelegate delegate : delegates) {
+            final TypedHandlerDelegate.Result result = delegate.checkAutoPopup(charTyped, project, editor, file);
+            handled = result == TypedHandlerDelegate.Result.STOP;
+            if (result != TypedHandlerDelegate.Result.CONTINUE) {
+              break;
+            }
           }
-        }
 
-        if (!handled) {
-          autoPopupCompletion(editor, charTyped, project, file);
-          autoPopupParameterInfo(editor, charTyped, project, file);
+          if (!handled) {
+            autoPopupCompletion(editor, charTyped, project, file);
+            autoPopupParameterInfo(editor, charTyped, project, file);
+          }
         }
 
         if (!editor.isInsertMode()) {
           type(originalEditor, charTyped);
           return;
+        }
+
+        for (TypedHandlerDelegate delegate : delegates) {
+          final TypedHandlerDelegate.Result result = delegate.beforeSelectionRemoved(charTyped, project, editor, file);
+          if (result == TypedHandlerDelegate.Result.STOP) {
+            return;
+          }
+          if (result == TypedHandlerDelegate.Result.DEFAULT) {
+            break;
+          }
         }
 
         EditorModificationUtil.deleteSelectedText(editor);
@@ -202,7 +231,7 @@ public class TypedHandler extends TypedActionHandlerBase {
 
         long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
         type(originalEditor, charTyped);
-        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStampBeforeTyping);
+        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
 
         if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
             CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
@@ -305,14 +334,15 @@ public class TypedHandler extends TypedActionHandlerBase {
     for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(oldFile)) {
       if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
-        final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
-        // IDEA-52375 fix: last quote sign should be handled by outer language quote handler
-        final CharSequence charsSequence = editor.getDocument().getCharsSequence();
-        if (injectedEditor.getCaretModel().getOffset() == injectedEditor.getDocument().getTextLength() &&
-            offset < charsSequence.length() && charTyped == charsSequence.charAt(offset)) {
-          return editor;
+        if (injectedFile != null) {
+          Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+          // IDEA-52375/WEB-9105 fix: last quote in editable fragment should be handled by outer language quote handler
+          TextRange hostRange = documentWindow.getHostRange(offset);
+          CharSequence sequence = editor.getDocument().getCharsSequence();
+          if (sequence.length() > offset && charTyped != sequence.charAt(offset) || hostRange != null && hostRange.contains(offset)) {
+            return injectedEditor;
+          }
         }
-        return injectedEditor;
       }
     }
 
@@ -597,27 +627,24 @@ public class TypedHandler extends TypedActionHandlerBase {
       }
       if (element.getNode() != null && isBrace) {
         final int finalLBraceOffset = lBraceOffset;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run(){
-            try{
-              int newOffset;
-              if (finalLBraceOffset != -1) {
-                RangeMarker marker = document.createRangeMarker(offset, offset + 1);
-                CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
-                newOffset = marker.getStartOffset();
-                marker.dispose();
-              } else {
-                newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
-              }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try{
+            int newOffset;
+            if (finalLBraceOffset != -1) {
+              RangeMarker marker = document.createRangeMarker(offset, offset + 1);
+              CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
+              newOffset = marker.getStartOffset();
+              marker.dispose();
+            } else {
+              newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+            }
 
-              editor.getCaretModel().moveToOffset(newOffset + 1);
-              editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-              editor.getSelectionModel().removeSelection();
-            }
-            catch(IncorrectOperationException e){
-              LOG.error(e);
-            }
+            editor.getCaretModel().moveToOffset(newOffset + 1);
+            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+            editor.getSelectionModel().removeSelection();
+          }
+          catch(IncorrectOperationException e){
+            LOG.error(e);
           }
         });
       }

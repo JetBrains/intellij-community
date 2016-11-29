@@ -18,30 +18,49 @@ package com.jetbrains.python.console;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
+import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
+import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
@@ -62,6 +81,7 @@ import java.awt.*;
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
 
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
+  private final ConsolePromptDecorator myPromptView;
 
   private PydevConsoleExecuteActionHandler myExecuteActionHandler;
   private PyConsoleSourceHighlighter mySourceHighlighter;
@@ -71,6 +91,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
+  private ActionCallback myInitialized = new ActionCallback();
 
   public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
     super(project, title, PythonLanguage.getInstance());
@@ -78,21 +99,74 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
-
-    setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
+    getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
+    super.setPrompt(null);
     setUpdateFoldingsEnabled(false);
     //noinspection ConstantConditions
     myPyHighlighter = new PyHighlighter(
       sdk != null && sdk.getVersionString() != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
     myScheme = getConsoleEditor().getColorsScheme();
+    PythonConsoleData data = PyConsoleUtil.getOrCreateIPythonData(getVirtualFile());
+    myPromptView = new ConsolePromptDecorator(this.getConsoleEditor(), data);
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
     getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
   }
 
+  private PyConsoleStartFolding createConsoleFolding() {
+    PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this);
+    myExecuteActionHandler.getConsoleCommunication().addCommunicationListener(startFolding);
+    getEditor().getDocument().addDocumentListener(startFolding);
+    ((FoldingModelEx)getEditor().getFoldingModel()).addListener(startFolding, this);
+    return startFolding;
+  }
+
+  public void addConsoleFolding(boolean isDebugConsole) {
+    try {
+      if (isDebugConsole && myExecuteActionHandler != null) {
+        PyConsoleStartFolding folding = createConsoleFolding();
+        // in debug console we should add folding from the place where the folding was turned on
+        folding.setStartLineOffset(getEditor().getDocument().getTextLength());
+        folding.setNumberOfCommandToStop(2);
+      }
+      else {
+        myInitialized.doWhenDone(this::createConsoleFolding);
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e.getMessage());
+    }
+  }
+
   public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
+  }
+
+  public PydevConsoleExecuteActionHandler getExecuteActionHandler() {
+    return myExecuteActionHandler;
+  }
+
+  public void setConsoleEnabled(boolean flag) {
+    if (myExecuteActionHandler != null) {
+      myExecuteActionHandler.setEnabled(flag);
+    }
+  }
+
+  public void inputRequested() {
+    if (myExecuteActionHandler != null) {
+      final ConsoleCommunication consoleCommunication = myExecuteActionHandler.getConsoleCommunication();
+      if (consoleCommunication instanceof PythonDebugConsoleCommunication) {
+        consoleCommunication.notifyInputRequested();
+      }
+    }
+  }
+
+  public void inputReceived() {
+    // If user's input was entered while debug console was turned off, we shouldn't wait for it anymore
+    if (myExecuteActionHandler != null) {
+      myExecuteActionHandler.inputReceived();
+    }
   }
 
   @Override
@@ -102,9 +176,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void executeCode(final @NotNull String code, @Nullable final Editor editor) {
-    showConsole(new Runnable() {
-      @Override
-      public void run() {
+    myInitialized.doWhenDone(
+      () ->
         ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
@@ -115,61 +188,43 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
               }
               if (System.currentTimeMillis() - time > 1000) {
                 if (editor != null) {
-                  UIUtil.invokeLaterIfNeeded(new Runnable() {
-                    @Override
-                    public void run() {
-                      HintManager.getInstance().showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage());
-                    }
-                  });
+                  UIUtil.invokeLaterIfNeeded(
+                    () -> HintManager.getInstance()
+                      .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
                 }
                 return;
               }
               TimeoutUtil.sleep(300);
             }
             if (!indicator.isCanceled()) {
-              doExecute(code);
+              executeInConsole(code);
             }
           }
-        });
-      }
-    });
+        })
+    );
   }
 
-  private void showConsole(@NotNull Runnable runnable) {
-    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(getProject());
-    if (toolWindow != null && toolWindow.getToolWindow() != null && !toolWindow.getToolWindow().isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      toolWindow.getToolWindow().activate(runnable);
-    }
-    else {
-      runnable.run();
-    }
-  }
-
-  private void doExecute(String code) {
-    String codeFragment = PyConsoleIndentUtil.normalize(code, myExecuteActionHandler.getCurrentIndentSize());
-    codeFragment += "\n";
-    executeInConsole(codeFragment);
-  }
 
   public void executeInConsole(final String code) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        String text = getConsoleEditor().getDocument().getText();
+    final String codeToExecute = code.endsWith("\n") ? code : code + "\n";
 
-        setInputText(code);
-        myExecuteActionHandler.runExecuteAction(PythonConsoleView.this);
+    TransactionGuard.submitTransaction(this, () -> {
+      String text = getConsoleEditor().getDocument().getText();
+      ApplicationManager.getApplication().runWriteAction(() -> setInputText(codeToExecute));
+      int oldOffset = getConsoleEditor().getCaretModel().getOffset();
+      getConsoleEditor().getCaretModel().moveToOffset(codeToExecute.length());
+      myExecuteActionHandler.runExecuteAction(this);
 
-        if (!StringUtil.isEmpty(text)) {
-          setInputText(text);
-        }
+      if (!StringUtil.isEmpty(text)) {
+        ApplicationManager.getApplication().runWriteAction(() -> setInputText(text));
+        getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
       }
     });
   }
 
   public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
     print(statement, outputTypeForAttributes(attributes));
-    myExecuteActionHandler.processLine(statement, true);
+    myExecuteActionHandler.processLine(statement);
   }
 
   public void printText(String text, final ConsoleViewContentType outputType) {
@@ -284,10 +339,79 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     splitWindow();
   }
 
+  protected final void doAddPromptToHistory(boolean isMainPrompt) {
+    flushDeferredText();
+    EditorEx viewer = getHistoryViewer();
+    DocumentEx document = viewer.getDocument();
+    RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
+      .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null, HighlighterTargetArea.EXACT_RANGE);
+    final String prompt;
+    if (isMainPrompt) {
+      prompt = myPromptView.getMainPrompt();
+      print(prompt + " ", myPromptView.getPromptAttributes());
+    }
+    else {
+      prompt = myPromptView.getIndentPrompt();
+      //todo should really be myPromptView.getPromptAttributes() output type
+      //but in that case flushing doesn't get handled correctly. Take a look at it later
+      print(prompt + " ", ConsoleViewContentType.USER_INPUT);
+    }
+
+    highlighter.putUserData(PyConsoleCopyHandler.PROMPT_LENGTH_MARKER, prompt.length() + 1);
+  }
+
+  @NotNull
+  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
+    String text;
+    EditorHighlighter highlighter;
+    if (inputEditor instanceof EditorWindow) {
+      PsiFile file = ((EditorWindow)inputEditor).getInjectedFile();
+      highlighter =
+        HighlighterFactory.createHighlighter(file.getVirtualFile(), EditorColorsManager.getInstance().getGlobalScheme(), getProject());
+      String fullText = InjectedLanguageUtil.getUnescapedText(file, null, null);
+      highlighter.setText(fullText);
+      text = textRange.substring(fullText);
+    }
+    else {
+      text = inputEditor.getDocument().getText(textRange);
+      highlighter = inputEditor.getHighlighter();
+    }
+    SyntaxHighlighter syntax =
+      highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;
+    doAddPromptToHistory(true);
+
+    if (syntax != null) {
+      ConsoleViewUtil.printWithHighlighting(this, text, syntax, () -> doAddPromptToHistory(false));
+    }
+    else {
+      print(text, ConsoleViewContentType.USER_INPUT);
+    }
+    print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    return text;
+  }
+
+
+  @NotNull
+  @Override
+  protected JComponent createCenterComponent() {
+    //workaround for extra lines appearing in the console
+    JComponent centerComponent = super.createCenterComponent();
+    getHistoryViewer().getSettings().setAdditionalLinesCount(0);
+    getHistoryViewer().getSettings().setUseSoftWraps(false);
+    getConsoleEditor().getGutter().registerTextAnnotation(this.myPromptView);
+    getConsoleEditor().getGutterComponentEx().setBackground(getConsoleEditor().getBackgroundColor());
+    getConsoleEditor().getGutterComponentEx().revalidate();
+    getConsoleEditor().getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, getConsoleEditor().getBackgroundColor());
+
+    // settings.set
+    return centerComponent;
+  }
+
+
   private void splitWindow() {
     Component console = getComponent(0);
     removeAll();
-    JBSplitter p = new JBSplitter(false, 2f/3);
+    JBSplitter p = new JBSplitter(false, 2f / 3);
     p.setFirstComponent((JComponent)console);
     p.setSecondComponent(mySplitView.getPanel());
     p.setShowDividerControls(true);
@@ -308,5 +432,38 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     add(pane.getFirstComponent(), BorderLayout.CENTER);
     validate();
     repaint();
+  }
+
+  @Nullable
+  @Override
+  public String getPrompt() {
+    if (myPromptView == null) // we're in the constructor!
+    {
+      return super.getPrompt();
+    }
+    return myPromptView.getMainPrompt();
+  }
+
+
+  @Override
+  public void setPrompt(@Nullable String prompt) {
+    if (this.myPromptView == null) // we're in the constructor!
+    {
+      super.setPrompt(prompt);
+      return;
+    }
+    if (prompt != null) {
+      this.myPromptView.setMainPrompt(prompt);
+    }
+  }
+
+
+  @Override
+  public void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes) {
+    myPromptView.setPromptAttributes(textAttributes);
+  }
+
+  public void initialized() {
+    myInitialized.setDone();
   }
 }

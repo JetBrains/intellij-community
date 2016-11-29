@@ -55,7 +55,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   private String myOptionTooltipText;
 
-  private Set<OptionInfo> myOptionInfos = new HashSet<OptionInfo>();
+  private Set<OptionInfo> myOptionInfos = new HashSet<>();
   private boolean myOkToProcessDefaultMnemonics = true;
 
   private IdeGlassPane myGlassPane;
@@ -193,7 +193,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
     final JPopupMenu popup = above ? myAbovePopup : myUnderPopup;
 
-    final Ref<PopupMenuListener> listener = new Ref<PopupMenuListener>();
+    final Ref<PopupMenuListener> listener = new Ref<>();
     listener.set(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -204,12 +204,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
         if (popup != null && listener.get() != null) {
           popup.removePopupMenuListener(listener.get());
         }
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myPopupIsShowing = false;
-          }
-        });
+        SwingUtilities.invokeLater(() -> myPopupIsShowing = false);
       }
 
       @Override
@@ -219,30 +214,27 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     popup.addPopupMenuListener(listener.get());
     popup.show(this, 0, y);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (popup == null || !popup.isShowing() || !myPopupIsShowing) return;
-        
-        Action selection = actionToSelect;
-        if (selection == null && myOptions.length > 0 && ensureSelection) {
-          selection = getAction();
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (popup == null || !popup.isShowing() || !myPopupIsShowing) return;
 
-        if (selection == null) return;
-        
-        final MenuElement[] elements = popup.getSubElements();
-        for (MenuElement eachElement : elements) {
-          if (eachElement instanceof JMenuItem) {
-            JMenuItem eachItem = (JMenuItem)eachElement;
-            if (selection.equals(eachItem.getAction())) {
-              final MenuSelectionManager mgr = MenuSelectionManager.defaultManager();
-              final MenuElement[] path = new MenuElement[2];
-              path[0] = popup;
-              path[1] = eachItem;
-              mgr.setSelectedPath(path);
-              break;
-            }
+      Action selection = actionToSelect;
+      if (selection == null && myOptions.length > 0 && ensureSelection) {
+        selection = getAction();
+      }
+
+      if (selection == null) return;
+
+      final MenuElement[] elements = popup.getSubElements();
+      for (MenuElement eachElement : elements) {
+        if (eachElement instanceof JMenuItem) {
+          JMenuItem eachItem = (JMenuItem)eachElement;
+          if (selection.equals(eachItem.getAction())) {
+            final MenuSelectionManager mgr = MenuSelectionManager.defaultManager();
+            final MenuElement[] path = new MenuElement[2];
+            path[0] = popup;
+            path[1] = eachItem;
+            mgr.setSelectedPath(path);
+            break;
           }
         }
       }

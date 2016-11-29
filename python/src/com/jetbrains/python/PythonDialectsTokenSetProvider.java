@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * Provides element types of various kinds for known Python dialects.
@@ -109,6 +110,7 @@ public class PythonDialectsTokenSetProvider {
     return myReferenceExpressionTokens;
   }
 
+  @TestOnly
   public static void reset() {
     INSTANCE = new PythonDialectsTokenSetProvider();
   }

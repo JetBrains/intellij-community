@@ -103,7 +103,7 @@ public class ProjectRootUtil {
   }
 
   public static PsiDirectory[] convertRoots(final FileManager fileManager, VirtualFile[] roots) {
-    ArrayList<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
+    ArrayList<PsiDirectory> dirs = new ArrayList<>();
 
     for (VirtualFile root : roots) {
       if (!root.isValid()) {

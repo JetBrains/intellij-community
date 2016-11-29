@@ -22,4 +22,10 @@ class Foo {
     if (<warning descr="Condition 'k > Integer.MAX_VALUE' is always 'false'">k > Integer.MAX_VALUE</warning>);
     if (<warning descr="Condition 'k >= Integer.MIN_VALUE' is always 'true'">k >= Integer.MIN_VALUE</warning>);
   }
+
+  void doo() {
+    for (long l = Long.MIN_VALUE; l < Long.MIN_VALUE + 10; l++) {
+      System.out.println(l);
+    }
+  }
 }

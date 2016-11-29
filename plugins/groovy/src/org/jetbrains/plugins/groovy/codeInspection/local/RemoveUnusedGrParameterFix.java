@@ -80,7 +80,7 @@ public class RemoveUnusedGrParameterFix implements IntentionAction {
   }
 
   private static GrChangeInfoImpl createChangeInfo(GrMethod method, GrParameter parameter) {
-    List<GrParameterInfo> params = new ArrayList<GrParameterInfo>();
+    List<GrParameterInfo> params = new ArrayList<>();
     int i = 0;
     for (GrParameter p : method.getParameterList().getParameters()) {
       if (p != parameter) {

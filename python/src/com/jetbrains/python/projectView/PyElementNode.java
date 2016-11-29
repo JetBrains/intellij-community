@@ -46,7 +46,7 @@ public class PyElementNode extends BasePsiNode<PyElement> {
     // for performance reasons, we don't show nested functions here
     if (value instanceof PyClass) {
       final PyClass pyClass = (PyClass)value;
-      List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      List<AbstractTreeNode> result = new ArrayList<>();
       for (PyClass aClass : pyClass.getNestedClasses()) {
         result.add(new PyElementNode(myProject, aClass, getSettings()));
       }

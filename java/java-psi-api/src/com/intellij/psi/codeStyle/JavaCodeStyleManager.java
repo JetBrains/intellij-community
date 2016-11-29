@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,9 +87,22 @@ public abstract class JavaCodeStyleManager {
    * file if an Optimize Imports operation was performed on it.
    *
    * @param file the file to calculate the import list for.
-   * @return the calculated import list.
+   * @return the calculated import list, or {@code null} when the file has no import list.
    */
   public abstract PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file);
+
+  /**
+   * Single-static-import <code>import static classFQN.referenceName;</code> shadows on-demand static imports, like described
+   * JLS 6.4.1
+   * A single-static-import declaration d in a compilation unit c of package p that imports a {member} named n
+   * shadows the declaration of any static {member} named n imported by a static-import-on-demand declaration in c, throughout c.
+   *
+   * @return true if file contains import which would be shadowed
+   *         false otherwise
+   */
+  public boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
+    return false;
+  }
 
   /**
    * Returns the kind of the specified variable (local, parameter, field, static field or static final field).

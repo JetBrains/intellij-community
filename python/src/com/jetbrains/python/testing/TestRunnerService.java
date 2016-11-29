@@ -30,7 +30,7 @@ import java.util.List;
  */
 @State(name = "TestRunnerService")
 public class TestRunnerService implements PersistentStateComponent<TestRunnerService> {
-  private List<String> myConfigurations = new ArrayList<String>();
+  private List<String> myConfigurations = new ArrayList<>();
   public String PROJECT_TEST_RUNNER = "";
 
   public TestRunnerService() {

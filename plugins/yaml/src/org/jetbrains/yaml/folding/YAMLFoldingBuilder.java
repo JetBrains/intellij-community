@@ -1,17 +1,22 @@
 package org.jetbrains.yaml.folding;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.YAMLElementTypes;
+import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
+import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
+import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl;
+import org.jetbrains.yaml.psi.impl.YAMLHashImpl;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -19,57 +24,92 @@ import java.util.List;
 /**
  * @author oleg
  */
-public class YAMLFoldingBuilder implements FoldingBuilder, DumbAware {
+public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
+
+  private static final int PLACEHOLDER_LEN = 20;
 
   @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode astNode, @NotNull Document document) {
-    List<FoldingDescriptor> descriptors = new LinkedList<FoldingDescriptor>();
-    collectDescriptors(astNode, descriptors);
+  @Override
+  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
+    List<FoldingDescriptor> descriptors = new LinkedList<>();
+    collectDescriptors(root, descriptors);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
-  private static void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<FoldingDescriptor> descriptors) {
-    final IElementType type = node.getElementType();
-    final TextRange nodeTextRange = node.getTextRange();
-    if (!StringUtil.isEmptyOrSpaces(node.getText()) && nodeTextRange.getLength() >= 2) {
-      if (type == YAMLElementTypes.KEY_VALUE_PAIR) {
-        final ASTNode valueNode = node.findChildByType(YAMLElementTypes.COMPOUND_VALUE);
-        // We should ignore empty compound values
-        if (valueNode != null && !StringUtil.isEmpty(valueNode.getText().trim())){
-          descriptors.add(new FoldingDescriptor(node, nodeTextRange));
-        }
-      }
-      if (type == YAMLElementTypes.DOCUMENT &&
-          node.getTreeParent().getChildren(TokenSet.create(YAMLElementTypes.DOCUMENT)).length > 1){
-        descriptors.add(new FoldingDescriptor(node, nodeTextRange));
-      }
-      if (type == YAMLElementTypes.SCALAR_TEXT_VALUE
-          || type == YAMLElementTypes.SCALAR_LIST_VALUE
-          || type == YAMLElementTypes.SCALAR_PLAIN_VALUE) {
-        descriptors.add(new FoldingDescriptor(node, nodeTextRange));
+  private static void collectDescriptors(@NotNull final PsiElement element, @NotNull final List<FoldingDescriptor> descriptors) {
+    final TextRange nodeTextRange = element.getTextRange();
+    if (nodeTextRange.getLength() < 2) {
+      return;
+    }
+
+    if (element instanceof YAMLDocument) {
+      if (PsiTreeUtil.findChildrenOfAnyType(element.getParent(), YAMLDocument.class).size() > 1) {
+        descriptors.add(new FoldingDescriptor(element, nodeTextRange));
       }
     }
-    for (ASTNode child : node.getChildren(null)) {
+    else if (element instanceof YAMLScalar
+             || element instanceof YAMLKeyValue && ((YAMLKeyValue)element).getValue() instanceof YAMLCompoundValue) {
+      descriptors.add(new FoldingDescriptor(element, nodeTextRange));
+    }
+
+    for (PsiElement child : element.getChildren()) {
       collectDescriptors(child, descriptors);
     }
   }
 
   @Nullable
   public String getPlaceholderText(@NotNull ASTNode node) {
-    final IElementType type = node.getElementType();
-    if (type == YAMLElementTypes.DOCUMENT){
+    return getPlaceholderText(SourceTreeToPsiMap.treeElementToPsi(node));
+  }
+
+  @NotNull
+  private static String getPlaceholderText(@Nullable PsiElement psiElement) {
+    if (psiElement instanceof YAMLDocument) {
       return "---";
     }
-    if (type == YAMLElementTypes.KEY_VALUE_PAIR){
-      return node.getFirstChildNode().getText();
+    else if (psiElement instanceof YAMLScalar) {
+      return normalizePlaceHolderText(((YAMLScalar)psiElement).getTextValue());
     }
-    if (type == YAMLElementTypes.SCALAR_TEXT_VALUE || type == YAMLElementTypes.SCALAR_LIST_VALUE) {
-      return node.getText().substring(0, 1);
+    else if (psiElement instanceof YAMLSequence) {
+      final int size = ((YAMLSequence)psiElement).getItems().size();
+      final String placeholder = size + " " + StringUtil.pluralize("item", size);
+      if (psiElement instanceof YAMLArrayImpl) {
+        return "[" + placeholder + "]";
+      }
+      else if (psiElement instanceof YAMLBlockSequenceImpl) {
+        return "<" + placeholder + ">";
+      }
+    }
+    else if (psiElement instanceof YAMLMapping) {
+      final int size = ((YAMLMapping)psiElement).getKeyValues().size();
+      final String placeholder = size + " " + StringUtil.pluralize("key", size);
+      if (psiElement instanceof YAMLHashImpl) {
+        return "{" + placeholder + "}";
+      }
+      else if (psiElement instanceof YAMLBlockMappingImpl) {
+        return "<" + placeholder + ">";
+      }
+    }
+    else if (psiElement instanceof YAMLKeyValue) {
+      return normalizePlaceHolderText(((YAMLKeyValue)psiElement).getKeyText())
+             + ": "
+             + getPlaceholderText(((YAMLKeyValue)psiElement).getValue());
     }
     return "...";
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return false;
+  }
+
+  private static String normalizePlaceHolderText(@Nullable String text) {
+    if (text == null) {
+      return null;
+    }
+
+    if (text.length() <= PLACEHOLDER_LEN) {
+      return text;
+    }
+    return StringUtil.trimMiddle(text, PLACEHOLDER_LEN);
   }
 }

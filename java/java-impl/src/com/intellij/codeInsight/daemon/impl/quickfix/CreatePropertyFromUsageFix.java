@@ -128,12 +128,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     public FieldExpression(final PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
       myField = field;
       myClass = aClass;
-      myExpectedTypes = ContainerUtil.map(expectedTypes, new Function<PsiType, SmartTypePointer>() {
-        @Override
-        public SmartTypePointer fun(PsiType type) {
-          return SmartTypePointerManager.getInstance(field.getProject()).createSmartTypePointer(type);
-        }
-      });
+      myExpectedTypes = ContainerUtil.map(expectedTypes, type -> SmartTypePointerManager.getInstance(field.getProject()).createSmartTypePointer(type));
       myDefaultFieldName = field.getName();
     }
 
@@ -149,7 +144,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
 
     @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      Set<LookupElement> set = new LinkedHashSet<>();
       set.add(JavaLookupElementBuilder.forField(myField).withTypeText(myField.getType().getPresentableText()));
       for (PsiField otherField : myClass.getFields()) {
         if (!myDefaultFieldName.equals(otherField.getName())) {
@@ -173,7 +168,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     List<PsiClass> all = super.getTargetClasses(element);
     if (all.isEmpty()) return all;
 
-    List<PsiClass> nonInterfaces = new ArrayList<PsiClass>();
+    List<PsiClass> nonInterfaces = new ArrayList<>();
     for (PsiClass aClass : all) {
       if (!aClass.isInterface()) nonInterfaces.add(aClass);
     }
@@ -272,36 +267,33 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     startTemplate(editor, template, project, new TemplateEditingAdapter() {
       @Override
       public void beforeTemplateFinished(final TemplateState state, Template template) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            String fieldName = state.getVariableValue(FIELD_VARIABLE).getText();
-            if (!PsiNameHelper.getInstance(project).isIdentifier(fieldName)) return;
-            String fieldType = state.getVariableValue(TYPE_VARIABLE).getText();
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          String fieldName1 = state.getVariableValue(FIELD_VARIABLE).getText();
+          if (!PsiNameHelper.getInstance(project).isIdentifier(fieldName1)) return;
+          String fieldType = state.getVariableValue(TYPE_VARIABLE).getText();
 
-            PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-            PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-            if (aClass == null) return;
-            PsiField field = aClass.findFieldByName(fieldName, true);
-            if (field != null){
-              CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field);
-              return;
-            }
-            PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+          PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+          PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+          if (aClass == null) return;
+          PsiField field1 = aClass.findFieldByName(fieldName1, true);
+          if (field1 != null){
+            CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field1);
+            return;
+          }
+          PsiElementFactory factory1 = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+          try {
+            PsiType type1 = factory1.createTypeFromText(fieldType, aClass);
             try {
-              PsiType type = factory.createTypeFromText(fieldType, aClass);
-              try {
-                field = factory.createField(fieldName, type);
-                field = (PsiField)aClass.add(field);
-                PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic1);
-                CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+              field1 = factory1.createField(fieldName1, type1);
+              field1 = (PsiField)aClass.add(field1);
+              PsiUtil.setModifierProperty(field1, PsiModifier.STATIC, isStatic1);
+              CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field1);
             }
             catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
+          }
+          catch (IncorrectOperationException e) {
           }
         });
       }
@@ -312,11 +304,8 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
         final int offset = editor.getCaretModel().getOffset();
         final PsiMethod generatedMethod = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
         if (generatedMethod != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              CodeStyleManager.getInstance(project).reformat(generatedMethod);
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            CodeStyleManager.getInstance(project).reformat(generatedMethod);
           });
         }
       }

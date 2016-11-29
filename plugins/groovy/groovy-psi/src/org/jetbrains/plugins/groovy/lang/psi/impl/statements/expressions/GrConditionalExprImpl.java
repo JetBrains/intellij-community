@@ -33,10 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
  * @author ilyas
  */
 public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditionalExpression {
-  private static final Function<GrConditionalExpression, PsiType> TYPE_CALCULATOR = new NullableFunction<GrConditionalExpression, PsiType>() {
-    @Override
-    @Nullable
-    public PsiType fun(GrConditionalExpression conditional) {
+  private static final Function<GrConditionalExpression, PsiType> TYPE_CALCULATOR =
+    (NullableFunction<GrConditionalExpression, PsiType>)conditional -> {
       GrExpression thenBranch = conditional.getThenBranch();
       GrExpression elseBranch = conditional.getElseBranch();
       if (thenBranch == null) {
@@ -49,8 +47,7 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
         return TypesUtil.getLeastUpperBoundNullable(thenType, elseType, conditional.getManager());
       }
       return null;
-    }
-  };
+    };
 
   public GrConditionalExprImpl(@NotNull ASTNode node) {
     super(node);

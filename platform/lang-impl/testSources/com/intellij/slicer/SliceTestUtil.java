@@ -46,7 +46,7 @@ public class SliceTestUtil {
   }
 
   public static Map<String, RangeMarker> extractSliceOffsetsFromDocument(final Document document) {
-    Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<String, RangeMarker>();
+    Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<>();
 
     extract(document, sliceUsageName2Offset, "");
     int index = document.getText().indexOf("<flown");
@@ -75,33 +75,26 @@ public class SliceTestUtil {
   }
 
   private static void extract(final Document document, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 1; i < 9; i++) {
-          String newName = name + i;
-          String s = "<flown" + newName + ">";
-          if (!document.getText().contains(s)) break;
-          int off = document.getText().indexOf(s);
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      for (int i = 1; i < 9; i++) {
+        String newName = name + i;
+        String s = "<flown" + newName + ">";
+        if (!document.getText().contains(s)) break;
+        int off = document.getText().indexOf(s);
 
-          document.deleteString(off, off + s.length());
-          RangeMarker prev = sliceUsageName2Offset.put(newName, document.createRangeMarker(off, off));
-          assertNull(prev);
+        document.deleteString(off, off + s.length());
+        RangeMarker prev = sliceUsageName2Offset.put(newName, document.createRangeMarker(off, off));
+        assertNull(prev);
 
-          extract(document, sliceUsageName2Offset, newName);
-        }
+        extract(document, sliceUsageName2Offset, newName);
       }
     });
   }
 
   public static void checkUsages(final SliceUsage usage, final TIntObjectHashMap<IntArrayList> flownOffsets) {
-    final List<SliceUsage> children = new ArrayList<SliceUsage>();
-    boolean b = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        usage.processChildren(new CommonProcessors.CollectProcessor<SliceUsage>(children));
-      }
-    }, "Expanding", true, usage.getElement().getProject());
+    final List<SliceUsage> children = new ArrayList<>();
+    boolean b = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> usage.processChildren(new CommonProcessors.CollectProcessor<>(children)), "Expanding", true, usage.getElement().getProject());
     assertTrue(b);
     int startOffset = usage.getElement().getTextOffset();
     IntArrayList list = flownOffsets.get(startOffset);
@@ -110,12 +103,7 @@ public class SliceTestUtil {
 
     int size = offsets.length;
     assertEquals(message(startOffset, usage), size, children.size());
-    Collections.sort(children, new Comparator<SliceUsage>() {
-      @Override
-      public int compare(SliceUsage o1, SliceUsage o2) {
-        return o1.compareTo(o2);
-      }
-    });
+    Collections.sort(children, (o1, o2) -> o1.compareTo(o2));
 
     for (int i = 0; i < children.size(); i++) {
       SliceUsage child = children.get(i);

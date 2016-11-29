@@ -16,10 +16,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.ImportFilter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
@@ -53,14 +53,6 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     }
 
     List<T> result = !applicableOnly && applicableList.isEmpty() ? list : applicableList;
-    for (int i = result.size() - 1; i >= 0; i--) {
-      ProgressManager.checkCanceled();
-      T method = result.get(i);
-      // check for manually excluded
-      if (StaticImportMethodFix.isExcluded(method)) {
-        result.remove(i);
-      }
-    }
     Collections.sort(result, CodeInsightUtil.createSortIdenticalNamedMembersComparator(myPlace));
     return result;
   }
@@ -87,13 +79,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      final PsiElement psiElement = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, PsiMethod.class);
-      if (psiElement instanceof PsiLambdaExpression) {
-        return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)psiElement).getFunctionalInterfaceType());
-      }
-      else if (psiElement instanceof PsiMethod) {
-        return ((PsiMethod)psiElement).getReturnType();
-      }
+      return PsiTypesUtil.getMethodReturnType(parent);
     }
     else if (parent instanceof PsiExpressionList) {
       final PsiElement pParent = parent.getParent();
@@ -129,9 +115,18 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   @Override
   public boolean process(T member) {
     ProgressManager.checkCanceled();
-    if (JavaCompletionUtil.isInExcludedPackage(member, false) || !member.hasModifierProperty(PsiModifier.STATIC)) return true;
-    PsiFile file = member.getContainingFile();
+    if (StaticImportMemberFix.isExcluded(member)) {
+      return true;
+    }
     final PsiClass containingClass = member.getContainingClass();
+    if (containingClass != null) {
+      final String qualifiedName = containingClass.getQualifiedName();
+      final PsiFile containingFile = myPlace.getContainingFile();
+      if (qualifiedName != null && containingFile != null && !ImportFilter.shouldImport(containingFile, qualifiedName)) {
+        return true;
+      }
+    }
+    PsiFile file = member.getContainingFile();
     if (file instanceof PsiJavaFile
         //do not show methods from default package
         && !((PsiJavaFile)file).getPackageName().isEmpty()) {
@@ -141,25 +136,31 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   }
 
   private boolean processCondition() {
-    return mySuggestions.size() < 50;
+    return mySuggestions.size() < 100;
   }
 
   private void registerMember(PsiClass containingClass,
                               Collection<T> members,
                               List<T> list,
                               List<T> applicableList) {
-    final Boolean alreadyMentioned = myPossibleClasses.get(containingClass);
+    Boolean alreadyMentioned = myPossibleClasses.get(containingClass);
     if (alreadyMentioned == Boolean.TRUE) return;
     if (containingClass.getQualifiedName() == null) {
       return;
     }
     if (alreadyMentioned == null) {
-      if (!members.isEmpty()) {
-        list.add(members.iterator().next());
-      }
       myPossibleClasses.put(containingClass, false);
     }
     for (T member : members) {
+      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+        continue;
+      }
+
+      if (alreadyMentioned == null) {
+        list.add(member);
+        alreadyMentioned = Boolean.FALSE;
+      }
+
       if (!PsiUtil.isAccessible(myPlace.getProject(), member, myPlace, containingClass)) {
         continue;
       }

@@ -15,47 +15,14 @@
  */
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class RunBackgroundable {
   private RunBackgroundable() {
   }
 
+  @Deprecated
   public static void run(@NotNull final Task task) {
-    final ProgressManager pm = ProgressManager.getInstance();
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      pm.run(task);
-    } else {
-      runIfBackgroundThread(task, pm.getProgressIndicator(), null);
-    }
-  }
-
-  public static void runIfBackgroundThread(final Task task, final ProgressIndicator pi, @Nullable final Runnable pooledContinuation) {
-    boolean canceled = true;
-    try {
-      task.run(pi);
-      canceled = pi != null && pi.isCanceled();
-    } catch (ProcessCanceledException e) {
-      //
-    } finally {
-      if (pooledContinuation != null) {
-        pooledContinuation.run();
-      }
-    }
-
-    final boolean finalCanceled = canceled;
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        if (finalCanceled) {
-          task.onCancel();
-        }
-        else {
-          task.onSuccess();
-        }
-      }
-    });
+    ProgressManager.getInstance().run(task);
   }
 }

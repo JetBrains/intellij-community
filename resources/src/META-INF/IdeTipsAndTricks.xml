@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <!--
     <tipAndTrick file="NotReadyYet.html"/>
@@ -125,7 +125,7 @@
     <tipAndTrick file="EditRegExp.html"/>
 
     <tipAndTrick file="Emmet.html"/>
-    <tipAndTrick file="EscapeCharactersInResourceBundle.html"/>
+    <!--<tipAndTrick file="EscapeCharactersInResourceBundle.html"/>-->
     <tipAndTrick file="LineEndings.html"/>
     <tipAndTrick file="LineEndingsFolder.html"/>
     <tipAndTrick file="RefactorThis.html"/>
@@ -160,7 +160,6 @@
     <tipAndTrick file="QuickDocInSuggestionList.html"/>
     <tipAndTrick file="TerminalOpen.html"/>
     <tipAndTrick file="PrintKeywords.html"/>
-    <!--<tipAndTrick file="ClosingTags.html"/>-->
     <tipAndTrick file="ConstructorDocs.html"/>
     <tipAndTrick file="DiffChevron.html"/>
     <tipAndTrick file="LensMode.html"/>
@@ -170,5 +169,9 @@
     <tipAndTrick file="QuickDocOnMouseMove.html"/>
     <tipAndTrick file="ScratchesView.html"/>
     <tipAndTrick file="RichTextCopy.html"/>
+    <tipAndTrick file="RemoveToolWindowButton.html"/>
+    <tipAndTrick file="GoToFile.html"/>
+    <tipAndTrick file="HippieCompletion.html"/>
+    <tipAndTrick file="ChangeSignatureAfterMovingParameters.html"/>
   </extensions>
 </idea-plugin>

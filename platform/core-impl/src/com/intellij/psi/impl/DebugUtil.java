@@ -498,7 +498,7 @@ public class DebugUtil {
   }
 
   public static String currentStackTrace() {
-    return ExceptionUtil.getThrowableText(new Throwable());
+    return ExceptionUtil.currentStackTrace();
   }
 
   public static class IncorrectTreeStructureException extends RuntimeException {
@@ -567,7 +567,7 @@ public class DebugUtil {
     }
   }
 
-  public static void onInvalidated(@NotNull PsiFile o) {
+  public static void onInvalidated(@NotNull PsiElement o) {
     Object trace = PsiInvalidElementAccessException.getInvalidationTrace(o);
     if (trace != null) return;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.WebProjectGenerator;
+import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
@@ -46,6 +45,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
+
+import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
 public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware {
   protected final DirectoryProjectGenerator myProjectGenerator;
@@ -88,6 +89,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     mainPanel.add(scrollPane, BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
+    bottomPanel.setName(BOTTOM_PANEL);
 
     bottomPanel.add(label, BorderLayout.NORTH);
     bottomPanel.add(button, BorderLayout.EAST);
@@ -123,12 +125,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-            @Override
-            public void run() {
-              myCallback.consume(ProjectSettingsStepBase.this);
-            }
-          });
+          myCallback.consume(ProjectSettingsStepBase.this);
         }
       }
     };
@@ -163,9 +160,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   protected JPanel createBasePanel() {
     final JPanel panel = new JPanel(new VerticalFlowLayout(0, 2));
     final LabeledComponent<TextFieldWithBrowseButton> component = createLocationComponent();
-    component.setLabelLocation(BorderLayout.WEST);
     panel.add(component);
-
     return panel;
   }
 
@@ -219,10 +214,16 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   protected JPanel createAndFillContentPanel() {
-    if (!(myProjectGenerator instanceof WebProjectTemplate)) return createContentPanelWithAdvancedSettingsPanel();
-
     WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper();
-    ((WebProjectTemplate)myProjectGenerator).getPeer().buildUI(settingsStep);
+    if (myProjectGenerator instanceof WebProjectTemplate) {
+      ((WebProjectTemplate)myProjectGenerator).getPeer().buildUI(settingsStep);
+    }
+    else if (myProjectGenerator instanceof TemplateProjectDirectoryGenerator) {
+      ((TemplateProjectDirectoryGenerator)myProjectGenerator).buildUI(settingsStep);
+    }
+    else {
+      return createContentPanelWithAdvancedSettingsPanel();
+    }
 
     //back compatibility: some plugins can implement only GeneratorPeer#getComponent() method
     if (settingsStep.isEmpty()) return createContentPanelWithAdvancedSettingsPanel();
@@ -257,7 +258,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   public void setWarningText(@Nullable String text) {
-    myErrorLabel.setText("Note: " + text + "  ");
+    myErrorLabel.setText("<html>Note: " + text + "  </html>");
     myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
   }
 
@@ -286,15 +287,20 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   protected final LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
     myProjectDirectory = findSequentNonExistingUntitled();
-    myLocationField.setText(myProjectDirectory.toString());
+    final String projectLocation = myProjectDirectory.toString();
+    myLocationField.setText(projectLocation);
+    final int index = projectLocation.lastIndexOf(File.separator);
+    if (index > 0) {
+      myLocationField.getTextField().select(index + 1, projectLocation.length());
+    }
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",
-                                            null, descriptor);
-    return LabeledComponent.create(myLocationField, BundleBase.replaceMnemonicAmpersand("&Location"));
+    myLocationField.addBrowseFolderListener("Select Base Directory", "Select base directory for the project", null, descriptor);
+    return LabeledComponent.create(myLocationField, BundleBase.replaceMnemonicAmpersand("&Location"), BorderLayout.WEST);
   }
 
-  private static File findSequentNonExistingUntitled() {
+  @NotNull
+  protected File findSequentNonExistingUntitled() {
     return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
   }
 }

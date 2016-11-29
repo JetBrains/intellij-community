@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -37,7 +38,6 @@ import com.intellij.psi.*;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,9 +64,9 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     }
   }
 
-  private static boolean isEnabled(AnActionEvent event) {
-    final DataContext context = event.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(context);
+  private static boolean isEnabled(AnActionEvent e) {
+    final DataContext context = e.getDataContext();
+    final Project project = e.getProject();
     if (project == null) {
       return false;
     }
@@ -133,7 +133,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     PropertiesComponent.getInstance().setValue(UPDATE_EXISTING_COPYRIGHTS, String.valueOf(myUpdateExistingCopyrightsCb.isSelected()), "true");
-    final Map<PsiFile, Runnable> preparations = new LinkedHashMap<PsiFile, Runnable>();
+    final Map<PsiFile, Runnable> preparations = new LinkedHashMap<>();
     Task.Backgroundable task = new Task.Backgroundable(project, "Prepare Copyright...", true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -160,12 +160,9 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
           final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, UpdateCopyrightProcessor.TITLE, true);
           progressTask.setMinIterationTime(200);
           progressTask.setTask(new UpdateCopyrightSequentialTask(preparations, progressTask));
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            @Override
-            public void run() {
-              CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-              ProgressManager.getInstance().run(progressTask);
-            }
+          CommandProcessor.getInstance().executeCommand(project, () -> {
+            CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+            ProgressManager.getInstance().run(progressTask);
           }, getTemplatePresentation().getText(), null);
         }
       }

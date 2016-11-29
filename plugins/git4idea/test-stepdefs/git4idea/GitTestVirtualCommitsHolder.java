@@ -27,7 +27,7 @@ import java.util.Map;
 public class GitTestVirtualCommitsHolder {
 
   // virtual hash -> commit details
-  private Map<String, CommitDetails> commits = new HashMap<String, CommitDetails>();
+  private Map<String, CommitDetails> commits = new HashMap<>();
 
   void register(String virtualHash, CommitDetails CommitInfo) {
     commits.put(virtualHash, CommitInfo);

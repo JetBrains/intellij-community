@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class TextDiffTypeFactory {
     new TextDiffTypeImpl(DiffColors.DIFF_CONFLICT, DiffBundle.message("diff.type.conflict.name"));
 
   private static final TextDiffTypeFactory ourInstance = new TextDiffTypeFactory();
-  private final List<TextDiffTypeImpl> myTypes = new ArrayList<TextDiffTypeImpl>();
+  private final List<TextDiffTypeImpl> myTypes = new ArrayList<>();
 
   private TextDiffTypeFactory() {
     ContainerUtil.addAll(myTypes, INSERTED, DELETED, MODIFIED, CONFLICT);
@@ -106,12 +107,12 @@ public class TextDiffTypeFactory {
       if (editor instanceof EditorEx) {
         Color fg = attributes.getBackgroundColor();
         Color bg = ((EditorEx)editor).getBackgroundColor();
-        return getMiddleColor(fg, bg);
+        return ColorUtil.mix(fg, bg, MIDDLE_COLOR_FACTOR);
       }
       else {
         Color fg = attributes.getBackgroundColor();
         Color bg = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-        return getMiddleColor(fg, bg);
+        return ColorUtil.mix(fg, bg, MIDDLE_COLOR_FACTOR);
       }
     }
 
@@ -136,14 +137,6 @@ public class TextDiffTypeFactory {
 
   @NotNull
   public static Color getMiddleColor(@NotNull Color fg, @NotNull Color bg) {
-    int red = avg(fg.getRed(), bg.getRed(), MIDDLE_COLOR_FACTOR);
-    int green = avg(fg.getGreen(), bg.getGreen(), MIDDLE_COLOR_FACTOR);
-    int blue = avg(fg.getBlue(), bg.getBlue(), MIDDLE_COLOR_FACTOR);
-    //noinspection UseJBColor
-    return new Color(red, green, blue);
-  }
-
-  private static int avg(int fg, int bg, double factor) {
-    return (int)(fg + Math.round(factor * (bg - fg)));
+    return ColorUtil.mix(fg, bg, MIDDLE_COLOR_FACTOR);
   }
 }

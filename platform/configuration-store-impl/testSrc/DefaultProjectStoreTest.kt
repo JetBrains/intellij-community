@@ -9,10 +9,12 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
-import com.intellij.util.deleteRecursively
-import com.intellij.util.refreshVfs
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.io.delete
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.isEmpty
+import com.intellij.util.loadElement
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.ClassRule
@@ -23,7 +25,8 @@ import java.nio.file.Paths
 internal class DefaultProjectStoreTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
 
     internal const val TEST_COMPONENT_NAME = "Foo"
 
@@ -58,7 +61,7 @@ internal class DefaultProjectStoreTest {
           app.doNotSave(isDoNotSave)
         }
         finally {
-          path.deleteRecursively()
+          path.delete()
           val virtualFile = LocalFileSystem.getInstance().findFileByPathIfCached(path.systemIndependentPath)
           runInEdtAndWait { runWriteAction { virtualFile?.delete(null) } }
         }
@@ -84,7 +87,7 @@ internal class DefaultProjectStoreTest {
   @Test fun `new project from default - directory-based storage`() {
     val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultTestComponent = TestComponent()
-    defaultTestComponent.loadState(JDOMUtil.load("""<component><main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" /></component>""".reader()))
+    defaultTestComponent.loadState(loadElement("""<component><main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" /></component>"""))
     val stateStore = defaultProject.stateStore as ComponentStoreImpl
     stateStore.initComponent(defaultTestComponent, true)
     try {
@@ -98,5 +101,14 @@ internal class DefaultProjectStoreTest {
     finally {
       stateStore.removeComponent(TEST_COMPONENT_NAME)
     }
+  }
+
+  @Test fun `new project from default - remove workspace component configuration`() {
+    val element = loadElement("""
+    <state>
+      <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
+    </state>""")
+    removeWorkspaceComponentConfiguration(ProjectManager.getInstance().defaultProject, element)
+    assertThat(element.isEmpty()).isTrue()
   }
 }

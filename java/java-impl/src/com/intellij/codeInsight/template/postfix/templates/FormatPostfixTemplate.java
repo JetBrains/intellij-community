@@ -26,15 +26,12 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 public class FormatPostfixTemplate extends StringBasedPostfixTemplate {
-  private static final Condition<PsiElement> IS_STRING = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement expr) {
-      if (!(expr instanceof PsiExpression)) {
-        return false;
-      }
-      PsiType type = ((PsiExpression)expr).getType();
-      return type != null && CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText());
+  private static final Condition<PsiElement> IS_STRING = expr -> {
+    if (!(expr instanceof PsiExpression)) {
+      return false;
     }
+    PsiType type = ((PsiExpression)expr).getType();
+    return type != null && CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText());
   };
 
 

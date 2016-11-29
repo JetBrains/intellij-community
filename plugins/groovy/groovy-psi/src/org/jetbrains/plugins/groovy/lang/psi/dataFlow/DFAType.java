@@ -72,7 +72,7 @@ public class DFAType {
 
   private final PsiType primary;
 
-  private final List<Mixin> mixins = new ArrayList<Mixin>();
+  private final List<Mixin> mixins = new ArrayList<>();
 
   private DFAType(@Nullable PsiType primary) {
     this.primary = primary;
@@ -134,7 +134,7 @@ public class DFAType {
   public PsiType getResultType() {
     if (mixins.isEmpty()) return primary;
 
-    List<PsiType> types = new ArrayList<PsiType>();
+    List<PsiType> types = new ArrayList<>();
     if (primary != null) {
       types.add(primary);
     }

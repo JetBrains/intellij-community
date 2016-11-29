@@ -16,7 +16,6 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.ResetCommand
@@ -36,8 +35,8 @@ import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.TreeFilter
-import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.settingsRepository.AuthenticationException
+import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.LOG
 import java.io.InputStream
 import java.nio.file.Path
@@ -97,7 +96,7 @@ fun createBareRepository(dir: Path): Repository {
   return repository
 }
 
-fun createRepository(dir: Path): Repository {
+fun createGitRepository(dir: Path): Repository {
   val repository = FileRepositoryBuilder().setWorkTree(dir.toFile()).build()
   repository.create()
   return repository
@@ -165,7 +164,7 @@ fun Repository.computeIndexDiff(): IndexDiff {
   }
 }
 
-fun cloneBare(uri: String, dir: Path, credentialsStore: NotNullLazyValue<CredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
+fun cloneBare(uri: String, dir: Path, credentialsStore: Lazy<IcsCredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
   val repository = createBareRepository(dir)
   val config = repository.setUpstream(uri)
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
@@ -206,19 +205,11 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
   val idHead = result.getAdvertisedRef(Constants.HEAD) ?: return null
 
   val master = result.getAdvertisedRef(Constants.R_HEADS + Constants.MASTER)
-  if (master != null && master.objectId.equals(idHead.objectId)) {
+  if (master != null && master.objectId == idHead.objectId) {
     return master
   }
 
-  for (r in result.advertisedRefs) {
-    if (!r.name.startsWith(Constants.R_HEADS)) {
-      continue
-    }
-    if (r.objectId.equals(idHead.objectId)) {
-      return r
-    }
-  }
-  return null
+  return result.advertisedRefs.firstOrNull { it.name.startsWith(Constants.R_HEADS) && it.objectId == idHead.objectId }
 }
 
 fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
@@ -250,8 +241,8 @@ fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)
           continue
         }
 
-        if (!processor(fileName, objectLoader.openStream())) {
-          break;
+        if (!objectLoader.openStream().use { processor(fileName, it) }) {
+          break
         }
       }
     }
@@ -308,7 +299,7 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
 
   override fun markSupported() = delegate.markSupported()
 
-  override fun equals(other: Any?) = delegate.equals(other)
+  override fun equals(other: Any?) = delegate == other
 
   override fun available() = delegate.available()
 
@@ -317,7 +308,7 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
       delegate.close()
     }
     finally {
-      reader.close();
+      reader.close()
     }
   }
 }
@@ -349,11 +340,7 @@ fun Repository.getAheadCommitsCount(): Int {
 
   walk.revFilter = RevFilter.ALL
 
-  var num = 0
-  for (c in walk) {
-    num++
-  }
-  return num
+  return walk.count()
 }
 
 inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {

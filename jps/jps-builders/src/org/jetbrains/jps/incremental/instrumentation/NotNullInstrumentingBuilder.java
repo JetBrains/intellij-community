@@ -19,6 +19,9 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -34,6 +37,8 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -76,15 +81,25 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
                                      ClassWriter writer,
                                      InstrumentationClassFinder finder) {
     try {
-      if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer)) {
+      final ProjectDescriptor pd = context.getProjectDescriptor();
+      final List<String> notNulls = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).getNotNullAnnotations();
+      if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer, ArrayUtil.toStringArray(notNulls))) {
         return new BinaryContent(writer.toByteArray());
       }
     }
     catch (Throwable e) {
       LOG.error(e);
-      final File sourceFile = compiledClass.getSourceFile();
-      String msg = "Cannot instrument " + sourceFile.getName() + ": " + e.getMessage();
-      context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, msg, sourceFile.getPath()));
+      final Collection<File> sourceFiles = compiledClass.getSourceFiles();
+      String msg = "Cannot instrument " + ContainerUtil.map(sourceFiles, new Function<File, String>() {
+        @Override
+        public String fun(File file) {
+          return file.getName();
+        }
+      }) + ": " + e.getMessage();
+      context.processMessage(new CompilerMessage(getPresentableName(),
+                                                 BuildMessage.Kind.ERROR,
+                                                 msg,
+                                                 ContainerUtil.getFirstItem(compiledClass.getSourceFilesPaths())));
     }
     return null;
   }

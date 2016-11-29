@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.KeyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -45,14 +44,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
 * @author Vladislav.Soroka
 * @since 10/24/13
 */
 class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
-  private final KeyValue[] myPlugins;
-  public AddGradleDslPluginActionHandler(KeyValue[] plugins) {
+  private final List<Pair<String, String>> myPlugins;
+
+  public AddGradleDslPluginActionHandler(List<Pair<String, String>> plugins) {
     myPlugins = plugins;
   }
 
@@ -63,43 +64,34 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
     final JBList list = new JBList(myPlugins);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new MyListCellRenderer());
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        final KeyValue selected = (KeyValue)list.getSelectedValue();
-        new WriteCommandAction.Simple(project, GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"), file) {
-          @Override
-          protected void run() {
-            if (selected == null) return;
-            GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
-            GrStatement grStatement = factory.createStatementFromText(
-              String.format("apply plugin: '%s'", selected.getKey()), null);
+    Runnable runnable = () -> {
+      final Pair selected = (Pair)list.getSelectedValue();
+      new WriteCommandAction.Simple(project, GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"), file) {
+        @Override
+        protected void run() {
+          if (selected == null) return;
+          GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+          GrStatement grStatement = factory.createStatementFromText(String.format("apply plugin: '%s'", selected.first), null);
 
-            PsiElement anchor = file.findElementAt(editor.getCaretModel().getOffset());
-            PsiElement currentElement = PsiTreeUtil.getParentOfType(anchor, GrClosableBlock.class, GroovyFile.class);
-            if (currentElement != null) {
-              currentElement.addAfter(grStatement, anchor);
-            }
-            else {
-              file.addAfter(grStatement, file.findElementAt(editor.getCaretModel().getOffset() - 1));
-            }
-            PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-            Document document = documentManager.getDocument(file);
-            if (document != null) {
-              documentManager.commitDocument(document);
-            }
+          PsiElement anchor = file.findElementAt(editor.getCaretModel().getOffset());
+          PsiElement currentElement = PsiTreeUtil.getParentOfType(anchor, GrClosableBlock.class, GroovyFile.class);
+          if (currentElement != null) {
+            currentElement.addAfter(grStatement, anchor);
           }
-        }.execute();
-      }
+          else {
+            file.addAfter(grStatement, file.findElementAt(editor.getCaretModel().getOffset() - 1));
+          }
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+          Document document = documentManager.getDocument(file);
+          if (document != null) {
+            documentManager.commitDocument(document);
+          }
+        }
+      }.execute();
     };
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      KeyValue descriptor = ContainerUtil.find(myPlugins, new Condition<KeyValue>() {
-        @Override
-        public boolean value(KeyValue value) {
-          return value.getKey().equals(AddGradleDslPluginAction.TEST_THREAD_LOCAL.get());
-        }
-      });
+      Pair<String, String> descriptor = ContainerUtil.find(myPlugins, value -> value.first.equals(AddGradleDslPluginAction.TEST_THREAD_LOCAL.get()));
       list.setSelectedValue(descriptor, false);
       runnable.run();
     }
@@ -107,12 +99,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
       JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setTitle(GradleBundle.message("gradle.codeInsight.action.apply_plugin.popup.title"))
         .setItemChoosenCallback(runnable)
-        .setFilteringEnabled(new Function<Object, String>() {
-          @Override
-          public String fun(Object o) {
-            return String.valueOf(((KeyValue)o).getKey());
-          }
-        })
+        .setFilteringEnabled(o -> String.valueOf(((Pair)o).first))
         .createPopup()
         .showInBestPositionFor(editor);
     }
@@ -130,7 +117,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
 
     public MyListCellRenderer() {
       myPanel = new JPanel(new BorderLayout());
-      myPanel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+      myPanel.setBorder(JBUI.Borders.emptyLeft(2));
       myNameLabel = new JLabel();
 
       myPanel.add(myNameLabel, BorderLayout.WEST);
@@ -146,15 +133,14 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-
-      KeyValue descriptor = (KeyValue)value;
+      Pair descriptor = (Pair)value;
       Color backgroundColor = isSelected ? list.getSelectionBackground() : list.getBackground();
 
-      myNameLabel.setText(String.valueOf(descriptor.getKey()));
+      myNameLabel.setText(String.valueOf(descriptor.first));
       myNameLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
       myPanel.setBackground(backgroundColor);
 
-      String description = String.format("<html><div WIDTH=%d>%s</div><html>", 400, String.valueOf(descriptor.getValue()));
+      String description = String.format("<html><div WIDTH=%d>%s</div><html>", 400, String.valueOf(descriptor.second));
       myDescLabel.setText(description);
       myDescLabel.setForeground(LookupCellRenderer.getGrayedForeground(isSelected));
       myDescLabel.setBackground(backgroundColor);

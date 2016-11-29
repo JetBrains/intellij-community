@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.text.View;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalTabbedPaneUI;
+import javax.swing.text.View;
 import java.awt.*;
 
 public class BegTabbedPaneUI extends MetalTabbedPaneUI {
@@ -41,18 +42,18 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
 
   protected Insets getContentBorderInsets(int tabPlacement) {
     if (tabPlacement == TOP && !myPaintContentBorder) {
-      return new Insets(1, 0, 0, 0);
+      return JBUI.insetsTop(1);
     }
     if (tabPlacement == BOTTOM && !myPaintContentBorder) {
-      return new Insets(0, 0, 1, 0);
+      return JBUI.insetsBottom(1);
     }
     if (tabPlacement == LEFT && !myPaintContentBorder) {
-      return new Insets(0, 1, 0, 0);
+      return JBUI.insetsLeft(1);
     }
     if (tabPlacement == RIGHT && !myPaintContentBorder) {
-      return new Insets(0, 0, 0, 1);
+      return JBUI.insetsRight(1);
     }
-    return new Insets(1, 1, 1, 1);
+    return JBUI.insets(1);
   }
 
   protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
 
   private final PsiElement myParent;
   private final ClsTypeElementImpl[] myTypeParameters;
-  private volatile PsiType[] myTypeParametersCachedTypes = null;
+  private volatile PsiType[] myTypeParametersCachedTypes;
 
   public ClsReferenceParameterListImpl(PsiElement parent, String[] classParameters) {
     myParent = parent;

@@ -53,7 +53,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
-    final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> result = new ArrayList<>();
     for (final ModuleGroup childGroup : childGroups) {
       result.add(createModuleGroupNode(childGroup));
     }
@@ -74,7 +74,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   @Override
   public Collection<VirtualFile> getRoots() {
     Collection<AbstractTreeNode> children = getChildren();
-    Set<VirtualFile> result = new HashSet<VirtualFile>();
+    Set<VirtualFile> result = new HashSet<>();
     for (AbstractTreeNode each : children) {
       if (each instanceof ProjectViewNode) {
         result.addAll(((ProjectViewNode)each).getRoots());
@@ -134,7 +134,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   }
 
   private static List<Module> extractModules(TreeNode[] sourceNodes) {
-    final List<Module> modules = new ArrayList<Module>();
+    final List<Module> modules = new ArrayList<>();
     for (TreeNode sourceNode : sourceNodes) {
       if (sourceNode instanceof DefaultMutableTreeNode) {
         final Object userObject = AbstractProjectViewPane.extractUserObject((DefaultMutableTreeNode)sourceNode);

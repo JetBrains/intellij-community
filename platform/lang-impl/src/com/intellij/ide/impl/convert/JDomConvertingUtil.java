@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,12 +78,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
   }
 
   public static Condition<Element> createAttributeValueFilter(@NonNls final String name, @NonNls final Collection<String> value) {
-    return new Condition<Element>() {
-      @Override
-      public boolean value(final Element element) {
-        return value.contains(element.getAttributeValue(name));
-      }
-    };
+    return element -> value.contains(element.getAttributeValue(name));
   }
 
   public static Condition<Element> createOptionElementFilter(@NonNls final String optionName) {
@@ -103,29 +98,24 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
   }
 
   public static void copyChildren(Element from, Element to) {
-    copyChildren(from, to, Conditions.<Element>alwaysTrue());
+    copyChildren(from, to, Conditions.alwaysTrue());
   }
 
   public static void copyChildren(Element from, Element to, Condition<Element> filter) {
     final List<Element> list = from.getChildren();
     for (Element element : list) {
       if (filter.value(element)) {
-        to.addContent((Element)element.clone());
+        to.addContent(element.clone());
       }
     }
   }
 
   public static Condition<Element> createElementNameFilter(@NonNls final String elementName) {
-    return new Condition<Element>() {
-      @Override
-      public boolean value(final Element element) {
-        return elementName.equals(element.getName());
-      }
-    };
+    return element -> elementName.equals(element.getName());
   }
 
   public static List<Element> removeChildren(final Element element, final Condition<Element> filter) {
-    List<Element> toRemove = new ArrayList<Element>();
+    List<Element> toRemove = new ArrayList<>();
     final List<Element> list = element.getChildren();
     for (Element e : list) {
       if (filter.value(e)) {
@@ -145,25 +135,6 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
     return element;
   }
 
-  public static void addChildAfter(final Element parent, final Element child, final Condition<Element> filter, boolean addFirstIfNotFound) {
-    List list = parent.getContent();
-    for (int i = 0; i < list.size(); i++) {
-      Object o = list.get(i);
-      if (o instanceof Element && filter.value((Element)o)) {
-        if (i < list.size() - 1) {
-          parent.addContent(i + 1, child);
-        }
-        else {
-          parent.addContent(child);
-        }
-        return;
-      }
-    }
-    if (addFirstIfNotFound) {
-      parent.addContent(0, child);
-    }
-  }
-
   @Nullable
   public static Element findChild(Element parent, final Condition<Element> filter) {
     final List<Element> list = parent.getChildren();
@@ -176,8 +147,8 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
   }
 
   public static void removeDuplicatedOptions(final Element element) {
-    List<Element> children = new ArrayList<Element>(element.getChildren(OPTION_ELEMENT));
-    Set<String> names = new HashSet<String>();
+    List<Element> children = new ArrayList<>(element.getChildren(OPTION_ELEMENT));
+    Set<String> names = new HashSet<>();
     for (Element child : children) {
       if (!names.add(child.getAttributeValue(NAME_ATTRIBUTE))) {
         element.removeContent(child);

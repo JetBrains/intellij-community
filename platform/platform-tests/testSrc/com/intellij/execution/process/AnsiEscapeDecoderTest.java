@@ -3,7 +3,6 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -55,16 +54,28 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     );
   }
 
-  @NotNull
-  private static List<Pair<String, String>> toListWithKeyName(@NotNull Collection<Pair<String, Key>> list) {
-    return ContainerUtil.map(list, new Function<Pair<String, Key>, Pair<String, String>>() {
-      @Override
-      public Pair<String, String> fun(Pair<String, Key> pair) {
-        return Pair.create(pair.first, pair.second.toString());
-      }
-    });
+  public void testBackspaceControlSequence() throws Exception {
+    AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
+    decoder.escapeText(" 10% 0/1 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 70% 1/1 build modules",
+                       ProcessOutputTypes.STDERR,
+                       createExpectedAcceptor(
+                         Pair.create(" 70% 1/1 build modules", ProcessOutputTypes.STDERR)
+                       )
+    );
+    decoder.escapeText("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 40% 1/2 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 30% 1/3 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 25% 1/4 build modules",
+                       ProcessOutputTypes.STDERR,
+                       createExpectedAcceptor(
+                         Pair.create("\n 25% 1/4 build modules", ProcessOutputTypes.STDERR)
+                       )
+    );
   }
 
+  @NotNull
+  private static List<Pair<String, String>> toListWithKeyName(@NotNull Collection<Pair<String, Key>> list) {
+    return ContainerUtil.map(list, pair -> Pair.create(pair.first, pair.second.toString()));
+  }
+
+  @SafeVarargs
   private static AnsiEscapeDecoder.ColoredChunksAcceptor createExpectedAcceptor(@NotNull final Pair<String, Key>... expected) {
     return new AnsiEscapeDecoder.ColoredChunksAcceptor() {
       @Override

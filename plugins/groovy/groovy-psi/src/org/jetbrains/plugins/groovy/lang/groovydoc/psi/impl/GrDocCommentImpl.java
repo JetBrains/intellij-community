@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -97,7 +99,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   @NotNull
   public GrDocTag[] findTagsByName(@NonNls String name) {
     if (!getText().contains(name)) return GrDocTag.EMPTY_ARRAY;
-    ArrayList<GrDocTag> list = new ArrayList<GrDocTag>();
+    ArrayList<GrDocTag> list = new ArrayList<>();
     for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof GrDocTag && name.equals(((GrDocTag)e).getName())) {
         list.add((GrDocTag)e);
@@ -109,7 +111,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   @Override
   @NotNull
   public PsiElement[] getDescriptionElements() {
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> array = new ArrayList<>();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       final ASTNode node = child.getNode();
       if (node == null) continue;
@@ -120,5 +122,11 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
       }
     }
     return PsiUtilCore.toPsiElementArray(array);
+  }
+
+  @NotNull
+  @Override
+  public PsiReference[] getReferences() {
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

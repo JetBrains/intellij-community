@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +16,26 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.BootstrapUtil;
-import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
@@ -79,114 +70,6 @@ public final class NettyUtil {
     }
   }
 
-  @Nullable
-  static Channel doConnect(@NotNull Bootstrap bootstrap,
-                           @NotNull InetSocketAddress remoteAddress,
-                           @Nullable AsyncPromise<?> promise,
-                           int maxAttemptCount,
-                           @NotNull Condition<Void> stopCondition) throws Throwable {
-    int attemptCount = 0;
-    if (bootstrap.group() instanceof NioEventLoopGroup) {
-      return connectNio(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition, attemptCount);
-    }
-
-    bootstrap.validate();
-
-    Socket socket;
-    while (true) {
-      try {
-        //noinspection IOResourceOpenedButNotSafelyClosed,SocketOpenedButNotSafelyClosed
-        socket = new Socket(remoteAddress.getAddress(), remoteAddress.getPort());
-        break;
-      }
-      catch (IOException e) {
-        if (stopCondition.value(null) || (promise != null && promise.getState() != Promise.State.PENDING)) {
-          return null;
-        }
-        else if (maxAttemptCount == -1) {
-          if (sleep(promise, 300)) {
-            return null;
-          }
-          attemptCount++;
-        }
-        else if (++attemptCount < maxAttemptCount) {
-          if (sleep(promise, attemptCount * MIN_START_TIME)) {
-            return null;
-          }
-        }
-        else {
-          if (promise != null) {
-            promise.setError(e);
-          }
-          return null;
-        }
-      }
-    }
-
-    OioSocketChannel channel = new OioSocketChannel(socket);
-    BootstrapUtil.initAndRegister(channel, bootstrap).sync();
-    return channel;
-  }
-
-  @Nullable
-  private static Channel connectNio(@NotNull Bootstrap bootstrap,
-                                    @NotNull InetSocketAddress remoteAddress,
-                                    @Nullable AsyncPromise<?> promise,
-                                    int maxAttemptCount,
-                                    @NotNull Condition<Void> stopCondition,
-                                    int attemptCount) {
-    while (true) {
-      ChannelFuture future = bootstrap.connect(remoteAddress).awaitUninterruptibly();
-      if (future.isSuccess()) {
-        if (!future.channel().isOpen()) {
-          continue;
-        }
-        return future.channel();
-      }
-      else if (stopCondition.value(null) || (promise != null && promise.getState() == Promise.State.REJECTED)) {
-        return null;
-      }
-      else if (maxAttemptCount == -1) {
-        if (sleep(promise, 300)) {
-          return null;
-        }
-        attemptCount++;
-      }
-      else if (++attemptCount < maxAttemptCount) {
-        if (sleep(promise, attemptCount * MIN_START_TIME)) {
-          return null;
-        }
-      }
-      else {
-        @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-        Throwable cause = future.cause();
-        if (promise != null) {
-          if (cause == null) {
-            promise.setError("Cannot connect: unknown error");
-          }
-          else {
-            promise.setError(cause);
-          }
-        }
-        return null;
-      }
-    }
-  }
-
-  private static boolean sleep(@Nullable AsyncPromise<?> promise, int time) {
-    try {
-      //noinspection BusyWait
-      Thread.sleep(time);
-    }
-    catch (InterruptedException ignored) {
-      if (promise != null) {
-        promise.setError("Interrupted");
-      }
-      return true;
-    }
-    return false;
-  }
-
   private static boolean isAsWarning(@NotNull Throwable throwable) {
     String message = throwable.getMessage();
     if (message == null) {
@@ -197,22 +80,6 @@ public final class NettyUtil {
            (throwable instanceof ChannelException && message.startsWith("Failed to bind to: ")) ||
            throwable instanceof BindException ||
            (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  @NotNull
-  public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
-    ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(NioServerSocketChannel.class);
-    bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
-    return bootstrap;
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  @NotNull
-  public static Bootstrap oioClientBootstrap() {
-    return NettyKt.oioClientBootstrap();
   }
 
   public static Bootstrap nioClientBootstrap() {
@@ -234,8 +101,9 @@ public final class NettyUtil {
     if (pipeline.get(ChunkedWriteHandler.class) == null) {
       pipeline.addLast("chunkedWriteHandler", new ChunkedWriteHandler());
     }
-    pipeline.addLast("corsHandler", new CorsHandlerDoNotUseOwnLogger(CorsConfig
-                                                                       .withAnyOrigin()
+    pipeline.addLast("corsHandler", new CorsHandlerDoNotUseOwnLogger(CorsConfigBuilder
+                                                                       .forAnyOrigin()
+                                                                       .shortCircuit()
                                                                        .allowCredentials()
                                                                        .allowNullOrigin()
                                                                        .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)

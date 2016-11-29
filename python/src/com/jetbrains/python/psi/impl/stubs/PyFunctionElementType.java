@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -40,10 +41,11 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     this("FUNCTION_DECLARATION");
   }
 
-  public PyFunctionElementType(String debugName) {
+  public PyFunctionElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyFunctionImpl(node);
   }
@@ -52,6 +54,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     return new PyFunctionImpl(stub);
   }
 
+  @NotNull
   public PyFunctionStub createStub(@NotNull final PyFunction psi, final StubElement parentStub) {
     PyFunctionImpl function = (PyFunctionImpl)psi;
     String message = function.extractDeprecationMessage();

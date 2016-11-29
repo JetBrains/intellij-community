@@ -30,7 +30,7 @@ public class ListStack<T> extends ArrayList<T> {
   }
 
   public ListStack<T> clone() {
-    ListStack<T> newstack = new ListStack<T>(this);
+    ListStack<T> newstack = new ListStack<>(this);
     newstack.pointer = this.pointer;
     return newstack;
   }

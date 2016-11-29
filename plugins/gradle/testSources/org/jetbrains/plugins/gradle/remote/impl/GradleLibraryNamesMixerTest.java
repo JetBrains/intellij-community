@@ -37,8 +37,8 @@ public class GradleLibraryNamesMixerTest {
   }
 
   private void doTest(TestDataEntry... entries) {
-    Map<LibraryData, String> expected = new IdentityHashMap<LibraryData, String>();
-    List<LibraryData> libraries = new ArrayList<LibraryData>();
+    Map<LibraryData, String> expected = new IdentityHashMap<>();
+    List<LibraryData> libraries = new ArrayList<>();
     // TODO den implement
 //    for (TestDataEntry entry : entries) {
 //      LibraryData library = new LibraryData(entry.initialName);

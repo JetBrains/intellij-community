@@ -109,7 +109,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
 
   @NotNull
   public static List<VirtualFile> findFiles(@NotNull List<String> filePaths, @Nullable String currentDirectory) throws Exception {
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    List<VirtualFile> files = new ArrayList<>();
 
     for (String path : filePaths) {
       VirtualFile virtualFile = findFile(path, currentDirectory);

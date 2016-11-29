@@ -45,7 +45,7 @@ public class JetBrainsEmitter implements Emitter {
 
   public void emit(FileManager fileManager, ModelDesc model, File outputRoot) {
     final NamespaceDesc nsdDef = model.nsdMap.get("");
-    final Set<String> simpleTypes = new TreeSet<String>();
+    final Set<String> simpleTypes = new TreeSet<>();
     for (TypeDesc td : model.jtMap.values()) {
       generateClass(fileManager, td, model, outputRoot, simpleTypes);
     }
@@ -75,7 +75,7 @@ public class JetBrainsEmitter implements Emitter {
     final File outFile = fileManager.getOutputFile(new File(outDir, toJavaFileName(typeQName)));
     PrintWriter out = null;
     try {
-      TreeSet<String> externalClasses = new TreeSet<String>();
+      TreeSet<String> externalClasses = new TreeSet<>();
       if (td.type != TypeDesc.TypeEnum.ENUM) {
         if (nsd.imports != null) {
           StringTokenizer st = new StringTokenizer(nsd.imports, ";");
@@ -232,11 +232,7 @@ public class JetBrainsEmitter implements Emitter {
       if (fields.length == 0) {
         Util.logwarn("no fields in: " + td.xsName);
       }
-      Arrays.sort(fields, new Comparator<FieldDesc>() {
-        public int compare(FieldDesc o1, FieldDesc o2) {
-          return o1.realIndex - o2.realIndex;
-        }
-      });
+      Arrays.sort(fields, (o1, o2) -> o1.realIndex - o2.realIndex);
       out.println("");
       for (FieldDesc field : fields) {
         String tagName = field.tagName;
@@ -521,7 +517,7 @@ public class JetBrainsEmitter implements Emitter {
     final Map<String, TypeDesc> jtMap = model.jtMap;
     final Map<String, NamespaceDesc> nsdMap = model.nsdMap;
     if (nsd.helperClass == null || nsd.helperClass.length() == 0) return;
-    ArrayList<TypeDesc> jtList = new ArrayList<TypeDesc>();
+    ArrayList<TypeDesc> jtList = new ArrayList<>();
     for (TypeDesc td : jtMap.values()) {
       if (td.type != TypeDesc.TypeEnum.CLASS) continue;
 //            if (!nsd.name.equals(td.xsNamespace)) {
@@ -561,12 +557,8 @@ public class JetBrainsEmitter implements Emitter {
       out.println("\tstatic {");
 
       for (TypeDesc td : jtList) {
-        ArrayList<FieldDesc> fields = new ArrayList<FieldDesc>(td.fdMap.values());
-        Collections.sort(fields, new Comparator<FieldDesc>() {
-          public int compare(FieldDesc o1, FieldDesc o2) {
-            return o1.realIndex - o2.realIndex;
-          }
-        });
+        ArrayList<FieldDesc> fields = new ArrayList<>(td.fdMap.values());
+        Collections.sort(fields, (o1, o2) -> o1.realIndex - o2.realIndex);
         int guessPriority = 0;
         FieldDesc guessedField = null;
         for (FieldDesc fd : fields) {

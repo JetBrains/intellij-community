@@ -175,14 +175,12 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     final Project project = element.getProject();
     final PsiPackage psiPackage = (PsiPackage)element;
     final String newQualifiedName = PsiUtilCore.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName);
-    return new Runnable() {
-      public void run() {
-        final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(newQualifiedName);
-        if (aPackage == null) {
-          return; //rename failed e.g. when the dir is used by another app
-        }
-        listener.elementRenamed(aPackage);
+    return () -> {
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(newQualifiedName);
+      if (aPackage == null) {
+        return; //rename failed e.g. when the dir is used by another app
       }
+      listener.elementRenamed(aPackage);
     };
   }
 

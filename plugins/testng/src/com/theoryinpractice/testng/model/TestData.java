@@ -24,6 +24,7 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
@@ -48,15 +49,16 @@ public class TestData implements Cloneable
   public String ANNOTATION_TYPE;
 
   public String ENV_VARIABLES;
-  private Map<String, String> ENVS = new LinkedHashMap<String, String>();
+  private Map<String, String> ENVS = new LinkedHashMap<>();
   public boolean PASS_PARENT_ENVS = true;
 
   public TestSearchScope.Wrapper TEST_SEARCH_SCOPE;
-  public Map<String, String> TEST_PROPERTIES = new HashMap<String, String>();
-  public List<String> TEST_LISTENERS = new ArrayList<String>();
+  public Map<String, String> TEST_PROPERTIES = new HashMap<>();
+  public List<String> TEST_LISTENERS = new ArrayList<>();
   public boolean USE_DEFAULT_REPORTERS = false;
   public String PROPERTIES_FILE;
-  private LinkedHashSet<String> myPatterns = new LinkedHashSet<String>();
+  private LinkedHashSet<String> myPatterns = new LinkedHashSet<>();
+  private String myChangeList;
 
   public TestData() {
     TEST_OBJECT = TestType.CLASS.getType();
@@ -168,15 +170,15 @@ public class TestData implements Cloneable
     }
     data.TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
 
-    data.TEST_PROPERTIES = new HashMap<String, String>();
+    data.TEST_PROPERTIES = new HashMap<>();
     data.TEST_PROPERTIES.putAll(TEST_PROPERTIES);
 
-    data.TEST_LISTENERS = new ArrayList<String>();
+    data.TEST_LISTENERS = new ArrayList<>();
     data.TEST_LISTENERS.addAll(TEST_LISTENERS);
 
     data.USE_DEFAULT_REPORTERS = USE_DEFAULT_REPORTERS;
-    data.ENVS = new LinkedHashMap<String, String>(ENVS);
-    data.myPatterns = new LinkedHashSet<String>();
+    data.ENVS = new LinkedHashMap<>(ENVS);
+    data.myPatterns = new LinkedHashSet<>();
     data.myPatterns.addAll(myPatterns);
     data.setScope(getScope());
     return data;
@@ -219,5 +221,13 @@ public class TestData implements Cloneable
 
   public void setPatterns(LinkedHashSet<String> set) {
     myPatterns = set;
+  }
+
+  public String getChangeList() {
+    return myChangeList;
+  }
+
+  public void setChangeList(String changeList) {
+    myChangeList = changeList;
   }
 }

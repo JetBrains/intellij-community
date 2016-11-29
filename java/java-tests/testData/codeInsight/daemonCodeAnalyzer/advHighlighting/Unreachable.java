@@ -1,6 +1,6 @@
 // unreachables
 import java.io.*;
-import java.net.*;
+
 public class a  {
 interface ii {}
 
@@ -135,16 +135,21 @@ interface ii {}
      int i = 6;
    }
  }
- void cf4() throws java.net.SocketException {
+ void cf4() throws SocketException {
   try {
     bind();
-  } catch (java.net.SocketException se) {
+  } catch (SocketException se) {
     throw se;
-  } catch(java.io.IOException e) {
-    throw new java.net.SocketException(e.getMessage());
+  } catch(IOException e) {
+    throw new SocketException(e.getMessage());
   }
  }
- void bind() throws java.net.SocketException {}
+ static class SocketException extends IOException {
+   public SocketException(String message) {
+     super(message);
+   }
+ }
+ void bind() throws SocketException {}
 
 
  void cf5() {
@@ -395,5 +400,92 @@ class Good3 {
   static boolean test() {
     System.out.println("1");
     return false;
+  }
+}
+
+class ContinueFromFinally {
+  void foo() {
+    while (true) {
+      try {
+        break;
+      } finally {
+        continue;
+      }
+    }
+    <error descr="Unreachable statement">System.out.println();</error>
+  }
+}
+
+class BreakFromNestedTry {
+  void foo() {
+    outer:
+    {
+      inner:
+      try {
+        try {
+          break inner;
+        } finally {
+          System.out.println();
+        }
+      } finally {
+        break outer;
+      }
+      <error descr="Unreachable statement">System.out.println();</error>
+    }
+  }
+}
+
+class BreakFromNestedFinally {
+  void foo() {
+    outer:
+    {
+      inner:
+      try {
+        try {
+        } finally {
+          break inner;
+        }
+      } finally {
+        break outer;
+      }
+      <error descr="Unreachable statement">System.out.println();</error>
+    }
+  }
+}
+
+class ContinueFromTry {
+  void foo() {
+    outer:
+    {
+      do {
+        try {
+          continue;
+        } finally {
+          break outer;
+        }
+      } while (false);
+      <error descr="Unreachable statement">System.out.println();</error>
+    }
+  }
+}
+
+class ManyExitsFromTry {
+  void f() {
+    final int i;
+    outer:
+    {
+      while (true) {
+        <error descr="Variable 'i' might be assigned in loop">i</error> = 1;
+        try {
+          if (i > 1) continue;
+          if (i > 2) break;
+          if (i > 3) break outer;
+          if (i > 4) return;
+          if (i > 5) throw new RuntimeException();
+        }
+        finally {
+        }
+      }
+    }
   }
 }

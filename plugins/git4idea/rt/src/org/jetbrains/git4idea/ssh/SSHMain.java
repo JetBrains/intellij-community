@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class SSHMain implements GitExternalApp {
   /**
    * Handler number
    */
-  private final int myHandlerNo;
+  private final String myHandlerNo;
   /**
    * the xml RPC port
    */
@@ -120,7 +120,7 @@ public class SSHMain implements GitExternalApp {
   private SSHMain(String host, String username, Integer port, String command) throws IOException {
     SSHConfig config = SSHConfig.load();
     myHost = config.lookup(username, host, port);
-    myHandlerNo = Integer.parseInt(System.getenv(GitSSHHandler.SSH_HANDLER_ENV));
+    myHandlerNo = System.getenv(GitSSHHandler.SSH_HANDLER_ENV);
     int xmlRpcPort = Integer.parseInt(System.getenv(GitSSHHandler.SSH_PORT_ENV));
     myXmlRpcClient = new GitSSHXmlRpcClient(xmlRpcPort, myHost.isBatchMode());
     myCommand = command;
@@ -206,7 +206,7 @@ public class SSHMain implements GitExternalApp {
    * @throws IOException in case of IO error or authentication failure
    */
   private void authenticate(final Connection c) throws IOException {
-    LinkedList<String> methods = new LinkedList<String>(myHost.getPreferredMethods());
+    LinkedList<String> methods = new LinkedList<>(myHost.getPreferredMethods());
     //log("authenticating... " + this);
     String lastSuccessfulMethod = myXmlRpcClient.getLastSuccessful(myHandlerNo, getUserHostString());
     //log("SSH: authentication methods: " + methods + " last successful method: " + lastSuccessfulMethod);
@@ -526,9 +526,9 @@ public class SSHMain implements GitExternalApp {
         return ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
       myPromptCount++;
-      Vector<String> vPrompts = new Vector<String>(prompt.length);
+      Vector<String> vPrompts = new Vector<>(prompt.length);
       Collections.addAll(vPrompts, prompt);
-      Vector<Boolean> vEcho = new Vector<Boolean>(prompt.length);
+      Vector<Boolean> vEcho = new Vector<>(prompt.length);
       for (boolean e : echo) {
         vEcho.add(e);
       }
@@ -609,7 +609,7 @@ public class SSHMain implements GitExternalApp {
   @Override
   public String toString() {
     return String
-      .format("SSHMain{myHost=%s, myHandlerNo=%d, myCommand='%s', myExitCode=%d, myLastError='%s'}", myHost, myHandlerNo, myCommand,
+      .format("SSHMain{myHost=%s, myHandlerNo=%s, myCommand='%s', myExitCode=%d, myLastError='%s'}", myHost, myHandlerNo, myCommand,
               myExitCode, myLastError);
   }
 

@@ -63,7 +63,7 @@ public class ModuleChooser extends CvsWizard {
   public CvsModule[] getSelectedModules() {
     CvsRepository repository = getSelectedRepository();
     CvsElement[] selectedCvsElement = mySelectCvsElementStep.getSelectedCvsElements();
-    ArrayList<CvsModule> result = new ArrayList<CvsModule>();
+    ArrayList<CvsModule> result = new ArrayList<>();
     for (CvsElement cvsElement : selectedCvsElement) {
       result.add(new CvsModule(repository, cvsElement.getElementPath(), cvsElement instanceof CvsFile));
     }

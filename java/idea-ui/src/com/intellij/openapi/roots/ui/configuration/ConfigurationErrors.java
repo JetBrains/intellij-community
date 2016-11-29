@@ -37,34 +37,24 @@ public interface ConfigurationErrors {
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {
     public static void addError(@NotNull final ConfigurationError error, @NotNull final Project project) {
-      _do(error, project, new PairProcessor<ConfigurationErrors, ConfigurationError>() {
-        @Override
-        public boolean process(final ConfigurationErrors configurationErrors, final ConfigurationError configurationError) {
-          configurationErrors.addError(configurationError);
-          return false;
-        }
+      _do(error, project, (configurationErrors, configurationError) -> {
+        configurationErrors.addError(configurationError);
+        return false;
       });
     }
 
     public static void removeError(@NotNull final ConfigurationError error, @NotNull final Project project) {
-      _do(error, project, new PairProcessor<ConfigurationErrors, ConfigurationError>() {
-        @Override
-        public boolean process(final ConfigurationErrors configurationErrors, final ConfigurationError configurationError) {
-          configurationErrors.removeError(configurationError);
-          return false;
-        }
+      _do(error, project, (configurationErrors, configurationError) -> {
+        configurationErrors.removeError(configurationError);
+        return false;
       });
     }
 
     public static void _do(@NotNull final ConfigurationError error, @NotNull final Project project,
                            @NotNull final PairProcessor<ConfigurationErrors, ConfigurationError> fun) {
       if (!project.isInitialized()) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-           @Override
-           public void run() {
-             fun.process(project.getMessageBus().syncPublisher(TOPIC), error);
-           }
-         });
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(
+          () -> fun.process(project.getMessageBus().syncPublisher(TOPIC), error));
 
         return;
       }
@@ -73,12 +63,7 @@ public interface ConfigurationErrors {
       if (EventQueue.isDispatchThread()) fun.process(bus.syncPublisher(TOPIC), error);
       else {
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            fun.process(bus.syncPublisher(TOPIC), error);
-          }
-        });
+        SwingUtilities.invokeLater(() -> fun.process(bus.syncPublisher(TOPIC), error));
       }
     }
   }

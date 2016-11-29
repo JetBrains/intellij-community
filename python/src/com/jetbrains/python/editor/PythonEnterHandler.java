@@ -107,9 +107,12 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
         comment = file.findElementAt(offset - 1);
       }
       int expectedStringStart = editor.getCaretModel().getOffset() - 3; // """ or '''
-      if (comment != null && atDocCommentStart(comment, expectedStringStart, doc)) {
-        insertDocStringStub(editor, comment);
-        return Result.Continue;
+      if (comment != null) {
+        final DocstringState state = canGenerateDocstring(comment, expectedStringStart, doc);
+        if (state != DocstringState.NONE) {
+          insertDocStringStub(editor, comment, state);
+          return Result.Continue;
+        }
       }
     }
 
@@ -259,17 +262,23 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     return wrappableBefore != wrappableAfter;
   }
 
-  private static void insertDocStringStub(Editor editor, PsiElement element) {
+  private static void insertDocStringStub(Editor editor, PsiElement element, DocstringState state) {
     PyDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
     if (docOwner != null) {
       final int caretOffset = editor.getCaretModel().getOffset();
-      final String quotes = editor.getDocument().getText(TextRange.from(caretOffset - 3, 3));
+      final Document document = editor.getDocument();
+      final String quotes = document.getText(TextRange.from(caretOffset - 3, 3));
       final String docString = PyDocstringGenerator.forDocStringOwner(docOwner)
         .withInferredParameters(true)
         .withQuotes(quotes)
         .forceNewMode()
         .buildDocString();
-      editor.getDocument().replaceString(caretOffset - 3, caretOffset, docString);
+      if (state == DocstringState.INCOMPLETE) {
+        document.insertString(caretOffset, docString.substring(3));
+      }
+      else if (state == DocstringState.EMPTY) {
+        document.replaceString(caretOffset, caretOffset + 3, docString.substring(3));
+      }
     }
   }
 
@@ -349,6 +358,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   public Result postProcessEnter(@NotNull PsiFile file,
                                  @NotNull Editor editor,
                                  @NotNull DataContext dataContext) {
+    if (!(file instanceof PyFile)) {
+      return Result.Continue;
+    }
     if (myPostprocessShift > 0) {
       editor.getCaretModel().moveCaretRelatively(myPostprocessShift, 0, false, false, false);
       myPostprocessShift = 0;
@@ -360,6 +372,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
   private static void addGoogleDocStringSectionIndent(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     final Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
     final PsiElement element = file.findElementAt(offset);
     if (element != null) {
       // Insert additional indentation after section header in Google code style docstrings
@@ -379,49 +392,61 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
   }
+  
+  enum DocstringState {
+    NONE,
+    INCOMPLETE,
+    EMPTY
+  }
 
-  public static boolean atDocCommentStart(@NotNull PsiElement element, int firstQuoteOffset, @NotNull Document document) {
+  @NotNull
+  public static DocstringState canGenerateDocstring(@NotNull PsiElement element, int firstQuoteOffset, @NotNull Document document) {
     if (firstQuoteOffset < 0 || firstQuoteOffset > document.getTextLength() - 3) {
-      return false;
+      return DocstringState.NONE;
     }
     final String quotes = document.getText(TextRange.from(firstQuoteOffset, 3));
     if (!quotes.equals("\"\"\"") && !quotes.equals("'''")) {
-      return false;
+      return DocstringState.NONE;
     }
     final PyStringLiteralExpression pyString = DocStringUtil.getParentDefinitionDocString(element);
     if (pyString != null) {
+
       String nodeText = element.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
       nodeText = nodeText.substring(prefixLength);
+
       final String literalText = pyString.getText();
       if (literalText.endsWith(nodeText) && nodeText.startsWith(quotes)) {
         if (firstQuoteOffset == pyString.getTextOffset() + prefixLength) {
           PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(pyString, PsiErrorElement.class);
-          if (error != null) {
-            return true;
+          if (error == null) {
+            error = PsiTreeUtil.getNextSiblingOfType(pyString.getParent(), PsiErrorElement.class);
           }
-          error = PsiTreeUtil.getNextSiblingOfType(pyString.getParent(), PsiErrorElement.class);
           if (error != null) {
-            return true;
+            return DocstringState.INCOMPLETE;
           }
-
+  
+          if (nodeText.equals(quotes + quotes)) {
+            return DocstringState.EMPTY;
+          }
+  
           if (nodeText.length() < 6 || !nodeText.endsWith(quotes)) {
-            return true;
+            return DocstringState.INCOMPLETE;
           }
           // Sometimes if incomplete docstring is followed by another declaration with a docstring, it might be treated
           // as complete docstring, because we can't understand that closing quotes actually belong to another docstring.
           final String docstringIndent = PyIndentUtil.getLineIndent(document, document.getLineNumber(firstQuoteOffset));
           for (String line : LineTokenizer.tokenizeIntoList(nodeText, false)) {
-            final String lineIndent = (String)PyIndentUtil.getLineIndent(line);
+            final String lineIndent = PyIndentUtil.getLineIndent(line);
             final String lineContent = line.substring(lineIndent.length());
             if ((lineContent.startsWith("def ") || lineContent.startsWith("class ")) &&
                 docstringIndent.length() > lineIndent.length() && docstringIndent.startsWith(lineIndent)) {
-              return true;
+              return DocstringState.INCOMPLETE;
             }
           }
         }
       }
     }
-    return false;
+    return DocstringState.NONE;
   }
 }

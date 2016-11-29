@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Danila Ponomarenko
  */
 public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAction {
-  private volatile boolean useElementToTheLeft = false;
+  private volatile boolean useElementToTheLeft;
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

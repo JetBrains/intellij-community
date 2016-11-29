@@ -68,7 +68,7 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
   protected abstract C createContext();
 
   public abstract static class AbstractContext {
-    protected final List<PsiElement> myElementsToExtract = new ArrayList<PsiElement>();
+    protected final List<PsiElement> myElementsToExtract = new ArrayList<>();
     protected boolean myIsEffective;
 
     public void addElementToExtract(PsiElement e) {

@@ -19,14 +19,18 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.text.MessageFormat;
@@ -52,26 +56,28 @@ public class FileTemplatesLoader {
   private final FTManager myCodeTemplatesManager;
   private final FTManager myJ2eeTemplatesManager;
 
-  private final Map<String, FTManager> myDirToManagerMap = new HashMap<String, FTManager>();
+  private final Map<String, FTManager> myDirToManagerMap = new HashMap<>();
   private final FTManager[] myAllManagers;
 
   private static final String INTERNAL_DIR = "internal";
   private static final String INCLUDES_DIR = "includes";
   private static final String CODE_TEMPLATES_DIR = "code";
   private static final String J2EE_TEMPLATES_DIR = "j2ee";
-  private static final String ROOT_DIR = ".";
   private final FileTypeManagerEx myTypeManager;
 
   private URL myDefaultTemplateDescription;
   private URL myDefaultIncludeDescription;
 
-  public FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager) {
+  protected FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
     myTypeManager = typeManager;
-    myDefaultTemplatesManager = new FTManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, ROOT_DIR);
-    myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, INTERNAL_DIR, true);
-    myPatternsManager = new FTManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, INCLUDES_DIR);
-    myCodeTemplatesManager = new FTManager(FileTemplateManager.CODE_TEMPLATES_CATEGORY, CODE_TEMPLATES_DIR);
-    myJ2eeTemplatesManager = new FTManager(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, J2EE_TEMPLATES_DIR);
+    File configDir = project == null || project.isDefault()
+                     ? new File(PathManager.getConfigPath(), TEMPLATES_DIR)
+                     : new File(ProjectKt.getStateStore(project).getDirectoryStorePath(true) + "/" + TEMPLATES_DIR);
+    myDefaultTemplatesManager = new FTManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, configDir);
+    myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, new File(configDir, INTERNAL_DIR), true);
+    myPatternsManager = new FTManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, new File(configDir, INCLUDES_DIR));
+    myCodeTemplatesManager = new FTManager(FileTemplateManager.CODE_TEMPLATES_CATEGORY, new File(configDir, CODE_TEMPLATES_DIR));
+    myJ2eeTemplatesManager = new FTManager(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, new File(configDir, J2EE_TEMPLATES_DIR));
     myAllManagers = new FTManager[]{
       myDefaultTemplatesManager,
       myInternalTemplatesManager,
@@ -86,6 +92,9 @@ public class FileTemplatesLoader {
     myDirToManagerMap.put(J2EE_TEMPLATES_DIR + "/", myJ2eeTemplatesManager);
 
     loadDefaultTemplates();
+    for (FTManager manager : myAllManagers) {
+      manager.loadCustomizedContent();
+    }
   }
 
   @NotNull
@@ -124,7 +133,7 @@ public class FileTemplatesLoader {
   }
 
   private void loadDefaultTemplates() {
-    final Set<URL> processedUrls = new HashSet<URL>();
+    final Set<URL> processedUrls = new HashSet<>();
     for (PluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
@@ -156,7 +165,7 @@ public class FileTemplatesLoader {
     if (children.isEmpty()) {
       return;
     }
-    final Set<String> descriptionPaths = new HashSet<String>();
+    final Set<String> descriptionPaths = new HashSet<>();
     for (String path : children) {
       if (path.equals("default.html")) {
         myDefaultTemplateDescription = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));

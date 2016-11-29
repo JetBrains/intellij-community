@@ -49,7 +49,7 @@ public class JavaTemplateUtil {
                                         final int segmentEnd,
                                         boolean noImport) {
     final Project project = file.getProject();
-    List<PsiClass> classes = new ArrayList<PsiClass>();
+    List<PsiClass> classes = new ArrayList<>();
     if (item instanceof PsiClass) {
       classes.add((PsiClass)item);
     }
@@ -140,14 +140,11 @@ public class JavaTemplateUtil {
       }
       if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement) parent).isQualified()) {
         final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement) parent;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              ref.bindToElement(aClass);
-            } catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            ref.bindToElement(aClass);
+          } catch (IncorrectOperationException e) {
+            LOG.error(e);
           }
         });
       }

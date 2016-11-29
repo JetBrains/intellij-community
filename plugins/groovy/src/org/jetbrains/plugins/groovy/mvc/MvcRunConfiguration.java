@@ -20,7 +20,6 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -50,7 +49,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   public String cmdLine;
   public boolean depsClasspath = true;
   protected final MvcFramework myFramework;
-  public final Map<String, String> envs = new HashMap<String, String>();
+  public final Map<String, String> envs = new HashMap<>();
   public boolean passParentEnv = true;
 
   public MvcRunConfiguration(final String name, final RunConfigurationModule configurationModule, final ConfigurationFactory factory, MvcFramework framework) {
@@ -153,7 +152,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Override
   public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    ArrayList<Module> res = new ArrayList<Module>();
+    ArrayList<Module> res = new ArrayList<>();
     for (Module module : modules) {
       if (isSupport(module)) {
         res.add(module);
@@ -164,7 +163,6 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     readModule(element);
     vmParams = JDOMExternalizer.readString(element, "vmparams");
@@ -249,7 +247,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Override
   @NotNull
   public SettingsEditor<? extends MvcRunConfiguration> getConfigurationEditor() {
-    return new MvcRunConfigurationEditor<MvcRunConfiguration>();
+    return new MvcRunConfigurationEditor<>();
   }
 
   public class MvcCommandLineState extends JavaCommandLineState {
@@ -275,7 +273,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     }
 
     protected void addEnvVars(final JavaParameters params) {
-      Map<String, String> envVars = new HashMap<String, String>(envs);
+      Map<String, String> envVars = new HashMap<>(envs);
       envVars.putAll(params.getEnv());
       
       params.setupEnvs(envVars, passParentEnv);

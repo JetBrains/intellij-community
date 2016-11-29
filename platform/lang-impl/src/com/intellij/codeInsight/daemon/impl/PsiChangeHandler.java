@@ -31,7 +31,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -43,8 +43,8 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +57,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   private /*NOT STATIC!!!*/ final Key<Boolean> UPDATE_ON_COMMIT_ENGAGED = Key.create("UPDATE_ON_COMMIT_ENGAGED");
 
   private final Project myProject;
-  private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = new THashMap<>();
+  private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = new WeakHashMap<>();
   private final FileStatusMap myFileStatusMap;
 
   PsiChangeHandler(@NotNull Project project,
@@ -103,7 +103,8 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   }
 
   private void updateChangesForDocument(@NotNull final Document document) {
-    if (DaemonListeners.isUnderIgnoredAction(null) || myProject.isDisposed()) return;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject.isDisposed()) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
     if (toUpdate == null) {
       // The document has been changed, but psi hasn't
@@ -193,6 +194,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   }
 
   private void queueElement(@NotNull PsiElement child, final boolean whitespaceOptimizationAllowed, @NotNull PsiTreeChangeEvent event) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     PsiFile file = event.getFile();
     if (file == null) file = child.getContainingFile();
     if (file == null) {
@@ -201,8 +203,16 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
     }
 
     if (!child.isValid()) return;
-    Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
+
+    PsiDocumentManagerImpl pdm = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+    Document document = pdm.getCachedDocument(file);
     if (document != null) {
+      if (pdm.getSynchronizer().getTransaction(document) == null) {
+        // content reload, language level change or some other big change
+        myFileStatusMap.markAllFilesDirty(child);
+        return;
+      }
+
       List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
       if (toUpdate == null) {
         toUpdate = new SmartList<>();
@@ -213,6 +223,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   }
 
   private void updateByChange(@NotNull PsiElement child, @NotNull final Document document, final boolean whitespaceOptimizationAllowed) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final PsiFile file;
     try {
       file = child.getContainingFile();
@@ -255,7 +266,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   }
 
   private boolean shouldBeIgnored(@NotNull VirtualFile virtualFile) {
-    return ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile) ||
+    return ProjectUtil.isProjectOrWorkspaceFile(virtualFile) ||
            ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(virtualFile);
   }
 

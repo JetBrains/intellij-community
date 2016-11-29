@@ -95,7 +95,7 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public List<ProjectStructureElementUsage> getUsagesInElement() {
-    final List<ProjectStructureElementUsage> usages = new ArrayList<ProjectStructureElementUsage>();
+    final List<ProjectStructureElementUsage> usages = new ArrayList<>();
     final ModuleEditor moduleEditor = myContext.getModulesConfigurator().getModuleEditor(myModule);
     if (moduleEditor != null) {
       for (OrderEntry entry : moduleEditor.getOrderEntries()) {

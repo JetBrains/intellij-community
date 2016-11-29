@@ -31,7 +31,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.xml.XmlElementDescriptor;
@@ -40,8 +39,8 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInTagDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxFieldIdReferenceProvider;
 
 /**
@@ -53,15 +52,12 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
   public PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
                                         final boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
+    if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlFile(XmlFile file) {
-        if (!JavaFxFileTypeFactory.isFxml(file)) return;
-        super.visitXmlFile(file);
-      }
-
-      @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
+        super.visitXmlAttribute(attribute);
         if (FxmlConstants.FX_ID.equals(attribute.getName())) {
           final XmlAttributeValue valueElement = attribute.getValueElement();
           if (valueElement != null && valueElement.getTextLength() > 0) {
@@ -98,13 +94,13 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
   private static PsiClass checkClass(XmlTag tag) {
     if (tag != null) {
       final XmlElementDescriptor descriptor = tag.getDescriptor();
-      if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
+      if (descriptor instanceof JavaFxClassTagDescriptorBase) {
         final PsiElement declaration = descriptor.getDeclaration();
         if (declaration instanceof PsiClass) {
           return (PsiClass)declaration;
         }
-      } else if (descriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
-        final XmlTag includedRoot = JavaFxDefaultPropertyElementDescriptor.getIncludedRoot(tag);
+      } else if (descriptor instanceof JavaFxBuiltInTagDescriptor) {
+        final XmlTag includedRoot = JavaFxBuiltInTagDescriptor.getIncludedRoot(tag);
         if (includedRoot != null && !includedRoot.equals(tag)) {
           return checkClass(includedRoot);
         }

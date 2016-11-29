@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public interface MoveMemberHandler {
-  LanguageExtension<MoveMemberHandler> EP_NAME = new LanguageExtension<MoveMemberHandler>("com.intellij.refactoring.moveMemberHandler");
+  LanguageExtension<MoveMemberHandler> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.moveMemberHandler");
 
   @Nullable
   MoveMembersProcessor.MoveMembersUsageInfo getUsage(@NotNull PsiMember member,
@@ -35,12 +35,21 @@ public interface MoveMemberHandler {
                                                      @NotNull Set<PsiMember> membersToMove,
                                                      @NotNull PsiClass targetClass);
 
-  void checkConflictsOnUsage(@NotNull MoveMembersProcessor.MoveMembersUsageInfo usageInfo,
-                             @Nullable String newVisibility,
-                             @Nullable PsiModifierList modifierListCopy,
-                             @NotNull PsiClass targetClass,
-                             @NotNull Set<PsiMember> membersToMove,
-                             @NotNull MultiMap<PsiElement, String> conflicts);
+  default void checkConflictsOnUsage(@NotNull MoveMembersProcessor.MoveMembersUsageInfo usageInfo,
+                                     @Nullable PsiModifierList modifierListCopy,
+                                     @NotNull PsiClass targetClass,
+                                     @NotNull Set<PsiMember> membersToMove,
+                                     MoveMembersOptions moveMembersOptions,
+                                     @NotNull MultiMap<PsiElement, String> conflicts) {
+    checkConflictsOnUsage(usageInfo, moveMembersOptions.getExplicitMemberVisibility(), modifierListCopy, targetClass, membersToMove, conflicts);
+  }
+
+  default void checkConflictsOnUsage(@NotNull MoveMembersProcessor.MoveMembersUsageInfo usageInfo,
+                                     @Nullable String newVisibility,
+                                     @Nullable PsiModifierList modifierListCopy,
+                                     @NotNull PsiClass targetClass,
+                                     @NotNull Set<PsiMember> membersToMove,
+                                     @NotNull MultiMap<PsiElement, String> conflicts) {}
 
   void checkConflictsOnMember(@NotNull PsiMember member,
                               @Nullable String newVisibility,

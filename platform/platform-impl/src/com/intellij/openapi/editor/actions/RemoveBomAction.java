@@ -103,7 +103,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
    */
   @NotNull
   private static List<VirtualFile> getFilesWithBom(@NotNull VirtualFile[] roots, boolean all) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     for (VirtualFile root : roots) {
       if (!all && !result.isEmpty()) {
         break;

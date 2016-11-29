@@ -66,11 +66,8 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
   }
 
   private static void stripTrailingSpaces() {
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      TrailingSpacesStripper.strip(getEditor().getDocument(), true, true);
     });
   }
 
@@ -177,12 +174,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     Document document = configureFromFileText("x.txt", "xxx <caret>\nyyy\n\t\t\t");
     // make any modification, so that Document and file content differ. Otherwise save won't be, and "on-save" actions won't be called.
     WriteCommandAction.runWriteCommandAction(getProject(),
-                                             new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(0, " ");
-      }
-    });
+                                             () -> document.insertString(0, " "));
 
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -222,6 +214,24 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     FileDocumentManager.getInstance().saveAllDocuments();
     assertEquals("x11\nyyy\n", editor1.getDocument().getText());
     assertEquals("x22  \nyyy\n", editor2.getDocument().getText()); // caret in the way in second but not in the first
+  }
+  
+  public void testStripTrailingSpacesAtCaretLineOnExplicitSave() {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    configureFromFileText(
+      "x.txt",
+      "xxx   <caret>\nyyy   "
+    );
+    type(' ');
+    backspace();
+    EditorTestUtil.executeAction(
+      getEditor(),
+      "SaveAll"
+    );
+    checkResultByText(
+      "xxx<caret>\nyyy"
+    );
   }
 
   @NotNull

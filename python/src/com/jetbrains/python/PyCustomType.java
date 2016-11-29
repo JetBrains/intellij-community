@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.util.*;
 public class PyCustomType implements PyClassLikeType {
 
   @NotNull
-  private final List<PyClassLikeType> myTypesToMimic = new ArrayList<PyClassLikeType>();
+  private final List<PyClassLikeType> myTypesToMimic = new ArrayList<>();
 
   @Nullable
   private final Processor<PyElement> myFilter;
@@ -108,11 +108,14 @@ public class PyCustomType implements PyClassLikeType {
                                                                 @NotNull final AccessDirection direction,
                                                                 @NotNull final PyResolveContext resolveContext,
                                                                 final boolean inherited) {
-    final List<RatedResolveResult> globalResult = new ArrayList<RatedResolveResult>();
+    final List<RatedResolveResult> globalResult = new ArrayList<>();
 
     // Delegate calls to classes, we mimic but filter if filter is set.
     for (final PyClassLikeType typeToMimic : myTypesToMimic) {
-      final List<? extends RatedResolveResult> results = typeToMimic.toInstance().resolveMember(name, location, direction, resolveContext, inherited);
+      final List<? extends RatedResolveResult> results = typeToMimic.toInstance().resolveMember(
+        name, location, direction, resolveContext, inherited
+      );
+
       if (results != null) {
         globalResult.addAll(Collections2.filter(results, new ResolveFilter()));
       }
@@ -181,17 +184,17 @@ public class PyCustomType implements PyClassLikeType {
   @NotNull
   @Override
   public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
-    final Collection<PyClassLikeType> result = new LinkedHashSet<PyClassLikeType>();
+    final Collection<PyClassLikeType> result = new LinkedHashSet<>();
     for (final PyClassLikeType type : myTypesToMimic) {
       result.addAll(type.getAncestorTypes(context));
     }
 
-    return new ArrayList<PyClassLikeType>(result);
+    return new ArrayList<>(result);
   }
 
   @Override
   public final Object[] getCompletionVariants(final String completionPrefix, final PsiElement location, final ProcessingContext context) {
-    final Collection<Object> lookupElements = new ArrayList<Object>();
+    final Collection<Object> lookupElements = new ArrayList<>();
 
     for (final PyClassLikeType parentType : myTypesToMimic) {
       lookupElements.addAll(Collections2.filter(Arrays.asList(parentType.getCompletionVariants(completionPrefix, location, context)),
@@ -204,7 +207,7 @@ public class PyCustomType implements PyClassLikeType {
   @Nullable
   @Override
   public final String getName() {
-    final Collection<String> classNames = new ArrayList<String>(myTypesToMimic.size());
+    final Collection<String> classNames = new ArrayList<>(myTypesToMimic.size());
     for (final PyClassLikeType type : myTypesToMimic) {
       String name = type.getName();
       if (name == null && (type instanceof PyClassType)) {
@@ -253,22 +256,33 @@ public class PyCustomType implements PyClassLikeType {
   }
 
   @Override
-  public final void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull final TypeEvalContext context) {
+  public final void visitMembers(@NotNull final Processor<PsiElement> processor,
+                                 final boolean inherited,
+                                 @NotNull final TypeEvalContext context) {
     for (final PyClassLikeType type : myTypesToMimic) {
       // Only visit methods that are allowed by filter (if any)
-      type.visitMembers(new Processor<PsiElement>() {
-        @Override
-        public boolean process(final PsiElement t) {
-          if (!(t instanceof PyElement)) {
-            return true;
-          }
-          if (myFilter == null || myFilter.process((PyElement)t)) {
-            return processor.process(t);
-          }
+      type.visitMembers(t -> {
+        if (!(t instanceof PyElement)) {
           return true;
         }
+        if (myFilter == null || myFilter.process((PyElement)t)) {
+          return processor.process(t);
+        }
+        return true;
       }, inherited, context);
     }
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> result = new LinkedHashSet<>();
+
+    for (PyClassLikeType type : myTypesToMimic) {
+      result.addAll(type.getMemberNames(inherited, context));
+    }
+
+    return result;
   }
 
   /**

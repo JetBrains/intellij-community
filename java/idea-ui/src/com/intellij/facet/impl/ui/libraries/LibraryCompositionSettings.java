@@ -90,7 +90,7 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   public List<? extends FrameworkLibraryVersion> getCompatibleVersions() {
-    final List<FrameworkLibraryVersion> result = new ArrayList<FrameworkLibraryVersion>();
+    final List<FrameworkLibraryVersion> result = new ArrayList<>();
     for (FrameworkLibraryVersion version : myAllVersions) {
       if (myVersionFilter.isAccepted(version)) {
         result.add(version);

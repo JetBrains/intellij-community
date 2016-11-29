@@ -18,34 +18,32 @@ package com.intellij.history.integration.patches;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
-import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.List;
 
 public class PatchCreator {
   public static void create(Project p, List<Change> changes, String filePath, boolean isReverse, CommitContext commitContext)
     throws IOException, VcsException {
-    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, p.getBaseDir().getPath(), isReverse);
-    writeFilePatches(p, filePath, patches, commitContext);
+    create(p, ObjectUtils.assertNotNull(p.getBasePath()), changes, filePath, isReverse, commitContext, Charset.defaultCharset());
   }
 
-  public static void writeFilePatches(Project p, String filePath, List<FilePatch> patches, CommitContext commitContext) throws IOException {
-    Writer writer = new OutputStreamWriter(new FileOutputStream(filePath));
-    try {
-      String lineSeparator = CodeStyleSettingsManager.getInstance(p).getCurrentSettings().getLineSeparator();
-      UnifiedDiffWriter.write(p, patches, writer, lineSeparator, commitContext);
-    }
-    finally {
-      writer.close();
-    }
+  public static void create(Project p,
+                            @NotNull String basePath,
+                            List<Change> changes,
+                            String filePath,
+                            boolean isReverse,
+                            CommitContext commitContext, Charset charset)
+    throws IOException, VcsException {
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, basePath, isReverse);
+    PatchWriter.writePatches(p, filePath, basePath, patches, commitContext, charset);
   }
 }

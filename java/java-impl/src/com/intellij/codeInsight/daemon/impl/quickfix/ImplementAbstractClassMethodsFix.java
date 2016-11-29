@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.ide.util.MemberChooser;
@@ -73,8 +72,7 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
                      @Nullable("is null when called from inspection") final Editor editor,
                      @NotNull final PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiFile containingFile = startElement.getContainingFile();
-    if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(containingFile)) return;
+    if (editor == null) return;
     PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)startElement).getClassReference();
     if (classReference == null) return;
     final PsiClass psiClass = (PsiClass)classReference.resolve();
@@ -93,7 +91,7 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
         newExpression = (PsiNewExpression)startElement.replace(newExpression);
         final PsiClass psiClass = newExpression.getAnonymousClass();
         if (psiClass == null) return;
-        Map<PsiClass, PsiSubstitutor> subst = new HashMap<PsiClass, PsiSubstitutor>();
+        Map<PsiClass, PsiSubstitutor> subst = new HashMap<>();
         for (PsiMethodMember selectedElement : selectedElements) {
           final PsiClass baseClass = selectedElement.getElement().getContainingClass();
           if (baseClass != null) {

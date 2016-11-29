@@ -32,7 +32,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.PairFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,14 +47,11 @@ public class EditorEmptyTextPainter {
     g.setFont(JBUI.Fonts.label(16f));
     UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.8f);
     advertiseActions(splitters, painter);
-    painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
-      @Override
-      public Couple<Integer> fun(Integer width, Integer height) {
-        Dimension s = splitters.getSize();
-        int w = (s.width - width) / 2;
-        int h = (int)(s.height * heightRatio());
-        return Couple.of(w, h);
-      }
+    painter.draw(g, (width, height) -> {
+      Dimension s = splitters.getSize();
+      int w = (s.width - width) / 2;
+      int h = (int)(s.height * heightRatio());
+      return Couple.of(w, h);
     });
   }
 

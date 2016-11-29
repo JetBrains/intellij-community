@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,20 @@ package com.intellij.util.graph;
 import java.util.*;
 
 /**
- *  @author dsl
+ * @author dsl
  */
-public class GraphGenerator<Node> implements Graph <Node>{
-  private final SemiGraph<Node> myGraph;
-
-  public interface SemiGraph<Node> {
-    Collection<Node> getNodes();
-    Iterator<Node> getIn(Node n);
+public class GraphGenerator<Node> implements Graph<Node> {
+  public static <T> Graph<T> generate(InboundSemiGraph<T> graph) {
+    return new GraphGenerator<T>(graph);
   }
 
+  private final InboundSemiGraph<Node> myGraph;
   private final Map<Node, Set<Node>> myOuts;
 
-  public GraphGenerator(SemiGraph<Node> graph) {
+  private GraphGenerator(InboundSemiGraph<Node> graph) {
     myGraph = graph;
     myOuts = new LinkedHashMap<Node, Set<Node>>();
     buildOuts();
-  }
-
-  public static <T> GraphGenerator<T> create(SemiGraph<T> graph) {
-    return new GraphGenerator<T>(graph);
   }
 
   private void buildOuts() {
@@ -74,4 +68,21 @@ public class GraphGenerator<Node> implements Graph <Node>{
     return myOuts.get(n).iterator();
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+  public interface SemiGraph<Node> extends InboundSemiGraph<Node> {
+    Collection<Node> getNodes();
+
+    Iterator<Node> getIn(Node n);
+  }
+
+  /** @deprecated use {@link #generate(InboundSemiGraph)} (to be removed in IDEA 2018) */
+  public GraphGenerator(SemiGraph<Node> graph) {
+    this((InboundSemiGraph<Node>)graph);
+  }
+
+  /** @deprecated use {@link #generate(InboundSemiGraph)} (to be removed in IDEA 2018) */
+  public static <T> GraphGenerator<T> create(SemiGraph<T> graph) {
+    return new GraphGenerator<T>((InboundSemiGraph<T>)graph);
+  }
+  //</editor-fold>
 }

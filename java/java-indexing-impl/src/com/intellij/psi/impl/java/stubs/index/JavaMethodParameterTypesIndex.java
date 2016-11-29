@@ -37,6 +37,11 @@ public class JavaMethodParameterTypesIndex extends StringStubIndexExtension<PsiM
     return ourInstance;
   }
 
+  @Override
+  public int getVersion() {
+    return super.getVersion() + 1;
+  }
+
   @NotNull
   @Override
   public StubIndexKey<String, PsiMethod> getKey() {

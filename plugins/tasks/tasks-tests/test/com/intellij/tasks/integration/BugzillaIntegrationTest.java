@@ -32,12 +32,7 @@ public class BugzillaIntegrationTest extends TaskManagerTestCase {
       assertEquals(TaskState.OPEN, task.getState());
 
       Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
-      List<String> stateNames = ContainerUtil.map(states, new Function<CustomTaskState, String>() {
-        @Override
-        public String fun(CustomTaskState state) {
-          return state.getPresentableName();
-        }
-      });
+      List<String> stateNames = ContainerUtil.map(states, state -> state.getPresentableName());
       assertContainsElements(stateNames, "IN_PROGRESS");
       assertDoesntContain(stateNames, "CONFIRMED");
 
@@ -45,12 +40,7 @@ public class BugzillaIntegrationTest extends TaskManagerTestCase {
       setStateAndCheckResult(task, IN_PROGRESS_STATE, TaskState.IN_PROGRESS);
 
       states = myRepository.getAvailableTaskStates(task);
-      stateNames = ContainerUtil.map(states, new Function<CustomTaskState, String>() {
-        @Override
-        public String fun(CustomTaskState state) {
-          return state.getPresentableName();
-        }
-      });
+      stateNames = ContainerUtil.map(states, state -> state.getPresentableName());
       assertContainsElements(stateNames, "CONFIRMED");
       assertDoesntContain(stateNames, "IN_PROGRESS");
     }

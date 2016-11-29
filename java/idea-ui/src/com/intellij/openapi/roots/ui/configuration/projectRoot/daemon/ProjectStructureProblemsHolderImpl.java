@@ -27,7 +27,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
   @Override
   public void registerProblem(final @NotNull ProjectStructureProblemDescription description) {
     if (myProblemDescriptions == null) {
-      myProblemDescriptions = new SmartList<ProjectStructureProblemDescription>();
+      myProblemDescriptions = new SmartList<>();
     }
     myProblemDescriptions.add(description);
   }

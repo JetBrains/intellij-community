@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import org.apache.log4j.FileAppender;
@@ -15,12 +30,20 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 public class Runner {
-  public static Logger logger = null;
-
   private static final String PATCH_FILE_NAME = "patch-file.zip";
 
-  public static void main(String[] args) throws Exception {
+  private static Logger logger = null;
+  private static boolean ourCaseSensitiveFs;
 
+  public static Logger logger() {
+    return logger;
+  }
+
+  public static boolean isCaseSensitiveFs() {
+    return ourCaseSensitiveFs;
+  }
+
+  public static void main(String[] args) throws Exception {
     String jarFile = getArgument(args, "jar");
     jarFile = jarFile == null ? resolveJarFile() : jarFile;
 
@@ -30,6 +53,8 @@ public class Runner {
       String oldFolder = args[3];
       String newFolder = args[4];
       String patchFile = args[5];
+
+      checkCaseSensitivity(newFolder);
       initLogger();
 
       // See usage for an explanation of these flags
@@ -65,20 +90,32 @@ public class Runner {
 
       create(spec);
     }
-    else if (args.length >= 2 && "install".equals(args[0])) {
+    else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0]))) {
       String destFolder = args[1];
-      initLogger();
-      logger.info("destFolder: " + destFolder);
+      checkCaseSensitivity(destFolder);
 
-      install(jarFile, destFolder);
+      initLogger();
+      logger().info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
+
+      if ("install".equals(args[0])) {
+        install(jarFile, destFolder);
+      }
+      else {
+        apply(jarFile, destFolder);
+      }
     }
     else {
       printUsage();
     }
   }
 
+  public static void checkCaseSensitivity(String path) {
+    boolean orig = new File(path).exists();
+    ourCaseSensitiveFs = orig != new File(path.toUpperCase()).exists() || orig != new File(path.toLowerCase()).exists();
+  }
+
   private static Map<String, String> buildWarningMap(List<String> warnings) {
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, String> map = new HashMap<>();
     for (String warning : warnings) {
       int ix = warning.indexOf(":");
       if (ix != -1) {
@@ -136,7 +173,7 @@ public class Runner {
   }
 
   public static void printStackTrace(Throwable e){
-    logger.error(e.getMessage(), e);
+    logger().error(e.getMessage(), e);
   }
 
   public static String getArgument(String[] args, String name) {
@@ -150,7 +187,7 @@ public class Runner {
   }
 
   public static List<String> extractArguments(String[] args, String paramName) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String param : args) {
       if (param.startsWith(paramName + "=")) {
         param = param.substring((paramName + "=").length());
@@ -203,28 +240,18 @@ public class Runner {
       File tempPatchFile = Utils.createTempFile();
       PatchFileCreator.create(spec, tempPatchFile, ui);
 
-      logger.info("Packing JAR file: " + spec.getPatchFile() );
+      logger().info("Packing JAR file: " + spec.getPatchFile() );
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
 
-      FileOutputStream fileOut = new FileOutputStream(spec.getPatchFile());
-      try {
-        ZipOutputWrapper out = new ZipOutputWrapper(fileOut);
-        ZipInputStream in = new ZipInputStream(new FileInputStream(new File(spec.getJarFile())));
-        try {
-          ZipEntry e;
-          while ((e = in.getNextEntry()) != null) {
-            out.zipEntry(e, in);
-          }
-        }
-        finally {
-          in.close();
+      try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()));
+           ZipInputStream in = new ZipInputStream(new FileInputStream(new File(spec.getJarFile())))) {
+        ZipEntry e;
+        while ((e = in.getNextEntry()) != null) {
+          out.zipEntry(e, in);
         }
 
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
-      }
-      finally {
-        fileOut.close();
       }
     }
     finally {
@@ -233,43 +260,39 @@ public class Runner {
   }
 
   private static void cleanup(UpdaterUI ui) throws IOException {
-    logger.info("Cleaning up...");
+    logger().info("Cleaning up...");
     ui.startProcess("Cleaning up...");
     ui.setProgressIndeterminate();
     Utils.cleanup();
   }
 
-  private static void install(final String jarFile, final String destFolder) throws Exception {
-    new SwingUpdaterUI(new SwingUpdaterUI.InstallOperation() {
-                         public boolean execute(UpdaterUI ui) throws OperationCancelledException {
-                           logger.info("installing patch to the " + destFolder);
-                           return doInstall(jarFile, ui, destFolder);
-                         }
-                       });
+  private static void install(String jarFile, String destFolder) throws Exception {
+    new SwingUpdaterUI(ui -> {
+      logger().info("Installing patch to the " + destFolder);
+      return doInstall(jarFile, ui, destFolder);
+    });
+  }
+
+  private static void apply(String jarFile, String destFolder) throws Exception {
+     logger().info("Applying patch to the " + destFolder);
+    final boolean success = doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
+    if (!success) {
+      System.exit(1);
+    }
   }
 
   private static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) throws OperationCancelledException {
     try {
       try {
         File patchFile = Utils.createTempFile();
-        ZipFile zipFile = new ZipFile(jarFile);
 
-        logger.info("Extracting patch file...");
+        logger().info("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
         ui.setProgressIndeterminate();
-        try {
-          InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
-          OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile));
-          try {
-            Utils.copyStream(in, out);
-          }
-          finally {
-            in.close();
-            out.close();
-          }
-        }
-        finally {
-          zipFile.close();
+        try (ZipFile zipFile = new ZipFile(jarFile);
+             InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
+             OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile))) {
+          Utils.copyStream(in, out);
         }
 
         ui.checkCancelled();

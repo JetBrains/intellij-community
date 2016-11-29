@@ -89,7 +89,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
   @NotNull
   public Object[] computeDependencies(@Nullable M model, @Nullable S scope) {
 
-    final ArrayList<Object> dependencies = new ArrayList<Object>();
+    final ArrayList<Object> dependencies = new ArrayList<>();
     dependencies.add(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     if (scope != null) {
       dependencies.add(ProjectRootManager.getInstance(getProject()));

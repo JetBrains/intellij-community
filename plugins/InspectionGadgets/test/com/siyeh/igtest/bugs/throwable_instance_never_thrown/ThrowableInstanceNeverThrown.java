@@ -5,6 +5,8 @@ import java.util.*;
 
 public class ThrowableInstanceNeverThrown {
 
+    private Throwable stop = new RuntimeException();
+
     void foo() throws Exception {
         try {
             System.out.println("");
@@ -14,7 +16,12 @@ public class ThrowableInstanceNeverThrown {
     }
 
     void bar() {
-        new RuntimeException();
+        <warning descr="Runtime exception instance 'new RuntimeException()' is not thrown">new RuntimeException()</warning>;
+    }
+
+    void suppressed() {
+      //noinspection ThrowableInstanceNeverThrown
+      new RuntimeException();
     }
 
     void throwing() throws Throwable {
@@ -31,7 +38,29 @@ public class ThrowableInstanceNeverThrown {
     }
 
     void leftBehind() throws Throwable {
-        final RuntimeException e = new RuntimeException("throw me");
+        final RuntimeException e = <warning descr="Runtime exception instance 'new RuntimeException(\"throw me\")' is not thrown">new RuntimeException("throw me")</warning>;
+    }
+
+    void saving() {
+      try {
+
+      } catch (Exception e) {
+        String message = e.getMessage();
+        if (message != null && message.length() > 1024) {
+          Exception truncated = new RuntimeException(message.substring(0, 1024) + "...");
+          truncated.setStackTrace(e.getStackTrace());
+          e = truncated;
+        }
+        System.out.println(e);
+      }
+    }
+
+    Throwable[] array() {
+      return new Throwable[] { new RuntimeException() };
+    }
+
+    void poorMansDebug() {
+      new Throwable().printStackTrace(System.out);
     }
 
     void exceptionIsCollected() {
@@ -43,6 +72,27 @@ public class ThrowableInstanceNeverThrown {
     }
 
     void methodCall(IOException e){}
+
+    void iterating() {
+        StackTraceElement[] stackTrace = new X().getStackTrace2();
+        for (StackTraceElement stackTraceElement : stackTrace) {
+            System.out.println(stackTraceElement);
+        }
+    }
+
+    private void print(String text, java.io.PrintStream ps) {
+        X asdf = new X();
+        StackTraceElement[] element = asdf.getStackTrace2();
+        StackTraceElement dumper = element[2];
+        ps.println(text + " at " + dumper.toString());
+    }
+
+    class X extends Throwable {
+      public StackTraceElement[] getStackTrace2() {
+        return null;
+      }
+    }
+    class StackTraceElement {}
 }
 
 interface I {

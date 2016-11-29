@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,14 +49,11 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       return Collections.emptyList();
     }
 
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile) file).getDecompiledPsiFile();
-    }
     if (!(file instanceof PsiClassOwner)) {
       return Collections.emptyList();
     }
 
-    final ArrayList<ReferenceData> array = new ArrayList<ReferenceData>();
+    final ArrayList<ReferenceData> array = new ArrayList<>();
     for (int j = 0; j < startOffsets.length; j++) {
       final int startOffset = startOffsets[j];
       for (final PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffsets[j])) {
@@ -121,12 +118,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       askReferencesToRestore(project, refs, referenceData);
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        restoreReferences(referenceData, refs);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> restoreReferences(referenceData, refs));
   }
 
   protected static void addReferenceData(final PsiElement element,
@@ -163,7 +155,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
                                       ReferenceData[] referenceData) {
     PsiManager manager = PsiManager.getInstance(project);
 
-    ArrayList<Object> array = new ArrayList<Object>();
+    ArrayList<Object> array = new ArrayList<>();
     Object[] refObjects = new Object[refs.length];
     for (int i = 0; i < referenceData.length; i++) {
       PsiElement ref = refs[i];
@@ -188,17 +180,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
     if (array.isEmpty()) return;
 
     Object[] selectedObjects = ArrayUtil.toObjectArray(array);
-    Arrays.sort(
-      selectedObjects,
-      new Comparator<Object>() {
-        @Override
-        public int compare(Object o1, Object o2) {
-          String fqName1 = getFQName(o1);
-          String fqName2 = getFQName(o2);
-          return fqName1.compareToIgnoreCase(fqName2);
-        }
-      }
-    );
+    Arrays.sort(selectedObjects, (o1, o2) -> getFQName(o1).compareToIgnoreCase(getFQName(o2)));
 
     RestoreReferencesDialog dialog = new RestoreReferencesDialog(project, selectedObjects);
     dialog.show();

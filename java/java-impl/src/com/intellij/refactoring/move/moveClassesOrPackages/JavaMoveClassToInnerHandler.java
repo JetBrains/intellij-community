@@ -56,17 +56,13 @@ public class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
 
   @Override
   public List<PsiElement> filterImports(@NotNull List<UsageInfo> usageInfos, @NotNull Project project) {
-    final List<PsiElement> importStatements = new ArrayList<PsiElement>();
+    final List<PsiElement> importStatements = new ArrayList<>();
     if (!CodeStyleSettingsManager.getSettings(project).INSERT_INNER_CLASS_IMPORTS) {
       filterUsagesInImportStatements(usageInfos, importStatements);
     }
     else {
       //rebind imports first
-      Collections.sort(usageInfos, new Comparator<UsageInfo>() {
-        public int compare(UsageInfo o1, UsageInfo o2) {
-          return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
-        }
-      });
+      Collections.sort(usageInfos, (o1, o2) -> PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement()));
     }
     return importStatements;
   }

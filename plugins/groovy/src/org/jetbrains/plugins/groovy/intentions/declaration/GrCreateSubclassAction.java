@@ -73,7 +73,7 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
   @Nullable
   public static PsiClass createSubclassGroovy(final GrTypeDefinition psiClass, final PsiDirectory targetDirectory, final String className) {
     final Project project = psiClass.getProject();
-    final Ref<GrTypeDefinition> targetClass = new Ref<GrTypeDefinition>();
+    final Ref<GrTypeDefinition> targetClass = new Ref<>();
 
     new WriteCommandAction(project, getTitle(psiClass), getTitle(psiClass)) {
       @Override
@@ -86,14 +86,10 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
           targetClass.set(CreateClassActionBase.createClassByType(targetDirectory, className, PsiManager.getInstance(project), psiClass, GroovyTemplates.GROOVY_CLASS, true));
         }
         catch (final IncorrectOperationException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
-                                                "\n" + e.getLocalizedMessage(),
-                                       CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(
+            () -> Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
+                                                  "\n" + e.getLocalizedMessage(),
+                                         CodeInsightBundle.message("intention.error.cannot.create.class.title")));
           return;
         }
         startTemplate(oldTypeParameterList, project, psiClass, targetClass.get(), false);

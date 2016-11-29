@@ -19,17 +19,13 @@ package com.intellij.ide.actions;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 
 public class SearchAgainAction extends AnAction implements DumbAware {
@@ -44,18 +40,15 @@ public class SearchAgainAction extends AnAction implements DumbAware {
     if (editor == null || project == null) return;
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
-        project, new Runnable() {
-        @Override
-        public void run() {
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-          FindManager findManager = FindManager.getInstance(project);
-          if(!findManager.selectNextOccurrenceWasPerformed() && findManager.findNextUsageInEditor(editor)) {
-            return;
-          }
-
-          FindUtil.searchAgain(project, editor, e.getDataContext());
+      project, () -> {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+        FindManager findManager = FindManager.getInstance(project);
+        if(!findManager.selectNextOccurrenceWasPerformed() && findManager.findNextUsageInEditor(editor)) {
+          return;
         }
+
+        FindUtil.searchAgain(project, editor, e.getDataContext());
       },
       IdeBundle.message("command.find.next"),
       null

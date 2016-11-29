@@ -149,7 +149,7 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
   }
 
   private static TIntObjectHashMap<String> fillMap(final Class<GridConstraints> aClass, @NonNls final String prefix) {
-    final TIntObjectHashMap<String> map = new TIntObjectHashMap<String>();
+    final TIntObjectHashMap<String> map = new TIntObjectHashMap<>();
 
     final Field[] fields = aClass.getFields();
     for (final Field field : fields) {

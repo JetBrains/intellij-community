@@ -52,7 +52,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     PsiElement sourceElement = TestFinderHelper.findSourceElement(selectedElement);
     if (sourceElement == null) return null;
 
-    List<AdditionalAction> actions = new SmartList<AdditionalAction>();
+    List<AdditionalAction> actions = new SmartList<>();
 
     Collection<PsiElement> candidates;
     if (TestFinderHelper.isTest(selectedElement)) {
@@ -97,18 +97,19 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
   @NotNull
   @Override
-  protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
+  protected String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
+    String suffix = finished ? "" : " so far";
     if (TestFinderHelper.isTest(sourceElement)) {
-      return CodeInsightBundle.message("goto.test.chooserTitle.subject", name, length);
+      return CodeInsightBundle.message("goto.test.chooserTitle.subject", name, length, suffix);
     }
     else {
-      return CodeInsightBundle.message("goto.test.chooserTitle.test", name, length);
+      return CodeInsightBundle.message("goto.test.chooserTitle.test", name, length, suffix);
     }
   }
 
   @NotNull
   @Override
-  protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
+  protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     if (TestFinderHelper.isTest(sourceElement)) {
       return CodeInsightBundle.message("goto.test.findUsages.subject.title", name);
     }
@@ -137,7 +138,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   }
 
   @Override
-  protected void navigateToElement(Navigatable element) {
+  protected void navigateToElement(@NotNull Navigatable element) {
     if (element instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement)element, true);
     }

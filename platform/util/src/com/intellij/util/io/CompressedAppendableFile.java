@@ -56,7 +56,7 @@ public class CompressedAppendableFile {
   private static final int myMinAppendBufferLength = 1024;
 
   public static final String INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION = ".s";
-  @SuppressWarnings("unused") private final LowMemoryWatcher myLowMemoryWatcher;
+  private final LowMemoryWatcher myLowMemoryWatcher;
 
   public CompressedAppendableFile(File file) {
     this(file, PersistentBTreeEnumerator.PAGE_SIZE);
@@ -291,7 +291,7 @@ public class CompressedAppendableFile {
 
   private synchronized void loadAppendBuffer() throws IOException {
     if (myNextChunkBuffer != null) return;
-    myNextChunkBuffer = new byte[myAppendBufferLength];
+
     File tempAppendFile = getIncompleteChunkFile();
     if (tempAppendFile.exists()) {
       myBufferPosition = (int)tempAppendFile.length();
@@ -434,6 +434,7 @@ public class CompressedAppendableFile {
   }
 
   public synchronized void dispose() {
+    myLowMemoryWatcher.stop();
     force();
   }
 

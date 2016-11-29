@@ -45,7 +45,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 
 public class AutoFormatTypedHandler extends TypedActionHandlerBase {
-  private static boolean myIsEnabledInTests = false;
+  private static boolean myIsEnabledInTests;
   
   private static char[] NO_SPACE_AFTER = { 
     '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' 

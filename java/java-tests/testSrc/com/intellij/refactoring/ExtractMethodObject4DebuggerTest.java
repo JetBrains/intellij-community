@@ -21,13 +21,11 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
@@ -165,7 +163,7 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
 
   public void testOffsetsAtCallSite() throws Exception {
     doTest("map.entrySet().stream().filter((a) -> (a.getKey()>0));",
-           "java.util.stream.Stream<Map.Entry<Integer,Integer>> result = new Test(map).invoke();",
+           "Stream<Map.Entry<Integer,Integer>> result = new Test(map).invoke();",
            "public class Test {\n" +
            "        private Map<Integer, Integer> map;\n" +
            "\n" +
@@ -313,10 +311,5 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "            return foo();\n" +
            "        }\n" +
            "    }");
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

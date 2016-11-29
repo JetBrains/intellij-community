@@ -41,8 +41,8 @@ public abstract class CloudRuntimeTask<
   private final Project myProject;
   private final String myTitle;
 
-  private final AtomicReference<Boolean> mySuccess = new AtomicReference<Boolean>();
-  private final AtomicReference<String> myErrorMessage = new AtomicReference<String>();
+  private final AtomicReference<Boolean> mySuccess = new AtomicReference<>();
+  private final AtomicReference<String> myErrorMessage = new AtomicReference<>();
 
   public CloudRuntimeTask(Project project, String title) {
     myProject = project;
@@ -65,7 +65,7 @@ public abstract class CloudRuntimeTask<
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
-    final AtomicReference<T> result = new AtomicReference<T>();
+    final AtomicReference<T> result = new AtomicReference<>();
 
     final Progressive progressive = new Progressive() {
 
@@ -75,13 +75,9 @@ public abstract class CloudRuntimeTask<
         while (!indicator.isCanceled()) {
           if (semaphore.waitFor(500)) {
             if (mySuccess.get()) {
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-
-                @Override
-                public void run() {
-                  if (disposable == null || !Disposer.isDisposed(disposable)) {
-                    postPerform(result.get());
-                  }
+              UIUtil.invokeLaterIfNeeded(() -> {
+                if (disposable == null || !Disposer.isDisposed(disposable)) {
+                  postPerform(result.get());
                 }
               });
             }
@@ -144,20 +140,16 @@ public abstract class CloudRuntimeTask<
   }
 
   protected void run(final SR serverRuntime, final Semaphore semaphore, final AtomicReference<T> result) {
-    serverRuntime.getTaskExecutor().submit(new Runnable() {
-
-      @Override
-      public void run() {
-        try {
-          result.set(CloudRuntimeTask.this.run(serverRuntime));
-          mySuccess.set(true);
-        }
-        catch (ServerRuntimeException e) {
-          runtimeErrorOccurred(e.getMessage());
-        }
-        finally {
-          semaphore.up();
-        }
+    serverRuntime.getTaskExecutor().submit(() -> {
+      try {
+        result.set(this.run(serverRuntime));
+        mySuccess.set(true);
+      }
+      catch (ServerRuntimeException e) {
+        runtimeErrorOccurred(e.getMessage());
+      }
+      finally {
+        semaphore.up();
       }
     });
   }

@@ -144,23 +144,20 @@ public class GroovyCreateClassDialog extends DialogWrapper {
   protected void doOKAction() {
     final String packageName = getPackageName();
 
-    final Ref<String> errorStringRef = new Ref<String>();
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final PsiDirectory baseDir = myModule == null ? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
-          myTargetDirectory = myModule == null ? null
-              : PackageUtil.findOrCreateDirectoryForPackage(myModule, packageName, baseDir, true);
-          if (myTargetDirectory == null) {
-            errorStringRef.set("");
-            return;
-          }
-          errorStringRef.set(RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName()));
+    final Ref<String> errorStringRef = new Ref<>();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      try {
+        final PsiDirectory baseDir = myModule == null ? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
+        myTargetDirectory = myModule == null ? null
+            : PackageUtil.findOrCreateDirectoryForPackage(myModule, packageName, baseDir, true);
+        if (myTargetDirectory == null) {
+          errorStringRef.set("");
+          return;
         }
-        catch (IncorrectOperationException e) {
-          errorStringRef.set(e.getMessage());
-        }
+        errorStringRef.set(RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName()));
+      }
+      catch (IncorrectOperationException e) {
+        errorStringRef.set(e.getMessage());
       }
     }, GroovyInspectionBundle.message("create.directory.command"), null);
 

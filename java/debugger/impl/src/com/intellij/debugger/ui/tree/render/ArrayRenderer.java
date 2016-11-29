@@ -73,14 +73,6 @@ public class ArrayRenderer extends NodeRendererImpl{
     return UNIQUE_ID;
   }
 
-  public boolean isEnabled() {
-    return myProperties.isEnabled();
-  }
-
-  public void setEnabled(boolean enabled) {
-    myProperties.setEnabled(enabled);
-  }
-
   public @NonNls String getName() {
     return "Array";
   }

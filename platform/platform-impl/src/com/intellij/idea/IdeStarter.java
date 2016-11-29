@@ -21,10 +21,10 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -42,7 +42,6 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -92,7 +91,7 @@ class IdeStarter extends ApplicationStarterEx {
   private void updateSplashScreen(ApplicationInfoEx appInfo, SplashScreen splashScreen) {
     final Graphics2D graphics = splashScreen.createGraphics();
     final Dimension size = splashScreen.getSize();
-    if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor())) {
+    if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor(), appInfo)) {
       splashScreen.update();
     }
   }
@@ -143,63 +142,47 @@ class IdeStarter extends ApplicationStarterEx {
   public void main(String[] args) {
     SystemDock.updateMenu();
 
-    // if OS has dock, RecentProjectsManager will be already created, but not all OS have dock, so, we trigger creation here to ensure that RecentProjectsManager app listener will be added
-    RecentProjectsManager.getInstance();
+      // if OS has dock, RecentProjectsManager will be already created, but not all OS have dock, so, we trigger creation here to ensure that RecentProjectsManager app listener will be added
+      RecentProjectsManager.getInstance();
 
-    // Event queue should not be changed during initialization of application components.
-    // It also cannot be changed before initialization of application components because IdeEventQueue uses other
-    // application components. So it is proper to perform replacement only here.
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
-    IdeEventQueue.getInstance().setWindowManager(windowManager);
+      // Event queue should not be changed during initialization of application components.
+      // It also cannot be changed before initialization of application components because IdeEventQueue uses other
+      // application components. So it is proper to perform replacement only here.
+      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+      IdeEventQueue.getInstance().setWindowManager(windowManager);
 
-    Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
-    AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
-    lifecyclePublisher.appFrameCreated(args, willOpenProject);
+      Ref<Boolean> willOpenProject = new Ref<>(Boolean.FALSE);
+      AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
+      lifecyclePublisher.appFrameCreated(args, willOpenProject);
 
-    IdeaApplication.LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
-    PluginManagerCore.dumpPluginClassStatistics();
+      IdeaApplication.LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
+      PluginManagerCore.dumpPluginClassStatistics();
 
-    if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
-      WelcomeFrame.showNow();
-      lifecyclePublisher.welcomeScreenDisplayed();
-    }
-    else {
-      windowManager.showFrame();
-    }
+      if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
+        WelcomeFrame.showNow();
+        lifecyclePublisher.welcomeScreenDisplayed();
+      }
+      else {
+        windowManager.showFrame();
+      }
 
-    app.invokeLater(new Runnable() {
-      @Override
-      public void run() {
+      app.invokeLater(() -> {
         if (mySplash != null) {
           mySplash.dispose();
           mySplash = null; // Allow GC collect the splash window
         }
-      }
-    }, ModalityState.NON_MODAL);
+      }, ModalityState.any());
 
-    app.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Project projectFromCommandLine = null;
-        if (myPerformProjectLoad) {
-          projectFromCommandLine = IdeaApplication.getInstance().loadProjectFromExternalCommandLine();
-        }
-
-        final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-        bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
+      TransactionGuard.submitTransaction(app, () -> {
+        Project projectFromCommandLine = myPerformProjectLoad ? IdeaApplication.getInstance().loadProjectFromExternalCommandLine() : null;
+        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            PluginManager.reportPluginError();
-          }
-        });
+        SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
         //safe for headless and unit test modes
         UsageTrigger.trigger(app.getName() + "app.started");
-      }
-    }, ModalityState.NON_MODAL);
+      });
   }
 }

@@ -29,7 +29,7 @@ public interface VcsLogFilterer {
 
   void onRefresh();
 
-  void invalidate();
+  void setValid(boolean validate);
 
   void onFiltersChange(@NotNull VcsLogFilterCollection filters);
 

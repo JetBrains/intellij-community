@@ -37,7 +37,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.util.CompositeAppearance");
 
   private Icon myIcon;
-  private final List<TextSection> mySections = new ArrayList<TextSection>();
+  private final List<TextSection> mySections = new ArrayList<>();
   private int myInsertionIndex = 0;
 
   public void customize(@NotNull SimpleColoredComponent component) {
@@ -92,7 +92,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
         return appearance.mySections.equals(mySections);
       }
       else {
-        return new ArrayList<TextSection>(appearance.mySections).equals(new ArrayList<TextSection>(mySections));
+        return new ArrayList<>(appearance.mySections).equals(new ArrayList<>(mySections));
       }
     }
   }

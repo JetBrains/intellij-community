@@ -27,7 +27,7 @@ import java.util.Arrays;
 
 public class FoldingTransformation implements Transformation {
   private final Editor myEditor;
-  private final ArrayList<FoldRegion> myCollapsed = new ArrayList<FoldRegion>();
+  private final ArrayList<FoldRegion> myCollapsed = new ArrayList<>();
   private final int[] myFoldBeginings;
 
   public FoldingTransformation(Editor editor) {

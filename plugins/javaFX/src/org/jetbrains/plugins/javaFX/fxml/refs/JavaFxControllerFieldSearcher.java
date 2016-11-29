@@ -20,8 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
@@ -45,52 +43,40 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
     if (elementToSearch instanceof PsiField) {
       final PsiField field = (PsiField)elementToSearch;
-      final PsiClass containingClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-        @Override
-        public PsiClass compute() {
-          return field.getContainingClass();
-        }
-      });
+      final PsiClass containingClass = ApplicationManager.getApplication().runReadAction(
+        (Computable<PsiClass>)() -> field.getContainingClass());
       if (containingClass != null) {
-        final String qualifiedName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return containingClass.getQualifiedName(); 
-          }
-        });
+        final String qualifiedName = ApplicationManager.getApplication().runReadAction(
+          (Computable<String>)() -> containingClass.getQualifiedName());
         if (qualifiedName != null) {
           Project project = PsiUtilCore.getProjectInReadAction(containingClass);
           final List<PsiFile> fxmlWithController =
             JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName);
           for (final PsiFile file : fxmlWithController) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                final String fieldName = field.getName();
-                final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
-                final SearchScope searchScope = queryParameters.getEffectiveSearchScope();
-                boolean contains = searchScope instanceof LocalSearchScope ? ((LocalSearchScope)searchScope).isInScope(virtualFile) :
-                                   ((GlobalSearchScope)searchScope).contains(virtualFile);
-                if (contains) {
-                  file.accept(new XmlRecursiveElementVisitor() {
-                    @Override
-                    public void visitXmlAttributeValue(final XmlAttributeValue value) {
-                      final PsiReference reference = value.getReference();
-                      if (reference != null) {
-                        final PsiElement resolve = reference.resolve();
-                        if (resolve instanceof XmlAttributeValue) {
-                          final PsiElement parent = resolve.getParent();
-                          if (parent instanceof XmlAttribute) {
-                            final XmlAttribute attribute = (XmlAttribute)parent;
-                            if (FxmlConstants.FX_ID.equals(attribute.getName()) && fieldName.equals(attribute.getValue())) {
-                              consumer.process(reference);
-                            }
+            ApplicationManager.getApplication().runReadAction(() -> {
+              final String fieldName = field.getName();
+              if (fieldName == null) return;
+              final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
+              final SearchScope searchScope = queryParameters.getEffectiveSearchScope();
+              if (searchScope.contains(virtualFile)) {
+                file.accept(new XmlRecursiveElementVisitor() {
+                  @Override
+                  public void visitXmlAttributeValue(final XmlAttributeValue value) {
+                    final PsiReference reference = value.getReference();
+                    if (reference != null) {
+                      final PsiElement resolve = reference.resolve();
+                      if (resolve instanceof XmlAttributeValue) {
+                        final PsiElement parent = resolve.getParent();
+                        if (parent instanceof XmlAttribute) {
+                          final XmlAttribute attribute = (XmlAttribute)parent;
+                          if (FxmlConstants.FX_ID.equals(attribute.getName()) && fieldName.equals(attribute.getValue())) {
+                            consumer.process(reference);
                           }
                         }
                       }
                     }
-                  });
-                }
+                  }
+                });
               }
             });
           }

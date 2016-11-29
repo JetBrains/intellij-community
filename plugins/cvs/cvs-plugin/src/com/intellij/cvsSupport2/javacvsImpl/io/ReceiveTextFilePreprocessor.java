@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor {
   private final ReceivedFileProcessor myReceivedFileProcessor;
-  private final Map<File, String> myFileToSeparator = new HashMap<File, String>();
+  private final Map<File, String> myFileToSeparator = new HashMap<>();
 
   public ReceiveTextFilePreprocessor(ReceivedFileProcessor receivedFileProcessor) {
     myReceivedFileProcessor = receivedFileProcessor;

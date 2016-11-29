@@ -16,7 +16,6 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -77,7 +76,7 @@ public class FluentIterableConversionUtil {
         PsiType myType = parameters[0];
 
         @Override
-        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
           if (!JavaGenericsUtil.isReifiableType(myType)) {
             final String chosenName = chooseName(expression, PsiType.INT);
             final PsiType arrayType;
@@ -138,15 +137,13 @@ public class FluentIterableConversionUtil {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression, TypeEvaluator typeEvaluator) {
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator typeEvaluator) {
       PsiExpression argument = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0];
 
       PsiAnonymousClass anonymousClass;
       if (argument instanceof PsiNewExpression &&
           (anonymousClass = ((PsiNewExpression)argument).getAnonymousClass()) != null) {
-        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, true)) {
-          argument = AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(argument, true, true);
-        };
+        argument = GuavaConversionUtil.convertAnonymousClass((PsiNewExpression)argument, anonymousClass, typeEvaluator);
       }
       final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(expression.getProject());
       if (argument != null && !(argument instanceof PsiFunctionalExpression)) {
@@ -159,7 +156,7 @@ public class FluentIterableConversionUtil {
         argument = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)argument, true, true);
       }
       if (argument instanceof PsiLambdaExpression) {
-        List<Pair<PsiExpression, Boolean>> iterableReturnValues = new SmartList<Pair<PsiExpression, Boolean>>();
+        List<Pair<PsiExpression, Boolean>> iterableReturnValues = new SmartList<>();
 
         final PsiElement body = ((PsiLambdaExpression)argument).getBody();
         final PsiClass collection = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_COLLECTION, expression.getResolveScope());
@@ -238,7 +235,7 @@ public class FluentIterableConversionUtil {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
       final PsiExpression argument = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0];
       final PsiExpression newArgument = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("(" + argument.getText() + ")::isInstance", argument);
       ParenthesesUtils.removeParentheses((PsiExpression)((PsiMethodReferenceExpression)newArgument).getQualifier(), false);
@@ -289,7 +286,7 @@ public class FluentIterableConversionUtil {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getProject());
       final PsiClass javaUtilCollection = facade.findClass(CommonClassNames.JAVA_UTIL_COLLECTION, expression.getResolveScope());
       LOG.assertTrue(javaUtilCollection != null);
@@ -310,7 +307,7 @@ public class FluentIterableConversionUtil {
     }
 
     @Nullable
-    private PsiType getQualifierElementType(PsiMethodCallExpression expression) {
+    private static PsiType getQualifierElementType(PsiMethodCallExpression expression) {
       final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return null;
       final PsiType type = qualifier.getType();

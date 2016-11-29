@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,113 +16,124 @@
 
 package org.jetbrains.plugins.groovy.runner;
 
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.application.options.ModulesComboBox;
+import com.intellij.execution.ui.CommonJavaParametersPanel;
+import com.intellij.execution.ui.DefaultJreSelector.SdkFromModuleDependencies;
+import com.intellij.execution.ui.JrePathEditor;
+import com.intellij.execution.util.ScriptFileUtil;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.application.options.ModulesComboBox;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.FieldPanel;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.UIUtil;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
-import java.awt.*;
+import javax.swing.event.DocumentEvent;
 
 public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> implements PanelWithAnchor {
-  private ModulesComboBox myModulesBox;
+
   private JPanel myMainPanel;
-  private RawCommandLineEditor myVMParameters;
-  private RawCommandLineEditor myParameters;
-  private JPanel scriptPathPanel;
-  private JPanel workDirPanel;
+
+  private LabeledComponent<TextFieldWithBrowseButton> myScriptPathComponent;
+  private CommonJavaParametersPanel myCommonJavaParametersPanel;
+
+  private LabeledComponent<ModulesComboBox> myModulesComboBoxComponent;
+  private JrePathEditor myJrePathEditor;
+
   private JCheckBox myDebugCB;
-  private EnvironmentVariablesComponent myEnvVariables;
-  private JBLabel myScriptParametersLabel;
-  private final JTextField scriptPathField;
-  private final JTextField workDirField;
-  private JComponent anchor;
+  private JCheckBox myAddClasspathCB;
 
-  public GroovyRunConfigurationEditor() {
+  private JComponent myAnchor;
 
-    scriptPathField = new JTextField();
-    final BrowseFilesListener scriptBrowseListener = new BrowseFilesListener(scriptPathField,
-        "Script Path",
-        "Specify path to script",
-        new FileChooserDescriptor(true, false, false, false, false, false) {
-          @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
+  public GroovyRunConfigurationEditor(@NotNull Project project) {
+    final TextFieldWithBrowseButton scriptPath = myScriptPathComponent.getComponent();
+    scriptPath.addBrowseFolderListener(
+      "Script Path", "Specify path to script", project,
+      FileChooserDescriptorFactory.createSingleFileDescriptor(GroovyFileType.GROOVY_FILE_TYPE)
+    );
+
+    final ModulesComboBox modulesComboBox = myModulesComboBoxComponent.getComponent();
+    modulesComboBox.addActionListener(e -> myCommonJavaParametersPanel.setModuleContext(modulesComboBox.getSelectedModule()));
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    Function0<Boolean> productionOnly = () -> {
+      VirtualFile script = ScriptFileUtil.findScriptFileByPath(scriptPath.getText());
+      return script != null && !fileIndex.isInTestSourceContent(script);
+    };
+    myJrePathEditor.setDefaultJreSelector(new SdkFromModuleDependencies(modulesComboBox, productionOnly) {
+      @Override
+      public void addChangeListener(@NotNull Runnable listener) {
+        super.addChangeListener(listener);
+        scriptPath.getChildComponent().getDocument().addDocumentListener(
+          new DocumentAdapter() {
+            @Override
+            protected void textChanged(DocumentEvent e) {
+              listener.run();
+            }
           }
-        });
-    final FieldPanel scriptFieldPanel = new FieldPanel(scriptPathField, null, null, scriptBrowseListener, null);
-    scriptPathPanel.setLayout(new BorderLayout());
-    scriptPathPanel.add(scriptFieldPanel, BorderLayout.CENTER);
-
-    workDirField = new JTextField();
-    final BrowseFilesListener workDirBrowseFilesListener = new BrowseFilesListener(workDirField,
-        "Working directory",
-        "Specify working directory",
-        BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-    final FieldPanel workDirFieldPanel = new FieldPanel(workDirField, null, null, workDirBrowseFilesListener, null);
-    workDirPanel.setLayout(new BorderLayout());
-    workDirPanel.add(workDirFieldPanel, BorderLayout.CENTER);
-
-    setAnchor(myEnvVariables.getLabel());
+        );
+      }
+    });
+    myAnchor = UIUtil.mergeComponentsWithAnchor(
+      myScriptPathComponent,
+      myCommonJavaParametersPanel,
+      myModulesComboBoxComponent,
+      myJrePathEditor
+    );
   }
 
   @Override
-  public void resetEditorFrom(GroovyScriptRunConfiguration configuration) {
-    myVMParameters.setDialogCaption("VM Options");
-    myVMParameters.setText(configuration.getVMParameters());
+  public void resetEditorFrom(@NotNull GroovyScriptRunConfiguration configuration) {
+    myScriptPathComponent.getComponent().setText(configuration.getScriptPath());
+    myCommonJavaParametersPanel.reset(configuration);
 
-    myParameters.setDialogCaption("Script Parameters");
-    myParameters.setText(configuration.getScriptParameters());
+    myModulesComboBoxComponent.getComponent().setModules(configuration.getValidModules());
+    myModulesComboBoxComponent.getComponent().setSelectedModule(configuration.getConfigurationModule().getModule());
+    myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
 
-    scriptPathField.setText(configuration.getScriptPath());
-    workDirField.setText(configuration.getWorkDir());
-
-    myDebugCB.setEnabled(true);
     myDebugCB.setSelected(configuration.isDebugEnabled());
-
-    myModulesBox.setModules(configuration.getValidModules());
-    myModulesBox.setSelectedModule(configuration.getModule());
-
-    myEnvVariables.setEnvs(configuration.getEnvs());
+    myAddClasspathCB.setSelected(configuration.isAddClasspathToTheRunner());
   }
 
   @Override
-  public void applyEditorTo(GroovyScriptRunConfiguration configuration) throws ConfigurationException {
-    configuration.setModule(myModulesBox.getSelectedModule());
-    configuration.setVMParameters(myVMParameters.getText());
+  public void applyEditorTo(@NotNull GroovyScriptRunConfiguration configuration) throws ConfigurationException {
+    configuration.setScriptPath(myScriptPathComponent.getComponent().getText().trim());
+    myCommonJavaParametersPanel.applyTo(configuration);
+
+    configuration.setModule(myModulesComboBoxComponent.getComponent().getSelectedModule());
+    configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
+    configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+
     configuration.setDebugEnabled(myDebugCB.isSelected());
-    configuration.setScriptParameters(myParameters.getText());
-    configuration.setScriptPath(scriptPathField.getText().trim());
-    configuration.setWorkDir(workDirField.getText().trim());
-    configuration.setEnvs(myEnvVariables.getEnvs());
+    configuration.setAddClasspathToTheRunner(myAddClasspathCB.isSelected());
   }
 
   @Override
   @NotNull
   public JComponent createEditor() {
-    myDebugCB.setEnabled(true);
-    myDebugCB.setSelected(false);
     return myMainPanel;
   }
 
   @Override
   public JComponent getAnchor() {
-    return anchor;
+    return myAnchor;
   }
 
   @Override
   public void setAnchor(JComponent anchor) {
-    this.anchor = anchor;
-    myScriptParametersLabel.setAnchor(anchor);
-    myEnvVariables.setAnchor(anchor);
+    myAnchor = anchor;
+    myScriptPathComponent.setAnchor(anchor);
+    myCommonJavaParametersPanel.setAnchor(anchor);
+    myModulesComboBoxComponent.setAnchor(anchor);
+    myJrePathEditor.setAnchor(anchor);
   }
 }

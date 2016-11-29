@@ -158,7 +158,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   private class ClasspathFormatPanel extends JPanel {
     private final JComboBox comboBoxClasspathFormat;
 
-    private final Map<String,String> formatIdToDescription = new THashMap<String, String>();
+    private final Map<String,String> formatIdToDescription = new THashMap<>();
 
     private ClasspathFormatPanel(@NotNull ClasspathStorageProvider[] providers) {
       super(new GridBagLayout());

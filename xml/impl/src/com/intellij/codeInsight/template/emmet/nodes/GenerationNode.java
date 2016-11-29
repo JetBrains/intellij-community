@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -151,7 +150,7 @@ public class GenerationNode extends UserDataHolderBase {
 
     GenerationNode generationNode = this;
     if (generationNode != this) {
-      return generationNode.generate(callback, generator, Collections.<ZenCodingFilter>emptyList(), insertSurroundedText, segmentsLimit);
+      return generationNode.generate(callback, generator, Collections.emptyList(), insertSurroundedText, segmentsLimit);
     }
 
     boolean shouldNotReformatTemplate = false;
@@ -407,7 +406,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private static void removeVariablesWhichHasNoSegment(TemplateImpl template) {
-    Set<String> segments = new HashSet<String>();
+    Set<String> segments = new HashSet<>();
     for (int i = 0; i < template.getSegmentsCount(); i++) {
       segments.add(template.getSegmentName(i));
     }
@@ -441,7 +440,7 @@ public class GenerationNode extends UserDataHolderBase {
     attributesString = attributesString.length() > 0 ? ' ' + attributesString : null;
     Map<String, String> predefinedValues = null;
     if (attributesString != null) {
-      predefinedValues = new HashMap<String, String>();
+      predefinedValues = new HashMap<>();
       predefinedValues.put(TemplateToken.ATTRS, attributesString);
     }
     return predefinedValues;
@@ -457,12 +456,8 @@ public class GenerationNode extends UserDataHolderBase {
       attributes.remove(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
 
       // exclude user defined attributes
-      final List<XmlAttribute> xmlAttributes = ContainerUtil.filter(tag.getAttributes(), new Condition<XmlAttribute>() {
-        @Override
-        public boolean value(XmlAttribute attribute) {
-          return !attributes.containsKey(attribute.getLocalName());
-        }
-      });
+      final List<XmlAttribute> xmlAttributes = ContainerUtil.filter(tag.getAttributes(),
+                                                                    attribute -> !attributes.containsKey(attribute.getLocalName()));
       XmlAttribute defaultAttribute = findDefaultAttribute(xmlAttributes);
       if (defaultAttribute == null) {
         defaultAttribute = findImpliedAttribute(xmlAttributes);
@@ -529,7 +524,7 @@ public class GenerationNode extends UserDataHolderBase {
     // remove all implicit and default attributes
     for (XmlAttribute xmlAttribute : tag.getAttributes()) {
       final String xmlAttributeLocalName = xmlAttribute.getLocalName();
-      if (isImpliedAttribute(xmlAttributeLocalName) || isDefaultAttribute(xmlAttributeLocalName)) {
+      if (xmlAttribute.getValue() != null && (isImpliedAttribute(xmlAttributeLocalName) || isDefaultAttribute(xmlAttributeLocalName))) {
         xmlAttribute.delete();
       }
     }
@@ -557,13 +552,13 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private static boolean isEmptyValue(String attributeValue) {
-    return StringUtil.isEmpty(attributeValue) || ATTRIBUTE_VARIABLE_PATTERN.matcher(attributeValue).matches();
+    return attributeValue != null && (attributeValue.isEmpty() || ATTRIBUTE_VARIABLE_PATTERN.matcher(attributeValue).matches());
   }
 
   @Nullable
   private static XmlAttribute findDefaultAttribute(@NotNull List<XmlAttribute> attributes) {
     for (XmlAttribute attribute : attributes) {
-      if (isDefaultAttribute(attribute.getLocalName())) {
+      if (attribute.getValueElement() != null && isDefaultAttribute(attribute.getLocalName())) {
         return attribute;
       }
     }
@@ -573,7 +568,7 @@ public class GenerationNode extends UserDataHolderBase {
   @Nullable
   private static XmlAttribute findImpliedAttribute(@NotNull List<XmlAttribute> attributes) {
     for (XmlAttribute attribute : attributes) {
-      if (isImpliedAttribute(attribute.getLocalName())) {
+      if (attribute.getValueElement() != null && isImpliedAttribute(attribute.getLocalName())) {
         return attribute;
       }
     }

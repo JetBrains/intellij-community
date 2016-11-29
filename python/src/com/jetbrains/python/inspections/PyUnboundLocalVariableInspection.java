@@ -60,7 +60,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
-    session.putUserData(LARGE_FUNCTIONS_KEY, new HashSet<ScopeOwner>());
+    session.putUserData(LARGE_FUNCTIONS_KEY, new HashSet<>());
     return new Visitor(holder, session);
   }
 
@@ -169,31 +169,28 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         return true;
       }
       final Ref<Boolean> first = Ref.create(true);
-      ControlFlowUtil.iteratePrev(num, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
-        @Override
-        public ControlFlowUtil.Operation fun(Instruction instruction) {
-          if (instruction instanceof ReadWriteInstruction) {
-            final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
-            final String name = rwInstruction.getName();
-            final PsiElement element = rwInstruction.getElement();
-            if (element != null && name != null && name.equals(nodeName) && instruction.num() != num) {
-              try {
-                if (scope.getDeclaredVariable(element, name) == null) {
-                  final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                  if (access.isReadAccess()) {
-                    first.set(false);
-                    return ControlFlowUtil.Operation.BREAK;
-                  }
+      ControlFlowUtil.iteratePrev(num, instructions, instruction -> {
+        if (instruction instanceof ReadWriteInstruction) {
+          final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+          final String name = rwInstruction.getName();
+          final PsiElement element = rwInstruction.getElement();
+          if (element != null && name != null && name.equals(nodeName) && instruction.num() != num) {
+            try {
+              if (scope.getDeclaredVariable(element, name) == null) {
+                final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
+                if (access.isReadAccess()) {
+                  first.set(false);
+                  return ControlFlowUtil.Operation.BREAK;
                 }
               }
-              catch (DFALimitExceededException e) {
-                first.set(false);
-              }
-              return ControlFlowUtil.Operation.CONTINUE;
             }
+            catch (DFALimitExceededException e) {
+              first.set(false);
+            }
+            return ControlFlowUtil.Operation.CONTINUE;
           }
-          return ControlFlowUtil.Operation.NEXT;
         }
+        return ControlFlowUtil.Operation.NEXT;
       });
       return first.get();
     }

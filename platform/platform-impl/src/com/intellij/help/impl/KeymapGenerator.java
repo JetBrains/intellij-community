@@ -59,7 +59,7 @@ public class KeymapGenerator implements ApplicationStarter {
         if (!StringUtil.isEmpty(shortcuts)) {
           AnAction action = actionManager.getAction(id);
           xml.append("    <Action id=\"").append(id).append("\">\n");
-          Set<String> addedShortcuts = new THashSet<String>();
+          Set<String> addedShortcuts = new THashSet<>();
           for (Shortcut shortcut : keymap.getShortcuts(id)) {
             // Different shortcuts may have equal display strings (e.g. shift+minus and shift+subtract)
             // We don't want them do be duplicated for users

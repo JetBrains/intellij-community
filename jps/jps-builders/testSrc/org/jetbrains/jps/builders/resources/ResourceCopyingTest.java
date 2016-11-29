@@ -41,17 +41,17 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
   public void testSimple() {
     String file = createFile("src/a.xml");
     JpsModule m = addModule("m", PathUtil.getParentPath(file));
-    rebuildAll();
+    rebuildAllModules();
     assertOutput(m, fs().file("a.xml"));
   }
 
   public void testCaseChange() {
     String file = createFile("src/a.xml");
     JpsModule m = addModule("m", PathUtil.getParentPath(file));
-    rebuildAll();
+    rebuildAllModules();
     assertOutput(m, fs().file("a.xml"));
     rename(file, "A.xml");
-    makeAll();
+    buildAllModules();
     assertOutput(m, fs().file("A.xml"));
   }
 
@@ -62,7 +62,7 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
     JpsTypedModuleSourceRoot<JavaSourceRootProperties> typed = sourceRoot.asTyped(JavaSourceRootType.SOURCE);
     assertNotNull(typed);
     typed.getProperties().setPackagePrefix("xxx");
-    rebuildAll();
+    rebuildAllModules();
     assertOutput(m, fs().dir("xxx").file("a.xml"));
   }
 
@@ -70,7 +70,7 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
     String file = createFile("res/A.java", "xxx");
     JpsModule m = addModule("m");
     m.addSourceRoot(JpsPathUtil.pathToUrl(PathUtil.getParentPath(file)), JavaResourceRootType.RESOURCE);
-    rebuildAll();
+    rebuildAllModules();
     assertOutput(m, fs().file("A.java", "xxx"));
   }
 }

@@ -31,6 +31,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +114,7 @@ public class RefactoringHierarchyUtil {
    * @return
    */
   public static ArrayList<PsiClass> createBasesList(PsiClass subClass, boolean includeNonProject, boolean sortAlphabetically) {
-    LinkedHashSet<PsiClass> bases = new LinkedHashSet<PsiClass>();
+    LinkedHashSet<PsiClass> bases = new LinkedHashSet<>();
     InheritanceUtil.getSuperClasses(subClass, bases, includeNonProject);
 
     if (!subClass.isInterface()) {
@@ -124,21 +125,19 @@ public class RefactoringHierarchyUtil {
       }
     }
 
-    ArrayList<PsiClass> basesList = new ArrayList<PsiClass>(bases);
+    ArrayList<PsiClass> basesList = new ArrayList<>(bases);
 
     if (sortAlphabetically) {
       Collections.sort(
-          basesList, new Comparator<PsiClass>() {
-            public int compare(PsiClass c1, PsiClass c2) {
-              final String fqn1 = c1.getQualifiedName();
-              final String fqn2 = c2.getQualifiedName();
-              if (fqn1 != null && fqn2 != null) return fqn1.compareTo(fqn2);
-              if (fqn1 == null && fqn2 == null) {
-                return Comparing.compare(c1.getName(), c2.getName());
-              }
-              return fqn1 == null ? 1 : -1;
-            }
+        basesList, (c1, c2) -> {
+          final String fqn1 = c1.getQualifiedName();
+          final String fqn2 = c2.getQualifiedName();
+          if (fqn1 != null && fqn2 != null) return fqn1.compareTo(fqn2);
+          if (fqn1 == null && fqn2 == null) {
+            return Comparing.compare(c1.getName(), c2.getName());
           }
+          return fqn1 == null ? 1 : -1;
+        }
       );
     }
 
@@ -160,8 +159,10 @@ public class RefactoringHierarchyUtil {
 
     if (elementClass == null) return false;
     if (superClass != null) {
-      return !superClass.getManager().areElementsEquivalent(superClass, elementClass) &&
-             elementClass.isInheritor(superClass, true);
+      if (elementClass.isInheritor(superClass, true)) {
+        return !superClass.getManager().areElementsEquivalent(superClass, elementClass);
+      }
+      return PsiTreeUtil.isAncestor(elementClass, subClass, false) && !PsiTreeUtil.isAncestor(elementClass, superClass, false);
     }
     else {
       return subClass.getManager().areElementsEquivalent(subClass, elementClass);
@@ -169,7 +170,7 @@ public class RefactoringHierarchyUtil {
   }
 
   public static void processSuperTypes(PsiType type, SuperTypeVisitor visitor) {
-    processSuperTypes(type, visitor, new HashSet<PsiType>());
+    processSuperTypes(type, visitor, new HashSet<>());
   }
   private static void processSuperTypes(PsiType type, SuperTypeVisitor visitor, Set<PsiType> visited) {
     if (visited.contains(type)) return;
@@ -192,8 +193,8 @@ public class RefactoringHierarchyUtil {
   }
 
   public static PsiClass[] findImplementingClasses(PsiClass anInterface) {
-    Set<PsiClass> result = new HashSet<PsiClass>();
-    _findImplementingClasses(anInterface, new HashSet<PsiClass>(), result);
+    Set<PsiClass> result = new HashSet<>();
+    _findImplementingClasses(anInterface, new HashSet<>(), result);
     boolean classesRemoved = true;
     while(classesRemoved) {
       classesRemoved = false;
@@ -215,17 +216,16 @@ public class RefactoringHierarchyUtil {
   private static void _findImplementingClasses(PsiClass anInterface, final Set<PsiClass> visited, final Collection<PsiClass> result) {
     LOG.assertTrue(anInterface.isInterface());
     visited.add(anInterface);
-    ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(@NotNull PsiClass aClass) {
         if (!aClass.isInterface()) {
           result.add(aClass);
         }
-        else if (!visited.contains(aClass)){
+        else if (!visited.contains(aClass)) {
           _findImplementingClasses(aClass, visited, result);
         }
         return true;
       }
-
     }));
   }
 

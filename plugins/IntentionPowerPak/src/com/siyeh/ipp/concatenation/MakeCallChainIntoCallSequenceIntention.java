@@ -41,7 +41,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
 
   @Override
   public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-    final List<String> callTexts = new ArrayList<String>();
+    final List<String> callTexts = new ArrayList<>();
     PsiExpression root = (PsiExpression)element;
     while (root instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) root;

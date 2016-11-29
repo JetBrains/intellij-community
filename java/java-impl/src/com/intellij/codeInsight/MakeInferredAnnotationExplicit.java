@@ -25,12 +25,13 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -53,18 +54,15 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   public boolean isAvailable(@NotNull final Project project, Editor editor, PsiFile file) {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiModifierListOwner owner = ExternalAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
-    if (owner != null && !(owner instanceof PsiCompiledElement) && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
+    if (owner != null && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) && isWritable(owner) &&
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
         PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
       final PsiAnnotation[] annotations = InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner);
       if (annotations.length > 0) {
-        final String annos = StringUtil.join(annotations, new Function<PsiAnnotation, String>() {
-          @Override
-          public String fun(PsiAnnotation annotation) {
-            final PsiJavaCodeReferenceElement nameRef = correctAnnotation(annotation).getNameReferenceElement();
-            final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
-            return "@" + name + annotation.getParameterList().getText();
-          }
+        final String annos = StringUtil.join(annotations, annotation -> {
+          final PsiJavaCodeReferenceElement nameRef = correctAnnotation(annotation).getNameReferenceElement();
+          final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
+          return "@" + name + annotation.getParameterList().getText();
         }, " ");
         setText("Insert '" + annos + "'");
         return true;
@@ -72,6 +70,13 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     }
     
     return false;
+  }
+
+  private static boolean isWritable(PsiModifierListOwner owner) {
+    if (owner instanceof PsiCompiledElement) return false;
+
+    VirtualFile vFile = PsiUtilCore.getVirtualFile(owner);
+    return vFile != null && vFile.isInLocalFileSystem();
   }
 
   @Override
@@ -97,17 +102,8 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
         return;
       }
       
-      WriteCommandAction.runWriteCommandAction(project, new Runnable() {
-        @Override
-        public void run() {
-          DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-            @Override
-            public void run() {
-              JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(toInsert, null));
-            }
-          });
-        }
-      });
+      WriteCommandAction.runWriteCommandAction(project, () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
+        () -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(toInsert, null))));
     }
 
     

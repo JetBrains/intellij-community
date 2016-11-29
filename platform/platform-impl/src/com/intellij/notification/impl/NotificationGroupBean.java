@@ -30,4 +30,7 @@ public class NotificationGroupBean extends AbstractExtensionPointBean {
 
   @Attribute("replaceTitle")
   public String replaceTitle;
+
+  @Attribute("shortTitle")
+  public String shortTitle;
 }

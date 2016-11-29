@@ -30,8 +30,8 @@ import java.util.List;
 
 public abstract class SerializationManager {
 
-  protected final List<ObjectStubSerializer> myAllSerializers = new ArrayList<ObjectStubSerializer>();
-  private volatile boolean mySerializersLoaded = false;
+  protected final List<ObjectStubSerializer> myAllSerializers = new ArrayList<>();
+  private volatile boolean mySerializersLoaded;
 
   public static SerializationManager getInstance() {
     return ApplicationManager.getApplication().getComponent(SerializationManager.class);
@@ -55,7 +55,8 @@ public abstract class SerializationManager {
         }
       });
       for (IElementType type : stubElementTypes) {
-        if (type instanceof StubFileElementType && ((StubFileElementType)type).isDefault()) {
+        if (type instanceof StubFileElementType &&
+            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType)type).getExternalId())) {
           continue;
         }
         StubSerializer stubSerializer = (StubSerializer)type;

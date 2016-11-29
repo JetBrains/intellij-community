@@ -45,19 +45,14 @@ public class PythonModuleBuilder extends PythonModuleBuilderBase implements Sour
 
   public void addSourcePath(final Pair<String, String> sourcePathInfo) {
     if (mySourcePaths == null) {
-      mySourcePaths = new ArrayList<Pair<String, String>>();
+      mySourcePaths = new ArrayList<>();
     }
     mySourcePaths.add(sourcePathInfo);
   }
 
   @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
-    return new SdkSettingsStep(settingsStep, this, new Condition<SdkTypeId>() {
-      @Override
-      public boolean value(SdkTypeId id) {
-        return PythonSdkType.getInstance() == id;
-      }
-    }) {
+    return new SdkSettingsStep(settingsStep, this, id -> PythonSdkType.getInstance() == id) {
       @Override
       protected void onSdkSelected(Sdk sdk) {
         setSdk(sdk);

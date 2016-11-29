@@ -3,7 +3,3 @@ class XXX {
         new C2(<caret>)
     }
 }
-class C2 {
-    public C2(int i) {
-    }
-}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -41,6 +43,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +130,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected Collection<PsiReference> collectRefs(SearchScope referencesSearchScope) {
-    final ArrayList<PsiReference> references = new ArrayList<PsiReference>(super.collectRefs(referencesSearchScope));
+    final ArrayList<PsiReference> references = new ArrayList<>(super.collectRefs(referencesSearchScope));
     final PsiNamedElement variable = getVariable();
     if (variable != null) {
       final PsiElement substituted = getSubstituted();
@@ -162,7 +165,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       if (substituted != null) {
         appendAdditionalElement(stringUsages, variable, substituted);
         RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(substituted);
-        final HashMap<PsiElement, String> allRenames = new HashMap<PsiElement, String>();
+        final HashMap<PsiElement, String> allRenames = new HashMap<>();
         PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
         processor.prepareRenaming(substituted, "", allRenames, new LocalSearchScope(currentFile));
         for (PsiElement element : allRenames.keySet()) {
@@ -207,15 +210,22 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             return;
           }
 
-          final String commandName = RefactoringBundle
-            .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), DescriptiveNameUtil.getDescriptiveName(variable), newName);
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
+          Runnable performRunnable = () -> {
+            final String commandName = RefactoringBundle.message("renaming.0.1.to.2",
+                                                                 UsageViewUtil.getType(variable),
+                                                                 DescriptiveNameUtil.getDescriptiveName(variable), newName);
+            CommandProcessor.getInstance().executeCommand(myProject, () -> {
               performRenameInner(substituted, newName);
               PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            }
-          }, commandName, null);
+            }, commandName, null);
+          };
+
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            performRunnable.run();
+          }
+          else {
+            TransactionGuard.getInstance().submitTransactionLater(myProject, performRunnable);
+          }
         }
       }
     }
@@ -232,7 +242,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   protected void performRenameInner(PsiElement element, String newName) {
     final RenameProcessor renameProcessor = createRenameProcessor(element, newName);
     for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-      if (factory.getOptionName() != null && factory.isApplicable(element)) {
+      if (factory.getOptionName() != null && factory.isEnabled() && factory.isApplicable(element)) {
         renameProcessor.addRenamerFactory(factory);
       }
     }
@@ -292,7 +302,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
     public MyRenameProcessor(PsiElement element, String newName, RenamePsiElementProcessor elementProcessor) {
       super(MemberInplaceRenamer.this.myProject, element, newName, elementProcessor.isToSearchInComments(element),
-            elementProcessor.isToSearchForTextOccurrences(element));
+            elementProcessor.isToSearchForTextOccurrences(element) && TextOccurrencesUtil.isSearchTextOccurencesEnabled(element));
     }
 
     @Nullable

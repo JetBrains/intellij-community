@@ -17,14 +17,32 @@ package com.intellij.psi.stubsHierarchy.impl.test;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.stubsHierarchy.impl.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.stubsHierarchy.ClassHierarchy;
+import com.intellij.psi.stubsHierarchy.HierarchyService;
+import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 // Building hierarchy only for source files
 public class TestStubHierarchyAction extends InheritanceAction {
@@ -33,71 +51,123 @@ public class TestStubHierarchyAction extends InheritanceAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      ProgressManager progress = ProgressManager.getInstance();
-      progress.runProcessWithProgressSynchronously(new TestHierarchy(project), "Testing Hierarchy", true, project);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(new TestHierarchy(project)::run),
+                                                                        "Testing Hierarchy", true, project);
     }
   }
 
   private static class TestHierarchy implements Runnable {
-    private final SingleClassHierarchy symbols;
-    Project myProject;
+    private final Project myProject;
 
     TestHierarchy(Project project) {
       myProject = project;
-      symbols = HierarchyService.instance(myProject).getSingleClassHierarchy();
     }
 
     @Override
     public void run() {
       LOG.info("TestStubHierarchyAction started");
-      final ProgressManager progressManager = ProgressManager.getInstance();
-      final ProgressIndicator indicator = progressManager.getProgressIndicator();
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      HierarchyService service = HierarchyService.getService(myProject);
+      service.clearHierarchy();
 
-      indicator.setText("Getting keys");
-      final SmartClassAnchor[] classes = symbols.myClassAnchors;
-      int size = symbols.myClassAnchors.length;
-      for (int i = 0; i < size; i++) {
-        final int finalI = i;
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            test(classes[finalI]);
-          }
-        });
-        indicator.setFraction(i * 1.0 / (double)size);
-      }
+      indicator.setText("Building hierarchy");
+      ClassHierarchy hierarchy = service.getHierarchy();
+      MultiMap<SmartClassAnchor, SmartClassAnchor> supers = calcSupersMap(hierarchy);
+
+      indicator.setText("Checking");
+      compareSupers(indicator, supers, hierarchy);
+
       LOG.info("TestStubHierarchyAction finished");
     }
 
-    private void test(SmartClassAnchor aClass) {
-      PsiClass psiClass = ClassAnchorUtil.retrieve(myProject, aClass);
-      if (psiClass == null) {
-        LOG.info("error testing: could not retrieve file for anchor: " + aClass);
-        return;
-      }
-
-      test(aClass, psiClass, psiClass.getSuperClass());
-      for (PsiClass inter : psiClass.getInterfaces()) {
-        test(aClass, psiClass, inter);
+    private void compareSupers(ProgressIndicator indicator, MultiMap<SmartClassAnchor, SmartClassAnchor> supers, ClassHierarchy hierarchy) {
+      List<VirtualFile> covered = getCoveredFiles(indicator, hierarchy);
+      for (int i = 0; i < covered.size(); i++) {
+        indicator.setFraction(i * 1.0 / covered.size());
+        checkFile(supers, hierarchy, covered.get(i));
       }
     }
 
-    private void test(SmartClassAnchor anchor, PsiClass psiClass, PsiClass fromPsi) {
-      if (fromPsi == null) {
-        return;
+    private void checkFile(MultiMap<SmartClassAnchor, SmartClassAnchor> supers, ClassHierarchy hierarchy, VirtualFile vFile) {
+      for (StubElement<?> element : getStubTree(vFile).getPlainListFromAllRoots()) {
+        Object psi = element.getPsi();
+        if (psi instanceof PsiClass && !(psi instanceof PsiTypeParameter)) {
+          SmartClassAnchor anchor = hierarchy.findAnchor((PsiClass)psi);
+          if (anchor == null) {
+            throw new AssertionError("Class not indexed: " + psi + " in " + vFile);
+          }
+          compareSupers(anchor, supers.get(anchor));
+        }
       }
-      String psiName = fromPsi.getQualifiedName();
-      if ("java.lang.Object".equals(psiName) || "groovy.lang.GroovyObject".equals(psiName) ||  "groovy.lang.GroovyObjectSupport".equals(psiName)) {
-        return;
-      }
-      // TODO - test using subtypes
-      LOG.info("error testing " + classInfo(psiClass) + ": missing " + classInfo(fromPsi));
+    }
 
+    @NotNull
+    private List<VirtualFile> getCoveredFiles(ProgressIndicator indicator, ClassHierarchy hierarchy) {
+      GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
+      GlobalSearchScope uncovered = hierarchy.restrictToUncovered(allScope);
+      List<VirtualFile> covered = new ArrayList<>();
+      FileBasedIndex.getInstance().iterateIndexableFiles(file -> {
+        if (!file.isDirectory() && allScope.contains(file) && !uncovered.contains(file)) {
+          covered.add(file);
+        }
+        return true;
+      }, myProject, indicator);
+      return covered;
+    }
+
+    @NotNull
+    private StubTree getStubTree(VirtualFile vFile) {
+      PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)PsiManager.getInstance(myProject).findFile(vFile);
+      assert psiFile != null : "No PSI for " + vFile;
+      StubTree stubTree = psiFile.getStubTree();
+      return stubTree != null ? stubTree : ((PsiFileImpl)psiFile).calcStubTree();
+    }
+
+    private void compareSupers(final SmartClassAnchor anchor, final Collection<SmartClassAnchor> superAnchors) {
+      PsiClass subClass = anchor.retrieveClass(myProject);
+      List<PsiClass> stubSuperList = ContainerUtil.map(superAnchors, (anchor1) -> anchor1.retrieveClass(myProject));
+
+      Set<PsiClass> psiSupers = new HashSet<>(ContainerUtil.filter(getPsiSupers(subClass), psiClass -> !isImplicit(psiClass.getQualifiedName())));
+      Set<PsiClass> stubSupers = new HashSet<>(ContainerUtil.filter(stubSuperList, psiClass -> !isImplicit(psiClass.getQualifiedName())));
+
+      if (!stubSupers.containsAll(psiSupers)) {
+        psiSupers.removeAll(stubSupers);
+        throw new AssertionError("Inconsistent hierarchy for " + classInfo(subClass) +
+                  "\n  missing " + psiSupers.size() + ": " + StringUtil.join(psiSupers, TestHierarchy::classInfo, ", ")
+        );
+      }
+    }
+
+    @NotNull
+    private static List<PsiClass> getPsiSupers(PsiClass subClass) {
+      List<PsiClass> psiSupers = new ArrayList<>();
+      PsiClass superClass = subClass.getSuperClass();
+      ContainerUtil.addIfNotNull(psiSupers, superClass);
+      Collections.addAll(psiSupers, subClass.getInterfaces());
+      return psiSupers;
+    }
+
+    private static boolean isImplicit(@Nullable String qname) {
+      return CommonClassNames.JAVA_LANG_OBJECT.equals(qname) ||
+             "groovy.lang.GroovyObject".equals(qname) || "groovy.lang.GroovyObjectSupport".equals(qname);
+    }
+
+    @NotNull
+    MultiMap<SmartClassAnchor, SmartClassAnchor> calcSupersMap(ClassHierarchy hierarchy) {
+      MultiMap<SmartClassAnchor, SmartClassAnchor> supers = MultiMap.create();
+      for (SmartClassAnchor aClass : hierarchy.getAllClasses()) {
+        for (SmartClassAnchor subtype : hierarchy.getDirectSubtypeCandidates(aClass)) {
+          supers.putValue(subtype, aClass);
+        }
+      }
+      return supers;
     }
 
     @NotNull
     private static String classInfo(PsiClass psiClass) {
-      return psiClass + "[" + psiClass.getQualifiedName() + "]" + " (" + psiClass.getContainingFile().getVirtualFile().getPresentableUrl() + ")";
+      String name = psiClass.getQualifiedName();
+      if (name == null) name = psiClass.toString();
+      return name + " (" + psiClass.getContainingFile().getVirtualFile().getPresentableUrl() + ")";
     }
   }
 

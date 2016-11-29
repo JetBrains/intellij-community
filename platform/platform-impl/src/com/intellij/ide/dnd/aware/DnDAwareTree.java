@@ -25,6 +25,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -66,8 +67,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
 
   @Override
   public final boolean isOverSelection(final Point point) {
-    final TreeUI ui = getUI();
-    final TreePath path = ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection()
+    final TreePath path = WideSelectionTreeUI.isWideSelection(this)
                           ? getClosestPathForLocation(point.x, point.y) : getPathForLocation(point.x, point.y);
     if (path == null) return false;
     return isPathSelected(path);
@@ -84,17 +84,23 @@ public class DnDAwareTree extends Tree implements DnDAware {
     return this;
   }
 
-  public static Pair<Image, Point> getDragImage(Tree dndAwareTree, @NotNull TreePath path, Point dragOrigin) {
+  @NotNull
+  public static Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull TreePath path, @NotNull Point dragOrigin) {
     int row = dndAwareTree.getRowForPath(path);
     Component comp = dndAwareTree.getCellRenderer().getTreeCellRendererComponent(dndAwareTree, path.getLastPathComponent(), false, true, true, row, false);
     return createDragImage(dndAwareTree, comp, dragOrigin, true);
   }
 
-  public static Pair<Image, Point> getDragImage(Tree dndAwareTree, final String text, Point dragOrigin) {
+  @NotNull
+  public static Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull String text, @Nullable Point dragOrigin) {
     return createDragImage(dndAwareTree, new JLabel(text), dragOrigin, false);
   }
 
-  private static Pair<Image, Point> createDragImage(final Tree tree, final Component c, Point dragOrigin, boolean adjustToPathUnderDragOrigin) {
+  @NotNull
+  private static Pair<Image, Point> createDragImage(@NotNull Tree tree,
+                                                    @NotNull Component c,
+                                                    @Nullable Point dragOrigin,
+                                                    boolean adjustToPathUnderDragOrigin) {
     if (c instanceof JComponent) {
       ((JComponent)c).setOpaque(true);
     }
@@ -119,7 +125,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
       }
     }
 
-    return new Pair<Image, Point>(image, point);
+    return new Pair<>(image, point);
   }
 
   private void initDnD() {

@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -39,6 +40,13 @@ public class VersionComparatorUtil {
     @Override
     public int compare(String s1, String s2) {
       return VersionComparatorUtil.compare(s1, s2);
+    }
+  };
+
+  public static final Function<String, Integer> DEFAULT_TOKEN_PRIORITY_PROVIDER = new Function<String, Integer>() {
+    @Override
+    public Integer fun(String s) {
+      return VersionTokenType.lookup(s).getPriority();
     }
   };
 
@@ -130,6 +138,10 @@ public class VersionComparatorUtil {
    * @return 0 if ver1 equals ver2, positive value if ver1 > ver2, negative value if ver1 < ver2
    */
   public static int compare(String ver1, String ver2) {
+    return compare(ver1, ver2, DEFAULT_TOKEN_PRIORITY_PROVIDER);
+  }
+
+  public static int compare(String ver1, String ver2, Function<String, Integer> tokenPriorityProvider) {
     // todo duplicates com.intellij.openapi.util.text.StringUtil.compareVersionNumbers()
     // todo please refactor next time you make changes here
     if (ver1 == null) {
@@ -146,16 +158,15 @@ public class VersionComparatorUtil {
 
     padWithNulls(s1, s2);
 
-    int res = 0;
+    int res;
     for (int i = 0; i < s1.size(); i++) {
       final String e1 = s1.get(i);
       final String e2 = s2.get(i);
-
       final VersionTokenType t1 = VersionTokenType.lookup(e1);
-      final VersionTokenType t2 = VersionTokenType.lookup(e2);
 
-      if (!t1.equals(t2)) {
-        res = comparePriorities(t1, t2);
+      res = comparePriorities(e1, e2, tokenPriorityProvider);
+      if (res != 0) {
+        return res;
       } else if (t1 == VersionTokenType._WORD) {
         res = e1.compareTo(e2);
       } else if (t1 == VersionTokenType._DIGITS) {
@@ -170,8 +181,11 @@ public class VersionComparatorUtil {
     return 0;
   }
 
-  private static int comparePriorities(VersionTokenType t1, VersionTokenType t2) {
-    return Integer.signum(t1.getPriority() - t2.getPriority());
+  public static int comparePriorities(String ver1, String ver2, Function<String, Integer> tokenPriorityProvider) {
+    int priority1 = tokenPriorityProvider.fun(ver1);
+    int priority2 = tokenPriorityProvider.fun(ver2);
+
+    return Integer.signum(priority1 - priority2);
   }
 
   private static int compareNumbers(String n1, String n2) {

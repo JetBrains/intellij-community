@@ -35,7 +35,7 @@ import static java.util.Arrays.asList;
  */
 public abstract class AbstractBlockWrapper {
 
-  private static final Set<IndentImpl.Type> RELATIVE_INDENT_TYPES = new HashSet<IndentImpl.Type>(asList(
+  private static final Set<IndentImpl.Type> RELATIVE_INDENT_TYPES = new HashSet<>(asList(
     Indent.Type.NORMAL, Indent.Type.CONTINUATION, Indent.Type.CONTINUATION_WITHOUT_FIRST
   ));
 
@@ -106,7 +106,7 @@ public abstract class AbstractBlockWrapper {
    * @return the list of wraps.
    */
   public ArrayList<WrapImpl> getWraps() {
-    final ArrayList<WrapImpl> result = new ArrayList<WrapImpl>(3);
+    final ArrayList<WrapImpl> result = new ArrayList<>(3);
     AbstractBlockWrapper current = this;
     while(current != null && current.getStartOffset() == getStartOffset()) {
       final WrapImpl wrap = current.getOwnWrap();
@@ -226,33 +226,7 @@ public abstract class AbstractBlockWrapper {
       //    }
       AlignmentImpl alignment = child.getAlignment();
       if (alignment != null) {
-        // Generally, we want to handle situation like the one below:
-        //   test("text", new Runnable() { 
-        //            @Override
-        //            public void run() {
-        //            }
-        //        },
-        //        new Runnable() {
-        //            @Override
-        //            public void run() {
-        //            }
-        //        }
-        //   );
-        // I.e. we want 'run()' method from the first anonymous class to be aligned with the 'run()' method of the second anonymous class.
-
-        AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
-        if (anchorBlock == null) {
-          anchorBlock = this;
-          if (anchorBlock instanceof CompositeBlockWrapper) {
-            List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)anchorBlock).getChildren();
-            for (AbstractBlockWrapper c : children) {
-              if (c.getStartOffset() != getStartOffset() && c.getStartOffset() < targetBlockStartOffset) {
-                anchorBlock = c;
-                break;
-              }
-            }
-          }
-        }
+        AbstractBlockWrapper anchorBlock = getAnchorBlock(child, targetBlockStartOffset, alignment);
         return anchorBlock.getNumberOfSymbolsBeforeBlock();
       }
       childIndent = CoreFormatterUtil.getIndent(options, child, getStartOffset());
@@ -321,6 +295,38 @@ public abstract class AbstractBlockWrapper {
     }
   }
 
+  @NotNull
+  private AbstractBlockWrapper getAnchorBlock(AbstractBlockWrapper child, int targetBlockStartOffset, AlignmentImpl alignment) {
+    // Generally, we want to handle situation like the one below:
+    //   test("text", new Runnable() { 
+    //            @Override
+    //            public void run() {
+    //            }
+    //        },
+    //        new Runnable() {
+    //            @Override
+    //            public void run() {
+    //            }
+    //        }
+    //   );
+    // I.e. we want 'run()' method from the first anonymous class to be aligned with the 'run()' method of the second anonymous class.
+
+    AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
+    if (anchorBlock == null) {
+      anchorBlock = this;
+      if (anchorBlock instanceof CompositeBlockWrapper) {
+        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)anchorBlock).getChildren();
+        for (AbstractBlockWrapper c : children) {
+          if (c.getStartOffset() != getStartOffset() && c.getStartOffset() < targetBlockStartOffset) {
+            anchorBlock = c;
+            break;
+          }
+        }
+      }
+    }
+    return anchorBlock;
+  }
+
   /**
    * Allows to answer if current wrapped block has a child block that is located before given block and has line feed.
    *
@@ -337,7 +343,7 @@ public abstract class AbstractBlockWrapper {
    *
    * @return    object that encapsulates information about number of symbols before the current block
    */
-  protected abstract IndentData getNumberOfSymbolsBeforeBlock();
+  public abstract IndentData getNumberOfSymbolsBeforeBlock();
 
   /**
    * @return    previous block for the current block if any; <code>null</code> otherwise

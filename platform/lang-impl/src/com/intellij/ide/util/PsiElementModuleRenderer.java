@@ -41,8 +41,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     int index,
     boolean isSelected,
     boolean cellHasFocus) {
-    final Component listCellRendererComponent = super.getListCellRendererComponent(list, value, index, isSelected,
-                                                                                   cellHasFocus);
+    final Component listCellRendererComponent = super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
     customizeCellRenderer(value, index, isSelected, cellHasFocus);
     return listCellRendererComponent;
   }
@@ -84,6 +83,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     setText(myText);
     setBorder(BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding()));
     setHorizontalTextPosition(SwingConstants.LEFT);
+    setHorizontalAlignment(SwingConstants.RIGHT); // align icon to the right
     setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor());
 

@@ -24,17 +24,20 @@ import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase implements BlockingProgressIndicator, WrappedProgressIndicator,
                                                                             StandardProgressIndicator {
   private static final int SHOW_DELAY = 500;
 
-  private final Alarm myStartupAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Future<?> myStartupAlarm = CompletableFuture.completedFuture(null);
 
   private final ProgressIndicator myOriginal;
   private final Project myProject;
@@ -94,7 +97,7 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
 
     super.start();
     myOriginalStarted = false;
-    myStartupAlarm.addRequest(myShowRequest, SHOW_DELAY);
+    myStartupAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(myShowRequest, SHOW_DELAY, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -137,7 +140,7 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
       myOriginal.stop();
     }
     else {
-      myStartupAlarm.cancelAllRequests();
+      myStartupAlarm.cancel(false);
 
       if (!myOriginalStarted && myOriginal instanceof Disposable) {
         // dispose original because start & stop were not called so original progress might not have released its resources 
@@ -150,15 +153,12 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
     semaphore.down();
 
     SwingUtilities.invokeLater(
-      new Runnable() {
-        @Override
-        public void run() {
-          semaphore.waitFor();
-          if (myDialog != null){
-            //System.out.println("myDialog.destroyProcess()");
-            myDialog.close(DialogWrapper.OK_EXIT_CODE);
-            myDialog = null;
-          }
+      () -> {
+        semaphore.waitFor();
+        if (myDialog != null){
+          //System.out.println("myDialog.destroyProcess()");
+          myDialog.close(DialogWrapper.OK_EXIT_CODE);
+          myDialog = null;
         }
       }
     );

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -49,7 +46,7 @@ public abstract class IntentionSettingsTree {
   private CheckboxTree myTree;
   private FilterComponent myFilter;
 
-  private final Map<IntentionActionMetaData, Boolean> myIntentionToCheckStatus = new HashMap<IntentionActionMetaData, Boolean>();
+  private final Map<IntentionActionMetaData, Boolean> myIntentionToCheckStatus = new HashMap<>();
   private JPanel myNorthPanel;
 
   protected IntentionSettingsTree() {
@@ -175,18 +172,15 @@ public abstract class IntentionSettingsTree {
   }
 
   private static List<IntentionActionMetaData> sort(final List<IntentionActionMetaData> intentionsToShow) {
-    List<IntentionActionMetaData> copy = new ArrayList<IntentionActionMetaData>(intentionsToShow);
-    Collections.sort(copy, new Comparator<IntentionActionMetaData>() {
-      @Override
-      public int compare(final IntentionActionMetaData data1, final IntentionActionMetaData data2) {
-        String[] category1 = data1.myCategory;
-        String[] category2 = data2.myCategory;
-        int result = ArrayUtil.lexicographicCompare(category1, category2);
-        if (result!= 0) {
-          return result;
-        }
-        return data1.getFamily().compareTo(data2.getFamily());
+    List<IntentionActionMetaData> copy = new ArrayList<>(intentionsToShow);
+    Collections.sort(copy, (data1, data2) -> {
+      String[] category1 = data1.myCategory;
+      String[] category2 = data2.myCategory;
+      int result = ArrayUtil.lexicographicCompare(category1, category2);
+      if (result!= 0) {
+        return result;
       }
+      return data1.getFamily().compareTo(data2.getFamily());
     });
     return copy;
   }
@@ -219,7 +213,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private static CheckedTreeNode findChild(CheckedTreeNode node, final String name) {
-    final Ref<CheckedTreeNode> found = new Ref<CheckedTreeNode>();
+    final Ref<CheckedTreeNode> found = new Ref<>();
     visitChildren(node, new CheckedNodeVisitor() {
       @Override
       public void visit(CheckedTreeNode node) {
@@ -233,7 +227,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private static CheckedTreeNode findChildRecursively(CheckedTreeNode node, final String name) {
-    final Ref<CheckedTreeNode> found = new Ref<CheckedTreeNode>();
+    final Ref<CheckedTreeNode> found = new Ref<>();
     visitChildren(node, new CheckedNodeVisitor() {
       @Override
       public void visit(CheckedTreeNode node) {
@@ -375,12 +369,9 @@ public abstract class IntentionSettingsTree {
         ((DefaultTreeModel)myTree.getModel()).reload();
         TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
       }
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myTree.setSelectionRow(0);
-          myTree.requestFocus();
-        }
+      SwingUtilities.invokeLater(() -> {
+        myTree.setSelectionRow(0);
+        myTree.requestFocus();
       });
       TreeUtil.expandAll(myTree);
       if (filter == null || filter.length() == 0) {

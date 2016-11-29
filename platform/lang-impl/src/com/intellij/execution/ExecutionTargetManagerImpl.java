@@ -151,7 +151,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (settings == null) return Collections.emptyList();
 
-    List<ExecutionTarget> result = new ArrayList<ExecutionTarget>();
+    List<ExecutionTarget> result = new ArrayList<>();
     for (ExecutionTargetProvider eachTargetProvider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
       for (ExecutionTarget eachTarget : eachTargetProvider.getTargets(myProject, settings)) {
         if (canRun(settings, eachTarget)) result.add(eachTarget);

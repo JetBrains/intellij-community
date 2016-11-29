@@ -43,7 +43,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
   private final FilePath[] myFiles;
 
   private final Project myProject;
-  private final Collection<MergedWithConflictProjectOrModuleFile> myCorruptedFiles = new ArrayList<MergedWithConflictProjectOrModuleFile>();
+  private final Collection<MergedWithConflictProjectOrModuleFile> myCorruptedFiles = new ArrayList<>();
   private final UpdatedFiles myUpdatedFiles;
   private final UpdateSettings myUpdateSettings;
 
@@ -78,11 +78,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
         }
       }
       else if (showOptions == Options.SHOW_DIALOG){
-        modalityContext.runInDispatchThread(new Runnable() {
-          public void run() {
-            new CorruptedProjectFilesDialog(myProject, myCorruptedFiles).show();
-          }
-        }, myProject);
+        modalityContext.runInDispatchThread(() -> new CorruptedProjectFilesDialog(myProject, myCorruptedFiles).show(), myProject);
       }
 
       final VcsKey vcsKey = CvsVcs2.getKey();

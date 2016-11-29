@@ -16,13 +16,13 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -90,10 +90,6 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     myText = text;
   }
 
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   @Override
   public String toString() {
     return getText();
@@ -141,8 +137,6 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     PsiElement container = getContainer(element);
     if (container == null) return;
 
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return;
-
     if (replaceSuppressionComments(container)) return;
 
     createSuppression(project, element, container);
@@ -175,6 +169,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("suppress.inspection.family");
+    final String text = getText();
+    return StringUtil.isEmpty(text) ? InspectionsBundle.message("suppress.inspection.family") : text;
   }
 }

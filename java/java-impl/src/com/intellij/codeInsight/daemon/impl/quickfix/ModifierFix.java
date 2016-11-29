@@ -141,19 +141,16 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     final PsiVariable variable = myVariable == null ? null : myVariable.getElement();
     if (!FileModificationService.getInstance().preparePsiElementForWrite(myModifierList)) return;
     if (variable != null && !FileModificationService.getInstance().preparePsiElementForWrite(variable)) return;
-    final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
+    final List<PsiModifierList> modifierLists = new ArrayList<>();
     final PsiFile containingFile = myModifierList.getContainingFile();
     final PsiModifierList modifierList;
     if (variable != null && variable.isValid()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            variable.normalizeDeclaration();
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          variable.normalizeDeclaration();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       });
       modifierList = variable.getModifierList();
@@ -168,7 +165,8 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
       changeModifierList(copy);
       final int accessLevel = PsiUtil.getAccessLevel(copy);
 
-      OverridingMethodsSearch.search((PsiMethod)owner, owner.getResolveScope(), true).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>() {
+      OverridingMethodsSearch.search((PsiMethod)owner, owner.getResolveScope(), true).forEach(
+        new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiMethod>() {
           @Override
           public boolean execute(@NotNull PsiMethod inheritor) {
             PsiModifierList list = inheritor.getModifierList();
@@ -185,27 +183,21 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                                    QuickFixBundle.message("change.inheritors.visibility.warning.text"),
                                    QuickFixBundle.message("change.inheritors.visibility.warning.title"),
                                    Messages.getQuestionIcon()) == Messages.YES) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!FileModificationService.getInstance().preparePsiElementsForWrite(modifierLists)) {
-              return;
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (!FileModificationService.getInstance().preparePsiElementsForWrite(modifierLists)) {
+            return;
+          }
 
-            for (final PsiModifierList modifierList : modifierLists) {
-              changeModifierList(modifierList);
-            }
+          for (final PsiModifierList modifierList1 : modifierLists) {
+            changeModifierList(modifierList1);
           }
         });
       }
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        changeModifierList(modifierList);
-        UndoUtil.markPsiFileForUndo(containingFile);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      changeModifierList(modifierList);
+      UndoUtil.markPsiFileForUndo(containingFile);
     });
   }
 

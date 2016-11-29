@@ -159,7 +159,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       return ((ArrangementExtendableSettings)myDefaultSettings).getRuleAliases();
     }
 
-    final Set<StdArrangementRuleAliasToken> tokenDefinitions = new THashSet<StdArrangementRuleAliasToken>();
+    final Set<StdArrangementRuleAliasToken> tokenDefinitions = new THashSet<>();
     final List<Element> tokens = tokensRoot.getChildren(TOKEN_ELEMENT_NAME);
     for (Element token : tokens) {
       final Attribute id = token.getAttribute(TOKEN_ID);
@@ -180,7 +180,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       return defaultSettings == null ? ContainerUtil.<ArrangementGroupingRule>newSmartList() : defaultSettings.getGroupings();
     }
 
-    final List<ArrangementGroupingRule> groupings = new ArrayList<ArrangementGroupingRule>();
+    final List<ArrangementGroupingRule> groupings = new ArrayList<>();
     for (Object group : groups.getChildren(GROUP_ELEMENT_NAME)) {
       Element groupElement = (Element)group;
 
@@ -213,7 +213,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
   @NotNull
   private List<ArrangementSectionRule> deserializeSectionRules(@NotNull Element rulesElement,
                                                                @Nullable Set<StdArrangementRuleAliasToken> tokens) {
-    final List<ArrangementSectionRule> sectionRules = new ArrayList<ArrangementSectionRule>();
+    final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     for (Object o : rulesElement.getChildren(SECTION_ELEMENT_NAME)) {
       final Element sectionElement = (Element)o;
       final List<StdArrangementMatchRule> rules = deserializeRules(sectionElement, tokens);
@@ -231,7 +231,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
     if (aliases != null && myMixin instanceof MutableMixin) {
       ((MutableMixin)myMixin).setMyRuleAliases(aliases);
     }
-    final List<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
+    final List<StdArrangementMatchRule> rules = new ArrayList<>();
     for (Object o : element.getChildren(RULE_ELEMENT_NAME)) {
       Element ruleElement = (Element)o;
       Element matcherElement = ruleElement.getChild(MATCHER_ELEMENT_NAME);

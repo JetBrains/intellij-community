@@ -51,7 +51,7 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
                             @NotNull InspectionManager manager,
                             @NotNull GlobalInspectionContext globalContext,
                             @NotNull ProblemDescriptionsProcessor problemProcessor) {
-    final Set<Module> modules = new THashSet<Module>();
+    final Set<Module> modules = new THashSet<>();
     scope.accept(new PsiElementVisitor(){
       @Override
       public void visitElement(PsiElement element) {
@@ -83,7 +83,7 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
             "Inconsistent language level settings: module " + module.getName() + " with language level " + languageLevel +
             " depends on module " + dependantModule.getName() +" with language level " + dependantLanguageLevel,
             new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(module, dependantModule),
-            QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
+            (QuickFix)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
           problemProcessor.addProblemElement(refModule, problemDescriptor);
         }
       }

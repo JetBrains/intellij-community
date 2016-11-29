@@ -85,13 +85,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final MyTree myRightTree = new MyTree();
   private final DependenciesUsagesPanel myUsagesPanel;
 
-  private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
+  private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
   private final TreeExpansionMonitor myRightTreeExpansionMonitor;
   private final TreeExpansionMonitor myLeftTreeExpansionMonitor;
 
   private final Marker myRightTreeMarker;
   private final Marker myLeftTreeMarker;
-  private Set<VirtualFile> myIllegalsInRightTree = new HashSet<VirtualFile>();
+  private Set<VirtualFile> myIllegalsInRightTree = new HashSet<>();
 
   private final Project myProject;
   private final List<DependenciesBuilder> myBuilders;
@@ -105,7 +105,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final int myTransitiveBorder;
 
   public DependenciesPanel(Project project, final DependenciesBuilder builder){
-    this(project, Collections.singletonList(builder), new HashSet<PsiFile>());
+    this(project, Collections.singletonList(builder), new HashSet<>());
   }
 
   public DependenciesPanel(Project project, final List<DependenciesBuilder> builders, final Set<PsiFile> excluded) {
@@ -116,8 +116,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     myForward = !main.isBackward();
     myScopeOfInterest = main.getScopeOfInterest();
     myTransitiveBorder = main.getTransitiveBorder();
-    myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
-    myIllegalDependencies = new HashMap<VirtualFile, Map<DependencyRule, Set<PsiFile>>>();
+    myDependencies = new HashMap<>();
+    myIllegalDependencies = new HashMap<>();
     for (DependenciesBuilder builder : builders) {
       myDependencies.putAll(builder.getDependencies());
       putAllDependencies(builder);
@@ -198,24 +198,18 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     myRightTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final Set<PsiFile> searchIn = getSelectedScope(myLeftTree);
-            final Set<PsiFile> searchFor = getSelectedScope(myRightTree);
-            if (searchIn.isEmpty() || searchFor.isEmpty()) {
-              myUsagesPanel.setToInitialPosition();
-              processDependencies(searchIn, searchFor, new Processor<List<PsiFile>>() { //todo do not show too many usages
-                @Override
-                public boolean process(final List<PsiFile> path) {
-                  searchFor.add(path.get(1));
-                  return true;
-                }
-              });
-            }
-            else {
-              myUsagesPanel.findUsages(searchIn, searchFor);
-            }
+        SwingUtilities.invokeLater(() -> {
+          final Set<PsiFile> searchIn = getSelectedScope(myLeftTree);
+          final Set<PsiFile> searchFor = getSelectedScope(myRightTree);
+          if (searchIn.isEmpty() || searchFor.isEmpty()) {
+            myUsagesPanel.setToInitialPosition();
+            processDependencies(searchIn, searchFor, path -> {
+              searchFor.add(path.get(1));
+              return true;
+            });
+          }
+          else {
+            myUsagesPanel.findUsages(searchIn, searchFor);
           }
         });
       }
@@ -248,17 +242,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private void processDependencies(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor, Processor<List<PsiFile>> processor) {
     if (myTransitiveBorder == 0) return;
-    Set<PsiFile> initialSearchFor = new HashSet<PsiFile>(searchFor);
+    Set<PsiFile> initialSearchFor = new HashSet<>(searchFor);
     for (DependenciesBuilder builder : myBuilders) {
       for (PsiFile from : searchIn) {
         for (PsiFile to : initialSearchFor) {
           final List<List<PsiFile>> paths = builder.findPaths(from, to);
-          Collections.sort(paths, new Comparator<List<PsiFile>>() {
-            @Override
-            public int compare(final List<PsiFile> p1, final List<PsiFile> p2) {
-              return p1.size() - p2.size();
-            }
-          });
+          Collections.sort(paths, (p1, p2) -> p1.size() - p2.size());
           for (List<PsiFile> path : paths) {
             if (!path.isEmpty()){
               path.add(0, from);
@@ -326,7 +315,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void rebuild() {
-    myIllegalDependencies = new HashMap<VirtualFile, Map<DependencyRule, Set<PsiFile>>>();
+    myIllegalDependencies = new HashMap<>();
     for (DependenciesBuilder builder : myBuilders) {
       putAllDependencies(builder);
     }
@@ -351,9 +340,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void updateRightTreeModel() {
-    Set<PsiFile> deps = new HashSet<PsiFile>();
+    Set<PsiFile> deps = new HashSet<>();
     Set<PsiFile> scope = getSelectedScope(myLeftTree);
-    myIllegalsInRightTree = new HashSet<VirtualFile>();
+    myIllegalsInRightTree = new HashSet<>();
     for (PsiFile psiFile : scope) {
       Map<DependencyRule, Set<PsiFile>> illegalDeps = myIllegalDependencies.get(psiFile.getVirtualFile());
       if (illegalDeps != null) {
@@ -435,7 +424,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private Set<PsiFile> getSelectedScope(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null ) return EMPTY_FILE_SET;
-    Set<PsiFile> result = new HashSet<PsiFile>();
+    Set<PsiFile> result = new HashSet<>();
     for (TreePath path : paths) {
       PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
       node.fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
@@ -702,17 +691,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public String getReportText() {
       final Element rootElement = new Element("root");
       rootElement.setAttribute("isBackward", String.valueOf(!myForward));
-      final List<PsiFile> files = new ArrayList<PsiFile>(myDependencies.keySet());
-      Collections.sort(files, new Comparator<PsiFile>() {
-        @Override
-        public int compare(PsiFile f1, PsiFile f2) {
-          final VirtualFile virtualFile1 = f1.getVirtualFile();
-          final VirtualFile virtualFile2 = f2.getVirtualFile();
-          if (virtualFile1 != null && virtualFile2 != null) {
-            return virtualFile1.getPath().compareToIgnoreCase(virtualFile2.getPath());
-          }
-          return 0;
+      final List<PsiFile> files = new ArrayList<>(myDependencies.keySet());
+      Collections.sort(files, (f1, f2) -> {
+        final VirtualFile virtualFile1 = f1.getVirtualFile();
+        final VirtualFile virtualFile2 = f2.getVirtualFile();
+        if (virtualFile1 != null && virtualFile2 != null) {
+          return virtualFile1.getPath().compareToIgnoreCase(virtualFile2.getPath());
         }
+        return 0;
       });
       for (PsiFile file : files) {
         final Element fileElement = new Element("file");
@@ -764,21 +750,18 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public void actionPerformed(AnActionEvent e) {
       DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final List<AnalysisScope> scopes = new ArrayList<AnalysisScope>();
-          for (DependenciesBuilder builder : myBuilders) {
-            final AnalysisScope scope = builder.getScope();
-            scope.invalidate();
-            scopes.add(scope);
-          }
-          if (!myForward) {
-            new BackwardDependenciesHandler(myProject, scopes, myScopeOfInterest, myExcluded).analyze();
-          }
-          else {
-            new AnalyzeDependenciesHandler(myProject, scopes, myTransitiveBorder, myExcluded).analyze();
-          }
+      SwingUtilities.invokeLater(() -> {
+        final List<AnalysisScope> scopes = new ArrayList<>();
+        for (DependenciesBuilder builder : myBuilders) {
+          final AnalysisScope scope = builder.getScope();
+          scope.invalidate();
+          scopes.add(scope);
+        }
+        if (!myForward) {
+          new BackwardDependenciesHandler(myProject, scopes, myScopeOfInterest, myExcluded).analyze();
+        }
+        else {
+          new AnalyzeDependenciesHandler(myProject, scopes, myTransitiveBorder, myExcluded).analyze();
         }
       });
     }
@@ -815,18 +798,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public void actionPerformed(final AnActionEvent e) {
       @NonNls final String delim = "&nbsp;-&gt;&nbsp;";
       final StringBuffer buf = new StringBuffer();
-      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), new Processor<List<PsiFile>>() {
-        @Override
-        public boolean process(final List<PsiFile> path) {
-          if (buf.length() > 0) buf.append("<br>");
-          buf.append(StringUtil.join(path, new Function<PsiFile, String>() {
-            @Override
-            public String fun(final PsiFile psiFile) {
-              return psiFile.getName();
-            }
-          }, delim));
-          return true;
-        }
+      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
+        if (buf.length() > 0) buf.append("<br>");
+        buf.append(StringUtil.join(path, psiFile -> psiFile.getName(), delim));
+        return true;
       });
       final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, XmlStringUtil.wrapInHtml(buf));
       pane.setForeground(JBColor.foreground());
@@ -843,12 +818,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @Override
     public void update(final AnActionEvent e) {
       final boolean[] direct = new boolean[]{true};
-      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), new Processor<List<PsiFile>>() {
-        @Override
-        public boolean process(final List<PsiFile> path) {
-          direct [0] = false;
-          return false;
-        }
+      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
+        direct [0] = false;
+        return false;
       });
       e.getPresentation().setEnabled(!direct[0]);
     }
@@ -898,31 +870,24 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       } else {
         builder = new ForwardDependenciesBuilder(myProject, scope, myTransitiveBorder);
       }
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"), new Runnable() {
-        @Override
-        public void run() {
-          builder.analyze();
-        }
-      }, new Runnable() {
-        @Override
-        public void run() {
-          myBuilders.add(builder);
-          myDependencies.putAll(builder.getDependencies());
-          putAllDependencies(builder);
-          exclude(myExcluded);
-          rebuild();
-        }
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
+                                                                         () -> builder.analyze(), () -> {
+        myBuilders.add(builder);
+        myDependencies.putAll(builder.getDependencies());
+        putAllDependencies(builder);
+        exclude(myExcluded);
+        rebuild();
       }, null, new PerformAnalysisInBackgroundOption(myProject));
     }
 
     @Nullable
     private AnalysisScope getScope() {
       final Set<PsiFile> selectedScope = getSelectedScope(myRightTree);
-      Set<PsiFile> result = new HashSet<PsiFile>();
+      Set<PsiFile> result = new HashSet<>();
       ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
       selectedScope.removeAll(result);
       if (selectedScope.isEmpty()) return null;
-      List<VirtualFile> files = new ArrayList<VirtualFile>();
+      List<VirtualFile> files = new ArrayList<>();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (PsiFile psiFile : selectedScope) {
         final VirtualFile file = psiFile.getVirtualFile();

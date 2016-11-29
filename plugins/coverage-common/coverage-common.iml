@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="extensions" />
     <orderEntry type="module" module-name="annotations" />
-    <orderEntry type="library" exported="" name="asm5" level="project" />
+    <orderEntry type="library" exported="" name="ASM" level="project" />
     <orderEntry type="library" exported="" name="Coverage" level="project" />
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="testRunner" />

@@ -45,7 +45,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguage(element.getLanguage());
     DefaultActionGroup actionGroup = null;
     Icon icon = null;
-    final List<RunLineMarkerContributor.Info> infos = new ArrayList<RunLineMarkerContributor.Info>();
+    final List<RunLineMarkerContributor.Info> infos = new ArrayList<>();
     for (RunLineMarkerContributor contributor : contributors) {
       RunLineMarkerContributor.Info info = contributor.getInfo(element);
       if (info == null) {
@@ -66,25 +66,22 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     if (icon == null) return null;
 
     final DefaultActionGroup finalActionGroup = actionGroup;
-    Function<PsiElement, String> tooltipProvider = new Function<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        final StringBuilder tooltip = new StringBuilder();
-        for (RunLineMarkerContributor.Info info : infos) {
-          if (info.tooltipProvider != null) {
-            String string = info.tooltipProvider.fun(element);
-            if (string == null) continue;
-            if (tooltip.length() != 0) {
-              tooltip.append("\n");
-            }
-            tooltip.append(string);
+    Function<PsiElement, String> tooltipProvider = element1 -> {
+      final StringBuilder tooltip = new StringBuilder();
+      for (RunLineMarkerContributor.Info info : infos) {
+        if (info.tooltipProvider != null) {
+          String string = info.tooltipProvider.fun(element1);
+          if (string == null) continue;
+          if (tooltip.length() != 0) {
+            tooltip.append("\n");
           }
+          tooltip.append(string);
         }
-
-        return tooltip.length() == 0 ? null : tooltip.toString();
       }
+
+      return tooltip.length() == 0 ? null : tooltip.toString();
     };
-    return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL,
+    return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.LINE_MARKERS,
                                           tooltipProvider, null,
                                           GutterIconRenderer.Alignment.CENTER) {
       @Nullable

@@ -120,7 +120,7 @@ public final class Annotation implements Segment {
       range = new TextRange(myStartOffset, myEndOffset);
     }
     if (myQuickFixes == null) {
-      myQuickFixes = new ArrayList<QuickFixInfo>();
+      myQuickFixes = new ArrayList<>();
     }
     myQuickFixes.add(new QuickFixInfo(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor), range, key));
   }
@@ -137,7 +137,7 @@ public final class Annotation implements Segment {
       range = new TextRange(myStartOffset, myEndOffset);
     }
     if (myQuickFixes == null) {
-      myQuickFixes = new ArrayList<QuickFixInfo>();
+      myQuickFixes = new ArrayList<>();
     }
     myQuickFixes.add(new QuickFixInfo(fix, range, key));
   }
@@ -152,7 +152,7 @@ public final class Annotation implements Segment {
     }
 
     if (myBatchFixes == null) {
-      myBatchFixes = new ArrayList<QuickFixInfo>();
+      myBatchFixes = new ArrayList<>();
     }
     myBatchFixes.add(new QuickFixInfo(fix, range, key));
   }

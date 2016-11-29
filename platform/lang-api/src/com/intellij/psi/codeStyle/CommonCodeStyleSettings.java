@@ -800,7 +800,7 @@ public class CommonCodeStyleSettings {
 
   public int CALL_PARAMETERS_WRAP = DO_NOT_WRAP;
   public boolean PREFER_PARAMETERS_WRAP = false;
-  public boolean CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
+  public boolean CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false; // misnamed, actually means: wrap AFTER lparen
   public boolean CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
   public int METHOD_PARAMETERS_WRAP = DO_NOT_WRAP;
@@ -930,6 +930,7 @@ public class CommonCodeStyleSettings {
     private FileIndentOptionsProvider myFileIndentOptionsProvider;
     private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
     private boolean myInaccurate;
+    private boolean myOverrideLanguageOptions;
 
     @Override
     public void readExternal(Element element) throws InvalidDataException {
@@ -1027,12 +1028,23 @@ public class CommonCodeStyleSettings {
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
     }
 
-    boolean isRecalculateForCommittedDocument() {
-      return myInaccurate;
+    /**
+     * @return True if the options can override the ones defined in language settings.
+     * @see CommonCodeStyleSettings.IndentOptions#setOverrideLanguageOptions(boolean) 
+     */
+    public boolean isOverrideLanguageOptions() {
+      return myOverrideLanguageOptions;
     }
 
-    void setRecalculateForCommittedDocument(boolean value) {
-      myInaccurate = value;
+    /**
+     * Make the indent options override options defined for a language block if the block implements <code>BlockEx.getLanguage()</code> 
+     * Useful when indent options provider must take a priority over any language settings for a formatter block.
+     * 
+     * @param overrideLanguageOptions True if language block options should be ignored.
+     * @see FileIndentOptionsProvider
+     */
+    public void setOverrideLanguageOptions(boolean overrideLanguageOptions) {
+      myOverrideLanguageOptions = overrideLanguageOptions;
     }
   }
 }

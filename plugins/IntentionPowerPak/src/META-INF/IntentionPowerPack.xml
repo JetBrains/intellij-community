@@ -1,14 +1,8 @@
-<idea-plugin version="2">
+<idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
 
     <!-- Annotations -->
-    <intentionAction>
-      <className>com.siyeh.ipp.annotation.ExpandToNormalAnnotationIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.annotations</categoryKey>
-    </intentionAction>
-
     <intentionAction>
       <className>com.siyeh.ipp.annotation.AnnotateOverriddenMethodsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
@@ -60,12 +54,6 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.bool.RemoveBooleanEqualityIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.boolean</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.bool.NegateComparisonIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.boolean</categoryKey>
@@ -93,18 +81,6 @@
 
     <intentionAction>
       <className>com.siyeh.ipp.equality.ReplaceEqualsWithEqualityIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.boolean</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.equality.ReplaceEqualityWithEqualsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.boolean</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.equality.ReplaceEqualityWithSafeEqualsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.boolean</categoryKey>
     </intentionAction>
@@ -142,12 +118,6 @@
 
     <intentionAction>
       <className>com.siyeh.ipp.trivialif.ReplaceIfWithConditionalIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.conditional.operator</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.conditional.RemoveConditionalIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.conditional.operator</categoryKey>
     </intentionAction>
@@ -212,18 +182,6 @@
     -->
 
     <intentionAction>
-      <className>com.siyeh.ipp.braces.AddArrayCreationExpressionIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.decls.SimplifyVariableIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.initialization.SplitDeclarationAndInitializationIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
@@ -231,12 +189,6 @@
 
     <intentionAction>
       <className>com.siyeh.ipp.interfacetoclass.ConvertInterfaceToClassIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.varargs.MakeMethodVarargsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
@@ -255,33 +207,6 @@
 
     <intentionAction>
       <className>com.siyeh.ipp.adapter.AdapterToListenerIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.types.ReplaceDiamondWithExplicitTypeArgumentsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.types.ReplaceLambdaWithAnonymousIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.types.ReplaceMethodRefWithLambdaIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-   <intentionAction>
-      <className>com.siyeh.ipp.types.InferLambdaParameterTypeIntention</className>
-     <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.types.ExpandOneLineLambda2CodeBlockIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
@@ -409,16 +334,6 @@
       <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.braces.AddBracesIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.control.flow</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.braces.RemoveBracesIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.control.flow</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.forloop.ReverseForLoopDirectionIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.control.flow</categoryKey>
@@ -463,16 +378,11 @@
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
-    <intentionAction>
+    <!--<intentionAction>
       <className>com.siyeh.ipp.commutative.SwapMethodCallArgumentsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.parenthesis.RemoveUnnecessaryParenthesesIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
+    </intentionAction>-->
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.ReplaceConcatenationWithStringBufferIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
@@ -514,22 +424,12 @@
       <categoryKey>intention.category.try.statements</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.exceptions.SplitMultiCatchIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.try.statements</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.exceptions.ReplaceArmWithTryFinallyIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.try.statements</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.exceptions.MergeNestedTryStatementsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.try.statements</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.exceptions.SplitTryWithMultipleResourcesIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.try.statements</categoryKey>
     </intentionAction>
@@ -577,16 +477,6 @@
       <className>com.siyeh.ipp.chartostring.StringToCharIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.strings</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.asserttoif.AssertToIfIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.control.flow</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.asserttoif.IfToAssertionIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.enumswitch.CreateEnumSwitchBranchesIntention</className>

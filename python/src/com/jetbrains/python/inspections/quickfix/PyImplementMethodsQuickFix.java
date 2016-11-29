@@ -62,7 +62,7 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
     if (editor != null && startElement instanceof PyClass) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        ArrayList<PyMethodMember> list = new ArrayList<PyMethodMember>();
+        ArrayList<PyMethodMember> list = new ArrayList<>();
         for (PyFunction function: myToImplement) {
           list.add(new PyMethodMember(function));
         }

@@ -83,12 +83,9 @@ public class DetailController {
       doUpdateDetailViewWithItem(mySelectedItem);
     }
     else {
-      myUpdateAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          doUpdateDetailViewWithItem(mySelectedItem);
-          myUpdateAlarm.cancelAllRequests();
-        }
+      myUpdateAlarm.addRequest(() -> {
+        doUpdateDetailViewWithItem(mySelectedItem);
+        myUpdateAlarm.cancelAllRequests();
       }, 100);
     }
   }

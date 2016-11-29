@@ -19,13 +19,21 @@ package com.intellij.application.options.colors;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -78,8 +86,12 @@ public class NewColorAndFontPanel extends JPanel {
 
     // We don't want to show non-used preview panel (it's considered to be not in use if it doesn't contain text).
     if (myPreviewPanel.getPanel() != null && (page == null || !StringUtil.isEmptyOrSpaces(page.getDemoText()))) {
-      add(top, BorderLayout.NORTH);
-      add(myPreviewPanel.getPanel(), BorderLayout.CENTER);
+      @SuppressWarnings("SuspiciousNameCombination")
+      JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, top, myPreviewPanel.getPanel());
+      splitPane.setBorder(BorderFactory.createEmptyBorder());
+      splitPane.setContinuousLayout(true);
+      add(splitPane);
+      GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
     }
     else {
       add(top, BorderLayout.CENTER);
@@ -95,10 +107,8 @@ public class NewColorAndFontPanel extends JPanel {
     optionsPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
       public void settingsChanged() {
-        if (schemesPanel.updateDescription(true)) {
-          optionsPanel.applyChangesToScheme();
-          previewPanel.updateView();
-        }
+        optionsPanel.applyChangesToScheme();
+        previewPanel.updateView();
       }
 
       @Override
@@ -128,8 +138,9 @@ public class NewColorAndFontPanel extends JPanel {
                                             Collection<String> optionList, ColorSettingsPage page) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
 
-    final OptionsPanel optionsPanel = new OptionsPanelImpl(options, schemesPanel, category);
-
+    final OptionsPanel optionsPanel = new OptionsPanelImpl(
+      options, schemesPanel, category,
+      new CustomizedSwitcherPanel(previewPanel, page));
 
     return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category, optionList, page);
   }
@@ -143,13 +154,7 @@ public class NewColorAndFontPanel extends JPanel {
     if (myOptionList == null) {
       return myOptionsPanel.processListOptions();
     }
-    else {
-      final HashSet<String> result = new HashSet<String>();
-      for (String s : myOptionList) {
-        result.add(s);
-      }
-      return result;
-    }
+    return new HashSet<>(myOptionList);
   }
 
 
@@ -195,5 +200,27 @@ public class NewColorAndFontPanel extends JPanel {
 
   public ColorSettingsPage getSettingsPage() {
     return mySettingsPage;
+  }
+  
+  public void setEmptyText(@NotNull String text, @NotNull String details) {
+    myOptionsPanel.setEmptyText(text, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        notifyAtSchemePanel(details);
+      }
+    });
+  }
+
+  private void notifyAtSchemePanel(@NotNull String message) {
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    Balloon balloon = popupFactory
+      .createHtmlTextBalloonBuilder(message, MessageType.INFO, null)
+      .setHideOnClickOutside(true)
+      .setHideOnKeyOutside(true)
+      .createBalloon();
+    Disposer.register(ApplicationManager.getApplication(), balloon);
+    balloon.show(new RelativePoint(
+      mySchemesPanel,
+      new Point(mySchemesPanel.getWidth() / 10, mySchemesPanel.getHeight())), Balloon.Position.below);
   }
 }

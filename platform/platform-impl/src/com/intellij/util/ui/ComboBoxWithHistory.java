@@ -27,7 +27,7 @@ import java.util.List;
 public class ComboBoxWithHistory extends JComboBox {
   private final String myHistoryId;
   private Project myProject;
-  private final HashMap<Object, Long> myWeights = new HashMap<Object, Long>();
+  private final HashMap<Object, Long> myWeights = new HashMap<>();
   private boolean myAutoSave = true;
 
   public ComboBoxWithHistory(@Nullable Project project, String historyId, Object[] items) {

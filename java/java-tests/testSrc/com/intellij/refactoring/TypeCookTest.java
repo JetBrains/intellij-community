@@ -17,9 +17,11 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.typeCook.Settings;
@@ -667,12 +669,24 @@ public class TypeCookTest extends MultiFileTestCase {
         start();
   }
 
+  public void testConvertToDiamond() throws Exception {
+    final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
+    final LanguageLevel oldLevel = levelProjectExtension.getLanguageLevel();
+    try {
+      levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_8);
+      start();
+    }
+    finally {
+      levelProjectExtension.setLanguageLevel(oldLevel);
+    }
+  }
+
   public void start() throws Exception {
     start(false);
   }
 
   public void start(final boolean cookObjects) throws Exception {
-    doTest((rootDir, rootAfter) -> TypeCookTest.this.performAction("Test", rootDir.getName(), cookObjects));
+    doTest((rootDir, rootAfter) -> this.performAction("Test", rootDir.getName(), cookObjects));
   }
 
   private void performAction(String className, String rootDir, final boolean cookObjects) throws Exception {

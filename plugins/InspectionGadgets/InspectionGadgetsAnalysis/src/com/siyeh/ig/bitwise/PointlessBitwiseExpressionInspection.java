@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
   public boolean m_ignoreExpressionsContainingConstants = false;
 
   static final Set<IElementType> bitwiseTokens =
-    new HashSet<IElementType>(6);
+    new HashSet<>(6);
 
   static {
     bitwiseTokens.add(JavaTokenType.AND);
@@ -122,7 +123,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
           }
         }
       }
-      else if (EquivalenceChecker.expressionsAreEquivalent(previousOperand, operand)) {
+      else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(previousOperand, operand)) {
         if (tokenType.equals(JavaTokenType.OR) || tokenType.equals(JavaTokenType.AND)) {
           return getText(expression, previousOperand, operand, operand.getText());
         }
@@ -175,14 +176,9 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "pointless.bitwise.expression.simplify.quickfix");
-    }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override
@@ -241,7 +237,8 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     private boolean booleanExpressionIsPointless(PsiExpression[] operands) {
       PsiExpression previousExpression = null;
       for (PsiExpression operand : operands) {
-        if (isZero(operand) || isAllOnes(operand) || EquivalenceChecker.expressionsAreEquivalent(previousExpression, operand)) {
+        if (isZero(operand) || isAllOnes(operand) || (EquivalenceChecker.getCanonicalPsiEquivalence()
+          .expressionsAreEquivalent(previousExpression, operand) && !SideEffectChecker.mayHaveSideEffects(operand))) {
           return true;
         }
         previousExpression = operand;

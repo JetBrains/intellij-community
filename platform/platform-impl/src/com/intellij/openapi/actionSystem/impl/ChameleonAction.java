@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionStub;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -31,7 +33,7 @@ import java.util.Map;
  */
 public class ChameleonAction extends AnAction {
 
-  private final Map<ProjectType, AnAction> myActions = new HashMap<ProjectType, AnAction>();
+  private final Map<ProjectType, AnAction> myActions = new HashMap<>();
 
   public ChameleonAction(@NotNull AnAction first, ProjectType projectType) {
     addAction(first, projectType);
@@ -68,7 +70,7 @@ public class ChameleonAction extends AnAction {
 
   @Nullable
   private AnAction getAction(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     ProjectType projectType = ProjectTypeService.getProjectType(project);
     AnAction action = myActions.get(projectType);
     if (action == null) action = myActions.get(null);

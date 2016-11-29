@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +65,8 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   protected JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new GridBagLayout());
     final TitledSeparator separator = new TitledSeparator();
-    mainPanel.add(separator, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+    mainPanel.add(separator, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                    JBUI.emptyInsets(), 0, 0));
 
     myList = createTargetVariableChooser();
     myList.addListSelectionListener(new ListSelectionListener() {
@@ -75,17 +78,21 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     separator.setText(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
-    mainPanel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
+    mainPanel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                                     JBUI.emptyInsets(), 0, 0));
 
     myVisibilityPanel = createVisibilityPanel();
-    mainPanel.add(myVisibilityPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(0,0,0,0), 0,0));
+    mainPanel.add(myVisibilityPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
+                                                            JBUI.emptyInsets(), 0, 0));
 
     final JPanel parametersPanel = createParametersPanel();
     if (parametersPanel != null) {
-      mainPanel.add(parametersPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+      mainPanel.add(parametersPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                            JBUI.emptyInsets(), 0, 0));
     }
 
-    mainPanel.add(initOpenInEditorCb(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+    mainPanel.add(initOpenInEditorCb(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
+                                                               JBUI.emptyInsets(), 0, 0));
 
     separator.setLabelFor(myList);
     validateTextFields(myList.getSelectedIndex());
@@ -113,11 +120,11 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   @Nullable
   private JPanel createParametersPanel () {
     myThisClassesMap = MoveInstanceMembersUtil.getThisClassesToMembers(myMethod);
-    myOldClassParameterNameFields = new HashMap<PsiClass, EditorTextField>();
+    myOldClassParameterNameFields = new HashMap<>();
     if (myThisClassesMap.size() == 0) return null;
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     for (PsiClass aClass : myThisClassesMap.keySet()) {
-      final String text = RefactoringBundle.message("move.method.this.parameter.label", aClass.getName());
+      final String text = RefactoringBundle.message("move.method.this.parameter.label", ObjectUtils.notNull(aClass.getName(), ""));
       panel.add(new TitledSeparator(text, null));
 
       String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
@@ -131,7 +138,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   }
 
   protected void doAction() {
-    Map<PsiClass, String> parameterNames = new LinkedHashMap<PsiClass, String>();
+    Map<PsiClass, String> parameterNames = new LinkedHashMap<>();
     for (final PsiClass aClass : myThisClassesMap.keySet()) {
       EditorTextField field = myOldClassParameterNameFields.get(aClass);
       if (field.isEnabled()) {

@@ -40,7 +40,7 @@ public class ArchetypesTest extends MavenTestCase {
                                                              Collections.<String>emptyList());
 
     MavenRunnerSettings settings = new MavenRunnerSettings();
-    Map<String, String> props = new THashMap<String, String>();
+    Map<String, String> props = new THashMap<>();
     props.put("archetypeGroupId", "org.apache.maven.archetypes");
     props.put("archetypeArtifactId", "maven-archetype-quickstart");
     props.put("archetypeVersion", "1.0");

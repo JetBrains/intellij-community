@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection.OptionsPanel">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="2">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="8" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="2">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="394" height="400"/>
+      <xy x="20" y="20" width="258" height="400"/>
     </constraints>
     <properties/>
-    <border type="empty" title=""/>
+    <border type="empty"/>
     <children>
+      <vspacer id="eb5d4">
+        <constraints>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <component id="2077d" class="javax.swing.JCheckBox" binding="myAccessors" custom-create="true" default-binding="true">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.accessors"/>
+        </properties>
+      </component>
       <component id="b6cc3" class="javax.swing.JCheckBox" binding="myCheckLocalVariablesCheckBox" default-binding="true">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="172" height="22"/>
           </grid>
         </constraints>
@@ -18,55 +31,158 @@
           <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.localvars"/>
         </properties>
       </component>
-      <component id="6664b" class="javax.swing.JCheckBox" binding="myCheckParametersCheckBox" default-binding="true">
+      <grid id="38635" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="172" height="22"/>
-          </grid>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.parameters"/>
-        </properties>
-      </component>
-      <component id="c49dc" class="javax.swing.JCheckBox" binding="myCheckMethodsCheckBox" default-binding="true">
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="bcd0d" class="javax.swing.JCheckBox" binding="myCheckClassesCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                <preferred-size width="158" height="20"/>
+              </grid>
+              <gridbag weightx="0.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.classes"/>
+            </properties>
+          </component>
+          <component id="12f2f" class="javax.swing.JLabel" binding="myClassVisibilityCb" custom-create="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text value="Label"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="db8f7" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="172" height="22"/>
-          </grid>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.methods"/>
-        </properties>
-      </component>
-      <component id="2077d" class="javax.swing.JCheckBox" binding="myReportUnusedParametersInPublics" default-binding="true">
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="90a98" class="javax.swing.JCheckBox" binding="myInnerClassesCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                <preferred-size width="158" height="20"/>
+              </grid>
+              <gridbag weightx="0.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.inner.classes"/>
+            </properties>
+          </component>
+          <component id="73c9b" class="javax.swing.JLabel" binding="myInnerClassVisibilityCb" custom-create="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text value="Label"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="d725d" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.public.method.parameters"/>
-        </properties>
-      </component>
-      <component id="b2b9f" class="javax.swing.JCheckBox" binding="myCheckFieldsCheckBox" default-binding="true">
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="b2b9f" class="javax.swing.JCheckBox" binding="myCheckFieldsCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.fields"/>
+            </properties>
+          </component>
+          <component id="50c90" class="javax.swing.JLabel" binding="myFieldVisibilityCb" custom-create="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text value="Label"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="e5507" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.fields"/>
-        </properties>
-      </component>
-      <component id="bcd0d" class="javax.swing.JCheckBox" binding="myCheckClassesCheckBox" default-binding="true">
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="c49dc" class="javax.swing.JCheckBox" binding="myCheckMethodsCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                <preferred-size width="172" height="22"/>
+              </grid>
+              <gridbag weightx="0.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.methods"/>
+            </properties>
+          </component>
+          <component id="9e9ee" class="javax.swing.JLabel" binding="myMethodVisibilityCb" custom-create="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text value="Label"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="f3ca1" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.classes"/>
-        </properties>
-      </component>
-      <vspacer id="eb5d4">
-        <constraints>
-          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </vspacer>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="6664b" class="javax.swing.JCheckBox" binding="myCheckParametersCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                <preferred-size width="172" height="22"/>
+              </grid>
+              <gridbag weightx="0.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/InspectionsBundle" key="inspection.unused.symbol.check.parameters"/>
+            </properties>
+          </component>
+          <component id="f3bb8" class="javax.swing.JLabel" binding="myMethodParameterVisibilityCb" custom-create="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <text value="Label"/>
+            </properties>
+          </component>
+          <component id="ded2e" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text value=" methods"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>

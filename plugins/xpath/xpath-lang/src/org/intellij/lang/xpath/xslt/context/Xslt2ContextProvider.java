@@ -168,7 +168,7 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
       final XmlTag rootTag = param.getRootTag();
       assert rootTag != null;
 
-      final Map<Pair<QName, Integer>, Function> candidates = new HashMap<Pair<QName, Integer>, Function>();
+      final Map<Pair<QName, Integer>, Function> candidates = new HashMap<>();
       final XsltFunction[] functions = XsltElementFactory.getInstance().wrapElement(rootTag, XsltStylesheet.class).getFunctions();
       for (XsltFunction function : functions) {
         candidates.put(Pair.create(function.getQName(), function.getParameters().length), function);

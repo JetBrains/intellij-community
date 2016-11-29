@@ -55,7 +55,7 @@ public class HgCommitTest extends HgPlatformTest {
     List<HgFileRevision> revisions = logCommand.execute(hgFile, -1, false);
     HgRepository hgRepo = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
     HgCommitCommand commit = new HgCommitCommand(myProject, hgRepo, changedCommit, true);
-    commit.execute();
+    commit.executeInCurrentThread();
     List<HgFileRevision> revisionsAfterAmendCommit = logCommand.execute(hgFile, -1, false);
     assertTrue(revisions.size() == revisionsAfterAmendCommit.size());
     assertEquals(revisionsAfterAmendCommit.get(0).getCommitMessage(), changedCommit);

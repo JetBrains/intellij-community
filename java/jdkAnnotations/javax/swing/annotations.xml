@@ -204,6 +204,9 @@
       <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
     </annotation>
   </item>
+  <item name='javax.swing.JOptionPane java.awt.Frame getRootFrame()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="javax.swing.JOptionPane java.lang.Object showInputDialog(java.awt.Component, java.lang.Object, java.lang.String, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
@@ -319,6 +322,16 @@
       <val name="intValues" val="{javax.swing.JTabbedPane.WRAP_TAB_LAYOUT, javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT}" />
     </annotation>
   </item>
+  <item name="javax.swing.JTabbedPane int getTabLayoutPolicy()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JTabbedPane.WRAP_TAB_LAYOUT, javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JTabbedPane int getTabPlacement()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.SwingConstants.TOP, javax.swing.SwingConstants.BOTTOM, javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.RIGHT}" />
+    </annotation>
+  </item>
   <item name="javax.swing.JTable JTable(java.lang.Object[][], java.lang.Object[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -327,16 +340,6 @@
   </item>
   <item name="javax.swing.JTable int columnAtPoint(java.awt.Point) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
-  <item name="javax.swing.JTable int getTabLayoutPolicy()">
-    <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="intValues" val="{javax.swing.JTabbedPane.WRAP_TAB_LAYOUT, javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT}" />
-    </annotation>
-  </item>
-  <item name="javax.swing.JTable int getTabPlacement()">
-    <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="intValues" val="{javax.swing.SwingConstants.TOP, javax.swing.SwingConstants.BOTTOM, javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.RIGHT}" />
-    </annotation>
   </item>
   <item name="javax.swing.JTable int rowAtPoint(java.awt.Point) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -455,6 +458,9 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{javax.swing.SwingConstants.HORIZONTAL, javax.swing.SwingConstants.VERTICAL}" />
     </annotation>
+  </item>
+  <item name='javax.swing.SwingUtilities java.awt.Frame getSharedOwnerFrame()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, java.awt.Point, java.awt.Component)">
     <annotation name="org.jetbrains.annotations.NotNull" />

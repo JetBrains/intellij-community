@@ -22,13 +22,18 @@ import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -53,6 +58,7 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -114,77 +120,106 @@ public class GradleManager
   @NotNull
   @Override
   public Function<Project, GradleSettings> getSettingsProvider() {
-    return new Function<Project, GradleSettings>() {
-      @Override
-      public GradleSettings fun(Project project) {
-        return GradleSettings.getInstance(project);
-      }
-    };
+    return project -> GradleSettings.getInstance(project);
   }
 
   @NotNull
   @Override
   public Function<Project, GradleLocalSettings> getLocalSettingsProvider() {
-    return new Function<Project, GradleLocalSettings>() {
-      @Override
-      public GradleLocalSettings fun(Project project) {
-        return GradleLocalSettings.getInstance(project);
-      }
-    };
+    return project -> GradleLocalSettings.getInstance(project);
   }
 
   @NotNull
   @Override
   public Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
-    return new Function<Pair<Project, String>, GradleExecutionSettings>() {
-
-      @Override
-      public GradleExecutionSettings fun(Pair<Project, String> pair) {
-        final Project project = pair.first;
-        GradleSettings settings = GradleSettings.getInstance(project);
-        File gradleHome = myInstallationManager.getGradleHome(project, pair.second);
-        String localGradlePath = null;
-        if (gradleHome != null) {
-          try {
-            // Try to resolve symbolic links as there were problems with them at the gradle side.
-            localGradlePath = gradleHome.getCanonicalPath();
-          }
-          catch (IOException e) {
-            localGradlePath = gradleHome.getAbsolutePath();
-          }
+    return pair -> {
+      final Project project = pair.first;
+      GradleSettings settings = GradleSettings.getInstance(project);
+      File gradleHome = myInstallationManager.getGradleHome(project, pair.second);
+      String localGradlePath = null;
+      if (gradleHome != null) {
+        try {
+          // Try to resolve symbolic links as there were problems with them at the gradle side.
+          localGradlePath = gradleHome.getCanonicalPath();
         }
+        catch (IOException e) {
+          localGradlePath = gradleHome.getAbsolutePath();
+        }
+      }
 
-        GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
-        final DistributionType distributionType;
-        if (projectLevelSettings == null) {
-          distributionType =
-            GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.LOCAL;
+      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
+      final DistributionType distributionType;
+      if (projectLevelSettings == null) {
+        distributionType =
+          GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.LOCAL;
+      }
+      else {
+        distributionType =
+          projectLevelSettings.getDistributionType() == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
+      }
+
+      GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
+                                                                   settings.getServiceDirectoryPath(),
+                                                                   distributionType,
+                                                                   settings.getGradleVmOptions(),
+                                                                   settings.isOfflineWork());
+
+      for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
+        result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
+      }
+
+      final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : pair.second;
+      final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, rootProjectPath);
+      final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
+      if (!StringUtil.isEmpty(javaHome)) {
+        LOG.info("Instructing gradle to use java from " + javaHome);
+      }
+      result.setJavaHome(javaHome);
+      result.setIdeProjectPath(project.getBasePath() == null ? rootProjectPath : project.getBasePath());
+      if (projectLevelSettings != null) {
+        result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
+      }
+
+      configureExecutionWorkspace(projectLevelSettings, settings, result, project);
+      return result;
+    };
+  }
+
+  /**
+   * Add composite participants
+   */
+  private static void configureExecutionWorkspace(@Nullable GradleProjectSettings compositeRootSettings,
+                                                  GradleSettings settings,
+                                                  GradleExecutionSettings result,
+                                                  Project project) {
+    if(compositeRootSettings == null) return;
+
+    for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
+      if (projectSettings == compositeRootSettings) continue;
+      if (!compositeRootSettings.getCompositeParticipants().contains(projectSettings.getExternalProjectPath())) continue;
+
+      GradleBuildParticipant buildParticipant = new GradleBuildParticipant(projectSettings.getExternalProjectPath());
+      ExternalProjectInfo projectData = ProjectDataManager.getInstance()
+        .getExternalProjectData(project, GradleConstants.SYSTEM_ID, projectSettings.getExternalProjectPath());
+
+      if (projectData == null || projectData.getExternalProjectStructure() == null) continue;
+
+      Collection<DataNode<ModuleData>> moduleNodes =
+        ExternalSystemApiUtil.findAll(projectData.getExternalProjectStructure(), ProjectKeys.MODULE);
+      for (DataNode<ModuleData> moduleNode : moduleNodes) {
+        ModuleData moduleData = moduleNode.getData();
+        if (moduleData.getArtifacts().isEmpty()) {
+          Collection<DataNode<GradleSourceSetData>> sourceSetNodes = ExternalSystemApiUtil.findAll(moduleNode, GradleSourceSetData.KEY);
+          for (DataNode<GradleSourceSetData> sourceSetNode : sourceSetNodes) {
+            buildParticipant.addModule(sourceSetNode.getData());
+          }
         }
         else {
-          distributionType =
-            projectLevelSettings.getDistributionType() == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
+          buildParticipant.addModule(moduleData);
         }
-
-        GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
-                                                                     settings.getServiceDirectoryPath(),
-                                                                     distributionType,
-                                                                     settings.getGradleVmOptions(),
-                                                                     settings.isOfflineWork());
-
-        for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-          result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
-        }
-
-        final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, pair.second);
-        final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
-        if (!StringUtil.isEmpty(javaHome)) {
-          LOG.info("Instructing gradle to use java from " + javaHome);
-        }
-        result.setJavaHome(javaHome);
-        result.setIdeProjectPath(project.getBasePath() == null ? pair.second : project.getBasePath());
-        return result;
       }
-    };
+      result.getExecutionWorkspace().addBuildParticipant(buildParticipant);
+    }
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.*;
 
@@ -80,35 +81,32 @@ public class CollectClassMembersUtil {
 
   @NotNull
   private static ClassMembers getCachedMembers(@NotNull PsiClass aClass, boolean includeSynthetic) {
-    PsiUtilCore.ensureValid(aClass);
-    Key<CachedValue<ClassMembers>> key = includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
-    CachedValue<ClassMembers> cachedValue = aClass.getUserData(key);
-    if (isCyclicDependence(aClass)) {
-      includeSynthetic = false;
+    CachedValue<ClassMembers> cached = aClass.getUserData(getMemberCacheKey(includeSynthetic));
+    if (cached != null && cached.hasUpToDateValue()) {
+      return cached.getValue();
     }
-    if (cachedValue == null) {
-      cachedValue = buildCache(aClass, includeSynthetic);
-      aClass.putUserData(key, cachedValue);
-    }
-    return cachedValue.getValue();
+
+    return buildCache(aClass, includeSynthetic && checkClass(aClass));
   }
 
-  private static boolean isCyclicDependence(PsiClass aClass) {
-    return !processCyclicDependence(aClass, ContainerUtil.<PsiClass>newHashSet());
-  }
+  private static boolean checkClass(PsiClass aClass) {
+    Set<PsiClass> visited = ContainerUtil.newHashSet();
+    Queue<PsiClass> queue = ContainerUtil.newLinkedList(aClass);
 
-  private static boolean processCyclicDependence(PsiClass aClass, Set<PsiClass> classes) {
-    if (!classes.add(aClass)) {
-      return aClass.isInterface() || CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
-    }
-
-    if (aClass instanceof ClsClassImpl) return true; //optimization
-
-    for (PsiClass psiClass : aClass.getSupers()) {
-      if (!processCyclicDependence(psiClass, classes)) {
+    while (!queue.isEmpty()) {
+      PsiClass current = queue.poll();
+      if (current instanceof ClsClassImpl) continue;
+      if (visited.add(current)) {
+        if (TransformationUtilKt.isUnderTransformation(current)) return false;
+        for (PsiClass superClass : getSupers(current, false)) {
+          queue.offer(superClass);
+        }
+      }
+      else if (!current.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(current.getQualifiedName())) {
         return false;
       }
     }
+
     return true;
   }
 
@@ -124,19 +122,21 @@ public class CollectClassMembersUtil {
     return getAllFields(aClass, true);
   }
 
-  private static CachedValue<ClassMembers> buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
-    return CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<ClassMembers>() {
-      @Override
-      public Result<ClassMembers> compute() {
-        LinkedHashMap<String, CandidateInfo> allFields = ContainerUtil.newLinkedHashMap();
-        LinkedHashMap<String, List<CandidateInfo>> allMethods = ContainerUtil.newLinkedHashMap();
-        LinkedHashMap<String, CandidateInfo> allInnerClasses = ContainerUtil.newLinkedHashMap();
+  private static ClassMembers buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
+    return CachedValuesManager.getManager(aClass.getProject()).getCachedValue(aClass, getMemberCacheKey(includeSynthetic), () -> {
+      LinkedHashMap<String, CandidateInfo> allFields = ContainerUtil.newLinkedHashMap();
+      LinkedHashMap<String, List<CandidateInfo>> allMethods = ContainerUtil.newLinkedHashMap();
+      LinkedHashMap<String, CandidateInfo> allInnerClasses = ContainerUtil.newLinkedHashMap();
 
-        processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic);
-        return Result.create(ClassMembers.create(allFields, allMethods, allInnerClasses),
-                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
+      processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<>(), PsiSubstitutor.EMPTY, includeSynthetic);
+      return CachedValueProvider.Result.create(
+        ClassMembers.create(allFields, allMethods, allInnerClasses), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+      );
     }, false);
+  }
+
+  private static Key<CachedValue<ClassMembers>> getMemberCacheKey(boolean includeSynthetic) {
+    return includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
   }
 
   private static void processClass(@NotNull PsiClass aClass,
@@ -176,19 +176,16 @@ public class CollectClassMembersUtil {
       addMethod(allMethods, method, substitutor);
     }
 
-    for (final PsiClass inner : aClass.getInnerClasses()) {
+    for (final PsiClass inner : getInnerClasses(aClass, includeSynthetic)) {
       final String name = inner.getName();
       if (name != null && !allInnerClasses.containsKey(name)) {
         allInnerClasses.put(name, new CandidateInfo(inner, substitutor));
       }
     }
 
-    for (PsiClassType superType : aClass.getSuperTypes()) {
-      PsiClass superClass = superType.resolve();
-      if (superClass != null) {
-        final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, substitutor);
-        processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic);
-      }
+    for (PsiClass superClass : getSupers(aClass, includeSynthetic)) {
+      final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, substitutor);
+      processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic);
     }
   }
 
@@ -198,6 +195,18 @@ public class CollectClassMembersUtil {
 
   public static PsiMethod[] getMethods(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition)aClass).getCodeMethods();
+  }
+
+  public static PsiClass[] getInnerClasses(@NotNull PsiClass aClass, boolean includeSynthetic) {
+    return includeSynthetic || !(aClass instanceof GrTypeDefinition)
+           ? aClass.getInnerClasses()
+           : ((GrTypeDefinition)aClass).getCodeInnerClasses();
+  }
+
+  public static PsiClass[] getSupers(@NotNull PsiClass aClass, boolean includeSynthetic) {
+    return aClass instanceof GrTypeDefinition
+           ? ((GrTypeDefinition)aClass).getSupers(includeSynthetic)
+           : aClass.getSupers();
   }
 
   private static boolean hasExplicitVisibilityModifiers(@NotNull PsiField field) {
@@ -216,7 +225,7 @@ public class CollectClassMembersUtil {
     String name = method.getName();
     List<CandidateInfo> methods = allMethods.get(name);
     if (methods == null) {
-      methods = new ArrayList<CandidateInfo>();
+      methods = new ArrayList<>();
       allMethods.put(name, methods);
     }
     methods.add(new CandidateInfo(method, substitutor));

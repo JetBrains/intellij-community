@@ -17,93 +17,76 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.JdkBundleList;
-import com.intellij.util.PlatformUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Locale;
 
 /**
  * @author denis
  */
 public class SwitchBootJdkAction extends AnAction implements DumbAware {
-  @NonNls private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
-  @NonNls private static final String productJdkConfigFileName = getExecutable() + ".jdk";
-  @NonNls private static final File productJdkConfigFile = new File(PathManager.getConfigPath(), productJdkConfigFileName);
-  @NonNls private static final File bundledJdkFile = getBundledJDKFile();
+  @NotNull private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
+  @NotNull private static final String productJdkConfigFileName =
+    getExecutable() + (SystemInfo.isWindows ? ((SystemInfo.is64Bit) ? "64.exe.jdk" : ".exe.jdk") : ".jdk");
+
+  @Nullable private static final String pathsSelector = PathManager.getPathsSelector();
+  @NotNull private static final File productJdkConfigDir = new File(pathsSelector != null ?
+                                                                    PathManager.getDefaultConfigPathFor(pathsSelector) :
+                                                                    PathManager.getConfigPath());
+
+  @NotNull private static final File productJdkConfigFile = new File(productJdkConfigDir, productJdkConfigFileName);
+
+  @NotNull private static final File bundledJdkFile = getBundledJDKFile();
 
 
 
   @NotNull
   private static File getBundledJDKFile() {
-    StringBuilder bundledJDKPath = new StringBuilder("jre");
-    if (SystemInfo.isMac) {
-      bundledJDKPath.append(File.separator).append("jdk");
-    }
-    return new File(bundledJDKPath.toString());
+    return new File(SystemInfo.isMac ? "jdk" : "jre");
   }
 
   @Override
   public void update(AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
-    if (!(SystemInfo.isMac || SystemInfo.isLinux)) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
     e.getPresentation().setText("Switch Boot JDK");
-  }
-
-  private static List<JdkBundle> getBundlesFromFile(@NotNull File fileWithBundles) {
-    List<JdkBundle> list = new ArrayList<JdkBundle>();
-    try {
-      for (String line : FileUtil.loadLines(fileWithBundles, "UTF-8")) {
-        File storedFile = new File(line);
-        final boolean isBundled = !storedFile.isAbsolute();
-        File actualFile = isBundled ? new File(PathManager.getHomePath(), storedFile.getPath()) : storedFile;
-        if (actualFile.exists()) {
-          list.add(JdkBundle.createBundle(storedFile, false, isBundled));
-        }
-      }
-    } catch (IllegalStateException e) {
-      // The device builders can throw IllegalStateExceptions if
-      // build gets called before everything is properly setup
-      LOG.error(e);
-    } catch (IOException e) {
-      LOG.error("Error reading JDK bundles", e);
-    }
-    return list;
   }
 
   @Override
   public void actionPerformed(AnActionEvent event) {
 
-    if (!productJdkConfigFile.exists()) {
+    if (!productJdkConfigDir.exists()) {
       try {
-        if (!productJdkConfigFile.createNewFile()){
-          LOG.error("Could not create " + productJdkConfigFileName + " productJdkConfigFile");
+        if (!productJdkConfigDir.mkdirs()) {
+          LOG.error("Could not create " + productJdkConfigDir + " productJdkConfigDir");
           return;
+        }
+        if (!productJdkConfigFile.exists()) {
+          if (!productJdkConfigFile.createNewFile()) {
+            LOG.error("Could not create " + productJdkConfigFileName + " productJdkConfigFile");
+            return;
+          }
         }
       }
       catch (IOException e) {
@@ -112,9 +95,14 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       }
     }
 
-    SwitchBootJdkDialog dialog = new SwitchBootJdkDialog(null, getBundlesFromFile(productJdkConfigFile));
+    SwitchBootJdkDialog dialog = new SwitchBootJdkDialog();
     if (dialog.showAndGet()) {
       File selectedJdkBundleFile = dialog.getSelectedFile();
+      if (selectedJdkBundleFile == null) {
+        LOG.error("SwitchBootJdkDialog returns null selection");
+        return;
+      }
+
       FileWriter fooWriter = null;
       try {
         //noinspection IOResourceOpenedButNotSafelyClosed
@@ -140,65 +128,137 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
   private static class SwitchBootJdkDialog extends DialogWrapper {
 
+    static class JdkBundleItem {
+      @Nullable private JdkBundle myBundle;
+
+      public JdkBundleItem(@Nullable JdkBundle bundle) {
+        myBundle = bundle;
+      }
+
+      @Nullable public JdkBundle getBundle() {
+        return myBundle;
+      }
+    }
+
     @NotNull private final ComboBox myComboBox;
 
-    private SwitchBootJdkDialog(@Nullable Project project, final List<JdkBundle> jdkBundlesList) {
-      super(project, false);
+    private SwitchBootJdkDialog() {
+      super((Project)null, false);
 
       final JdkBundleList pathsList = findJdkPaths();
 
       myComboBox = new ComboBox();
 
-      DefaultComboBoxModel model = new DefaultComboBoxModel();
+      final DefaultComboBoxModel<JdkBundleItem> model = new DefaultComboBoxModel<>();
 
       for (JdkBundle jdkBundlePath : pathsList.toArrayList()) {
         //noinspection unchecked
-        model.addElement(jdkBundlePath);
+        model.addElement(new JdkBundleItem(jdkBundlePath));
       }
 
-      model.addListDataListener(new ListDataListener() {
-        @Override
-        public void intervalAdded(ListDataEvent e) { }
-
-        @Override
-        public void intervalRemoved(ListDataEvent e) { }
-
-        @Override
-        public void contentsChanged(ListDataEvent e) {
-          setOKActionEnabled(!((JdkBundle)myComboBox.getSelectedItem()).isBoot());
-        }
-      });
+      model.addElement(new JdkBundleItem(null));
 
       //noinspection unchecked
       myComboBox.setModel(model);
 
+      //noinspection unchecked
       myComboBox.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          if (value != null) {
-            JdkBundle jdkBundleDescriptor = ((JdkBundle)value);
+          JdkBundle jdkBundleDescriptor = ((JdkBundleItem)value).getBundle();
+          if (jdkBundleDescriptor != null) {
             if (jdkBundleDescriptor.isBoot()) {
               setForeground(JBColor.DARK_GRAY);
             }
             setText(jdkBundleDescriptor.getVisualRepresentation());
           }
           else {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " + pathsList.toArrayList().size());
-              StringBuilder jdkNames = new StringBuilder();
-              for (JdkBundle jdkBundlePath : pathsList.toArrayList()) {
-                if (!jdkBundlesList.isEmpty()) {
-                  continue;
-                }
-                jdkNames.append(jdkBundlePath.getVisualRepresentation()).append("; ");
-              }
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Available JDKs names: " + jdkNames.toString());
-              }
-            }
+            setText("...");
           }
         }
       });
+
+      myComboBox.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          if (myComboBox.getSelectedItem() == null) {
+            LOG.error("Unexpected nullable selection");
+            return;
+          }
+
+          JdkBundleItem item = (JdkBundleItem)myComboBox.getSelectedItem();
+
+          if (item.getBundle() == null) {
+            FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+              JdkBundle selectedBundle;
+
+              @Override
+              public boolean isFileSelectable(final VirtualFile file) {
+                selectedBundle = null;
+                if (!super.isFileSelectable(file)) return false;
+                // allow selection of JDK of any arch, so that to warn about possible arch mismatch during validation
+                JdkBundle bundle = JdkBundle.createBundle(new File(file.getPath()), false, false, false);
+                if (bundle == null) return false;
+                Version version = bundle.getVersion();
+                selectedBundle = bundle;
+                return version != null && !version.lessThan(JDK8_VERSION.major, JDK8_VERSION.minor, JDK8_VERSION.bugfix);
+              }
+
+              @Override
+              public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+                super.validateSelectedFiles(files);
+                assert files.length == 1;
+                if (selectedBundle == null) {
+                  throw new Exception("Invalid JDK bundle!");
+                }
+                if (selectedBundle.getBitness() != JdkBundle.runtimeBitness) {
+                  //noinspection SpellCheckingInspection
+                  throw new Exception("JDK arch mismatch! Your IDE's arch is " + JdkBundle.runtimeBitness);
+                }
+              }
+            };
+
+            FileChooser.chooseFiles(descriptor, null, null, files -> {
+              if (files.size() > 0) {
+                final File jdkFile = new File(files.get(0).getPath());
+                JdkBundle selectedJdk = pathsList.getBundle(jdkFile.getPath());
+                JdkBundleItem jdkBundleItem;
+                if (selectedJdk == null) {
+                  selectedJdk = JdkBundle.createBundle(jdkFile, false, false);
+                  if (selectedJdk != null) {
+                    pathsList.addBundle(selectedJdk, true);
+                    if (model.getSize() > 0) {
+                      jdkBundleItem = new JdkBundleItem(selectedJdk);
+                      model.insertElementAt(jdkBundleItem, model.getSize() - 1);
+                    }
+                    else {
+                      jdkBundleItem = new JdkBundleItem(selectedJdk);
+                      model.addElement(jdkBundleItem);
+                    }
+                  }
+                  else {
+                    LOG.error("Cannot create bundle for path: " + jdkFile.getPath());
+                    return;
+                  }
+                } else {
+                  jdkBundleItem = new JdkBundleItem(selectedJdk);
+                }
+                myComboBox.setSelectedItem(jdkBundleItem);
+              }
+            });
+          }
+
+          item = (JdkBundleItem)myComboBox.getSelectedItem();
+
+          if (item == null || item.getBundle() == null) {
+            item = model.getElementAt(0);
+            myComboBox.setSelectedItem(item);
+          }
+
+          setOKActionEnabled(item.getBundle() != null && !item.getBundle().isBoot());
+        }
+      });
+      myComboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
 
       setTitle("Switch IDE Boot JDK");
       setOKActionEnabled(false); // First item is a boot jdk
@@ -223,8 +283,14 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       return myComboBox;
     }
 
+    @Nullable
     public File getSelectedFile() {
-      return ((JdkBundle)myComboBox.getSelectedItem()).getLocation();
+      final JdkBundleItem item = (JdkBundleItem)myComboBox.getSelectedItem();
+      if (item == null) return null;
+
+      final JdkBundle bundle = item.getBundle();
+
+      return bundle != null ? bundle.getLocation() : null;
     }
   }
 
@@ -233,11 +299,14 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     "/usr/lib/jvm/", // Ubuntu
     "/usr/java/"     // Fedora
   };
+  private static final String STANDARD_JVM_X64_LOCATIONS_ON_WINDOWS = "Program Files/Java";
+
+  private static final String STANDARD_JVM_X86_LOCATIONS_ON_WINDOWS = "Program Files (x86)/Java";
 
   private static final Version JDK8_VERSION = new Version(1, 8, 0);
 
   @NotNull
-  private static JdkBundleList findJdkPaths() {
+  public static JdkBundleList findJdkPaths() {
     JdkBundle bootJdk = JdkBundle.createBoot();
 
     JdkBundleList jdkBundleList = new JdkBundleList();
@@ -258,6 +327,16 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     else if (SystemInfo.isLinux) {
       for (String location : STANDARD_JVM_LOCATIONS_ON_LINUX) {
         jdkBundleList.addBundlesFromLocation(location, JDK8_VERSION, null);
+      }
+    }
+    else if (SystemInfo.isWindows) {
+      for (File root : File.listRoots()) {
+        if (SystemInfo.is32Bit) {
+          jdkBundleList.addBundlesFromLocation(new File(root, STANDARD_JVM_X86_LOCATIONS_ON_WINDOWS).getAbsolutePath(), JDK8_VERSION, null);
+        }
+        else {
+          jdkBundleList.addBundlesFromLocation(new File(root, STANDARD_JVM_X64_LOCATIONS_ON_WINDOWS).getAbsolutePath(), JDK8_VERSION, null);
+        }
       }
     }
 

@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <depends optional="true" config-file="terminal-for-remote-servers.xml">com.intellij.modules.remoteServers</depends>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -10,6 +10,7 @@
     <fileEditorProvider implementation="org.jetbrains.plugins.terminal.vfs.TerminalSessionEditorProvider"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider"/>
   </extensions>
 
   <project-components>
@@ -18,4 +19,9 @@
       <implementation-class>org.jetbrains.plugins.terminal.TerminalView</implementation-class>
     </component>
   </project-components>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.localTerminalCustomizer"
+                    interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer"/>
+  </extensionPoints>
 </idea-plugin>

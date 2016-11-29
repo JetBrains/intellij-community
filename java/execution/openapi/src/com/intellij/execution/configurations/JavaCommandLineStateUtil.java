@@ -16,14 +16,11 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessHandlerFactory;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class JavaCommandLineStateUtil {
   private JavaCommandLineStateUtil() { }
 
@@ -34,7 +31,10 @@ public class JavaCommandLineStateUtil {
   
   @NotNull
   public static OSProcessHandler startProcess(@NotNull GeneralCommandLine commandLine, boolean ansiColoring) throws ExecutionException {
-    OSProcessHandler processHandler = ansiColoring ? new ColoredProcessHandler(commandLine) : new OSProcessHandler(commandLine);
+    ProcessHandlerFactory factory = ProcessHandlerFactory.getInstance();
+    OSProcessHandler processHandler = ansiColoring ?
+                                      factory.createColoredProcessHandler(commandLine) :
+                                      factory.createProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }

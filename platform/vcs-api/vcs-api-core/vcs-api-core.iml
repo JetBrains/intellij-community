@@ -10,6 +10,6 @@
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="editor-ui-api" />
+    <orderEntry type="module" module-name="diff-api" />
   </component>
 </module>
-

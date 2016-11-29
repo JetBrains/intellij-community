@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.github.exceptions;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubErrorMessage;
+import org.jetbrains.plugins.github.api.data.GithubErrorMessage;
 
 /**
  * @author Aleksey Pivovarov

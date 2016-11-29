@@ -73,7 +73,7 @@ public class RestRoleInspection extends RestInspection {
 
   private class Visitor extends RestInspectionVisitor {
     private final ImmutableSet<String> myIgnoredRoles;
-    Set<String> mySphinxRoles = new HashSet<String>();
+    Set<String> mySphinxRoles = new HashSet<>();
 
     public Visitor(final ProblemsHolder holder, List<String> ignoredRoles) {
       super(holder);
@@ -126,7 +126,7 @@ public class RestRoleInspection extends RestInspection {
       if (RestUtil.SPHINX_ROLES.contains(node.getText()) || RestUtil.SPHINX_ROLES.contains(":py"+node.getText())
           || mySphinxRoles.contains(node.getRoleName())) return;
 
-      Set<String> definedRoles = new HashSet<String>();
+      Set<String> definedRoles = new HashSet<>();
 
       RestDirectiveBlock[] directives = PsiTreeUtil.getChildrenOfType(file, RestDirectiveBlock.class);
       if (directives != null) {

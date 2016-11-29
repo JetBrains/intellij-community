@@ -45,7 +45,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class FindUsagesTest extends PsiTestCase{
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -63,7 +62,7 @@ public class FindUsagesTest extends PsiTestCase{
     String[] fileNames = {"B.java", "A.java", "A.java", "B.java"};
     int[] starts = {};
     int[] ends = {};
-    final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
+    final ArrayList<PsiFile> filesList = new ArrayList<>();
     final IntArrayList startsList = new IntArrayList();
     final IntArrayList endsList = new IntArrayList();
     PsiReference[] refs =
@@ -102,6 +101,17 @@ public class FindUsagesTest extends PsiTestCase{
     PsiMethod usedMethod = ctrs[1];
     assertEquals(1, usedMethod.getParameterList().getParametersCount());
     assertEquals(1, ReferencesSearch.search(usedMethod).findAll().size());
+  }
+
+  public void testImplicitVarArgsConstructorsUsage() throws Throwable {
+    PsiMethod[] ctrs = myJavaFacade.findClass("A1", GlobalSearchScope.allScope(myProject)).getConstructors();
+    PsiMethod usedCtr = ctrs[0];
+    assertEquals("java.lang.String", ((PsiEllipsisType)usedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
+    assertEquals(1, ReferencesSearch.search(usedCtr).findAll().size());
+
+    PsiMethod unusedCtr = ctrs[1];
+    assertEquals("java.lang.Object", ((PsiEllipsisType)unusedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
+    assertEquals(0, ReferencesSearch.search(unusedCtr).findAll().size());
   }
 
   private static void addReference(PsiReference ref, ArrayList<PsiFile> filesList, IntArrayList startsList, IntArrayList endsList) {
@@ -154,18 +164,15 @@ public class FindUsagesTest extends PsiTestCase{
       PsiClass bar = myJavaFacade.findClass("com.Foo.Bar", scope);
 
       final int[] count = {0};
-      Processor<UsageInfo> processor = new Processor<UsageInfo>() {
-        @Override
-        public boolean process(UsageInfo usageInfo) {
-          int navigationOffset = usageInfo.getNavigationOffset();
-          assertTrue(navigationOffset > 0);
-          String textAfter = usageInfo.getFile().getText().substring(navigationOffset);
-          assertTrue(textAfter, textAfter.startsWith("Foo") || textAfter.startsWith("Bar") ||
-                                textAfter.startsWith("com.Foo.Bar") // sorry, can't get references with dollar-dot mismatch to work now
-          );
-          count[0]++;
-          return true;
-        }
+      Processor<UsageInfo> processor = usageInfo -> {
+        int navigationOffset = usageInfo.getNavigationOffset();
+        assertTrue(navigationOffset > 0);
+        String textAfter = usageInfo.getFile().getText().substring(navigationOffset);
+        assertTrue(textAfter, textAfter.startsWith("Foo") || textAfter.startsWith("Bar") ||
+                              textAfter.startsWith("com.Foo.Bar") // sorry, can't get references with dollar-dot mismatch to work now
+        );
+        count[0]++;
+        return true;
       };
       JavaFindUsagesHandler handler = new JavaFindUsagesHandler(bar, JavaFindUsagesHandlerFactory.getInstance(getProject()));
 
@@ -183,7 +190,7 @@ public class FindUsagesTest extends PsiTestCase{
   }
 
   public static void doTest(PsiElement element, String[] fileNames, int[] starts, int[] ends) throws Exception {
-    final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
+    final ArrayList<PsiFile> filesList = new ArrayList<>();
     final IntArrayList startsList = new IntArrayList();
     final IntArrayList endsList = new IntArrayList();
     ReferencesSearch.search(element, GlobalSearchScope.projectScope(element.getProject()), false).forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
@@ -239,13 +246,13 @@ public class FindUsagesTest extends PsiTestCase{
   }
 
   private static void checkResult(String[] fileNames, final ArrayList<PsiFile> filesList, int[] starts, final IntArrayList startsList, int[] ends, final IntArrayList endsList) {
-    List<SearchResult> expected = new ArrayList<SearchResult>();
+    List<SearchResult> expected = new ArrayList<>();
     for (int i = 0; i < fileNames.length; i++) {
       String fileName = fileNames[i];
       expected.add(new SearchResult(fileName, i < starts.length ? starts[i] : -1, i < ends.length ? ends[i] : -1));
     }
 
-    List<SearchResult> actual = new ArrayList<SearchResult>();
+    List<SearchResult> actual = new ArrayList<>();
     for (int i = 0; i < filesList.size(); i++) {
       PsiFile psiFile = filesList.get(i);
       actual.add(

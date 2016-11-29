@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,20 +29,18 @@ import java.util.*;
 public abstract class AutomaticUsageRenamer<T> {
   private final String myOldName;
   private final String myNewName;
-  private final Map<T, String> myRenames = new LinkedHashMap<T, String>();
-  private final List<T> myElements = new ArrayList<T>();
-  private final Map<T, List<RenameableUsage>> myReferences = new HashMap<T, List<RenameableUsage>>();
+  private final Map<T, String> myRenames = new LinkedHashMap<>();
+  private final List<T> myElements = new ArrayList<>();
+  private final Map<T, List<RenameableUsage>> myReferences = new HashMap<>();
 
   protected AutomaticUsageRenamer(List<? extends T> renamedElements, String oldName, String newName) {
     myOldName = oldName;
     myNewName = newName;
-    List<T> elements = new ArrayList<T>(renamedElements);
-    Collections.sort(elements, new Comparator<T>() {
-      public int compare(T o1, T o2) {
-        int i = StringUtil.compare(getSourceName(o1), getSourceName(o2), false);
-        if (i != 0) return i;
-        return getName(o1).compareTo(getName(o2));
-      }
+    List<T> elements = new ArrayList<>(renamedElements);
+    Collections.sort(elements, (o1, o2) -> {
+      int i = StringUtil.compare(getSourceName(o1), getSourceName(o2), false);
+      if (i != 0) return i;
+      return getName(o1).compareTo(getName(o2));
     });
     for (T element : elements) {
       String suggestedNewName = suggestName(element);
@@ -88,10 +86,10 @@ public abstract class AutomaticUsageRenamer<T> {
     return myElements;
   }
 
-  @Nullable
   /**
    * Element source, path. For example, package. Taken into account while sorting.
    */
+  @Nullable
   public String getSourceName(T element) {
     return null;
   }

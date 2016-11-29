@@ -25,14 +25,16 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import org.jetbrains.annotations.NotNull;
 
-public class GitIntegrationEnabler extends VcsIntegrationEnabler<GitVcs> {
-
-  private final @NotNull Git myGit;
+public class GitIntegrationEnabler extends VcsIntegrationEnabler {
 
   private static final Logger LOG = Logger.getInstance(GitIntegrationEnabler.class);
 
+  @NotNull private final Git myGit;
+  @NotNull private final GitVcs myVcs;
+
   public GitIntegrationEnabler(@NotNull GitVcs vcs, @NotNull Git git) {
     super(vcs);
+    myVcs = vcs;
     myGit = git;
   }
 
@@ -52,5 +54,4 @@ public class GitIntegrationEnabler extends VcsIntegrationEnabler<GitVcs> {
       return false;
     }
   }
-
 }

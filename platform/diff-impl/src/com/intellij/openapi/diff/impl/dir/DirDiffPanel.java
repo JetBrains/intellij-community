@@ -27,14 +27,12 @@ import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
-import com.intellij.ide.diff.DirDiffElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.diff.impl.dir.actions.RefreshDirDiffAction;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,6 +43,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.PopupHandler;
@@ -507,14 +506,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
     else if (DIR_DIFF_TABLE.is(dataId)) {
       return myTable;
     }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getOpenFileDescriptorsArray();
-    }
-    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return getOpenFileDescriptor();
-    }
-    else if (DiffDataKeys.OPEN_FILE_DESCRIPTOR.is(dataId)) {
-      return getOpenFileDescriptor();
+    else if (DiffDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      return getNavigatableArray();
     }
     else if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
@@ -523,32 +516,19 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   @Nullable
-  private OpenFileDescriptor getOpenFileDescriptor() {
+  private Navigatable[] getNavigatableArray() {
     Project project = myModel.getProject();
     List<DirDiffElementImpl> elements = myModel.getSelectedElements();
-    if (elements.isEmpty()) return null;
-    DirDiffElement element = elements.get(0);
-    DiffElement source = element.getSource();
-    DiffElement target = element.getTarget();
-    OpenFileDescriptor descriptor1 = source != null ? source.getOpenFileDescriptor(project) : null;
-    OpenFileDescriptor descriptor2 = target != null ? target.getOpenFileDescriptor(project) : null;
-    return descriptor2 != null ? descriptor2 : descriptor1;
-  }
-
-  @Nullable
-  private OpenFileDescriptor[] getOpenFileDescriptorsArray() {
-    Project project = myModel.getProject();
-    List<DirDiffElementImpl> elements = myModel.getSelectedElements();
-    List<OpenFileDescriptor> descriptors = new ArrayList<OpenFileDescriptor>();
+    List<Navigatable> navigatables = new ArrayList<>();
     for (DirDiffElementImpl element : elements) {
       DiffElement source = element.getSource();
       DiffElement target = element.getTarget();
-      OpenFileDescriptor descriptor1 = source != null ? source.getOpenFileDescriptor(project) : null;
-      OpenFileDescriptor descriptor2 = target != null ? target.getOpenFileDescriptor(project) : null;
-      if (descriptor1 != null) descriptors.add(descriptor1);
-      if (descriptor2 != null) descriptors.add(descriptor2);
+      Navigatable navigatable1 = source != null ? source.getNavigatable(project) : null;
+      Navigatable navigatable2 = target != null ? target.getNavigatable(project) : null;
+      if (navigatable1 != null) navigatables.add(navigatable1);
+      if (navigatable2 != null) navigatables.add(navigatable2);
     }
-    return ContainerUtil.toArray(descriptors, new OpenFileDescriptor[descriptors.size()]);
+    return ContainerUtil.toArray(navigatables, new Navigatable[navigatables.size()]);
   }
 
   private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {

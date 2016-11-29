@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticIconFieldsAction extends AnAction {
@@ -45,7 +44,7 @@ public class StaticIconFieldsAction extends AnAction {
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setTabName("Statics");
     presentation.setTabText("Statitcs");
-    final UsageView view = UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, new Usage[0], presentation);
+    final UsageView view = UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation);
 
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching icons usages") {
@@ -74,27 +73,19 @@ public class StaticIconFieldsAction extends AnAction {
   }
 
   private static void searchFields(final PsiClass allIcons, final UsageView view, final ProgressIndicator indicator) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        indicator.setText("Searching for: " + allIcons.getQualifiedName());
+    ApplicationManager.getApplication().runReadAction(() -> indicator.setText("Searching for: " + allIcons.getQualifiedName()));
+
+    ReferencesSearch.search(allIcons).forEach(reference -> {
+      PsiElement elt = reference.getElement();
+
+      while (elt instanceof PsiExpression) elt = elt.getParent();
+
+      if (elt instanceof PsiField) {
+        UsageInfo info = new UsageInfo(elt, false);
+        view.appendUsage(new UsageInfo2UsageAdapter(info));
       }
-    });
 
-    ReferencesSearch.search(allIcons).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        PsiElement elt = reference.getElement();
-
-        while (elt instanceof PsiExpression) elt = elt.getParent();
-
-        if (elt instanceof PsiField) {
-          UsageInfo info = new UsageInfo(elt, false);
-          view.appendUsage(new UsageInfo2UsageAdapter(info));
-        }
-
-        return true;
-      }
+      return true;
     });
   }
 }

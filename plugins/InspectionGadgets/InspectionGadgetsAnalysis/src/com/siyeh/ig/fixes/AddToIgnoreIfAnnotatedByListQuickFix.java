@@ -41,15 +41,12 @@ public class AddToIgnoreIfAnnotatedByListQuickFix {
   public static List<InspectionGadgetsFix> build(final PsiModifierListOwner modifierListOwner,
                                                  final List<String> configurationList,
                                                  final List<InspectionGadgetsFix> fixes) {
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(modifierListOwner, new Processor<String>() {
-      @Override
-      public boolean process(String qualifiedName) {
-        fixes.add(new DelegatingFix(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
-          InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
-          QuickFixBundle.message("fix.add.special.annotation.family"),
-          configurationList, qualifiedName, modifierListOwner)));
-        return true;
-      }
+    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(modifierListOwner, qualifiedName -> {
+      fixes.add(new DelegatingFix(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
+        InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
+        QuickFixBundle.message("fix.add.special.annotation.family"),
+        configurationList, qualifiedName, modifierListOwner)));
+      return true;
     });
     return fixes;
   }

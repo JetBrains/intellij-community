@@ -28,6 +28,7 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 /**
  * User: anna
  * Date: 28-Feb-2006
@@ -40,15 +41,14 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
   public boolean AUTOSCROLL_TO_SOURCE = false;
   public float SPLITTER_PROPORTION = 0.5f;
-  public boolean GROUP_BY_SEVERITY = false;
-  public boolean FILTER_RESOLVED_ITEMS = true;
+  public volatile boolean GROUP_BY_SEVERITY = false;
+  public volatile boolean FILTER_RESOLVED_ITEMS = true;
   public boolean ANALYZE_TEST_SOURCES = true;
-  public boolean SHOW_DIFF_WITH_PREVIOUS_RUN = false;
   public int SCOPE_TYPE = AnalysisScope.PROJECT;
   public String CUSTOM_SCOPE_NAME = "";
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-  public boolean SHOW_ONLY_DIFF = false;
-  public boolean SHOW_STRUCTURE = false;
+  public volatile boolean SHOW_STRUCTURE = false;
+  public String FILE_MASK;
 
   public boolean ANALYSIS_IN_BACKGROUND = true;
 
@@ -83,9 +83,10 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   }
 
   public AnAction createGroupBySeverityAction(final InspectionResultsView view) {
-    return new ToggleAction(InspectionsBundle.message("inspection.action.group.by.severity"),
-                            InspectionsBundle.message("inspection.action.group.by.severity.description"),
-                            AllIcons.Nodes.SortBySeverity) {
+    return new InspectionResultsViewToggleAction(view,
+                                                 InspectionsBundle.message("inspection.action.group.by.severity"),
+                                                 InspectionsBundle.message("inspection.action.group.by.severity.description"),
+                                                 AllIcons.Nodes.SortBySeverity) {
 
 
       @Override
@@ -94,17 +95,17 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      protected void setSelected(boolean state) {
         GROUP_BY_SEVERITY = state;
-        view.update();
       }
     };
   }
 
   public AnAction createFilterResolvedItemsAction(final InspectionResultsView view){
-    return new ToggleAction(InspectionsBundle.message("inspection.filter.resolved.action.text"),
-                            InspectionsBundle.message("inspection.filter.resolved.action.text"),
-                            AllIcons.General.Filter) {
+    return new InspectionResultsViewToggleAction(view,
+                                                 InspectionsBundle.message("inspection.filter.resolved.action.text"),
+                                                 InspectionsBundle.message("inspection.filter.resolved.action.text"),
+                                                 AllIcons.General.Filter) {
 
 
       @Override
@@ -113,39 +114,17 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(boolean state) {
         FILTER_RESOLVED_ITEMS = state;
-        view.update();
-      }
-    };
-  }
-
-  public AnAction createShowOutdatedProblemsAction(final InspectionResultsView view) {
-    return new ToggleAction(InspectionsBundle.message("inspection.filter.show.diff.action.text"),
-                            InspectionsBundle.message("inspection.filter.show.diff.action.text"),
-                            AllIcons.Actions.Diff) {
-
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return SHOW_DIFF_WITH_PREVIOUS_RUN;
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        SHOW_DIFF_WITH_PREVIOUS_RUN = state;
-        if (!SHOW_DIFF_WITH_PREVIOUS_RUN) {
-          SHOW_ONLY_DIFF = false;
-        }
-        view.update();
       }
     };
   }
 
   public AnAction createGroupByDirectoryAction(final InspectionResultsView view) {
-    return new ToggleAction("Group by directory",
-                            "Group by directory",
-                            AllIcons.Actions.GroupByPackage) {
+    return new InspectionResultsViewToggleAction(view,
+                                                 "Group by directory",
+                                                 "Group by directory",
+                                                 AllIcons.Actions.GroupByPackage) {
 
       @Override
       public boolean isSelected(AnActionEvent e) {
@@ -153,34 +132,8 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(boolean state) {
         SHOW_STRUCTURE = state;
-        view.update();
-      }
-    };
-  }
-
-  public AnAction createShowDiffOnlyAction(final InspectionResultsView view) {
-    return new ToggleAction(InspectionsBundle.message("inspection.filter.show.diff.only.action.text"),
-                            InspectionsBundle.message("inspection.filter.show.diff.only.action.text"),
-                            AllIcons.Actions.ShowChangesOnly) {
-
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return SHOW_ONLY_DIFF;
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        SHOW_ONLY_DIFF = state;
-        view.update();
-      }
-
-      @Override
-      public void update(final AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setEnabled(SHOW_DIFF_WITH_PREVIOUS_RUN);
       }
     };
   }
@@ -193,5 +146,25 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   @Override
   public void loadState(AnalysisUIOptions state) {
     XmlSerializerUtil.copyBean(state, this);
+  }
+
+  private abstract static class InspectionResultsViewToggleAction extends ToggleAction {
+    @NotNull private final InspectionResultsView myView;
+
+    public InspectionResultsViewToggleAction(@NotNull InspectionResultsView view,
+                                             @NotNull String text,
+                                             @NotNull String description,
+                                             @NotNull Icon icon) {
+      super(text, description, icon);
+      myView = view;
+    }
+
+    @Override
+    public final void setSelected(AnActionEvent e, boolean state) {
+      setSelected(state);
+      myView.update();
+    }
+
+    protected abstract void setSelected(boolean state);
   }
 }

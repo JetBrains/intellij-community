@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,22 +40,17 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   }
 
   protected Collection<AbstractTreeNode> modulesAndGroups(Module[] modules) {
-    Map<String, List<Module>> groups = new THashMap<String, List<Module>>();
-    List<Module> nonGroupedModules = new ArrayList<Module>(Arrays.asList(modules));
+    Map<String, List<Module>> groups = new THashMap<>();
+    List<Module> nonGroupedModules = new ArrayList<>(Arrays.asList(modules));
     for (final Module module : modules) {
       final String[] path = ModuleManager.getInstance(getProject()).getModuleGroupPath(module);
       if (path != null) {
         final String topLevelGroupName = path[0];
-        List<Module> moduleList = groups.get(topLevelGroupName);
-        if (moduleList == null) {
-          moduleList = new ArrayList<Module>();
-          groups.put(topLevelGroupName, moduleList);
-        }
-        moduleList.add(module);
+        groups.computeIfAbsent(topLevelGroupName, k -> new ArrayList<>()).add(module);
         nonGroupedModules.remove(module);
       }
     }
-    List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    List<AbstractTreeNode> result = new ArrayList<>();
     try {
       for (String groupPath : groups.keySet()) {
         result.add(createModuleGroupNode(new ModuleGroup(new String[]{groupPath})));
@@ -66,7 +61,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     }
     catch (Exception e) {
       LOG.error(e);
-      return new ArrayList<AbstractTreeNode>();
+      return new ArrayList<>();
     }
     return result;
   }

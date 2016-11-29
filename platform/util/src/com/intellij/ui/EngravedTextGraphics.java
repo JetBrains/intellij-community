@@ -19,14 +19,12 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.SystemInfo;
-
 import java.awt.*;
 import java.text.AttributedCharacterIterator;
 
 public class EngravedTextGraphics extends Graphics2DDelegate {
   public static final Color SHADOW_COLOR = Gray._250.withAlpha(140);
-  private static final boolean ALLOW_ENGRAVEMENT = SystemInfo.isMac;
+  private static final boolean ALLOW_ENGRAVEMENT = false;
   private Color myShadowColor;
   private int myXOffset;
   private int myYOffset;

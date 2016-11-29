@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   private final Project myProject;
 
-  private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<VirtualFile,Editor>();
+  private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<>();
   private VirtualFile myActiveFile;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
@@ -79,13 +79,8 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
                                                                         final boolean focusEditor,
                                                                         boolean searchForSplitter) {
-    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        result.set(openFileImpl3(file, focusEditor));
-      }
-    }, "", null);
+    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(file, focusEditor)), "", null);
     return result.get();
 
   }
@@ -202,12 +197,14 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void closeAllFiles() {
-    final EditorFactory editorFactory = EditorFactory.getInstance();
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    TextEditorProvider editorProvider = TextEditorProvider.getInstance();
     Iterator<Editor> it = myVirtualFile2Editor.values().iterator();
     while (it.hasNext()) {
       Editor editor = it.next();
       it.remove();
       if (editor != null && !editor.isDisposed()){
+        editorProvider.disposeEditor(editorProvider.getTextEditor(editor));
         editorFactory.releaseEditor(editor);
       }
     }
@@ -234,11 +231,6 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       @NotNull
       public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
         throw new IncorrectOperationException();
-      }
-
-      @Override
-      public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
-
       }
 
       @Override
@@ -368,7 +360,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public JComponent getComponent() {
-    throw new UnsupportedOperationException();
+    return new JLabel();
   }
 
   @Override

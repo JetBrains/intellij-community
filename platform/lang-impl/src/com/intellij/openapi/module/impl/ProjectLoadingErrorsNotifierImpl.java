@@ -42,7 +42,7 @@ import java.util.List;
  * @author nik
  */
 public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifier {
-  private final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> myErrors = new MultiMap<ConfigurationErrorType, ConfigurationErrorDescription>();
+  private final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> myErrors = new MultiMap<>();
   private final Object myLock = new Object();
   private final Project myProject;
 
@@ -70,17 +70,12 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
       fireNotifications();
     }
     else if (first) {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          fireNotifications();
-        }
-      });
+      StartupManager.getInstance(myProject).registerPostStartupActivity(() -> fireNotifications());
     }
   }
 
   private void fireNotifications() {
-    final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> descriptionsMap = new MultiMap<ConfigurationErrorType, ConfigurationErrorDescription>();
+    final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> descriptionsMap = new MultiMap<>();
     synchronized (myLock) {
       if (myErrors.isEmpty()) return;
       descriptionsMap.putAllValues(myErrors);
@@ -100,12 +95,7 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
                                                   public void hyperlinkUpdate(@NotNull Notification notification,
                                                                               @NotNull HyperlinkEvent event) {
                                                     final List<ConfigurationErrorDescription> validDescriptions =
-                                                      ContainerUtil.findAll(descriptions, new Condition<ConfigurationErrorDescription>() {
-                                                        @Override
-                                                        public boolean value(ConfigurationErrorDescription errorDescription) {
-                                                          return errorDescription.isValid();
-                                                        }
-                                                      });
+                                                      ContainerUtil.findAll(descriptions, errorDescription -> errorDescription.isValid());
                                                     RemoveInvalidElementsDialog
                                                       .showDialog(myProject, CommonBundle.getErrorTitle(), type, invalidElements,
                                                                   validDescriptions);

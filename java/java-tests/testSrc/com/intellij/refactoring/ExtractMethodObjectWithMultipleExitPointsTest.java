@@ -64,9 +64,7 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
     processor.setCreateInnerClass(createInnerClass);
 
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
-    });
+    ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
 
 
     checkResultByFile("/refactoring/extractMethodObject/multipleExitPoints/" + testName + ".java" + ".after");
@@ -146,6 +144,10 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
   }
 
   public void testFormattingInside() throws Exception {
+    doTest();
+  }
+
+  public void testAssignReturnValueToForeachParameter() throws Exception {
     doTest();
   }
 }

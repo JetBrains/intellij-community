@@ -172,7 +172,7 @@ public class ChangeUtil {
         event.registerChangeSet(treeAspect, destinationTreeChange);
         action.makeChange(destinationTreeChange);
 
-        TreeUtil.clearCaches(changedElement);
+        changedElement.clearCaches();
         if (changedElement instanceof CompositeElement) {
           ((CompositeElement) changedElement).subtreeChanged();
         }

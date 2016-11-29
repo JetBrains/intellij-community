@@ -35,7 +35,6 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -66,7 +65,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myUnknownVariables = ContainerUtil.newLinkedHashSet();
     myVariableStates = ContainerUtil.newLinkedHashMap();
     myDistinctClasses = new TLongHashSet();
-    myStack = new Stack<DfaValue>();
+    myStack = new Stack<>();
     myIdToEqClassesIndices = new MyIdMap(20);
   }
 
@@ -75,7 +74,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myEphemeral = toCopy.myEphemeral;
     myDefaultVariableStates = toCopy.myDefaultVariableStates; // shared between all states
     
-    myStack = new Stack<DfaValue>(toCopy.myStack);
+    myStack = new Stack<>(toCopy.myStack);
     myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.toArray());
     myUnknownVariables = ContainerUtil.newLinkedHashSet(toCopy.myUnknownVariables);
 
@@ -140,7 +139,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     LinkedHashSet<UnorderedPair<EqClass>> result = ContainerUtil.newLinkedHashSet();
     for (long encodedPair : myDistinctClasses.toArray()) {
-      result.add(new UnorderedPair<EqClass>(myEqClasses.get(low(encodedPair)), myEqClasses.get(high(encodedPair))));
+      result.add(new UnorderedPair<>(myEqClasses.get(low(encodedPair)), myEqClasses.get(high(encodedPair))));
     }
     return myCachedDistinctClassPairs = result;
   }
@@ -194,7 +193,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (!myDistinctClasses.isEmpty()) {
       result.append("\n  distincts: ");
-      List<String> distincts = new ArrayList<String>();
+      List<String> distincts = new ArrayList<>();
       for (UnorderedPair<EqClass> pair : getDistinctClassPairs()) {
         distincts.add("{" + pair.first + ", " + pair.second + "}");
       }
@@ -212,7 +211,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     if (!myUnknownVariables.isEmpty()) {
-      result.append("\n  unknowns: ").append(new HashSet<DfaVariableValue>(myUnknownVariables));
+      result.append("\n  unknowns: ").append(new HashSet<>(myUnknownVariables));
     }
     result.append('>');
     return result.toString();
@@ -238,7 +237,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public void emptyStack() {
     myCachedHash = null;
-    myStack.clear();
+    while (!myStack.isEmpty() && !(myStack.peek() instanceof DfaControlTransferValue)) {
+      myStack.pop();
+    }
   }
 
   @Override
@@ -678,7 +679,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
             setVariableState(dfaVar, newState);
             return true;
           }
-          return applyRelation(dfaVar, myFactory.getConstFactory().getNull(), false);
+          return !getVariableState(dfaVar).isNotNull() && applyRelation(dfaVar, myFactory.getConstFactory().getNull(), false);
         }
         if (applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true)) {
           DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue((DfaTypeValue)dfaRight);
@@ -697,6 +698,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return isNegated;
     }
     if (canBeNaN(dfaLeft) && canBeNaN(dfaRight)) {
+      if (dfaLeft == dfaRight &&
+          dfaLeft instanceof DfaVariableValue &&
+          !(((DfaVariableValue)dfaLeft).getVariableType() instanceof PsiPrimitiveType)) {
+        return !isNegated;
+      }
+
       applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
       return true;
     }
@@ -810,9 +817,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       Object value = ((DfaConstValue)dfa).getValue();
       if (value instanceof Double && ((Double)value).isNaN()) return true;
       if (value instanceof Float && ((Float)value).isNaN()) return true;
-    }
-    else if (dfa instanceof DfaBoxedValue){
-      return isNaN(((DfaBoxedValue)dfa).getWrappedValue());
     }
     return false;
   }
@@ -991,12 +995,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushVariable(@NotNull final DfaVariableValue variable) {
-    List<DfaValue> updatedStack = ContainerUtil.map(myStack, new Function<DfaValue, DfaValue>() {
-      @Override
-      public DfaValue fun(DfaValue value) {
-        return handleFlush(variable, value);
-      }
-    });
+    List<DfaValue> updatedStack = ContainerUtil.map(myStack, value -> handleFlush(variable, value));
     myStack.clear();
     for (DfaValue value : updatedStack) {
       myStack.push(value);

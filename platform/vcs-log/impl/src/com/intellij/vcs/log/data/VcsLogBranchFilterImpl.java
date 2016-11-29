@@ -2,7 +2,6 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +32,10 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
 
   @Deprecated
   public VcsLogBranchFilterImpl(@NotNull Collection<String> branches, @NotNull Collection<String> excludedBranches) {
-    myBranches = new ArrayList<String>(branches);
-    myPatterns = new ArrayList<Pattern>();
-    myExcludedBranches = new ArrayList<String>(excludedBranches);
-    myExcludedPatterns = new ArrayList<Pattern>();
+    myBranches = new ArrayList<>(branches);
+    myPatterns = new ArrayList<>();
+    myExcludedBranches = new ArrayList<>(excludedBranches);
+    myExcludedPatterns = new ArrayList<>();
   }
 
   @Nullable
@@ -47,10 +46,10 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
 
   @NotNull
   public static VcsLogBranchFilterImpl fromTextPresentation(@NotNull Collection<String> strings, @NotNull Set<String> existingBranches) {
-    List<String> branchNames = new ArrayList<String>();
-    List<String> excludedBranches = new ArrayList<String>();
-    List<Pattern> patterns = new ArrayList<Pattern>();
-    List<Pattern> excludedPatterns = new ArrayList<Pattern>();
+    List<String> branchNames = new ArrayList<>();
+    List<String> excludedBranches = new ArrayList<>();
+    List<Pattern> patterns = new ArrayList<>();
+    List<Pattern> excludedPatterns = new ArrayList<>();
 
     for (String string : strings) {
       boolean isExcluded = string.startsWith("-");
@@ -93,28 +92,13 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
   @NotNull
   @Override
   public Collection<String> getTextPresentation() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     result.addAll(myBranches);
-    result.addAll(ContainerUtil.map(myPatterns, new Function<Pattern, String>() {
-      @Override
-      public String fun(Pattern pattern) {
-        return pattern.pattern();
-      }
-    }));
+    result.addAll(ContainerUtil.map(myPatterns, pattern -> pattern.pattern()));
 
-    result.addAll(ContainerUtil.map(myExcludedBranches, new Function<String, String>() {
-      @Override
-      public String fun(String branchName) {
-        return "-" + branchName;
-      }
-    }));
-    result.addAll(ContainerUtil.map(myExcludedPatterns, new Function<Pattern, String>() {
-      @Override
-      public String fun(Pattern pattern) {
-        return "-" + pattern.pattern();
-      }
-    }));
+    result.addAll(ContainerUtil.map(myExcludedBranches, branchName -> "-" + branchName));
+    result.addAll(ContainerUtil.map(myExcludedPatterns, pattern -> "-" + pattern.pattern()));
 
     return result;
   }

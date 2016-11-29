@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
@@ -29,5 +30,10 @@ public class CopyAbstractMethodImplementationTest extends LightIntentionActionTe
 
   public void test() throws Exception {
     doAllTests();
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_6;
   }
 }

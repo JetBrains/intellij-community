@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.List;
 /**
 * Created by Egor on 04.10.2014.
 */
-class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEvaluatorProvider {
+class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(ImageObjectRenderer.class);
 
   public ImageObjectRenderer(final NodeRendererSettings rendererSettings) {

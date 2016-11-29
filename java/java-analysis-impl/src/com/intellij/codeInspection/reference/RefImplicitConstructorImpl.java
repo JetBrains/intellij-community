@@ -34,8 +34,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImplicitConstructor {
 
+  private final RefClass myOwnerClass;
   RefImplicitConstructorImpl(@NotNull RefClass ownerClass) {
     super(InspectionsBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName()), ownerClass);
+    myOwnerClass = ownerClass;
   }
 
   @Override

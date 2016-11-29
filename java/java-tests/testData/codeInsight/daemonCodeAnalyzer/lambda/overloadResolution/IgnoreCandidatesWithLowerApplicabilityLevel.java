@@ -12,7 +12,7 @@ class MyTest<T> {
 
   public static class Builder<E> {
 
-    public Builder<E> add(E element) {
+    public Builder<E> add(E <warning descr="Parameter 'element' is never used">element</warning>) {
       return this;
     }
 

@@ -73,7 +73,7 @@ public class GroovyCompilerWrapper {
     }
     catch (NoClassDefFoundError e) {
       final String className = e.getMessage();
-      if (className.startsWith("org/apache/ivy/")) {
+      if (className.contains("org/apache/ivy/")) {
         addMessageWithoutLocation("Cannot @Grab without Ivy, please add it to your module dependencies (NoClassDefFoundError: " + className + ")", true);
       } else {
         throw e;

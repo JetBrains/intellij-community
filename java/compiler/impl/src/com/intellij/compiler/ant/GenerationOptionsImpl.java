@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,13 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Chunk;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.File;
 import java.util.*;
 
@@ -67,11 +68,11 @@ public class GenerationOptionsImpl extends GenerationOptions {
   /**
    * Custom compilers used in the ant build.
    */
-  private final Set<ChunkCustomCompilerExtension> myCustomCompilers = new HashSet<ChunkCustomCompilerExtension>();
+  private final Set<ChunkCustomCompilerExtension> myCustomCompilers = new HashSet<>();
   /**
    * map from modules to chunks
    */
-  private final Map<Module, ModuleChunk> myModuleToChunkMap = new HashMap<Module, ModuleChunk>();
+  private final Map<Module, ModuleChunk> myModuleToChunkMap = new HashMap<>();
 
   /**
    * A constructor
@@ -183,7 +184,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
   }
 
   private static Map<String, String> createOutputUrlToPropertyRefMap(ModuleChunk[] chunks) {
-    final Map<String, String> map = new HashMap<String, String>();
+    final Map<String, String> map = new HashMap<>();
 
     for (final ModuleChunk chunk : chunks) {
       final String outputPathRef = BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(chunk.getName()));
@@ -212,10 +213,10 @@ public class GenerationOptionsImpl extends GenerationOptions {
   }
 
   private ModuleChunk[] createModuleChunks(String[] representativeModuleNames) {
-    final Set<String> mainModuleNames = new HashSet<String>(Arrays.asList(representativeModuleNames));
+    final Set<String> mainModuleNames = new HashSet<>(Arrays.asList(representativeModuleNames));
     final Graph<Chunk<Module>> chunkGraph = ModuleCompilerUtil.toChunkGraph(ModuleManager.getInstance(myProject).moduleGraph());
-    final Map<Chunk<Module>, ModuleChunk> map = new HashMap<Chunk<Module>, ModuleChunk>();
-    final Map<ModuleChunk, Chunk<Module>> reverseMap = new HashMap<ModuleChunk, Chunk<Module>>();
+    final Map<Chunk<Module>, ModuleChunk> map = new HashMap<>();
+    final Map<ModuleChunk, Chunk<Module>> reverseMap = new HashMap<>();
     for (final Chunk<Module> chunk : chunkGraph.getNodes()) {
       final Set<Module> modules = chunk.getNodes();
       final ModuleChunk moduleChunk = new ModuleChunk(modules.toArray(new Module[modules.size()]));
@@ -229,35 +230,34 @@ public class GenerationOptionsImpl extends GenerationOptions {
       reverseMap.put(moduleChunk, chunk);
     }
 
-    final Graph<ModuleChunk> moduleChunkGraph =
-      GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<ModuleChunk>() {
-        public Collection<ModuleChunk> getNodes() {
-          return map.values();
-        }
+    final Graph<ModuleChunk> moduleChunkGraph = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<ModuleChunk>() {
+      public Collection<ModuleChunk> getNodes() {
+        return map.values();
+      }
 
-        public Iterator<ModuleChunk> getIn(ModuleChunk n) {
-          final Chunk<Module> chunk = reverseMap.get(n);
-          final Iterator<Chunk<Module>> in = chunkGraph.getIn(chunk);
-          return new Iterator<ModuleChunk>() {
-            public boolean hasNext() {
-              return in.hasNext();
-            }
+      public Iterator<ModuleChunk> getIn(ModuleChunk n) {
+        final Chunk<Module> chunk = reverseMap.get(n);
+        final Iterator<Chunk<Module>> in = chunkGraph.getIn(chunk);
+        return new Iterator<ModuleChunk>() {
+          public boolean hasNext() {
+            return in.hasNext();
+          }
 
-            public ModuleChunk next() {
-              return map.get(in.next());
-            }
+          public ModuleChunk next() {
+            return map.get(in.next());
+          }
 
-            public void remove() {
-              new OperationNotSupportedException();
-            }
-          };
-        }
-      }));
+          public void remove() {
+            throw new IncorrectOperationException("Method is not supported");
+          }
+        };
+      }
+    }));
     final Collection<ModuleChunk> nodes = moduleChunkGraph.getNodes();
     final ModuleChunk[] moduleChunks = nodes.toArray(new ModuleChunk[nodes.size()]);
     for (ModuleChunk moduleChunk : moduleChunks) {
       final Iterator<ModuleChunk> depsIterator = moduleChunkGraph.getIn(moduleChunk);
-      List<ModuleChunk> deps = new ArrayList<ModuleChunk>();
+      List<ModuleChunk> deps = new ArrayList<>();
       while (depsIterator.hasNext()) {
         deps.add(depsIterator.next());
       }
@@ -288,7 +288,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
       return myJdkUrls;
     }
     final Sdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
-    myJdkUrls = new HashSet<String>();
+    myJdkUrls = new HashSet<>();
     for (Sdk jdk : projectJdks) {
       ContainerUtil.addAll(myJdkUrls, jdk.getRootProvider().getUrls(OrderRootType.CLASSES));
     }
@@ -296,7 +296,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
   }
 
   private static class ChunksComparator implements Comparator<ModuleChunk> {
-    final Map<ModuleChunk, Integer> myCachedLevels = new HashMap<ModuleChunk, Integer>();
+    final Map<ModuleChunk, Integer> myCachedLevels = new HashMap<>();
 
     public int compare(final ModuleChunk o1, final ModuleChunk o2) {
       final int level1 = getChunkLevel(o1);

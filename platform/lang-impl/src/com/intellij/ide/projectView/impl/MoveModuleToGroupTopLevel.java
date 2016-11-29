@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.actions.MoveModulesOutsideGroupAction;
@@ -47,10 +44,10 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
     if (e == null) {
       return EMPTY_ARRAY;
     }
-    List<String> topLevelGroupNames = new ArrayList<String> (getTopLevelGroupNames(e.getDataContext()));
+    List<String> topLevelGroupNames = new ArrayList<>(getTopLevelGroupNames(e.getDataContext()));
     Collections.sort ( topLevelGroupNames );
 
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
     result.add(new MoveModulesOutsideGroupAction());
     result.add(new MoveModulesToSubGroupAction(null));
     result.add(Separator.getInstance());
@@ -72,7 +69,7 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
       allModules = ModuleManager.getInstance(project).getModules();
     }
 
-    Set<String> topLevelGroupNames = new HashSet<String>();
+    Set<String> topLevelGroupNames = new HashSet<>();
     for (final Module child : allModules) {
       String[] group;
       if ( model != null ) {

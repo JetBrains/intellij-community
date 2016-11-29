@@ -33,7 +33,7 @@ public class MavenProjectsProcessor {
   private final boolean myCancellable;
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final Queue<MavenProjectsProcessorTask> myQueue = new LinkedList<MavenProjectsProcessorTask>();
+  private final Queue<MavenProjectsProcessorTask> myQueue = new LinkedList<>();
   private boolean isProcessing;
 
   private volatile boolean isStopped;
@@ -99,11 +99,7 @@ public class MavenProjectsProcessor {
   private void startProcessing(final MavenProjectsProcessorTask task) {
     MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-        Condition<MavenProgressIndicator> condition = new Condition<MavenProgressIndicator>() {
-          public boolean value(MavenProgressIndicator mavenProgressIndicator) {
-            return isStopped;
-          }
-        };
+        Condition<MavenProgressIndicator> condition = mavenProgressIndicator -> isStopped;
         indicator.addCancelCondition(condition);
         try {
           doProcessPendingTasks(indicator, task);

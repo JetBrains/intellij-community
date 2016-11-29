@@ -24,7 +24,7 @@ import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFile;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -33,14 +33,12 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,17 +57,14 @@ import java.util.*;
 public class CreateResourceBundleDialogComponent {
   private final static Logger LOG = Logger.getInstance(CreateResourceBundleDialogComponent.class);
 
-  private static final Comparator<Locale> LOCALE_COMPARATOR = new Comparator<Locale>() {
-    @Override
-    public int compare(Locale l1, Locale l2) {
-      if (l1 == PropertiesUtil.DEFAULT_LOCALE) {
-        return -1;
-      }
-      if (l2 == PropertiesUtil.DEFAULT_LOCALE) {
-        return 1;
-      }
-      return l1.toString().compareTo(l2.toString());
+  private static final Comparator<Locale> LOCALE_COMPARATOR = (l1, l2) -> {
+    if (l1 == PropertiesUtil.DEFAULT_LOCALE) {
+      return -1;
     }
+    if (l2 == PropertiesUtil.DEFAULT_LOCALE) {
+      return 1;
+    }
+    return l1.toString().compareTo(l2.toString());
   };
   private final Project myProject;
   private final PsiDirectory myDirectory;
@@ -172,31 +167,23 @@ public class CreateResourceBundleDialogComponent {
     final List<PsiFile> createdFiles = WriteCommandAction.runWriteCommandAction(myProject, new Computable<List<PsiFile>>() {
       @Override
       public List<PsiFile> compute() {
-        return ApplicationManager.getApplication().runWriteAction(new Computable<List<PsiFile>>() {
-          @Override
-          public List<PsiFile> compute() {
-            return ContainerUtil.map(fileNames, new Function<String, PsiFile>() {
-              @Override
-              public PsiFile fun(String n) {
-                final boolean isXml = myResourceBundle == null
-                        ? myUseXMLBasedPropertiesCheckBox.isSelected()
-                        : myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile;
-                if (isXml) {
-                  FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
-                  LOG.assertTrue(template != null);
-                  try {
-                    return (PsiFile)FileTemplateUtil.createFromTemplate(template, n, null, myDirectory);
-                  }
-                  catch (Exception e) {
-                    throw new RuntimeException(e);
-                  }
-                } else {
-                  return myDirectory.createFile(n);
-                }
-              }
-            });
+        return ReadAction.compute(() -> ContainerUtil.map(fileNames, n -> {
+          final boolean isXml = myResourceBundle == null
+                  ? myUseXMLBasedPropertiesCheckBox.isSelected()
+                  : myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile;
+          if (isXml) {
+            FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
+            LOG.assertTrue(template != null);
+            try {
+              return (PsiFile)FileTemplateUtil.createFromTemplate(template, n, null, myDirectory);
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          } else {
+            return myDirectory.createFile(n);
           }
-        });
+        }));
       }
     });
     combineToResourceBundleIfNeed(createdFiles);
@@ -207,27 +194,19 @@ public class CreateResourceBundleDialogComponent {
   private Set<String> getFileNamesToCreate() {
     final String name = getBaseName();
     final String suffix = getPropertiesFileSuffix();
-    return ContainerUtil.map2Set(myLocalesModel.getItems(), new Function<Locale, String>() {
-      @Override
-      public String fun(Locale locale) {
-        return name + (locale == PropertiesUtil.DEFAULT_LOCALE ? "" : ("_" + locale.toString())) + suffix;
-      }
-    });
+    return ContainerUtil.map2Set(myLocalesModel.getItems(),
+                                 locale -> name + (locale == PropertiesUtil.DEFAULT_LOCALE ? "" : ("_" + locale.toString())) + suffix);
   }
 
   private void combineToResourceBundleIfNeed(Collection<PsiFile> files) {
-    Collection<PropertiesFile> createdFiles = ContainerUtil.map(files, new NotNullFunction<PsiFile, PropertiesFile>() {
-      @NotNull
-      @Override
-      public PropertiesFile fun(PsiFile dom) {
-        final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(dom);
-        LOG.assertTrue(file != null, dom.getName());
-        return file;
-      }
+    Collection<PropertiesFile> createdFiles = ContainerUtil.map(files, (NotNullFunction<PsiFile, PropertiesFile>)dom -> {
+      final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(dom);
+      LOG.assertTrue(file != null, dom.getName());
+      return file;
     });
 
     ResourceBundle mainBundle = myResourceBundle;
-    final Set<ResourceBundle> allBundles = new HashSet<ResourceBundle>();
+    final Set<ResourceBundle> allBundles = new HashSet<>();
     if (mainBundle != null) {
       allBundles.add(mainBundle);
     }
@@ -244,7 +223,7 @@ public class CreateResourceBundleDialogComponent {
     }
 
     if (needCombining) {
-      final List<PropertiesFile> toCombine = new ArrayList<PropertiesFile>(createdFiles);
+      final List<PropertiesFile> toCombine = new ArrayList<>(createdFiles);
       final String baseName = getBaseName();
       if (myResourceBundle != null) {
         toCombine.addAll(myResourceBundle.getPropertiesFiles());
@@ -301,7 +280,7 @@ public class CreateResourceBundleDialogComponent {
       return Collections.emptyList();
     }
     final String[] splitRawLocales = rawLocales.split(",");
-    final List<Locale> locales = new ArrayList<Locale>(splitRawLocales.length);
+    final List<Locale> locales = new ArrayList<>(splitRawLocales.length);
 
     for (String rawLocale : splitRawLocales) {
       final Locale locale = PropertiesUtil.getLocale("_" + rawLocale + ".properties");
@@ -336,23 +315,14 @@ public class CreateResourceBundleDialogComponent {
       restrictedLocales = Collections.emptyList();
     } else {
       locales = Collections.emptyList();
-      restrictedLocales = ContainerUtil.map(myResourceBundle.getPropertiesFiles(), new Function<PropertiesFile, Locale>() {
-        @Override
-        public Locale fun(PropertiesFile propertiesFile) {
-          return propertiesFile.getLocale();
-        }
-      });
+      restrictedLocales = ContainerUtil.map(myResourceBundle.getPropertiesFiles(), PropertiesFile::getLocale);
     }
     myLocalesModel = new CollectionListModel<Locale>(locales) {
       @Override
       public void add(@NotNull List<? extends Locale> elements) {
         final List<Locale> currentItems = getItems();
-        elements = ContainerUtil.filter(elements, new Condition<Locale>() {
-          @Override
-          public boolean value(Locale locale) {
-            return !restrictedLocales.contains(locale) && !currentItems.contains(locale);
-          }
-        });
+        elements = ContainerUtil.filter(elements,
+                                        locale -> !restrictedLocales.contains(locale) && !currentItems.contains(locale));
         super.add(elements);
       }
     };
@@ -409,12 +379,7 @@ public class CreateResourceBundleDialogComponent {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         if (clickCount == 1) {
-          myLocalesModel.add(ContainerUtil.map(projectExistLocalesList.getSelectedValues(), new Function<Object, Locale>() {
-            @Override
-            public Locale fun(Object o) {
-              return (Locale)o;
-            }
-          }));
+          myLocalesModel.add(ContainerUtil.map(projectExistLocalesList.getSelectedValues(), o -> (Locale)o));
           return true;
         }
         return false;
@@ -453,7 +418,7 @@ public class CreateResourceBundleDialogComponent {
   private static ColoredListCellRenderer<Locale> getLocaleRenderer() {
     return new ColoredListCellRenderer<Locale>() {
       @Override
-      protected void customizeCellRenderer(JList list, Locale locale, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Locale locale, int index, boolean selected, boolean hasFocus) {
         if (PropertiesUtil.DEFAULT_LOCALE == locale) {
           append("Default locale");
         } else {
@@ -468,7 +433,7 @@ public class CreateResourceBundleDialogComponent {
     private final List<Locale> myLocales;
 
     private MyExistLocalesListModel() {
-      myLocales = new ArrayList<Locale>();
+      myLocales = new ArrayList<>();
       myLocales.add(PropertiesUtil.DEFAULT_LOCALE);
       PropertiesReferenceManager.getInstance(myProject).processPropertiesFiles(GlobalSearchScope.projectScope(myProject), new PropertiesFileProcessor() {
         @Override

@@ -1,7 +1,0 @@
-public class X {
-  void f(Object foo) {
-     <spot>if</spot> (foo == null) {
-        throw new AssertionError("Argument is null");
-     }
-  }
-}

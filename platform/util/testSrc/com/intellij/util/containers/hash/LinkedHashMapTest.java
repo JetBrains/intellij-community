@@ -29,7 +29,7 @@ public class LinkedHashMapTest {
 
   @Test
   public void testPutGet() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
     for (int i = 0; i < 1000; ++i) {
       tested.put(i, Integer.toString(i));
     }
@@ -48,7 +48,7 @@ public class LinkedHashMapTest {
 
   @Test
   public void testPutGet2() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
     for (int i = 0; i < 1000; ++i) {
       tested.put(i - 500, Integer.toString(i));
     }
@@ -67,7 +67,7 @@ public class LinkedHashMapTest {
 
   @Test
   public void testPutGetRemove() {
-     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
+     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
      for (int i = 0; i < 1000; ++i) {
        tested.put(i, Integer.toString(i));
      }
@@ -83,7 +83,7 @@ public class LinkedHashMapTest {
 
   @Test
   public void keySet() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
     for (int i = 0; i < 10000; ++i) {
       tested.put(i, Integer.toString(i));
     }
@@ -95,7 +95,7 @@ public class LinkedHashMapTest {
 
   @Test
   public void keySet2() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
     for (int i = 0; i < 10000; ++i) {
       tested.put(i, Integer.toString(i));
     }
@@ -181,7 +181,7 @@ public class LinkedHashMapTest {
 
   @Test
   public void valuesIteration() {
-    Map<Integer, String> map = new LinkedHashMap<Integer, String>();
+    Map<Integer, String> map = new LinkedHashMap<>();
     map.put(1, "a");
     map.put(2, "b");
     map.put(3, "c");
@@ -194,7 +194,7 @@ public class LinkedHashMapTest {
 
   @Test
   public void accessOrderValuesIteration() {
-    Map<Integer, String> map = new LinkedHashMap<Integer, String>(0, true);
+    Map<Integer, String> map = new LinkedHashMap<>(0, true);
     map.put(1, "a");
     map.put(2, "b");
     map.put(3, "c");
@@ -207,7 +207,7 @@ public class LinkedHashMapTest {
 
   @Test
   public void lastAddedKey() {
-    LinkedHashMap<Integer, String> map = new LinkedHashMap<Integer, String>();
+    LinkedHashMap<Integer, String> map = new LinkedHashMap<>();
     map.put(1, "a");
     map.put(2, "b");
     map.put(3, "c");
@@ -234,7 +234,7 @@ public class LinkedHashMapTest {
     long started;
 
 
-    final Map<Integer, String> map = new java.util.LinkedHashMap<Integer, String>();
+    final Map<Integer, String> map = new java.util.LinkedHashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -257,7 +257,7 @@ public class LinkedHashMapTest {
     System.out.println("100 000 000 lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
 
 
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -290,7 +290,7 @@ public class LinkedHashMapTest {
     long started;
 
 
-    final Map<Integer, String> map = new java.util.LinkedHashMap<Integer, String>();
+    final Map<Integer, String> map = new java.util.LinkedHashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -313,7 +313,7 @@ public class LinkedHashMapTest {
     System.out.println("100 000 000 lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
 
 
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -346,7 +346,7 @@ public class LinkedHashMapTest {
     long started;
 
 
-    final Map<Integer, String> map = new java.util.LinkedHashMap<Integer, String>();
+    final Map<Integer, String> map = new java.util.LinkedHashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 
@@ -371,7 +371,7 @@ public class LinkedHashMapTest {
     System.out.println("20 000 000 LRU lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
 
 
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>();
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
 
     for (int i = 0; i < 100000; ++i) {
 

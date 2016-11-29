@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.statistic.persistence;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
@@ -25,8 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Alarm;
-import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @State(
   name = "StatisticsApplicationUsages",
@@ -43,9 +43,6 @@ import java.util.Set;
 public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence
   implements ApplicationComponent, PersistentStateComponent<Element> {
   private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
-
-  private final Alarm myAlarm;
-  private final long PERSIST_PERIOD = 24*60*60*1000; //1 day
 
   private static final String TOKENIZER = ",";
 
@@ -63,10 +60,6 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   @NonNls
   private static final String VALUES_ATTR = "values";
 
-  public ApplicationStatisticsPersistenceComponent() {
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
-  }
-
   public static ApplicationStatisticsPersistenceComponent getInstance() {
     return ApplicationManager.getApplication().getComponent(ApplicationStatisticsPersistenceComponent.class);
   }
@@ -80,7 +73,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
         String projectId = projectElement.getAttributeValue(PROJECT_ID_ATTR);
         String frameworks = projectElement.getAttributeValue(VALUES_ATTR);
         if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(frameworks)) {
-          Set<UsageDescriptor> frameworkDescriptors = new THashSet<UsageDescriptor>();
+          Set<UsageDescriptor> frameworkDescriptors = new THashSet<>();
           for (String key : StringUtil.split(frameworks, TOKENIZER)) {
             UsageDescriptor descriptor = getUsageDescriptor(key);
             if (descriptor != null) {
@@ -156,13 +149,10 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   private static String joinUsages(@NotNull Set<UsageDescriptor> usages) {
     // for instance, usage can be: "_foo"(equals "_foo=1") or "_foo=2"
-    return StringUtil.join(usages, new Function<UsageDescriptor, String>() {
-      @Override
-      public String fun(UsageDescriptor usageDescriptor) {
-        final String key = usageDescriptor.getKey();
-        final int value = usageDescriptor.getValue();
-        return value != 1 ? key + "=" + value : key;
-      }
+    return StringUtil.join(usages, usageDescriptor -> {
+      final String key = usageDescriptor.getKey();
+      final int value = usageDescriptor.getValue();
+      return value != 1 ? key + "=" + value : key;
     }, TOKENIZER);
   }
 
@@ -195,14 +185,8 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     persistPeriodically();
   }
 
-  private void persistPeriodically() {
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        persistOpenedProjects();
-        persistPeriodically();
-      }
-    }, PERSIST_PERIOD);
+  private static void persistPeriodically() {
+    JobScheduler.getScheduler().scheduleWithFixedDelay(ApplicationStatisticsPersistenceComponent::persistOpenedProjects, 1, 1, TimeUnit.DAYS);
   }
 
   private static void persistOpenedProjects() {
@@ -210,7 +194,6 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
       UsagesCollector.doPersistProjectUsages(project);
     }
   }
-
 
   @Override
   public void disposeComponent() {

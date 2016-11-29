@@ -90,7 +90,7 @@ public class AnnotatedMacro extends Macro {
     final Query<PsiMember> query = findAnnotated(context, params);
 
     if (query != null) {
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      Set<LookupElement> set = new LinkedHashSet<>();
       final String secondParamValue = params.length > 1 ? params[1].calculateResult(context).toString() : null;
       final boolean isShortName = secondParamValue != null && !Boolean.valueOf(secondParamValue);
       final Project project = context.getProject();

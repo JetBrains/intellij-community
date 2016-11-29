@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -73,7 +74,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   }
 
   private boolean buildVariableData(InternalUsageInfo[] internalUsages) {
-    ArrayList<VariableData> variableDatum = new ArrayList<VariableData>();
+    ArrayList<VariableData> variableDatum = new ArrayList<>();
     boolean nonFieldUsages = MakeStaticUtil.collectVariableData(myMember, internalUsages, variableDatum);
 
     myVariableData = variableDatum.toArray(new VariableData[0]);
@@ -129,7 +130,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
 
     JPanel panel = new JPanel(new GridBagLayout());
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 8);
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 0;
     gbConstraints.gridx = 0;
@@ -149,7 +150,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     panel.add(myMakeClassParameter, gbConstraints);
     myMakeClassParameter.setSelected(myAnyNonFieldMembersUsed);
 
-    gbConstraints.insets = new Insets(0, 8, 4, 8);
+    gbConstraints.insets = JBUI.insets(0, 8, 4, 8);
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 2;
@@ -173,7 +174,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
 
     if(myVariableData.length > 0) {
-      gbConstraints.insets = new Insets(4, 8, 4, 8);
+      gbConstraints.insets = JBUI.insets(4, 8);
       gbConstraints.weighty = 0;
       gbConstraints.weightx = 0;
       gbConstraints.gridheight = 1;
@@ -196,7 +197,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
         }
       };
 
-      gbConstraints.insets = new Insets(0, 8, 4, 8);
+      gbConstraints.insets = JBUI.insets(0, 8, 4, 8);
       gbConstraints.gridwidth = 2;
       gbConstraints.fill = GridBagConstraints.BOTH;
       gbConstraints.weighty = 1;

@@ -124,7 +124,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       }
 
       if (manager != null) {
-        final List<String> cmdline = new ArrayList<String>();
+        final List<String> cmdline = new ArrayList<>();
         cmdline.add(homePath);
         cmdline.add(RemoteFile.detectSystemByPath(homePath).createRemoteFile(helperPath).getPath());
         cmdline.addAll(Collections2.transform(args, new Function<String, String>() {
@@ -214,7 +214,6 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         try {
           manager.runVagrant(myVagrantFolder, myMachineName);
           PythonSdkType.getInstance().setupSdkPaths(sdk);
-          clearCaches();
         }
         catch (ExecutionException e) {
           throw new RuntimeException(e);

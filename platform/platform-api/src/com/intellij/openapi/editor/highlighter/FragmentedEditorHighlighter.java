@@ -51,7 +51,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
                                      boolean mergeByTextAttributes) {
     myMergeByTextAttributes = mergeByTextAttributes;
     myDocument = sourceIterator.getDocument();
-    myPieces = new ArrayList<Element>();
+    myPieces = new ArrayList<>();
     myAdditionalOffset = additionalOffset;
     translate(sourceIterator, ranges);
   }
@@ -113,12 +113,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), new Comparator<Element>() {
-      @Override
-      public int compare(Element o1, Element o2) {
-        return o1.getStart() - o2.getStart();
-      }
-    });
+    int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), (o1, o2) -> o1.getStart() - o2.getStart());
     // index: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
     // and we need index of the first element that is less or equal (floorElement)
     if (index < 0) index = Math.max(-index - 2, 0);

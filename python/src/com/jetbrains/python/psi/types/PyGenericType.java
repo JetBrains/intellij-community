@@ -60,12 +60,7 @@ public class PyGenericType implements PyType {
   public String getName() {
     if (myBound instanceof PyUnionType) {
       final PyUnionType bounds = (PyUnionType)myBound;
-      final String boundsString = StringUtil.join(bounds.getMembers(), new Function<PyType, String>() {
-        @Override
-        public String fun(PyType type) {
-          return type != null ? type.getName() : PyNames.UNKNOWN_TYPE;
-        }
-      }, ", ");
+      final String boundsString = StringUtil.join(bounds.getMembers(), type -> type != null ? type.getName() : PyNames.UNKNOWN_TYPE, ", ");
       return "TypeVar('" + myName + "', " + boundsString + ")";
     }
     else {

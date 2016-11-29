@@ -54,12 +54,6 @@ public class RemoveTrailingBlankLinesFix implements LocalQuickFix, IntentionActi
 
   @NotNull
   @Override
-  public String getName() {
-    return getText();
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
     return getText();
   }

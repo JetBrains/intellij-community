@@ -1,0 +1,128 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+buildscript {
+  ext.kotlin_version = '1.0.3'
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
+}
+
+plugins {
+  id "org.jetbrains.intellij" version "0.0.39"
+}
+
+subprojects {
+  apply plugin: 'java'
+  apply plugin: 'kotlin'
+  apply plugin: "org.jetbrains.intellij"
+
+  tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
+
+  sourceSets {
+    main {
+      java.srcDirs 'src', '../src', '../gen'
+      kotlin.srcDirs 'src'
+      resources.srcDirs 'resources', '../resources'
+    }
+    test {
+      java.srcDir 'test'
+    }
+  }
+
+  processResources {
+    filesNotMatching("**/*.png") {
+      it.filter(ReplaceTokens, tokens: [
+        'VERSION'     : version.toString(),
+        'BUILD-NUMBER': buildNumber,
+      ])
+    }
+  }
+
+  repositories {
+    ivy {
+      ivyPattern      'http://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_PyCharm_Installers/lastSuccessful/teamcity-ivy.xml'
+      artifactPattern 'http://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_PyCharm_Installers/lastSuccessful/[artifact].[ext]'
+    }
+  }
+
+  configurations {
+    pycharm
+  }
+
+  dependencies {
+    pycharm ('org:ijplatform_master_PyCharm_Installers:lastSuccessful')
+    compileOnly fileTree(dir: rootProject.projectDir.toString() + "/gradleBuild/pycharm", include: ['**/*.jar'])
+  }
+
+  task extractPyCharm(type: Copy) {
+    from zipTree(configurations.pycharm.filter{dep -> dep.name.startsWith("pycharmPC-") && dep.name.endsWith(".zip")}[0])
+    into rootProject.projectDir.toString() + "/gradleBuild/pycharm"
+    include "**/*.jar"
+  }
+
+  intellij {
+    version ideaVersion
+    updateSinceUntilBuild Boolean.valueOf(updateBuildNumber)
+    downloadSources Boolean.valueOf(downloadIdeaSources)
+    sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
+  }
+
+  buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
+}
+
+project(':student-python') {
+  sourceSets {
+    main {
+      resources.srcDirs '../resources'
+    }
+  }
+
+  dependencies {
+    compile project(':educational-core:student') {
+      dependencies {
+        compile fileTree(dir: 'lib', include: ['*.jar'])
+      }
+    }
+  }
+
+  compileJava.dependsOn(extractPyCharm)
+
+  intellij {
+    pluginName 'student-python'
+  }
+
+  afterEvaluate {
+    tasks.getByName('buildPlugin') {
+      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
+    }
+  }
+
+}
+
+
+project(':course-creator-python') {
+
+  dependencies {
+    compile project(':student-python')
+
+    compile project(':educational-core:course-creator') {
+      dependencies {
+        compile project(':educational-core:student')
+      }
+    }
+  }
+
+  intellij {
+    pluginName 'course-creator-python'
+  }
+
+  afterEvaluate {
+    tasks.getByName('buildPlugin') {
+      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
+    }
+  }
+
+}

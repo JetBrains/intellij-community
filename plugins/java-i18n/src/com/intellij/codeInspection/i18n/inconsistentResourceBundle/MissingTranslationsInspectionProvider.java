@@ -58,14 +58,14 @@ public class MissingTranslationsInspectionProvider implements InconsistentResour
       boolean isLeaf = children == null || children.isEmpty();
       if (!isLeaf) continue;
       Set<String> keys = propertiesFilesNamesMaps.get(file).keySet();
-      Set<String> parentKeys = new THashSet<String>(keysUpToParent.get(parent));
+      Set<String> parentKeys = new THashSet<>(keysUpToParent.get(parent));
       if (parent.getLocale().getLanguage().equals(file.getLocale().getLanguage())) {
         // properties can be left untranslated in the dialect files
-        keys = new THashSet<String>(keys);
+        keys = new THashSet<>(keys);
         keys.addAll(propertiesFilesNamesMaps.get(parent).keySet());
         parent = parents.get(parent);
         if (parent == null) continue;
-        parentKeys = new THashSet<String>(keysUpToParent.get(parent));
+        parentKeys = new THashSet<>(keysUpToParent.get(parent));
       }
       parentKeys.removeAll(keys);
       for (String untranslatedKey : parentKeys) {

@@ -57,12 +57,12 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
       return new DefaultComboBoxModel(data.toArray());
     }
 
-    final List<String> urls = new ArrayList<String>(Arrays.asList(ExternalResourceManager.getInstance().getResourceUrls(null, true)));
+    final List<String> urls = new ArrayList<>(Arrays.asList(ExternalResourceManager.getInstance().getResourceUrls(null, true)));
     Collections.sort(urls);
 
     final JspSupportProxy jspSupport = JspSupportProxy.getInstance();
     if (jspSupport != null) {
-      final List<String> tlds = new ArrayList<String>();
+      final List<String> tlds = new ArrayList<>();
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       for (final Module module : modules) {
         final String[] tldUris = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {

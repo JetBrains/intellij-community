@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ import java.util.NoSuchElementException;
  *
  * <p>For example, the tree
  *
- * <pre>          {@code
+ * <pre>{@code
  *          h
  *        / | \
  *       /  e  \
@@ -64,7 +64,7 @@ public abstract class TreeTraversal {
   }
 
   @NotNull
-  public <T> JBIterable<T> traversal(@NotNull final Iterable<? extends T> roots, @NotNull final Function<T, ? extends Iterable<? extends T>> tree) {
+  public final <T> JBIterable<T> traversal(@NotNull final Iterable<? extends T> roots, @NotNull final Function<T, ? extends Iterable<? extends T>> tree) {
     return new JBIterable<T>() {
       @NotNull
       @Override
@@ -75,16 +75,56 @@ public abstract class TreeTraversal {
   }
 
   @NotNull
-  public <T> JBIterable<T> traversal(@Nullable final T root, @NotNull final Function<T, ? extends Iterable<? extends T>> tree) {
+  public final <T> JBIterable<T> traversal(@Nullable final T root, @NotNull final Function<T, ? extends Iterable<? extends T>> tree) {
     return traversal(ContainerUtil.createMaybeSingletonList(root), tree);
   }
 
   @NotNull
-  public <T> Function<T, JBIterable<T>> traversal(@NotNull final Function<T, ? extends Iterable<? extends T>> tree) {
+  public final <T> Function<T, JBIterable<T>> traversal(@NotNull final Function<T, ? extends Iterable<? extends T>> tree) {
     return new Function<T, JBIterable<T>>() {
       @Override
       public JBIterable<T> fun(T t) {
         return traversal(t, tree);
+      }
+    };
+  }
+
+  @NotNull
+  public final TreeTraversal unique() {
+    return unique(Function.ID);
+  }
+
+  @NotNull
+  public TreeTraversal unique(@NotNull final Function<?, ?> identity) {
+    final TreeTraversal original = this;
+    return new TreeTraversal(debugName + " (UNIQUE)") {
+      @NotNull
+      @Override
+      public TreeTraversal unique(@NotNull Function<?, ?> identity) {
+        return original.unique(identity);
+      }
+
+      @NotNull
+      @Override
+      public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                      @NotNull final Function<T, ? extends Iterable<? extends T>> tree) {
+        class WrappedTree implements Condition<T>, Function<T, Iterable<? extends T>> {
+          HashSet<Object> visited;
+
+          @Override
+          public boolean value(T e) {
+            if (visited == null) visited = new HashSet<Object>();
+            //noinspection unchecked
+            return visited.add(((Function<T, Object>)identity).fun(e));
+          }
+
+          @Override
+          public Iterable<? extends T> fun(T t) {
+            return JBIterable.from(tree.fun(t)).filter(this);
+          }
+        }
+        WrappedTree wrappedTree = new WrappedTree();
+        return original.createIterator(JBIterable.from(roots).filter(wrappedTree), wrappedTree);
       }
     };
   }
@@ -99,7 +139,7 @@ public abstract class TreeTraversal {
   public abstract <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<T, ? extends Iterable<? extends T>> tree);
 
   @Override
-  public String toString() {
+  public final String toString() {
     return debugName;
   }
 
@@ -126,20 +166,41 @@ public abstract class TreeTraversal {
     protected TracingIt(Function<T, ? extends Iterable<? extends T>> tree) {
       super(tree);
     }
+
+    protected JBIterable<T> _transform(JBIterable<?> original) {
+      JBIterable<?> result = original;
+      for (Function<Object, Object> f : getTransformations()) {
+        result = result.transform(f);
+      }
+      //noinspection unchecked
+      return (JBIterable<T>)result;
+    }
+
+    protected T _transform(Object original) {
+      Object result = original;
+      for (Function<Object, ?> f : getTransformations()) {
+        result = f.fun(result);
+      }
+      //noinspection unchecked
+      return (T)result;
+    }
   }
 
   public static abstract class GuidedIt<T> extends It<T> {
+
+    public interface Guide<T> {
+      void guide(@NotNull GuidedIt<T> guidedIt);
+    }
+
     @Nullable
     public T curChild, curParent;
     @Nullable
     public Iterable<? extends T> curChildren;
     public boolean curNoChildren;
 
-    public abstract GuidedIt<T> setGuide(Consumer<GuidedIt<T>> guide);
-
-    public abstract GuidedIt<T> queueNext(T child);
-    public abstract GuidedIt<T> result(T node);
-    public abstract GuidedIt<T> queueLast(T child);
+    public abstract GuidedIt<T> queueNext(@Nullable T child);
+    public abstract GuidedIt<T> result(@Nullable T node);
+    public abstract GuidedIt<T> queueLast(@Nullable T child);
 
     protected GuidedIt(Function<T, ? extends Iterable<? extends T>> tree) {
       super(tree);
@@ -147,17 +208,20 @@ public abstract class TreeTraversal {
   }
 
   @NotNull
-  public static final TreeTraversal GUIDED_TRAVERSAL = new TreeTraversal("GUIDED_TRAVERSAL") {
-    @NotNull
-    @Override
-    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<T, ? extends Iterable<? extends T>> tree) {
-      return new GuidedItImpl<T>(roots, tree);
-    }
-  };
+  public static TreeTraversal GUIDED_TRAVERSAL(@NotNull final GuidedIt.Guide<?> guide) {
+    return new TreeTraversal("GUIDED_TRAVERSAL") {
+      @NotNull
+      @Override
+      public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<T, ? extends Iterable<? extends T>> tree) {
+        //noinspection unchecked
+        return new GuidedItImpl<T>(roots, tree, (GuidedIt.Guide<T>)guide);
+      }
+    };
+  }
 
   /**
-   * Returns an iterator over the nodes in a tree structure, using pre-order
-   * traversal. That is, each node's subtrees are traversed after the node itself is returned.
+   * Returns an iterator over the nodes in a tree structure, using pre-order traversal.
+   * That is, each node's subtrees are traversed after the node itself is returned.
    *
    * <p>No guarantees are made about the behavior of the traversal when nodes change while
    * iteration is in progress or when the iterators generated by {@code tree} are advanced.
@@ -172,8 +236,8 @@ public abstract class TreeTraversal {
   };
 
   /**
-   * Returns an iterator over the nodes in a tree structure, using post-order
-   * traversal. That is, each node's subtrees are traversed before the node itself is returned.
+   * Returns an iterator over the nodes in a tree structure, using post-order DFS traversal.
+   * That is, each node's subtrees are traversed before the node itself is returned.
    * <p/>
    * <p>No guarantees are made about the behavior of the traversal when nodes change while
    * iteration is in progress or when the iterators generated by {@code tree} are advanced.
@@ -188,6 +252,10 @@ public abstract class TreeTraversal {
   };
 
 
+  /**
+   * Returns an iterator over the leaf nodes only in a tree structure, using DFS traversal.
+   * That is, each node's subtrees are traversed before the node itself is returned.
+   */
   @NotNull
   public static final TreeTraversal LEAVES_DFS = new TreeTraversal("LEAVES_DFS") {
     @NotNull
@@ -198,9 +266,8 @@ public abstract class TreeTraversal {
   };
 
   /**
-   * Returns an iterator over the nodes in a tree structure, using interlaced pre-order
-   * traversal. That is, all paths are traversed in an interlaced manner that is suitable
-   * for infinite and cyclic graphs
+   * Returns an iterator over the nodes in a tree structure, using interlaced pre-order DFS traversal.
+   * That is, all paths are traversed in an interlaced manner that is suitable for infinite and cyclic graphs
    * and each node's subtrees are traversed before the node itself is returned.
    * <p/>
    * <p>No guarantees are made about the behavior of the traversal when nodes change while
@@ -216,8 +283,8 @@ public abstract class TreeTraversal {
   };
 
   /**
-   * Returns an iterator over the nodes in a tree structure, using breadth-first
-   * traversal. That is, all the nodes of depth 0 are returned, then depth 1, then 2, and so on.
+   * Returns an iterator over the nodes in a tree structure, using breadth-first traversal.
+   * That is, all the nodes of depth 0 are returned, then depth 1, then 2, and so on.
    * <p/>
    * <p>No guarantees are made about the behavior of the traversal when nodes change while
    * iteration is in progress or when the iterators generated by {@code tree} are advanced.
@@ -231,6 +298,11 @@ public abstract class TreeTraversal {
     }
   };
 
+  /**
+   * Same as {@code PLAIN_BFS} but with {@code TracingIt}.
+   * That is, a path to the current node can be retrieved during some traversal.
+   * @see TreeTraversal.TracingIt
+   */
   @NotNull
   public static final TreeTraversal TRACING_BFS = new TreeTraversal("TRACING_BFS") {
     @NotNull
@@ -240,6 +312,10 @@ public abstract class TreeTraversal {
     }
   };
 
+  /**
+   * Returns an iterator over the leaf nodes only in a tree structure, using BFS traversal.
+   * That is, all the leaves of depth 0 are returned, then depth 1, then 2, and so on.
+   */
   @NotNull
   public static final TreeTraversal LEAVES_BFS = new TreeTraversal("LEAVES_BFS") {
     @NotNull
@@ -266,13 +342,13 @@ public abstract class TreeTraversal {
       if (last == null) throw new NoSuchElementException();
 
       H p = last.parent;
-      return p == null ? null : p.node;
+      return p == null ? null : p.node == null ? null : _transform(p.node);
     }
 
     @NotNull
     public JBIterable<T> backtrace() {
       if (last == null) throw new NoSuchElementException();
-      return JBIterable.generate(last, P.<T>toPrev()).transform(P.<T>toNode()).filter(Condition.NOT_NULL);
+      return _transform(JBIterable.generate(last, P.<T>toPrev()).transform(P.<T>toNode()).filter(Condition.NOT_NULL));
     }
   }
 
@@ -469,30 +545,14 @@ public abstract class TreeTraversal {
     @Override
     public T parent() {
       if (top == null) throw new NoSuchElementException();
-      return paths.get(top.node);
+      return _transform(paths.get(top.node));
     }
 
     @NotNull
     @Override
     public JBIterable<T> backtrace() {
       if (top == null) throw new NoSuchElementException();
-      final T first = top.node;
-      return new JBIterable<T>() {
-        @Override
-        public Iterator<T> iterator() {
-          return new JBIterator<T>() {
-            T cur = first;
-
-            @Override
-            public T nextImpl() {
-              if (cur == null) return stop();
-              T result = cur;
-              cur = paths.get(cur);
-              return result;
-            }
-          };
-        }
-      };
+      return _transform(JBIterable.generate(top.node, Functions.fromMap(paths)));
     }
   }
 
@@ -500,19 +560,17 @@ public abstract class TreeTraversal {
   // Misc
   // -----------------------------------------------------------------------------
   private static final class GuidedItImpl<T> extends GuidedIt<T> {
-    P1<T> first, last;
+    final Guide<T> guide;
 
-    Consumer<GuidedIt<T>> guide;
+    P1<T> first, last;
     T curResult;
 
-    GuidedItImpl(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
+    GuidedItImpl(@NotNull Iterable<? extends T> roots,
+                 @NotNull Function<T, ? extends Iterable<? extends T>> tree,
+                 @NotNull Guide<T> guide) {
       super(tree);
       first = last = P1.create(roots);
-    }
-
-    public GuidedIt<T> setGuide(Consumer<GuidedIt<T>> guide) {
       this.guide = guide;
-      return this;
     }
 
     public GuidedIt<T> queueNext(T child) {
@@ -543,7 +601,7 @@ public abstract class TreeTraversal {
           curParent = top.node;
           curChildren = top.itle;
           curNoChildren = top.empty;
-          guide.consume(this);
+          guide.guide(this);
         }
         if (!hasNext) {
           last = last.remove();

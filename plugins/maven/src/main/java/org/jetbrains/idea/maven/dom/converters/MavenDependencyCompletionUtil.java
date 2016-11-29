@@ -40,21 +40,18 @@ public class MavenDependencyCompletionUtil {
   public static MavenDomDependency findManagedDependency(MavenDomProjectModel domModel, Project project,
     @NotNull final String groupId, @NotNull final String artifactId) {
 
-    final Ref<MavenDomDependency> ref = new Ref<MavenDomDependency>();
+    final Ref<MavenDomDependency> ref = new Ref<>();
 
     MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(domModel,
-                                                                            new Processor<MavenDomDependency>() {
-                                                                              @Override
-                                                                              public boolean process(MavenDomDependency dependency) {
-                                                                                if (groupId.equals(dependency.getGroupId().getStringValue())
-                                                                                    &&
-                                                                                    artifactId.equals(
-                                                                                      dependency.getArtifactId().getStringValue())) {
-                                                                                  ref.set(dependency);
-                                                                                  return true;
-                                                                                }
-                                                                                return false;
+                                                                            dependency -> {
+                                                                              if (groupId.equals(dependency.getGroupId().getStringValue())
+                                                                                  &&
+                                                                                  artifactId.equals(
+                                                                                    dependency.getArtifactId().getStringValue())) {
+                                                                                ref.set(dependency);
+                                                                                return true;
                                                                               }
+                                                                              return false;
                                                                             }, project);
 
     return ref.get();
@@ -112,12 +109,8 @@ public class MavenDependencyCompletionUtil {
   }
 
   public static void invokeCompletion(@NotNull final InsertionContext context, final CompletionType completionType) {
-    context.setLaterRunnable(new Runnable() {
-      @Override
-      public void run() {
-        new CodeCompletionHandlerBase(completionType).invokeCompletion(context.getProject(), context.getEditor());
-      }
-    });
+    context.setLaterRunnable(
+      () -> new CodeCompletionHandlerBase(completionType).invokeCompletion(context.getProject(), context.getEditor()));
   }
 
 }

@@ -39,16 +39,13 @@ public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnota
   public static List<ExternalAnnotator> allForFile(@NotNull Language language, @NotNull final PsiFile file) {
     List<ExternalAnnotator> annotators = INSTANCE.allForLanguage(language);
     final ExternalAnnotatorsFilter[] filters = Extensions.getExtensions(ExternalAnnotatorsFilter.EXTENSION_POINT_NAME);
-    return ContainerUtil.findAll(annotators, new Condition<ExternalAnnotator>() {
-      @Override
-      public boolean value(ExternalAnnotator annotator) {
-        for (ExternalAnnotatorsFilter filter : filters) {
-          if (filter.isProhibited(annotator, file)) {
-            return false;
-          }
+    return ContainerUtil.findAll(annotators, annotator -> {
+      for (ExternalAnnotatorsFilter filter : filters) {
+        if (filter.isProhibited(annotator, file)) {
+          return false;
         }
-        return true;
       }
+      return true;
     });
   }
 }

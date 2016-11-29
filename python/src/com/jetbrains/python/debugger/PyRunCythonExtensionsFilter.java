@@ -53,6 +53,7 @@ public class PyRunCythonExtensionsFilter implements Filter {
   public static final String[] CYTHON_ARGS = {"build_ext", "--inplace"};
   private static final Logger LOG = Logger.getInstance("com.jetbrains.python.debugger.PyRunCythonExtensionsFilter");
   private final @NotNull Project myProject;
+  private volatile boolean isApplied = false;
 
   public PyRunCythonExtensionsFilter(@NotNull Project project) {
     myProject = project;
@@ -79,6 +80,9 @@ public class PyRunCythonExtensionsFilter implements Filter {
     @Override
     public void navigate(Project project) {
       try {
+        if (isApplied) {
+          return;
+        }
         final RunManager runManager = RunManager.getInstance(myProject);
         final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
         if (selectedConfiguration == null) {
@@ -98,9 +102,12 @@ public class PyRunCythonExtensionsFilter implements Filter {
         cmdline.addAll(Arrays.asList(CYTHON_ARGS));
         LOG.info("Compile Cython Extensions " + StringUtil.join(cmdline, " "));
 
-        final Map<String, String> environment = new HashMap<String, String>(System.getenv());
+        final Map<String, String> environment = new HashMap<>(System.getenv());
         PythonEnvUtil.setPythonUnbuffered(environment);
         PythonEnvUtil.setPythonDontWriteBytecode(environment);
+        if (sdkPath != null) {
+          PythonEnvUtil.resetHomePathChanges(sdkPath, environment);
+        }
         GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withEnvironment(environment);
 
         final boolean canCreate = FileUtil.ensureCanCreateFile(new File(helpersPath));
@@ -116,6 +123,7 @@ public class PyRunCythonExtensionsFilter implements Filter {
         ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Compile Cython Extensions") {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
+            isApplied = true;
             final CapturingProcessHandler handler =
               new CapturingProcessHandler(process, commandLine.getCharset(), commandLine.getCommandLineString());
             handler.addProcessListener(new ProcessAdapter() {
@@ -140,12 +148,7 @@ public class PyRunCythonExtensionsFilter implements Filter {
               final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr())
                                      ? "Permission denied"
                                      : "Non-zero exit code (" + exitCode + "): \n" + result.getStderr();
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  showErrorDialog(message);
-                }
-              });
+              UIUtil.invokeLaterIfNeeded(() -> showErrorDialog(message));
             }
           }
         });

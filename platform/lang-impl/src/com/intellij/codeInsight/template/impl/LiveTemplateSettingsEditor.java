@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.GridBag;
@@ -84,6 +83,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateContext myContext;
   private JBPopup myContextPopup;
   private Dimension myLastSize;
+  private JPanel myTemplateOptionsPanel;
 
   public LiveTemplateSettingsEditor(TemplateImpl template,
                                     final String defaultShortcut,
@@ -133,21 +133,23 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   void dispose() {
-    final Project project = myTemplateEditor.getProject();
-    if (project != null && !project.isDisposed()) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(myTemplateEditor.getDocument());
-      if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
+    if (!myTemplateEditor.isDisposed()) {
+      final Project project = myTemplateEditor.getProject();
+      if (project != null && !project.isDisposed()) {
+        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(myTemplateEditor.getDocument());
+        if (psiFile != null) {
+          DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
+        }
       }
+      EditorFactory.getInstance().releaseEditor(myTemplateEditor);
     }
-    EditorFactory.getInstance().releaseEditor(myTemplateEditor);
   }
 
   private void createComponents(boolean allowNoContexts) {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
-    
+
     JPanel editorPanel = new JPanel(new BorderLayout(4, 4));
     editorPanel.setPreferredSize(JBUI.size(250, 100));
     editorPanel.setMinimumSize(editorPanel.getPreferredSize());
@@ -163,7 +165,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myEditVariablesButton.setMaximumSize(myEditVariablesButton.getPreferredSize());
     panel.add(myEditVariablesButton, gb.next().weighty(0));
 
-    panel.add(createTemplateOptionsPanel(), gb.nextLine().next().next().coverColumn(2).weighty(1));
+    myTemplateOptionsPanel = new JPanel(new BorderLayout());
+    myTemplateOptionsPanel.add(createTemplateOptionsPanel());
+    panel.add(myTemplateOptionsPanel, gb.nextLine().next().next().coverColumn(2).weighty(1));
 
     panel.add(createShortContextPanel(allowNoContexts), gb.nextLine().next().weighty(0).fillCellNone().anchor(GridBagConstraints.WEST));
 
@@ -238,7 +242,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new ComboBox(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
+    myExpandByCombo = new ComboBox<>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
@@ -255,11 +259,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
         else {
           myTemplate.setShortcutChar(TemplateSettings.SPACE_CHAR);
         }
-        
       }
     });
     expandWithLabel.setLabelFor(myExpandByCombo);
-    
+
     panel.add(myExpandByCombo, gbConstraints);
     gbConstraints.weightx = 1;
     gbConstraints.gridx = 2;
@@ -272,30 +275,25 @@ public class LiveTemplateSettingsEditor extends JPanel {
     panel.add(myCbReformat, gbConstraints);
 
     for (final TemplateOptionalProcessor processor: myOptions.keySet()) {
-      if (!processor.isVisible(myTemplate)) continue;
+      if (!processor.isVisible(myTemplate, myContext)) continue;
       gbConstraints.gridy++;
       final JCheckBox cb = new JCheckBox(processor.getOptionName());
       panel.add(cb, gbConstraints);
       cb.setSelected(myOptions.get(processor).booleanValue());
-      cb.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          myOptions.put(processor, cb.isSelected());
-        }
-      });
+      cb.addActionListener(e -> myOptions.put(processor, cb.isSelected()));
     }
 
     gbConstraints.weighty = 1;
     gbConstraints.gridy++;
-    panel.add(new JPanel(), gbConstraints);          
+    panel.add(new JPanel(), gbConstraints);
 
     return panel;
   }
 
   private List<TemplateContextType> getApplicableContexts() {
-    ArrayList<TemplateContextType> result = new ArrayList<TemplateContextType>();
+    ArrayList<TemplateContextType> result = new ArrayList<>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
-      if (myContext.isExplicitlyEnabled(type)) {
+      if (myContext.isEnabled(type)) {
         result.add(type);
       }
     }
@@ -312,40 +310,40 @@ public class LiveTemplateSettingsEditor extends JPanel {
     panel.add(ctxLabel, BorderLayout.CENTER);
     panel.add(change, BorderLayout.EAST);
 
-    final Runnable updateLabel = new Runnable() {
-      @Override
-      public void run() {
-        myExpandByCombo.setEnabled(isExpandableFromEditor());
-        updateHighlighter();
+    final Runnable updateLabel = () -> {
+      myExpandByCombo.setEnabled(isExpandableFromEditor());
+      updateHighlighter();
 
-        StringBuilder sb = new StringBuilder();
-        String oldPrefix = "";
-        for (TemplateContextType type : getApplicableContexts()) {
-          final TemplateContextType base = type.getBaseContextType();
-          String ownName = UIUtil.removeMnemonic(type.getPresentableName());
-          String prefix = "";
-          if (base != null && !(base instanceof EverywhereContextType)) {
-            prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
-            ownName = StringUtil.decapitalize(ownName);
-          }
-          if (type instanceof EverywhereContextType) {
-            ownName = "Other";
-          }
-          if (sb.length() > 0) {
-            sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
-          }
-          if (!oldPrefix.equals(prefix)) {
-            sb.append(prefix);
-            oldPrefix = prefix;
-          }
-          sb.append(ownName);
+      StringBuilder sb = new StringBuilder();
+      String oldPrefix = "";
+      for (TemplateContextType type : getApplicableContexts()) {
+        final TemplateContextType base = type.getBaseContextType();
+        String ownName = UIUtil.removeMnemonic(type.getPresentableName());
+        String prefix = "";
+        if (base != null && !(base instanceof EverywhereContextType)) {
+          prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
+          ownName = StringUtil.decapitalize(ownName);
         }
-        final boolean noContexts = sb.length() == 0;
-        String contexts = (noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ";
-        ctxLabel.setText(StringUtil.first(contexts, 100, true));
-        ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
-        change.setText(noContexts ? "Define" : "Change");
+        if (type instanceof EverywhereContextType) {
+          ownName = "Other";
+        }
+        if (sb.length() > 0) {
+          sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
+        }
+        if (!oldPrefix.equals(prefix)) {
+          sb.append(prefix);
+          oldPrefix = prefix;
+        }
+        sb.append(ownName);
       }
+      final boolean noContexts = sb.length() == 0;
+      String contexts = (noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ";
+      ctxLabel.setText(StringUtil.first(contexts, 100, true));
+      ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
+      change.setText(noContexts ? "Define" : "Change");
+
+      myTemplateOptionsPanel.removeAll();
+      myTemplateOptionsPanel.add(createTemplateOptionsPanel());
     };
 
     new ClickListener() {
@@ -419,18 +417,15 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     ((DefaultTreeModel)checkboxTree.getModel()).nodeStructureChanged(root);
 
-    TreeUtil.traverse(root, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object _node) {
-        final CheckedTreeNode node = (CheckedTreeNode)_node;
-        if (node.isChecked()) {
-          final TreeNode[] path = node.getPath();
-          if (path != null) {
-            checkboxTree.expandPath(new TreePath(path).getParentPath());
-          }
+    TreeUtil.traverse(root, _node -> {
+      final CheckedTreeNode node = (CheckedTreeNode)_node;
+      if (node.isChecked()) {
+        final TreeNode[] path = node.getPath();
+        if (path != null) {
+          checkboxTree.expandPath(new TreePath(path).getParentPath());
         }
-        return true;
       }
+      return true;
     });
 
     panel.add(ScrollPaneFactory.createScrollPane(checkboxTree));
@@ -449,14 +444,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
     parent.add(node);
 
     if (children.isEmpty()) {
-      node.setChecked(context.isExplicitlyEnabled(type));
+      node.setChecked(context.isEnabled(type));
     }
     else {
       for (TemplateContextType child : children) {
         addContextNode(hierarchy, node, child, context);
       }
       final CheckedTreeNode other = new CheckedTreeNode(Pair.create(type, "Other"));
-      other.setChecked(context.isExplicitlyEnabled(type));
+      other.setChecked(context.isEnabled(type));
       node.add(other);
     }
   }
@@ -499,18 +494,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
     }
 
     CommandProcessor.getInstance().executeCommand(
-      null, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final Document document = myTemplateEditor.getDocument();
-            document.replaceString(0, document.getTextLength(), myTemplate.getString());
-          }
-        });
-      }
-    },
+      null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        final Document document = myTemplateEditor.getDocument();
+        document.replaceString(0, document.getTextLength(), myTemplate.getString());
+      }),
       "",
       null
     );
@@ -542,12 +529,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private ArrayList<Variable> updateVariablesByTemplateText() {
     List<Variable> oldVariables = getCurrentVariables();
     
-    Set<String> oldVariableNames = ContainerUtil.map2Set(oldVariables, new Function<Variable, String>() {
-      @Override
-      public String fun(Variable variable) {
-        return variable.getName();
-      }
-    });
+    Set<String> oldVariableNames = ContainerUtil.map2Set(oldVariables, variable -> variable.getName());
     
     Map<String,Variable> newVariableNames = parseVariables();
 
@@ -569,11 +551,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
       }
     }
 
-    return new ArrayList<Variable>(newVariableNames.values());
+    return new ArrayList<>(newVariableNames.values());
   }
 
   private List<Variable> getCurrentVariables() {
-    List<Variable> myVariables = new ArrayList<Variable>();
+    List<Variable> myVariables = new ArrayList<>();
 
     for(int i = 0; i < myTemplate.getVariableCount(); i++) {
       myVariables.add(new Variable(myTemplate.getVariableNameAt(i),
@@ -593,22 +575,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     //todo[peter,kirillk] without these invokeLaters this requestFocus conflicts with com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.MyDialog.MyWindowListener.windowOpened()
     IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true);
     final ModalityState modalityState = ModalityState.stateForComponent(myKeyField);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true);
-              }
-            }, modalityState);
-          }
-        }, modalityState);
-      }
-    }, modalityState);
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true), modalityState), modalityState), modalityState);
   }
 
   private Map<String, Variable> parseVariables() {

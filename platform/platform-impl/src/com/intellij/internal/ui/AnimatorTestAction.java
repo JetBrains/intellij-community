@@ -36,17 +36,8 @@ import java.util.concurrent.TimeUnit;
 public class AnimatorTestAction extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            TimeoutUtil.sleep(30);
-          }
-        });
-      }
-    }, 0, 123, TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(
+      () -> SwingUtilities.invokeLater(() -> TimeoutUtil.sleep(30)), 0, 123, TimeUnit.MILLISECONDS);
 
     try {
       new DialogWrapper(e.getProject()) {
@@ -74,7 +65,7 @@ public class AnimatorTestAction extends AnAction {
             AllIcons.Process.Big.Step_11,
             AllIcons.Process.Big.Step_12
           };
-          List<Icon> iconsList2 = new ArrayList<Icon>();
+          List<Icon> iconsList2 = new ArrayList<>();
           for (int i = 0; i < cycles; i++) {
             Collections.addAll(iconsList2, icons1);
           }

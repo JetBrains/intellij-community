@@ -25,6 +25,8 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,12 +37,9 @@ import java.util.Comparator;
 
 public class MethodListDlg extends DialogWrapper {
   private final PsiClass myClass;
-  private static final Comparator<PsiMethod> METHOD_NAME_COMPARATOR = new Comparator<PsiMethod>() {
-      public int compare(final PsiMethod psiMethod, final PsiMethod psiMethod1) {
-        return psiMethod.getName().compareToIgnoreCase(psiMethod1.getName());
-      }
-    };
-  private final SortedListModel<PsiMethod> myListModel = new SortedListModel<PsiMethod>(METHOD_NAME_COMPARATOR);
+  private static final Comparator<PsiMethod> METHOD_NAME_COMPARATOR =
+    (psiMethod, psiMethod1) -> psiMethod.getName().compareToIgnoreCase(psiMethod1.getName());
+  private final SortedListModel<PsiMethod> myListModel = new SortedListModel<>(METHOD_NAME_COMPARATOR);
   private final JList myList = new JBList(myListModel);
   private final JPanel myWholePanel = new JPanel(new BorderLayout());
 
@@ -50,7 +49,7 @@ public class MethodListDlg extends DialogWrapper {
     createList(psiClass.getAllMethods(), filter);
     myWholePanel.add(ScrollPaneFactory.createScrollPane(myList));
     myList.setCellRenderer(new ColoredListCellRenderer() {
-      protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         final PsiMethod psiMethod = (PsiMethod)value;
         append(PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME, 0),
                StructureNodeRenderer.applyDeprecation(psiMethod, SimpleTextAttributes.REGULAR_ATTRIBUTES));
@@ -70,6 +69,7 @@ public class MethodListDlg extends DialogWrapper {
     }.installOn(myList);
 
     ScrollingUtil.ensureSelectionExists(myList);
+    TreeUIHelper.getInstance().installListSpeedSearch(myList);
     setTitle(ExecutionBundle.message("choose.test.method.dialog.title"));
     init();
   }
@@ -83,6 +83,12 @@ public class MethodListDlg extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     return myWholePanel;
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myList;
   }
 
   public PsiMethod getSelected() {

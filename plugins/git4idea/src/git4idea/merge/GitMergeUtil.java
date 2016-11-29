@@ -18,10 +18,10 @@ package git4idea.merge;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
@@ -30,17 +30,17 @@ import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.GuiUtils;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
-import git4idea.actions.GitRepositoryAction;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 /**
  * Utilities for merge
@@ -122,56 +122,34 @@ public class GitMergeUtil {
    * @param actionName  the action name
    * @param actionInfo  the information about the action
    */
-  public static void showUpdates(GitRepositoryAction action,
-                                 final Project project,
+  public static void showUpdates(final Project project,
                                  final List<VcsException> exceptions,
                                  final VirtualFile root,
                                  final GitRevisionNumber currentRev,
                                  final Label beforeLabel,
                                  final String actionName,
                                  final ActionInfo actionInfo) {
-    final UpdatedFiles files = UpdatedFiles.create();
+    UpdatedFiles files = UpdatedFiles.create();
     MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
     collector.collect(files, exceptions);
-    if (exceptions.size() != 0) {
-      return;
-    }
-    action.delayTask(new TransactionRunnable() {
-      public void run(List<VcsException> exceptionList) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
-            UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
-            tree.setBefore(beforeLabel);
-            tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
-          }
-        });
-      }
-    });
-    final Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
+    if (!exceptions.isEmpty()) return;
+
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
+      UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
+      tree.setBefore(beforeLabel);
+      tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+    }, ModalityState.defaultModalityState());
+
+    Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
     if (!unmergedNames.isEmpty()) {
-      action.delayTask(new TransactionRunnable() {
-        public void run(List<VcsException> exceptionList) {
-          LocalFileSystem lfs = LocalFileSystem.getInstance();
-          final ArrayList<VirtualFile> unmerged = new ArrayList<VirtualFile>();
-          for (String fileName : unmergedNames) {
-            VirtualFile f = lfs.findFileByPath(fileName);
-            if (f != null) {
-              unmerged.add(f);
-            }
-          }
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              GitVcs vcs = GitVcs.getInstance(project);
-              if (vcs != null) {
-                AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, vcs.getMergeProvider());
-              }
-            }
-          });
+      List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        GitVcs vcs = GitVcs.getInstance(project);
+        if (vcs != null) {
+          AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, vcs.getMergeProvider());
         }
-      });
+      }, ModalityState.defaultModalityState());
     }
   }
 }

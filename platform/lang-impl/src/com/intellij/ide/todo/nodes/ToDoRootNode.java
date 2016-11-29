@@ -38,7 +38,7 @@ public final class ToDoRootNode extends BaseToDoNode{
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    return new ArrayList<AbstractTreeNode>(Collections.singleton(mySummaryNode));
+    return new ArrayList<>(Collections.singleton(mySummaryNode));
   }
 
   @Override

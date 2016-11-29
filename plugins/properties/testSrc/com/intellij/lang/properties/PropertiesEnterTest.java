@@ -19,7 +19,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,12 +46,9 @@ public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
   public void testBeforeComment() throws Exception { doTest(); }
   public void testPerformance() throws Exception {
     configureByFile(BASE_PATH + getTestName(false)+".properties");
-    PlatformTestUtil.startPerformanceTest("Property files editing", 1000, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        type("aaaa=bbb");
-        PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
-      }
+    PlatformTestUtil.startPerformanceTest("Property files editing", 1000, () -> {
+      type("aaaa=bbb");
+      PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
     }).cpuBound().useLegacyScaling().assertTiming();
   }
 

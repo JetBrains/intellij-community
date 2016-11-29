@@ -49,7 +49,7 @@ public class MessageViewHelper {
 
   private final Project myProject;
 
-  private final Set<String> myErrors = new THashSet<String>();
+  private final Set<String> myErrors = new THashSet<>();
 
   private final String myContentName;
   private final Key<NewErrorTreeViewPanel> myKey;
@@ -101,17 +101,12 @@ public class MessageViewHelper {
 
     final VirtualFile file1 = file;
     ApplicationManager.getApplication().invokeLater(
-      new Runnable() {
-        @Override
-        public void run() {
-          myErrorsView.addMessage(
-            warning ? MessageCategory.WARNING : MessageCategory.ERROR,
-            new String[]{ex.getLocalizedMessage()},
-            file1,
-            ex.getLineNumber() - 1,
-            ex.getColumnNumber() - 1, null);
-        }
-      }
+      () -> myErrorsView.addMessage(
+        warning ? MessageCategory.WARNING : MessageCategory.ERROR,
+        new String[]{ex.getLocalizedMessage()},
+        file1,
+        ex.getLineNumber() - 1,
+        ex.getColumnNumber() - 1, null)
     );
   }
 
@@ -137,18 +132,15 @@ public class MessageViewHelper {
 
   private void openMessageViewImpl() {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    commandProcessor.executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-        Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
-        content.putUserData(myKey, myErrorsView);
-        messageView.getContentManager().addContent(content);
-        messageView.getContentManager().setSelectedContent(content);
-        messageView.getContentManager().addContentManagerListener(new CloseListener(content, myContentName, myErrorsView));
-        removeOldContents(content);
-        messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView, myKey));
-      }
+    commandProcessor.executeCommand(myProject, () -> {
+      MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+      Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
+      content.putUserData(myKey, myErrorsView);
+      messageView.getContentManager().addContent(content);
+      messageView.getContentManager().setSelectedContent(content);
+      messageView.getContentManager().addContentManagerListener(new CloseListener(content, myContentName, myErrorsView));
+      removeOldContents(content);
+      messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView, myKey));
     }, "Open Message View", null);
 
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);

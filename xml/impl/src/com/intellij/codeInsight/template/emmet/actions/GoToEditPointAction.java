@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet.actions;
 
+import com.intellij.codeInsight.editorActions.XmlGtTypedHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -38,7 +39,7 @@ public abstract class GoToEditPointAction extends EditorAction implements DumbAw
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
     super.update(editor, presentation, dataContext);
     final PsiFile file = getFile(dataContext);
-    if (!EmmetEditPointUtil.isApplicableFile(file)) {
+    if (!XmlGtTypedHandler.fileContainsXmlLanguage(file)) {
       presentation.setEnabledAndVisible(false);
     }
   }

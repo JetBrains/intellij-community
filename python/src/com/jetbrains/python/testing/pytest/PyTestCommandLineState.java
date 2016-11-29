@@ -58,7 +58,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   @NotNull
   @Override
   protected List<String> getTestSpecs() {
-    List<String> specs = new ArrayList<String>();
+    List<String> specs = new ArrayList<>();
     specs.add(myConfiguration.getTestToRun());
     return specs;
   }

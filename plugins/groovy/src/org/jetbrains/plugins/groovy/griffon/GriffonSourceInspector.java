@@ -39,61 +39,58 @@ import java.util.*;
  */
 public class GriffonSourceInspector {
   public static List<GriffonSource> processModuleMetadata(final Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<List<GriffonSource>>() {
-      @Override
-      public Result<List<GriffonSource>> compute() {
-        List<GriffonSource> sources = new ArrayList<GriffonSource>();
-        List<Object> dependencies = ContainerUtil.newArrayList();
-        dependencies.add(ProjectRootManager.getInstance(module.getProject()));
-        ContainerUtil.addIfNotNull(dependencies, GriffonFramework.getInstance().getApplicationPropertiesFile(module));
-        String applicationName = GriffonFramework.getInstance().getApplicationName(module);
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      List<GriffonSource> sources = new ArrayList<>();
+      List<Object> dependencies = ContainerUtil.newArrayList();
+      dependencies.add(ProjectRootManager.getInstance(module.getProject()));
+      ContainerUtil.addIfNotNull(dependencies, GriffonFramework.getInstance().getApplicationPropertiesFile(module));
+      String applicationName = GriffonFramework.getInstance().getApplicationName(module);
 
-        File sdkWorkDir = GriffonFramework.getInstance().getSdkWorkDir(module);
-        // construct $griffonWorkDir/projects/$appName/plugins
-        File pluginsDir = new File(sdkWorkDir, "/projects/" + applicationName + "/plugins/");
-        if (pluginsDir.exists() && pluginsDir.canRead() && pluginsDir.isDirectory()) {
-          //noinspection ConstantConditions
-          for (File pluginDir : pluginsDir.listFiles()) {
-            if (!pluginDir.isDirectory() || !pluginDir.canRead()) continue;
-            File srcIdeSupportDir = new File(pluginDir, "src/ide-support");
-            if (!srcIdeSupportDir.exists() || !srcIdeSupportDir.canRead()) continue;
-            File ideaSupport = new File(srcIdeSupportDir, "idea.xml");
-            VirtualFile ideaMetadata = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaSupport);
-            if (ideaMetadata != null) {
-              dependencies.add(ideaMetadata);
-              PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(ideaMetadata);
-              if (psiFile instanceof XmlFile) {
-                XmlTag rootTag = ((XmlFile)psiFile).getRootTag();
-                if (rootTag == null) continue;
-                /*
-                   Metadata file has the following format
-                   <idea-griffon>
-                     <source-root path="src/commons">
-                       <navigation
-                         description="Common Sources"
-                         icon="groovy-icon"
-                         weight="75" />
-                     </source-root>
-                   </idea-griffon>
-                */
+      File sdkWorkDir = GriffonFramework.getInstance().getSdkWorkDir(module);
+      // construct $griffonWorkDir/projects/$appName/plugins
+      File pluginsDir = new File(sdkWorkDir, "/projects/" + applicationName + "/plugins/");
+      if (pluginsDir.exists() && pluginsDir.canRead() && pluginsDir.isDirectory()) {
+        //noinspection ConstantConditions
+        for (File pluginDir : pluginsDir.listFiles()) {
+          if (!pluginDir.isDirectory() || !pluginDir.canRead()) continue;
+          File srcIdeSupportDir = new File(pluginDir, "src/ide-support");
+          if (!srcIdeSupportDir.exists() || !srcIdeSupportDir.canRead()) continue;
+          File ideaSupport = new File(srcIdeSupportDir, "idea.xml");
+          VirtualFile ideaMetadata = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaSupport);
+          if (ideaMetadata != null) {
+            dependencies.add(ideaMetadata);
+            PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(ideaMetadata);
+            if (psiFile instanceof XmlFile) {
+              XmlTag rootTag = ((XmlFile)psiFile).getRootTag();
+              if (rootTag == null) continue;
+              /*
+                 Metadata file has the following format
+                 <idea-griffon>
+                   <source-root path="src/commons">
+                     <navigation
+                       description="Common Sources"
+                       icon="groovy-icon"
+                       weight="75" />
+                   </source-root>
+                 </idea-griffon>
+              */
 
-                for (XmlTag sourceRootTag : rootTag.findSubTags("source-root")) {
-                  String path = sourceRootTag.getAttributeValue("path");
-                  XmlTag navigationTag = sourceRootTag.findFirstSubTag("navigation");
-                  String description = navigationTag == null ? "" : navigationTag.getAttributeValue("description");
-                  XmlAttribute iconAttr = navigationTag == null ? null : navigationTag.getAttribute("icon");
-                  XmlAttribute weightAttr = navigationTag == null ? null : navigationTag.getAttribute("weight");
-                  String icon = iconAttr != null ? iconAttr.getValue() : "groovy-icon";
-                  int weight = weightAttr != null ? Integer.parseInt(weightAttr.getValue()) : 75;
+              for (XmlTag sourceRootTag : rootTag.findSubTags("source-root")) {
+                String path = sourceRootTag.getAttributeValue("path");
+                XmlTag navigationTag = sourceRootTag.findFirstSubTag("navigation");
+                String description = navigationTag == null ? "" : navigationTag.getAttributeValue("description");
+                XmlAttribute iconAttr = navigationTag == null ? null : navigationTag.getAttribute("icon");
+                XmlAttribute weightAttr = navigationTag == null ? null : navigationTag.getAttribute("weight");
+                String icon = iconAttr != null ? iconAttr.getValue() : "groovy-icon";
+                int weight = weightAttr != null ? Integer.parseInt(weightAttr.getValue()) : 75;
 
-                  sources.add(new GriffonSource(path, new GriffonSource.Navigation(description, icon, weight)));
-                }
+                sources.add(new GriffonSource(path, new GriffonSource.Navigation(description, icon, weight)));
               }
             }
           }
         }
-        return Result.create(sources, dependencies);
       }
+      return CachedValueProvider.Result.create(sources, dependencies);
     });
 
   }
@@ -200,7 +197,7 @@ public class GriffonSourceInspector {
 
   private static String getNaturalName(String name) {
     name = getShortName(name);
-    List<String> words = new ArrayList<String>();
+    List<String> words = new ArrayList<>();
     int i = 0;
     char[] chars = name.toCharArray();
     for (int j = 0; j < chars.length; j++) {

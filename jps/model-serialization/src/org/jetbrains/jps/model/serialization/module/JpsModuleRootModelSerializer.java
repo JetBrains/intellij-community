@@ -91,10 +91,12 @@ public class JpsModuleRootModelSerializer {
     dependenciesList.clear();
     final JpsElementFactory elementFactory = JpsElementFactory.getInstance();
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
+    boolean moduleSourceAdded = false;
     for (Element orderEntry : getChildren(rootModelComponent, ORDER_ENTRY_TAG)) {
       String type = orderEntry.getAttributeValue(TYPE_ATTRIBUTE);
       if (SOURCE_FOLDER_TYPE.equals(type)) {
         dependenciesList.addModuleSourceDependency();
+        moduleSourceAdded = true;
       }
       else if (JDK_TYPE.equals(type)) {
         String sdkName = orderEntry.getAttributeValue(JDK_NAME_ATTRIBUTE);
@@ -139,6 +141,9 @@ public class JpsModuleRootModelSerializer {
         final JpsModuleDependency dependency = dependenciesList.addModuleDependency(elementFactory.createModuleReference(name));
         loadModuleDependencyProperties(dependency, orderEntry);
       }
+    }
+    if (!moduleSourceAdded) {
+      dependenciesList.addModuleSourceDependency();
     }
 
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class RootsChangedTest extends ModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    MessageBusConnection connection = myProject.getMessageBus().connect(myTestRootDisposable);
+    MessageBusConnection connection = myProject.getMessageBus().connect(getTestRootDisposable());
     myModuleRootListener = new MyModuleRootListener();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);
   }
@@ -126,7 +126,13 @@ public class RootsChangedTest extends ModuleTestCase {
       Module a = loadModule(PathManagerEx.getHomePath(getClass()) + "/java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml");
       assertEventsCount(1);
 
-      final Sdk jdk = IdeaTestUtil.getMockJdk17();
+      final Sdk jdk;
+      try {
+        jdk = (Sdk)IdeaTestUtil.getMockJdk17().clone();
+      }
+      catch (CloneNotSupportedException e) {
+        throw new RuntimeException(e);
+      }
       ProjectJdkTable.getInstance().addJdk(jdk);
       assertEventsCount(0);
 
@@ -148,7 +154,13 @@ public class RootsChangedTest extends ModuleTestCase {
       final Module moduleB = createModule("b.iml");
       assertEventsCount(2);
 
-      final Sdk jdk = IdeaTestUtil.getMockJdk17();
+      final Sdk jdk;
+      try {
+        jdk = (Sdk)IdeaTestUtil.getMockJdk17().clone();
+      }
+      catch (CloneNotSupportedException e) {
+        throw new RuntimeException(e);
+      }
       ProjectJdkTable.getInstance().addJdk(jdk);
       assertEventsCount(0);
 
@@ -156,7 +168,7 @@ public class RootsChangedTest extends ModuleTestCase {
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelA.setSdk(jdk);
       rootModelB.setSdk(jdk);
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
       ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       assertEventsCount(1);
 
@@ -177,11 +189,18 @@ public class RootsChangedTest extends ModuleTestCase {
       final Module moduleB = createModule("b.iml");
       assertEventsCount(2);
 
-      final Sdk jdk = IdeaTestUtil.getMockJdk17("AAA");
-      ProjectJdkTable.getInstance().addJdk(jdk);
-      assertEventsCount(0);
+      final Sdk jdk;
+      final Sdk jdkBBB;
+      try {
+        jdk = (Sdk)IdeaTestUtil.getMockJdk17("AAA").clone();
+        ProjectJdkTable.getInstance().addJdk(jdk);
+        assertEventsCount(0);
 
-      final Sdk jdkBBB = IdeaTestUtil.getMockJdk17("BBB");
+        jdkBBB = (Sdk)IdeaTestUtil.getMockJdk17("BBB").clone();
+      }
+      catch (CloneNotSupportedException e) {
+        throw new RuntimeException(e);
+      }
       ProjectJdkTable.getInstance().addJdk(jdk);
       assertEventsCount(0);
 
@@ -192,7 +211,7 @@ public class RootsChangedTest extends ModuleTestCase {
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelA.inheritSdk();
       rootModelB.inheritSdk();
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
       if (rootModels.length > 0) {
         ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       }
@@ -211,7 +230,7 @@ public class RootsChangedTest extends ModuleTestCase {
     });
   }
 
-  private void verifyLibraryTableEditing(final LibraryTable libraryTable) throws IOException {
+  private void verifyLibraryTableEditing(final LibraryTable libraryTable) {
     final Module moduleA = createModule("a.iml");
     final Module moduleB = createModule("b.iml");
     assertEventsCount(2);

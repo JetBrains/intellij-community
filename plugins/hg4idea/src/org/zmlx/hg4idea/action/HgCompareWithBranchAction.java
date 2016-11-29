@@ -101,7 +101,7 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
   @NotNull
   @Override
   protected List<String> getBranchNamesExceptCurrent(@NotNull HgRepository repository) {
-    final List<String> namesToCompare = new ArrayList<String>(repository.getBranches().keySet());
+    final List<String> namesToCompare = new ArrayList<>(repository.getBranches().keySet());
     final String currentBranchName = repository.getCurrentBranchName();
     assert currentBranchName != null;
     final Hash currentHash = getCurrentHash(repository);
@@ -151,6 +151,6 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
     HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(!path.isDirectory())
       .baseRevision(compareWithRevisionNumber).targetRevision(null).build(repository.getProject());
     statusCommand.cleanFilesOption(true);
-    return !statusCommand.execute(repository.getRoot(), Collections.singleton(path)).isEmpty();
+    return !statusCommand.executeInCurrentThread(repository.getRoot(), Collections.singleton(path)).isEmpty();
   }
 }

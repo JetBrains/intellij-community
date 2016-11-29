@@ -60,7 +60,7 @@ public class MavenRootModelAdapter {
 
   private final MavenSourceFoldersModuleExtension myRootModelModuleExtension;
 
-  private final Set<String> myOrderEntriesBeforeJdk = new THashSet<String>();
+  private final Set<String> myOrderEntriesBeforeJdk = new THashSet<>();
 
   public MavenRootModelAdapter(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
@@ -439,14 +439,11 @@ public class MavenRootModelAdapter {
   public Library findLibrary(@NotNull final MavenArtifact artifact) {
     final String name = artifact.getLibraryName();
     final Ref<Library> result = Ref.create(null);
-    myRootModel.orderEntries().forEachLibrary(new Processor<Library>() {
-      @Override
-      public boolean process(Library library) {
-        if (name.equals(library.getName())) {
-          result.set(library);
-        }
-        return true;
+    myRootModel.orderEntries().forEachLibrary(library -> {
+      if (name.equals(library.getName())) {
+        result.set(library);
       }
+      return true;
     });
     return result.get();
   }

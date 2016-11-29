@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyRemoteProcessStarter {
   public static final Key<Boolean> OPEN_FOR_INCOMING_CONNECTION = Key.create("OPEN_FOR_INCOMING_CONNECTION");
-  public static final Key<HostAndPort> WEB_SERVER_HOST_AND_PORT = new Key<HostAndPort>("WEB_SERVER_HOST_AND_PORT");
+  public static final Key<HostAndPort> WEB_SERVER_HOST_AND_PORT = new Key<>("WEB_SERVER_HOST_AND_PORT");
 
   public ProcessHandler startRemoteProcess(@NotNull Sdk sdk,
                                            @NotNull GeneralCommandLine commandLine,

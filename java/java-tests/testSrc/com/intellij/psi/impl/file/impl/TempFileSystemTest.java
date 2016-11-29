@@ -15,14 +15,15 @@
  */
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-
-import java.io.IOException;
 
 public class TempFileSystemTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testMove() {
@@ -30,14 +31,22 @@ public class TempFileSystemTest extends LightPlatformCodeInsightFixtureTestCase 
     VirtualFile sourceRoot = rootManager.getContentSourceRoots()[0];
     PsiManager psiManager = PsiManager.getInstance(getProject());
     PsiDirectory psiSourceRoot = psiManager.findDirectory(sourceRoot);
-    PsiFile psiFile = psiSourceRoot.createFile("TestDocument.xml");
-    try {
-      psiFile.getVirtualFile().move(this, psiSourceRoot.createSubdirectory("com").getVirtualFile());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    PsiFile psiFile = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
+      @Override
+      public PsiFile compute() {
+        return psiSourceRoot.createFile("TestDocument.xml");
+      }
+    });
+    PsiDirectory subdirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+      @Override
+      public PsiDirectory compute() {
+        return psiSourceRoot.createSubdirectory("com");
+      }
+    });
+    PlatformTestCase.move(psiFile.getVirtualFile(), subdirectory.getVirtualFile());
     assertTrue(psiFile.isValid());
-    psiFile.delete();
+    ApplicationManager.getApplication().runWriteAction(() -> psiFile.delete());
+
     assertFalse(psiFile.isValid());
   }
 }

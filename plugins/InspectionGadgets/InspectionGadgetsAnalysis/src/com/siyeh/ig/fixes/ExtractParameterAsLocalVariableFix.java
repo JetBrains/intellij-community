@@ -34,15 +34,9 @@ public class ExtractParameterAsLocalVariableFix
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message(
       "extract.parameter.as.local.variable.quickfix");
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return getName();
   }
 
   @Override

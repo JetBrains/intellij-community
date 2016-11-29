@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.core.JavaCoreBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -47,6 +46,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.project.ProjectKt;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
@@ -131,7 +131,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setPreferredSize(JBUI.size(700, 500));
 
-    if (ProjectUtil.isDirectoryBased(myProject)) {
+    if (ProjectKt.isDirectoryBased(myProject)) {
       final JPanel namePanel = new JPanel(new BorderLayout());
       final JLabel label =
         new JLabel("<html><body><b>Project name:</b></body></html>", SwingConstants.LEFT);
@@ -150,17 +150,17 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       wrapper.add(namePanel);
       wrapper.setAlignmentX(0);
       myPanel.add(wrapper, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
-                                                        GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                        new Insets(4, 0, 10, 0), 0, 0));
+                                                  GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                  JBUI.insets(4, 0, 10, 0), 0, 0));
     }
 
     myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, model);
     myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
                                                                                    GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                                                   new Insets(4, 0, 0, 0), 0, 0));
+                                                                                   JBUI.insetsTop(4), 0, 0));
 
     myPanel.add(myWholePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                     GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+                                                     GridBagConstraints.NONE, JBUI.insetsTop(4), 0, 0));
 
     myPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
     myProjectCompilerOutput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -224,38 +224,35 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       throw new ConfigurationException("Please, specify project name!");
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        // set the output path first so that handlers of RootsChanged event sent after JDK is set
-        // would see the updated path
-        String canonicalPath = myProjectCompilerOutput.getText();
-        if (canonicalPath != null && canonicalPath.length() > 0) {
-          try {
-            canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
-          }
-          catch (IOException e) {
-            //file doesn't exist yet
-          }
-          canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-          compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      // set the output path first so that handlers of RootsChanged event sent after JDK is set
+      // would see the updated path
+      String canonicalPath = myProjectCompilerOutput.getText();
+      if (canonicalPath != null && canonicalPath.length() > 0) {
+        try {
+          canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
         }
-        else {
-          compilerProjectExtension.setCompilerOutputPointer(null);
+        catch (IOException e) {
+          //file doesn't exist yet
         }
+        canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
+        compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
+      }
+      else {
+        compilerProjectExtension.setCompilerOutputPointer(null);
+      }
 
-        LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
-        LanguageLevel level = myLanguageLevelCombo.getSelectedLevel();
-        if (level != null) {
-          extension.setLanguageLevel(level);
-        }
-        extension.setDefault(myLanguageLevelCombo.isDefault());
-        myProjectJdkConfigurable.apply();
+      LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
+      LanguageLevel level = myLanguageLevelCombo.getSelectedLevel();
+      if (level != null) {
+        extension.setLanguageLevel(level);
+      }
+      extension.setDefault(myLanguageLevelCombo.isDefault());
+      myProjectJdkConfigurable.apply();
 
-        if (myProjectName != null) {
-          ((ProjectEx)myProject).setProjectName(getProjectName());
-          if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
-        }
+      if (myProjectName != null) {
+        ((ProjectEx)myProject).setProjectName(getProjectName());
+        if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
       }
     });
   }

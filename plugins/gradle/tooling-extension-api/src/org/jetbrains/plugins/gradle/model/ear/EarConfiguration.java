@@ -40,6 +40,8 @@ public interface EarConfiguration extends Serializable {
     @NotNull
     String getEarName();
 
+    File getArchivePath();
+
     String getManifestContent();
 
     @NotNull

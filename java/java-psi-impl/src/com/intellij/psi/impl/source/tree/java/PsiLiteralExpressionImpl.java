@@ -16,13 +16,16 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ResolveScopeManager;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.impl.PsiLiteralStub;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -35,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 
 public class PsiLiteralExpressionImpl
-       extends ExpressionPsiElement
+  extends JavaStubPsiElement<PsiLiteralStub>
        implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
   @NonNls private static final String QUOT = "&quot;";
 
@@ -47,8 +50,18 @@ public class PsiLiteralExpressionImpl
   public static final TokenSet REAL_LITERALS = TokenSet.create(JavaTokenType.FLOAT_LITERAL, JavaTokenType.DOUBLE_LITERAL);
   public static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
 
-  public PsiLiteralExpressionImpl() {
-    super(JavaElementType.LITERAL_EXPRESSION);
+  public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
+    super(stub, JavaStubElementTypes.LITERAL_EXPRESSION);
+  }
+
+  public PsiLiteralExpressionImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement[] getChildren() {
+    return ((CompositeElement)getNode()).getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
   @Override
@@ -84,18 +97,39 @@ public class PsiLiteralExpressionImpl
   }
 
   public IElementType getLiteralElementType() {
-    return getFirstChildNode().getElementType();
+    PsiLiteralStub stub = getGreenStub();
+    if (stub != null) return stub.getLiteralType();
+
+    return getNode().getFirstChildNode().getElementType();
   }
 
   public String getCanonicalText() {
-    final TreeElement literal = getFirstChildNode();
-    final IElementType type = literal.getElementType();
-    return NUMERIC_LITERALS.contains(type) ? LiteralFormatUtil.removeUnderscores(literal.getText()) : literal.getText();
+    IElementType type = getLiteralElementType();
+    return NUMERIC_LITERALS.contains(type) ? LiteralFormatUtil.removeUnderscores(getText()) : getText();
+  }
+
+  @Override
+  public String getText() {
+    PsiLiteralStub stub = getGreenStub();
+    if (stub != null) return stub.getLiteralText();
+
+    return super.getText();
   }
 
   @Override
   public Object getValue() {
     final IElementType type = getLiteralElementType();
+    if (type == JavaTokenType.TRUE_KEYWORD) {
+      return Boolean.TRUE;
+    }
+    if (type == JavaTokenType.FALSE_KEYWORD) {
+      return Boolean.FALSE;
+    }
+    if (type == JavaTokenType.STRING_LITERAL) {
+      String innerText = getInnerText();
+      return innerText == null ? null : internedParseStringCharacters(innerText);
+    }
+
     String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase(Locale.ENGLISH) : getCanonicalText();
     final int textLength = text.length();
 
@@ -177,16 +211,6 @@ public class PsiLiteralExpressionImpl
       if (chars.length() != 1) return null;
       return Character.valueOf(chars.charAt(0));
     }
-    if (type == JavaTokenType.STRING_LITERAL) {
-      String innerText = getInnerText();
-      return innerText == null ? null : internedParseStringCharacters(innerText);
-    }
-    if (type == JavaTokenType.TRUE_KEYWORD) {
-      return Boolean.TRUE;
-    }
-    if (type == JavaTokenType.FALSE_KEYWORD) {
-      return Boolean.FALSE;
-    }
 
     return null;
   }
@@ -259,7 +283,7 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public boolean isValidHost() {
-    return getValue() instanceof String;
+    return getLiteralElementType() == JavaTokenType.STRING_LITERAL;
   }
 
   @Override
@@ -274,7 +298,7 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public PsiLanguageInjectionHost updateText(@NotNull final String text) {
-    TreeElement valueNode = getFirstChildNode();
+    ASTNode valueNode = getNode().getFirstChildNode();
     assert valueNode instanceof LeafElement;
     ((LeafElement)valueNode).replaceWithText(text);
     return this;

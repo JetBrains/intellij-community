@@ -70,7 +70,7 @@ public class NamedScopeManager extends NamedScopesHolder {
   public static class OrderState {
     @Tag("order")
     @AbstractCollection(surroundWithTag = false, elementTag = "scope", elementValueAttribute = "name")
-    public List<String> myOrder = new ArrayList<String>();
+    public List<String> myOrder = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {

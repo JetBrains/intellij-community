@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,9 +51,8 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    RegistryValue value = Registry.get(key);
-    boolean enter = !value.asBoolean();
-    value.setValue(enter);
+    alternateCurrentDistractionFreeModeSetting();
+    boolean enter = isDistractionFreeModeEnabled();
 
     if (project == null) return;
 
@@ -93,6 +92,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     p.setValue(before + "IS_FOLDING_OUTLINE_SHOWN", valueOf(eo.IS_FOLDING_OUTLINE_SHOWN));  eo.IS_FOLDING_OUTLINE_SHOWN = p.getBoolean(after + "IS_FOLDING_OUTLINE_SHOWN", value); 
     p.setValue(before + "IS_WHITESPACES_SHOWN",     valueOf(eo.IS_WHITESPACES_SHOWN));      eo.IS_WHITESPACES_SHOWN     = p.getBoolean(after + "IS_WHITESPACES_SHOWN", value); 
     p.setValue(before + "ARE_LINE_NUMBERS_SHOWN",   valueOf(eo.ARE_LINE_NUMBERS_SHOWN));    eo.ARE_LINE_NUMBERS_SHOWN   = p.getBoolean(after + "ARE_LINE_NUMBERS_SHOWN", value); 
+    p.setValue(before + "ARE_GUTTER_ICONS_SHOWN",   valueOf(eo.ARE_GUTTER_ICONS_SHOWN));    eo.ARE_GUTTER_ICONS_SHOWN   = p.getBoolean(after + "ARE_GUTTER_ICONS_SHOWN", value); 
     p.setValue(before + "IS_RIGHT_MARGIN_SHOWN",    valueOf(eo.IS_RIGHT_MARGIN_SHOWN));     eo.IS_RIGHT_MARGIN_SHOWN    = p.getBoolean(after + "IS_RIGHT_MARGIN_SHOWN", value); 
     p.setValue(before + "IS_INDENT_GUIDES_SHOWN",   valueOf(eo.IS_INDENT_GUIDES_SHOWN));    eo.IS_INDENT_GUIDES_SHOWN   = p.getBoolean(after + "IS_INDENT_GUIDES_SHOWN", value); 
     p.setValue(before + "SHOW_BREADCRUMBS",         valueOf(eo.SHOW_BREADCRUMBS));          eo.SHOW_BREADCRUMBS         = p.getBoolean(after + "SHOW_BREADCRUMBS", value); 
@@ -102,5 +102,14 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     p.setValue(before + "HIDE_TOOL_STRIPES",        valueOf(ui.HIDE_TOOL_STRIPES));         ui.HIDE_TOOL_STRIPES        = p.getBoolean(after + "HIDE_TOOL_STRIPES", !value);
     p.setValue(before + "EDITOR_TAB_PLACEMENT",     valueOf(ui.EDITOR_TAB_PLACEMENT));      ui.EDITOR_TAB_PLACEMENT     = p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE);
     // @formatter:on
+  }
+
+  public static boolean isDistractionFreeModeEnabled() {
+    return Registry.get(key).asBoolean();
+  }
+
+  private static void alternateCurrentDistractionFreeModeSetting() {
+    RegistryValue value = Registry.get(key);
+    value.setValue(!value.asBoolean());
   }
 }

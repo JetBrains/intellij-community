@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
   private PsiCapturedWildcardType(@NotNull PsiWildcardType existential,
                                   @NotNull PsiElement context,
                                   @Nullable PsiTypeParameter parameter) {
-    super(PsiAnnotation.EMPTY_ARRAY);
+    super(TypeAnnotationProvider.EMPTY);
     myExistential = existential;
     myContext = context;
     myParameter = parameter;
@@ -132,8 +133,8 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return "capture of " + myExistential.getPresentableText();
+  public String getPresentableText(boolean annotated) {
+    return "capture of " + myExistential.getPresentableText(annotated);
   }
 
   @NotNull
@@ -179,17 +180,24 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     return myExistential.isSuper() ? myExistential.getBound() : NULL;
   }
 
+  @NotNull
   public PsiType getUpperBound () {
+    return getUpperBound(true);
+  }
+
+  @NotNull
+  public PsiType getUpperBound(boolean capture) {
     final PsiType bound = myExistential.getBound();
     if (myExistential.isExtends() && myParameter == null) {
+      assert bound != null : myExistential.getCanonicalText();
       return bound;
     }
     else {
-      return myUpperBound;
+      return isCapture() && capture ? PsiUtil.captureToplevelWildcards(myUpperBound, myContext) : myUpperBound;
     }
   }
 
-  public void setUpperBound(PsiType upperBound) {
+  public void setUpperBound(@NotNull PsiType upperBound) {
     myUpperBound = upperBound;
   }
 

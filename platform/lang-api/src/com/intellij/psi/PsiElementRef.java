@@ -67,11 +67,11 @@ public final class PsiElementRef<T extends PsiElement> {
   }
 
   public static <T extends PsiElement> PsiElementRef<T> real(@NotNull final T element) {
-    return new PsiElementRef<T>(new PsiRefColleague.Real<T>(element));
+    return new PsiElementRef<>(new PsiRefColleague.Real<>(element));
   }
 
   public static <Child extends PsiElement, Parent extends PsiElement> PsiElementRef<Child> imaginary(final PsiElementRef<? extends Parent> parent, final PsiRefElementCreator<Parent, Child> creator) {
-    return new PsiElementRef<Child>(new PsiRefColleague.Imaginary<Child, Parent>(parent, creator));
+    return new PsiElementRef<>(new PsiRefColleague.Imaginary<>(parent, creator));
   }
 
   public PsiManager getPsiManager() {
@@ -182,7 +182,7 @@ public final class PsiElementRef<T extends PsiElement> {
       @Override
       @NotNull
       public Real<Child> makeReal() {
-        return new Real<Child>(myCreator.createChild(myParent.ensurePsiElementExists()));
+        return new Real<>(myCreator.createChild(myParent.ensurePsiElementExists()));
       }
 
       @Override

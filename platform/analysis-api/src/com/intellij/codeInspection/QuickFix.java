@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @since 6.0
  * @see CommonProblemDescriptor#getFixes()
  */
-public interface QuickFix<D extends CommonProblemDescriptor> {
+public interface QuickFix<D extends CommonProblemDescriptor> extends WriteActionAware {
   QuickFix[] EMPTY_ARRAY = new QuickFix[0];
 
   /**
@@ -36,7 +37,9 @@ public interface QuickFix<D extends CommonProblemDescriptor> {
    */
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
-  String getName();
+  default String getName() {
+    return getFamilyName();
+  }
 
   /**
    * @return text to appear in "Apply Fix" popup when multiple Quick Fixes exist (in the results of batch code inspection). For example,

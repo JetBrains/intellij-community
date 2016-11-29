@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMemberFix;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,7 +29,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author peter
@@ -40,7 +42,7 @@ public abstract class StaticMemberProcessor {
   private final PsiElement myPosition;
   private final Project myProject;
   private final PsiResolveHelper myResolveHelper;
-  private boolean myHintShown = false;
+  private boolean myHintShown;
   private final boolean myPackagedContext;
 
   public StaticMemberProcessor(final PsiElement position) {
@@ -58,7 +60,7 @@ public abstract class StaticMemberProcessor {
     final GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
     for (final String memberName : CompletionUtil.sortMatching(matcher, memberNames)) {
-      Set<PsiClass> classes = new THashSet<PsiClass>();
+      Set<PsiClass> classes = new THashSet<>();
       for (final PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, myProject, scope)) {
         if (isStaticallyImportable(member)) {
           final PsiClass containingClass = member.getContainingClass();
@@ -69,12 +71,7 @@ public abstract class StaticMemberProcessor {
             showHint(shouldImport);
             if (member instanceof PsiMethod && classes.add(containingClass)) {
               final PsiMethod[] allMethods = containingClass.getAllMethods();
-              final List<PsiMethod> overloads = ContainerUtil.findAll(allMethods, new Condition<PsiMethod>() {
-                @Override
-                public boolean value(PsiMethod psiMethod) {
-                  return memberName.equals(psiMethod.getName()) && isStaticallyImportable(psiMethod);
-                }
-              });
+              final List<PsiMethod> overloads = ContainerUtil.findAll(allMethods, psiMethod -> memberName.equals(psiMethod.getName()) && isStaticallyImportable(psiMethod));
 
               assert !overloads.isEmpty();
               if (overloads.size() == 1) {
@@ -128,7 +125,7 @@ public abstract class StaticMemberProcessor {
 
 
   private boolean isStaticallyImportable(final PsiMember member) {
-    return member.hasModifierProperty(PsiModifier.STATIC) && isAccessible(member) && !StaticImportMethodFix.isExcluded(member);
+    return member.hasModifierProperty(PsiModifier.STATIC) && isAccessible(member) && !StaticImportMemberFix.isExcluded(member);
   }
 
   protected boolean isAccessible(PsiMember member) {

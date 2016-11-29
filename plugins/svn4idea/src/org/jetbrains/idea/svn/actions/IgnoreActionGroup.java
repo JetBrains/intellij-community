@@ -80,8 +80,8 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
         final Project project = CommonDataKeys.PROJECT.getData(dataContext);
         SvnVcs vcs = SvnVcs.getInstance(project);
 
-        final Ref<Boolean> filesOk = new Ref<Boolean>(Boolean.FALSE);
-        final Ref<Boolean> extensionOk = new Ref<Boolean>(Boolean.FALSE);
+        final Ref<Boolean> filesOk = new Ref<>(Boolean.FALSE);
+        final Ref<Boolean> extensionOk = new Ref<>(Boolean.FALSE);
 
         // virtual files parameter is not used -> can pass null
         SvnPropertyService.doCheckIgnoreProperty(vcs, project, null, fileGroupInfo, fileGroupInfo.getExtensionMask(), filesOk, extensionOk);

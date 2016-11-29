@@ -41,7 +41,7 @@ public class ParamMatcher extends BaseMatcher {
     public ParamMatcher(XmlTag root, String[] excludedNames, String name) {
         myRoot = root;
         myName = name;
-        myExcludedNames = new HashSet<String>(Arrays.asList(excludedNames));
+        myExcludedNames = new HashSet<>(Arrays.asList(excludedNames));
     }
 
     public XmlTag getRoot() {

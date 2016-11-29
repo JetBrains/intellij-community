@@ -17,11 +17,14 @@ package com.intellij.execution.compound;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -32,18 +35,16 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
-public class CompoundRunConfiguration extends RunConfigurationBase implements WithoutOwnBeforeRunSteps, Cloneable {
-  static final Comparator<RunConfiguration> COMPARATOR = new Comparator<RunConfiguration>() {
-    @Override
-    public int compare(RunConfiguration o1, RunConfiguration o2) {
-      int i = o1.getType().getDisplayName().compareTo(o2.getType().getDisplayName());
-      return (i != 0) ? i : o1.getName().compareTo(o2.getName());
-    }
+public class CompoundRunConfiguration extends RunConfigurationBase implements RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
+  static final Comparator<RunConfiguration> COMPARATOR = (o1, o2) -> {
+    int i = o1.getType().getDisplayName().compareTo(o2.getType().getDisplayName());
+    return (i != 0) ? i : o1.getName().compareTo(o2.getName());
   };
-  private Set<Pair<String, String>> myPairs = new HashSet<Pair<String, String>>();
-  private Set<RunConfiguration> mySetToRun = new TreeSet<RunConfiguration>(COMPARATOR);
+  private Set<Pair<String, String>> myPairs = new HashSet<>();
+  private Set<RunConfiguration> mySetToRun = new TreeSet<>(COMPARATOR);
   private boolean myInitialized = false;
 
   public CompoundRunConfiguration(Project project, @NotNull CompoundRunConfigurationType type, String name) {
@@ -92,17 +93,14 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
       @Nullable
       @Override
       public ExecutionResult execute(final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            RunManagerImpl manager = RunManagerImpl.getInstanceImpl(getProject());
-            for (RunConfiguration configuration : getSetToRun()) {
-              RunnerAndConfigurationSettings settings = new RunnerAndConfigurationSettingsImpl(manager, configuration, false);
-              ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
-              if (builder != null) {
-                ExecutionManager.getInstance(getProject())
-                  .restartRunProfile(builder.activeTarget().dataContext(null).build());
-              }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          RunManagerImpl manager = RunManagerImpl.getInstanceImpl(getProject());
+          for (RunConfiguration configuration : getSetToRun()) {
+            RunnerAndConfigurationSettings settings = new RunnerAndConfigurationSettingsImpl(manager, configuration, false);
+            ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
+            if (builder != null) {
+              ExecutionManager.getInstance(getProject())
+                .restartRunProfile(builder.activeTarget().dataContext(null).build());
             }
           }
         });
@@ -139,10 +137,41 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
   @Override
   public RunConfiguration clone() {
     CompoundRunConfiguration clone = (CompoundRunConfiguration)super.clone();
-    clone.myPairs = new HashSet<Pair<String, String>>();
+    clone.myPairs = new HashSet<>();
     clone.myPairs.addAll(myPairs);
-    clone.mySetToRun = new TreeSet<RunConfiguration>(COMPARATOR);
+    clone.mySetToRun = new TreeSet<>(COMPARATOR);
     clone.mySetToRun.addAll(getSetToRun());
     return clone;
+  }
+
+
+  @Nullable
+  @Override
+  public Icon getExecutorIcon(@NotNull RunConfiguration configuration, @NotNull Executor executor) {
+    if (DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId()) && hasRunningSingletones()) {
+      return AllIcons.Actions.Restart;
+    }
+    return executor.getIcon();
+  }
+
+  protected boolean hasRunningSingletones() {
+    Project project = getProject();
+    if (project.isDisposed()) return false;
+    final ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
+
+    return executionManager.getRunningDescriptors(s -> {
+      RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
+      for (RunConfiguration runConfiguration : mySetToRun) {
+        if (runConfiguration instanceof CompoundRunConfiguration && ((CompoundRunConfiguration)runConfiguration).hasRunningSingletones()) {
+          return true;
+        }
+        RunnerAndConfigurationSettings settings =
+          manager.findConfigurationByTypeAndName(runConfiguration.getType().getId(), runConfiguration.getName());
+        if (settings != null && settings.isSingleton() && runConfiguration.equals(s.getConfiguration())) {
+          return true;
+        }
+      }
+      return false;
+    }).size() > 0;
   }
 }

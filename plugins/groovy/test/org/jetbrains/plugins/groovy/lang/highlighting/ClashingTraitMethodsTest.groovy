@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethodsInspection
 
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethod
  */
 class ClashingTraitMethodsTest extends GrHighlightingTestBase {
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     GroovyLightProjectDescriptor.GROOVY_2_3
@@ -35,7 +37,7 @@ class ClashingTraitMethodsTest extends GrHighlightingTestBase {
     [new ClashingTraitMethodsInspection()]
   }
 
-  public void testClash() {
+  void testClash() {
     testHighlighting('''
 trait T1 {
   def foo(){}
@@ -51,7 +53,7 @@ class <warning descr="Traits T1, T2 contain clashing methods with signature foo(
 ''')
   }
 
-  public void testCustomImplementationNoClash() {
+  void testCustomImplementationNoClash() {
     testHighlighting('''
 trait T1 {
   def foo(){}
@@ -67,7 +69,7 @@ class A implements T1, T2 {
 ''')
   }
 
-  public void testNoClash() {
+  void testNoClash() {
     testHighlighting('''
 trait T1 {
   def foo(){}
@@ -82,7 +84,7 @@ class A implements T1, T2 {
 ''')
   }
 
-  public void testNoClashWithInterface() {
+  void testNoClashWithInterface() {
     testHighlighting('''
 trait T1 {
   def foo(){}
@@ -98,7 +100,7 @@ class A implements T1, T2 {
   }
 
 
-  public void testNoClashInInheritor() {
+  void testNoClashInInheritor() {
     testHighlighting('''
 trait T1 {
   def foo(){}

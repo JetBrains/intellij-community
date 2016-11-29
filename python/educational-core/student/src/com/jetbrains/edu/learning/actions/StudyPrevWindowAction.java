@@ -1,8 +1,9 @@
 package com.jetbrains.edu.learning.actions;
 
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.intellij.icons.AllIcons;
 import com.jetbrains.edu.learning.StudyUtils;
-import icons.InteractiveLearningIcons;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,18 +18,42 @@ public class StudyPrevWindowAction extends StudyWindowNavigationAction {
   public static final String SHORTCUT = "ctrl shift pressed COMMA";
 
   public StudyPrevWindowAction() {
-    super("Navigate to the Previous Answer Placeholder", "Navigate to the previous answer placeholder", InteractiveLearningIcons.Prev);
+    super("Navigate to the Previous Answer Placeholder", "Navigate to the previous answer placeholder",
+          AllIcons.Actions.Back);
   }
 
 
   @Nullable
   @Override
-  protected AnswerPlaceholder getNextAnswerPlaceholder(@NotNull final AnswerPlaceholder window) {
-    int prevIndex = window.getIndex() - 1;
-    List<AnswerPlaceholder> windows = window.getTaskFile().getAnswerPlaceholders();
-    if (StudyUtils.indexIsValid(prevIndex, windows)) {
-      return windows.get(prevIndex);
+  protected AnswerPlaceholder getTargetPlaceholder(@NotNull final TaskFile taskFile, int offset) {
+    final AnswerPlaceholder selectedAnswerPlaceholder = taskFile.getAnswerPlaceholder(offset);
+    final List<AnswerPlaceholder> placeholders = taskFile.getActivePlaceholders();
+    if (selectedAnswerPlaceholder == null) {
+      for (int i = placeholders.size() - 1; i >= 0; i--) {
+        final AnswerPlaceholder placeholder = placeholders.get(i);
+        if (placeholder.getOffset() < offset) {
+          return placeholder;
+        }
+      }
+    }
+    else {
+      int prevIndex = selectedAnswerPlaceholder.getIndex() - 1;
+      if (StudyUtils.indexIsValid(prevIndex, placeholders)) {
+        return placeholders.get(prevIndex);
+      }
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public String getActionId() {
+    return ACTION_ID;
+  }
+
+  @Nullable
+  @Override
+  public String[] getShortcuts() {
+    return new String[]{SHORTCUT};
   }
 }

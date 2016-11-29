@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,10 +15,12 @@ import com.intellij.psi.PsiManager;
 public final class SearchContext {
   private final PsiFile file;
   private final Project project;
+  private final Editor editor;
 
-  private SearchContext(Project project, PsiFile file) {
+  private SearchContext(Project project, PsiFile file, Editor editor) {
     this.project = project;
     this.file = file;
+    this.editor = editor;
   }
 
   public PsiFile getFile() {
@@ -41,10 +42,12 @@ public final class SearchContext {
     if (vFile != null && (file == null || !vFile.equals(file.getContainingFile().getVirtualFile()))) {
       file = PsiManager.getInstance(project).findFile(vFile);
     }
-    return new SearchContext(project, file);
+
+    final Editor editor = CommonDataKeys.EDITOR.getData(context);
+    return new SearchContext(project, file, editor);
   }
 
   public Editor getEditor() {
-    return FileEditorManager.getInstance(project).getSelectedTextEditor();
+    return editor;
   }
 }

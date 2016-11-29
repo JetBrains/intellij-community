@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -60,7 +59,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
     PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (method == null) return;
-    final List<PsiMethod> toAnnotate = new ArrayList<PsiMethod>();
+    final List<PsiMethod> toAnnotate = new ArrayList<>();
     toAnnotate.add(method);
     List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
@@ -74,7 +73,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
       }
     }
     if (annotateOverriddenMethods()) {
-      PsiMethod[] methods = OverridingMethodsSearch.search(method, GlobalSearchScope.allScope(project), true).toArray(PsiMethod.EMPTY_ARRAY);
+      PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
       for (PsiMethod psiMethod : methods) {
         if (AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) && !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false, false) && psiMethod.getManager().isInProject(psiMethod)) {
           toAnnotate.add(psiMethod);
@@ -101,7 +100,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return getName();
+    return InspectionsBundle.message("inspection.annotate.method.quickfix.family.name");
   }
 
   private void annotateMethod(@NotNull PsiMethod method) {

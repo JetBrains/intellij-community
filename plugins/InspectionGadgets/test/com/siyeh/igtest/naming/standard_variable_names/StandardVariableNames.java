@@ -1,5 +1,5 @@
 package com.siyeh.igtest.naming.standard_variable_names;
-
+import java.io.*;
 public class StandardVariableNames {
 
     void bad() {
@@ -21,9 +21,13 @@ public class StandardVariableNames {
         long l;
         String s, str;
 
-        new java.io.OutputStream() {
+        new MyOutputStream() {
+            // same as super
             public void write(int b) throws IOException {}
-        }
+        };
     }
 
+}
+interface MyOutputStream {
+    void write(int b) throws IOException;
 }

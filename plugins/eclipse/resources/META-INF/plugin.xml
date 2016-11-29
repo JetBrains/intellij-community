@@ -29,6 +29,10 @@
         name="Eclipse XML Profile"
         implementationClass="org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"/>
+    <schemeImporter 
+        name="Eclipse Color Theme (XML)"
+        implementationClass="org.jetbrains.idea.eclipse.importer.colors.EclipseColorSchemeImporter"
+        schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
   </extensions>

@@ -50,7 +50,7 @@ public class XmlUnwrapDescriptor implements UnwrapDescriptor {
       }
     }
 
-    List<Pair<PsiElement, Unwrapper>> result = new ArrayList<Pair<PsiElement, Unwrapper>>();
+    List<Pair<PsiElement, Unwrapper>> result = new ArrayList<>();
 
     FileViewProvider viewProvider = file.getViewProvider();
 
@@ -62,19 +62,14 @@ public class XmlUnwrapDescriptor implements UnwrapDescriptor {
         PsiElement tag = PsiTreeUtil.getParentOfType(e, XmlTag.class);
         while (tag != null) {
           if (XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode()) != null) { // Exclude implicit tags suck as 'jsp:root'
-            result.add(new Pair<PsiElement, Unwrapper>(tag, new XmlEnclosingTagUnwrapper()));
+            result.add(new Pair<>(tag, new XmlEnclosingTagUnwrapper()));
           }
           tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class);
         }
       }
     }
 
-    Collections.sort(result, new Comparator<Pair<PsiElement, Unwrapper>>() {
-      @Override
-      public int compare(Pair<PsiElement, Unwrapper> o1, Pair<PsiElement, Unwrapper> o2) {
-        return o2.first.getTextOffset() - o1.first.getTextOffset();
-      }
-    });
+    Collections.sort(result, (o1, o2) -> o2.first.getTextOffset() - o1.first.getTextOffset());
 
     return result;
   }

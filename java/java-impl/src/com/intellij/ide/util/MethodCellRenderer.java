@@ -23,7 +23,6 @@ import javax.swing.*;
 
 public class MethodCellRenderer extends PsiElementListCellRenderer<PsiMethod>{
   private final boolean myShowMethodNames;
-  private final PsiClassListCellRenderer myClassListCellRenderer = new PsiClassListCellRenderer();
   @PsiFormatUtil.FormatMethodOptions
   private final int myOptions;
 
@@ -37,7 +36,7 @@ public class MethodCellRenderer extends PsiElementListCellRenderer<PsiMethod>{
 
   public String getElementText(PsiMethod element) {
     final PsiNamedElement container = fetchContainer(element);
-    String text = container instanceof PsiClass ? myClassListCellRenderer.getElementText((PsiClass)container) : container.getName();
+    String text = container instanceof PsiClass ? PsiClassListCellRenderer.INSTANCE.getElementText((PsiClass)container) : container.getName();
     if (myShowMethodNames) {
       text += "."+PsiFormatUtil.formatMethod(element, PsiSubstitutor.EMPTY, myOptions, PsiFormatUtilBase.SHOW_TYPE);
     }
@@ -58,6 +57,6 @@ public class MethodCellRenderer extends PsiElementListCellRenderer<PsiMethod>{
   }
 
   public int getIconFlags() {
-    return myClassListCellRenderer.getIconFlags();
+    return PsiClassListCellRenderer.INSTANCE.getIconFlags();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.FilterComponent;
@@ -57,7 +56,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     super("Filter Inspections", true);
     myInspectionsFilter = inspectionsFilter;
     myFilterComponent = filterComponent;
-    mySeverityRegistrar = ((SeverityProvider)profile.getProfileManager()).getOwnSeverityRegistrar();
+    mySeverityRegistrar = profile.getProfileManager().getOwnSeverityRegistrar();
     getTemplatePresentation().setIcon(AllIcons.General.Filter);
     tune(profile, project);
   }
@@ -79,21 +78,21 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     addAction(new ShowEnabledOrDisabledInspectionsAction(true));
     addAction(new ShowEnabledOrDisabledInspectionsAction(false));
+    addAction(new ShowOnlyModifiedInspectionsAction());
     addSeparator();
 
-    final SortedSet<HighlightSeverity> severities = LevelChooserAction.getSeverities(mySeverityRegistrar);
-    for (final HighlightSeverity severity : severities) {
+    for (final HighlightSeverity severity : LevelChooserAction.getSeverities(mySeverityRegistrar)) {
       add(new ShowWithSpecifiedSeverityInspectionsAction(severity));
     }
     addSeparator();
 
-    final Set<String> languageIds = new HashSet<String>();
+    final Set<String> languageIds = new HashSet<>();
     for (ScopeToolState state : profile.getDefaultStates(project)) {
       final String languageId = state.getTool().getLanguage();
       languageIds.add(languageId);
     }
 
-    final List<Language> languages = new ArrayList<Language>();
+    final List<Language> languages = new ArrayList<>();
     for (String id : languageIds) {
       if (id != null) {
         final Language language = Language.findLanguageByID(id);
@@ -107,12 +106,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
       final DefaultActionGroup languageActionGroupParent =
         new DefaultActionGroup("Filter by Language", languages.size() >= MIN_LANGUAGE_COUNT_TO_WRAP);
       add(languageActionGroupParent);
-      Collections.sort(languages, new Comparator<Language>() {
-        @Override
-        public int compare(Language l1, Language l2) {
-          return l1.getDisplayName().compareTo(l2.getDisplayName());
-        }
-      });
+      Collections.sort(languages, Comparator.comparing(Language::getDisplayName));
       for (Language language : languages) {
         languageActionGroupParent.add(new LanguageFilterAction(language));
       }
@@ -251,7 +245,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
                                  (StringUtil.isEmptyOrSpaces(StringUtil.trimStart(ApplicationInfo.getInstance().getMinorVersion(),"0")) ?
                                  "" : "."+ApplicationInfo.getInstance().getMinorVersion());
   private final String presentableVersion = ApplicationNamesInfo.getInstance().getProductName() + " " + version;
-  private class ShowNewInspectionsAction extends AnAction {
+  private class ShowNewInspectionsAction extends AnAction implements DumbAware {
     private ShowNewInspectionsAction() {
       super("Show New Inspections in " + presentableVersion,
             "Shows new inspections which are available since " + presentableVersion,
@@ -261,6 +255,22 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     @Override
     public void actionPerformed(AnActionEvent e) {
       myFilterComponent.setFilter("\"New in " + version + "\"");
+    }
+  }
+
+  private class ShowOnlyModifiedInspectionsAction extends CheckboxAction implements DumbAware {
+    public ShowOnlyModifiedInspectionsAction() {
+      super("Show Only Modified Inspections");
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myInspectionsFilter.isShowOnlyModifiedInspections();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myInspectionsFilter.setShowOnlyModifiedInspections(state);
     }
   }
 }

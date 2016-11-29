@@ -46,7 +46,8 @@ import java.util.List;
 public abstract class TreeInplaceEditor implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTreeInplaceEditor");
   private JComponent myInplaceEditorComponent;
-  private final List<Runnable> myRemoveActions = new ArrayList<Runnable>();
+  private final List<Runnable> myRemoveActions = new ArrayList<>();
+  protected final Disposable myDisposable = Disposer.newDisposable();
 
   protected abstract JComponent createInplaceEditorComponent();
 
@@ -78,10 +79,10 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     }
     myInplaceEditorComponent = null;
     onHidden();
-    for (Runnable action : myRemoveActions) {
-      action.run();
-    }
+    myRemoveActions.forEach(Runnable::run);
     myRemoveActions.clear();
+
+    Disposer.dispose(myDisposable);
 
     final JTree tree = getTree();
     tree.repaint();
@@ -94,7 +95,8 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   protected abstract Project getProject();
 
   private static void setInplaceEditorBounds(JComponent component, int x, int y, int width, int height) {
-    component.setBounds(x, y, width, Math.max(height, component.getPreferredSize().height));
+    int h = Math.max(height, component.getPreferredSize().height);
+    component.setBounds(x, y - (h - height) / 2, width, h);
   }
 
   public final void show() {
@@ -168,8 +170,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       rootPane.removeComponentListener(componentListener);
     });
 
-    final Disposable disposable = Disposer.newDisposable();
-    getProject().getMessageBus().connect(disposable).subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
+    getProject().getMessageBus().connect(myDisposable).subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
       public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         cancelEditing();
@@ -180,7 +181,6 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         cancelEditing();
       }
     });
-    myRemoveActions.add(() -> Disposer.dispose(disposable));
 
     final JComponent editorComponent = getEditorComponent();
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
@@ -267,7 +267,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   }
 
   @Nullable
-  private Rectangle getEditorBounds() {
+  protected Rectangle getEditorBounds() {
     final JTree tree = getTree();
     Rectangle bounds = tree.getVisibleRect();
     Rectangle nodeBounds = tree.getPathBounds(getNodePath());

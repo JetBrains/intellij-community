@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
@@ -27,6 +28,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -283,5 +285,18 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
 
   protected static void configureSoftWraps(int charCountToWrapAt) {
     EditorTestUtil.configureSoftWraps(myEditor, charCountToWrapAt);
+  }
+
+  public static Inlay addInlay(int offset) {
+    return EditorTestUtil.addInlay(myEditor, offset);
+  }
+
+  protected static void runWriteCommand(ThrowableRunnable r) {
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        r.run();
+      }
+    }.execute();
   }
 }

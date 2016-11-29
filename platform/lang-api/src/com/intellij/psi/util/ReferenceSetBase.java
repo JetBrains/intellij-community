@@ -59,7 +59,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
   @NotNull
   protected List<T> parse(String str, int offset) {
 
-    final List<T> references = new ArrayList<T>();
+    final List<T> references = new ArrayList<>();
     int current = -1;
     int index = 0;
     int next;

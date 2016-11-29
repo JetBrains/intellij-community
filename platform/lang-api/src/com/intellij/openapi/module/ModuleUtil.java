@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
@@ -41,7 +38,7 @@ public class ModuleUtil extends ModuleUtilCore {
       @Nullable
       @Override
       public CachedValueProvider.Result<MultiMap<ModuleType<?>, Module>> compute(Project param) {
-        MultiMap<ModuleType<?>, Module> map = new MultiMap<ModuleType<?>, Module>();
+        MultiMap<ModuleType<?>, Module> map = new MultiMap<>();
         for (Module module : ModuleManager.getInstance(param).getModules()) {
           map.putValue(ModuleType.get(module), module);
         }
@@ -69,7 +66,7 @@ public class ModuleUtil extends ModuleUtilCore {
   @NotNull
   public static List<Module> getParentModulesOfType(ModuleType expectedModuleType, Module module) {
     final List<Module> parents = ModuleManager.getInstance(module.getProject()).getModuleDependentModules(module);
-    ArrayList<Module> modules = new ArrayList<Module>();
+    ArrayList<Module> modules = new ArrayList<>();
     for (Module parent : parents) {
       if (expectedModuleType.equals(ModuleType.get(parent))) {
         modules.add(parent);

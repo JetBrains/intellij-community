@@ -50,7 +50,7 @@ class EncodingFileTreeTable extends AbstractFileTreeTable<Charset> {
     super(project, Charset.class, "Default Encoding", VirtualFileFilter.ALL, false);
     Map<VirtualFile, Charset> mappings = FileEncodingConfigurable.getExistingMappingIncludingDefault(project);
     reset(mappings);
-    getValueColumn().setCellRenderer(new DefaultTableCellRenderer(){
+    getValueColumn().setCellRenderer(new DefaultTableCellRenderer() {
       @Override
       public Component getTableCellRendererComponent(final JTable table, final Object value,
                                                      final boolean isSelected, final boolean hasFocus, final int row, final int column) {
@@ -60,7 +60,6 @@ class EncodingFileTreeTable extends AbstractFileTreeTable<Charset> {
         final VirtualFile file = userObject instanceof VirtualFile ? (VirtualFile)userObject : null;
         Pair<Charset, String> check = file == null || file.isDirectory() ? null : EncodingUtil.checkSomeActionEnabled(file);
         String failReason = check == null ? null : check.second;
-        boolean enabled = failReason == null;
 
         // show existing encoding only if it was specified explicitly or it is unchangeable (with reason)
         boolean toShow = t != null || failReason != null;
@@ -71,24 +70,26 @@ class EncodingFileTreeTable extends AbstractFileTreeTable<Charset> {
           setText(encodingText + (failReason == null ? "" : " (" + failReason + ")"));
         }
 
-        setEnabled(enabled);
+        boolean enabled = failReason == null;
+        setEnabled(enabled || isSelected); // do not use grayed text on selected row
         return this;
       }
     });
 
-    getValueColumn().setCellEditor(new DefaultCellEditor(new JComboBox()){
+    getValueColumn().setCellEditor(new DefaultCellEditor(new JComboBox()) {
       private VirtualFile myVirtualFile;
+
       {
         delegate = new EditorDelegate() {
-            @Override
-            public void setValue(Object value) {
-              getTableModel().setValueAt(value, new DefaultMutableTreeNode(myVirtualFile), -1);
-            }
+          @Override
+          public void setValue(Object value) {
+            getTableModel().setValueAt(value, new DefaultMutableTreeNode(myVirtualFile), -1);
+          }
 
-	    @Override
-            public Object getCellEditorValue() {
-		return getTableModel().getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
-	    }
+          @Override
+          public Object getCellEditorValue() {
+            return getTableModel().getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
+          }
         };
       }
 
@@ -124,7 +125,7 @@ class EncodingFileTreeTable extends AbstractFileTreeTable<Charset> {
           }
         };
         DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), myVirtualFile,
-                                                                      SimpleDataContext.getProjectContext(getProject()));
+                                                                     SimpleDataContext.getProjectContext(getProject()));
         AnActionEvent event = AnActionEvent.createFromAnAction(changeAction, null, ActionPlaces.UNKNOWN, dataContext);
         Presentation presentation = event.getPresentation();
         JComponent comboComponent = changeAction.createCustomComponent(presentation);

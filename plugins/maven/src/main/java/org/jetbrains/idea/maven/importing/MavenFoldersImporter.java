@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
@@ -58,9 +57,8 @@ public class MavenFoldersImporter {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     final MavenImportingSettings settings = manager.getImportingSettings();
 
-    AccessToken accessToken = WriteAction.start();
-    try {
-      List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
+    WriteAction.run(() -> {
+      List<ModifiableRootModel> rootModels = new ArrayList<>();
       for (Module each : ModuleManager.getInstance(project).getModules()) {
         MavenProject mavenProject = manager.findProject(each);
         if (mavenProject == null) continue;
@@ -83,10 +81,7 @@ public class MavenFoldersImporter {
           ModifiableModelCommitter.multiCommit(modelsArray, ModuleManager.getInstance(modelsArray[0].getProject()).getModifiableModel());
         }
       }
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   public MavenFoldersImporter(MavenProject mavenProject, MavenImportingSettings settings, MavenRootModelAdapter model) {
@@ -111,18 +106,13 @@ public class MavenFoldersImporter {
   }
 
   private void configSourceFolders() {
-    final MultiMap<JpsModuleSourceRootType<?>, String> roots = new LinkedMultiMap<JpsModuleSourceRootType<?>, String>();
+    final MultiMap<JpsModuleSourceRootType<?>, String> roots = new LinkedMultiMap<>();
 
     roots.putValues(JavaSourceRootType.SOURCE, myMavenProject.getSources());
     roots.putValues(JavaSourceRootType.TEST_SOURCE, myMavenProject.getTestSources());
 
     for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
-      each.collectSourceRoots(myMavenProject, new PairConsumer<String, JpsModuleSourceRootType<?>>() {
-        @Override
-        public void consume(String s, JpsModuleSourceRootType<?> type) {
-          roots.putValue(type, s);
-        }
-      });
+      each.collectSourceRoots(myMavenProject, (s, type) -> roots.putValue(type, s));
     }
 
     for (MavenResource each : myMavenProject.getResources()) {
@@ -135,7 +125,7 @@ public class MavenFoldersImporter {
     addBuilderHelperPaths("add-source", roots.getModifiable(JavaSourceRootType.SOURCE));
     addBuilderHelperPaths("add-test-source", roots.getModifiable(JavaSourceRootType.TEST_SOURCE));
 
-    List<String> addedPaths = new ArrayList<String>();
+    List<String> addedPaths = new ArrayList<>();
     for (JpsModuleSourceRootType<?> type : roots.keySet()) {
       for (String path : roots.get(type)) {
         addSourceFolderIfNotOverlap(path, type, addedPaths);
@@ -221,7 +211,7 @@ public class MavenFoldersImporter {
       }
     }
 
-    List<String> facetExcludes = new ArrayList<String>();
+    List<String> facetExcludes = new ArrayList<>();
     for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
       each.collectExcludedFolders(myMavenProject, facetExcludes);
     }

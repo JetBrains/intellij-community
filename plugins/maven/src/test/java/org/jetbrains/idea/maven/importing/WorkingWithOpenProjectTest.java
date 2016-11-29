@@ -35,11 +35,6 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                   "<version>1</version>");
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
   public void testShouldNotFailOnNewEmptyPomCreation() throws Exception {
     createModulePom("module", ""); // should not throw an exception
   }
@@ -61,21 +56,17 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
 
     myProjectsManager.listenForExternalChanges();
     final Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        d.setText(createPomXml("<groupId>test</groupId>" +
-                               "<artifactId>project</artifactId>" +
-                               "<version>1</version>" +
+    WriteCommandAction.runWriteCommandAction(null, () -> d.setText(createPomXml("<groupId>test</groupId>" +
+                                                                              "<artifactId>project</artifactId>" +
+                                                                              "<version>1</version>" +
 
-                               "<dependencies>" +
-                               "  <dependency>" +
-                               "    <groupId>junit</groupId>" +
-                               "    <artifactId>junit</artifactId>" +
-                               "    <version>4.0</version>" +
-                               "  </dependency>" +
-                               "</dependencies>"));
-      }
-    });
+                                                                              "<dependencies>" +
+                                                                              "  <dependency>" +
+                                                                              "    <groupId>junit</groupId>" +
+                                                                              "    <artifactId>junit</artifactId>" +
+                                                                              "    <version>4.0</version>" +
+                                                                              "  </dependency>" +
+                                                                              "</dependencies>")));
 
     resolveDependenciesAndImport();
 

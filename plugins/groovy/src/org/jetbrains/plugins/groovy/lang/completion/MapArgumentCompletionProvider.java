@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
@@ -23,11 +24,13 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -49,11 +52,22 @@ import java.util.Map;
  */
 class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
 
+  // @formatter:off
+
+  // [<caret>]
+  // [<some values, initializers or named arguments>, <caret>]
+  // foo <caret>
+  // foo (<caret>)
   public static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL = PlatformPatterns
     .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(
     StandardPatterns.or(PlatformPatterns.psiElement(GrArgumentList.class), PlatformPatterns.psiElement(GrListOrMap.class)))
   );
+
+  // [<caret> : ]
+  // [<some values>, <caret> : ]
   public static final ElementPattern<PsiElement> IN_LABEL = PlatformPatterns.psiElement(GroovyTokenTypes.mIDENT).withParent(GrArgumentLabel.class);
+
+  // @formatter:on
 
   private MapArgumentCompletionProvider() {
   }
@@ -78,15 +92,8 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       result.stopHere();
     }
 
-    Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
-    if (map == null) {
-      return;
-    }
+    final Map<String, NamedArgumentDescriptor> map = ContainerUtil.newHashMap(calculateNamedArguments(mapOrArgumentList));
 
-    if (map.isEmpty()) {
-      map = findOtherNamedArgumentsInFile(mapOrArgumentList);
-    }
-    
     for (GrNamedArgument argument : getSiblingNamedArguments(mapOrArgumentList)) {
       map.remove(argument.getLabelName());
     }
@@ -97,15 +104,15 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         .withTailText(":");
 
       if (entry.getValue().getPriority() == NamedArgumentDescriptor.Priority.UNLIKELY) {
-        lookup.withItemTextForeground(GroovySyntaxHighlighter.MAP_KEY.getDefaultAttributes().getForegroundColor());
+        lookup = lookup.withItemTextForeground(GroovySyntaxHighlighter.MAP_KEY.getDefaultAttributes().getForegroundColor());
       }
       else {
         lookup = lookup.withIcon(JetgroovyIcons.Groovy.DynamicProperty);
       }
-      
-      result.addElement(lookup);
-    }
 
+      LookupElement customized = entry.getValue().customizeLookupElement(lookup);
+      result.addElement(customized == null ? lookup : customized);
+    }
   }
 
   public static boolean isMapKeyCompletion(CompletionParameters parameters) {
@@ -126,8 +133,9 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return parent.getParent().getParent();
   }
 
+  @NotNull
   private static Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
-    final Map<String, NamedArgumentDescriptor> map = new HashMap<String, NamedArgumentDescriptor>();
+    final Map<String, NamedArgumentDescriptor> map = new HashMap<>();
     mapOrArgumentList.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -158,6 +166,21 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return GrNamedArgument.EMPTY_ARRAY;
   }
 
+  @NotNull
+  private static Map<String, NamedArgumentDescriptor> calculateNamedArguments(@NotNull PsiElement mapOrArgumentList) {
+    Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
+
+    if ((map == null || map.isEmpty()) && mapOrArgumentList instanceof GrListOrMap) {
+      map = NamedArgumentUtilKt.getDescriptors((GrListOrMap)mapOrArgumentList);
+    }
+
+    if (map == null || map.isEmpty()) {
+      map = findOtherNamedArgumentsInFile(mapOrArgumentList);
+    }
+
+    return map;
+  }
+
   @Nullable
   private static Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
     PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
@@ -173,6 +196,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         return GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders((GrCall)argumentList.getParent(), null, true);
       }
     }
+
     return Collections.emptyMap();
   }
 }

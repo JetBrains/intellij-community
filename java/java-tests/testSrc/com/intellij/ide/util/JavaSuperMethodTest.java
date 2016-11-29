@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ide.util;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,6 @@ public class JavaSuperMethodTest extends LightDaemonAnalyzerTestCase {
 
   public void testDoNotGoToSiblingInheritanceIfInLibrary() throws Throwable {
     configureByFile(getBasePath() + "OverridingLibrary.java");
-    PsiJavaFile file = (PsiJavaFile)getFile();
 
     PsiClass aThread = getJavaFacade().findClass("java.lang.Thread");
     PsiMethod startMethod = aThread.findMethodsByName("start", false)[0];

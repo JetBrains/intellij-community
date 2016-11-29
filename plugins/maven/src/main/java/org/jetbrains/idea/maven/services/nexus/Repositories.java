@@ -139,7 +139,7 @@ public class Repositories {
          */
         public List<RepositoryType> getRepositoriesItem() {
             if (repositoriesItem == null) {
-                repositoriesItem = new ArrayList<RepositoryType>();
+                repositoriesItem = new ArrayList<>();
             }
             return this.repositoriesItem;
         }

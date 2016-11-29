@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -40,6 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,8 +102,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final Set<PsiMember> members = new HashSet<PsiMember>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final Set<PsiMember> members = new HashSet<>();
     members.add(myMethod);
     if (myTargetVariable instanceof PsiField) members.add((PsiMember)myTargetVariable);
     if (!myTargetClass.isInterface()) {
@@ -153,7 +155,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   protected UsageInfo[] findUsages() {
     final PsiManager manager = myMethod.getManager();
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(manager.getProject());
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usages = new ArrayList<>();
     for (PsiReference ref : ReferencesSearch.search(myMethod, searchScope, false)) {
       final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
@@ -168,7 +170,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
     }
 
-    if (myTargetClass.isInterface()) {
+    if (myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
       addInheritorUsages(myTargetClass, searchScope, usages);
     }
 
@@ -230,7 +232,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myTargetClass)) return;
 
     PsiMethod patternMethod = createMethodToAdd();
-    final List<PsiReference> docRefs = new ArrayList<PsiReference>();
+    final List<PsiReference> docRefs = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof InheritorUsageInfo) {
         final PsiClass inheritor = ((InheritorUsageInfo)usage).getInheritor();
@@ -240,9 +242,24 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         final PsiElement expression = ((MethodCallUsageInfo)usage).getMethodCallExpression();
         if (expression instanceof PsiMethodCallExpression) {
           correctMethodCall((PsiMethodCallExpression)expression, false);
-        } else if (expression instanceof PsiMethodReferenceExpression) {
-          PsiExpression newQualifier = JavaPsiFacade.getInstance(myProject).getElementFactory().createExpressionFromText(myTargetVariable.getType().getCanonicalText(), null);
-          ((PsiMethodReferenceExpression)expression).setQualifierExpression(newQualifier);
+        }
+        else if (expression instanceof PsiMethodReferenceExpression) {
+          PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
+          PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+          String exprText;
+          if (myTargetVariable instanceof PsiParameter ||
+              qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == myMethod.getContainingClass()) {
+            exprText = myTargetVariable.getType().getCanonicalText();
+          }
+          else if (qualifierExpression instanceof PsiReferenceExpression) {
+            exprText = qualifierExpression.getText() + "." + myTargetVariable.getName();
+          }
+          else {
+            exprText = myTargetVariable.getName();
+          }
+          PsiExpression newQualifier = JavaPsiFacade.getInstance(myProject).getElementFactory().createExpressionFromText(exprText, null);
+          ((PsiMethodReferenceExpression)expression).setQualifierExpression(
+            (PsiExpression)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newQualifier));
         }
       }
       else if (usage instanceof JavadocUsageInfo) {
@@ -251,7 +268,17 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
 
     try {
-      if (myTargetClass.isInterface()) patternMethod.getBody().delete();
+      if (myTargetClass.isInterface()) {
+        final PsiModifierList modifierList = patternMethod.getModifierList();
+        if (!PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
+          patternMethod.getBody().delete();
+          modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+        }
+        else {
+          modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+        }
+        RefactoringUtil.makeMethodAbstract(myTargetClass, patternMethod);
+      }
 
       final PsiMethod method = addMethodToClass(myTargetClass, patternMethod, false);
       myMethod.delete();
@@ -307,7 +334,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
         }
         else {
-          thisArgumentText = classReferencedByThis.getName() + ".this";
+          final String name = classReferencedByThis.getName();
+          if (name != null) {
+            thisArgumentText = name + ".this";
+          }
+          else {
+            thisArgumentText = "this";
+          }
         }
 
         if (thisArgumentText != null) {
@@ -350,8 +383,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   private PsiExpression replaceRefsToTargetVariable(final PsiExpression expression) {
     final PsiManager manager = expression.getManager();
-    if (expression instanceof PsiReferenceExpression &&
-        ((PsiReferenceExpression)expression).isReferenceTo(myTargetVariable)) {
+    if (ExpressionUtils.isReferenceTo(expression, myTargetVariable)) {
       return createThisExpr(manager);
     }
 
@@ -407,7 +439,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       //correct internal references
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
-        final Map<PsiElement, PsiElement> replaceMap = new HashMap<PsiElement, PsiElement>();
+        final Map<PsiElement, PsiElement> replaceMap = new HashMap<>();
         body.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitThisExpression(PsiThisExpression expression) {
             final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
@@ -428,7 +460,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
             try {
               final PsiExpression qualifier = expression.getQualifierExpression();
               final PsiElement resolved = expression.resolve();
-              if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(myTargetVariable)) {
+              if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
                 if (resolved instanceof PsiField) {
                   for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
                     if (Comparing.strEqual(parameter.getName(), ((PsiField)resolved).getName())) {
@@ -476,7 +508,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           @Override public void visitNewExpression(PsiNewExpression expression) {
             try {
               final PsiExpression qualifier = expression.getQualifier();
-              if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(myTargetVariable)) {
+              if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
                 //Target is a field, replace target.new A() -> new A()
                 qualifier.delete();
               } else {
@@ -509,7 +541,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       final PsiMethod methodCopy = getPatternMethod();
 
       final List<PsiParameter> newParameters = Arrays.asList(methodCopy.getParameterList().getParameters());
-      RefactoringUtil.fixJavadocsForParams(methodCopy, new HashSet<PsiParameter>(newParameters));
+      RefactoringUtil.fixJavadocsForParams(methodCopy, new HashSet<>(newParameters));
       return methodCopy;
     }
     catch (IncorrectOperationException e) {

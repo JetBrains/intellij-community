@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -406,6 +406,40 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testPullingErrorMessagesFromSubExpressionsToTheTopLevel() throws Exception {
+    doTest();
+  }
+
+  public void testHighlightArgumentWithProblem() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA153632() throws Exception {
+    doTest();
+  }
+
+  public void testPartialRawSubstitutionToAvoidInferringObjectsWhenRawExpected() throws Exception {
+    final UncheckedWarningLocalInspection localInspection = new UncheckedWarningLocalInspection();
+    enableInspectionTool(localInspection);
+    doTest(true);
+  }
+
+  public void testIDEA154278() throws Exception {
+    doTest();
+  }
+
+  public void testPrimitiveTypeInReturnConstraintWithUncheckedConversion() throws Exception {
+    doTest();
+  }
+
+  public void testPolyMethodCallOnLeftSideOfAssignment() throws Exception {
+    doTest();
+  }
+
+  public void testTreatConditionalExpressionAsPolyIfNewExpressionWithDiamondsIsUsed() throws Exception {
+    doTest();
+  }
+
   public void testVariableNamesOfNestedCalls() throws Exception {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
@@ -433,6 +467,34 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     }
   }
 
+  public void testCreateFreshVariablesOnlyForWildcardPlacesDuringReturnTypeProcessing() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedConversionDuringDirectSuperCheck() throws Exception {
+    doTest();
+  }
+
+  public void _testResolutionOrderForVariableCycles() throws Exception {
+    doTest();
+  }
+
+  public void testPostponeUnresolvedVariables() throws Exception {
+    doTest();
+  }
+
+  public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly() throws Exception {
+    doTest();
+  }
+
+  public void testTwoDifferentParameterizationCheckWithInterfaceTypeArguments() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedConversionDuringProperTypeExpressionConstraintResolution() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
@@ -440,10 +502,5 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   private void doTest(final boolean checkWarnings) throws Exception {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

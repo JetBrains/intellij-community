@@ -66,12 +66,8 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   private static final UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object> myAttlistDeclCache = new UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object>() {
     @Override
     protected final CachedValue<XmlAttlistDecl[]> compute(final XmlElement owner, Object o) {
-      return CachedValuesManager.getManager(owner.getProject()).createCachedValue(new CachedValueProvider<XmlAttlistDecl[]>() {
-        @Override
-        public Result<XmlAttlistDecl[]> compute() {
-          return new Result<XmlAttlistDecl[]>(doCollectAttlistDeclarations(owner),owner);
-        }
-      });
+      return CachedValuesManager.getManager(owner.getProject()).createCachedValue(
+        () -> new CachedValueProvider.Result<>(doCollectAttlistDeclarations(owner), owner));
     }
   };
 
@@ -122,7 +118,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   // Read-only action
   @Override
   protected final XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context) {
-    final LinkedHashSet<XmlElementDescriptor> result = new LinkedHashSet<XmlElementDescriptor>();
+    final LinkedHashSet<XmlElementDescriptor> result = new LinkedHashSet<>();
     final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
     final XmlNSDescriptor nsDescriptor = getNSDescriptor();
     final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);
@@ -184,7 +180,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   // Read-only calculation
   @Override
   protected final XmlAttributeDescriptor[] collectAttributeDescriptors(final XmlTag context) {
-    final List<XmlAttributeDescriptor> result = new SmartList<XmlAttributeDescriptor>();
+    final List<XmlAttributeDescriptor> result = new SmartList<>();
     for (XmlAttlistDecl attlistDecl : findAttlistDeclarations(getName())) {
       for (XmlAttributeDecl attributeDecl : attlistDecl.getAttributeDecls()) {
         final PsiMetaData psiMetaData = attributeDecl.getMetaData();
@@ -200,7 +196,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   protected HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap(final XmlTag context) {
     final HashMap<String, XmlAttributeDescriptor> localADM;
     final XmlAttributeDescriptor[] xmlAttributeDescriptors = getAttributesDescriptors(context);
-    localADM = new HashMap<String, XmlAttributeDescriptor>(xmlAttributeDescriptors.length);
+    localADM = new HashMap<>(xmlAttributeDescriptors.length);
 
     for (final XmlAttributeDescriptor xmlAttributeDescriptor : xmlAttributeDescriptors) {
       localADM.put(xmlAttributeDescriptor.getName(), xmlAttributeDescriptor);
@@ -209,7 +205,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   private XmlAttlistDecl[] findAttlistDeclarations(String elementName) {
-    final List<XmlAttlistDecl> result = new ArrayList<XmlAttlistDecl>();
+    final List<XmlAttlistDecl> result = new ArrayList<>();
     for (final XmlAttlistDecl declaration : getAttlistDeclarations()) {
       final String name = declaration.getName();
       if (name != null && name.equals(elementName)) {
@@ -231,7 +227,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   private static XmlAttlistDecl[] doCollectAttlistDeclarations(XmlElement xmlElement) {
-    final List<XmlAttlistDecl> result = new ArrayList<XmlAttlistDecl>();
+    final List<XmlAttlistDecl> result = new ArrayList<>();
     XmlUtil.processXmlElements(xmlElement, new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), false, false, XmlUtil.getContainingFile(xmlElement));
     return result.toArray(new XmlAttlistDecl[result.size()]);
   }
@@ -265,7 +261,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   protected HashMap<String, XmlElementDescriptor> collectElementDescriptorsMap(final XmlTag element) {
     final HashMap<String, XmlElementDescriptor> elementDescriptorsMap;
     final XmlElementDescriptor[] descriptors = getElementsDescriptors(element);
-    elementDescriptorsMap = new HashMap<String, XmlElementDescriptor>(descriptors.length);
+    elementDescriptorsMap = new HashMap<>(descriptors.length);
 
     for (final XmlElementDescriptor descriptor : descriptors) {
       elementDescriptorsMap.put(descriptor.getName(), descriptor);

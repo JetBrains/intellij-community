@@ -23,7 +23,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.tree.TreeSelectionModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +40,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
     Project project = e.getProject();
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
 
-    Ref<JBPopup> popup = new Ref<JBPopup>();
+    Ref<JBPopup> popup = new Ref<>();
     ChangesBrowser cb = new MyChangesBrowser(project, getChanges(), getCurrentSelection(), popup);
 
     popup.set(JBPopupFactory.getInstance()
@@ -84,7 +84,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
                             @Nullable final Change currentChange,
                             @NotNull Ref<JBPopup> popup) {
       super(project, null, changes, null, false, false, null, MyUseCase.LOCAL_CHANGES, null);
-      setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       setChangesToDisplay(changes);
 
       UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
@@ -136,7 +136,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
       // we want to show ChangeBrowser-based popup, so have to create some fake changes
       List<? extends DiffRequestProducer> requests = chain.getRequests();
 
-      myChanges = new ArrayList<Change>(requests.size());
+      myChanges = new ArrayList<>(requests.size());
       for (int i = 0; i < requests.size(); i++) {
         FilePath path = getFilePath(i);
         FileStatus status = getFileStatus(i);

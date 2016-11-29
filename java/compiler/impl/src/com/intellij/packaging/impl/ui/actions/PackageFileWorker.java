@@ -69,12 +69,8 @@ public class PackageFileWorker {
   }
 
   public static void startPackagingFiles(Project project, List<VirtualFile> files, Artifact[] artifacts, final @NotNull Runnable onFinishedInAwt) {
-    startPackagingFiles(project, files, artifacts, true).doWhenProcessed(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(onFinishedInAwt);
-      }
-    });
+    startPackagingFiles(project, files, artifacts, true).doWhenProcessed(
+      () -> ApplicationManager.getApplication().invokeLater(onFinishedInAwt));
   }
 
   public static ActionCallback startPackagingFiles(final Project project, final List<VirtualFile> files,
@@ -128,7 +124,7 @@ public class PackageFileWorker {
   }
 
   private void packageFile(String outputPath, List<CompositePackagingElement<?>> parents) throws IOException {
-    List<CompositePackagingElement<?>> parentsList = new ArrayList<CompositePackagingElement<?>>(parents);
+    List<CompositePackagingElement<?>> parentsList = new ArrayList<>(parents);
     Collections.reverse(parentsList);
     if (!parentsList.isEmpty() && parentsList.get(0) instanceof ArtifactRootElement) {
       parentsList = parentsList.subList(1, parentsList.size());
@@ -207,6 +203,11 @@ public class PackageFileWorker {
 
   private static JBZipFile getOrCreateZipFile(File archiveFile) throws IOException {
     FileUtil.createIfDoesntExist(archiveFile);
-    return new JBZipFile(archiveFile);
+    try {
+      return new JBZipFile(archiveFile);
+    }
+    catch (IllegalArgumentException e) {
+      throw new IOException(e);
+    }
   }
 }

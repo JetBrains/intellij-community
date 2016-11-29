@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -24,7 +26,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -40,7 +41,6 @@ import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -51,7 +51,7 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance(JavaPsiFacadeImpl.class);
 
-  private volatile PsiElementFinder[] myElementFinders;
+  private final SimpleSmartExtensionPoint<PsiElementFinder> myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
@@ -85,6 +85,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
+    myElementFinders = new SimpleSmartExtensionPoint<PsiElementFinder>(Collections.<PsiElementFinder>emptyList()) {
+      @NotNull
+      @Override
+      protected ExtensionPoint<PsiElementFinder> getExtensionPoint() {
+        return Extensions.getArea(myProject).getExtensionPoint(PsiElementFinder.EP_NAME);
+      }
+    };
   }
 
   @Override
@@ -117,7 +124,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return null;
     }
 
-    PsiElementFinder[] finders = finders();
+    List<PsiElementFinder> finders = finders();
     Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
     for (PsiElementFinder finder : finders) {
@@ -158,7 +165,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return findClassesInDumbMode(qualifiedName, scope);
     }
 
-    PsiElementFinder[] finders = finders();
+    List<PsiElementFinder> finders = finders();
     Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
     List<PsiClass> result = null;
@@ -173,7 +180,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result == null || result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
-  private static Condition<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull PsiElementFinder[] finders) {
+  private static Condition<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<PsiElementFinder> finders) {
     Condition<PsiClass> filter = null;
     for (PsiElementFinder finder : finders) {
       Condition<PsiClass> finderFilter = finder.getClassesFilter(scope);
@@ -189,22 +196,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
   }
 
-  @NotNull
-  private PsiElementFinder[] finders() {
-    PsiElementFinder[] answer = myElementFinders;
-    if (answer == null) {
-      answer = calcFinders();
-      myElementFinders = answer;
-    }
-
-    return answer;
-  }
-
-  @NotNull
-  protected PsiElementFinder[] calcFinders() {
-    List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
-    ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
-    return elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
+  private List<PsiElementFinder> finders() {
+    return myElementFinders.getExtensions();
   }
 
   @Override
@@ -231,14 +224,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   @NotNull
-  private PsiElementFinder[] filteredFinders() {
-    DumbService dumbService = DumbService.getInstance(getProject());
-    PsiElementFinder[] finders = finders();
-    if (dumbService.isDumb()) {
-      List<PsiElementFinder> list = dumbService.filterByDumbAwareness(finders);
-      finders = list.toArray(new PsiElementFinder[list.size()]);
-    }
-    return finders;
+  private List<PsiElementFinder> filteredFinders() {
+    return DumbService.getInstance(getProject()).filterByDumbAwareness(finders());
   }
 
   @Override
@@ -270,7 +257,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @NotNull
   public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    PsiElementFinder[] finders = filteredFinders();
+    List<PsiElementFinder> finders = filteredFinders();
     Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
     List<PsiClass> result = null;
@@ -407,19 +394,15 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   @Override
+  public boolean isConstantExpression(@NotNull PsiExpression expression) {
+    IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
+    expression.accept(visitor);
+    return visitor.isConstant();
+  }
+
+  @Override
   @NotNull
   public PsiElementFactory getElementFactory() {
     return PsiElementFactory.SERVICE.getInstance(myProject);
-  }
-
-  @TestOnly
-  @Override
-  public void setAssertOnFileLoadingFilter(@NotNull final VirtualFileFilter filter, Disposable parentDisposable) {
-    ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter, parentDisposable);
-  }
-
-  @TestOnly
-  public void clearFindersCache() {
-    myElementFinders = null;
   }
 }

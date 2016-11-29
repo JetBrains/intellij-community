@@ -21,7 +21,7 @@ public class CmdCleanupClient extends BaseSvnClient implements CleanupClient {
   @Override
   public void cleanup(@NotNull File path, @Nullable ProgressTracker handler) throws VcsException {
     // TODO: Implement event handler support - currently in SVNKit implementation handler is used to support cancelling
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, path);
     execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.cleanup, parameters, null);

@@ -63,7 +63,7 @@ public class ValuesExtractionResultImpl implements ValuesExtractionResult {
   @Contract("false -> null")
   public ValuesExtractionResult apply(boolean retPrevValue) {
     if (retPrevValue) {
-      final ArrayList<Value> orig = new ArrayList<Value>();
+      final ArrayList<Value> orig = new ArrayList<>();
       for (Value value : myValues) {
         final Value old = value.write(true);
         if (old != null) {

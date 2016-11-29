@@ -33,10 +33,6 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class OptimizeImportsQuickFix implements LocalQuickFix, IntentionAction, HighPriorityAction {
-  @NotNull
-  public String getName() {
-    return "Optimize imports";
-  }
 
   @NotNull
   @Override

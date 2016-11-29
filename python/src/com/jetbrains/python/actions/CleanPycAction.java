@@ -42,33 +42,27 @@ public class CleanPycAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
     if (elements == null) return;
-    final List<File> pycFiles = new ArrayList<File>();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        for (PsiElement element : elements) {
-          PsiDirectory dir = (PsiDirectory) element;
-          collectPycFiles(new File(dir.getVirtualFile().getPath()), pycFiles);
-        }
-        FileUtil.asyncDelete(pycFiles);
+    final List<File> pycFiles = new ArrayList<>();
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      for (PsiElement element : elements) {
+        PsiDirectory dir = (PsiDirectory) element;
+        collectPycFiles(new File(dir.getVirtualFile().getPath()), pycFiles);
       }
+      FileUtil.asyncDelete(pycFiles);
     }, "Cleaning up .pyc files...", false, e.getProject());
     final StatusBar statusBar = WindowManager.getInstance().getIdeFrame(e.getProject()).getStatusBar();
     statusBar.setInfo("Deleted " + pycFiles.size() + " bytecode file" + (pycFiles.size() != 1 ? "s" : ""));
   }
 
   private static void collectPycFiles(File directory, final List<File> pycFiles) {
-    FileUtil.processFilesRecursively(directory, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
-            FileUtilRt.extensionEquals(file.getName(), "pyc") ||
-            FileUtilRt.extensionEquals(file.getName(), "pyo") ||
-            file.getName().endsWith("$py.class")) {
-          pycFiles.add(file);
-        }
-        return true;
+    FileUtil.processFilesRecursively(directory, file -> {
+      if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
+          FileUtilRt.extensionEquals(file.getName(), "pyc") ||
+          FileUtilRt.extensionEquals(file.getName(), "pyo") ||
+          file.getName().endsWith("$py.class")) {
+        pycFiles.add(file);
       }
+      return true;
     });
   }
 

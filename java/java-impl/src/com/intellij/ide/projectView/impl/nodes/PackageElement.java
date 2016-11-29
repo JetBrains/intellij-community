@@ -61,7 +61,7 @@ public final class PackageElement implements Queryable, RootsProvider {
   @NotNull
   @Override
   public Collection<VirtualFile> getRoots() {
-    Set<VirtualFile> roots= new HashSet<VirtualFile>();
+    Set<VirtualFile> roots= new HashSet<>();
     final PsiDirectory[] dirs = PackageUtil.getDirectories(getPackage(), myModule, isLibraryElement());
     for (PsiDirectory each : dirs) {
       roots.add(each.getVirtualFile());

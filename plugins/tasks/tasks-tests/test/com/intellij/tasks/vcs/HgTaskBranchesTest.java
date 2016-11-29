@@ -16,9 +16,9 @@
 package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,6 +31,7 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
+import java.io.IOException;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.touch;
@@ -54,14 +55,26 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     HgPlatformTest.initRepo(root);
     touch("a.txt");
     hg("add a.txt");
-    hg("commit -m another");
+    hg("commit -m another -u abc");
     hg("up -r 0");
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+    HgVcs hgVcs = HgVcs.getInstance(myProject);
+    assert hgVcs != null;
+    hgVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     vcsManager.setDirectoryMapping(root, HgVcs.VCS_NAME);
     VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
     HgRepository repository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(file);
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;
+  }
+
+  @Override
+  protected void createAndCommitChanges(@NotNull Repository repository) throws IOException, VcsException {
+    cd(repository.getRoot());
+    touch("foo.txt");
+    hg("add foo.txt");
+    hg("commit -m another -u abc");
+    repository.update();
   }
 
   @NotNull
@@ -75,12 +88,6 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     if (!(repository instanceof HgRepository)) return 0;
     return ((HgRepository)repository).getOpenedBranches().size() +
            ((HgRepository)repository).getBookmarks().size();
-  }
-
-  @Override
-  protected void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull VirtualFile file) {
-    cd(root);
-    hg("add " + file.getPath());
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -28,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class ColorAndFontDescription extends TextAttributes implements EditorSchemeAttributeDescriptor {
+public abstract class ColorAndFontDescription extends TextAttributes implements EditorSchemeAttributeDescriptorWithPath {
   private final String myName;
   private final String myGroup;
   private final String myType;
@@ -229,12 +232,17 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     return false;
   }
 
-  public boolean isInherited() {
+  public final boolean isInherited() {
     return isInherited;
   }
 
   public void setInherited(boolean isInherited) {
     this.isInherited = isInherited;
+  }
+
+  public boolean isEditable() {
+    return !(myScheme instanceof ReadOnlyColorsScheme ||
+             myScheme instanceof AbstractColorsScheme && ((AbstractColorsScheme)myScheme).isReadOnly());
   }
 
   @Nullable

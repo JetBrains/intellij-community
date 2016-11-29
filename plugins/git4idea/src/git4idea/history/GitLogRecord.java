@@ -39,26 +39,31 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * One record (commit information) returned by git log output.
  * The access methods try heavily to return some default value if real is unavailable, for example, blank string is better than null.
  * BUT if one tries to get an option which was not specified to the GitLogParser, one will get null.
+ *
  * @see git4idea.history.GitLogParser
  */
 class GitLogRecord {
 
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
-  private final Map<GitLogParser.GitLogOption, String> myOptions;
-  private final List<String> myPaths;
-  private final List<GitLogStatusInfo> myStatusInfo;
+  @NotNull private final Map<GitLogParser.GitLogOption, String> myOptions;
+  @NotNull private final List<String> myPaths;
+  @NotNull private final List<GitLogStatusInfo> myStatusInfo;
   private final boolean mySupportsRawBody;
 
   private GitHandler myHandler;
 
-  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options, @NotNull List<String> paths, @NotNull List<GitLogStatusInfo> statusInfo, boolean supportsRawBody) {
+  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
+               @NotNull List<String> paths,
+               @NotNull List<GitLogStatusInfo> statusInfo,
+               boolean supportsRawBody) {
     myOptions = options;
     myPaths = paths;
     myStatusInfo = statusInfo;
     mySupportsRawBody = supportsRawBody;
   }
 
+  @NotNull
   private List<String> getPaths() {
     return myPaths;
   }
@@ -69,8 +74,8 @@ class GitLogRecord {
   }
 
   @NotNull
-  public List<FilePath> getFilePaths(VirtualFile root) throws VcsException {
-    List<FilePath> res = new ArrayList<FilePath>();
+  public List<FilePath> getFilePaths(@NotNull VirtualFile root) throws VcsException {
+    List<FilePath> res = new ArrayList<>();
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
       final String subPath = GitUtil.unescapePath(strPath);
@@ -80,20 +85,61 @@ class GitLogRecord {
     return res;
   }
 
-  private String lookup(GitLogParser.GitLogOption key) {
-    return shortBuffer(myOptions.get(key));
+  @NotNull
+  private String lookup(@NotNull GitLogParser.GitLogOption key) {
+    String value = myOptions.get(key);
+    if (value == null) {
+      LOG.error("Missing value for option " + key);
+      return "";
+    }
+    return shortBuffer(value);
   }
 
   // trivial access methods
-  String getHash() { return lookup(HASH); }
-  String getAuthorName() { return lookup(AUTHOR_NAME); }
-  String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
-  String getCommitterName() { return lookup(COMMITTER_NAME); }
-  String getCommitterEmail() { return lookup(COMMITTER_EMAIL); }
-  String getSubject() { return lookup(SUBJECT); }
-  String getBody() { return lookup(BODY); }
-  String getRawBody() { return lookup(RAW_BODY); }
-  String getShortenedRefLog() { return lookup(SHORT_REF_LOG_SELECTOR); }
+  @NotNull
+  String getHash() {
+    return lookup(HASH);
+  }
+
+  @NotNull
+  String getAuthorName() {
+    return lookup(AUTHOR_NAME);
+  }
+
+  @NotNull
+  String getAuthorEmail() {
+    return lookup(AUTHOR_EMAIL);
+  }
+
+  @NotNull
+  String getCommitterName() {
+    return lookup(COMMITTER_NAME);
+  }
+
+  @NotNull
+  String getCommitterEmail() {
+    return lookup(COMMITTER_EMAIL);
+  }
+
+  @NotNull
+  String getSubject() {
+    return lookup(SUBJECT);
+  }
+
+  @NotNull
+  String getBody() {
+    return lookup(BODY);
+  }
+
+  @NotNull
+  String getRawBody() {
+    return lookup(RAW_BODY);
+  }
+
+  @NotNull
+  String getShortenedRefLog() {
+    return lookup(SHORT_REF_LOG_SELECTOR);
+  }
 
   // access methods with some formatting or conversion
 
@@ -126,21 +172,25 @@ class GitLogRecord {
     return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
   }
 
+  @NotNull
   String[] getParentsHashes() {
     final String parents = lookup(PARENTS);
     if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
     return parents.split(" ");
   }
 
+  @NotNull
   public Collection<String> getRefs() {
     final String decorate = myOptions.get(REF_NAMES);
     return parseRefNames(decorate);
   }
+
   /**
    * Returns the list of tags and the list of branches.
    * A single method is used to return both, because they are returned together by Git and we don't want to parse them twice.
-   * @return
+   *
    * @param allBranchesSet
+   * @return
    */
   /*Pair<List<String>, List<String>> getTagsAndBranches(SymbolicRefs refs) {
     final String decorate = myOptions.get(REF_NAMES);
@@ -161,7 +211,6 @@ class GitLogRecord {
     }
     return Pair.create(tags, branches);
   }*/
-
   @NotNull
   private static List<String> parseRefNames(@Nullable final String decoration) {
     if (decoration == null) {
@@ -192,11 +241,13 @@ class GitLogRecord {
     return result;
   }
 
-  private static String shortBuffer(String raw) {
+  @NotNull
+  private static String shortBuffer(@NotNull String raw) {
     return new String(raw);
   }
 
-  public List<Change> parseChanges(Project project, VirtualFile vcsRoot) throws VcsException {
+  @NotNull
+  public List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) throws VcsException {
     return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), Arrays.asList(getParentsHashes()));
   }
 

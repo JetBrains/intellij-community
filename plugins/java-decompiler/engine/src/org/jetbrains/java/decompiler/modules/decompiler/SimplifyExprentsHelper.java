@@ -310,7 +310,7 @@ public class SimplifyExprentsHelper {
 
           VarExprent arrvar = (VarExprent)as.getLeft();
 
-          HashMap<Integer, Exprent> mapInit = new HashMap<Integer, Exprent>();
+          HashMap<Integer, Exprent> mapInit = new HashMap<>();
 
           int i = 1;
           while (index + i < list.size() && i <= size) {
@@ -350,7 +350,7 @@ public class SimplifyExprentsHelper {
           if ((arrvar.isStack() && fraction > 0) || (size <= 7 && fraction >= 0.3) ||
               (size > 7 && fraction >= 0.7)) {
 
-            List<Exprent> lstRet = new ArrayList<Exprent>();
+            List<Exprent> lstRet = new ArrayList<>();
 
             VarType arrtype = newex.getNewType().decreaseArrayDim();
 
@@ -813,7 +813,7 @@ public class SimplifyExprentsHelper {
                 }
 
                 if (found) {
-                  List<Exprent> data = new ArrayList<Exprent>();
+                  List<Exprent> data = new ArrayList<>();
                   data.addAll(stif.getFirst().getExprents());
 
                   data.add(new AssignmentExprent(ifvar, new FunctionExprent(FunctionExprent.FUNCTION_IIF,
@@ -854,7 +854,7 @@ public class SimplifyExprentsHelper {
                 return false;
               }
 
-              List<Exprent> data = new ArrayList<Exprent>();
+              List<Exprent> data = new ArrayList<>();
               data.addAll(stif.getFirst().getExprents());
 
               data.add(new ExitExprent(ifex.getExitType(), new FunctionExprent(FunctionExprent.FUNCTION_IIF,
@@ -918,7 +918,7 @@ public class SimplifyExprentsHelper {
 
       assfirst.replaceExprent(assfirst.getRight(), new ConstExprent(VarType.VARTYPE_CLASS, class_name, null));
       
-      List<Exprent> data = new ArrayList<Exprent>();
+      List<Exprent> data = new ArrayList<>();
       data.addAll(stat.getFirst().getExprents());
 
       stat.setExprents(data);

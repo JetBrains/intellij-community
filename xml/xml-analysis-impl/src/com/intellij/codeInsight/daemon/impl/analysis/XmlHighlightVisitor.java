@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataCache;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
@@ -48,10 +49,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlUndefinedElementFixProvider;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.AnchorReference;
 import com.intellij.xml.util.HtmlUtil;
@@ -310,7 +308,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     for (XmlAttributeDescriptor attribute : attributeDescriptors) {
       if (attribute != null && attribute.isRequired()) {
         if (requiredAttributes == null) {
-          requiredAttributes = new HashSet<String>();
+          requiredAttributes = new HashSet<>();
         }
         requiredAttributes.add(attribute.getName(tag));
       }
@@ -323,7 +321,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
           IntentionAction insertRequiredAttributeIntention = XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName);
           final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
-          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
+          final InspectionProfile profile = InspectionProfileManager.getInstance(tag.getProject()).getCurrentProfile();
           RequiredAttributesInspectionBase inspection =
             (RequiredAttributesInspectionBase)profile.getUnwrappedTool(XmlEntitiesInspection.REQUIRED_ATTRIBUTES_SHORT_NAME, tag);
           if (inspection != null) {
@@ -365,7 +363,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       if(isAdditionallyDeclared(inspection.getAdditionalEntries(), name)) return;
     }
 
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getCurrentProfile();
     if (htmlTag && profile.isToolEnabled(key, tag)) {
       addElementsForTagWithManyQuickFixes(
         tag,
@@ -519,7 +517,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     final PsiFile containingFile = tag.getContainingFile();
     final XmlExtension extension = containingFile instanceof XmlFile ?
                                    XmlExtension.getExtension(containingFile) :
-                                   XmlExtension.DEFAULT_EXTENSION;
+                                   DefaultXmlExtension.DEFAULT_EXTENSION;
     for (XmlAttribute tagAttribute : attributes) {
       ProgressManager.checkCanceled();
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(), tagAttribute.getName())) {

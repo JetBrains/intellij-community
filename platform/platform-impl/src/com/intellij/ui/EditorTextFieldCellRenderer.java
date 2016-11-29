@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -142,11 +141,14 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   public abstract static class RendererComponent extends CellRendererPanel implements Disposable {
     private final EditorEx myEditor;
+    private final EditorTextField myTextField;
     protected TextAttributes myTextAttributes;
     private boolean mySelected;
 
     public RendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
-      myEditor = createEditor(project, fileType, inheritFontFromLaF);
+      Pair<EditorTextField, EditorEx> pair = createEditor(project, fileType, inheritFontFromLaF);
+      myTextField = pair.first;
+      myEditor = pair.second;
       add(myEditor.getContentComponent());
     }
 
@@ -155,7 +157,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     @NotNull
-    private static EditorEx createEditor(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
+    private static Pair<EditorTextField, EditorEx> createEditor(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
       EditorTextField field = new EditorTextField(new MyDocument(), project, fileType, false, false);
       field.setSupplementary(true);
       field.setFontInheritedFromLAF(inheritFontFromLaF);
@@ -169,7 +171,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
       editor.getScrollPane().setBorder(null);
 
-      return editor;
+      return Pair.create(field, editor);
     }
 
     public void setText(String text, @Nullable TextAttributes textAttributes, boolean selected) {
@@ -190,13 +192,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
-    }
-
-    @Override
     public void dispose() {
-      myEditor.getComponent().removeNotify();
-      EditorFactory.getInstance().releaseEditor(myEditor);
+      remove(myEditor.getContentComponent());
+      myTextField.removeNotify();
     }
 
     protected void setTextToEditor(String text) {

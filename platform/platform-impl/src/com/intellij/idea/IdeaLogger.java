@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
+import org.apache.log4j.DefaultThrowableRenderer;
+import org.apache.log4j.spi.LoggerRepository;
+import org.apache.log4j.spi.ThrowableRenderer;
+import org.apache.log4j.spi.ThrowableRendererSupport;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +40,7 @@ import java.io.LineNumberReader;
 /**
  * @author Mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class IdeaLogger extends Log4jBasedLogger {
   private static ApplicationInfoProvider ourApplicationInfoProvider = getIdeaInfoProvider();
 
@@ -49,31 +53,47 @@ public class IdeaLogger extends Log4jBasedLogger {
     return ourCompilationTimestamp;
   }
 
-  private static String ourCompilationTimestamp;
+  private static final String ourCompilationTimestamp;
 
   @NonNls private static final String COMPILATION_TIMESTAMP_RESOURCE_NAME = "/.compilation-timestamp";
 
+  private static final ThrowableRenderer ourThrowableRenderer = t -> {
+    String[] defaultRes = DefaultThrowableRenderer.render(t);
+    int maxStackSize = 1024;
+    int maxExtraSize = 256;
+    if (defaultRes.length > maxStackSize + maxExtraSize) {
+      String[] res = new String[maxStackSize + maxExtraSize + 1];
+      System.arraycopy(defaultRes, 0, res, 0, maxStackSize);
+      res[maxStackSize] = "\t...";
+      System.arraycopy(defaultRes, defaultRes.length - maxExtraSize, res, maxStackSize + 1, maxExtraSize);
+      return res;
+    }
+    return defaultRes;
+  };
+
   static {
     InputStream stream = Logger.class.getResourceAsStream(COMPILATION_TIMESTAMP_RESOURCE_NAME);
+    String stamp = null;
     if (stream != null) {
       try {
-        LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream));
-        try {
+        try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream))) {
           String s = reader.readLine();
           if (s != null) {
-            ourCompilationTimestamp = s.trim();
+            stamp = s.trim();
           }
-        }
-        finally {
-          reader.close();
         }
       }
       catch (IOException ignored) { }
     }
+    ourCompilationTimestamp = stamp;
   }
 
-  IdeaLogger(org.apache.log4j.Logger logger) {
+  IdeaLogger(@NotNull org.apache.log4j.Logger logger) {
     super(logger);
+    LoggerRepository repository = myLogger.getLoggerRepository();
+    if (repository instanceof ThrowableRendererSupport) {
+      ((ThrowableRendererSupport)repository).setThrowableRenderer(ourThrowableRenderer);
+    }
   }
 
   @Override
@@ -87,14 +107,14 @@ public class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(@NonNls String message, Attachment... attachments) {
+  public void error(@NonNls String message, @NotNull Attachment... attachments) {
     myLogger.error(LogMessageEx.createEvent(message, DebugUtil.currentStackTrace(), attachments));
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     if (t instanceof ControlFlowException) {
-      myLogger.error(message, new Throwable("Control-flow exceptions should never be logged", t));
+      myLogger.error(message, new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged", t));
       if (t instanceof RuntimeException) {
         throw (RuntimeException)t;
       }
@@ -148,17 +168,20 @@ public class IdeaLogger extends Log4jBasedLogger {
     }
   }
 
-  public static void setApplicationInfoProvider(ApplicationInfoProvider aProvider) {
+  @NotNull
+  public static ThrowableRenderer getThrowableRenderer() {
+    return ourThrowableRenderer;
+  }
+
+  public static void setApplicationInfoProvider(@NotNull ApplicationInfoProvider aProvider) {
     ourApplicationInfoProvider = aProvider;
   }
 
+  @NotNull
   private static ApplicationInfoProvider getIdeaInfoProvider() {
-    return new ApplicationInfoProvider() {
-      @Override
-      public String getInfo() {
-        final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
-        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asStringWithAllDetails();
-      }
+    return () -> {
+      final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
+      return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
     };
   }
 }

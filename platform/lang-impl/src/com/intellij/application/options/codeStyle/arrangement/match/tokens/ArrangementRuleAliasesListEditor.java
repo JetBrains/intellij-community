@@ -17,17 +17,22 @@ package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import gnu.trove.Equality;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Set;
 
@@ -51,12 +56,7 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
       token.setTokenName(name.replaceAll("\\s+", " "));
     }
   };
-  private static final Factory<StdArrangementRuleAliasToken> FACTORY = new Factory<StdArrangementRuleAliasToken>() {
-    @Override
-    public StdArrangementRuleAliasToken create() {
-      return new StdArrangementRuleAliasToken("");
-    }
-  };
+  private static final Factory<StdArrangementRuleAliasToken> FACTORY = () -> new StdArrangementRuleAliasToken("");
   private static final Cloner<StdArrangementRuleAliasToken> CLONER = new Cloner<StdArrangementRuleAliasToken>() {
     @Override
     public StdArrangementRuleAliasToken cloneOf(StdArrangementRuleAliasToken original) {
@@ -105,5 +105,22 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
   @Override
   public String getDisplayName() {
     return "Custom Composite Tokens";
+  }
+
+  @Nullable
+  @Override
+  public String askForProfileName(String titlePattern) {
+    String title = MessageFormat.format(titlePattern, subjDisplayName());
+    return Messages.showInputDialog("New " + subjDisplayName() + " name:", title, Messages.getQuestionIcon(), "", new InputValidator() {
+      @Override
+      public boolean checkInput(String s) {
+        return s.length() > 0 && findByName(s) == null && Verifier.checkElementName(s) == null;
+      }
+
+      @Override
+      public boolean canClose(String s) {
+        return checkInput(s);
+      }
+    });
   }
 }

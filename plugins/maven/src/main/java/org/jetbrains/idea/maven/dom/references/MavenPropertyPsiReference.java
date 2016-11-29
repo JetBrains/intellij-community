@@ -163,7 +163,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (hasPrefix) {
       MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
       if (domProjectModel != null) {
-        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<DomElement>());
+        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<>());
         if (res != null) {
           return res;
         }
@@ -187,18 +187,15 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
     MavenDomConfiguration pluginCfg = DomUtil.findDomElement(myElement, MavenDomConfiguration.class);
     if (pluginCfg != null) {
-      boolean notFound = MavenPluginDescriptor.processDescriptors(new Processor<MavenPluginDescriptor>() {
-        @Override
-        public boolean process(MavenPluginDescriptor descriptor) {
-          if (descriptor.properties != null) {
-            for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
-              if (property.insideConfigurationOnly && property.name.equals(myText)) {
-                return false;
-              }
+      boolean notFound = MavenPluginDescriptor.processDescriptors(descriptor -> {
+        if (descriptor.properties != null) {
+          for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
+            if (property.insideConfigurationOnly && property.name.equals(myText)) {
+              return false;
             }
           }
-          return true;
         }
+        return true;
       }, pluginCfg);
 
       if (!notFound) {
@@ -246,7 +243,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (!hasPrefix) {
       MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
       if (domProjectModel != null) {
-        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<DomElement>());
+        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<>());
         if (res != null) {
           return res;
         }
@@ -340,8 +337,8 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   @NotNull
   public Object[] getVariants() {
-    List<Object> result = new ArrayList<Object>();
-    collectVariants(result, new THashSet<String>());
+    List<Object> result = new ArrayList<>();
+    collectVariants(result, new THashSet<>());
     return ArrayUtil.toObjectArray(result);
   }
 
@@ -420,18 +417,15 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
     MavenDomConfiguration pluginCfg = DomUtil.findDomElement(myElement, MavenDomConfiguration.class);
     if (pluginCfg != null) {
-      MavenPluginDescriptor.processDescriptors(new Processor<MavenPluginDescriptor>() {
-        @Override
-        public boolean process(MavenPluginDescriptor descriptor) {
-          if (descriptor.properties != null) {
-            for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
-              if (property.insideConfigurationOnly) {
-                result.add(LookupElementBuilder.create(property.name).withIcon(PlatformIcons.PROPERTY_ICON));
-              }
+      MavenPluginDescriptor.processDescriptors(descriptor -> {
+        if (descriptor.properties != null) {
+          for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
+            if (property.insideConfigurationOnly) {
+              result.add(LookupElementBuilder.create(property.name).withIcon(PlatformIcons.PROPERTY_ICON));
             }
           }
-          return true;
         }
+        return true;
       }, pluginCfg);
     }
   }
@@ -498,7 +492,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     XmlDocument document = xmlFile.getDocument();
     XmlNSDescriptor desc = (XmlNSDescriptor)document.getMetaData();
     XmlElementDescriptor[] descriptors = desc.getRootElementsDescriptors(document);
-    return doProcessSchema(descriptors, null, processor, new THashSet<XmlElementDescriptor>());
+    return doProcessSchema(descriptors, null, processor, new THashSet<>());
   }
 
   private static <T> T doProcessSchema(XmlElementDescriptor[] descriptors,

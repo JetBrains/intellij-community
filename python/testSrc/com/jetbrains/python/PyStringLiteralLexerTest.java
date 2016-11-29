@@ -31,4 +31,29 @@ public class PyStringLiteralLexerTest extends PyLexerTestCase {
     PyLexerTestCase.doLexerTest("r'[\\w\\']'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_STRING), true,
                                 "r'[\\w\\']'");
   }
+
+  // PY-20921
+  public void testIllegalPrefixes() {
+    PyLexerTestCase.doLexerTest("ff'foo'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), "Py:SINGLE_QUOTED_UNICODE");
+    PyLexerTestCase.doLexerTest("fff'foo'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), "Py:SINGLE_QUOTED_UNICODE");
+    PyLexerTestCase.doLexerTest("rrr'''foo'''", new PyStringLiteralLexer(PyTokenTypes.TRIPLE_QUOTED_UNICODE), "Py:TRIPLE_QUOTED_UNICODE");
+  }
+
+  // PY-21399
+  public void testBackslashBreaksAnyEscapeSequence() {
+    PyLexerTestCase.doLexerTest("'\\u\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), true, "'", "\\u", "\\'", ")");
+    PyLexerTestCase.doLexerTest("'\\u\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
+                                "Py:SINGLE_QUOTED_UNICODE", "INVALID_UNICODE_ESCAPE_TOKEN", "VALID_STRING_ESCAPE_TOKEN",
+                                "Py:SINGLE_QUOTED_UNICODE");
+
+    PyLexerTestCase.doLexerTest("'\\x\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), true, "'", "\\x", "\\'", ")");
+    PyLexerTestCase.doLexerTest("'\\x\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
+                                "Py:SINGLE_QUOTED_UNICODE", "INVALID_UNICODE_ESCAPE_TOKEN", "VALID_STRING_ESCAPE_TOKEN",
+                                "Py:SINGLE_QUOTED_UNICODE");
+
+    PyLexerTestCase.doLexerTest("'\\N{F\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), true, "'", "\\N{F", "\\'", ")");
+    PyLexerTestCase.doLexerTest("'\\N{F\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
+                                "Py:SINGLE_QUOTED_UNICODE", "INVALID_UNICODE_ESCAPE_TOKEN", "VALID_STRING_ESCAPE_TOKEN",
+                                "Py:SINGLE_QUOTED_UNICODE");
+  }
 }

@@ -150,7 +150,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
       final ProjectWindowAction windowAction = (ProjectWindowAction) child;
       if (projectName.equals(windowAction.getProjectName())) {
         if (result == null) {
-          result = new ArrayList<ProjectWindowAction>();
+          result = new ArrayList<>();
         }
         result.add(windowAction);
       }

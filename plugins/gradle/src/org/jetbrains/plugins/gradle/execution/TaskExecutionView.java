@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,7 +221,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
     if (Location.DATA_KEYS.is(dataId)) {
       TreePath[] paths = tree.getSelectionModel().getSelectionPaths();
       if (paths != null && paths.length > 1) {
-        final List<Location<?>> locations = new ArrayList<Location<?>>(paths.length);
+        final List<Location<?>> locations = new ArrayList<>(paths.length);
         for (TreePath path : paths) {
           if (tree.isPathSelected(path.getParentPath())) continue;
           ExecutionInfo executionInfo = getSelectedExecution(path);
@@ -243,7 +243,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
         for (TreePath path : paths) {
           if (tree.isPathSelected(path.getParentPath())) continue;
           ExecutionInfo executionInfo = getSelectedExecution(path);
-          ContainerUtil.addIfNotNull(executionInfo, executionInfos);
+          ContainerUtil.addIfNotNull(executionInfos, executionInfo);
         }
         return executionInfos.isEmpty()
                ? null
@@ -307,7 +307,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
   }
 
   @Override
-  public void performWhenNoDeferredOutput(Runnable runnable) {
+  public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
 
   }
 
@@ -317,12 +317,12 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
   }
 
   @Override
-  public void addMessageFilter(Filter filter) {
+  public void addMessageFilter(@NotNull Filter filter) {
 
   }
 
   @Override
-  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
+  public void printHyperlink(@NotNull String hyperlinkText, HyperlinkInfo info) {
 
   }
 
@@ -339,7 +339,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
   @NotNull
   @Override
   public AnAction[] createConsoleActions() {
-    return new AnAction[0];
+    return AnAction.EMPTY_ARRAY;
   }
 
   @Override

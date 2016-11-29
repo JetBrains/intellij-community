@@ -43,7 +43,7 @@ import java.util.List;
 public class MockPsiElement extends UserDataHolderBase implements PsiElement, Navigatable {
   private final String myText;
   private final Project myProject;
-  private final List<PsiElement> myDeclarations = new SmartList<PsiElement>();
+  private final List<PsiElement> myDeclarations = new SmartList<>();
   private Ref<PsiElement> myParent;
   private PsiManager myManager;
 

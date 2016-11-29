@@ -56,7 +56,7 @@ public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
     }
   }
 
-  private final Collection<String> myTagNames = new ArrayList<String>();
+  private final Collection<String> myTagNames = new ArrayList<>();
   private boolean myElementStarted;
 
   @Override

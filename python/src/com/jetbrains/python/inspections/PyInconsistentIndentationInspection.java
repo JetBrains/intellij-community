@@ -63,7 +63,7 @@ public class PyInconsistentIndentationInspection extends PyInspection {
       myFile = file;
       myManager = manager;
       myOnTheFly = isOnTheFly;
-      myProblems = new ArrayList<ProblemDescriptor>();
+      myProblems = new ArrayList<>();
     }
 
     public ProblemDescriptor[] invoke() {

@@ -1,4 +1,4 @@
-// "Static import method 'java.lang.String.format'" "true"
+// "Import static method 'java.lang.String.format'" "true"
 public class X {
     {
       String.format("");

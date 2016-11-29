@@ -16,6 +16,7 @@
 
 package com.intellij.ide.fileTemplates.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -80,7 +81,6 @@ import java.util.List;
  * Date: Jul 26, 2002
  * Time: 12:46:00 PM
  */
-
 public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable");
   @NonNls private static final String EMPTY_HTML = "<html></html>";
@@ -127,16 +127,16 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     if (message == null) {
       myTopPanel.add(new JLabel(IdeBundle.message("label.name")),
                      new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                            new Insets(0, 0, 0, 2), 0, 0));
+                                            JBUI.insetsRight(2), 0, 0));
       myTopPanel.add(myNameField,
                      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-                                            GridBagConstraints.HORIZONTAL, new Insets(3, 2, 3, 2), 0, 0));
+                                            GridBagConstraints.HORIZONTAL, JBUI.insets(3, 2), 0, 0));
       myTopPanel.add(new JLabel(IdeBundle.message("label.extension")),
                      new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                            new Insets(0, 2, 0, 2), 0, 0));
+                                            JBUI.insets(0, 2), 0, 0));
       myTopPanel.add(myExtensionField,
                      new GridBagConstraints(3, 0, 1, 1, .3, 0.0, GridBagConstraints.CENTER,
-                                            GridBagConstraints.HORIZONTAL, new Insets(0, 2, 0, 0), 0, 0));
+                                            GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(2), 0, 0));
       myExtensionField.setColumns(7);
     }
     myMainPanel.revalidate();
@@ -176,17 +176,17 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     JPanel descriptionPanel = new JPanel(new GridBagLayout());
     descriptionPanel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.description"), null),
                          new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                  new Insets(0, 0, 2, 0), 0, 0));
+                                                JBUI.insetsBottom(2), 0, 0));
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myDescriptionComponent),
                          new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                                  new Insets(2, 0, 0, 0), 0, 0));
+                                                JBUI.insetsTop(2), 0, 0));
 
     myMainPanel.add(myTopPanel,
                     new GridBagConstraints(0, 0, 4, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-                                           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+                                           GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     myMainPanel.add(mySplitter,
                     new GridBagConstraints(0, 2, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                           new Insets(0, 0, 0, 0), 0, 0));
+                                           JBUI.emptyInsets(), 0, 0));
 
     mySplitter.setSecondComponent(descriptionPanel);
     setShowInternalMessage(null);
@@ -419,7 +419,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     private final Lexer myLexer;
 
     public TemplateHighlighter() {
-      myLexer = new MergingLexerAdapter(new FlexAdapter(new FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
+      myLexer = createDefaultLexer();
     }
 
     @NotNull
@@ -437,6 +437,12 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
       return EMPTY;
     }
+  }
+
+  @NotNull
+  @VisibleForTesting
+  static Lexer createDefaultLexer() {
+    return new MergingLexerAdapter(new FlexAdapter(new _FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
   }
 
 

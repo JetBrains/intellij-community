@@ -26,22 +26,17 @@ import org.jetbrains.annotations.Nullable;
 public class VcsDirectoryMapping {
   public static final String PROJECT_CONSTANT = "<Project>";
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
-  private String myDirectory;
-  // for reliable comparison
-  private String mySystemIdependentPath;
+
+  @NotNull private final String myDirectory;
   private String myVcs;
   private VcsRootSettings myRootSettings;
-
-  public VcsDirectoryMapping() {
-    this(null, null, null);
-  }
 
   public VcsDirectoryMapping(@NotNull final String directory, final String vcs) {
     this(directory, vcs, null);
   }
 
-  public VcsDirectoryMapping(@Nullable String directory, @Nullable String vcs, @Nullable VcsRootSettings rootSettings) {
-    if (directory != null) setDirectory(directory);
+  public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs, @Nullable VcsRootSettings rootSettings) {
+    myDirectory = directory;
     myVcs = vcs;
     myRootSettings = rootSettings;
   }
@@ -51,12 +46,9 @@ public class VcsDirectoryMapping {
     return myDirectory;
   }
 
-  private void initSystemIndependentPath() {
-    mySystemIdependentPath = FileUtil.toSystemIndependentName(myDirectory);
-  }
-
+  @NotNull
   public String systemIndependentPath() {
-    return mySystemIdependentPath;
+    return FileUtil.toSystemIndependentName(myDirectory);
   }
 
   public String getVcs() {
@@ -65,11 +57,6 @@ public class VcsDirectoryMapping {
 
   public void setVcs(final String vcs) {
     myVcs = vcs;
-  }
-
-  public void setDirectory(@NotNull final String directory) {
-    myDirectory = directory;
-    initSystemIndependentPath();
   }
 
   /**
@@ -102,7 +89,7 @@ public class VcsDirectoryMapping {
 
     final VcsDirectoryMapping mapping = (VcsDirectoryMapping)o;
 
-    if (myDirectory != null ? !myDirectory.equals(mapping.myDirectory) : mapping.myDirectory != null) return false;
+    if (!myDirectory.equals(mapping.myDirectory)) return false;
     if (myVcs != null ? !myVcs.equals(mapping.myVcs) : mapping.myVcs != null) return false;
     if (myRootSettings != null ? !myRootSettings.equals(mapping.myRootSettings) : mapping.myRootSettings != null) return false;
 
@@ -111,7 +98,7 @@ public class VcsDirectoryMapping {
 
   public int hashCode() {
     int result;
-    result = (myDirectory != null ? myDirectory.hashCode() : 0);
+    result = myDirectory.hashCode();
     result = 31 * result + (myVcs != null ? myVcs.hashCode() : 0);
     return result;
   }

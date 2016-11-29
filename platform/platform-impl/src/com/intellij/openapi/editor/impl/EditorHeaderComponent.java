@@ -16,7 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import org.jetbrains.annotations.NotNull;
@@ -27,17 +27,22 @@ import java.awt.*;
 /**
  * @author gregsh
  */
-public class EditorHeaderComponent extends JPanel {
+public class EditorHeaderComponent extends JPanel implements UISettingsListener {
   public EditorHeaderComponent() {
     super(new BorderLayout(0, 0));
-    boolean topBorderRequired = !SystemInfo.isMac && UISettings.getInstance().EDITOR_TAB_PLACEMENT != SwingConstants.TOP &&
-                                !(UISettings.getInstance().SHOW_MAIN_TOOLBAR && UISettings.getInstance().SHOW_NAVIGATION_BAR);
-    setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
+    uiSettingsChanged(UISettings.getInstance());
   }
 
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
     super.paint(g);
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings uiSettings) {
+    boolean topBorderRequired = uiSettings.EDITOR_TAB_PLACEMENT != SwingConstants.TOP &&
+                                (uiSettings.SHOW_NAVIGATION_BAR || uiSettings.SHOW_MAIN_TOOLBAR);
+    setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
   }
 }

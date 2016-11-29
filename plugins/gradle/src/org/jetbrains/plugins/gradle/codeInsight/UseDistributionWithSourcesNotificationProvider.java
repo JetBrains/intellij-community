@@ -49,6 +49,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -98,26 +99,20 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
         final GradleProjectSettings settings = GradleSettings.getInstance(module.getProject()).getLinkedProjectSettings(rootProjectPath);
         if (settings == null || settings.getDistributionType() != DistributionType.DEFAULT_WRAPPED) return null;
         if (settings.isDisableWrapperSourceDistributionNotification()) return null;
-        if (isWrapperDistributionWithSourcesUsed(rootProjectPath)) return null;
+        if (!showUseDistributionWithSourcesTip(rootProjectPath)) return null;
 
         final EditorNotificationPanel panel = new EditorNotificationPanel();
         panel.setText(GradleBundle.message("gradle.notifications.use.distribution.with.sources"));
-        panel.createActionLabel(GradleBundle.message("gradle.notifications.hide.tip"), new Runnable() {
-          @Override
-          public void run() {
-            settings.setDisableWrapperSourceDistributionNotification(true);
-            EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
-          }
+        panel.createActionLabel(GradleBundle.message("gradle.notifications.hide.tip"), () -> {
+          settings.setDisableWrapperSourceDistributionNotification(true);
+          EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
         });
-        panel.createActionLabel(GradleBundle.message("gradle.notifications.apply.suggestion"), new Runnable() {
-          @Override
-          public void run() {
-            updateDefaultWrapperConfiguration(rootProjectPath);
-            EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
-            ExternalSystemUtil.refreshProject(
-              module.getProject(), GradleConstants.SYSTEM_ID, settings.getExternalProjectPath(), true,
-              ProgressExecutionMode.START_IN_FOREGROUND_ASYNC);
-          }
+        panel.createActionLabel(GradleBundle.message("gradle.notifications.apply.suggestion"), () -> {
+          updateDefaultWrapperConfiguration(rootProjectPath);
+          EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
+          ExternalSystemUtil.refreshProject(
+            module.getProject(), GradleConstants.SYSTEM_ID, settings.getExternalProjectPath(), false,
+            ProgressExecutionMode.START_IN_FOREGROUND_ASYNC);
         });
         return panel;
       }
@@ -157,12 +152,18 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
     }
   }
 
-  private static boolean isWrapperDistributionWithSourcesUsed(String linkedProjectPath) {
+  private static boolean showUseDistributionWithSourcesTip(String linkedProjectPath) {
     WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(linkedProjectPath);
     // currently only wrapped distribution takes into account
     if (wrapperConfiguration == null) return true;
     String distributionUri = wrapperConfiguration.getDistribution().toString();
-    return GRADLE_SRC_DISTRIBUTION_PATTERN.matcher(distributionUri).matches();
+    try {
+      String host = new URI(distributionUri).getHost();
+      return host.endsWith("gradle.org") && !GRADLE_SRC_DISTRIBUTION_PATTERN.matcher(distributionUri).matches();
+    }
+    catch (URISyntaxException ignore) {
+    }
+    return false;
   }
 
   @Nullable

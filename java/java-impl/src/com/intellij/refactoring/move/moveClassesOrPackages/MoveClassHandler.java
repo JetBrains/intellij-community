@@ -29,7 +29,7 @@ import java.util.Collection;
  * @author Maxim.Medvedev
  */
 public interface MoveClassHandler {
-  ExtensionPointName<MoveClassHandler> EP_NAME = new ExtensionPointName<MoveClassHandler>("com.intellij.refactoring.moveClassHandler");
+  ExtensionPointName<MoveClassHandler> EP_NAME = new ExtensionPointName<>("com.intellij.refactoring.moveClassHandler");
 
   void prepareMove(@NotNull PsiClass aClass);
 

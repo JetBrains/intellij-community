@@ -34,11 +34,11 @@ import java.util.*;
  */
 public abstract class AutomaticRenamer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.naming.AutomaticRenamer");
-  private final LinkedHashMap<PsiNamedElement, String> myRenames = new LinkedHashMap<PsiNamedElement, String>();
+  private final LinkedHashMap<PsiNamedElement, String> myRenames = new LinkedHashMap<>();
   protected final List<PsiNamedElement> myElements;
 
   protected AutomaticRenamer() {
-    myElements = new ArrayList<PsiNamedElement>();
+    myElements = new ArrayList<>();
   }
 
   public boolean hasAnythingToRename() {
@@ -84,7 +84,7 @@ public abstract class AutomaticRenamer {
     final String newName = getNewName(element);
     if (newName != null) {
 
-      final LinkedHashMap<PsiNamedElement, String> renames = new LinkedHashMap<PsiNamedElement, String>();
+      final LinkedHashMap<PsiNamedElement, String> renames = new LinkedHashMap<>();
       renames.putAll(myRenames);
       if (allRenames != null) {
         for (PsiElement psiElement : allRenames.keySet()) {

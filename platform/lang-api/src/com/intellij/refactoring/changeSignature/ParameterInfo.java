@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -47,6 +48,16 @@ public interface ParameterInfo {
    */
   @Nullable
   String getDefaultValue();
+
+  /**
+   * For added parameters, returns expression which should be created at the call site.
+   * By default it's expression based on {@link #getDefaultValue()} string representation or default value for a type
+   * Could be overridden to provide values which depend on the call site
+   */
+  @Nullable
+  default PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
+    return null;
+  }
 
   /**
    * Set parameter new name (to be changed to during refactoring)

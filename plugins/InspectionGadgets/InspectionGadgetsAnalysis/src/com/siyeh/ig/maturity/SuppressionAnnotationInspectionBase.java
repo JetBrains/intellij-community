@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class SuppressionAnnotationInspectionBase extends BaseInspection {
-  public List<String> myAllowedSuppressions = new ArrayList<String>();
+  public List<String> myAllowedSuppressions = new ArrayList<>();
 
   @Override
   @NotNull

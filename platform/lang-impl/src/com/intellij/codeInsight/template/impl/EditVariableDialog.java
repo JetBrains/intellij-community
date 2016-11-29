@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class EditVariableDialog extends DialogWrapper {
-  private ArrayList<Variable> myVariables = new ArrayList<Variable>();
+  private ArrayList<Variable> myVariables = new ArrayList<>();
 
   private JTable myTable;
   private final Editor myEditor;
@@ -175,20 +175,12 @@ class EditVariableDialog extends DialogWrapper {
   }*/
 
   private void updateTemplateTextByVarNameChange(final Variable oldVar, final Variable newVar) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(null, new Runnable() {
-          @Override
-          public void run() {
-            Document document = myEditor.getDocument();
-            String templateText = document.getText();
-            templateText = templateText.replaceAll("\\$" + oldVar.getName() + "\\$", "\\$" + newVar.getName() + "\\$");
-            document.replaceString(0, document.getTextLength(), templateText);
-          }
-        }, null, null);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(null, () -> {
+      Document document = myEditor.getDocument();
+      String templateText = document.getText();
+      templateText = templateText.replaceAll("\\$" + oldVar.getName() + "\\$", "\\$" + newVar.getName() + "\\$");
+      document.replaceString(0, document.getTextLength(), templateText);
+    }, null, null));
   }
 
   private class VariablesModel extends AbstractTableModel implements EditableModel {

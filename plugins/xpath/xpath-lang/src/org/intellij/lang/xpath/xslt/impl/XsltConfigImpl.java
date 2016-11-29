@@ -173,10 +173,5 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
     public String getId() {
       return getHelpTopic();
     }
-
-    @Override
-    public Runnable enableSearch(String option) {
-      return null;
-    }
   }
 }

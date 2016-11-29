@@ -56,7 +56,7 @@ public class GroovyEmptySyncBlockInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
+    public void visitSynchronizedStatement(@NotNull GrSynchronizedStatement synchronizedStatement) {
       super.visitSynchronizedStatement(synchronizedStatement);
       final GrOpenBlock body = synchronizedStatement.getBody();
       if (body == null || !isEmpty(body)) {

@@ -3,7 +3,7 @@ package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNode;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAction {
+public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAction implements DumbAware {
 
   protected ServersTreeAction(String text, String description, Icon icon) {
     super(text, description, icon);
@@ -58,7 +58,7 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAct
       return null;
     }
     Class<T> targetNodeClass = getTargetNodeClass();
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     for (Object selectedElement : selectedElements) {
       ServersTreeNode node = (ServersTreeNode)selectedElement;
       if (!targetNodeClass.isInstance(node)) {
@@ -80,12 +80,7 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAct
       return;
     }
 
-    List<T> verifiedTargetNodes = ContainerUtil.filter(targetNodes, new Condition<T>() {
-      @Override
-      public boolean value(T targetNode) {
-        return isVisible4(targetNode) && isEnabled4(targetNode);
-      }
-    });
+    List<T> verifiedTargetNodes = ContainerUtil.filter(targetNodes, targetNode -> isVisible4(targetNode) && isEnabled4(targetNode));
     doActionPerformed(getContent(e), e, verifiedTargetNodes);
   }
 

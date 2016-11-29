@@ -17,13 +17,14 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +35,18 @@ import java.awt.*;
 import java.util.List;
 
 public class SyncScrollSupport {
-  private static final Logger LOG = Logger.getInstance(SyncScrollSupport.class);
-
   public interface SyncScrollable {
     @CalledInAwt
     boolean isSyncScrollEnabled();
 
     @CalledInAwt
     int transfer(@NotNull Side baseSide, int line);
+  }
+
+  public interface Support {
+    void enterDisableScrollSection();
+
+    void exitDisableScrollSection();
   }
 
   public static class TwosideSyncScrollSupport extends SyncScrollSupportBase {
@@ -212,17 +217,19 @@ public class SyncScrollSupport {
   // Impl
   //
 
-  private abstract static class SyncScrollSupportBase {
+  private abstract static class SyncScrollSupportBase implements Support {
     private int myDuringSyncScrollDepth = 0;
 
     public boolean isDuringSyncScroll() {
       return myDuringSyncScrollDepth > 0;
     }
 
+    @Override
     public void enterDisableScrollSection() {
       myDuringSyncScrollDepth++;
     }
 
+    @Override
     public void exitDisableScrollSection() {
       myDuringSyncScrollDepth--;
       assert myDuringSyncScrollDepth >= 0;
@@ -242,7 +249,7 @@ public class SyncScrollSupport {
       assert startLines.length == count;
       assert endLines.length == count;
 
-      final int[] offsets = getTargetOffsets(editors.toArray(new Editor[count]), startLines, endLines);
+      final int[] offsets = getTargetOffsets(editors.toArray(new Editor[count]), startLines, endLines, -1);
 
       final int[] startOffsets = new int[count];
       for (int i = 0; i < count; i++) {
@@ -261,32 +268,24 @@ public class SyncScrollSupport {
       doScrollHorizontally(masterEditor, 0, false); // animation will be canceled by "scroll vertically" anyway
       doScrollVertically(masterEditor, masterOffset, animate);
 
-      masterEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-        @Override
-        public void run() {
-          for (ScrollHelper helper : helpers) {
-            helper.removeAnchor();
-          }
+      masterEditor.getScrollingModel().runActionOnScrollingFinished(() -> {
+        for (ScrollHelper helper : helpers) {
+          helper.removeAnchor();
+        }
 
-          int masterFinalOffset = masterEditor.getScrollingModel().getVisibleArea().y;
-          boolean animateSlaves = animate && masterFinalOffset == masterStartOffset;
-          for (int i = 0; i < count; i++) {
-            if (i == masterIndex) continue;
-            Editor editor = editors.get(i);
+        int masterFinalOffset = masterEditor.getScrollingModel().getVisibleArea().y;
+        boolean animateSlaves = animate && masterFinalOffset == masterStartOffset;
+        for (int i = 0; i < count; i++) {
+          if (i == masterIndex) continue;
+          Editor editor = editors.get(i);
 
-            int finalOffset = editor.getScrollingModel().getVisibleArea().y;
-            if (finalOffset != offsets[i]) {
-              enterDisableScrollSection();
+          int finalOffset = editor.getScrollingModel().getVisibleArea().y;
+          if (finalOffset != offsets[i]) {
+            enterDisableScrollSection();
 
-              doScrollVertically(editor, offsets[i], animateSlaves);
+            doScrollVertically(editor, offsets[i], animateSlaves);
 
-              editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-                @Override
-                public void run() {
-                  exitDisableScrollSection();
-                }
-              });
-            }
+            editor.getScrollingModel().runActionOnScrollingFinished(this::exitDisableScrollSection);
           }
         }
       });
@@ -332,6 +331,8 @@ public class SyncScrollSupport {
 
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
+      if (((FoldingModelImpl)getSlave().getFoldingModel()).isInBatchFoldingOperation()) return;
+
       Rectangle newRectangle = e.getNewRectangle();
       Rectangle oldRectangle = e.getOldRectangle();
       if (oldRectangle == null) return;
@@ -411,15 +412,17 @@ public class SyncScrollSupport {
   }
 
   @NotNull
-  private static int[] getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
-                                        int startLine1, int endLine1, int startLine2, int endLine2) {
+  public static int[] getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
+                                       int startLine1, int endLine1, int startLine2, int endLine2,
+                                       int preferredTopShift) {
     return getTargetOffsets(new Editor[]{editor1, editor2},
                             new int[]{startLine1, startLine2},
-                            new int[]{endLine1, endLine2});
+                            new int[]{endLine1, endLine2},
+                            preferredTopShift);
   }
 
   @NotNull
-  private static int[] getTargetOffsets(@NotNull Editor[] editors, int[] startLines, int[] endLines) {
+  private static int[] getTargetOffsets(@NotNull Editor[] editors, int[] startLines, int[] endLines, int preferredTopShift) {
     int count = editors.length;
     assert startLines.length == count;
     assert endLines.length == count;
@@ -444,17 +447,18 @@ public class SyncScrollSupport {
 
       // 'shift' here - distance between editor's top and first line of range
 
-      // make whole range visible. If possible, locate it at 'center' (1/3 of height)
+      // make whole range visible. If possible, locate it at 'center' (1/3 of height) (or at 'preferredTopShift' if it was specified)
       // If can't show whole range - show as much as we can
       boolean canShow = 2 * gapLines[i] + rangeHeights[i] <= editorHeights[i];
 
-      topShifts[i] = canShow ? Math.min(editorHeights[i] - gapLines[i] - rangeHeights[i], editorHeights[i] / 3) : gapLines[i];
+      int shift = preferredTopShift != -1 ? preferredTopShift : editorHeights[i] / 3;
+      topShifts[i] = canShow ? Math.min(editorHeights[i] - gapLines[i] - rangeHeights[i], shift) : gapLines[i];
     }
 
-    int topShift = min(topShifts);
+    int topShift = ArrayUtil.min(topShifts);
 
     // check if we're at the top of file
-    topShift = Math.min(topShift, min(topOffsets));
+    topShift = Math.min(topShift, ArrayUtil.min(topOffsets));
 
     int[] offsets = new int[count];
     boolean haveEnoughSpace = true;
@@ -480,14 +484,6 @@ public class SyncScrollSupport {
     }
 
     return offsets;
-  }
-
-  private static int min(int[] values) {
-    int min = Integer.MAX_VALUE;
-    for (int value : values) {
-      if (value < min) min = value;
-    }
-    return min;
   }
 
   private static class Anchor {

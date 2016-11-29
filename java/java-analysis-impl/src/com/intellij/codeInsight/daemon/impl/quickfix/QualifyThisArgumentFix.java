@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Nov 13, 2002
- * Time: 3:26:50 PM
- * To change this template use Options | File Templates.
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -54,7 +47,7 @@ public class QualifyThisArgumentFix extends QualifyThisOrSuperArgumentFix{
   public static void registerQuickFixAction(CandidateInfo[] candidates, PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
     if (candidates.length == 0) return;
 
-    final Set<PsiClass> containingClasses = new HashSet<PsiClass>();
+    final Set<PsiClass> containingClasses = new HashSet<>();
     PsiClass parentClass = PsiTreeUtil.getParentOfType(call, PsiClass.class);
     while (parentClass != null) {
       if (parentClass.hasModifierProperty(PsiModifier.STATIC)) break;

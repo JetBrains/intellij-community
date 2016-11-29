@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumMap;
-import java.util.Map;
-
 /**
  * Used to build and run a live template.
  * @see TemplateManager
@@ -33,12 +30,8 @@ public abstract class Template {
   public enum Property {
     USE_STATIC_IMPORT_IF_POSSIBLE
   }
-  private static final Map<Property, Boolean> DEFAULT_PROPERTIES = new EnumMap<Property, Boolean>(Property.class);
-  static {
-    DEFAULT_PROPERTIES.put(Property.USE_STATIC_IMPORT_IF_POSSIBLE, false);
-  }
 
-  private final Map<Property, Boolean> myProperties = new EnumMap<Property, Boolean>(Property.class);
+  private boolean myUseStaticImport;
 
   public abstract void addTextSegment(@NotNull String text);
   public abstract void addVariableSegment(@NonNls @NotNull String name);
@@ -101,16 +94,14 @@ public abstract class Template {
   public abstract void setToShortenLongNames(boolean toShortenLongNames);
 
   public boolean getValue(@NotNull Property key) {
-    Boolean result = myProperties.get(key);
-    return result == null ? getDefaultValue(key) : result;
+    return myUseStaticImport;
   }
 
   public void setValue(@NotNull Property key, boolean value) {
-    myProperties.put(key, value);
+    myUseStaticImport = value;
   }
 
   public static boolean getDefaultValue(@NotNull Property key) {
-    Boolean result = DEFAULT_PROPERTIES.get(key);
-    return result == null ? false : result;
+    return false;
   }
 }

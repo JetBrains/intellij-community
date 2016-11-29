@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
@@ -53,9 +52,10 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    int maxSeverity = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST ? severityRegistrar.getSeveritiesCount() - 1 : 0;
+    int maxSeverity = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST ? severityRegistrar.getSeveritiesCount() - 1
+                                                                      : SeverityRegistrar.SHOWN_SEVERITIES_OFFSET;
 
-    for (int idx = maxSeverity; idx >= 0; idx--) {
+    for (int idx = maxSeverity; idx >= SeverityRegistrar.SHOWN_SEVERITIES_OFFSET; idx--) {
       final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
       HighlightInfo infoToGo = findInfo(project, editor, caretOffset, minSeverity);
       if (infoToGo != null) {
@@ -71,18 +71,15 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     final HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
     final int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
 
-    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo info) {
-        int startOffset = getNavigationPositionFor(info, document);
-        if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
-          infoToGo[0][0] = getBetterInfoThan(infoToGo[0][0], caretOffset, startOffset, info);
-          infoToGo[1][0] = getBetterInfoThan(infoToGo[1][0], caretOffsetIfNoLuck, startOffset, info);
-        }
-        infoToGo[0][1] = getBetterInfoThan(infoToGo[0][1], caretOffset, startOffset, info);
-        infoToGo[1][1] = getBetterInfoThan(infoToGo[1][1], caretOffsetIfNoLuck, startOffset, info);
-        return true;
+    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), info -> {
+      int startOffset = getNavigationPositionFor(info, document);
+      if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
+        infoToGo[0][0] = getBetterInfoThan(infoToGo[0][0], caretOffset, startOffset, info);
+        infoToGo[1][0] = getBetterInfoThan(infoToGo[1][0], caretOffsetIfNoLuck, startOffset, info);
       }
+      infoToGo[0][1] = getBetterInfoThan(infoToGo[0][1], caretOffset, startOffset, info);
+      infoToGo[1][1] = getBetterInfoThan(infoToGo[1][1], caretOffsetIfNoLuck, startOffset, info);
+      return true;
     });
     if (infoToGo[0][0] == null) infoToGo[0][0] = infoToGo[1][0];
     if (infoToGo[0][1] == null) infoToGo[0][1] = infoToGo[1][1];
@@ -132,14 +129,11 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     }
 
     scrollingModel.runActionOnScrollingFinished(
-      new Runnable(){
-        @Override
-        public void run() {
-          int maxOffset = editor.getDocument().getTextLength() - 1;
-          if (maxOffset == -1) return;
-          scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, endOffset)), ScrollType.MAKE_VISIBLE);
-          scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, offset)), ScrollType.MAKE_VISIBLE);
-        }
+      () -> {
+        int maxOffset = editor.getDocument().getTextLength() - 1;
+        if (maxOffset == -1) return;
+        scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, endOffset)), ScrollType.MAKE_VISIBLE);
+        scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, offset)), ScrollType.MAKE_VISIBLE);
       }
     );
 

@@ -15,9 +15,8 @@
  */
 package com.jetbrains.python.magicLiteral;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -36,18 +35,15 @@ class PyMagicLiteralReferenceSearcher extends QueryExecutorBase<PsiReference, Re
 
   @Override
   public void processQuery(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
-    new ReadAction() {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        final PsiElement refElement = queryParameters.getElementToSearch();
-        if (PyMagicLiteralTools.isMagicLiteral(refElement)) {
-          final String refText = ((StringLiteralExpression)refElement).getStringValue();
-          if (!StringUtil.isEmpty(refText)) {
-            final SearchScope searchScope = queryParameters.getEffectiveSearchScope();
-            queryParameters.getOptimizer().searchWord(refText, searchScope, true, refElement);
-          }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiElement refElement = queryParameters.getElementToSearch();
+      if (PyMagicLiteralTools.isMagicLiteral(refElement)) {
+        final String refText = ((StringLiteralExpression)refElement).getStringValue();
+        if (!StringUtil.isEmpty(refText)) {
+          final SearchScope searchScope = queryParameters.getEffectiveSearchScope();
+          queryParameters.getOptimizer().searchWord(refText, searchScope, true, refElement);
         }
       }
-    }.execute();
+    });
   }
 }

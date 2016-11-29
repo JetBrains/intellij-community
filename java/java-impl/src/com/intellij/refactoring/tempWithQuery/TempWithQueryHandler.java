@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,8 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
       return;
     }
 
-    final PsiReference[] refs = ReferencesSearch.search(local, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
+    final PsiReference[] refs = ReferencesSearch.search(local, GlobalSearchScope.projectScope(project), false).toArray(
+      PsiReference.EMPTY_ARRAY);
 
     if (refs.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.never.used", localName));
@@ -89,7 +90,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     }
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
-    ArrayList<PsiReference> array = new ArrayList<PsiReference>();
+    ArrayList<PsiReference> array = new ArrayList<>();
     EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
@@ -134,42 +135,36 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
 
     if (processor.showDialog()) {
       CommandProcessor.getInstance().executeCommand(
-          project, new Runnable() {
-                public void run() {
-                  final Runnable action = new Runnable() {
-                    public void run() {
-                      try {
-                        processor.doRefactoring();
+        project, () -> {
+          final Runnable action = () -> {
+            try {
+              processor.doRefactoring();
 
-                        local.normalizeDeclaration();
+              local.normalizeDeclaration();
 
-                        PsiExpression initializer = local.getInitializer();
+              PsiExpression initializer1 = local.getInitializer();
 
-                        PsiExpression[] exprs = new PsiExpression[refs.length];
-                        for (int idx = 0; idx < refs.length; idx++) {
-                          PsiElement ref = refs[idx].getElement();
-                          exprs[idx] = (PsiExpression) ref.replace(initializer);
-                        }
-                        PsiDeclarationStatement declaration = (PsiDeclarationStatement) local.getParent();
-                        declaration.delete();
+              PsiExpression[] exprs = new PsiExpression[refs.length];
+              for (int idx = 0; idx < refs.length; idx++) {
+                PsiElement ref = refs[idx].getElement();
+                exprs[idx] = (PsiExpression) ref.replace(initializer1);
+              }
+              PsiDeclarationStatement declaration = (PsiDeclarationStatement) local.getParent();
+              declaration.delete();
 
-                        highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
-                      } catch (IncorrectOperationException e) {
-                        LOG.error(e);
-                      }
-                    }
-                  };
+              highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
+            } catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          };
 
-                  PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable () {
-                    public void run() {
-                      ApplicationManager.getApplication().runWriteAction(action);
-                      DuplicatesImpl.processDuplicates(processor, project, editor);
-                    }
-                  });
-                }
-              },
-          REFACTORING_NAME,
-          null
+          PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(() -> {
+            ApplicationManager.getApplication().runWriteAction(action);
+            DuplicatesImpl.processDuplicates(processor, project, editor);
+          });
+        },
+        REFACTORING_NAME,
+        null
       );
     }
 

@@ -60,14 +60,8 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.replace.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.replace.quickfix");
     }
 
     @Override

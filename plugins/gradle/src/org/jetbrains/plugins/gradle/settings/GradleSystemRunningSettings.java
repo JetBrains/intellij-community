@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @State(name = "GradleSystemRunningSettings", storages = @Storage("gradle.run.settings.xml"))
 public class GradleSystemRunningSettings implements PersistentStateComponent<GradleSystemRunningSettings.MyState> {
-
+  private boolean myUseGradleAwareMake;
   @NotNull private PreferredTestRunner myPreferredTestRunner = PreferredTestRunner.PLATFORM_TEST_RUNNER;
 
   @NotNull
@@ -42,17 +42,24 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
   @Override
   public GradleSystemRunningSettings.MyState getState() {
     MyState state = new MyState();
+    state.useGradleAwareMake = myUseGradleAwareMake;
     state.preferredTestRunner = myPreferredTestRunner;
     return state;
   }
 
   @Override
   public void loadState(MyState state) {
+    myUseGradleAwareMake = state.useGradleAwareMake;
     myPreferredTestRunner = state.preferredTestRunner;
   }
 
   @NotNull
   public PreferredTestRunner getPreferredTestRunner() {
+    return myUseGradleAwareMake ? PreferredTestRunner.GRADLE_TEST_RUNNER : myPreferredTestRunner;
+  }
+
+  @NotNull
+  PreferredTestRunner getLastPreferredTestRunner() {
     return myPreferredTestRunner;
   }
 
@@ -60,21 +67,31 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
     myPreferredTestRunner = preferredTestRunner;
   }
 
+  public boolean isUseGradleAwareMake() {
+    return myUseGradleAwareMake;
+  }
+
+  public void setUseGradleAwareMake(boolean useGradleAwareMake) {
+    this.myUseGradleAwareMake = useGradleAwareMake;
+  }
+
   public static class MyState {
-    public PreferredTestRunner preferredTestRunner;
+    public PreferredTestRunner preferredTestRunner = PreferredTestRunner.PLATFORM_TEST_RUNNER;
+    public boolean useGradleAwareMake;
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GradleSystemRunningSettings)) return false;
+    if (o == null || getClass() != o.getClass()) return false;
     GradleSystemRunningSettings settings = (GradleSystemRunningSettings)o;
-    return Objects.equal(myPreferredTestRunner, settings.myPreferredTestRunner);
+    return myUseGradleAwareMake == settings.myUseGradleAwareMake &&
+           myPreferredTestRunner == settings.myPreferredTestRunner;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myPreferredTestRunner);
+    return Objects.hashCode(myPreferredTestRunner, myUseGradleAwareMake);
   }
 
   public enum PreferredTestRunner {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,108 +38,108 @@ class GrPullUpTest extends LightGroovyTestCase {
     TestUtils.testDataPath + 'refactoring/pullUp'
   }
 
-  public void testQualifiedThis() {
-    doTest(new MemberDescriptor("Inner", PsiClass));
+  void testQualifiedThis() {
+    doTest(new MemberDescriptor("Inner", PsiClass))
   }
 
-  public void testQualifiedSuper() {
-    doTest(new MemberDescriptor("Inner", PsiClass));
+  void testQualifiedSuper() {
+    doTest(new MemberDescriptor("Inner", PsiClass))
   }
 
-  public void testQualifiedReference() {     // IDEADEV-25008
+  void testQualifiedReference() {     // IDEADEV-25008
     doTest(new MemberDescriptor("getX", PsiMethod),
            new MemberDescriptor("setX", PsiMethod),
-           new MemberDescriptor("x", PsiField));
+           new MemberDescriptor("x", PsiField))
   }
 
-  public void testPullUpInheritedStaticClasses() {
+  void testPullUpInheritedStaticClasses() {
     doTest(new MemberDescriptor("C", PsiClass),
-           new MemberDescriptor("D", PsiClass));
+           new MemberDescriptor("D", PsiClass))
   }
 
-  public void testPullUpPrivateInnerClassWithPrivateConstructor() {
-    doTest(new MemberDescriptor("C", PsiClass));
+  void testPullUpPrivateInnerClassWithPrivateConstructor() {
+    doTest(new MemberDescriptor("C", PsiClass))
   }
 
-  public void testPullUpAndMakeAbstract() {
+  void testPullUpAndMakeAbstract() {
     doTest(new MemberDescriptor("a", PsiMethod),
-           new MemberDescriptor("b", PsiMethod, true));
+           new MemberDescriptor("b", PsiMethod, true))
   }
 
-  public void _testTryCatchFieldInitializer() {
-    doTest(new MemberDescriptor("field", PsiField));
+  void _testTryCatchFieldInitializer() {
+    doTest(new MemberDescriptor("field", PsiField))
   }
 
-  public void testIfFieldInitializationWithNonMovedField() {
-    doTest(new MemberDescriptor("f", PsiField));
+  void testIfFieldInitializationWithNonMovedField() {
+    doTest(new MemberDescriptor("f", PsiField))
   }
 
-  public void _testIfFieldMovedInitialization() {
-    doTest(new MemberDescriptor("f", PsiField));
+  void _testIfFieldMovedInitialization() {
+    doTest(new MemberDescriptor("f", PsiField))
   }
 
-  public void _testMultipleConstructorsFieldInitialization() {
-    doTest(new MemberDescriptor("f", PsiField));
+  void _testMultipleConstructorsFieldInitialization() {
+    doTest(new MemberDescriptor("f", PsiField))
   }
 
-  public void _testMultipleConstructorsFieldInitializationNoGood() {
-    doTest(new MemberDescriptor("f", PsiField));
+  void _testMultipleConstructorsFieldInitializationNoGood() {
+    doTest(new MemberDescriptor("f", PsiField))
   }
 
-  public void _testRemoveOverride() {
-    doTest(new MemberDescriptor("get", PsiMethod));
+  void _testRemoveOverride() {
+    doTest(new MemberDescriptor("get", PsiMethod))
   }
 
-  public void testTypeParamErasure() {
-    doTest(new MemberDescriptor("f", PsiField));
+  void testTypeParamErasure() {
+    doTest(new MemberDescriptor("f", PsiField))
   }
 
-  public void testTypeParamSubst() {
-    doTest(new MemberDescriptor("f", PsiField));
+  void testTypeParamSubst() {
+    doTest(new MemberDescriptor("f", PsiField))
   }
 
-  public void testTypeArgument() {
-    doTest(new MemberDescriptor("f", PsiField));
+  void testTypeArgument() {
+    doTest(new MemberDescriptor("f", PsiField))
   }
 
-  public void testGenericsInAbstractMethod() {
-    doTest(new MemberDescriptor("method", PsiMethod, true));
+  void testGenericsInAbstractMethod() {
+    doTest(new MemberDescriptor("method", PsiMethod, true))
   }
 
-  public void _testReplaceDuplicatesInInheritors() {
-    doTest(new MemberDescriptor("foo", PsiMethod, false));
+  void _testReplaceDuplicatesInInheritors() {
+    doTest(new MemberDescriptor("foo", PsiMethod, false))
   }
 
-  public void testGenericsInImplements() {
-    doTest(false, new MemberDescriptor("I", PsiClass));
+  void testGenericsInImplements() {
+    doTest(false, new MemberDescriptor("I", PsiClass))
   }
 
-  public void testUpdateStaticRefs() {
-    doTest(false, new MemberDescriptor("foo", PsiMethod));
+  void testUpdateStaticRefs() {
+    doTest(false, new MemberDescriptor("foo", PsiMethod))
   }
 
-  public void testRemoveOverrideFromPulledMethod() {
-    doTest(false, new MemberDescriptor("foo", PsiMethod));
+  void testRemoveOverrideFromPulledMethod() {
+    doTest(false, new MemberDescriptor("foo", PsiMethod))
   }
 
-  public void testPreserveOverrideInPulledMethod() {
-    doTest(false, new MemberDescriptor("foo", PsiMethod));
+  void testPreserveOverrideInPulledMethod() {
+    doTest(false, new MemberDescriptor("foo", PsiMethod))
   }
 
-  public void testMergeInterfaces() {
-    doTest(false, new MemberDescriptor("I", PsiClass));
+  void testMergeInterfaces() {
+    doTest(false, new MemberDescriptor("I", PsiClass))
   }
 
-  public void testTypeParamsConflictingNames() {
-    doTest(false, new MemberDescriptor("foo", PsiMethod));
+  void testTypeParamsConflictingNames() {
+    doTest(false, new MemberDescriptor("foo", PsiMethod))
   }
 
-  public void testEscalateVisibility() {
-    doTest(false, new MemberDescriptor("foo", PsiMethod));
+  void testEscalateVisibility() {
+    doTest(false, new MemberDescriptor("foo", PsiMethod))
   }
 
-  public void testPreserveOverride() {
-    doTest(false, new MemberDescriptor("foo", PsiMethod));
+  void testPreserveOverride() {
+    doTest(false, new MemberDescriptor("foo", PsiMethod))
   }
 
   void testImplementsList1() {
@@ -163,62 +163,62 @@ class GrPullUpTest extends LightGroovyTestCase {
   }
 
   private void doTest(MemberDescriptor... membersToFind) {
-    doTest(true, membersToFind);
+    doTest(true, membersToFind)
   }
 
   private void doTest(final boolean checkMembersMovedCount, MemberDescriptor... membersToFind) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    PsiElement elementAt = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
-    final PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass);
-    assertNotNull(sourceClass);
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    PsiElement elementAt = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset())
+    final PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass)
+    assertNotNull(sourceClass)
 
-    PsiClass targetClass = sourceClass.getSuperClass();
-    assertNotNull(targetClass);
+    PsiClass targetClass = sourceClass.getSuperClass()
+    assertNotNull(targetClass)
     if (!targetClass.isWritable()) {
-      final PsiClass[] interfaces = sourceClass.getInterfaces();
-      assertEquals(2, interfaces.length);
-      assertTrue(interfaces[0].isWritable());
-      targetClass = interfaces[0];
+      final PsiClass[] interfaces = sourceClass.getInterfaces()
+      assertEquals(2, interfaces.length)
+      assertTrue(interfaces[0].isWritable())
+      targetClass = interfaces[0]
     }
-    MemberInfo[] infos = findMembers(sourceClass, membersToFind);
+    MemberInfo[] infos = findMembers(sourceClass, membersToFind)
 
-    final int[] countMoved = [0];
+    final int[] countMoved = [0]
     final MoveMemberListener listener = new MoveMemberListener() {
       @Override
-      public void memberMoved(PsiClass aClass, PsiMember member) {
-        assertEquals(sourceClass, aClass);
-        countMoved[0]++;
+      void memberMoved(PsiClass aClass, PsiMember member) {
+        assertEquals(sourceClass, aClass)
+        countMoved[0]++
       }
-    };
-    JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
-    final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
-    helper.run();
-    UIUtil.dispatchAllInvocationEvents();
-    JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
+    }
+    JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener)
+    final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS))
+    helper.run()
+    UIUtil.dispatchAllInvocationEvents()
+    JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener)
     if (checkMembersMovedCount) {
-      assertEquals(countMoved[0], membersToFind.length);
+      assertEquals(countMoved[0], membersToFind.length)
     }
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
-  public static class MemberDescriptor {
-    private String myName;
-    private Class<? extends PsiMember> myClass;
-    private boolean myAbstract;
+  static class MemberDescriptor {
+    private String myName
+    private Class<? extends PsiMember> myClass
+    private boolean myAbstract
 
-    public MemberDescriptor(String name, Class<? extends PsiMember> aClass, boolean isAbstract) {
-      myName = name;
-      myClass = aClass;
-      myAbstract = isAbstract;
+    MemberDescriptor(String name, Class<? extends PsiMember> aClass, boolean isAbstract) {
+      myName = name
+      myClass = aClass
+      myAbstract = isAbstract
     }
 
 
-    public MemberDescriptor(String name, Class<? extends PsiMember> aClass) {
-      this(name, aClass, false);
+    MemberDescriptor(String name, Class<? extends PsiMember> aClass) {
+      this(name, aClass, false)
     }
   }
 
-  public static MemberInfo[] findMembers(final PsiClass sourceClass, final MemberDescriptor... membersToFind) {
+  static MemberInfo[] findMembers(final PsiClass sourceClass, final MemberDescriptor... membersToFind) {
     MemberInfo[] infos = new MemberInfo[membersToFind.length]
     for (int i = 0; i < membersToFind.length; i++) {
       final Class<? extends PsiMember> clazz = membersToFind[i].myClass

@@ -21,33 +21,17 @@ import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.net.IdeHttpClientHelpers;
-import com.intellij.util.net.ssl.CertificateManager;
 import org.apache.http.*;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.config.ConnectionConfig;
-import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.github.api.data.GithubErrorMessage;
 import org.jetbrains.plugins.github.exceptions.*;
 import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
@@ -61,15 +45,12 @@ import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.List;
 
-import static org.jetbrains.plugins.github.api.GithubApiUtil.createDataFromRaw;
 import static org.jetbrains.plugins.github.api.GithubApiUtil.fromJson;
 
 public class GithubConnection {
   private static final Logger LOG = GithubUtil.LOG;
 
-  private static final HttpRequestInterceptor PREEMPTIVE_BASIC_AUTH = new PreemptiveBasicAuthInterceptor();
-
-  @NotNull private final String myHost;
+  @NotNull private final String myApiURL;
   @NotNull private final CloseableHttpClient myClient;
   private final boolean myReusable;
 
@@ -82,8 +63,8 @@ public class GithubConnection {
   }
 
   public GithubConnection(@NotNull GithubAuthData auth, boolean reusable) {
-    myHost = auth.getHost();
-    myClient = createClient(auth);
+    myApiURL = GithubUrlUtil.getApiUrl(auth.getHost());
+    myClient = new GithubConnectionBuilder(auth, myApiURL).createClient();
     myReusable = reusable;
   }
 
@@ -124,8 +105,8 @@ public class GithubConnection {
   }
 
   @NotNull
-  public String getHost() {
-    return myHost;
+  String getApiURL() {
+    return myApiURL;
   }
 
   public void abort() {
@@ -141,85 +122,11 @@ public class GithubConnection {
   }
 
   @NotNull
-  private static CloseableHttpClient createClient(@NotNull GithubAuthData auth) {
-    HttpClientBuilder builder = HttpClients.custom();
-
-    return builder
-      .setDefaultRequestConfig(createRequestConfig(auth))
-      .setDefaultConnectionConfig(createConnectionConfig(auth))
-      .setDefaultCredentialsProvider(createCredentialsProvider(auth))
-      .setDefaultHeaders(createHeaders(auth))
-      .addInterceptorFirst(PREEMPTIVE_BASIC_AUTH)
-      .setSslcontext(CertificateManager.getInstance().getSslContext())
-      .setHostnameVerifier((X509HostnameVerifier)CertificateManager.HOSTNAME_VERIFIER)
-      .build();
-  }
-
-  @NotNull
-  private static RequestConfig createRequestConfig(@NotNull GithubAuthData auth) {
-    RequestConfig.Builder builder = RequestConfig.custom();
-
-    int timeout = GithubSettings.getInstance().getConnectionTimeout();
-    builder
-      .setConnectTimeout(timeout)
-      .setSocketTimeout(timeout);
-
-    if (auth.isUseProxy()) {
-      IdeHttpClientHelpers.ApacheHttpClient4.setProxyForUrlIfEnabled(builder, auth.getHost());
-    }
-
-    return builder.build();
-  }
-
-  @NotNull
-  private static ConnectionConfig createConnectionConfig(@NotNull GithubAuthData auth) {
-    return ConnectionConfig.custom()
-      .setCharset(Consts.UTF_8)
-      .build();
-  }
-
-
-  @NotNull
-  private static CredentialsProvider createCredentialsProvider(@NotNull GithubAuthData auth) {
-    CredentialsProvider provider = new BasicCredentialsProvider();
-    // Basic authentication
-    GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
-    if (basicAuth != null) {
-      provider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(basicAuth.getLogin(), basicAuth.getPassword()));
-    }
-
-    if (auth.isUseProxy()) {
-      IdeHttpClientHelpers.ApacheHttpClient4.setProxyCredentialsForUrlIfEnabled(provider, auth.getHost());
-    }
-
-    return provider;
-  }
-
-  @NotNull
-  private static Collection<? extends Header> createHeaders(@NotNull GithubAuthData auth) {
-    List<Header> headers = new ArrayList<Header>();
-    GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
-    if (tokenAuth != null) {
-      headers.add(new BasicHeader("Authorization", "token " + tokenAuth.getToken()));
-    }
-    GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
-    if (basicAuth != null && basicAuth.getCode() != null) {
-      headers.add(new BasicHeader("X-GitHub-OTP", basicAuth.getCode()));
-    }
-    return headers;
-  }
-
-  @NotNull
-  private static String getRequestUrl(@NotNull String host, @NotNull String path) {
-    return GithubUrlUtil.getApiUrl(host) + path;
-  }
-
-  @NotNull
   private ResponsePage request(@NotNull String path,
                                @Nullable String requestBody,
                                @NotNull Collection<Header> headers,
                                @NotNull HttpVerb verb) throws IOException {
-    return doRequest(getRequestUrl(myHost, path), requestBody, headers, verb);
+    return doRequest(myApiURL + path, requestBody, headers, verb);
   }
 
   @NotNull
@@ -403,22 +310,15 @@ public class GithubConnection {
     }
   }
 
-  public static class PagedRequest<T> {
+  public static abstract class PagedRequestBase<T> implements PagedRequest<T> {
     @NotNull private String myPath;
     @NotNull private final Collection<Header> myHeaders;
-    @NotNull private final Class<T> myResult;
-    @NotNull private final Class<? extends DataConstructor[]> myRawArray;
 
     private boolean myFirstRequest = true;
     @Nullable private String myNextPage;
 
-    public PagedRequest(@NotNull String path,
-                        @NotNull Class<T> result,
-                        @NotNull Class<? extends DataConstructor[]> rawArray,
-                        @NotNull Header... headers) {
+    public PagedRequestBase(@NotNull String path, @NotNull Header... headers) {
       myPath = path;
-      myResult = result;
-      myRawArray = rawArray;
       myHeaders = Arrays.asList(headers);
     }
 
@@ -426,7 +326,7 @@ public class GithubConnection {
     public List<T> next(@NotNull GithubConnection connection) throws IOException {
       String url;
       if (myFirstRequest) {
-        url = getRequestUrl(connection.getHost(), myPath);
+        url = connection.getApiURL() + myPath;
         myFirstRequest = false;
       }
       else {
@@ -436,35 +336,57 @@ public class GithubConnection {
       }
 
       ResponsePage response = connection.doRequest(url, null, myHeaders, HttpVerb.GET);
+      myNextPage = response.getNextPage();
 
       if (response.getJsonElement() == null) {
         throw new GithubConfusingException("Empty response");
       }
 
-      if (!response.getJsonElement().isJsonArray()) {
-        throw new GithubJsonException("Wrong json type: expected JsonArray", new Exception(response.getJsonElement().toString()));
-      }
-
-      myNextPage = response.getNextPage();
-
-      List<T> result = new ArrayList<T>();
-      for (DataConstructor raw : fromJson(response.getJsonElement().getAsJsonArray(), myRawArray)) {
-        result.add(createDataFromRaw(raw, myResult));
-      }
-      return result;
+      return parse(response.getJsonElement());
     }
 
     public boolean hasNext() {
       return myFirstRequest || myNextPage != null;
     }
 
-    @NotNull
-    public List<T> getAll(@NotNull GithubConnection connection) throws IOException {
-      List<T> result = new ArrayList<T>();
-      while (hasNext()) {
-        result.addAll(next(connection));
+    protected abstract List<T> parse(@NotNull JsonElement response) throws IOException;
+  }
+
+  public static class ArrayPagedRequest<T> extends PagedRequestBase<T> {
+    @NotNull private final Class<? extends T[]> myTypeArray;
+
+    public ArrayPagedRequest(@NotNull String path,
+                             @NotNull Class<? extends T[]> typeArray,
+                             @NotNull Header... headers) {
+      super(path, headers);
+      myTypeArray = typeArray;
+    }
+
+    @Override
+    protected List<T> parse(@NotNull JsonElement response) throws IOException {
+      if (!response.isJsonArray()) {
+        throw new GithubJsonException("Wrong json type: expected JsonArray", new Exception(response.toString()));
       }
-      return result;
+
+      T[] result = fromJson(response.getAsJsonArray(), myTypeArray);
+      return Arrays.asList(result);
+    }
+  }
+
+  public static class SingleValuePagedRequest<T> extends PagedRequestBase<T> {
+    @NotNull private final Class<? extends T> myType;
+
+    public SingleValuePagedRequest(@NotNull String path,
+                                   @NotNull Class<? extends T> type,
+                                   @NotNull Header... headers) {
+      super(path, headers);
+      myType = type;
+    }
+
+    @Override
+    protected List<T> parse(@NotNull JsonElement response) throws IOException {
+      T result = fromJson(response, myType);
+      return Collections.singletonList(result);
     }
   }
 
@@ -508,14 +430,19 @@ public class GithubConnection {
     }
   }
 
-  private static class PreemptiveBasicAuthInterceptor implements HttpRequestInterceptor {
-    @Override
-    public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-      CredentialsProvider provider = (CredentialsProvider)context.getAttribute(HttpClientContext.CREDS_PROVIDER);
-      Credentials credentials = provider.getCredentials(AuthScope.ANY);
-      if (credentials != null) {
-        request.addHeader(new BasicScheme(Consts.UTF_8).authenticate(credentials, request, context));
+  public interface PagedRequest<T> {
+    @NotNull
+    List<T> next(@NotNull GithubConnection connection) throws IOException;
+
+    boolean hasNext();
+
+    @NotNull
+    default List<T> getAll(@NotNull GithubConnection connection) throws IOException {
+      List<T> result = new ArrayList<>();
+      while (hasNext()) {
+        result.addAll(next(connection));
       }
+      return result;
     }
   }
 }

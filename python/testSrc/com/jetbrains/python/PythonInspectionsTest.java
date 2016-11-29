@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.LanguageLevel;
  * @author yole
  */
 public class PythonInspectionsTest extends PyTestCase {
+
   public void testReturnValueFromInit() {
     LocalInspectionTool inspection = new PyReturnFromInitInspection();
     doTest(getTestName(true), inspection);
@@ -69,6 +70,10 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testPyMethodParametersInspectionInitSubclass() {
+    doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON36);
+  }
+
   public void testPyNestedDecoratorsInspection() {
     LocalInspectionTool inspection = new PyNestedDecoratorsInspection();
     doTest(getTestName(false), inspection);
@@ -107,6 +112,20 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testPyUnusedLocalCoroutine() {
     myFixture.copyDirectoryToProject("inspections/" + getTestName(false), "");
     doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON34);
+  }
+
+  public void testPyUnusedParameterInspection() {
+    doHighlightingTest(PyUnusedLocalInspection.class);
+  }
+
+  // PY-20805
+  public void testUnusedLocalFStringReferences() {
+    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON36);
+  }
+
+  // PY-8219
+  public void testUnusedLocalDoctestReference() {
+    doHighlightingTest(PyUnusedLocalInspection.class);
   }
 
   public void testPyDictCreationInspection() {
@@ -152,20 +171,12 @@ public class PythonInspectionsTest extends PyTestCase {
 
   //PY-3373
   public void testPyDocstringParametersInspection() {     
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      public void run() {
-        doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
   }
   
   // PY-9795
   public void testGoogleDocstringParametersInspection() {     
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      public void run() {
-        doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
   }
 
   public void testPySimplifyBooleanCheckInspection() {
@@ -248,16 +259,16 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyPropertyDefinitionInspection25() {
-    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON25);
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON25);
   }
 
   public void testPyPropertyDefinitionInspection26() {
-    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON26);
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON26);
   }
 
   // PY-11426
   public void testPyPropertyDefinitionInspection33() {
-    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON33);
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON33);
   }
 
   public void testInconsistentIndentation() {
@@ -335,5 +346,9 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyShadowingNamesInspection() {
     doHighlightingTest(PyShadowingNamesInspection.class);
+  }
+
+  public void testPyDunderSlotsInspection() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doHighlightingTest(PyDunderSlotsInspection.class));
   }
 }

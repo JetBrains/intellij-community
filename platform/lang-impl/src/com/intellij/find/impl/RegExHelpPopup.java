@@ -342,7 +342,7 @@ public class RegExHelpPopup extends JPanel {
   @NotNull
   public static LinkLabel createRegExLink(@NotNull String title, @Nullable final Component owner, @Nullable final Logger logger) {
     final Runnable action = createRegExLinkRunnable(owner, logger);
-    return new LinkLabel<Object>(title, null, new LinkListener<Object>() {
+    return new LinkLabel<>(title, null, new LinkListener<Object>() {
 
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {

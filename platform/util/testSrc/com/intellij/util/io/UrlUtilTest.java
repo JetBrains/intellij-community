@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,16 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
+import java.io.File;
+import java.net.URL;
 import java.util.regex.Matcher;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,12 +53,48 @@ public class UrlUtilTest {
 
     assertPair(URLUtil.splitJarUrl("jar:file:/path/to/jar.jar!/resource.xml"), "/path/to/jar.jar", "resource.xml");
     assertPair(URLUtil.splitJarUrl("jar:file:///path/to/jar.jar!/resource.xml"), "/path/to/jar.jar", "resource.xml");
+
+    if (SystemInfo.isWindows) {
+      assertPair(URLUtil.splitJarUrl("file:/C:/path/to/jar.jar!/resource.xml"), "C:/path/to/jar.jar", "resource.xml");
+      assertPair(URLUtil.splitJarUrl("file:////HOST/share/path/to/jar.jar!/resource.xml"), "//HOST/share/path/to/jar.jar", "resource.xml");
+    }
+    else {
+      assertPair(URLUtil.splitJarUrl("file:/C:/path/to/jar.jar!/resource.xml"), "/C:/path/to/jar.jar", "resource.xml");
+      assertPair(URLUtil.splitJarUrl("file:////HOST/share/path/to/jar.jar!/resource.xml"), "/HOST/share/path/to/jar.jar", "resource.xml");
+    }
+
+    assertPair(URLUtil.splitJarUrl("file:/path/to/jar%20with%20spaces.jar!/resource.xml"), "/path/to/jar with spaces.jar", "resource.xml");
+
+    assertPair(URLUtil.splitJarUrl("file:/path/to/jar with spaces.jar!/resource.xml"), "/path/to/jar with spaces.jar", "resource.xml");
   }
 
   private static void assertPair(@Nullable Pair<String, String> pair, String expected1, String expected2) {
     assertNotNull(pair);
     assertEquals(expected1, pair.first);
     assertEquals(expected2, pair.second);
+  }
+
+  @Test
+  public void resourceExistsForLocalFile() throws Exception {
+    File dir = FileUtil.createTempDirectory("UrlUtilTest", "");
+    File existingFile = new File(dir, "a.txt");
+    assertTrue(existingFile.createNewFile());
+    assertEquals(ThreeState.YES, URLUtil.resourceExists(existingFile.toURI().toURL()));
+    File nonExistingFile = new File(dir, "b.txt");
+    assertEquals(ThreeState.NO, URLUtil.resourceExists(nonExistingFile.toURI().toURL()));
+  }
+
+  @Test
+  public void resourceExistsForRemoteUrl() throws Exception {
+    assertEquals(ThreeState.UNSURE, URLUtil.resourceExists(new URL("http://jetbrains.com")));
+  }
+
+  @Test
+  public void resourceExistsForFileInJar() throws Exception {
+    URL stringUrl = String.class.getResource("String.class");
+    assertEquals(ThreeState.YES, URLUtil.resourceExists(stringUrl));
+    URL xxxUrl = new URL(stringUrl.getProtocol(), "", -1, stringUrl.getPath() + "/xxx");
+    assertEquals(ThreeState.NO, URLUtil.resourceExists(xxxUrl));
   }
 
   @Test
@@ -83,17 +124,22 @@ public class UrlUtilTest {
     // https://youtrack.jetbrains.com/issue/WEB-14581#comment=27-1014790
     assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset:utf-8;base64,dGVzdA==")).isEqualTo(test);
   }
-  
+
   private static void doUrlTest(@NotNull final String line, @Nullable final String expectedUrl) {
     final Matcher matcher = URLUtil.URL_PATTERN.matcher(line);
+    boolean found = matcher.find();
     if (expectedUrl == null) {
-      if (matcher.find()) {
+      if (found) {
         fail("No URL expected in [" + line + "], detected: " + matcher.group());
       }
       return;
     }
 
-    assertTrue("Expected URL (" + expectedUrl + ") is not detected in [" + line + "]", matcher.find());
+    if (!URLUtil.canContainUrl(line) && found) {
+      fail("canContainUrl returns false for " + line);
+    }
+
+    assertTrue("Expected URL (" + expectedUrl + ") is not detected in [" + line + "]", found);
     assertEquals("Text: [" + line + "]", expectedUrl, matcher.group());
   }
 
@@ -122,5 +168,7 @@ public class UrlUtilTest {
     doUrlTest("not a site 1www.jetbrains.com", null);
     doUrlTest("not a site wwww.jetbrains.com", null);
     doUrlTest("not a site xxx.www.jetbrains.com", null);
+    doUrlTest("site https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage", 
+              "https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage");
   }
 }

@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * User : catherine
  */
-public class SphinxTasksModel extends CollectionComboBoxModel {
+public class SphinxTasksModel extends CollectionComboBoxModel<String> {
   private static List<String> targets = Lists.newArrayList();
   static {
     targets.add("changes");
@@ -37,7 +37,6 @@ public class SphinxTasksModel extends CollectionComboBoxModel {
     targets.add("htmlhelp");
     targets.add("json");
     targets.add("latex");
-    targets.add("latexpdf");
     targets.add("linkcheck");
     targets.add("man");
     targets.add("pickle");

@@ -42,33 +42,21 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
                                 final Function<T, String> namer,
                                 final Condition<String> filter,
                                 final SpeedSearch speedSearch) {
-    this(list, namer, filter, new Computable<String>() {
-      @Override
-      public String compute() {
-        return speedSearch.getFilter();
-      }
-    });
+    this(list, namer, filter, () -> speedSearch.getFilter());
   }
 
   public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, final SpeedSearchSupply speedSearch) {
-    this(list, namer, filter, new Computable<String>() {
-          @Override
-          public String compute() {
-            final String prefix = speedSearch.getEnteredPrefix();
-            return prefix == null ? "" : prefix;
-          }
-        });
+    this(list, namer, filter, () -> {
+      final String prefix = speedSearch.getEnteredPrefix();
+      return prefix == null ? "" : prefix;
+    });
   }
 
   public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, Computable<String> pattern) {
     super(list);
     myPattern = pattern;
     myNamer = namer;
-    setFilter(namer != null ? new Condition<T>() {
-      public boolean value(T t) {
-        return filter.value(namer.fun(t));
-      }
-    } : null);
+    setFilter(namer != null ? (Condition<T>)t -> filter.value(namer.fun(t)) : null);
   }
 
   @Override

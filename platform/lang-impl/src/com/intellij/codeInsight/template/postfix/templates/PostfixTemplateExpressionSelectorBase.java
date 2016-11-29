@@ -41,12 +41,7 @@ public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTe
     myAdditionalCondition = condition != null ? condition : Conditions.<PsiElement>alwaysTrue();
   }
 
-  private static final Condition<PsiElement> PSI_ERROR_FILTER = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      return !PsiTreeUtil.hasErrorElements(element);
-    }
-  };
+  private static final Condition<PsiElement> PSI_ERROR_FILTER = element -> !PsiTreeUtil.hasErrorElements(element);
 
   @Override
   public boolean hasExpression(@NotNull PsiElement context,
@@ -56,12 +51,7 @@ public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTe
   }
 
   protected Condition<PsiElement> getBorderOffsetFilter(final int offset) {
-    return new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element.getTextRange().getEndOffset() == offset;
-      }
-    };
+    return element -> element.getTextRange().getEndOffset() == offset;
   }
 
   @NotNull
@@ -72,12 +62,7 @@ public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTe
 
   @NotNull
   public Function<PsiElement, String> getRenderer() {
-    return new Function<PsiElement, String>() {
-      @Override
-      public String fun(@NotNull PsiElement element) {
-        return element.getText();
-      }
-    };
+    return element -> element.getText();
   }
 
   protected abstract List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);

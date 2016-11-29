@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,13 +68,8 @@ public class GrReassignedLocalVarsChecker {
     }
 
     assert resolved instanceof GrVariable;
-    return CachedValuesManager.getCachedValue(resolved, new CachedValueProvider<Boolean>() {
-      @Nullable
-      @Override
-      public Result<Boolean> compute() {
-        return Result.create(isReassignedVarImpl((GrVariable)resolved), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(resolved, () -> CachedValueProvider.Result
+      .create(isReassignedVarImpl((GrVariable)resolved), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static boolean isReassignedVarImpl(@NotNull final GrVariable resolved) {
@@ -88,14 +82,14 @@ public class GrReassignedLocalVarsChecker {
       if (scope instanceof GroovyPsiElement) {
         ((GroovyPsiElement)scope).accept(new GroovyRecursiveElementVisitor() {
           @Override
-          public void visitClosure(GrClosableBlock closure) {
+          public void visitClosure(@NotNull GrClosableBlock closure) {
             if (getUsedVarsInsideBlock(closure).contains(name)) {
               isReassigned.set(true);
             }
           }
 
           @Override
-          public void visitElement(GroovyPsiElement element) {
+          public void visitElement(@NotNull GroovyPsiElement element) {
             if (isReassigned.get()) return;
             super.visitElement(element);
           }
@@ -122,70 +116,58 @@ public class GrReassignedLocalVarsChecker {
 
     assert resolved instanceof GrVariable;
 
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(((GrVariable)resolved), new Function<GrVariable, PsiType>() {
-      @Override
-      public PsiType fun(GrVariable variable) {
-        return getLeastUpperBoundByVar(variable);
-      }
-    });
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(((GrVariable)resolved), variable -> getLeastUpperBoundByVar(variable));
   }
 
   @Nullable
   private static PsiType getLeastUpperBoundByVar(@NotNull final GrVariable var) {
-    return RecursionManager.doPreventingRecursion(var, false, new NullableComputable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        final Collection<PsiReference> all = ReferencesSearch.search(var, var.getUseScope()).findAll();
-        final GrExpression initializer = var.getInitializerGroovy();
+    return RecursionManager.doPreventingRecursion(var, false, (NullableComputable<PsiType>)() -> {
+      final Collection<PsiReference> all = ReferencesSearch.search(var, var.getUseScope()).findAll();
+      final GrExpression initializer = var.getInitializerGroovy();
 
-        if (initializer == null && all.isEmpty()) {
-          return var.getDeclaredType();
-        }
-
-        PsiType result = initializer != null ? initializer.getType() : null;
-
-        final PsiManager manager = var.getManager();
-        for (PsiReference reference : all) {
-          final PsiElement ref = reference.getElement();
-          if (ref instanceof GrReferenceExpression && PsiUtil.isLValue(((GrReferenceExpression)ref))) {
-            result = TypesUtil.getLeastUpperBoundNullable(result, TypeInferenceHelper.getInitializerTypeFor(ref), manager);
-          }
-        }
-
-        return result;
+      if (initializer == null && all.isEmpty()) {
+        return var.getDeclaredType();
       }
+
+      PsiType result = initializer != null ? initializer.getType() : null;
+
+      final PsiManager manager = var.getManager();
+      for (PsiReference reference : all) {
+        final PsiElement ref = reference.getElement();
+        if (ref instanceof GrReferenceExpression && PsiUtil.isLValue(((GrReferenceExpression)ref))) {
+          result = TypesUtil.getLeastUpperBoundNullable(result, TypeInferenceHelper.getInitializerTypeFor(ref), manager);
+        }
+      }
+
+      return result;
     });
   }
 
   @NotNull
   private static Set<String> getUsedVarsInsideBlock(@NotNull final GrCodeBlock block) {
-      return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Set<String>>() {
-        @Nullable
-        @Override
-        public Result<Set<String>> compute() {
-          final Set<String> result = ContainerUtil.newHashSet();
+      return CachedValuesManager.getCachedValue(block, () -> {
+        final Set<String> result = ContainerUtil.newHashSet();
 
-          block.acceptChildren(new GroovyRecursiveElementVisitor() {
+        block.acceptChildren(new GroovyRecursiveElementVisitor() {
 
-            @Override
-            public void visitOpenBlock(GrOpenBlock openBlock) {
-              result.addAll(getUsedVarsInsideBlock(openBlock));
+          @Override
+          public void visitOpenBlock(@NotNull GrOpenBlock openBlock) {
+            result.addAll(getUsedVarsInsideBlock(openBlock));
+          }
+
+          @Override
+          public void visitClosure(@NotNull GrClosableBlock closure) {
+            result.addAll(getUsedVarsInsideBlock(closure));
+          }
+
+          @Override
+          public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
+            if (referenceExpression.getQualifier() == null && referenceExpression.getReferenceName() != null) {
+              result.add(referenceExpression.getReferenceName());
             }
-
-            @Override
-            public void visitClosure(GrClosableBlock closure) {
-              result.addAll(getUsedVarsInsideBlock(closure));
-            }
-
-            @Override
-            public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-              if (referenceExpression.getQualifier() == null && referenceExpression.getReferenceName() != null) {
-                result.add(referenceExpression.getReferenceName());
-              }
-            }
-          });
-          return Result.create(result, block);
-        }
+          }
+        });
+        return CachedValueProvider.Result.create(result, block);
       });
   }
 

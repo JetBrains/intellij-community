@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * <p>The provider of external application scripts called by Git when a remote operation needs communication with the user.</p>
@@ -57,8 +58,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   @Nullable private File myScriptPath;
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
 
-  @NotNull private final THashMap<Integer, T> handlers = new THashMap<Integer, T>();
-  private int myNextHandlerKey;
+  @NotNull private final THashMap<UUID, T> handlers = new THashMap<>();
   @NotNull private final Object HANDLERS_LOCK = new Object();
 
   /**
@@ -111,14 +111,14 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @param parentDisposable a disposable to unregister the handler if it doesn't get unregistered manually
    * @return an identifier to pass to the environment variable
    */
-  public int registerHandler(@NotNull T handler, @NotNull Disposable parentDisposable) {
+  public UUID registerHandler(@NotNull T handler, @NotNull Disposable parentDisposable) {
     synchronized (HANDLERS_LOCK) {
       XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
       if (!xmlRpcServer.hasHandler(myHandlerName)) {
         xmlRpcServer.addHandler(myHandlerName, createRpcRequestHandlerDelegate());
       }
 
-      final int key = myNextHandlerKey;
+      final UUID key = UUID.randomUUID();
       handlers.put(key, handler);
       Disposer.register(parentDisposable, new Disposable() {
         @Override
@@ -126,7 +126,6 @@ public abstract class GitXmlRpcHandlerService<T> {
           handlers.remove(key);
         }
       });
-      myNextHandlerKey++;
       return key;
     }
   }
@@ -146,7 +145,7 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @return the registered handler
    */
   @NotNull
-  protected T getHandler(int key) {
+  protected T getHandler(UUID key) {
     synchronized (HANDLERS_LOCK) {
       T rc = handlers.get(key);
       if (rc == null) {
@@ -161,7 +160,7 @@ public abstract class GitXmlRpcHandlerService<T> {
    *
    * @param key the key to unregister
    */
-  public void unregisterHandler(int key) {
+  public void unregisterHandler(UUID key) {
     synchronized (HANDLERS_LOCK) {
       if (handlers.remove(key) == null) {
         throw new IllegalArgumentException("The handler " + key + " is not registered");

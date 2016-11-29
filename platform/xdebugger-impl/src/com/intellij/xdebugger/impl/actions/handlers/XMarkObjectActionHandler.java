@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialog;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
@@ -48,7 +48,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
     if (markers == null || node == null) return;
     XValue value = node.getValueContainer();
 
-    boolean detachedView = event.getData(XDebugSessionTab.TAB_KEY) == null;
+    boolean detachedView = DebuggerUIUtil.isInDetachedTree(event);
     XDebuggerTreeState treeState = XDebuggerTreeState.saveState(node.getTree());
 
     ValueMarkup existing = markers.getMarkup(value);

@@ -18,14 +18,12 @@ package org.jetbrains.plugins.gradle.service.project.wizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.SelectExternalProjectStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.GradleProjectSettingsControl;
@@ -91,12 +89,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
     else {
       AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), projectImportProvider);
       dialog.getWizardContext().setProjectBuilder(getBuilder());
-      dialog.navigateToStep(new Function<Step, Boolean>() {
-        @Override
-        public Boolean fun(Step step) {
-          return step instanceof SelectExternalProjectStep;
-        }
-      });
+      dialog.navigateToStep(step -> step instanceof SelectExternalProjectStep);
       result = dialog.showAndGet();
     }
     if (result && getBuilder().getExternalProjectNode() != null) {

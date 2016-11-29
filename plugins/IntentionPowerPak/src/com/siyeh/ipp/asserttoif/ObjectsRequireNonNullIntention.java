@@ -111,7 +111,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
         return false;
       }
       final PsiAnnotation annotation = NullableNotNullManager.getInstance(variable.getProject()).getNotNullAnnotation(variable, true);
-      if (annotation != null && annotation.isWritable()) {
+      if (annotation != null && !AnnotationUtil.isExternalAnnotation(annotation) && !AnnotationUtil.isInferredAnnotation(annotation)) {
         return true;
       }
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);
@@ -142,7 +142,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
         return false;
       }
       final PsiStatement thenBranch = ifStatement.getThenBranch();
-      if (!IfStatementPredicate.isSimpleThrowStatement(thenBranch)) {
+      if (!isSimpleThrowStatement(thenBranch)) {
         return false;
       }
       final PsiExpression condition = ifStatement.getCondition();
@@ -182,6 +182,23 @@ public class ObjectsRequireNonNullIntention extends Intention {
       }
       return PsiType.NULL.equals(rhs.getType()) && VariableAccessUtils.evaluatesToVariable(lhs, variable) ||
              PsiType.NULL.equals(lhs.getType()) && VariableAccessUtils.evaluatesToVariable(rhs, variable);
+    }
+
+    public static boolean isSimpleThrowStatement(PsiStatement element) {
+      if (element instanceof PsiThrowStatement) {
+        return true;
+      }
+      else if (element instanceof PsiBlockStatement) {
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)element;
+        final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+        final PsiStatement[] statements = codeBlock.getStatements();
+        if (statements.length != 1) {
+          return false;
+        }
+        final PsiStatement statement = statements[0];
+        return isSimpleThrowStatement(statement);
+      }
+      return false;
     }
   }
 }

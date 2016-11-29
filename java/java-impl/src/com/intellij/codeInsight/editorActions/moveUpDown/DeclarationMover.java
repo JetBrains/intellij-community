@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.List;
 class DeclarationMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.DeclarationMover");
   private PsiEnumConstant myEnumToInsertSemicolonAfter;
-  private boolean moveEnumConstant = false;
+  private boolean moveEnumConstant;
 
   @Override
   public void beforeMove(@NotNull final Editor editor, @NotNull final MoveInfo info, final boolean down) {
@@ -202,7 +202,7 @@ class DeclarationMover extends LineMover {
         endLine == lineRange.endLine) {
       return true;
     }
-    List<PsiElement> memberSuspects = new ArrayList<PsiElement>();
+    List<PsiElement> memberSuspects = new ArrayList<>();
     PsiModifierList modifierList = member instanceof PsiMember ? ((PsiMember)member).getModifierList() : null;
     if (modifierList != null) memberSuspects.add(modifierList);
     if (member instanceof PsiClass) {

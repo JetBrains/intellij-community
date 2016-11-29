@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class StringDescriptorManager {
   private Module myModule;
-  private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = new SoftValueHashMap<Pair<Locale, String>, PropertiesFile>();
+  private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = new SoftValueHashMap<>();
 
   public StringDescriptorManager(final Module module, MessageBus bus) {
     myModule = module;

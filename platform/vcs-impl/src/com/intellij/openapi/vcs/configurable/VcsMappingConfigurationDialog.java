@@ -25,10 +25,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,7 +64,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
-    myVcses = new HashMap<String, VcsDescriptor>();
+    myVcses = new HashMap<>();
     for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
       myVcses.put(vcsDescriptor.getName(), vcsDescriptor);
     }
@@ -106,15 +103,12 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     initProjectMessage();
   }
 
-  public void saveToMapping(VcsDirectoryMapping mapping) {
+  @NotNull
+  public VcsDirectoryMapping getMapping() {
     VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
-    mapping.setVcs((wrapper == null) || wrapper.isNone() ? "" : wrapper.getName());
-    if (myProjectRadioButton.isSelected()) {
-      mapping.setDirectory("");
-    } else {
-      mapping.setDirectory(FileUtil.toSystemIndependentName(myDirectoryTextField.getText()));
-    }
-    mapping.setRootSettings(myMappingCopy.getRootSettings());
+    String vcs = wrapper == null || wrapper.isNone() ? "" : wrapper.getName();
+    String directory = myProjectRadioButton.isSelected() ? "" : FileUtil.toSystemIndependentName(myDirectoryTextField.getText());
+    return new VcsDirectoryMapping(directory, vcs, myMappingCopy.getRootSettings());
   }
 
   private void updateVcsConfigurable() {
@@ -208,7 +202,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
             VcsDescriptor probableVcs = null;
 
             @Override
-            protected void doInAwtIfFail(Exception e) {
+            protected void doInAwtIfFail(@NotNull Exception e) {
             }
 
             @Override

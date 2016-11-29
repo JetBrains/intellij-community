@@ -38,6 +38,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,16 +95,40 @@ public class SvnHistoryProvider
       final MergeSourceColumnInfo mergeSourceColumn = new MergeSourceColumnInfo((SvnHistorySession)session);
       columns = new ColumnInfo[]{new CopyFromColumnInfo(), mergeSourceColumn};
 
-      final JPanel panel = new JPanel(new BorderLayout());
+      final JTextArea field = new JTextArea() {
+        final StatusText statusText = new StatusText(this) {
+          @Override
+          protected boolean isStatusVisible() {
+            return getDocument().getLength() == 0;
+          }
+        };
 
-      final JTextArea field = new JTextArea();
+        @Override
+        public Color getBackground() {
+          return UIUtil.getEditorPaneBackground();
+        }
+
+        {
+          statusText.setText("Merge sources");
+          setWrapStyleWord(true);
+          setLineWrap(true);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          statusText.paint(this, g);
+        }
+      };
       field.setEditable(false);
-      field.setBackground(UIUtil.getComboBoxDisabledBackground());
+      field.setOpaque(false);
       field.setWrapStyleWord(true);
       listener = new Consumer<VcsFileRevision>() {
         @Override
         public void consume(VcsFileRevision vcsFileRevision) {
           field.setText(mergeSourceColumn.getText(vcsFileRevision));
+          field.setCaretPosition(0);
+          field.repaint();
         }
       };
 
@@ -131,11 +156,8 @@ public class SvnHistoryProvider
       }.initPosition()
         .addExtraAction(AnActionButton.fromAction(sourceAction))
         .createPanel();
-      fieldPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP));
-
-      panel.add(fieldPanel, BorderLayout.CENTER);
-      panel.add(new JLabel("Merge Sources:"), BorderLayout.NORTH);
-      addComp = panel;
+      fieldPanel.setBorder(IdeBorderFactory.createEmptyBorder());
+      addComp = fieldPanel;
     }
     else {
       columns = new ColumnInfo[]{new CopyFromColumnInfo()};
@@ -228,7 +250,7 @@ public class SvnHistoryProvider
       new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
                             ! path.isNonLocal());
 
-    final Ref<Boolean> sessionReported = new Ref<Boolean>();
+    final Ref<Boolean> sessionReported = new Ref<>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(SvnBundle.message("progress.text2.collecting.history", path.getName()));

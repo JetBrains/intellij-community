@@ -35,9 +35,9 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
     return (ToolWindowManagerEx)getInstance(project);
   }
 
-  public abstract void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l);
-  public abstract void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l, @NotNull Disposable parentDisposable);
-  public abstract void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l);
+  public abstract void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener);
+  public abstract void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener, @NotNull Disposable parentDisposable);
+  public abstract void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener);
 
   /**
    * @return <code>ID</code> of tool window that was activated last time.
@@ -69,5 +69,6 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
 
   public abstract void hideToolWindow(@NotNull String id, boolean hideSide);
 
+  @NotNull
   public abstract List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);
 }

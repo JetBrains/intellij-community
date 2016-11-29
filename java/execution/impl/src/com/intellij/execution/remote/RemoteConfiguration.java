@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import java.util.Collection;
 
 public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
                                  implements RunConfigurationWithSuppressedDefaultRunAction, RemoteRunProfile {
-
   @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
@@ -90,9 +89,9 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<RemoteConfiguration>();
+    SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable(getProject()));
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<RemoteConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 
@@ -100,6 +99,4 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public Collection<Module> getValidModules() {
     return getAllModules();
   }
-
-
 }

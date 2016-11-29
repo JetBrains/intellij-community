@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class PsiDisjunctionType extends PsiType.Stub {
   private final CachedValue<PsiType> myLubCache;
 
   public PsiDisjunctionType(@NotNull List<PsiType> types, @NotNull PsiManager psiManager) {
-    super(PsiAnnotation.EMPTY_ARRAY);
+    super(TypeAnnotationProvider.EMPTY);
 
     myManager = psiManager;
     myTypes = Collections.unmodifiableList(types);
@@ -83,11 +83,11 @@ public class PsiDisjunctionType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
+  public String getPresentableText(final boolean annotated) {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
       @Override
       public String fun(PsiType psiType) {
-        return psiType.getPresentableText();
+        return psiType.getPresentableText(annotated);
       }
     }, " | ");
   }

@@ -80,8 +80,8 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   public ThreadDumpPanel(final Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
     super(new BorderLayout());
     myThreadDump = threadDump;
-    myMergedThreadDump = new ArrayList<ThreadState>();
-    List<ThreadState> copy = new ArrayList<ThreadState>(myThreadDump);
+    myMergedThreadDump = new ArrayList<>();
+    List<ThreadState> copy = new ArrayList<>(myThreadDump);
     for (int i = 0; i < copy.size(); i++) {
       ThreadState state = copy.get(i);
       ThreadState.CompoundThreadState compound = new ThreadState.CompoundThreadState(state);
@@ -266,7 +266,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   private static class ThreadListCellRenderer extends ColoredListCellRenderer {
 
     @Override
-    protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
       ThreadState threadState = (ThreadState) value;
       setIcon(getThreadStateIcon(threadState));
       if (!selected) {
@@ -303,25 +303,17 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   }
 
   private class SortThreadsAction extends DumbAwareAction {
-    private final Comparator<ThreadState> BY_TYPE = new Comparator<ThreadState>() {
-      @Override
-      public int compare(ThreadState o1, ThreadState o2) {
-        final int s1 = getThreadStateCode(o1).ordinal();
-        final int s2 = getThreadStateCode(o2).ordinal();
-        if (s1 == s2) {
-          return o1.getName().compareToIgnoreCase(o2.getName());
-        } else {
-          return s1 < s2 ? - 1 :  1;
-        }
+    private final Comparator<ThreadState> BY_TYPE = (o1, o2) -> {
+      final int s1 = getThreadStateCode(o1).ordinal();
+      final int s2 = getThreadStateCode(o2).ordinal();
+      if (s1 == s2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      } else {
+        return s1 < s2 ? - 1 :  1;
       }
     };
 
-    private final Comparator<ThreadState> BY_NAME = new Comparator<ThreadState>() {
-      @Override
-      public int compare(ThreadState o1, ThreadState o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    };
+    private final Comparator<ThreadState> BY_NAME = (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName());
     private Comparator<ThreadState> COMPARATOR = BY_TYPE;
     private static final String TYPE_LABEL = "Sort threads by type";
     private static final String NAME_LABEL = "Sort threads by name";

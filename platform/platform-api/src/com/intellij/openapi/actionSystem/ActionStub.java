@@ -102,6 +102,7 @@ public class ActionStub extends AnAction{
       targetPresentation.setDescription(sourcePresentation.getDescription());
     }
     targetAction.setShortcutSet(getShortcutSet());
+    targetAction.markAsGlobal();
   }
 
   public String getProjectType() {

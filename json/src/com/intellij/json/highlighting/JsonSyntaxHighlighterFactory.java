@@ -55,7 +55,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   }
 
   private static class MyHighlighter extends SyntaxHighlighterBase {
-    private static final Map<IElementType, TextAttributesKey> ourAttributes = new HashMap<IElementType, TextAttributesKey>();
+    private static final Map<IElementType, TextAttributesKey> ourAttributes = new HashMap<>();
 
     static {
       fillMap(ourAttributes, JSON_BRACES, JsonElementTypes.L_CURLY, JsonElementTypes.R_CURLY);
@@ -69,7 +69,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       fillMap(ourAttributes, JSON_LINE_COMMENT, JsonElementTypes.LINE_COMMENT);
       fillMap(ourAttributes, JSON_BLOCK_COMMENT, JsonElementTypes.BLOCK_COMMENT);
       // TODO may be it's worth to add more sensible highlighting for identifiers
-      fillMap(ourAttributes, JSON_IDENTIFIER, JsonElementTypes.INDENTIFIER);
+      fillMap(ourAttributes, JSON_IDENTIFIER, JsonElementTypes.IDENTIFIER);
       fillMap(ourAttributes, HighlighterColors.BAD_CHARACTER, TokenType.BAD_CHARACTER);
 
       fillMap(ourAttributes, JSON_VALID_ESCAPE, StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN);

@@ -115,11 +115,6 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
     throw new RuntimeException("Error message:" + message);
   }
 
-  @Override
-  protected boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
-    return false;
-  }
-
   private PsiType findType(final PsiType[] candidates, PsiType defaultType) {
     for (PsiType candidate : candidates) {
       if (candidate.equalsToText(myExpectedTypeCanonicalName)) return candidate;

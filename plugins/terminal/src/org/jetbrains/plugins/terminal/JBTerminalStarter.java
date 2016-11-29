@@ -2,22 +2,24 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.jediterm.terminal.*;
+import com.jediterm.terminal.Terminal;
+import com.jediterm.terminal.TerminalDataStream;
+import com.jediterm.terminal.TerminalStarter;
+import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.emulator.JediEmulator;
-
-import javax.swing.*;
 
 /**
  * @author traff
  */
 public class JBTerminalStarter extends TerminalStarter {
-  public JBTerminalStarter(Terminal terminal, TtyConnector ttyConnector) {
-    super(terminal, ttyConnector);
+
+  public JBTerminalStarter(Terminal terminal, TtyConnector ttyConnector, TerminalDataStream dataStream) {
+    super(terminal, ttyConnector, dataStream);
   }
 
   @Override
-  protected JediEmulator createEmulator(TtyChannel channel, TerminalOutputStream stream, Terminal terminal) {
-    return new JediEmulator(channel, stream, terminal) {
+  protected JediEmulator createEmulator(TerminalDataStream dataStream, Terminal terminal) {
+    return new JediEmulator(dataStream, terminal) {
       @Override
       protected void unsupported(char... sequenceChars) {
         if (sequenceChars[0] == 7) { //ESC BEL

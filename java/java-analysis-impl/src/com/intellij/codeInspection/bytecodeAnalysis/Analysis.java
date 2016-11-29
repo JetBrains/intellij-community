@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,12 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
 
 class AbstractValues {
   static final class ParamValue extends BasicValue {
@@ -213,7 +216,7 @@ abstract class Analysis<Res> {
   final protected List<State>[] computed;
   final Key aKey;
 
-  Res earlyResult = null;
+  Res earlyResult;
 
   protected Analysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
     this.richControlFlow = richControlFlow;
@@ -227,7 +230,7 @@ abstract class Analysis<Res> {
   }
 
   final State createStartState() {
-    return new State(0, new Conf(0, createStartFrame()), new ArrayList<Conf>(), false, false);
+    return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false);
   }
 
   static boolean stateEquiv(State curr, State prev) {
@@ -257,7 +260,7 @@ abstract class Analysis<Res> {
   protected abstract Equation analyze() throws AnalyzerException;
 
   final Frame<BasicValue> createStartFrame() {
-    Frame<BasicValue> frame = new Frame<BasicValue>(methodNode.maxLocals, methodNode.maxStack);
+    Frame<BasicValue> frame = new Frame<>(methodNode.maxLocals, methodNode.maxStack);
     Type returnType = Type.getReturnType(methodNode.desc);
     BasicValue returnValue = Type.VOID_TYPE.equals(returnType) ? null : new BasicValue(returnType);
     frame.setReturn(returnValue);
@@ -292,7 +295,7 @@ abstract class Analysis<Res> {
   }
 
   static <A> List<A> append(List<A> xs, A x) {
-    ArrayList<A> result = new ArrayList<A>();
+    ArrayList<A> result = new ArrayList<>();
     if (xs != null) {
       result.addAll(xs);
     }
@@ -303,7 +306,7 @@ abstract class Analysis<Res> {
   protected void addComputed(int i, State s) {
     List<State> states = computed[i];
     if (states == null) {
-      states = new ArrayList<State>();
+      states = new ArrayList<>();
       computed[i] = states;
     }
     states.add(s);

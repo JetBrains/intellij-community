@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,23 @@
 package com.intellij.util.graph;
 
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
-import junit.framework.TestCase;
 
 import java.util.*;
 
 /**
  * @author nik
  */
-public abstract class GraphTestCase extends TestCase {
-  protected static GraphAlgorithmsImpl getAlgorithmsInstance() {
+public abstract class GraphTestCase {
+  protected static GraphAlgorithms getAlgorithmsInstance() {
     return new GraphAlgorithmsImpl();
   }
 
   protected static Graph<String> initGraph(final Map<String, String> graph) {
-    final Map<String, List<String>> out = new HashMap<String, List<String>>();
-    final Map<String, List<String>> in = new HashMap<String, List<String>>();
+    final Map<String, List<String>> out = new HashMap<>();
+    final Map<String, List<String>> in = new HashMap<>();
     for (String s : graph.keySet()) {
-      out.put(s, new ArrayList<String>());
-      in.put(s, new ArrayList<String>());
+      out.put(s, new ArrayList<>());
+      in.put(s, new ArrayList<>());
     }
     for (Map.Entry<String, String> entry : graph.entrySet()) {
       String from = entry.getKey();

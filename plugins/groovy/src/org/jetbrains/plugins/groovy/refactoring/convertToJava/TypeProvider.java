@@ -43,7 +43,7 @@ import java.util.Map;
  * @author Medvedev Max
  */
 public class TypeProvider {
-  private final Map<GrMethod, PsiType[]> inferredTypes = new HashMap<GrMethod, PsiType[]>();
+  private final Map<GrMethod, PsiType[]> inferredTypes = new HashMap<>();
 
   public TypeProvider() {
   }
@@ -127,29 +127,26 @@ public class TypeProvider {
 
     if (!paramInds.isEmpty()) {
       final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY);
-      MethodReferencesSearch.search(method, true).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference psiReference) {
-          final PsiElement element = psiReference.getElement();
-          final PsiManager manager = element.getManager();
-          final GlobalSearchScope resolveScope = element.getResolveScope();
+      MethodReferencesSearch.search(method, true).forEach(psiReference -> {
+        final PsiElement element = psiReference.getElement();
+        final PsiManager manager = element.getManager();
+        final GlobalSearchScope resolveScope = element.getResolveScope();
 
-          if (element instanceof GrReferenceExpression) {
-            final GrCall call = (GrCall)element.getParent();
-            final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, call);
+        if (element instanceof GrReferenceExpression) {
+          final GrCall call = (GrCall)element.getParent();
+          final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, call);
 
-            if (argInfos == null) return true;
-            paramInds.forEach(new TIntProcedure() {
-              @Override
-              public boolean execute(int i) {
-                PsiType type = GrClosureSignatureUtil.getTypeByArg(argInfos[i], manager, resolveScope);
-                types[i] = TypesUtil.getLeastUpperBoundNullable(type, types[i], manager);
-                return true;
-              }
-            });
-          }
-          return true;
+          if (argInfos == null) return true;
+          paramInds.forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(int i) {
+              PsiType type = GrClosureSignatureUtil.getTypeByArg(argInfos[i], manager, resolveScope);
+              types[i] = TypesUtil.getLeastUpperBoundNullable(type, types[i], manager);
+              return true;
+            }
+          });
         }
+        return true;
       });
     }
     paramInds.forEach(new TIntProcedure() {

@@ -57,7 +57,7 @@ public class SameLogicalRootWeigher extends ProximityWeigher {
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) return null;
 
-    final VirtualFile file = psiFile.getVirtualFile();
+    final VirtualFile file = psiFile.getOriginalFile().getVirtualFile();
     if (file == null) return null;
 
     return LogicalRootsManager.getLogicalRootsManager(element.getProject()).findLogicalRoot(file);

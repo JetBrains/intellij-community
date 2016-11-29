@@ -140,22 +140,12 @@ public abstract class TaskStateCombo extends JPanel {
 
     @NotNull
     static List<CustomStateTrinityAdapter> wrapList(@NotNull Collection<CustomTaskState> states) {
-      return ContainerUtil.map(states, new Function<CustomTaskState, CustomStateTrinityAdapter>() {
-        @Override
-        public CustomStateTrinityAdapter fun(CustomTaskState state) {
-          return new CustomStateTrinityAdapter(state);
-        }
-      });
+      return ContainerUtil.map(states, state -> new CustomStateTrinityAdapter(state));
     }
 
     @NotNull
     static List<CustomTaskState> unwrapList(@NotNull Collection<CustomStateTrinityAdapter> wrapped) {
-      return ContainerUtil.map(wrapped, new Function<CustomStateTrinityAdapter, CustomTaskState>() {
-        @Override
-        public CustomTaskState fun(CustomStateTrinityAdapter adapter) {
-          return adapter.myState;
-        }
-      });
+      return ContainerUtil.map(wrapped, adapter -> adapter.myState);
     }
   }
 }

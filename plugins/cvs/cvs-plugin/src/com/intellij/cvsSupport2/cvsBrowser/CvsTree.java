@@ -93,7 +93,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
   }
 
   private void setCurrentSelection(TreePath[] paths) {
-    final ArrayList<CvsElement> selection = new ArrayList<CvsElement>();
+    final ArrayList<CvsElement> selection = new ArrayList<>();
     if (paths != null) {
       for (TreePath path : paths) {
         final Object selectedObject = path.getLastPathComponent();
@@ -194,12 +194,9 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     myLoadingNodeManager.addTo(myModel, element);
     final Application application = ApplicationManager.getApplication();
     final ModalityState modalityState = application.getCurrentModalityState();
-    application.executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final RemoteResourceDataProvider dataProvider = element.getDataProvider();
-        dataProvider.fillContentFor(new MyGetContentCallback(element, modalityState, myProject), myErrorCallback);
-      }
+    application.executeOnPooledThread(() -> {
+      final RemoteResourceDataProvider dataProvider = element.getDataProvider();
+      dataProvider.fillContentFor(new MyGetContentCallback(element, modalityState, myProject), myErrorCallback);
     });
   }
 
@@ -218,14 +215,11 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
       myModalityState = modalityState;
       myProject = project;
       addListener(this);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        mySelectionPath = myTree.getSelectionPath();
+        if (mySelectionPath == null) {
+          selectRoot();
           mySelectionPath = myTree.getSelectionPath();
-          if (mySelectionPath == null) {
-            selectRoot();
-            mySelectionPath = myTree.getSelectionPath();
-          }
         }
       }, myModalityState);
     }
@@ -259,31 +253,28 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
 
     @Override
     public void appendDirectoryContent(final DirectoryContent directoryContent) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final TreePath selectionPath = myTree.getSelectionPath();
-          if (selectionPath != null) {
-            mySelectionPath = selectionPath;
-          }
-          if (myShowModules) {
-            process(directoryContent.getSubModulesRaw(), CvsElementFactory.MODULE_ELEMENT_FACTORY,
-                    new ModuleDataProvider(myCvsRootConfiguration));
-          }
-          process(directoryContent.getSubDirectoriesRaw(), CvsElementFactory.FOLDER_ELEMENT_FACTORY,
-                  myParentNode.getDataProvider().getChildrenDataProvider());
-          if (myShowFiles) {
-            process(directoryContent.getFilesRaw(), CvsElementFactory.FILE_ELEMENT_FACTORY, RemoteResourceDataProvider.NOT_EXPANDABLE);
-          }
-          if (myTree.getSelectionPath() == null) {
-            myTree.setSelectionPath(mySelectionPath);
-          }
-          final long currentTime = System.currentTimeMillis();
-          if (currentTime - timeStamp > waitTime) {
-            waitTime += 100; // ease off
-            myModel.reload(myParentNode);
-            timeStamp = System.currentTimeMillis();
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        final TreePath selectionPath = myTree.getSelectionPath();
+        if (selectionPath != null) {
+          mySelectionPath = selectionPath;
+        }
+        if (myShowModules) {
+          process(directoryContent.getSubModulesRaw(), CvsElementFactory.MODULE_ELEMENT_FACTORY,
+                  new ModuleDataProvider(myCvsRootConfiguration));
+        }
+        process(directoryContent.getSubDirectoriesRaw(), CvsElementFactory.FOLDER_ELEMENT_FACTORY,
+                myParentNode.getDataProvider().getChildrenDataProvider());
+        if (myShowFiles) {
+          process(directoryContent.getFilesRaw(), CvsElementFactory.FILE_ELEMENT_FACTORY, RemoteResourceDataProvider.NOT_EXPANDABLE);
+        }
+        if (myTree.getSelectionPath() == null) {
+          myTree.setSelectionPath(mySelectionPath);
+        }
+        final long currentTime = System.currentTimeMillis();
+        if (currentTime - timeStamp > waitTime) {
+          waitTime += 100; // ease off
+          myModel.reload(myParentNode);
+          timeStamp = System.currentTimeMillis();
         }
       }, myModalityState);
     }
@@ -301,19 +292,16 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     @Override
     public void finished() {
       removeListener(this);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myLoadingNodeManager.removeFrom(myParentNode);
-          myParentNode.setLoading(false);
-          if (mySelectionPath != null) {
-            if (mySelectionPath.getLastPathComponent() instanceof LoadingNode) {
-              final TreeNode firstChild = myParentNode.getFirstChild();
-              myTree.setSelectionPath(mySelectionPath.getParentPath().pathByAddingChild(firstChild));
-            }
-            else if (myTree.getSelectionPath() == null) {
-              myTree.setSelectionPath(mySelectionPath);
-            }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myLoadingNodeManager.removeFrom(myParentNode);
+        myParentNode.setLoading(false);
+        if (mySelectionPath != null) {
+          if (mySelectionPath.getLastPathComponent() instanceof LoadingNode) {
+            final TreeNode firstChild = myParentNode.getFirstChild();
+            myTree.setSelectionPath(mySelectionPath.getParentPath().pathByAddingChild(firstChild));
+          }
+          else if (myTree.getSelectionPath() == null) {
+            myTree.setSelectionPath(mySelectionPath);
           }
         }
       }, myModalityState);

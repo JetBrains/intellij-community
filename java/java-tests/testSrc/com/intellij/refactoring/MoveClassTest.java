@@ -94,6 +94,10 @@ public class MoveClassTest extends RefactoringTestCase {
     doTest("qualifiedRef", new String[]{"p1.Test"}, "p2");
   }
 
+  public void testConflictingClassNames() throws Exception {
+    doTest("conflictingNames", new String[] {"p1.First", "p1.Second"}, "p3");
+  }
+
   private void doTest(@NonNls String testName, @NonNls String[] classNames, @NonNls String newPackageName) throws Exception{
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveClass/" + testName;
 

@@ -1,4 +1,4 @@
-// "Static import method 'foo.B.aaaaaaa'" "false"
+// "Import static method 'foo.B.aaaaaaa'" "false"
 package foo;
 
 public class X {

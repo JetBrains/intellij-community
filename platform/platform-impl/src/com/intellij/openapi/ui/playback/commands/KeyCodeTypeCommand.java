@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,19 +59,12 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
     final ActionCallback result = new ActionCallback();
 
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        TypingTarget typingTarget = findTarget(context);
-        if (typingTarget != null) {
-          typingTarget.type(unicode).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(new Runnable() {
-            public void run() {
-              typeCodes(context, context.getRobot(), codes).notify(result);
-            }
-          });
-        } else {
-          typeCodes(context, context.getRobot(), codes).notify(result);
-        }
+    inWriteSafeContext(() -> {
+      TypingTarget typingTarget = findTarget(context);
+      if (typingTarget != null) {
+        typingTarget.type(unicode).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> typeCodes(context, context.getRobot(), codes).notify(result));
+      } else {
+        typeCodes(context, context.getRobot(), codes).notify(result);
       }
     });
 
@@ -82,25 +74,24 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
   private ActionCallback typeCodes(final PlaybackContext context, final Robot robot, final String codes) {
     final ActionCallback result = new ActionCallback();
 
-    Runnable runnable = new Runnable() {
-      public void run() {
-        String[] pairs = codes.split(CODE_DELIMITER);
-        for (String eachPair : pairs) {
-          try {
-            String[] splits = eachPair.split(MODIFIER_DELIMITER);
-            Integer code = Integer.valueOf(splits[0]);
-            Integer modifier = Integer.valueOf(splits[1]);
-            type(robot, code.intValue(), modifier.intValue());
-          }
-          catch (NumberFormatException e) {
-            dumpError(context, "Invalid code: " + eachPair);
-            result.setRejected();
-            return;
-          }
+    Runnable runnable = () -> {
+      String[] pairs = codes.split(CODE_DELIMITER);
+      for (String eachPair : pairs) {
+        try {
+          String[] splits = eachPair.split(MODIFIER_DELIMITER);
+          Integer code = Integer.valueOf(splits[0]);
+          Integer modifier = Integer.valueOf(splits[1]);
+          //noinspection MagicConstant
+          type(robot, code.intValue(), modifier.intValue());
         }
-
-        result.setDone();
+        catch (NumberFormatException e) {
+          dumpError(context, "Invalid code: " + eachPair);
+          result.setRejected();
+          return;
+        }
       }
+
+      result.setDone();
     };
 
 
@@ -114,8 +105,8 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
   }
 
   public static Couple<List<Integer>> parseKeyCodes(String keyCodesText) {
-    List<Integer> codes = new ArrayList<Integer>();
-    List<Integer> modifiers = new ArrayList<Integer>();
+    List<Integer> codes = new ArrayList<>();
+    List<Integer> modifiers = new ArrayList<>();
 
     if (keyCodesText != null) {
       String[] pairs = keyCodesText.split(CODE_DELIMITER);

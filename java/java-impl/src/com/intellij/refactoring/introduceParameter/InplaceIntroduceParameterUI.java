@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
@@ -27,6 +29,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 
@@ -40,7 +44,7 @@ import java.awt.event.ItemListener;
  */
 public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSettingsUI {
   private JComboBox myReplaceFieldsCb;
-  private boolean myHasWriteAccess = false;
+  private boolean myHasWriteAccess;
   private final Project myProject;
   private final TypeSelectorManager myTypeSelectorManager;
   private final PsiExpression[] myOccurrences;
@@ -69,7 +73,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
 
   @Override
   protected JPanel createReplaceFieldsWithGettersPanel() {
-    final LabeledComponent<JComboBox> component = new LabeledComponent<JComboBox>();
+    final LabeledComponent<JComboBox> component = new LabeledComponent<>();
     myReplaceFieldsCb = new JComboBox(new Integer[]{IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE});
@@ -116,7 +120,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
 
   public void appendOccurrencesDelegate(JPanel myWholePanel) {
     final GridBagConstraints gc =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0);
     if (myOccurrences.length > 1 && !myIsInvokedOnDeclaration) {
       gc.gridy++;
       createOccurrencesCb(gc, myWholePanel, myOccurrences.length);

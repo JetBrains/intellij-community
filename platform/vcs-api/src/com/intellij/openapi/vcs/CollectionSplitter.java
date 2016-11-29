@@ -1,7 +1,16 @@
 package com.intellij.openapi.vcs;
 
-import java.util.*;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * @deprecated Use {@link JBIterable#from(Iterable)} and {@link JBIterable#split(int, boolean)} directly.
+ */
+@SuppressWarnings("unused") // Required for compatibility with external plugins.
+@Deprecated
 public class CollectionSplitter<T> {
   private final int myBunchSize;
 
@@ -9,21 +18,8 @@ public class CollectionSplitter<T> {
     myBunchSize = bunchSize;
   }
 
-  public List<List<T>> split(final Collection<T> in) {
-    if (in.size() <= myBunchSize) return Collections.<List<T>>singletonList(new ArrayList<T>(in));
-
-    final List<List<T>> result = new LinkedList<List<T>>();
-    List<T> piece = new LinkedList<T>();
-    for (T path : in) {
-      if (myBunchSize == piece.size()) {
-        result.add(piece);
-        piece = new LinkedList<T>();
-      }
-      piece.add(path);
-    }
-    if (! piece.isEmpty()) {
-      result.add(piece);
-    }
-    return result;
+  @NotNull
+  public List<List<T>> split(@NotNull Collection<T> in) {
+    return JBIterable.from(in).split(myBunchSize, false).toList();
   }
 }

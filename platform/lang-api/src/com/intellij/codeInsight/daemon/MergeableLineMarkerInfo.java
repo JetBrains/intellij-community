@@ -79,10 +79,10 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   @NotNull
   public static List<LineMarkerInfo> merge(@NotNull List<MergeableLineMarkerInfo> markers) {
-    List<LineMarkerInfo> result = new SmartList<LineMarkerInfo>();
+    List<LineMarkerInfo> result = new SmartList<>();
     for (int i = 0; i < markers.size(); i++) {
       MergeableLineMarkerInfo marker = markers.get(i);
-      List<MergeableLineMarkerInfo> toMerge = new SmartList<MergeableLineMarkerInfo>();
+      List<MergeableLineMarkerInfo> toMerge = new SmartList<>();
       for (int k = markers.size() - 1; k > i; k--) {
         MergeableLineMarkerInfo current = markers.get(k);
         if (marker.canMergeWith(current)) {
@@ -131,52 +131,40 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       return new GutterIconNavigationHandler<PsiElement>() {
         @Override
         public void navigate(final MouseEvent e, PsiElement elt) {
-          final List<LineMarkerInfo> infos = new ArrayList<LineMarkerInfo>(markers);
-          Collections.sort(infos, new Comparator<LineMarkerInfo>() {
-            @Override
-            public int compare(LineMarkerInfo o1, LineMarkerInfo o2) {
-              return o1.startOffset - o2.startOffset;
-            }
-          });
+          final List<LineMarkerInfo> infos = new ArrayList<>(markers);
+          Collections.sort(infos, (o1, o2) -> o1.startOffset - o2.startOffset);
           final JBList list = new JBList(infos);
           list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT);
           PopupChooserBuilder builder  = JBPopupFactory.getInstance().createListPopupBuilder(list);
           if (!markers.get(0).configurePopupAndRenderer(builder, list, infos)) {
-            list.installCellRenderer(new NotNullFunction<Object, JComponent>() {
-              @NotNull
-              @Override
-              public JComponent fun(Object dom) {
-                if (dom instanceof LineMarkerInfo) {
-                  Icon icon = null;
-                  final GutterIconRenderer renderer = ((LineMarkerInfo)dom).createGutterRenderer();
-                  if (renderer != null) {
-                    icon = renderer.getIcon();
-                  }
-                  PsiElement element = ((LineMarkerInfo)dom).getElement();
-                  assert element != null;
-                  final String elementPresentation =
-                    dom instanceof MergeableLineMarkerInfo ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element) : element.getText();
-                  String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
-
-                  final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
-                  label.setBorder(IdeBorderFactory.createEmptyBorder(2));
-                  return label;
+            list.installCellRenderer(dom -> {
+              if (dom instanceof LineMarkerInfo) {
+                Icon icon = null;
+                final GutterIconRenderer renderer = ((LineMarkerInfo)dom).createGutterRenderer();
+                if (renderer != null) {
+                  icon = renderer.getIcon();
                 }
+                PsiElement element = ((LineMarkerInfo)dom).getElement();
+                assert element != null;
+                final String elementPresentation =
+                  dom instanceof MergeableLineMarkerInfo ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element) : element.getText();
+                String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
 
-                return new JBLabel();
+                final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
+                label.setBorder(IdeBorderFactory.createEmptyBorder(2));
+                return label;
               }
+
+              return new JBLabel();
             });
           }
-          builder.setItemChoosenCallback(new Runnable() {
-            @Override
-            public void run() {
-              final Object value = list.getSelectedValue();
-              if (value instanceof LineMarkerInfo) {
-                final GutterIconNavigationHandler handler = ((LineMarkerInfo)value).getNavigationHandler();
-                if (handler != null) {
-                  //noinspection unchecked
-                  handler.navigate(e, ((LineMarkerInfo)value).getElement());
-                }
+          builder.setItemChoosenCallback(() -> {
+            final Object value = list.getSelectedValue();
+            if (value instanceof LineMarkerInfo) {
+              final GutterIconNavigationHandler handler = ((LineMarkerInfo)value).getNavigationHandler();
+              if (handler != null) {
+                //noinspection unchecked
+                handler.navigate(e, ((LineMarkerInfo)value).getElement());
               }
             }
           }).createPopup().show(new RelativePoint(e));

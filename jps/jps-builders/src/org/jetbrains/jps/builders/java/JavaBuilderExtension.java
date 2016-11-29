@@ -27,7 +27,7 @@ import java.util.Set;
 public abstract class JavaBuilderExtension {
 
   public boolean shouldHonorFileEncodingForCompilation(File file) {
-    return true;
+    return false;
   }
 
   public Set<? extends JpsModuleType<?>> getCompilableModuleTypes() {

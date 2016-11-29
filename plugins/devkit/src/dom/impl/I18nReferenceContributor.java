@@ -125,7 +125,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     public Object[] getVariants() {
       final Project project = myElement.getProject();
       PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(project);
-      final List<LookupElement> variants = new ArrayList<LookupElement>();
+      final List<LookupElement> variants = new ArrayList<>();
       referenceManager.processPropertiesFiles(GlobalSearchScopesCore.projectProductionScope(project), new PropertiesFileProcessor() {
         public boolean process(String baseName, PropertiesFile propertiesFile) {
           final Icon icon = propertiesFile.getContainingFile().getIcon(Iconable.ICON_FLAG_READ_STATUS);

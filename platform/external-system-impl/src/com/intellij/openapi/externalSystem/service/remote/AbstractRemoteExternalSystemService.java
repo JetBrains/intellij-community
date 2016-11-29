@@ -43,15 +43,15 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   private final ConcurrentMap<ExternalSystemTaskType, Set<ExternalSystemTaskId>> myTasksInProgress =
     ContainerUtil.newConcurrentMap();
 
-  private final AtomicReference<S> mySettings = new AtomicReference<S>();
+  private final AtomicReference<S> mySettings = new AtomicReference<>();
   
   private final AtomicReference<ExternalSystemTaskNotificationListener> myListener
-    = new AtomicReference<ExternalSystemTaskNotificationListener>();
+    = new AtomicReference<>();
 
   protected <T> T execute(@NotNull ExternalSystemTaskId id, @NotNull Producer<T> task) {
     Set<ExternalSystemTaskId> tasks = myTasksInProgress.get(id.getType());
     if (tasks == null) {
-      myTasksInProgress.putIfAbsent(id.getType(), new HashSet<ExternalSystemTaskId>());
+      myTasksInProgress.putIfAbsent(id.getType(), new HashSet<>());
       tasks = myTasksInProgress.get(id.getType());
     }
     tasks.add(id);

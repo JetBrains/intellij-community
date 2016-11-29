@@ -31,11 +31,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class CodeStyleSchemesModel {
-  private final List<CodeStyleScheme> mySchemes = new ArrayList<CodeStyleScheme>();
+  private final List<CodeStyleScheme> mySchemes = new ArrayList<>();
   private CodeStyleScheme myGlobalSelected;
   private final CodeStyleSchemeImpl myProjectScheme;
   private final CodeStyleScheme myDefault;
-  private final Map<CodeStyleScheme, CodeStyleSettings> mySettingsToClone = new HashMap<CodeStyleScheme, CodeStyleSettings>();
+  private final Map<CodeStyleScheme, CodeStyleSettings> mySettingsToClone = new HashMap<>();
 
   private final EventDispatcher<CodeStyleSettingsListener> myDispatcher = EventDispatcher.create(CodeStyleSettingsListener.class);
   private final Project myProject;
@@ -153,7 +153,7 @@ public class CodeStyleSchemesModel {
         getSelectedScheme() != schemes.findPreferredScheme(getProjectSettings().PREFERRED_PROJECT_CODE_STYLE)) {
       return true;
     }
-    Set<CodeStyleScheme> configuredSchemesSet = new HashSet<CodeStyleScheme>(getSchemes());
+    Set<CodeStyleScheme> configuredSchemesSet = new HashSet<>(getSchemes());
     return !configuredSchemesSet.equals(new THashSet<>(CodeStyleSchemesImpl.getSchemeManager().getAllSchemes()));
   }
 
@@ -172,12 +172,9 @@ public class CodeStyleSchemesModel {
     mySettingsToClone.clear();
   }
 
+  @Deprecated
   public static boolean cannotBeModified(final CodeStyleScheme currentScheme) {
-    return currentScheme.isDefault();
-  }
-
-  public static boolean cannotBeDeleted(final CodeStyleScheme currentScheme) {
-    return currentScheme.isDefault();
+    return false;
   }
 
   public void fireCurrentSettingsChanged() {
@@ -252,7 +249,7 @@ public class CodeStyleSchemesModel {
   }
 
   public List<CodeStyleScheme> getAllSortedSchemes() {
-    List<CodeStyleScheme> schemes = new ArrayList<CodeStyleScheme>();
+    List<CodeStyleScheme> schemes = new ArrayList<>();
     schemes.addAll(getSchemes());
     schemes.add(myProjectScheme);
     Collections.sort(schemes, (s1, s2) -> {

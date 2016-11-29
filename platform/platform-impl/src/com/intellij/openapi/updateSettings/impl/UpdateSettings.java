@@ -17,6 +17,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @State(
   name = "UpdatesConfigurable",
@@ -37,9 +42,12 @@ import java.util.List;
 )
 public class UpdateSettings implements PersistentStateComponent<UpdateSettings.State>, UserUpdateSettings {
   public static class State {
-    @CollectionBean public final List<String> pluginHosts = new SmartList<String>();
-    @CollectionBean public final List<String> knownUpdateChannels = new SmartList<String>();
-    @CollectionBean public final List<String> ignoredBuildNumbers = new SmartList<String>();
+    @CollectionBean public final List<String> pluginHosts = new SmartList<>();
+    @CollectionBean public final List<String> ignoredBuildNumbers = new SmartList<>();
+
+    @CollectionBean public final List<String> enabledExternalComponentSources = new SmartList<>();
+    @CollectionBean public final List<String> knownExternalComponentSources = new SmartList<>();
+    @CollectionBean public final Map<String, String> externalUpdateChannels = new HashMap<>();
 
     public boolean CHECK_NEEDED = true;
     public long LAST_TIME_CHECKED = 0;
@@ -85,6 +93,18 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     myState.CHECK_NEEDED = value;
   }
 
+  public List<String> getEnabledExternalUpdateSources() {
+    return myState.enabledExternalComponentSources;
+  }
+
+  public List<String> getKnownExternalUpdateSources() {
+    return myState.knownExternalComponentSources;
+  }
+
+  public Map<String, String> getExternalUpdateChannels() {
+    return myState.externalUpdateChannels;
+  }
+
   public boolean isSecureConnection() {
     return myState.SECURE_CONNECTION;
   }
@@ -98,21 +118,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   }
 
   @NotNull
-  @Override
-  public List<String> getKnownChannelsIds() {
-    return new ArrayList<String>(myState.knownUpdateChannels);
-  }
-
-  @Override
-  public void setKnownChannelIds(@NotNull List<String> ids) {
-    myState.knownUpdateChannels.clear();
-    myState.knownUpdateChannels.addAll(ids);
-  }
-
-  public void forgetChannelId(String id) {
-    myState.knownUpdateChannels.remove(id);
-  }
-
   @Override
   public List<String> getIgnoredBuildNumbers() {
     return myState.ignoredBuildNumbers;
@@ -128,8 +133,25 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     myState.UPDATE_CHANNEL_TYPE = channel.getCode();
   }
 
+  @NotNull
+  public List<ChannelStatus> getActiveChannels() {
+    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+    return Stream.of(ChannelStatus.values())
+      .filter((ch) -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
+      .collect(Collectors.toList());
+  }
+
+  @NotNull
+  public ChannelStatus getSelectedActiveChannel() {
+    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+    ChannelStatus current = getSelectedChannelStatus();
+    return tweaker.isChannelActive(current)
+           ? current
+           : getActiveChannels().stream().filter(ch -> ch.compareTo(current) > 0).findFirst().orElse(ChannelStatus.RELEASE);
+  }
+
   public List<String> getPluginHosts() {
-    List<String> hosts = new ArrayList<String>(myState.pluginHosts);
+    List<String> hosts = new ArrayList<>(myState.pluginHosts);
     String pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
@@ -150,6 +172,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     return myState.SECURE_CONNECTION && NetUtils.isSniEnabled();
   }
 
+  //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 17) */
   @SuppressWarnings("unused")
   public String getUpdateChannelType() {
@@ -161,4 +184,5 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   public void setUpdateChannelType(@NotNull String value) {
     myState.UPDATE_CHANNEL_TYPE = value;
   }
+  //</editor-fold>
 }

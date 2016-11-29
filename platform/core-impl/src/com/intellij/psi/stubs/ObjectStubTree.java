@@ -20,6 +20,7 @@ import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +93,8 @@ public class ObjectStubTree<T extends Stub> {
     myDebugInfo = info;
   }
 
-  static ObjectStubTree getStubTree(ObjectStubBase root) {
+  @Nullable
+  public static ObjectStubTree getStubTree(@NotNull ObjectStubBase root) {
     return root.getUserData(STUB_TO_TREE_REFERENCE);
   }
 
@@ -124,6 +126,10 @@ public class ObjectStubTree<T extends Stub> {
       } else {
         int lastZero;
         for(lastZero = list.length - 1; lastZero >=0 && list[lastZero] == 0; --lastZero);
+        if (lastZero >= 0 && list[lastZero] == myStubIdx) {
+          // second and subsequent occurrence calls for the same value are no op
+          return;
+        }
         ++lastZero;
 
         if (lastZero == list.length) {

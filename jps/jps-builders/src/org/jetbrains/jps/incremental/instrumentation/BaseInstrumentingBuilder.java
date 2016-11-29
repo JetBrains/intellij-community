@@ -20,6 +20,7 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
@@ -72,7 +73,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
         LOG.info(e);
         final String message = e.getMessage();
         if (message != null) {
-          context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message, compiledClass.getSourceFile().getPath()));
+          context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message, ContainerUtil.getFirstItem(compiledClass.getSourceFilesPaths())));
         }
         else {
           context.processMessage(new CompilerMessage(getPresentableName(), e));

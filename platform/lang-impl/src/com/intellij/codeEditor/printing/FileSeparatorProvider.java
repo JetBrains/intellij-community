@@ -36,18 +36,14 @@ import java.util.List;
 public class FileSeparatorProvider {
   @Nullable
   public static List<LineMarkerInfo> getFileSeparators(PsiFile file, final Document document) {
-    final List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>();
+    final List<LineMarkerInfo> result = new ArrayList<>();
     for (LineMarkerInfo lineMarkerInfo : LineMarkersPass.queryLineMarkers(file, document)) {
       if (lineMarkerInfo.separatorColor != null) {
         result.add(lineMarkerInfo);
       }
     }
 
-    Collections.sort(result, new Comparator<LineMarkerInfo>() {
-      public int compare(final LineMarkerInfo i1, final LineMarkerInfo i2) {
-        return getDisplayLine(i1, document) - getDisplayLine(i2, document);
-      }
-    });
+    Collections.sort(result, (i1, i2) -> getDisplayLine(i1, document) - getDisplayLine(i2, document));
     return result;
   }
 

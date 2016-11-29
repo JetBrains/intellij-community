@@ -58,7 +58,7 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
   @NotNull
   @Override
   public Collection<PsiReference> findReferences(PsiElement element) {
-    final List<PsiReference> results = new ArrayList<PsiReference>();
+    final List<PsiReference> results = new ArrayList<>();
     for (PsiReference reference : super.findReferences(element)) {
       if (isNotAliasedInImportElement(reference)) {
         results.add(reference);
@@ -74,7 +74,7 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
                              List<UsageInfo> result) {
     final String newFileName = FileUtil.getNameWithoutExtension(newName);
     if (!PyNames.isIdentifier(newFileName)) {
-      final List<UsageInfo> usages = new ArrayList<UsageInfo>(result);
+      final List<UsageInfo> usages = new ArrayList<>(result);
       for (UsageInfo usageInfo : usages) {
         final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(usageInfo.getElement(), PyImportStatementBase.class);
         if (importStatement != null) {

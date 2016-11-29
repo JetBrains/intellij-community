@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+
 /**
  * @author spleaner
  */
@@ -66,7 +68,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   };
 
   static {
-    final List<Fixer> fixers = new ArrayList<Fixer>();
+    final List<Fixer> fixers = new ArrayList<>();
     fixers.add(new LiteralFixer());
     fixers.add(new MethodCallFixer());
     fixers.add(new IfConditionFixer());
@@ -74,11 +76,12 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new WhileConditionFixer());
     fixers.add(new CatchDeclarationFixer());
     fixers.add(new SwitchExpressionFixer());
-    fixers.add(new CaseColonFixer());
+    fixers.add(new SwitchLabelColonFixer());
     fixers.add(new DoWhileConditionFixer());
     fixers.add(new BlockBraceFixer());
     fixers.add(new MissingIfBranchesFixer());
     fixers.add(new MissingWhileBodyFixer());
+    fixers.add(new MissingTryBodyFixer());
     fixers.add(new MissingSwitchBodyFixer());
     fixers.add(new MissingCatchBodyFixer());
     fixers.add(new MissingSynchronizedBodyFixer());
@@ -157,7 +160,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
         return;
       }
 
-      List<PsiElement> queue = new ArrayList<PsiElement>();
+      List<PsiElement> queue = new ArrayList<>();
       collectAllElements(atCaret, queue, true);
       queue.add(atCaret);
 
@@ -211,39 +214,41 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private void doEnter(PsiElement atCaret, Editor editor, boolean afterCompletion) throws IncorrectOperationException {
     final PsiFile psiFile = atCaret.getContainingFile();
 
-    final RangeMarker rangeMarker = createRangeMarker(atCaret);
     if (myFirstErrorOffset != Integer.MAX_VALUE) {
       editor.getCaretModel().moveToOffset(myFirstErrorOffset);
       reformat(atCaret);
       return;
     }
 
+    final RangeMarker rangeMarker = createRangeMarker(atCaret);
     reformat(atCaret);
     commit(editor);
 
-    if (mySkipEnter) {
-      return;
-    }
-    
-    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
-    for (EnterProcessor processor : afterCompletion ? ourAfterCompletionEnterProcessors : ourEnterProcessors) {
-      if(atCaret == null){
-        // Can't restore element at caret after enter processor execution!
-        break;
+    if (!mySkipEnter) {
+      atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
+      for (EnterProcessor processor : afterCompletion ? ourAfterCompletionEnterProcessors : ourEnterProcessors) {
+        if (atCaret == null) {
+          // Can't restore element at caret after enter processor execution!
+          break;
+        }
+
+        if (processor.doEnter(editor, atCaret, isModified(editor))) {
+          rangeMarker.dispose();
+          return;
+        }
       }
 
-      if (processor.doEnter(editor, atCaret, isModified(editor))) return;
-    }
-
-    if (!isModified(editor) && !afterCompletion) {
-      plainEnter(editor);
-    } else {
-      if (myFirstErrorOffset == Integer.MAX_VALUE) {
-        editor.getCaretModel().moveToOffset(rangeMarker.getEndOffset());
+      if (!isModified(editor) && !afterCompletion) {
+        plainEnter(editor);
       } else {
-        editor.getCaretModel().moveToOffset(myFirstErrorOffset);
+        if (myFirstErrorOffset == Integer.MAX_VALUE) {
+          editor.getCaretModel().moveToOffset(rangeMarker.getEndOffset());
+        } else {
+          editor.getCaretModel().moveToOffset(myFirstErrorOffset);
+        }
       }
     }
+    rangeMarker.dispose();
   }
 
   private static void collectAllElements(PsiElement atCaret, List<PsiElement> res, boolean recurse) {
@@ -273,7 +278,9 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     if (atCaret instanceof PsiWhiteSpace) return null;
     if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText())) {
       atCaret = atCaret.getParent();
-      if (!(atCaret instanceof PsiAnonymousClass || atCaret instanceof PsiArrayInitializerExpression)) {
+      if (!(atCaret instanceof PsiAnonymousClass ||
+            atCaret instanceof PsiArrayInitializerExpression ||
+            psiElement(PsiCodeBlock.class).withParent(PsiLambdaExpression.class).accepts(atCaret))) {
         return null;
       }
     }

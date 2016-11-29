@@ -18,7 +18,6 @@ package org.jetbrains.idea.devkit;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -45,15 +44,5 @@ public class PluginProjectWizardTest extends NewProjectWizardTestCase {
 
     VirtualFile[] files = FileEditorManager.getInstance(project).getOpenFiles();
     assertEquals(1, files.length);
-  }
-
-  public void testProjectWithoutSdk() throws Exception {
-    try {
-      createProjectFromTemplate(PluginModuleType.getInstance().getName(), null, null);
-      fail("Exception should be thrown");
-    }
-    catch (Exception e) {
-      assertEquals(IdeBundle.message("prompt.confirm.project.no.jdk"), e.getMessage());
-    }
   }
 }

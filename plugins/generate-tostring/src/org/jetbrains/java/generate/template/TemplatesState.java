@@ -24,5 +24,5 @@ import java.util.List;
 
 public class TemplatesState {
     public String defaultTempalteName = "";
-    public List<TemplateResource> templates = new ArrayList<TemplateResource>();
+    public List<TemplateResource> templates = new ArrayList<>();
 }

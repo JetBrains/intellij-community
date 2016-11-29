@@ -72,7 +72,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   public Object[] getVariants() {
     final PsiFile containingFile = myAttribute.getContainingFile();
     if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile)) {
-      final List<Object> l = new ArrayList<Object>();
+      final List<Object> l = new ArrayList<>();
       if (!myImplicitModeElement.hasPrefix()) {
         final Object[] prefixes = getPrefixCompletions(myAttribute);
         ContainerUtil.addAll(l, prefixes);
@@ -148,7 +148,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     final ModeReference.MyModeMatcher matcher = new ModeReference.MyModeMatcher(attribute, QNameUtil.ANY);
     final PsiElement[] modes = ResolveUtil.collect(matcher);
     final Collection<String> prefixes = XsltNamespaceContext.getPrefixes(attribute);
-    final Set<NamespaceLookup> lookups = new HashSet<NamespaceLookup>(prefixes.size());
+    final Set<NamespaceLookup> lookups = new HashSet<>(prefixes.size());
 
     for (PsiElement mode : modes) {
       final QName qName = ((ImplicitModeElement)mode).getQName();

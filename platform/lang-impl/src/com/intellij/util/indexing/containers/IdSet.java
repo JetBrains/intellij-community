@@ -15,9 +15,8 @@
  */
 package com.intellij.util.indexing.containers;
 
-import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.indexing.IntPredicate;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
 
 public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
   public IdSet(final int initialCapacity) {
@@ -37,8 +36,8 @@ public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
   }
 
   @Override
-  public ValueContainer.IntPredicate intPredicate() {
-    return new ValueContainer.IntPredicate() {
+  public IntPredicate intPredicate() {
+    return new IntPredicate() {
       @Override
       public boolean contains(int id) {
         return IdSet.this.contains(id);
@@ -47,41 +46,17 @@ public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
   }
 
   @Override
-  public ValueContainer.IntIterator intIterator() {
+  public IntIdsIterator intIterator() {
     return new IntSetIterator();
   }
 
-  private class IntSetIterator implements ValueContainer.IntIterator {
-    private final TIntIterator mySetIterator;
-    private final int mySize;
-
+  private class IntSetIterator extends TroveSetIntIterator {
     public IntSetIterator() {
-      mySetIterator = iterator();
-      mySize = IdSet.this.size();
+      super(IdSet.this);
     }
 
     @Override
-    public boolean hasNext() {
-      return mySetIterator.hasNext();
-    }
-
-    @Override
-    public int next() {
-      return mySetIterator.next();
-    }
-
-    @Override
-    public int size() {
-      return mySize;
-    }
-
-    @Override
-    public boolean hasAscendingOrder() {
-      return false;
-    }
-
-    @Override
-    public ValueContainer.IntIterator createCopyInInitialState() {
+    public IntIdsIterator createCopyInInitialState() {
       return new IntSetIterator();
     }
   }

@@ -50,7 +50,7 @@ import java.util.List;
  * Date: Sep 17, 2003
  * Time: 2:04:00 PM
  */
-public class ExpressionChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer {
+public class ExpressionChildrenRenderer extends TypeRenderer implements ChildrenRenderer {
   public static final @NonNls String UNIQUE_ID = "ExpressionChildrenRenderer";
   private static final Key<Value> EXPRESSION_VALUE = new Key<>("EXPRESSION_VALUE");
   private static final Key<NodeRenderer> LAST_CHILDREN_RENDERER = new Key<>("LAST_CHILDREN_RENDERER");
@@ -139,9 +139,13 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
 
     NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue, (ValueDescriptor) node.getParent().getDescriptor());
 
+    PsiExpression childrenPsiExpression = myChildrenExpression.getPsiExpression(node.getProject());
+    if (childrenPsiExpression == null) {
+      return null;
+    }
     return DebuggerTreeNodeExpression.substituteThis(
       childrenRenderer.getChildValueExpression(node, context),
-      (PsiExpression)myChildrenExpression.getPsiExpression(node.getProject()).copy(),
+      (PsiExpression)childrenPsiExpression.copy(),
       expressionValue);
   }
 

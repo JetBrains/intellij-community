@@ -78,7 +78,7 @@ public class SuggestVariableNameMacro extends Macro {
     PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
     PsiElement e = file.findElementAt(context.getStartOffset());
     PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(e, "");
-    LinkedList<String> namesList = new LinkedList<String>(Arrays.asList(names));
+    LinkedList<String> namesList = new LinkedList<>(Arrays.asList(names));
     for (PsiVariable var : vars) {
       if (e.equals(var.getNameIdentifier())) continue;
       namesList.remove(var.getName());

@@ -36,7 +36,7 @@ public abstract class ModuleContextProvider {
   public static Module[] getModules(@Nullable PsiFile context) {
     if (context == null) return Module.EMPTY_ARRAY;
 
-    final Set<Module> modules = new HashSet<Module>();
+    final Set<Module> modules = new HashSet<>();
     for (ModuleContextProvider moduleContextProvider : Extensions.getExtensions(EP_NAME)) {
       ContainerUtil.addAllNotNull(modules, moduleContextProvider.getContextModules(context));
     }

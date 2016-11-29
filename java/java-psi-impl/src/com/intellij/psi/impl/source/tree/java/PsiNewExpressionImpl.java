@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,20 +73,22 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
         assert type == null : this;
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        type = factory.createPrimitiveType(child.getText(), ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
+        PsiAnnotation[] copy = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);
+        type = factory.createPrimitiveTypeFromText(child.getText()).annotate(TypeAnnotationProvider.Static.create(copy));
         if (stop) return type;
       }
       else if (elementType == JavaTokenType.LBRACKET) {
         assert type != null : this;
-        type = type.createArrayType(ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
+        PsiAnnotation[] copy = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);
+        type = type.createArrayType().annotate(TypeAnnotationProvider.Static.create(copy));
         if (stop) return type;
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         PsiClass aClass = (PsiClass)child.getPsi();
         PsiSubstitutor substitutor = aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : factory.createRawSubstitutor(aClass);
-        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass),
-                                  ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
+        PsiAnnotation[] copy = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);
+        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass)).annotate(TypeAnnotationProvider.Static.create(copy));
         if (stop) return type;
       }
     }

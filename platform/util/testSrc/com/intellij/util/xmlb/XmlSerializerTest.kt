@@ -18,9 +18,9 @@ package com.intellij.util.xmlb
 import com.intellij.openapi.util.JDOMExternalizableStringList
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
+import com.intellij.util.loadElement
 import com.intellij.util.xmlb.annotations.*
 import com.intellij.util.xmlb.annotations.AbstractCollection
 import junit.framework.AssertionFailedError
@@ -290,9 +290,7 @@ internal class XmlSerializerTest {
 
   @Test fun FilterSerializer() {
     val bean = BeanWithPublicFields()
-    assertSerializer(bean, "<BeanWithPublicFields>\n" + "  <option name=\"INT_V\" value=\"1\" />\n" + "</BeanWithPublicFields>", object : SerializationFilter {
-      override fun accepts(accessor: Accessor, bean: Any) = accessor.name.startsWith("I")
-    })
+    assertSerializer(bean, "<BeanWithPublicFields>\n" + "  <option name=\"INT_V\" value=\"1\" />\n" + "</BeanWithPublicFields>", SerializationFilter { accessor, bean -> accessor.name.startsWith("I") })
   }
 
   data class BeanWithArray(var ARRAY_V: Array<String> = arrayOf("a", "b"))
@@ -834,7 +832,7 @@ internal class XmlSerializerTest {
     @Tag("bean")
     data class Bean(@Tag var description: String? = null)
 
-    var bean = XmlSerializer.deserialize(JDOMUtil.load("""<bean>
+    var bean = XmlSerializer.deserialize(loadElement("""<bean>
   <description>
     <![CDATA[
     <h4>Node.js integration</h4>
@@ -843,7 +841,7 @@ internal class XmlSerializerTest {
 </bean>""".reader()), Bean::class.java)!!
     assertThat(bean.description).isEqualToIgnoringWhitespace("<h4>Node.js integration</h4>")
 
-    bean = XmlSerializer.deserialize(JDOMUtil.load("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""".reader()), Bean::class.java)!!
+    bean = XmlSerializer.deserialize(loadElement("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""".reader()), Bean::class.java)!!
     assertThat(bean.description).isEqualTo("<h4>Node.js integration</h4>")
   }
 
@@ -882,9 +880,3 @@ internal fun <T: Any> doSerializerTest(@Language("XML") expectedText: String, be
 fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
 
 inline fun <reified T: Any> Element.deserialize(): T = XmlSerializer.deserialize(this, T::class.java)!!
-
-fun Element.toByteArray(): ByteArray {
-  val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.writeParent(this, out, "\n")
-  return out.toByteArray()
-}

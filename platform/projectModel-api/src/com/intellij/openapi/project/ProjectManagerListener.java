@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ public interface ProjectManagerListener extends EventListener {
    *
    * @param project opening project
    */
-  void projectOpened(Project project);
+  default void projectOpened(Project project) {
+  }
 
   /**
    * Checks whether the project can be closed.
@@ -36,17 +37,21 @@ public interface ProjectManagerListener extends EventListener {
    * @param project project to check
    * @return true or false
    */
-  boolean canCloseProject(Project project);
+  default boolean canCloseProject(Project project) {
+    return true;
+  }
 
   /**
    * Invoked on project close.
    *
    * @param project closing project
    */
-  void projectClosed(Project project);
+  default void projectClosed(Project project) {
+  }
 
   /**
    * Invoked on project close before any closing activities
    */
-  void projectClosing(Project project);
+  default void projectClosing(Project project) {
+  }
 }

@@ -158,7 +158,7 @@ public class DomBasicsTest extends DomTestCase {
 
   public void testAcceptChildren() throws Throwable {
     final MyElement element = createElement("<a><child-element/><child/><child-element/></a>");
-    final Set<DomElement> visited = new HashSet<DomElement>();
+    final Set<DomElement> visited = new HashSet<>();
     element.acceptChildren(new DomElementVisitor() {
       @Override
       public void visitDomElement(DomElement element) {
@@ -442,15 +442,12 @@ public class DomBasicsTest extends DomTestCase {
 
   public void testStableValues() throws Throwable {
     final MyElement[] element = new MyElement[]{null};
-    final MyElement stable = getDomManager().createStableValue(new Factory<MyElement>() {
-      @Override
-      public MyElement create() {
-        try {
-          return element[0] = createElement("<root/>").addChildElement();
-        }
-        catch (IncorrectOperationException e) {
-          throw new RuntimeException(e);
-        }
+    final MyElement stable = getDomManager().createStableValue(() -> {
+      try {
+        return element[0] = createElement("<root/>").addChildElement();
+      }
+      catch (IncorrectOperationException e) {
+        throw new RuntimeException(e);
       }
     });
     assertNotNull(element[0]);
@@ -499,12 +496,7 @@ public class DomBasicsTest extends DomTestCase {
 
   public void testStable_Revalidate() throws Throwable {
     final MyElement[] element = new MyElement[]{createElement("")};
-    final MyElement stable = getDomManager().createStableValue(new Factory<MyElement>() {
-      @Override
-      public MyElement create() {
-        return element[0];
-      }
-    });
+    final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     MyElement oldElement = element[0];
     ((StableElement) stable).revalidate();
     assertSame(oldElement, ((StableElement) stable).getWrappedElement());
@@ -520,12 +512,7 @@ public class DomBasicsTest extends DomTestCase {
   public void testStable_Invalidate() throws Throwable {
     final MyElement oldElement = createElement("");
     final MyElement[] element = new MyElement[]{oldElement};
-    final MyElement stable = getDomManager().createStableValue(new Factory<MyElement>() {
-      @Override
-      public MyElement create() {
-        return element[0];
-      }
-    });
+    final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     element[0] = null;
     ((StableElement) stable).invalidate();
     assertTrue(stable.equals(stable));

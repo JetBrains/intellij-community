@@ -79,7 +79,7 @@ public class PathMacroListEditor {
 
   private Collection<String> parseIgnoredVariables() {
     final String s = myIgnoredVariables.getText();
-    final List<String> ignored = new ArrayList<String>();
+    final List<String> ignored = new ArrayList<>();
     final StringTokenizer st = new StringTokenizer(s, ";");
     while (st.hasMoreElements()) {
       ignored.add(st.nextElement().trim());
@@ -89,14 +89,12 @@ public class PathMacroListEditor {
   }
 
   public void commit() throws ConfigurationException {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myPathMacroTable.commit();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myPathMacroTable.commit();
 
-        final Collection<String> ignored = parseIgnoredVariables();
-        final PathMacros instance = PathMacros.getInstance();
-        instance.setIgnoredMacroNames(ignored);
-      }
+      final Collection<String> ignored = parseIgnoredVariables();
+      final PathMacros instance = PathMacros.getInstance();
+      instance.setIgnoredMacroNames(ignored);
     });
   }
 

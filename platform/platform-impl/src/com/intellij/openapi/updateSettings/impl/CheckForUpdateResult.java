@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,57 +23,44 @@ import java.util.Collections;
 import java.util.List;
 
 public class CheckForUpdateResult {
-  private final BuildInfo myNewBuildInSelectedChannel;
-  private final UpdateChannel myUpdatedChannel;
-  private final UpdateChannel myChannelToPropose;
-  private final List<String> myAllChannelIds;
   private final UpdateStrategy.State myState;
+  private final BuildInfo myNewBuild;
+  private final UpdateChannel myUpdatedChannel;
   private final Exception myError;
 
-  public CheckForUpdateResult(@Nullable BuildInfo newBuildInSelectedChannel,
-                              @Nullable UpdateChannel updated,
-                              @Nullable UpdateChannel channelToPropose,
-                              @NotNull List<String> allChannelsIds) {
-    myNewBuildInSelectedChannel = newBuildInSelectedChannel;
-    myUpdatedChannel = updated;
-    myChannelToPropose = channelToPropose;
-    myAllChannelIds = allChannelsIds;
+  public CheckForUpdateResult(@Nullable BuildInfo newBuild, @Nullable UpdateChannel updatedChannel) {
     myState = UpdateStrategy.State.LOADED;
+    myNewBuild = newBuild;
+    myUpdatedChannel = updatedChannel;
     myError = null;
   }
 
   public CheckForUpdateResult(@NotNull UpdateStrategy.State state, @Nullable Exception e) {
-    myNewBuildInSelectedChannel = null;
-    myUpdatedChannel = null;
-    myChannelToPropose = null;
-    myAllChannelIds = Collections.emptyList();
     myState = state;
+    myNewBuild = null;
+    myUpdatedChannel = null;
     myError = e;
-  }
-
-  @Nullable
-  public BuildInfo getNewBuildInSelectedChannel() {
-    return myNewBuildInSelectedChannel;
-  }
-
-  @Nullable
-  public UpdateChannel getUpdatedChannel() {
-    return myUpdatedChannel;
-  }
-
-  @Nullable
-  public UpdateChannel getChannelToPropose() {
-    return myChannelToPropose;
-  }
-
-  @NotNull
-  public List<String> getAllChannelsIds() {
-    return myAllChannelIds;
   }
 
   @NotNull
   public UpdateStrategy.State getState() {
     return myState;
+  }
+
+  @Nullable
+  public BuildInfo getNewBuild() {
+    return myNewBuild;
+  }
+
+  @Nullable
+  public PatchInfo findPatchForBuild(@NotNull BuildNumber build) {
+    List<PatchInfo> patches = myNewBuild != null ? myNewBuild.getPatches() : Collections.emptyList();
+    return patches.stream().filter(p -> p.isAvailable() && p.getFromBuild().compareTo(build) == 0).findFirst().orElse(null);
+  }
+
+  @Nullable
+  public UpdateChannel getUpdatedChannel() {
+    return myUpdatedChannel;
   }
 
   @Nullable

@@ -142,13 +142,8 @@ public abstract class JspSpiUtil {
   }
 
   public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module, boolean includeModuleOutput) {
-    final List<URL> urls = new ArrayList<URL>();
-    processClassPathItems(virtualFile, module, new Consumer<VirtualFile>() {
-      @Override
-      public void consume(final VirtualFile file) {
-        addUrl(urls, file);
-      }
-    }, includeModuleOutput);
+    final List<URL> urls = new ArrayList<>();
+    processClassPathItems(virtualFile, module, file -> addUrl(urls, file), includeModuleOutput);
     return urls;
   }
 

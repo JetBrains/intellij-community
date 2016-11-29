@@ -35,11 +35,8 @@ public class SelectAllAction extends TextComponentEditorAction implements DumbAw
     @Override
     public void execute(final Editor editor, DataContext dataContext) {
       CommandProcessor processor = CommandProcessor.getInstance();
-      processor.executeCommand(CommonDataKeys.PROJECT.getData(dataContext), new Runnable() {
-        public void run() {
-          editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
-        }
-      }, IdeBundle.message("command.select.all"), null);
+      processor.executeCommand(CommonDataKeys.PROJECT.getData(dataContext),
+                               () -> editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength()), IdeBundle.message("command.select.all"), null);
     }
   }
 

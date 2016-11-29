@@ -88,10 +88,10 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
     final XmlDocument document = xmlFile == null ? null : xmlFile.getDocument();
     if (document == null) return Collections.emptyList();
 
-    final List<XmlTag> rootTags = new ArrayList<XmlTag>();
+    final List<XmlTag> rootTags = new ArrayList<>();
     document.processElements(new FilterElementProcessor(XmlTagFilter.INSTANCE, rootTags), document);
 
-    final Collection<Html5SectionTreeElement> result = new ArrayList<Html5SectionTreeElement>();
+    final Collection<Html5SectionTreeElement> result = new ArrayList<>();
 
     for (XmlTag tag : rootTags) {
       result.addAll(Html5SectionsProcessor.processAndGetRootSections(tag));

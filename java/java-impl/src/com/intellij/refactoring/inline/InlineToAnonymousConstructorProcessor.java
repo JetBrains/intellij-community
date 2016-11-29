@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
@@ -59,8 +61,8 @@ class InlineToAnonymousConstructorProcessor {
   private final PsiClass myClass;
   private PsiNewExpression myNewExpression;
   private final PsiType mySuperType;
-  private final Map<String, PsiExpression> myFieldInitializers = new HashMap<String, PsiExpression>();
-  private final Map<PsiParameter, PsiVariable> myLocalsForParameters = new HashMap<PsiParameter, PsiVariable>();
+  private final Map<String, PsiExpression> myFieldInitializers = new HashMap<>();
+  private final Map<PsiParameter, PsiVariable> myLocalsForParameters = new HashMap<>();
   private PsiStatement myNewStatement;
   private final PsiElementFactory myElementFactory;
   private PsiMethod myConstructor;
@@ -80,7 +82,8 @@ class InlineToAnonymousConstructorProcessor {
     checkInlineChainingConstructor();
     JavaResolveResult classResolveResult = myNewExpression.getClassReference().advancedResolve(false);
     JavaResolveResult methodResolveResult = myNewExpression.resolveMethodGenerics();
-    myConstructor = (PsiMethod) methodResolveResult.getElement();
+    final PsiElement element = methodResolveResult.getElement();
+    myConstructor = element != null ? (PsiMethod) element.getNavigationElement() : null;
     myConstructorArguments = myNewExpression.getArgumentList();
 
     PsiSubstitutor classResolveSubstitutor = classResolveResult.getSubstitutor();
@@ -188,7 +191,7 @@ class InlineToAnonymousConstructorProcessor {
           }
         }
         else if (!ourSuperCallPattern.accepts(stmt) && !ourThisCallPattern.accepts(stmt)) {
-          replaceParameterReferences(stmt, new ArrayList<PsiReferenceExpression>(), false);
+          replaceParameterReferences(stmt, new ArrayList<>(), false);
           initializerBlock.addBefore(stmt, initializerBlock.getRBrace());
         }
       }
@@ -210,7 +213,7 @@ class InlineToAnonymousConstructorProcessor {
       if (psiElement instanceof PsiField) {
         PsiField field = (PsiField) psiElement;
         if (myClass.getManager().areElementsEquivalent(field.getContainingClass(), myClass)) {
-          final List<PsiReferenceExpression> localVarRefs = new ArrayList<PsiReferenceExpression>();
+          final List<PsiReferenceExpression> localVarRefs = new ArrayList<>();
           final PsiExpression initializer;
           try {
             initializer = (PsiExpression) replaceParameterReferences(rExpr.copy(), localVarRefs, false);
@@ -246,7 +249,8 @@ class InlineToAnonymousConstructorProcessor {
   }
 
   private PsiVariable generateLocal(final String baseName, final PsiType type, final PsiExpression initializer) {
-    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myClass.getProject());
+    final Project project = myClass.getProject();
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
     String baseNameForIndex = baseName;
     int index = 0;
@@ -262,7 +266,9 @@ class InlineToAnonymousConstructorProcessor {
     try {
       final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, type, initializer);
       PsiVariable variable = (PsiVariable)declaration.getDeclaredElements()[0];
-      PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
+      if (!PsiUtil.isLanguageLevel8OrHigher(myNewExpression) || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
+        PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
+      }
       final PsiElement parent = myNewStatement.getParent();
       if (parent instanceof PsiCodeBlock) {
         variable = (PsiVariable)((PsiDeclarationStatement)parent.addBefore(declaration, myNewStatement)).getDeclaredElements()[0];
@@ -337,7 +343,7 @@ class InlineToAnonymousConstructorProcessor {
     PsiExpressionList superArguments = context.get(ourCallKey).getArgumentList();
     if (superArguments != null) {
       for(PsiExpression argument: superArguments.getExpressions()) {
-        final PsiElement superArgument = replaceParameterReferences(argument.copy(), new ArrayList<PsiReferenceExpression>(), true);
+        final PsiElement superArgument = replaceParameterReferences(argument.copy(), new ArrayList<>(), true);
         argumentList.add(superArgument);
       }
     }
@@ -358,13 +364,13 @@ class InlineToAnonymousConstructorProcessor {
       }
     }
 
-    final List<Pair<PsiReferenceExpression, PsiParameter>> parameterReferences = new ArrayList<Pair<PsiReferenceExpression, PsiParameter>>();
-    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
+    final List<Pair<PsiReferenceExpression, PsiParameter>> parameterReferences = new ArrayList<>();
+    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<>();
     argument.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement psiElement = expression.resolve();
-        if (psiElement instanceof PsiParameter) {
+        if (psiElement instanceof PsiParameter && ((PsiParameter)psiElement).getDeclarationScope() == myConstructor) {
           parameterReferences.add(Pair.create(expression, (PsiParameter)psiElement));
         }
         else if ((psiElement instanceof PsiField || psiElement instanceof PsiMethod) &&
@@ -421,7 +427,7 @@ class InlineToAnonymousConstructorProcessor {
 
   private void replaceReferences(final PsiMember method,
                                  final PsiType[] substitutedParameters, final PsiVariable outerClassLocal) throws IncorrectOperationException {
-    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<>();
     method.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);

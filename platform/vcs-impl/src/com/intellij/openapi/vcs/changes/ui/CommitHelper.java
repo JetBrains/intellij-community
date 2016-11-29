@@ -52,13 +52,10 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class CommitHelper {
-  public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
+  public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<>("DOCUMENT_BEING_COMMITTED");
 
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.CommitHelper");
   private final Project myProject;
@@ -74,7 +71,7 @@ public class CommitHelper {
   private final boolean myForceSyncCommit;
   private final NullableFunction<Object, Object> myAdditionalData;
   @Nullable private final CommitResultHandler myCustomResultHandler;
-  private final List<Document> myCommittingDocuments = new ArrayList<Document>();
+  private final List<Document> myCommittingDocuments = new ArrayList<>();
   private final VcsConfiguration myConfiguration;
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final HashSet<String> myFeedback;
@@ -100,7 +97,7 @@ public class CommitHelper {
     myCustomResultHandler = customResultHandler;
     myConfiguration = VcsConfiguration.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    myFeedback = new HashSet<String>();
+    myFeedback = new HashSet<>();
   }
 
   public boolean doCommit() {
@@ -302,14 +299,10 @@ public class CommitHelper {
     }
 
     public void callSelf() {
-      ChangesUtil.processItemsByVcs(myIncludedChanges, new ChangesUtil.VcsSeparator<Change>() {
-        public AbstractVcs getVcsFor(final Change item) {
-          return myVcs;
-        }
-      }, this);
+      ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this);
     }
 
-    public void process(final AbstractVcs vcs, final List<Change> items) {
+    public void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       if (myVcs.getName().equals(vcs.getName())) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
@@ -352,9 +345,9 @@ public class CommitHelper {
     protected final List<Change> myChangesFailedToCommit;
 
     protected GeneralCommitProcessor() {
-      myPathsToRefresh = new ArrayList<FilePath>();
-      myVcsExceptions = new ArrayList<VcsException>();
-      myChangesFailedToCommit = new ArrayList<Change>();
+      myPathsToRefresh = new ArrayList<>();
+      myVcsExceptions = new ArrayList<>();
+      myChangesFailedToCommit = new ArrayList<>();
     }
 
     public abstract void callSelf();
@@ -399,7 +392,7 @@ public class CommitHelper {
       myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.NOTHING;
       if (myChangeList instanceof LocalChangeList) {
         final LocalChangeList localList = (LocalChangeList) myChangeList;
-        final boolean containsAll = new HashSet<Change>(myIncludedChanges).containsAll(new HashSet<Change>(myChangeList.getChanges()));
+        final boolean containsAll = new HashSet<>(myIncludedChanges).containsAll(new HashSet<>(myChangeList.getChanges()));
         if (containsAll && !localList.isDefault() && !localList.isReadOnly()) {
           myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.DELETE_LIST;
         }
@@ -417,7 +410,7 @@ public class CommitHelper {
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, this);
     }
 
-    public void process(final AbstractVcs vcs, final List<Change> items) {
+    public void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       final CheckinEnvironment environment = vcs.getCheckinEnvironment();
       if (environment != null) {
         Collection<FilePath> paths = ChangesUtil.getPaths(items);
@@ -444,7 +437,7 @@ public class CommitHelper {
           moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
                            VcsBundle.message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject);
         }
-      }, ModalityState.defaultModalityState(), o -> myProject.isDisposed());
+      }, ModalityState.defaultModalityState(), myProject.getDisposed());
     }
 
     public void doBeforeRefresh() {
@@ -459,14 +452,11 @@ public class CommitHelper {
     }
 
     public void customRefresh() {
-      final List<Change> toRefresh = new ArrayList<Change>();
-      ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, new ChangesUtil.PerVcsProcessor<Change>() {
-        @Override
-        public void process(AbstractVcs vcs, List<Change> items) {
-          CheckinEnvironment ce = vcs.getCheckinEnvironment();
-          if (ce != null && ce.isRefreshAfterCommitNeeded()) {
-            toRefresh.addAll(items);
-          }
+      final List<Change> toRefresh = new ArrayList<>();
+      ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, (vcs, items) -> {
+        CheckinEnvironment ce = vcs.getCheckinEnvironment();
+        if (ce != null && ce.isRefreshAfterCommitNeeded()) {
+          toRefresh.addAll(items);
         }
       });
 
@@ -503,7 +493,7 @@ public class CommitHelper {
                     ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
                     if (dialog.showAndGet()) {
                       final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
-                      MoveChangesToAnotherListAction.askAndMove(myProject, changes, null);
+                      MoveChangesToAnotherListAction.askAndMove(myProject, changes, Collections.emptyList());
                     }
                   }
                 }
@@ -558,7 +548,7 @@ public class CommitHelper {
    */
   @NotNull
   public static Collection<Document> markCommittingDocuments(@NotNull Project project, @NotNull List<Change> changes) {
-    Collection<Document> committingDocs = new ArrayList<Document>();
+    Collection<Document> committingDocs = new ArrayList<>();
     for (Change change : changes) {
       VirtualFile virtualFile = ChangesUtil.getFilePath(change).getVirtualFile();
       if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
@@ -670,7 +660,7 @@ public class CommitHelper {
   }
 
   private static List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
-    final ArrayList<VcsException> result = new ArrayList<VcsException>();
+    final ArrayList<VcsException> result = new ArrayList<>();
     for (VcsException vcsException : vcsExceptions) {
       if (!vcsException.isWarning()) {
         result.add(vcsException);

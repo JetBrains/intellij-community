@@ -19,18 +19,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -99,8 +101,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     // extra check for obsolete nodes - tree root was changed
     // too dangerous to put this into isObsolete - it is called from anywhere, not only EDT
     if (isObsolete()) return;
-    XDebuggerTreeNode root = getTree().getRoot();
-    if (root != null && !TreeUtil.isAncestor(root, this)) return;
 
     setIcon(icon);
     myValuePresentation = valuePresentation;
@@ -140,10 +140,12 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
             return;
           }
 
-          data.put(file, position, XValueNodeImpl.this);
-          timestamps.put(file, document.getModificationStamp());
+          if (!showAsInlay(file, position, debuggerPosition)) {
+            data.put(file, position, XValueNodeImpl.this);
+            timestamps.put(file, document.getModificationStamp());
 
-          myTree.updateEditor();
+            myTree.updateEditor();
+          }
         }
       };
 
@@ -153,6 +155,17 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
     catch (Exception ignore) {
     }
+  }
+
+  private boolean showAsInlay(VirtualFile file, XSourcePosition position, XSourcePosition debuggerPosition) {
+    if (!Registry.is("debugger.show.values.inplace")) return false;
+    if (!debuggerPosition.getFile().equals(position.getFile()) || debuggerPosition.getLine() != position.getLine()) return false;
+    XValue container = getValueContainer();
+    if (!(container instanceof XValueWithInlinePresentation)) return false;
+    String presentation = ((XValueWithInlinePresentation)container).computeInlinePresentation();
+    if (presentation == null) return false;
+    XDebuggerInlayUtil.createInlay(myTree.getProject(), file, position.getOffset(), presentation);
+    return true;
   }
 
   @Override
@@ -167,7 +180,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myText.clear();
     XValueMarkers<?, ?> markers = myTree.getValueMarkers();
     if (markers != null) {
-      ValueMarkup markup = markers.getMarkup(myValueContainer);
+      ValueMarkup markup = markers.getMarkup(getValueContainer());
       if (markup != null) {
         myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }

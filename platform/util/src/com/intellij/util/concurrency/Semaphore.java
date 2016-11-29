@@ -50,6 +50,10 @@ public class Semaphore {
         if (compareAndSetState(current, next)) return;
       }
     }
+
+    private boolean isAcquired() {
+      return getState() != 0;
+    }
   }
 
   private final Sync sync = new Sync();

@@ -83,7 +83,7 @@ public class MoveJavaClassHandler implements MoveClassHandler {
   }
 
   private static void correctOldClassReferences(final PsiClass newClass, final PsiClass oldClass) {
-    final Set<PsiImportStatementBase> importsToDelete = new HashSet<PsiImportStatementBase>();
+    final Set<PsiImportStatementBase> importsToDelete = new HashSet<>();
     newClass.getContainingFile().accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {

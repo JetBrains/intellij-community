@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class ProjectViewTestUtil {
         return result;
       }
     }
-    return new VirtualFile[0];
+    return VirtualFile.EMPTY_ARRAY;
   }
 
   public static void collect(AbstractTreeNode node,
@@ -86,7 +86,7 @@ public class ProjectViewTestUtil {
   public static void checkContainsMethod(final Object rootElement,
                                          final AbstractTreeStructure structure,
                                          Function<AbstractTreeNode, VirtualFile[]> converterFunction) {
-    MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<VirtualFile, AbstractTreeNode>();
+    MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<>();
     collect((AbstractTreeNode)rootElement, map, structure, converterFunction);
 
     for (VirtualFile eachFile : map.keySet()) {

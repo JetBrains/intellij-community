@@ -62,12 +62,10 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
 
     public Comparator<VcsFileRevision> getComparator() {
-      return new Comparator<VcsFileRevision>() {
-        public int compare(VcsFileRevision r1, VcsFileRevision r2) {
-          if (!(r1 instanceof CvsFileRevision)) return 1;
-          if (!(r2 instanceof CvsFileRevision)) return -1;
-          return ((CvsFileRevision)r1).getState().compareTo(((CvsFileRevision)r2).getState());
-        }
+      return (r1, r2) -> {
+        if (!(r1 instanceof CvsFileRevision)) return 1;
+        if (!(r2 instanceof CvsFileRevision)) return -1;
+        return ((CvsFileRevision)r1).getState().compareTo(((CvsFileRevision)r2).getState());
       };
     }
   };
@@ -242,7 +240,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     final LocalPathIndifferentLogOperation logOperation = new LocalPathIndifferentLogOperation(connectionSettings);
     logOperation.addFile(lightweightFileForFile);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
+    final ArrayList<VcsFileRevision> result = new ArrayList<>();
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file.content"), logOperation),
                                new DefaultCvsOperationExecutorCallback() {
                                  @Override
@@ -289,12 +287,12 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     public List<TreeItem<VcsFileRevision>> createTreeOn(List<VcsFileRevision> allRevisions) {
       Collections.sort(allRevisions, VcsFileRevisionComparator.INSTANCE);
 
-      final List<TreeItem<VcsFileRevision>> result = new ArrayList<TreeItem<VcsFileRevision>>();
+      final List<TreeItem<VcsFileRevision>> result = new ArrayList<>();
 
       TreeItem<VcsFileRevision> prevRevision = null;
       for (final VcsFileRevision sortedRevision : allRevisions) {
         final CvsFileRevisionImpl cvsFileRevision = (CvsFileRevisionImpl)sortedRevision;
-        final TreeItem<VcsFileRevision> treeItem = new TreeItem<VcsFileRevision>(cvsFileRevision);
+        final TreeItem<VcsFileRevision> treeItem = new TreeItem<>(cvsFileRevision);
         final TreeItem<VcsFileRevision> commonParent = getCommonParent(prevRevision, treeItem);
         if (commonParent != null) {
           commonParent.addChild(treeItem);

@@ -15,12 +15,12 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.*;
 import org.sonatype.aether.graph.DependencyNode;
 
@@ -36,6 +36,7 @@ import java.util.*;
  */
 public class Maven30AetherModelConverter extends MavenModelConverter {
 
+  @NotNull
   public static MavenModel convertModelWithAetherDependencyTree(Model model,
                                                                 List<String> sources,
                                                                 List<String> testSources,

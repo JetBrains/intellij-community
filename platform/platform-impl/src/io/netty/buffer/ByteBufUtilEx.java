@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,12 @@
 package io.netty.buffer;
 
 import io.netty.util.CharsetUtil;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.UTFDataFormatException;
-import java.nio.CharBuffer;
+import static io.netty.util.internal.StringUtil.isSurrogate;
 
 // todo pull request
 public class ByteBufUtilEx {
-  public static int writeUtf8(ByteBuf buf, CharSequence seq) {
-    return writeUtf8(buf, seq, 0, seq.length());
-  }
+  private static final byte WRITE_UTF_UNKNOWN = (byte) '?';
 
   public static int writeUtf8(ByteBuf buf, CharSequence seq, int start, int end) {
     if (buf == null) {
@@ -61,10 +56,49 @@ public class ByteBufUtilEx {
     }
 
     int writerIndex = oldWriterIndex;
-    // We can use the _set methods as these not need to do any index checks and reference checks.
-    // This is possible as we called ensureWritable(...) before.
     for (int i = start; i < end; i++) {
-      writerIndex = writeChar(buffer, writerIndex, seq.charAt(i));
+      char c = seq.charAt(i);
+      if (c < 0x80) {
+        buffer._setByte(writerIndex++, (byte)c);
+      }
+      else if (c < 0x800) {
+        buffer._setByte(writerIndex++, (byte)(0xc0 | (c >> 6)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
+      }
+      else if (isSurrogate(c)) {
+        if (!Character.isHighSurrogate(c)) {
+          buffer._setByte(writerIndex++, WRITE_UTF_UNKNOWN);
+          continue;
+        }
+        final char c2;
+        try {
+          // Surrogate Pair consumes 2 characters. Optimistically try to get the next character to avoid
+          // duplicate bounds checking with charAt. If an IndexOutOfBoundsException is thrown we will
+          // re-throw a more informative exception describing the problem.
+          //noinspection AssignmentToForLoopParameter
+          c2 = seq.charAt(++i);
+        }
+        catch (IndexOutOfBoundsException e) {
+          buffer._setByte(writerIndex++, WRITE_UTF_UNKNOWN);
+          break;
+        }
+        if (!Character.isLowSurrogate(c2)) {
+          buffer._setByte(writerIndex++, WRITE_UTF_UNKNOWN);
+          buffer._setByte(writerIndex++, Character.isHighSurrogate(c2) ? WRITE_UTF_UNKNOWN : c2);
+          continue;
+        }
+        int codePoint = Character.toCodePoint(c, c2);
+        // See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf#G2630.
+        buffer._setByte(writerIndex++, (byte)(0xf0 | (codePoint >> 18)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | ((codePoint >> 12) & 0x3f)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | ((codePoint >> 6) & 0x3f)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | (codePoint & 0x3f)));
+      }
+      else {
+        buffer._setByte(writerIndex++, (byte)(0xe0 | (c >> 12)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | ((c >> 6) & 0x3f)));
+        buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
+      }
     }
 
     // update the writerIndex without any extra checks for performance reasons
@@ -75,113 +109,5 @@ public class ByteBufUtilEx {
       buf.writerIndex(writerIndex);
     }
     return writerIndex - oldWriterIndex;
-  }
-
-  static int writeChar(AbstractByteBuf buffer, int writerIndex, int c) {
-    if (c < 0x80) {
-      buffer._setByte(writerIndex++, (byte)c);
-    }
-    else if (c < 0x800) {
-      buffer._setByte(writerIndex++, (byte)(0xc0 | (c >> 6)));
-      buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
-    }
-    else {
-      buffer._setByte(writerIndex++, (byte)(0xe0 | (c >> 12)));
-      buffer._setByte(writerIndex++, (byte)(0x80 | ((c >> 6) & 0x3f)));
-      buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
-    }
-    return writerIndex;
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  public static void readUtf8(@NotNull ByteBuf buf, int byteCount, @NotNull CharBuffer charBuffer) throws IOException {
-    AbstractByteBuf buffer = getBuf(buf);
-    int readerIndex = buf.readerIndex();
-
-    int c, char2, char3;
-    int count = 0;
-
-    int byteIndex = readerIndex;
-    int charIndex = charBuffer.position();
-    char[] chars = charBuffer.array();
-    while (count < byteCount) {
-      c = buffer._getByte(byteIndex++) & 0xff;
-      if (c > 127) {
-        break;
-      }
-
-      count++;
-      chars[charIndex++] = (char)c;
-    }
-
-    // byteIndex incremented before check "c > 127", so, we must reset it
-    byteIndex = readerIndex + count;
-    while (count < byteCount) {
-      c = buffer._getByte(byteIndex++) & 0xff;
-      switch (c >> 4) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-          // 0xxxxxxx
-          count++;
-          chars[charIndex++] = (char)c;
-          break;
-
-        case 12:
-        case 13:
-          // 110x xxxx   10xx xxxx
-          count += 2;
-          if (count > byteCount) {
-            throw new UTFDataFormatException("malformed input: partial character at end");
-          }
-          char2 = (int)buffer._getByte(byteIndex++);
-          if ((char2 & 0xC0) != 0x80) {
-            throw new UTFDataFormatException("malformed input around byte " + count);
-          }
-          chars[charIndex++] = (char)(((c & 0x1F) << 6) | (char2 & 0x3F));
-          break;
-
-        case 14:
-          // 1110 xxxx  10xx xxxx  10xx xxxx
-          count += 3;
-          if (count > byteCount) {
-            throw new UTFDataFormatException("malformed input: partial character at end");
-          }
-          char2 = buffer._getByte(byteIndex++);
-          char3 = buffer._getByte(byteIndex++);
-          if (((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80)) {
-            throw new UTFDataFormatException("malformed input around byte " + (count - 1));
-          }
-          chars[charIndex++] = (char)(((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | ((char3 & 0x3F)));
-          break;
-
-        default:
-          // 10xx xxxx,  1111 xxxx
-          throw new UTFDataFormatException("malformed input around byte " + count);
-      }
-    }
-
-    if (buf == buffer) {
-      buffer.readerIndex = readerIndex + byteCount;
-    }
-    else {
-      buf.readerIndex(readerIndex + byteCount);
-    }
-    charBuffer.position(charIndex);
-  }
-
-  @NotNull
-  static AbstractByteBuf getBuf(@NotNull ByteBuf buffer) {
-    if (buffer instanceof AbstractByteBuf) {
-      return (AbstractByteBuf)buffer;
-    }
-    else {
-      return (AbstractByteBuf)((WrappedByteBuf)buffer).buf;
-    }
   }
 }

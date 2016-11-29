@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -75,50 +75,65 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
+
     final List<ProblemDescriptor> descriptions =
-      ProgressManager.getInstance().runProcess(new Computable<List<ProblemDescriptor>>() {
-        @Override
-        public List<ProblemDescriptor> compute() {
-          InspectionManager inspectionManager = InspectionManager.getInstance(project);
-          return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext(false));
-        }
+      ProgressManager.getInstance().runProcess(() -> {
+        InspectionManager inspectionManager = InspectionManager.getInstance(project);
+        return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext(false));
       }, new EmptyProgressIndicator());
 
-    Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
-      @Override
-      public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
-        final ProblemDescriptorBase d1 = (ProblemDescriptorBase)o1;
-        final ProblemDescriptorBase d2 = (ProblemDescriptorBase)o2;
-        final int offset2 = d2.getTextRange().getStartOffset();
-        final int offset1 = d1.getTextRange().getStartOffset();
-        return offset2 < offset1 ? -1 : offset1 == offset2 ? 0 : 1;
-      }
-    });
-    
-    final String templatePresentationText = "Apply Fixes";
-    final SequentialModalProgressTask progressTask =
-      new SequentialModalProgressTask(project, templatePresentationText, true);
-    final boolean isBatch = BatchQuickFix.class.isAssignableFrom(myQuickfixClass);
-    final AbstractPerformFixesTask fixesTask = createTask(project, descriptions.toArray(new ProblemDescriptor[descriptions.size()]), progressTask, isBatch);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-        progressTask.setMinIterationTime(200);
-        progressTask.setTask(fixesTask);
-        ProgressManager.getInstance().run(progressTask);
-      }
-    }, templatePresentationText, null);
+    if (!descriptions.isEmpty() && !FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
+
+    final AbstractPerformFixesTask fixesTask = applyFixes(project, "Apply Fixes", descriptions, myQuickfixClass);
 
     if (!fixesTask.isApplicableFixFound()) {
-      HintManager.getInstance().showErrorHint(editor, "Unfortunately '" + myText + "' is currently not available for batch mode");
+      HintManager.getInstance().showErrorHint(editor, "Unfortunately '" + myText + "' is currently not available for batch mode\n User interaction is required for each problem found");
     }
+  }
+
+  public static AbstractPerformFixesTask applyFixes(@NotNull Project project,
+                                                    @NotNull String presentationText,
+                                                    @NotNull List<ProblemDescriptor> descriptions,
+                                                    @Nullable Class quickfixClass) {
+    sortDescriptions(descriptions);
+    return applyFixesNoSort(project, presentationText, descriptions, quickfixClass);
+  }
+
+  public static AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
+                                                          @NotNull String presentationText,
+                                                          @NotNull List<ProblemDescriptor> descriptions,
+                                                          @Nullable Class quickfixClass) {
+    final SequentialModalProgressTask progressTask =
+      new SequentialModalProgressTask(project, presentationText, true);
+    final boolean isBatch = quickfixClass != null && BatchQuickFix.class.isAssignableFrom(quickfixClass);
+    final AbstractPerformFixesTask fixesTask = isBatch ?
+                                               new PerformBatchFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), progressTask, quickfixClass) :
+                                               new PerformFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), progressTask, quickfixClass);
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+      progressTask.setMinIterationTime(200);
+      progressTask.setTask(fixesTask);
+      ProgressManager.getInstance().run(progressTask);
+    }, presentationText, null);
+    return fixesTask;
+  }
+
+  public static void sortDescriptions(@NotNull List<ProblemDescriptor> descriptions) {
+    Collections.sort(descriptions, (o1, o2) -> {
+      final ProblemDescriptorBase d1 = (ProblemDescriptorBase)o1;
+      final ProblemDescriptorBase d2 = (ProblemDescriptorBase)o2;
+      final int elementsDiff = PsiUtilCore.compareElementsByPosition(d1.getPsiElement(), d2.getPsiElement());
+      if (elementsDiff == 0) {
+        return Comparing.compare(d1.getDescriptionTemplate(), d2.getDescriptionTemplate());
+      }
+      return -elementsDiff;
+    });
   }
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myQuickfixClass != EmptyIntentionAction.class &&
+           editor != null &&
            !(myToolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }
 
@@ -127,23 +142,16 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     return false;
   }
 
-  @NotNull
-  private AbstractPerformFixesTask createTask(@NotNull Project project,
-                                              ProblemDescriptor[] descriptions,
-                                              SequentialModalProgressTask progressTask,
-                                              boolean isBatch) {
-    return isBatch ?
-           new PerformBatchFixesTask(project, descriptions, progressTask) :
-           new PerformFixesTask(project, descriptions, progressTask);
-  }
-
-  private abstract class AbstractPerformFixesTask extends PerformFixesModalTask {
+  private static abstract class AbstractPerformFixesTask extends PerformFixesModalTask {
     private boolean myApplicableFixFound = false;
+    protected final Class myQuickfixClass;
 
     public AbstractPerformFixesTask(@NotNull Project project,
-                            @NotNull CommonProblemDescriptor[] descriptors,
-                            @NotNull SequentialModalProgressTask task) {
+                                    @NotNull CommonProblemDescriptor[] descriptors,
+                                    @NotNull SequentialModalProgressTask task,
+                                    @Nullable Class quickfixClass) {
       super(project, descriptors, task);
+      myQuickfixClass = quickfixClass;
     }
 
     protected abstract void collectFix(QuickFix fix, ProblemDescriptor descriptor, Project project);
@@ -153,7 +161,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (final QuickFix fix : fixes) {
-          if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
+          if (fix != null && (myQuickfixClass == null || fix.getClass().isAssignableFrom(myQuickfixClass))) {
             final ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
             final PsiElement element = problemDescriptor.getPsiElement();
             if (element != null && element.isValid()) {
@@ -171,14 +179,15 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     }
   }
 
-  private class PerformBatchFixesTask extends AbstractPerformFixesTask {
-    private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<ProblemDescriptor>();
+  private static class PerformBatchFixesTask extends AbstractPerformFixesTask {
+    private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<>();
     private boolean myApplied = false;
 
     public PerformBatchFixesTask(@NotNull Project project,
                                  @NotNull CommonProblemDescriptor[] descriptors,
-                                 @NotNull SequentialModalProgressTask task) {
-      super(project, descriptors, task);
+                                 @NotNull SequentialModalProgressTask task,
+                                 @NotNull Class quickfixClass) {
+      super(project, descriptors, task, quickfixClass);
     }
 
     @Override
@@ -196,7 +205,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
             if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
               ((BatchQuickFix)fix).applyFix(myProject,
                                             myBatchModeDescriptors.toArray(new ProblemDescriptor[myBatchModeDescriptors.size()]),
-                                            new ArrayList<PsiElement>(),
+                                            new ArrayList<>(),
                                             null);
               break;
             }
@@ -211,11 +220,12 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     }
   }
   
-  private class PerformFixesTask extends AbstractPerformFixesTask {
+  private static class PerformFixesTask extends AbstractPerformFixesTask {
     public PerformFixesTask(@NotNull Project project,
                             @NotNull CommonProblemDescriptor[] descriptors,
-                            @NotNull SequentialModalProgressTask task) {
-      super(project, descriptors, task);
+                            @NotNull SequentialModalProgressTask task,
+                            @Nullable Class quickFixClass) {
+      super(project, descriptors, task, quickFixClass);
     }
 
     @Override

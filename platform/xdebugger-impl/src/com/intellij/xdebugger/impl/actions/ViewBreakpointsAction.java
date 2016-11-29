@@ -60,7 +60,7 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
   @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = event.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;

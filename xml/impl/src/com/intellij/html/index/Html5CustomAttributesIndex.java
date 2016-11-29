@@ -52,7 +52,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
       if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
         final Lexer lexer = (language == HTMLLanguage.INSTANCE ? new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS")) : new XHtmlHighlightingLexer());
         lexer.start(input);
-        Map<String, Void> result = new HashMap<String, Void>();
+        Map<String, Void> result = new HashMap<>();
         IElementType tokenType = lexer.getTokenType();
         while (tokenType != null) {
           if (tokenType == XmlTokenType.XML_NAME) {
@@ -89,7 +89,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return new EnumeratorStringDescriptor();
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull

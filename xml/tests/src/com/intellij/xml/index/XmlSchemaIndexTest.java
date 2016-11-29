@@ -5,15 +5,14 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.xml.util.XmlUtil;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -72,14 +71,9 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     assert module != null;
     final Collection<VirtualFile> files1 = FileBasedIndex.getInstance().getContainingFiles(XmlTagNamesIndex.NAME, "web-app", module.getModuleContentScope());
 
-    assertEquals(new ArrayList<VirtualFile>(files1).toString(), 2, files1.size());
+    assertEquals(new ArrayList<>(files1).toString(), 2, files1.size());
 
-    List<String> names = new ArrayList<String>(ContainerUtil.map(files1, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile virtualFile) {
-        return virtualFile.getName();
-      }
-    }));
+    List<String> names = new ArrayList<>(ContainerUtil.map(files1, virtualFile -> virtualFile.getName()));
     Collections.sort(names);
     assertEquals(Arrays.asList("web-app_2_5.xsd", "web-app_3_0.xsd"), names);
   }
@@ -138,6 +132,17 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     assertEquals("dbchangelog-3.1.xsd", XmlNamespaceIndex
       .guessSchema(namespace, null, null, "http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd", myModule, getProject())
       .getFile().getName());
+  }
+
+  public void testNullSerialization() throws Exception {
+    DataExternalizer<XsdNamespaceBuilder> externalizer = new XmlNamespaceIndex().getValueExternalizer();
+    XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new StringReader(""));
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    externalizer.save(new DataOutputStream(out), builder);
+
+    XsdNamespaceBuilder read = externalizer.read(new DataInputStream(new ByteArrayInputStream(out.toByteArray())));
+    assertEquals(read, builder);
+    assertEquals(read.hashCode(), builder.hashCode());
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -67,8 +66,22 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       runCustomPatchers(parameters, environment.getExecutor(), environment.getRunProfile());
-      RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(parameters, true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
-      return attachVirtualMachine(state, environment, connection, true);
+      boolean isPollConnection = true;
+      RemoteConnection connection = null;
+      if (state instanceof RemoteConnectionCreator) {
+        connection = ((RemoteConnectionCreator)state).createRemoteConnection(environment);
+        isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
+      }
+      if (connection == null) {
+        int transport = DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
+        connection = DebuggerManagerImpl.createDebugParameters(parameters,
+                                                               true,
+                                                               transport,
+                                                               transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "",
+                                                               false);
+        isPollConnection = true;
+      }
+      return attachVirtualMachine(state, environment, connection, isPollConnection);
     }
     if (state instanceof PatchedRunnableState) {
       final RemoteConnection connection = doPatch(new JavaParameters(), environment.getRunnerSettings());
@@ -87,23 +100,22 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                       @NotNull ExecutionEnvironment env,
                                                       RemoteConnection connection,
                                                       boolean pollConnection) throws ExecutionException {
-    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollConnection);
+    return attachVirtualMachine(state, env, connection, pollConnection ? DebugEnvironment.LOCAL_START_TIMEOUT : 0);
+  }
+
+
+  @Nullable
+  protected RunContentDescriptor attachVirtualMachine(RunProfileState state,
+                                                      @NotNull ExecutionEnvironment env,
+                                                      RemoteConnection connection,
+                                                      long pollTimeout) throws ExecutionException {
+    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollTimeout);
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
     if (debuggerSession == null) {
       return null;
     }
 
     final DebugProcessImpl debugProcess = debuggerSession.getProcess();
-    if (debugProcess.isDetached() || debugProcess.isDetaching()) {
-      debuggerSession.dispose();
-      return null;
-    }
-    if (environment.isRemote()) {
-      // optimization: that way BatchEvaluator will not try to lookup the class file in remote VM
-      // which is an expensive operation when executed first time
-      debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
-    }
-
     return XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
       @Override
       @NotNull

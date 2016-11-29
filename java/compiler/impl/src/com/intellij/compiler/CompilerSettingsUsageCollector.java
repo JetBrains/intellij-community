@@ -38,7 +38,7 @@ public class CompilerSettingsUsageCollector extends AbstractApplicationUsagesCol
   public Set<UsageDescriptor> getProjectUsages(@Nullable Project project) throws CollectUsagesException {
     final CompilerWorkspaceConfiguration wsConfig = CompilerWorkspaceConfiguration.getInstance(project);
     
-    final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
+    final Set<UsageDescriptor> result = new HashSet<>();
     if (wsConfig.MAKE_PROJECT_ON_SAVE) {
       result.add(new UsageDescriptor("auto_make", 1));
     }

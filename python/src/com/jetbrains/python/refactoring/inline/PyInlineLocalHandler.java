@@ -31,7 +31,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -141,7 +140,6 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
     final TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       highlightManager.addOccurrenceHighlights(editor, refsToInline, attributes, true, null);
       final int occurrencesCount = refsToInline.length;
@@ -150,9 +148,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       final RefactoringMessageDialog dialog =
         new RefactoringMessageDialog(REFACTORING_NAME, question, HELP_ID, "OptionPane.questionIcon", true, project);
       if (!dialog.showAndGet()) {
-        if (statusBar != null) {
-          statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        }
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }
     }
@@ -168,7 +164,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     }
 
     for (final PsiElement ref : refsToInline) {
-      final List<PsiElement> elems = new ArrayList<PsiElement>();
+      final List<PsiElement> elems = new ArrayList<>();
       final List<Instruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref, false, false);
       for (Instruction i : latestDefs) {
         elems.add(i.getElement());
@@ -184,76 +180,64 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         final String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
-        if (statusBar != null) {
-          statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        }
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }
     }
 
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              final RefactoringEventData afterData = new RefactoringEventData();
-              afterData.addElement(local);
-              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-                .refactoringStarted(getRefactoringId(), afterData);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        final RefactoringEventData afterData = new RefactoringEventData();
+        afterData.addElement(local);
+        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+          .refactoringStarted(getRefactoringId(), afterData);
 
-              final PsiElement[] exprs = new PsiElement[refsToInline.length];
-              final PyExpression value = prepareValue(def, localName, project);
-              final PyExpression withParenthesis =
-                PyElementGenerator.getInstance(project).createExpressionFromText("(" + value.getText() + ")");
-              final PsiElement lastChild = def.getLastChild();
-              if (lastChild != null && lastChild.getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
-                final PsiElement parent = def.getParent();
-                if (parent != null) parent.addBefore(lastChild, def);
-              }
+        final PsiElement[] exprs = new PsiElement[refsToInline.length];
+        final PyExpression value = prepareValue(def, localName, project);
+        final PyExpression withParenthesis =
+          PyElementGenerator.getInstance(project).createExpressionFromText("(" + value.getText() + ")");
+        final PsiElement lastChild = def.getLastChild();
+        if (lastChild != null && lastChild.getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+          final PsiElement parent = def.getParent();
+          if (parent != null) parent.addBefore(lastChild, def);
+        }
 
-              for (int i = 0, refsToInlineLength = refsToInline.length; i < refsToInlineLength; i++) {
-                final PsiElement element = refsToInline[i];
-                if (PyReplaceExpressionUtil.isNeedParenthesis((PyExpression)element, value)) {
-                  exprs[i] = element.replace(withParenthesis);
-                }
-                else {
-                  exprs[i] = element.replace(value);
-                }
-              }
-              final PsiElement next = def.getNextSibling();
-              if (next instanceof PsiWhiteSpace) {
-                PyPsiUtils.removeElements(next);
-              }
-              PyPsiUtils.removeElements(def);
-
-              final List<TextRange> ranges = ContainerUtil.mapNotNull(exprs, new Function<PsiElement, TextRange>() {
-                @Override
-                public TextRange fun(PsiElement element) {
-                  final PyStatement parentalStatement = PsiTreeUtil.getParentOfType(element, PyStatement.class, false);
-                  return parentalStatement != null ? parentalStatement.getTextRange() : null;
-                }
-              });
-              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-              CodeStyleManager.getInstance(project).reformatText(workingFile, ranges);
-
-              if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
-                if (statusBar != null) {
-                  statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-                }
-              }
-            }
-            finally {
-              final RefactoringEventData afterData = new RefactoringEventData();
-              afterData.addElement(local);
-              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-                .refactoringDone(getRefactoringId(), afterData);
-            }
+        for (int i = 0, refsToInlineLength = refsToInline.length; i < refsToInlineLength; i++) {
+          final PsiElement element = refsToInline[i];
+          if (PyReplaceExpressionUtil.isNeedParenthesis((PyExpression)element, value)) {
+            exprs[i] = element.replace(withParenthesis);
           }
+          else {
+            exprs[i] = element.replace(value);
+          }
+        }
+        final PsiElement next = def.getNextSibling();
+        if (next instanceof PsiWhiteSpace) {
+          PyPsiUtils.removeElements(next);
+        }
+        PyPsiUtils.removeElements(def);
+
+        final List<TextRange> ranges = ContainerUtil.mapNotNull(exprs, element -> {
+          final PyStatement parentalStatement = PsiTreeUtil.getParentOfType(element, PyStatement.class, false);
+          return parentalStatement != null ? parentalStatement.getTextRange() : null;
         });
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        CodeStyleManager.getInstance(project).reformatText(workingFile, ranges);
+
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
+          WindowManager.getInstance().getStatusBar(project)
+            .setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
       }
-    }, RefactoringBundle.message("inline.command", localName), null);
+      finally {
+        final RefactoringEventData afterData = new RefactoringEventData();
+        afterData.addElement(local);
+        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+          .refactoringDone(getRefactoringId(), afterData);
+      }
+    }), RefactoringBundle.message("inline.command", localName), null);
   }
 
   private static boolean isSameDefinition(PyStatement def, PsiElement otherDef) {

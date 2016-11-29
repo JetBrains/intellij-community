@@ -1,8 +1,0 @@
-interface DefInInterface {
-  def bar
-}
------
-public interface DefInInterface {
-public static final java.lang.Object bar = null;
-}
----

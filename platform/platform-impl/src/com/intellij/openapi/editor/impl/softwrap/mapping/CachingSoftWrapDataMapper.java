@@ -68,9 +68,9 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
   private static final Logger LOG = Logger.getInstance("#" + CachingSoftWrapDataMapper.class.getName());
   
   /** Caches information for the document visual line starts sorted in ascending order. */
-  private final List<CacheEntry>               myCache                               = new ArrayList<CacheEntry>();
-  private final List<CacheEntry>               myAffectedByUpdateCacheEntries        = new ArrayList<CacheEntry>();
-  private final List<SoftWrapImpl>             myAffectedByUpdateSoftWraps           = new ArrayList<SoftWrapImpl>();
+  private final List<CacheEntry>               myCache                               = new ArrayList<>();
+  private final List<CacheEntry>               myAffectedByUpdateCacheEntries        = new ArrayList<>();
+  private final List<SoftWrapImpl>             myAffectedByUpdateSoftWraps           = new ArrayList<>();
 
   private final LogicalToOffsetCalculationStrategy myLogicalToOffsetStrategy;
   private final OffsetToLogicalCalculationStrategy myOffsetToLogicalStrategy;
@@ -138,23 +138,20 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
                                                                                                      newSoftWrap.getEnd() - lengthDiff),
                                                                                   newSoftWrap.getIndentInColumns(),
                                                                                   newSoftWrap.getIndentInPixels()),
-                                    new Comparator<SoftWrapImpl>() {
-                                      @Override
-                                      public int compare(SoftWrapImpl o1, SoftWrapImpl o2) {
-                                        int offsetDiff = o1.getStart() - o2.getStart();
-                                        if (offsetDiff != 0) {
-                                          return offsetDiff;
-                                        }
-                                        int textDiff = o1.getText().toString().compareTo(o2.getText().toString());
-                                        if (textDiff != 0) {
-                                          return textDiff;
-                                        }
-                                        int colIndentDiff = o1.getIndentInColumns() - o2.getIndentInColumns();
-                                        if (colIndentDiff != 0) {
-                                          return colIndentDiff;
-                                        }
-                                        return o1.getIndentInPixels() - o2.getIndentInPixels();
+                                    (o1, o2) -> {
+                                      int offsetDiff = o1.getStart() - o2.getStart();
+                                      if (offsetDiff != 0) {
+                                        return offsetDiff;
                                       }
+                                      int textDiff = o1.getText().toString().compareTo(o2.getText().toString());
+                                      if (textDiff != 0) {
+                                        return textDiff;
+                                      }
+                                      int colIndentDiff = o1.getIndentInColumns() - o2.getIndentInColumns();
+                                      if (colIndentDiff != 0) {
+                                        return colIndentDiff;
+                                      }
+                                      return o1.getIndentInPixels() - o2.getIndentInPixels();
                                     }) >= 0;
   }
 

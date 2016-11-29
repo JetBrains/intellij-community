@@ -113,7 +113,7 @@ public class SyntheticWorker {
       if (children == null) {
         return Boolean.FALSE;
       }
-      final List<DirectoryEntry> newChildren = new ArrayList<DirectoryEntry>(children.size());
+      final List<DirectoryEntry> newChildren = new ArrayList<>(children.size());
 
       try {
         for (DirectoryEntry child : children) {

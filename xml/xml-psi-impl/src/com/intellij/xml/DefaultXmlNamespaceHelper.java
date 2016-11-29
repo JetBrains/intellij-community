@@ -172,7 +172,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     final String name = tag.getLocalName();
     final Set<String> byTagName = getNamespacesByTagName(name, file);
     if (!byTagName.isEmpty()) {
-      Set<String> filtered = new HashSet<String>(byTagName);
+      Set<String> filtered = new HashSet<>(byTagName);
       filtered.removeAll(Arrays.asList(tag.knownNamespaces()));
       return filtered;
     }
@@ -210,7 +210,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   private static Set<String> guessNamespace(final PsiFile file, String tagName) {
     final Project project = file.getProject();
     final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName(tagName, project);
-    final Set<String> possibleUris = new LinkedHashSet<String>(files.size());
+    final Set<String> possibleUris = new LinkedHashSet<>(files.size());
     for (VirtualFile virtualFile : files) {
       final String namespace = XmlNamespaceIndex.getNamespace(virtualFile, project, file);
       if (namespace != null) {
@@ -225,7 +225,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   public Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context) {
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(context);
 
-    HashSet<String> set = new HashSet<String>();
+    HashSet<String> set = new HashSet<>();
     for (XmlSchemaProvider provider : providers) {
       set.addAll(provider.getAvailableNamespaces(context, tagName));
     }

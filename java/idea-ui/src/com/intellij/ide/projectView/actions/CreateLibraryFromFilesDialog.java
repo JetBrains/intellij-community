@@ -15,12 +15,10 @@
  */
 package com.intellij.ide.projectView.actions;
 
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -28,7 +26,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
-import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryNameAndLevelPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -133,19 +130,13 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        addLibrary();
-      }
-    });
+    addLibrary();
     super.doOKAction();
   }
 
   private void addLibrary() {
     final LibrariesContainer.LibraryLevel level = myNameAndLevelPanel.getLibraryLevel();
-    AccessToken token = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       final Module module = myModulesComboBox.getSelectedModule();
       final String libraryName = myNameAndLevelPanel.getLibraryName();
       if (level == LibrariesContainer.LibraryLevel.MODULE) {
@@ -159,10 +150,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
           ModuleRootModificationUtil.addDependency(module, library);
         }
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 
   @Override

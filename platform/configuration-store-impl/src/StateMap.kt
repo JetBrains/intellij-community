@@ -18,55 +18,26 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import gnu.trove.THashMap
 import org.iq80.snappy.SnappyInputStream
 import org.iq80.snappy.SnappyOutputStream
 import org.jdom.Element
-import org.jdom.output.Format
 import java.io.ByteArrayInputStream
-import java.io.DataOutputStream
-import java.io.OutputStreamWriter
 import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
 
-private val XML_FORMAT = Format.getRawFormat().setTextMode(Format.TextMode.TRIM).setOmitEncoding(true).setOmitDeclaration(true)
-
-// must be mot modified during app life
-private val isUseNewSaving by lazy { ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("configuration.saving.v3", false) }
-
-private fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
-  if (isUseNewSaving) {
-    return archiveStateBinary(state)
-  }
-  else {
-    return archiveStateXml(state)
-  }
-}
-
-fun archiveStateBinary(state: Element): BufferExposingByteArrayOutputStream {
+fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
-  DataOutputStream(SnappyOutputStream(byteOut)).use {
-    writeElement(state, it)
+  SnappyOutputStream(byteOut).use {
+    serializeElementToBinary(state, it)
   }
   return byteOut
 }
 
-fun archiveStateXml(state: Element): BufferExposingByteArrayOutputStream {
-  val byteOut = BufferExposingByteArrayOutputStream()
-  OutputStreamWriter(SnappyOutputStream(byteOut), CharsetToolkit.UTF8_CHARSET).use {
-    val xmlOutputter = JDOMUtil.MyXMLOutputter()
-    xmlOutputter.format = XML_FORMAT
-    xmlOutputter.output(state, it)
-  }
-  return byteOut
-}
-
-private fun unarchiveState(state: ByteArray) = JDOMUtil.load(SnappyInputStream(ByteArrayInputStream(state)))
+private fun unarchiveState(state: ByteArray) = SnappyInputStream(ByteArrayInputStream(state)).use { readElement(it) }
 
 fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
   val newBytes: ByteArray
@@ -85,27 +56,28 @@ fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteAr
     }
   }
 
-  if (SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
+  val logChangedComponents = SystemProperties.getBooleanProperty("idea.log.changed.components", false)
+  if (ApplicationManager.getApplication().isUnitTestMode || logChangedComponents ) {
     fun stateToString(state: Any) = JDOMUtil.writeParent(state as? Element ?: unarchiveState(state as ByteArray), "\n")
 
     val before = stateToString(oldState)
     val after = stateToString(newState)
     if (before == after) {
-      LOG.info("Serialization error: serialized are different, but unserialized are equal")
+      throw IllegalStateException("$key serialization error - serialized are different, but unserialized are equal")
     }
-    else {
+    else if (logChangedComponents) {
       LOG.info("$key ${StringUtil.repeat("=", 80 - key.length)}\nBefore:\n$before\nAfter:\n$after")
     }
   }
   return newBytes
 }
 
-fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element {
+fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element? {
   if (state is Element) {
     return state.clone()
   }
   else {
-    return newLiveStates?.get(key) ?: unarchiveState(state as ByteArray)
+    return newLiveStates?.get(key) ?: (state as? ByteArray)?.let(::unarchiveState)
   }
 }
 
@@ -178,7 +150,12 @@ class StateMap private constructor(private val names: Array<String>, private val
         diffs.add(key)
       }
     }
-    else if (getNewByteIfDiffers(key, newState!!, oldState as ByteArray) != null) {
+    else if (oldState == null) {
+      if (newState != null) {
+        diffs.add(key)
+      }
+    }
+    else if (newState == null || getNewByteIfDiffers(key, newState, oldState as ByteArray) != null) {
       diffs.add(key)
     }
   }
@@ -202,9 +179,7 @@ class StateMap private constructor(private val names: Array<String>, private val
       return
     }
 
-    val currentState = states.get(index)
-    LOG.assertTrue(currentState is Element, currentState?.let { it.javaClass.name } ?: "null")
-    states.set(index, if (state == null) null else archiveState(state).toByteArray())
+    states.set(index, state?.let { archiveState(state).toByteArray() })
   }
 }
 
@@ -262,7 +237,7 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
   return true
 }
 
-fun arrayEquals(a: ByteArray, a2: ByteArray, aSize: Int = a.size): Boolean {
+private fun arrayEquals(a: ByteArray, a2: ByteArray, aSize: Int = a.size): Boolean {
   if (a == a2) {
     return true
   }

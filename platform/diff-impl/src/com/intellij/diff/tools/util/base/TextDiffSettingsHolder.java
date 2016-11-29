@@ -42,6 +42,9 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
   private final static class SharedSettings {
     // Fragments settings
     public int CONTEXT_RANGE = 4;
+
+    public boolean MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES = false;
+    public boolean MERGE_LST_GUTTER_MARKERS = true;
   }
 
   private static class PlaceSettings {
@@ -58,6 +61,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     public boolean SHOW_INDENT_LINES = false;
     public boolean USE_SOFT_WRAPS = false;
     public HighlightingLevel HIGHLIGHTING_LEVEL = HighlightingLevel.INSPECTIONS;
+    public boolean READ_ONLY_LOCK = true;
 
     // Fragments settings
     public boolean EXPAND_BY_DEFAULT = true;
@@ -83,7 +87,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     }
 
     public void setEnableSyncScroll(boolean value) {
-      this.PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
+      PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
     }
 
     // Diff settings
@@ -104,6 +108,26 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     public void setIgnorePolicy(@NotNull IgnorePolicy policy) {
       PLACE_SETTINGS.IGNORE_POLICY = policy;
+    }
+
+    //
+    // Merge
+    //
+
+    public boolean isAutoApplyNonConflictedChanges() {
+      return SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES;
+    }
+
+    public void setAutoApplyNonConflictedChanges(boolean value) {
+      SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES = value;
+    }
+
+    public boolean isEnableLstGutterMarkersInMerge() {
+      return SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS;
+    }
+
+    public void setEnableLstGutterMarkersInMerge(boolean value) {
+      SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS = value;
     }
 
     // Editor settings
@@ -165,6 +189,14 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
       PLACE_SETTINGS.EXPAND_BY_DEFAULT = value;
     }
 
+    public boolean isReadOnlyLock() {
+      return PLACE_SETTINGS.READ_ONLY_LOCK;
+    }
+
+    public void setReadOnlyLock(boolean state) {
+      PLACE_SETTINGS.READ_ONLY_LOCK = state;
+    }
+
     //
     // Impl
     //
@@ -217,7 +249,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
   @NotNull
   public static Map<String, PlaceSettings> getDefaultPlaceSettings() {
-    Map<String, PlaceSettings> map = new TreeMap<String, PlaceSettings>();
+    Map<String, PlaceSettings> map = new TreeMap<>();
 
     PlaceSettings changes = new PlaceSettings();
     changes.EXPAND_BY_DEFAULT = false;

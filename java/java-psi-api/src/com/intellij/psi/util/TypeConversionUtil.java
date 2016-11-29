@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,10 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -65,7 +61,7 @@ public class TypeConversionUtil {
   private static final int BOOL_RANK = 10;
   private static final int STRING_RANK = 100;
   private static final int MAX_NUMERIC_RANK = DOUBLE_RANK;
-  public static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL){
+  public static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL) {
     @Override
     public boolean isValid() {
       return true;
@@ -73,8 +69,7 @@ public class TypeConversionUtil {
 
     @NotNull
     @Override
-    @NonNls
-    public String getPresentableText() {
+    public String getPresentableText(boolean annotated) {
       return "FAKE TYPE";
     }
   };
@@ -777,7 +772,7 @@ public class TypeConversionUtil {
     }
 
     if (right instanceof PsiCapturedWildcardType) {
-      return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(), allowUncheckedConversion, capture);
+      return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(capture), allowUncheckedConversion, capture);
     }
 
     if (left instanceof PsiCapturedWildcardType) {
@@ -839,7 +834,7 @@ public class TypeConversionUtil {
       return false; // must be TypeCook's PsiTypeVariable
     }
     if (left instanceof PsiPrimitiveType) {
-      return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right);
+      return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right, new HashSet<PsiClassType>());
     }
     final PsiClassType.ClassResolveResult leftResult = PsiUtil.resolveGenericsClassInType(left);
     final PsiClassType.ClassResolveResult rightResult = PsiUtil.resolveGenericsClassInType(right);
@@ -880,7 +875,20 @@ public class TypeConversionUtil {
     return isAssignable(wildcardType.getExtendsBound(), right);
   }
 
-  private static boolean isUnboxable(@NotNull PsiPrimitiveType left, @NotNull PsiClassType right) {
+  private static boolean isUnboxable(@NotNull PsiPrimitiveType left, @NotNull PsiClassType right, @NotNull Set<PsiClassType> types) {
+    if (!right.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) return false;
+    final PsiClass psiClass = right.resolve();
+    if (psiClass == null) return false;
+
+    if (psiClass instanceof PsiTypeParameter) {
+      for (PsiClassType bound : psiClass.getExtendsListTypes()) {
+        if (types.add(bound) && isUnboxable(left, bound, types)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     final PsiPrimitiveType rightUnboxedType = PsiPrimitiveType.getUnboxedType(right);
     return rightUnboxedType != null && isAssignable(left, rightUnboxedType);
   }
@@ -935,7 +943,7 @@ public class TypeConversionUtil {
             InheritanceUtil.processSupers(boxedClass, true, new Processor<PsiClass>() {
               @Override
               public boolean process(PsiClass psiClass) {
-                ContainerUtil.addIfNotNull(psiClass.getQualifiedName(), set);
+                ContainerUtil.addIfNotNull(set, psiClass.getQualifiedName());
                 return true;
               }
             });
@@ -1316,7 +1324,13 @@ public class TypeConversionUtil {
 
       @Override
       public PsiType visitWildcardType(PsiWildcardType wildcardType) {
-        return wildcardType.getExtendsBound().accept(this);
+        return wildcardType;
+      }
+
+      @Nullable
+      @Override
+      public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        return capturedWildcardType.getUpperBound().accept(this);
       }
 
       @Override
@@ -1351,10 +1365,8 @@ public class TypeConversionUtil {
   public static Object computeCastTo(final Object operand, final PsiType castType) {
     if (operand == null || castType == null) return null;
     Object value;
-    if (operand instanceof String && castType.equalsToText(JAVA_LANG_STRING)) {
-      value = operand;
-    }
-    else if (operand instanceof Boolean && PsiType.BOOLEAN.equals(castType)) {
+    if (operand instanceof String && castType.equalsToText(JAVA_LANG_STRING) ||
+        operand instanceof Boolean && PsiType.BOOLEAN.equals(castType)) {
       value = operand;
     }
     else {
@@ -1450,14 +1462,7 @@ public class TypeConversionUtil {
       if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
       return lType;
     }
-    if (sign == JavaTokenType.EQEQ ||
-        sign == JavaTokenType.NE ||
-        sign == JavaTokenType.LT ||
-        sign == JavaTokenType.GT ||
-        sign == JavaTokenType.LE ||
-        sign == JavaTokenType.GE ||
-        sign == JavaTokenType.OROR ||
-        sign == JavaTokenType.ANDAND) {
+    if (PsiBinaryExpression.BOOLEAN_OPERATION_TOKENS.contains(sign)) {
       return PsiType.BOOLEAN;
     }
     if (sign == JavaTokenType.OR || sign == JavaTokenType.XOR || sign == JavaTokenType.AND) {

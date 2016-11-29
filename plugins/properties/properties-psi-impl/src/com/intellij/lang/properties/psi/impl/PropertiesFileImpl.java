@@ -19,10 +19,10 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.PropertiesList;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -32,24 +32,25 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private static final Logger LOG = Logger.getInstance(PropertiesFileImpl.class);
   private static final TokenSet PROPERTIES_LIST_SET = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
-  private volatile MostlySingularMultiMap<String,IProperty> myPropertiesMap; //guarded by lock
-  private volatile List<IProperty> myProperties;  //guarded by lock
-  private volatile boolean myAlphaSorted;
-  private final Object lock = new Object();
 
   public PropertiesFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PropertiesLanguage.INSTANCE);
@@ -69,51 +70,25 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Override
   @NotNull
   public List<IProperty> getProperties() {
-    ensurePropertiesLoaded();
-    return myProperties;
+    final PropertiesList propertiesList = PsiTreeUtil.getStubChildOfType(this, PropertiesList.class);
+    if (propertiesList == null) return Collections.emptyList();
+    return Collections.unmodifiableList(PsiTreeUtil.getStubChildrenOfTypeAsList(propertiesList, Property.class));
   }
 
   private ASTNode getPropertiesList() {
     return ArrayUtil.getFirstElement(getNode().getChildren(PROPERTIES_LIST_SET));
   }
 
-  private void ensurePropertiesLoaded() {
-    if (myPropertiesMap != null) return;
-
-    final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
-    MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<String, IProperty>();
-    List<IProperty> properties = new ArrayList<IProperty>(props.length);
-    for (final ASTNode prop : props) {
-      final Property property = (Property)prop.getPsi();
-      String key = property.getUnescapedKey();
-      propertiesMap.add(key, property);
-      properties.add(property);
-    }
-    final boolean isAlphaSorted = PropertiesImplUtil.isAlphaSorted(properties);
-    synchronized (lock) {
-      if (myPropertiesMap != null) return;
-      myProperties = properties;
-      myPropertiesMap = propertiesMap;
-      myAlphaSorted = isAlphaSorted;
-    }
-  }
-
+  @Nullable
   @Override
   public IProperty findPropertyByKey(@NotNull String key) {
-    ensurePropertiesLoaded();
-    synchronized (lock) {
-      Iterator<IProperty> iterator = myPropertiesMap.get(key).iterator();
-      return iterator.hasNext() ? iterator.next() : null;
-    }
+    return propertiesByKey(key).findFirst().orElse(null);
   }
 
   @Override
   @NotNull
   public List<IProperty> findPropertiesByKey(@NotNull String key) {
-    ensurePropertiesLoaded();
-    synchronized (lock) {
-      return ContainerUtil.collect(myPropertiesMap.get(key).iterator());
-    }
+    return propertiesByKey(key).collect(Collectors.toList());
   }
 
   @Override
@@ -141,28 +116,6 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
     final IProperty position = findInsertionPosition(property);
     return addPropertyAfter(property, position);
-  }
-
-  private IProperty findInsertionPosition(@NotNull IProperty property) {
-    synchronized (lock) {
-      ensurePropertiesLoaded();
-      if (myProperties.isEmpty()) {
-        return null;
-      }
-      if (myAlphaSorted) {
-        final int insertIndex = Collections.binarySearch(myProperties, property, new Comparator<IProperty>() {
-          @Override
-          public int compare(IProperty p1, IProperty p2) {
-            final String k1 = p1.getKey();
-            final String k2 = p2.getKey();
-            LOG.assertTrue(k1 != null && k2 != null);
-            return String.CASE_INSENSITIVE_ORDER.compare(k1, k2);
-          }
-        });
-        return insertIndex == -1 ? null :myProperties.get(insertIndex < 0 ? - insertIndex - 2 : insertIndex);
-      }
-      return myProperties.get(myProperties.size() - 1);
-    }
   }
 
   @Override
@@ -211,7 +164,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Override
   @NotNull
   public Map<String, String> getNamesMap() {
-    Map<String, String> result = new THashMap<String, String>();
+    Map<String, String> result = new THashMap<>();
     for (IProperty property : getProperties()) {
       result.put(property.getUnescapedKey(), property.getValue());
     }
@@ -220,19 +173,25 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   @Override
   public boolean isAlphaSorted() {
-    synchronized (lock) {
-      ensurePropertiesLoaded();
-      return myAlphaSorted;
-    }
+    return PropertiesImplUtil.isAlphaSorted(getProperties());
   }
 
-  @Override
-  public void clearCaches() {
-    super.clearCaches();
-
-    synchronized (lock) {
-      myPropertiesMap = null;
-      myProperties = null;
+  private IProperty findInsertionPosition(@NotNull IProperty property) {
+    List<IProperty> properties = getProperties();
+    if (properties.isEmpty()) return null;
+    if (PropertiesImplUtil.isAlphaSorted(properties)) {
+      final int insertIndex = Collections.binarySearch(getProperties(), property, (p1, p2) -> {
+        final String k1 = p1.getKey();
+        final String k2 = p2.getKey();
+        LOG.assertTrue(k1 != null && k2 != null);
+        return String.CASE_INSENSITIVE_ORDER.compare(k1, k2);
+      });
+      return insertIndex == -1 ? null : getProperties().get(insertIndex < 0 ? -insertIndex - 2 : insertIndex);
     }
+    return ContainerUtil.getLastItem(properties);
+  }
+
+  private Stream<IProperty> propertiesByKey(@NotNull String key) {
+    return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));
   }
 }

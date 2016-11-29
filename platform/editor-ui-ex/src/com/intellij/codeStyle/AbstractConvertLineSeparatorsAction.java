@@ -30,8 +30,8 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,27 +90,16 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
       return;
     }
 
-    final VirtualFile projectVirtualDirectory;
-    VirtualFile projectBaseDir = project.getBaseDir();
-    if (projectBaseDir != null && projectBaseDir.isDirectory()) {
-      projectVirtualDirectory = projectBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-    }
-    else {
-      projectVirtualDirectory = null;
-    }
-
+    VirtualFile projectVirtualDirectory = ProjectKt.getStateStore(project).getDirectoryStoreFile();
     final FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
     for (VirtualFile file : virtualFiles) {
       VfsUtilCore.processFilesRecursively(
         file,
-        new Processor<VirtualFile>() {
-          @Override
-          public boolean process(VirtualFile file) {
-            if (shouldProcess(file, project)) {
-              changeLineSeparators(project, file, mySeparator);
-            }
-            return true;
+        file1 -> {
+          if (shouldProcess(file1, project)) {
+            changeLineSeparators(project, file1, mySeparator);
           }
+          return true;
         },
         new Convertor<VirtualFile, Boolean>() {
           @Override

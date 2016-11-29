@@ -17,6 +17,7 @@ package com.intellij.spi.psi;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
@@ -35,24 +36,26 @@ public class SPIClassProviderReferenceElement extends SPIPackageOrClassReference
     super(node);
   }
 
+  @Override
+  public TextRange getRangeInElement() {
+    return TextRange.from(0, getTextLength());
+  }
+
   @NotNull
   @Override
   public Object[] getVariants() {
     final String name = getContainingFile().getName();
     final PsiClass superProvider = JavaPsiFacade.getInstance(getProject()).findClass(name, getResolveScope());
     if (superProvider != null) {
-      final List<Object> result = new ArrayList<Object>();
-      ClassInheritorsSearch.search(superProvider).forEach(new Processor<PsiClass>() {
-        @Override
-        public boolean process(PsiClass psiClass) {
-          if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            final String jvmClassName = ClassUtil.getJVMClassName(psiClass);
-            if (jvmClassName != null) {
-              result.add(LookupElementBuilder.create(psiClass, jvmClassName));
-            }
+      final List<Object> result = new ArrayList<>();
+      ClassInheritorsSearch.search(superProvider).forEach(psiClass -> {
+        if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          final String jvmClassName = ClassUtil.getJVMClassName(psiClass);
+          if (jvmClassName != null) {
+            result.add(LookupElementBuilder.create(psiClass, jvmClassName));
           }
-          return true;
         }
+        return true;
       });
       return ArrayUtil.toObjectArray(result);
     }

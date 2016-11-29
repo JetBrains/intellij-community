@@ -17,7 +17,6 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -73,14 +72,10 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       }
       else {
         LibraryModel model = new LibraryModel(myModel);
-        AccessToken token = WriteAction.start();
-        try {
+        WriteAction.run(() -> {
           model.readExternal(element);
           commit(model);
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
 
       myFirstLoad = false;
@@ -210,7 +205,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   public class LibraryModel implements ModifiableModel, JDOMExternalizable, Listener, Disposable {
-    private final ArrayList<Library> myLibraries = new ArrayList<Library>();
+    private final ArrayList<Library> myLibraries = new ArrayList<>();
     private volatile Map<String, Library> myLibraryByNameCache;
     private boolean myWritable;
 
@@ -247,7 +242,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     public Library getLibraryByName(@NotNull String name) {
       Map<String, Library> cache = myLibraryByNameCache;
       if (cache == null) {
-        cache = new HashMap<String, Library>();
+        cache = new HashMap<>();
         for (Library library : myLibraries) {
           cache.put(library.getName(), library);
         }
@@ -303,8 +298,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     @Override
     public boolean isChanged() {
       if (!myWritable) return false;
-      Set<Library> thisLibraries = new HashSet<Library>(myLibraries);
-      Set<Library> thatLibraries = new HashSet<Library>(myModel.myLibraries);
+      Set<Library> thisLibraries = new HashSet<>(myLibraries);
+      Set<Library> thatLibraries = new HashSet<>(myModel.myLibraries);
       return !thisLibraries.equals(thatLibraries);
     }
 
@@ -349,9 +344,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       final List<Library> libraries = ContainerUtil.findAll(myLibraries, library -> !((LibraryEx)library).isDisposed());
 
       // todo: do not sort if project is directory-based
-      ContainerUtil.sort(libraries, (o1, o2) -> {
-        return StringUtil.compare(o1.getName(), o2.getName(), true);
-      });
+      ContainerUtil.sort(libraries, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
 
       for (final Library library : libraries) {
         if (library.getName() != null) {

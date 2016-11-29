@@ -27,6 +27,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("InfiniteRecursion")
 public class ProblematicWhitespaceInspectionTest extends LightInspectionTestCase {
 
   public void testHtml() {
@@ -113,7 +114,7 @@ public class ProblematicWhitespaceInspectionTest extends LightInspectionTestCase
     final CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
     options.USE_TAB_CHARACTER = true;
     options.SMART_TABS = true;
-    doTest("class X {{\n" +
+    doTest("class X {static{\n" +
            "\tSystem.out.println(\"asdf\" +\n" +
            "\t\t\t                   \"asdf\");\n" +
            "}}");

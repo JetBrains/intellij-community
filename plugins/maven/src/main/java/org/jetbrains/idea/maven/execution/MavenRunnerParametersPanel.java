@@ -32,8 +32,8 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
@@ -60,7 +60,10 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
         @Override
         public boolean isFileSelectable(VirtualFile file) {
           if (!super.isFileSelectable(file)) return false;
-          return file.findChild(MavenConstants.POM_XML) != null;
+          for (VirtualFile child : file.getChildren()) {
+            if(MavenUtil.isPomFileName(child.getName())) return true;
+          }
+          return false;
         }
       });
 
@@ -123,7 +126,7 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
     data.setGoals(ParametersListUtil.parse(goalsComponent.getComponent().getText()));
     data.setResolveToWorkspace(myResolveToWorkspaceCheckBox.isSelected());
 
-    Map<String, Boolean> profilesMap = new LinkedHashMap<String, Boolean>();
+    Map<String, Boolean> profilesMap = new LinkedHashMap<>();
 
     List<String> profiles = ParametersListUtil.parse(profilesComponent.getComponent().getText());
 

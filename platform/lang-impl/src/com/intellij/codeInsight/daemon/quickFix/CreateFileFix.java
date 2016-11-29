@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -96,20 +94,20 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return CodeInsightBundle.message("create.file.family");
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return null;
+  }
+
   @Override
   public void invoke(@NotNull final Project project,
                      @NotNull PsiFile file,
                      Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiDirectory myDirectory = (PsiDirectory)startElement;
     if (isAvailable(project, null, file)) {
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          invoke(project, myDirectory);
-        }
-      }.execute();
+      invoke(project, (PsiDirectory)startElement);
     }
   }
 
@@ -170,27 +168,31 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
           text = psiElement.getText();
         }
 
-        final FileEditorManager editorManager = FileEditorManager.getInstance(directory.getProject());
-        final FileEditor[] fileEditors = editorManager.openFile(newFile.getVirtualFile(), true);
-
-        if (text != null) {
-          for(FileEditor fileEditor: fileEditors) {
-            if (fileEditor instanceof TextEditor) { // JSP is not safe to edit via Psi
-              final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
-              document.setText(text);
-
-              if (ApplicationManager.getApplication().isUnitTestMode()) {
-                FileDocumentManager.getInstance().saveDocument(document);
-              }
-              PsiDocumentManager.getInstance(project).commitDocument(document);
-              break;
-            }
-          }
-        }
+        openFile(project, directory, newFile, text);
       }
     }
     catch (IncorrectOperationException e) {
       myIsAvailable = false;
+    }
+  }
+
+  protected void openFile(@NotNull Project project, PsiDirectory directory, PsiFile newFile, String text) {
+    final FileEditorManager editorManager = FileEditorManager.getInstance(directory.getProject());
+    final FileEditor[] fileEditors = editorManager.openFile(newFile.getVirtualFile(), true);
+
+    if (text != null) {
+      for(FileEditor fileEditor: fileEditors) {
+        if (fileEditor instanceof TextEditor) { // JSP is not safe to edit via Psi
+          final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
+          document.setText(text);
+
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          break;
+        }
+      }
     }
   }
 }

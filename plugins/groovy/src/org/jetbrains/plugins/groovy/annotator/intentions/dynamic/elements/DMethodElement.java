@@ -29,7 +29,7 @@ import java.util.List;
  * Date: 12.02.2008
  */
 public class DMethodElement extends DItemElement {
-  public List<ParamInfo> myPairs = new ArrayList<ParamInfo>();
+  public List<ParamInfo> myPairs = new ArrayList<>();
   private GrDynamicImplicitMethod myImplicitMethod;
 
   @SuppressWarnings("UnusedDeclaration") //for serialization

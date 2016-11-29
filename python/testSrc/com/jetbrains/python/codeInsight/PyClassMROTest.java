@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -64,7 +65,11 @@ public class PyClassMROTest extends PyTestCase {
   }
 
   public void testSixWithMetaclass() {
-    assertMRO(getClass("C"), "B", "object");
+    assertMRO(getClass("C"), "B", "D", "object");
+  }
+
+  public void testSixWithMetaclassWithAs() {
+    assertMRO(getClass("C"), "B", "D", "object");
   }
 
   // PY-4183
@@ -75,7 +80,7 @@ public class PyClassMROTest extends PyTestCase {
   public void testTangledInheritance() {
     final int numClasses = 100;
 
-    final List<String> expectedMRO = new ArrayList<String>();
+    final List<String> expectedMRO = new ArrayList<>();
     for (int i = numClasses - 1; i >= 1; i--) {
       expectedMRO.add(String.format("Class%03d", i));
     }
@@ -96,7 +101,7 @@ public class PyClassMROTest extends PyTestCase {
 
   public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
     final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.deepCodeInsight(cls.getProject()));
-    final List<String> classNames = new ArrayList<String>();
+    final List<String> classNames = new ArrayList<>();
     for (PyClassLikeType type : types) {
       if (type != null) {
         final String name = type.getName();
@@ -108,6 +113,16 @@ public class PyClassMROTest extends PyTestCase {
       classNames.add("unknown");
     }
     assertOrderedEquals(classNames, Arrays.asList(mro));
+  }
+
+  // PY-20026
+  public void testDuplicatedBaseClasses() {
+    assertMRO(getClass("MyClass"), "Base", "object");
+  }
+
+  // PY-20026
+  public void testUnresolvedMetaClassAncestors() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> assertMRO(getClass("CompositeFieldMeta"), "type", "object"));
   }
 
   @NotNull

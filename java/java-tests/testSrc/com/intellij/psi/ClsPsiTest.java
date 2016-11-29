@@ -15,17 +15,25 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
+import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.util.GCUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.FileBasedIndex;
 
 import java.io.File;
@@ -50,7 +58,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     File testFile = IoTestUtil.createTestFile("TestClass.class");
     File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
     FileUtil.copy(file1, testFile);
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(testFile);
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
     assertNotNull(testFile.getPath(), vFile);
     FileBasedIndex.getInstance().requestReindex(vFile);
     PsiFile file = PsiManager.getInstance(getProject()).findFile(vFile);
@@ -85,6 +93,8 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertTrue(file.isValid());
     assertEquals("pack", file.getPackageName());
     assertEquals(1, file.getClasses().length);
+    file = getFile("MyEnum");
+    assertEquals(LanguageLevel.JDK_1_5, file.getLanguageLevel());
   }
 
   public void testClassBasics() {
@@ -98,6 +108,12 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals("pack.MyClass", aClass.getQualifiedName());
     assertFalse(aClass.isInterface());
     assertFalse(aClass.isDeprecated());
+  }
+
+  public void testViewProviderHasJavaLanguage() {
+    PsiJavaFile file = getFile("MyClass");
+    assertEquals(JavaLanguage.INSTANCE, file.getLanguage());
+    assertEquals(JavaLanguage.INSTANCE, file.getViewProvider().getBaseLanguage());
   }
 
   public void testClassMembers() {
@@ -383,16 +399,57 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals(42L, lng.computeConstantValue());
   }
 
+  public void testAnnotationsOnTypes() {
+    PsiClass cls = getFile("../../mirror/pkg/TypeAnnotations").getClasses()[0];
+
+    PsiField f1 = cls.findFieldByName("f1", false);
+    assertNotNull(f1);
+    assertEquals("java.lang.@pkg.TypeAnnotations.TA(\"field type\") String", f1.getType().getCanonicalText(true));
+
+    PsiField f2 = cls.findFieldByName("f2", false);
+    assertNotNull(f2);
+    assertEquals("java.lang.@pkg.TypeAnnotations.MixA(\"field and type\") String", f2.getType().getCanonicalText(true));
+
+    PsiMethod m1 = cls.findMethodsByName("m1", false)[0];
+    assertEquals("@pkg.TypeAnnotations.TA(\"return type\") int", ObjectUtils.assertNotNull(m1.getReturnType()).getCanonicalText(true));
+
+    PsiParameter p1 = cls.findMethodsByName("m2", false)[0].getParameterList().getParameters()[0];
+    assertEquals("@pkg.TypeAnnotations.TA(\"parameter\") int", p1.getType().getCanonicalText(true));
+  }
+
+  public void testModuleInfo() {
+    PsiJavaFile file = getFile("../../stubBuilder/module-info");
+    assertEquals(LanguageLevel.JDK_1_9, file.getLanguageLevel());
+
+    PsiJavaModule module = file.getModuleDeclaration();
+    assertNotNull(module);
+    assertEquals("M.N", module.getModuleName());
+
+    assertNull(file.getPackageStatement());
+    assertEquals(0, file.getClasses().length);
+  }
+
   private PsiJavaFile getFile() {
     return getFile(getTestName(false));
   }
 
   private static PsiJavaFile getFile(String name) {
     String path = PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/pack/" + name + ".class";
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull(path, file);
     PsiFile clsFile = PsiManager.getInstance(getProject()).findFile(file);
     assertTrue(String.valueOf(clsFile), clsFile instanceof ClsFileImpl);
     return (PsiJavaFile)clsFile;
+  }
+
+  public void testClsPsiDoesNotHoldStrongReferencesToMirrorAST() {
+    PsiClass dbl = getJavaFacade().findClass(Double.class.getName(), myScope);
+    assertNotNull(dbl);
+    int hash1 = ((ClsClassImpl)dbl).getMirror().hashCode();
+    assertEquals(dbl, ((ClsClassImpl)dbl).getMirror().getUserData(ClsElementImpl.COMPILED_ELEMENT));
+
+    GCUtil.tryGcSoftlyReachableObjects();
+    LeakHunter.checkLeak(dbl, ClassElement.class, element -> element.getPsi().getUserData(ClsElementImpl.COMPILED_ELEMENT) == dbl);
+    assertFalse(hash1 == ((ClsClassImpl)dbl).getMirror().hashCode());
   }
 }

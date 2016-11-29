@@ -45,7 +45,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -202,16 +201,18 @@ public class JavaStackFrame extends XStackFrame {
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions
+      Set<ObjectReference> exceptions = new HashSet<>();
       for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(debuggerContext.getSuspendContext())) {
-        final Event debugEvent = pair.getSecond();
+        Event debugEvent = pair.getSecond();
         if (debugEvent instanceof ExceptionEvent) {
-          final ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
+          ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
           if (exception != null) {
-            final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, exception);
-            children.add(JavaValue.create(exceptionDescriptor, evaluationContext, myNodeManager));
+            exceptions.add(exception);
           }
         }
       }
+      exceptions.forEach(e -> children.add(
+        JavaValue.create(myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, e), evaluationContext, myNodeManager)));
 
       try {
         buildVariables(debuggerContext, evaluationContext, debugProcess, children, thisObjectReference, location);
@@ -242,7 +243,7 @@ public class JavaStackFrame extends XStackFrame {
   }
 
   private static final Pair<Set<String>, Set<TextWithImports>> EMPTY_USED_VARS =
-    Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+    Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
 
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext,
@@ -282,12 +283,7 @@ public class JavaStackFrame extends XStackFrame {
         final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
         final Map<String, LocalVariableProxyImpl> visibleVariables =
           ContainerUtil.map2Map(getVisibleVariables(),
-                                new Function<LocalVariableProxyImpl, Pair<String, LocalVariableProxyImpl>>() {
-                                  @Override
-                                  public Pair<String, LocalVariableProxyImpl> fun(LocalVariableProxyImpl var) {
-                                    return Pair.create(var.name(), var);
-                                  }
-                                });
+                                var -> Pair.create(var.name(), var));
 
         Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
         if (sourcePosition != null) {
@@ -347,9 +343,7 @@ public class JavaStackFrame extends XStackFrame {
                                                        @NotNull SourcePosition sourcePosition,
                                                        @NotNull EvaluationContextImpl evalContext) {
     Set<String> alreadyCollected = new HashSet<>(usedVars.first);
-    for (TextWithImports text : usedVars.second) {
-      alreadyCollected.add(text.getText());
-    }
+    usedVars.second.stream().map(TextWithImports::getText).forEach(alreadyCollected::add);
     Set<TextWithImports> extra = new HashSet<>();
     for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensions()) {
       if (provider.isAvailable(sourcePosition, evalContext)) {
@@ -579,17 +573,17 @@ public class JavaStackFrame extends XStackFrame {
   private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(Set<String> visibleVars, @NotNull SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
-      return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+      return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
     }
     final PsiFile positionFile = position.getFile();
     if (!positionFile.isValid() || !positionFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
-      return Pair.create(visibleVars, Collections.<TextWithImports>emptySet());
+      return Pair.create(visibleVars, Collections.emptySet());
     }
 
     final VirtualFile vFile = positionFile.getVirtualFile();
     final Document doc = vFile != null ? FileDocumentManager.getInstance().getDocument(vFile) : null;
     if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {
-      return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+      return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
     }
 
     final TextRange limit = calculateLimitRange(positionFile, doc, line);
@@ -631,7 +625,7 @@ public class JavaStackFrame extends XStackFrame {
 
         //noinspection unchecked
         if (element instanceof PsiCompiledElement) {
-          return Pair.create(visibleVars, Collections.<TextWithImports>emptySet());
+          return Pair.create(visibleVars, Collections.emptySet());
         }
         else {
           VariablesCollector collector = new VariablesCollector(visibleVars, adjustRange(element, lineRange));
@@ -640,7 +634,7 @@ public class JavaStackFrame extends XStackFrame {
         }
       }
     }
-    return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+    return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
   }
 
   private static TextRange calculateLimitRange(final PsiFile file, final Document doc, final int line) {

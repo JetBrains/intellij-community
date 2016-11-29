@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sherpa-solver">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/android/android/lib/sherpa-solver.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

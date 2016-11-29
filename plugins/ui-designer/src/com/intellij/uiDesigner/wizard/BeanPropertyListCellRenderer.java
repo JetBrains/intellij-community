@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.wizard;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -35,20 +36,20 @@ final class BeanPropertyListCellRenderer extends ColoredListCellRenderer{
   }
 
   protected void customizeCellRenderer(
-    final JList list,
+    @NotNull final JList list,
     final Object value,
     final int index,
     final boolean selected,
     final boolean hasFocus
   ) {
-    final BeanProperty property = (BeanProperty)value;
-    if(property == null){
-      append(UIDesignerBundle.message("property.not.defined"), myAttrs2);
-    }
-    else{
+    if (value instanceof BeanProperty) {
+      final BeanProperty property = (BeanProperty)value;
       append(property.myName, myAttrs1);
       append(" ", myAttrs1);
       append(property.myType, myAttrs2);
+    }
+    else {
+      append(UIDesignerBundle.message("property.not.defined"), myAttrs2);
     }
   }
 }

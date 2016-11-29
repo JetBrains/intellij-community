@@ -55,7 +55,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     final JavaPsiFacade psiFacade =
       JavaPsiFacade.getInstance(element.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
-    final List<PsiComment> multiLineComments = new ArrayList<PsiComment>();
+    final List<PsiComment> multiLineComments = new ArrayList<>();
     PsiElement nextComment = firstComment;
     String whiteSpace = null;
     while (true) {

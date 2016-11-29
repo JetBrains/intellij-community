@@ -28,18 +28,19 @@ import static com.intellij.structuralsearch.MatchOptions.MODIFIER_ANNOTATION_NAM
 public class GlobalCompilingVisitor {
   @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
   private static final Pattern ourSubstitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
-  private static final Set<String> ourReservedWords = new HashSet<String>(Arrays.asList(MODIFIER_ANNOTATION_NAME, INSTANCE_MODIFIER_NAME)) {
-    {
-      for (StructuralSearchProfile profile : Extensions.getExtensions(StructuralSearchProfile.EP_NAME)) {
-        addAll(profile.getReservedWords());
-      }
+  private static final Set<String> ourReservedWords = new HashSet<>(Arrays.asList(MODIFIER_ANNOTATION_NAME, INSTANCE_MODIFIER_NAME));
+
+  static {
+    for (StructuralSearchProfile profile : Extensions.getExtensions(StructuralSearchProfile.EP_NAME)) {
+      ourReservedWords.addAll(profile.getReservedWords());
     }
-  };
+  }
+
   private static final Pattern ourAlternativePattern = Pattern.compile("^\\((.+)\\)$");
   @NonNls private static final String WORD_SEARCH_PATTERN_STR = ".*?\\b(.+?)\\b.*?";
   private static final Pattern ourWordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
   private CompileContext context;
-  private final ArrayList<PsiElement> myLexicalNodes = new ArrayList<PsiElement>();
+  private final ArrayList<PsiElement> myLexicalNodes = new ArrayList<>();
 
   private int myCodeBlockLevel;
 
@@ -159,7 +160,7 @@ public class GlobalCompilingVisitor {
 
     SubstitutionHandler handler = null;
     while (matcher.find()) {
-      if (handlers == null) handlers = new ArrayList<SubstitutionHandler>();
+      if (handlers == null) handlers = new ArrayList<>();
       handler = (SubstitutionHandler)getContext().getPattern().getHandler(matcher.group(1));
       if (handler != null) handlers.add(handler);
 
@@ -271,7 +272,7 @@ public class GlobalCompilingVisitor {
   }
 
   private static class WordTokenizer {
-    private final List<String> myWords = new ArrayList<String>();
+    private final List<String> myWords = new ArrayList<>();
 
     WordTokenizer(String text) {
       final StringTokenizer tokenizer = new StringTokenizer(text);

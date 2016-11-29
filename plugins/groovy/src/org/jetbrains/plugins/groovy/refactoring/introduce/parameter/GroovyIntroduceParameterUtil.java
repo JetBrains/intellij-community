@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -301,7 +301,7 @@ public class GroovyIntroduceParameterUtil {
   }
 
   public static TObjectIntHashMap<GrParameter> findParametersToRemove(IntroduceParameterInfo helper) {
-    final TObjectIntHashMap<GrParameter> result = new TObjectIntHashMap<GrParameter>();
+    final TObjectIntHashMap<GrParameter> result = new TObjectIntHashMap<>();
 
     final TextRange range = ExtractUtil.getRangeOfRefactoring(helper);
 
@@ -346,15 +346,12 @@ public class GroovyIntroduceParameterUtil {
       final GrVariable var = settings.getVar();
       LOG.assertTrue(var != null);
       final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
-      ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference psiReference) {
-          final PsiElement element = psiReference.getElement();
-          if (element != null) {
-            list.add(element);
-          }
-          return true;
+      ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(psiReference -> {
+        final PsiElement element = psiReference.getElement();
+        if (element != null) {
+          list.add(element);
         }
+        return true;
       });
       return list.toArray(new PsiElement[list.size()]);
     }
@@ -405,18 +402,18 @@ public class GroovyIntroduceParameterUtil {
       final GrIntroduceContext
         introduceContext = new GrIntroduceContextImpl(project, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, scope);
       final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expr, validator, true)));
+      return new LinkedHashSet<>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expr, validator, true)));
     }
     else if (var != null) {
       final GrIntroduceContext introduceContext = new GrIntroduceContextImpl(project, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, scope);
       final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
-      LinkedHashSet<String> names = new LinkedHashSet<String>();
+      LinkedHashSet<String> names = new LinkedHashSet<>();
       names.add(var.getName());
       ContainerUtil.addAll(names, GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator));
       return names;
     }
     else {
-      LinkedHashSet<String> names = new LinkedHashSet<String>();
+      LinkedHashSet<String> names = new LinkedHashSet<>();
       names.add("closure");
       return names;
     }
@@ -424,7 +421,7 @@ public class GroovyIntroduceParameterUtil {
 
   private static class FieldSearcher extends GroovyRecursiveElementVisitor {
     PsiClass myClass;
-    private final List<PsiField> result = new ArrayList<PsiField>();
+    private final List<PsiField> result = new ArrayList<>();
 
     private FieldSearcher(PsiClass aClass) {
       myClass = aClass;
@@ -435,7 +432,7 @@ public class GroovyIntroduceParameterUtil {
     }
 
     @Override
-    public void visitReferenceExpression(GrReferenceExpression ref) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression ref) {
       super.visitReferenceExpression(ref);
       final GrExpression qualifier = ref.getQualifier();
       if (!PsiUtil.isThisReference(qualifier)) return;

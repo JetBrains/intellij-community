@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author vlan
  */
-public class PyYieldFromIntention extends BaseIntentionAction {
+public class PyYieldFromIntention extends PyBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -62,7 +61,7 @@ public class PyYieldFromIntention extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PyForStatement forLoop = findForStatementAtCaret(editor, file);
     if (forLoop != null) {
       final PyExpression source = forLoop.getForPart().getSource();

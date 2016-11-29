@@ -46,7 +46,7 @@ public class MavenPluginGoalConverter extends ResolvingConverter<String> impleme
     MavenDomPluginModel model = MavenPluginDomUtil.getMavenPluginModel(context.getInvocationElement());
     if (model == null) return Collections.emptyList();
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (MavenDomMojo each : model.getMojos().getMojos()) {
       String goal = each.getGoal().getStringValue();
       if (goal != null) result.add(goal);

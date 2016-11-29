@@ -34,7 +34,7 @@ import java.util.*;
 
 public class LogFilesManager {
   private final LogConsoleManager myManager;
-  private final List<LogFile> myLogFiles = new ArrayList<LogFile>();
+  private final List<LogFile> myLogFiles = new ArrayList<>();
   private final SingleAlarm myUpdateAlarm;
 
   public LogFilesManager(@NotNull final Project project, @NotNull LogConsoleManager manager, @NotNull Disposable parentDisposable) {
@@ -47,7 +47,7 @@ public class LogFilesManager {
           return;
         }
 
-        for (final LogFile logFile : new ArrayList<LogFile>(myLogFiles)) {
+        for (final LogFile logFile : new ArrayList<>(myLogFiles)) {
           ProcessHandler process = logFile.getProcess();
           if (process != null && process.isProcessTerminated()) {
             myLogFiles.remove(logFile);
@@ -58,26 +58,18 @@ public class LogFilesManager {
           final Set<String> newPaths = logFile.getOptions().getPaths(); // should not be called in UI thread
           logFile.setPaths(newPaths);
 
-          final Set<String> obsoletePaths = new THashSet<String>(oldPaths);
+          final Set<String> obsoletePaths = new THashSet<>(oldPaths);
           obsoletePaths.removeAll(newPaths);
 
           try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-              @Override
-              public void run() {
-                if (project.isDisposed()) {
-                  return;
-                }
+            SwingUtilities.invokeAndWait(() -> {
+              if (project.isDisposed()) {
+                return;
+              }
 
-                addConfigurationConsoles(logFile.getOptions(), new Condition<String>() {
-                  @Override
-                  public boolean value(final String file) {
-                    return !oldPaths.contains(file);
-                  }
-                }, newPaths, logFile.getConfiguration());
-                for (String each : obsoletePaths) {
-                  myManager.removeLogConsole(each);
-                }
+              addConfigurationConsoles(logFile.getOptions(), file -> !oldPaths.contains(file), newPaths, logFile.getConfiguration());
+              for (String each : obsoletePaths) {
+                myManager.removeLogConsole(each);
               }
             });
           }
@@ -111,7 +103,7 @@ public class LogFilesManager {
       return;
     }
 
-    TreeMap<String, String> titleToPath = new TreeMap<String, String>();
+    TreeMap<String, String> titleToPath = new TreeMap<>();
     if (paths.size() == 1) {
       String path = paths.iterator().next();
       if (shouldInclude.value(path)) {
@@ -142,7 +134,7 @@ public class LogFilesManager {
     private final LogFileOptions myOptions;
     private final RunConfigurationBase myConfiguration;
     private final ProcessHandler myProcess;
-    private Set<String> myPaths = new HashSet<String>();
+    private Set<String> myPaths = new HashSet<>();
 
     public LogFile(LogFileOptions options, RunConfigurationBase configuration, ProcessHandler process) {
       myOptions = options;

@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.PlatformIcons;
@@ -80,7 +81,7 @@ public class ActionStepBuilder {
 
   public void buildGroup(@NotNull ActionGroup actionGroup) {
     calcMaxIconSize(actionGroup);
-    myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? new EmptyIcon(myMaxIconWidth, myMaxIconHeight) : null;
+    myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? EmptyIcon.create(myMaxIconWidth, myMaxIconHeight) : null;
 
     appendActionsFromGroup(actionGroup);
 
@@ -156,7 +157,7 @@ public class ActionStepBuilder {
     Presentation presentation = getPresentation(action);
     AnActionEvent event = createActionEvent(action);
 
-    ActionUtil.performDumbAwareUpdate(action, event, true);
+    ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, true);
     if ((myShowDisabled || presentation.isEnabled()) && presentation.isVisible()) {
       String text = presentation.getText();
       if (myShowNumbers) {

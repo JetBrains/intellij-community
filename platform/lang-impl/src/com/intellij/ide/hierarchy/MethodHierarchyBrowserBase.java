@@ -113,12 +113,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
       HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED = flag;
 
       // invokeLater is called to update state of button before long tree building operation
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          doRefresh(true);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> doRefresh(true));
     }
 
     @Override
@@ -131,8 +126,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   public static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_METHOD_HIERARCHY, DATA_KEY.getName(),
-            LanguageMethodHierarchy.INSTANCE);
+      super(IdeBundle.message("action.base.on.this.method"), DATA_KEY.getName(), LanguageMethodHierarchy.INSTANCE);
     }
   }
 

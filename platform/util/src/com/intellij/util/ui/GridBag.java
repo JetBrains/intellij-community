@@ -54,7 +54,7 @@ import java.awt.*;
  * </pre>
  * Note that every call of {@link #nextLine()} or {@link #next()} resets settings to the defaults for the corresponding column.
  */
-@SuppressWarnings({"JavaDoc"})
+@SuppressWarnings("unused")
 public class GridBag extends GridBagConstraints {
   private int myDefaultAnchor = anchor;
   @NotNull private final TIntIntHashMap myDefaultColumnAnchors = new TIntIntHashMap();
@@ -212,7 +212,27 @@ public class GridBag extends GridBagConstraints {
    */
   @NotNull
   public GridBag insets(int top, int left, int bottom, int right) {
-    return insets(new Insets(top, left, bottom, right));
+    return insets(JBUI.insets(top, left, bottom, right));
+  }
+
+  @NotNull
+  public GridBag insetTop(int top) {
+    return insets(JBUI.insets(top, -1, -1, -1));
+  }
+
+  @NotNull
+  public GridBag insetBottom(int bottom) {
+    return insets(JBUI.insets(-1, -1, bottom, -1));
+  }
+
+  @NotNull
+  public GridBag insetLeft(int left) {
+    return insets(JBUI.insets(-1, left, -1, -1));
+  }
+
+  @NotNull
+  public GridBag insetRight(int right) {
+    return insets(JBUI.insets(-1, -1, -1, right));
   }
 
   /**
@@ -392,7 +412,7 @@ public class GridBag extends GridBagConstraints {
 
   @NotNull
   public GridBag setDefaultInsets(int top, int left, int bottom, int right) {
-    return setDefaultInsets(new Insets(top, left, bottom, right));
+    return setDefaultInsets(JBUI.insets(top, left, bottom, right));
   }
 
   public GridBag setDefaultInsets(@Nullable Insets insets) {
@@ -407,7 +427,7 @@ public class GridBag extends GridBagConstraints {
 
   @NotNull
   public GridBag setDefaultInsets(int column, int top, int left, int bottom, int right) {
-    return setDefaultInsets(column, new Insets(top, left, bottom, right));
+    return setDefaultInsets(column, JBUI.insets(top, left, bottom, right));
   }
 
   @NotNull

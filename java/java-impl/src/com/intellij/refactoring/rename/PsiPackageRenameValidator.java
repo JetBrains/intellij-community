@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,40 +19,44 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * User: anna
- * Date: 3/14/11
+ * @author anna
+ * @since 14.03.2011
  */
 public class PsiPackageRenameValidator implements RenameInputValidatorEx {
+  private final ElementPattern<? extends PsiElement> myPattern = PlatformPatterns.psiElement(PsiPackage.class);
+
+  @NotNull
+  @Override
+  public ElementPattern<? extends PsiElement> getPattern() {
+    return myPattern;
+  }
+
   @Nullable
   @Override
-  public String getErrorMessage(String newName, Project project) {
+  public String getErrorMessage(@NotNull String newName, @NotNull Project project) {
     if (FileTypeManager.getInstance().isFileIgnored(newName)) {
       return "Trying to create a package with ignored name, result will not be visible";
     }
+
     if (newName.length() > 0) {
       if (!PsiDirectoryFactory.getInstance(project).isValidPackageName(newName)) {
         return "Not a valid package name";
       }
     }
+
     return null;
   }
 
   @Override
-  public ElementPattern<? extends PsiElement> getPattern() {
-    return PlatformPatterns.psiElement(PsiPackage.class);
-  }
-
-  @Override
-  public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
-    return newName != null && newName.length() > 0;
+  public boolean isInputValid(@NotNull String newName, @NotNull PsiElement element, @NotNull ProcessingContext context) {
+    return !newName.isEmpty();
   }
 }

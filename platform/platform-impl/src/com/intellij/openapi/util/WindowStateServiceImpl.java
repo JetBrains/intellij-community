@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.Patches;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -44,7 +43,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NonNls private static final String FULL_SCREEN = "full-screen";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
-  private final Map<String, WindowState> myStateMap = new TreeMap<String, WindowState>();
+  private final Map<String, WindowState> myStateMap = new TreeMap<>();
 
   abstract Point getDefaultLocationFor(Object object, @NotNull String key);
 
@@ -155,8 +154,11 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     if (size != null) {
       bounds.setSize(size);
     }
+    if (bounds.isEmpty()) {
+      bounds.setSize(component.getPreferredSize());
+    }
     component.setBounds(bounds);
-    if (!Patches.JDK_BUG_ID_8007219 && maximized && frame != null) {
+    if (maximized && frame != null) {
       frame.setExtendedState(Frame.MAXIMIZED_BOTH);
     }
     return true;

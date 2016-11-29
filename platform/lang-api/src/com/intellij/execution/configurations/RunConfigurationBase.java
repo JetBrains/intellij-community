@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Standard base class for run configuration implementations.
@@ -54,8 +53,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private String myName = "";
   private final Icon myIcon;
 
-  private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
-  private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
+  private ArrayList<LogFileOptions> myLogFiles = new ArrayList<>();
+  private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<>();
   private boolean mySaveOutput = false;
   private boolean myShowConsoleOnStdOut = false;
   private boolean myShowConsoleOnStdErr = false;
@@ -130,8 +129,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public RunConfiguration clone() {
     final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
-    runConfiguration.myLogFiles = new ArrayList<LogFileOptions>(myLogFiles);
-    runConfiguration.myPredefinedLogFiles = new ArrayList<PredefinedLogFile>(myPredefinedLogFiles);
+    runConfiguration.myLogFiles = new ArrayList<>(myLogFiles);
+    runConfiguration.myPredefinedLogFiles = new ArrayList<>(myPredefinedLogFiles);
     runConfiguration.myFileOutputPath = myFileOutputPath;
     runConfiguration.mySaveOutput = mySaveOutput;
     runConfiguration.myShowConsoleOnStdOut = myShowConsoleOnStdOut;
@@ -159,7 +158,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @NotNull
   public ArrayList<LogFileOptions> getAllLogFiles() {
-    ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>(myLogFiles);
+    ArrayList<LogFileOptions> list = new ArrayList<>(myLogFiles);
     for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
       final LogFileOptions options = getOptionsForPredefinedLogFile(predefinedLogFile);
       if (options != null) {
@@ -196,16 +195,15 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myLogFiles.clear();
-    for (final Object o : element.getChildren(LOG_FILE)) {
+    for (Element o : element.getChildren(LOG_FILE)) {
       LogFileOptions logFileOptions = new LogFileOptions();
-      logFileOptions.readExternal((Element)o);
+      logFileOptions.readExternal(o);
       myLogFiles.add(logFileOptions);
     }
     myPredefinedLogFiles.clear();
-    final List list = element.getChildren(PREDEFINED_LOG_FILE_ELEMENT);
-    for (Object fileElement : list) {
+    for (Element fileElement : element.getChildren(PREDEFINED_LOG_FILE_ELEMENT)) {
       final PredefinedLogFile logFile = new PredefinedLogFile();
-      logFile.readExternal((Element)fileElement);
+      logFile.readExternal(fileElement);
       myPredefinedLogFiles.add(logFile);
     }
     final Element fileOutputElement = element.getChild(FILE_OUTPUT);

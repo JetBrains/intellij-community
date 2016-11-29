@@ -16,21 +16,21 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.Patches;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class BoundedTaskExecutor extends AbstractExecutorService {
   private volatile boolean myShutdown;
+  @NotNull private final String myName;
   private final Executor myBackendExecutor;
   private final int myMaxTasks;
   // low  32 bits: number of tasks running (or trying to run)
@@ -45,7 +46,8 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   private final AtomicLong myStatus = new AtomicLong();
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<Runnable>();
 
-  public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
+  public BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks) {
+    myName = name;
     myBackendExecutor = backendExecutor;
     if (maxSimultaneousTasks < 1) {
       throw new IllegalArgumentException("maxSimultaneousTasks must be >=1 but got: "+maxSimultaneousTasks);
@@ -57,10 +59,17 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   /**
+   * @deprecated use {@link #BoundedTaskExecutor(String, Executor, int)} instead
+   */
+  public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
+    this(ExceptionUtil.getThrowableText(new Throwable("Creation point:")), backendExecutor, maxSimultaneousTasks);
+  }
+
+  /**
    * Constructor which automatically shuts down this executor when {@code parent} is disposed.
    */
-  public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
-    this(backendExecutor, maxSimultaneousTasks);
+  public BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
+    this(name, backendExecutor, maxSimultaneousTasks);
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
@@ -70,19 +79,22 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   // for diagnostics
-  static Object info(Object task) {
+  static Object info(Runnable info) {
+    Object task = info;
+    String extra = null;
     if (task instanceof FutureTask) {
-      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task.getClass());
+      extra = ((FutureTask)task).isCancelled() ? " (future cancelled)" : ((FutureTask)task).isDone() ? " (future done)" : null;
+      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task);
     }
     if (task instanceof Callable && task.getClass().getName().equals("java.util.concurrent.Executors$RunnableAdapter")) {
-      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task.getClass());
+      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task);
     }
-    return task;
+    return extra == null ? task : task == null ? extra : task.getClass() + extra;
   }
 
   @Override
   public void shutdown() {
-    if (myShutdown) throw new IllegalStateException("Already shutdown");
+    if (myShutdown) throw new IllegalStateException("Already shutdown: "+this);
     myShutdown = true;
   }
 
@@ -103,26 +115,51 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     return myShutdown;
   }
 
+  // can be executed even after shutdown
+  private static class LastTask extends FutureTask<Void> {
+    LastTask(@NotNull Runnable runnable) {
+      super(runnable, null);
+    }
+  }
+
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-    if (!isShutdown()) throw new IllegalStateException("you must call shutdown() first");
+    if (!isShutdown()) throw new IllegalStateException("you must call shutdown() or shutdownNow() first");
+    try {
+      waitAllTasksExecuted(timeout, unit);
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e.getCause());
+    }
+    catch (TimeoutException e) {
+      return false;
+    }
     return true;
   }
 
   @Override
   public void execute(@NotNull Runnable task) {
-    if (isShutdown()) {
+    if (isShutdown() && !(task instanceof LastTask)) {
       throw new RejectedExecutionException("Already shutdown");
     }
     long status = incrementCounterAndTimestamp(); // increment inProgress and queue stamp atomically
 
-    if (tryToExecute(status, task)) {
+    int inProgress = (int)status;
+
+    assert inProgress > 0 : inProgress;
+    if (inProgress <= myMaxTasks) {
+      // optimisation: can execute without queue/dequeue
+      wrapAndExecute(task, status);
       return;
     }
+
     if (!myTaskQueue.offer(task)) {
       throw new RejectedExecutionException();
     }
-    pollAndExecute(status);
+    Runnable next = pollOrGiveUp(status);
+    if (next != null) {
+      wrapAndExecute(next, status);
+    }
   }
 
   static {
@@ -134,72 +171,72 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     long newStatus;
     do {
       status = myStatus.get();
+      // avoid "tasks number" bits to be garbled on overflow
       newStatus = status + 1 + (1L << 32) & 0x7fffffffffffffffL;
     } while (!myStatus.compareAndSet(status, newStatus));
     return newStatus;
   }
 
-  private void pollAndExecute(long status) {
+  // return next task taken from the queue if it can be executed now
+  // or decrement my counter (atomically) and return null
+  private Runnable pollOrGiveUp(long status) {
     while (true) {
       int inProgress = (int)status;
       assert inProgress > 0 : inProgress;
 
       Runnable next;
       if (inProgress <= myMaxTasks && (next = myTaskQueue.poll()) != null) {
-        tryToExecute(status, next);
-        break;
+        return next;
       }
       if (myStatus.compareAndSet(status, status - 1)) {
         break;
       }
       status = myStatus.get();
     }
+    return null;
   }
 
-  // true if executed
-  private boolean tryToExecute(long status, @NotNull Runnable task) {
-    int inProgress = (int)status;
+  private void wrapAndExecute(@NotNull final Runnable firstTask, final long status) {
+    try {
+      final AtomicReference<Runnable> currentTask = new AtomicReference<Runnable>(firstTask);
+      myBackendExecutor.execute(new Runnable() {
+        @Override
+        public void run() {
+          // we are back inside backend executor, no need to call .execute() - just run synchronously
+          Runnable task = currentTask.get();
+          do {
+            currentTask.set(task);
+            try {
+              task.run();
+            }
+            catch (Error ignored) {
+              // exception will be stored in this FutureTask status
+            }
+            catch (RuntimeException ignored) {
+              // exception will be stored in this FutureTask status
+            }
+            task = pollOrGiveUp(status);
+          }
+          while (task != null);
+        }
 
-    assert inProgress > 0 : inProgress;
-    if (inProgress <= myMaxTasks) {
-      try {
-        myBackendExecutor.execute(wrap(task));
-      }
-      catch (Error e) {
-        myStatus.decrementAndGet();
-        throw e;
-      }
-      catch (RuntimeException e) {
-        myStatus.decrementAndGet();
-        throw e;
-      }
-      return true;
+        @Override
+        public String toString() {
+          return String.valueOf(info(currentTask.get()));
+        }
+      });
     }
-    return false;
+    catch (Error e) {
+      myStatus.decrementAndGet();
+      throw e;
+    }
+    catch (RuntimeException e) {
+      myStatus.decrementAndGet();
+      throw e;
+    }
   }
 
-  @NotNull
-  private Runnable wrap(@NotNull final Runnable task) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        try {
-          task.run();
-        }
-        finally {
-          pollAndExecute(myStatus.get());
-        }
-      }
-
-      @Override
-      public String toString() {
-        return String.valueOf(info(task));
-      }
-    };
-  }
-
-  @TestOnly
-  public void waitAllTasksExecuted(int timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException {
+  public void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
     // start myMaxTasks runnables which will spread to all available executor threads
@@ -207,7 +244,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxTasks, null), new Function<Object, Future>() {
       @Override
       public Future fun(Object o) {
-        return submit(new Runnable() {
+        final LastTask wait = new LastTask(new Runnable() {
           @Override
           public void run() {
             try {
@@ -219,12 +256,13 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
             }
           }
         });
+        execute(wait);
+        return wait;
       }
     });
     try {
       if (!started.await(timeout, unit)) {
-        throw new RuntimeException("Interrupted by timeout. " + this +
-                                   "; Thread dump:\n" + ThreadDumper.dumpThreadsToString());
+        throw new TimeoutException("Interrupted by timeout. " + this);
       }
     }
     catch (InterruptedException e) {
@@ -234,7 +272,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       readyToFinish.countDown();
     }
     for (Future future : futures) {
-      future.get();
+      future.get(timeout, unit);
     }
   }
 
@@ -254,11 +292,13 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   public String toString() {
     return "BoundedExecutor(" + myMaxTasks + ") " + (isShutdown() ? "SHUTDOWN " : "") +
            "inProgress: " + (int)myStatus.get() +
-           "; " + myTaskQueue.size() + " tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
-      @Override
-      public Object fun(Runnable runnable) {
-        return info(runnable);
-      }
-    }) + "]";
+           "; " +
+           (myTaskQueue.isEmpty() ? "" : "Queue size: "+myTaskQueue.size() +"; tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
+             @Override
+             public Object fun(Runnable runnable) {
+               return info(runnable);
+             }
+           }) + "]") +
+      "name: "+myName;
   }
 }

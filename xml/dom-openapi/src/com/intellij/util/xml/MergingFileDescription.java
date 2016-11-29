@@ -52,7 +52,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final DomManager domManager = element.getManager();
 
     XmlFile xmlFile = element.getFile();
-    Set<XmlFile> files = new HashSet<XmlFile>();
+    Set<XmlFile> files = new HashSet<>();
     files.add(xmlFile);
     final XmlFile originalFile = (XmlFile)xmlFile.getOriginalFile();
     if (originalFile != xmlFile) {
@@ -65,7 +65,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     files.addAll(getFilesToMerge(element));
 
 
-    ArrayList<T> roots = new ArrayList<T>(files.size());
+    ArrayList<T> roots = new ArrayList<>(files.size());
     for (XmlFile file: files) {
       final DomFileElement<T> fileElement = domManager.getFileElement(file);
       if (fileElement != null) {

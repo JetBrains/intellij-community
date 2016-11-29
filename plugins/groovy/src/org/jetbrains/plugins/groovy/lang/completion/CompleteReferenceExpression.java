@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,12 +167,14 @@ public class CompleteReferenceExpression {
     }
     else {
       if (myRefExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
-        getVariantsFromQualifier(qualifier);
-
-        if (qualifier instanceof GrReferenceExpression &&
-            ("class".equals(((GrReferenceExpression)qualifier).getReferenceName()) || PsiUtil.isThisReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier))) {
+        if (qualifier instanceof GrReferenceExpression && (
+          "class".equals(((GrReferenceExpression)qualifier).getReferenceName()) ||
+          PsiUtil.isThisReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)
+          || ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass
+        )) {
           processIfJavaLangClass(qualifier.getType());
         }
+        getVariantsFromQualifier(qualifier);
       }
       else {
         getVariantsFromQualifierForSpreadOperator(qualifier);
@@ -189,7 +191,7 @@ public class CompleteReferenceExpression {
     if (file instanceof GroovyFile) {
       ((GroovyFile)file).accept(new GroovyRecursiveElementVisitor() {
         @Override
-        public void visitAssignmentExpression(GrAssignmentExpression expression) {
+        public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
           super.visitAssignmentExpression(expression);
 
           final GrExpression value = expression.getLValue();
@@ -206,7 +208,7 @@ public class CompleteReferenceExpression {
         }
 
         @Override
-        public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+        public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
           //don't go into classes
         }
       });
@@ -368,7 +370,7 @@ public class CompleteReferenceExpression {
       return Collections.emptySet();
     }
 
-    Set<String> propertyNames = new HashSet<String>();
+    Set<String> propertyNames = new HashSet<>();
     for (GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(myRefExpr, GrTypeDefinition.class);
          containingClass != null;
          containingClass = PsiTreeUtil.getParentOfType(containingClass, GrTypeDefinition.class)) {
@@ -397,9 +399,9 @@ public class CompleteReferenceExpression {
     private final SubstitutorComputer mySubstitutorComputer;
 
     private final Collection<String> myPreferredFieldNames; //Reference is inside classes with such fields so don't suggest properties with such names.
-    private final Set<String> myPropertyNames = new HashSet<String>();
-    private final Set<String> myLocalVars = new HashSet<String>();
-    private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();
+    private final Set<String> myPropertyNames = new HashSet<>();
+    private final Set<String> myLocalVars = new HashSet<>();
+    private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<>();
 
     private List<GroovyResolveResult> myInapplicable;
 
@@ -407,12 +409,9 @@ public class CompleteReferenceExpression {
 
     protected CompleteReferenceProcessor() {
       super(null, EnumSet.allOf(DeclarationKind.class), myRefExpr, PsiType.EMPTY_ARRAY);
-      myConsumer = new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          myIsEmpty = false;
-          CompleteReferenceExpression.this.myConsumer.consume(element);
-        }
+      myConsumer = element -> {
+        myIsEmpty = false;
+        CompleteReferenceExpression.this.myConsumer.consume(element);
       };
       myPreferredFieldNames = addAllRestrictedProperties();
       mySkipPackages = shouldSkipPackages();
@@ -567,7 +566,7 @@ public class CompleteReferenceExpression {
     public GroovyResolveResult[] getCandidates() {
       if (!hasCandidates()) return GroovyResolveResult.EMPTY_ARRAY;
       final GroovyResolveResult[] results = ResolveUtil.filterSameSignatureCandidates(getCandidatesInternal());
-      List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>(results.length);
+      List<GroovyResolveResult> list = new ArrayList<>(results.length);
       myPropertyNames.removeAll(myPreferredFieldNames);
 
       Set<String> usedFields = ContainerUtil.newHashSet();

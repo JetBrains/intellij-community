@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,36 +20,15 @@ import java.io.DataInputStream;
 import java.io.IOException;
 
 public class DataInputFullStream extends DataInputStream {
-
   public DataInputFullStream(byte[] bytes) {
     super(new ByteArrayInputStream(bytes));
   }
 
-  public int readFull(byte[] b) throws IOException {
-    int length = b.length;
-    byte[] temp = new byte[length];
-    int pos = 0;
-
-    int bytes_read;
-    while (true) {
-      bytes_read = read(temp, 0, length - pos);
-      if (bytes_read == -1) {
-        return -1;
-      }
-
-      System.arraycopy(temp, 0, b, pos, bytes_read);
-      pos += bytes_read;
-      if (pos == length) {
-        break;
-      }
-    }
-
-    return length;
+  public byte[] read(int n) throws IOException {
+    return InterpreterUtil.readBytes(this, n);
   }
 
   public void discard(int n) throws IOException {
-    if (super.skip(n) != n) {
-      throw new IOException("Skip failed");
-    }
+    InterpreterUtil.discardBytes(this, n);
   }
 }

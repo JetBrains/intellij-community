@@ -55,7 +55,7 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     ProjectView projectView = ProjectView.getInstance(context.getProject());
     Collection<SelectInTarget> targets = projectView.getSelectInTargets();
-    Collection<SelectInTarget> targetsToCheck = new LinkedHashSet<SelectInTarget>();
+    Collection<SelectInTarget> targetsToCheck = new LinkedHashSet<>();
     String currentId = projectView.getCurrentViewId();
     for (SelectInTarget projectViewTarget : targets) {
       if (Comparing.equal(currentId, projectViewTarget.getMinorViewId())) {

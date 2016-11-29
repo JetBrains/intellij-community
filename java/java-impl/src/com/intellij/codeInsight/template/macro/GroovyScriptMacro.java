@@ -67,12 +67,7 @@ public class GroovyScriptMacro extends Macro {
         Result paramResult = params[i].calculateResult(context);
         Object value = null;
         if (paramResult instanceof ListResult) {
-          value = ContainerUtil.map2List(((ListResult)paramResult).getComponents(), new Function<Result, String>() {
-            @Override
-            public String fun(Result result) {
-              return result.toString();
-            }
-          });
+          value = ContainerUtil.map2List(((ListResult)paramResult).getComponents(), result1 -> result1.toString());
         } else if (paramResult != null) {
           value = paramResult.toString();
         }
@@ -99,7 +94,7 @@ public class GroovyScriptMacro extends Macro {
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     Object o = runIt(params, context);
     if (o != null) {
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+      Set<LookupElement> set = new LinkedHashSet<>();
       set.add(LookupElementBuilder.create(o.toString()));
       return set.toArray(new LookupElement[set.size()]);
     }

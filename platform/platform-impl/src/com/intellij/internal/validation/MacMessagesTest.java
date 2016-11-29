@@ -111,13 +111,10 @@ public class MacMessagesTest extends AnAction {
       public void actionPerformed(ActionEvent e) {
         final Task task = new Task.Modal(null, "Test task", true) {
           public void run(@NotNull final ProgressIndicator indicator) {
-            ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-              @Override
-              public void run() {
-                FocusManagerImpl fmi = FocusManagerImpl.getInstance();
-                final Project p = fmi.getLastFocusedFrame().getProject();
-                showTestMessage(p);
-              }
+            ApplicationManager.getApplication().invokeAndWait(() -> {
+              FocusManagerImpl fmi1 = FocusManagerImpl.getInstance();
+              final Project p1 = fmi1.getLastFocusedFrame().getProject();
+              showTestMessage(p1);
             }, ModalityState.any());
           }
 

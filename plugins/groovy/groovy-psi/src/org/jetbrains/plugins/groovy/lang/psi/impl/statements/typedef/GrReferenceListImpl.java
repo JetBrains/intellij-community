@@ -40,7 +40,7 @@ import java.util.ArrayList;
 public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub> implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
   private static final Logger LOG = Logger.getInstance(GrReferenceListImpl.class);
   
-  private PsiClassType[] myCachedTypes = null;
+  private PsiClassType[] myCachedTypes;
 
   public GrReferenceListImpl(@NotNull ASTNode node) {
     super(node);
@@ -85,11 +85,6 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
     return null;
   }
 
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
   public GrReferenceListImpl(final GrReferenceListStub stub, IStubElementType elementType) {
     super(stub, elementType);
   }
@@ -114,7 +109,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
   @Override
   public PsiClassType[] getReferencedTypes() {
     if (myCachedTypes == null || !isValid()) {
-      final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
+      final ArrayList<PsiClassType> types = new ArrayList<>();
       for (GrCodeReferenceElement ref : getReferenceElementsGroovy()) {
         types.add(new GrClassReferenceType(ref));
       }

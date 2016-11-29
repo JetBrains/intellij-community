@@ -38,7 +38,7 @@ public class XmlTagTreeHighlightingUtil {
   }
 
   static boolean containsTagsWithSameName(PsiElement[] elements) {
-    final Set<String> names = new HashSet<String>();
+    final Set<String> names = new HashSet<>();
 
     for (PsiElement element : elements) {
       if (element instanceof XmlTag) {

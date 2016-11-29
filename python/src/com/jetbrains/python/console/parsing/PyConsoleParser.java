@@ -33,9 +33,9 @@ public class PyConsoleParser extends PyParser{
   private PythonConsoleData myPythonConsoleData;
   private boolean myIPythonStartSymbol;
 
-  public PyConsoleParser(PythonConsoleData pythonConsoleData) {
+  public PyConsoleParser(PythonConsoleData pythonConsoleData, LanguageLevel languageLevel) {
     myPythonConsoleData = pythonConsoleData;
-    myLanguageLevel = LanguageLevel.getDefault();
+    myLanguageLevel = languageLevel;
   }
 
   @NotNull

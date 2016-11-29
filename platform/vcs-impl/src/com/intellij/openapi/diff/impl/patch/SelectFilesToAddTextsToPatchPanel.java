@@ -21,6 +21,9 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -31,8 +34,17 @@ public class SelectFilesToAddTextsToPatchPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchPanel");
 
   public static Set<Change> getBig(List<Change> changes) {
-    final Set<Change> exclude = new HashSet<Change>();
+    final Set<Change> exclude = new HashSet<>();
     for (Change change : changes) {
+      // try to estimate size via VF: we assume that base content hasn't been changed much
+      VirtualFile virtualFile = getVfFromChange(change);
+      if (virtualFile != null) {
+        if (isBig(virtualFile)) {
+          exclude.add(change);
+        }
+        continue;
+      }
+      // otherwise, to avoid regression we have to process context length
       ContentRevision beforeRevision = change.getBeforeRevision();
       if (beforeRevision != null) {
         try {
@@ -52,5 +64,15 @@ public class SelectFilesToAddTextsToPatchPanel {
       }
     }
     return exclude;
+  }
+
+  private static boolean isBig(@NotNull VirtualFile virtualFile) {
+    return virtualFile.getLength() > VcsConfiguration.ourMaximumFileForBaseRevisionSize;
+  }
+
+  @Nullable
+  private static VirtualFile getVfFromChange(@NotNull Change change) {
+    ContentRevision after = change.getAfterRevision();
+    return after != null ? after.getFile().getVirtualFile() : null;
   }
 }

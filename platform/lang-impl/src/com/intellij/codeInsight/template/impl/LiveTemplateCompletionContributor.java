@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -30,7 +29,6 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +47,7 @@ import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filter
  */
 public class LiveTemplateCompletionContributor extends CompletionContributor {
   private static boolean ourShowTemplatesInTests = false;
-  
+
   @TestOnly
   public static void setShowTemplatesInTests(boolean show, @NotNull Disposable parentDisposable) {
     ourShowTemplatesInTests = show;
@@ -87,17 +85,15 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         if (showAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
-          result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-            @Override
-            public void consume(CompletionResult completionResult) {
-              finalResult.passResult(completionResult);
-              if (completionResult.isStartMatch()) {
-                ensureTemplatesShown(templatesShown, templates, parameters, finalResult);
-              }
+          result.runRemainingContributors(parameters, completionResult -> {
+            finalResult.passResult(completionResult);
+            if (completionResult.isStartMatch()) {
+              ensureTemplatesShown(templatesShown, templates, finalResult);
             }
           });
 
-          ensureTemplatesShown(templatesShown, templates, parameters, result);
+          ensureTemplatesShown(templatesShown, templates, result);
+          showCustomLiveTemplates(parameters, result);
           return;
         }
 
@@ -112,7 +108,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
               .addElement(new LiveTemplateLookupElementImpl(template, true));
           }
         }
-        
+
         for (Map.Entry<TemplateImpl, String> possible : templates.entrySet()) {
           String templateKey = possible.getKey().getKey();
           String currentPrefix = possible.getValue();
@@ -142,19 +138,21 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   }
 
   private static void ensureTemplatesShown(AtomicBoolean templatesShown, Map<TemplateImpl, String> templates,
-                                           CompletionParameters parameters, CompletionResultSet result) {
+                                           CompletionResultSet result) {
     if (!templatesShown.getAndSet(true)) {
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {
         result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(StringUtil.notNullize(entry.getValue())))
           .addElement(new LiveTemplateLookupElementImpl(entry.getKey(), false));
       }
+    }
+  }
 
-      PsiFile file = parameters.getPosition().getContainingFile();
-      Editor editor = parameters.getEditor();
-      for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
-        if (customLiveTemplate instanceof CustomLiveTemplateBase) {
-          ((CustomLiveTemplateBase)customLiveTemplate).addCompletions(parameters, result);
-        }
+  private static void showCustomLiveTemplates(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    PsiFile file = parameters.getPosition().getContainingFile();
+    Editor editor = parameters.getEditor();
+    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
+      if (customLiveTemplate instanceof CustomLiveTemplateBase) {
+        ((CustomLiveTemplateBase)customLiveTemplate).addCompletions(parameters, result);
       }
     }
   }
@@ -173,11 +171,4 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  public static class Skipper extends CompletionPreselectSkipper {
-
-    @Override
-    public boolean skipElement(LookupElement element, CompletionLocation location) {
-      return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden && !Registry.is("ide.completion.autopopup.select.live.templates");
-    }
-  }
 }

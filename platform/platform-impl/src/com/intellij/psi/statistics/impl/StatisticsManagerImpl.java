@@ -44,7 +44,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
   @NonNls private static final String STORE_PATH = PathManager.getSystemPath() + File.separator + "stat";
 
   private final SoftReference[] myUnits = new SoftReference[UNIT_COUNT];
-  private final HashSet<StatisticsUnit> myModifiedUnits = new HashSet<StatisticsUnit>();
+  private final HashSet<StatisticsUnit> myModifiedUnits = new HashSet<>();
   private boolean myTestingStatistics;
 
   public int getUseCount(@NotNull final StatisticsInfo info) {
@@ -116,12 +116,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
     synchronized (LOCK) {
       strings = getUnit(getUnitNumber(context)).getKeys2(context);
     }
-    return ContainerUtil.map2Array(strings, StatisticsInfo.class, new NotNullFunction<String, StatisticsInfo>() {
-      @NotNull
-      public StatisticsInfo fun(final String s) {
-        return new StatisticsInfo(context, s);
-      }
-    });
+    return ContainerUtil.map2Array(strings, StatisticsInfo.class, (NotNullFunction<String, StatisticsInfo>)s -> new StatisticsInfo(context, s));
   }
 
   public void save() {
@@ -144,7 +139,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
     if (unit == null){
       unit = new StatisticsUnit(unitNumber);
     }
-    myUnits[unitNumber] = new SoftReference<StatisticsUnit>(unit);
+    myUnits[unitNumber] = new SoftReference<>(unit);
     return unit;
   }
 

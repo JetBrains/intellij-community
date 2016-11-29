@@ -65,23 +65,20 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   private void updateAfterPsiChange() {
     if (myProject.isDisposed()) return;
     if (myBaseStructureViewDescriptor != null && ((StructureViewComponent)myBaseStructureViewDescriptor.structureView).getTree() == null) return;
-    ApplicationManager.getApplication().runReadAction(new Runnable(){
-      @Override
-      public void run() {
-        if (!myVirtualFile.isValid() || getViewProvider() == null) return;
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (!myVirtualFile.isValid() || getViewProvider() == null) return;
 
-        StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
-        if (structureViewWrapper == null) return;
+      StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
+      if (structureViewWrapper == null) return;
 
-        Language baseLanguage = getTemplateDataLanguage();
-        if (baseLanguage == myTemplateDataLanguage
-            && (myBaseStructureViewDescriptor == null || isPsiValid(myBaseStructureViewDescriptor))) {
-          updateBaseLanguageView();
-        }
-        else {
-          myTemplateDataLanguage = baseLanguage;
-          ((StructureViewWrapperImpl)structureViewWrapper).rebuild();
-        }
+      Language baseLanguage = getTemplateDataLanguage();
+      if (baseLanguage == myTemplateDataLanguage
+          && (myBaseStructureViewDescriptor == null || isPsiValid(myBaseStructureViewDescriptor))) {
+        updateBaseLanguageView();
+      }
+      else {
+        myTemplateDataLanguage = baseLanguage;
+        ((StructureViewWrapperImpl)structureViewWrapper).rebuild();
       }
     });
   }
@@ -142,7 +139,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   }
 
   private static List<PsiAnchor> collectAnchors(final Object[] expandedElements) {
-    List<PsiAnchor> expanded = new ArrayList<PsiAnchor>(expandedElements == null ? 0 : expandedElements.length);
+    List<PsiAnchor> expanded = new ArrayList<>(expandedElements == null ? 0 : expandedElements.length);
     if (expandedElements != null) {
       for (Object element : expandedElements) {
         if (element instanceof PsiElement && ((PsiElement) element).isValid()) {
@@ -157,7 +154,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   @NotNull
   public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
     myFileEditor = fileEditor;
-    List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<StructureViewComposite.StructureViewDescriptor>();
+    List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
     final FileViewProvider provider = getViewProvider();
     assert provider != null : myVirtualFile;
 
@@ -176,7 +173,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
       final Language dataLanguage = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
       for (final Language language : provider.getLanguages()) {
         if (language != dataLanguage && language != provider.getBaseLanguage()) {
-          ContainerUtil.addIfNotNull(createBaseLanguageStructureView(fileEditor, language), viewDescriptors);
+          ContainerUtil.addIfNotNull(viewDescriptors, createBaseLanguageStructureView(fileEditor, language));
         }
       }
     }
@@ -189,12 +186,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
       @Override
       public void modificationCountChanged() {
         alarm.cancelAllRequests();
-        alarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            updateAfterPsiChange();
-          }
-        }, 300, ModalityState.NON_MODAL);
+        alarm.addRequest(() -> updateAfterPsiChange(), 300, ModalityState.NON_MODAL);
       }
     });
     return myStructureViewComposite;

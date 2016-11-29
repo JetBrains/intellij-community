@@ -198,7 +198,7 @@ public class EditorPaintingTest extends AbstractEditorTest {
     }
   }
 
-  private void fail(String message, File expectedResultsFile, BufferedImage actualImage) throws IOException {
+  private void fail(@NotNull String message, @NotNull File expectedResultsFile, BufferedImage actualImage) throws IOException {
     File savedImage = FileUtil.createTempFile(getName(), ".png", false);
     addTmpFileToKeep(savedImage);
     ImageIO.write(actualImage, "png", savedImage);

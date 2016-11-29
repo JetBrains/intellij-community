@@ -31,13 +31,13 @@ import java.awt.*;
 
 public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
   @Override
-  protected boolean isBelowRightMargin(Project project, int lineLength) {
+  protected boolean isBelowRightMargin(@NotNull Project project, int lineLength) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     return lineLength <= settings.getRightMargin(JavaLanguage.INSTANCE);
   }
 
   @Override
-  protected boolean shouldShowExplicitLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression) {
+  protected boolean shouldShowExplicitLambdaType(@NotNull PsiAnonymousClass anonymousClass, @NotNull PsiNewExpression expression) {
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiReferenceExpression || parent instanceof PsiAssignmentExpression) {
       return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,8 @@ import com.siyeh.ig.numeric.ImplicitNumericConversionInspection;
  */
 public class ImplicitNumericConversionFixTest extends IGQuickFixesTestCase {
 
-  public void testOperatorAssignment() {
-    doTest();
-  }
+  public void testOperatorAssignment() { doTest(); }
+  public void testHexadecimalLiteral() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {

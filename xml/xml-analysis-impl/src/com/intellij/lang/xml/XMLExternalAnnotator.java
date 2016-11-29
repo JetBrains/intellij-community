@@ -75,7 +75,7 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
   }
 
   static class MyHost implements Validator.ValidationHost {
-    private final List<Trinity<PsiElement, String, ErrorType>> messages = new ArrayList<Trinity<PsiElement, String, ErrorType>>();
+    private final List<Trinity<PsiElement, String, ErrorType>> messages = new ArrayList<>();
 
     @Override
     public void addMessage(PsiElement context, String message, int type) {

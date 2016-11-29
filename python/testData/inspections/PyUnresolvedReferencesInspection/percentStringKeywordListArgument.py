@@ -1,0 +1,1 @@
+"%(<warning descr="Unresolved reference 'foo'">foo</warning>)s" % [1, 2, 3]

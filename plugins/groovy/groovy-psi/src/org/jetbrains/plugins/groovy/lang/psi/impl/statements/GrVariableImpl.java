@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,27 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStub;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author Dmitry.Krasilschikov
  * @date 11.04.2007
  */
-public class GrVariableImpl extends GrVariableBaseImpl<StubElement> implements GrVariable {
+public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implements GrVariable {
 
   public GrVariableImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrVariableImpl(@NotNull GrVariableStub stub) {
+    super(stub, GroovyElementTypes.VARIABLE);
   }
 
   @Override
@@ -45,11 +52,13 @@ public class GrVariableImpl extends GrVariableBaseImpl<StubElement> implements G
 
   @Override
   public PsiElement getContext() {
-    if (ResolveUtil.isScriptField(this)) {
-      return getContainingFile();
-    }
-    else {
-      return super.getContext();
-    }
+    return ResolveUtil.isScriptField(this) ? getContainingFile() : super.getContext();
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    GrScriptField field = ResolveUtil.findScriptField(this);
+    return field != null ? field.getUseScope() : super.getUseScope();
   }
 }

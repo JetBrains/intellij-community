@@ -63,7 +63,7 @@ public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
     PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     PsiMethod method = factory.createMethod("foo", PsiType.VOID);
     int offset = getEditor().getCaretModel().getOffset();
-    List<GenerationInfo> list = Collections.<GenerationInfo>singletonList(new PsiGenerationInfo<PsiMethod>(method));
+    List<GenerationInfo> list = Collections.<GenerationInfo>singletonList(new PsiGenerationInfo<>(method));
     List<GenerationInfo> members = ApplicationManager.getApplication().runWriteAction(new Computable<List<GenerationInfo>>() {
       @Override
       public List<GenerationInfo> compute() {
@@ -85,15 +85,12 @@ public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
     PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject())
       .createFileFromText(JavaLanguage.INSTANCE, "class A {void foo() {}}\n class B extends A {void foo() {}\n}");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        PsiMethod newMethod = file.getClasses()[1].getMethods()[0];
-        GenerateMembersUtil.setupGeneratedMethod(newMethod);
-        assertEquals("@Override void foo() {\n" +
-                     "    super.foo();\n" +
-                     "    }", newMethod.getText());
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiMethod newMethod = file.getClasses()[1].getMethods()[0];
+      GenerateMembersUtil.setupGeneratedMethod(newMethod);
+      assertEquals("@Override void foo() {\n" +
+                   "    super.foo();\n" +
+                   "    }", newMethod.getText());
     });
 
   }

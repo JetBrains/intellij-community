@@ -40,7 +40,7 @@ import java.util.List;
 public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   @NotNull private final StringBuilder titleBuilder = new StringBuilder();
-  @NotNull private final List<Change> changes = new ArrayList<Change>();
+  @NotNull private final List<Change> changes = new ArrayList<>();
 
   public DirectoryWithBranchComparer(@NotNull Project project,
                                      @NotNull VirtualFile virtualFile,

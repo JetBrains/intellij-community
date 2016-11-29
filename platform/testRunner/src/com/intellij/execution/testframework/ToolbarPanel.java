@@ -24,7 +24,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.execution.testframework.actions.ShowStatisticsAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
 import com.intellij.execution.testframework.autotest.AdjustAutotestDelayActionGroup;
@@ -40,7 +39,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import com.intellij.util.config.DumbAwareToggleInvertedBooleanProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
@@ -56,7 +54,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   protected final ScrollToTestSourceAction myScrollToSource;
   private @Nullable ExportTestResultsAction myExportAction;
 
-  private final ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
+  private final ArrayList<ToggleModelAction> myActions = new ArrayList<>();
 
   public ToolbarPanel(final TestConsoleProperties properties,
                       final JComponent parent) {
@@ -117,9 +115,6 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
                                                  ExecutionBundle.message("junit.runing.info.track.test.action.description"),
                                                  null, properties, TestConsoleProperties.TRACK_RUNNING_TEST));
-    if (Registry.is("tests.view.old.statistics.panel")) {
-      secondaryGroup.add(new ShowStatisticsAction(properties));
-    }
     secondaryGroup.add(new DumbAwareToggleBooleanProperty("Show Inline Statistics", "Toggle the visibility of the test duration in the tree",
                                                  null, properties, TestConsoleProperties.SHOW_INLINE_STATISTICS));
 

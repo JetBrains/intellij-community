@@ -46,8 +46,8 @@ import java.util.List;
  */
 public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
 
-  private final ListTableModel<EditorInfo> myModel = new ListTableModel<EditorInfo>(COLUMNS);
-  private final TableView<EditorInfo> myTable = new TableView<EditorInfo>(myModel);
+  private final ListTableModel<EditorInfo> myModel = new ListTableModel<>(COLUMNS);
+  private final TableView<EditorInfo> myTable = new TableView<>(myModel);
 
   private final static ColumnInfo<EditorInfo, String> USER = new ColumnInfo<EditorInfo, String>(CvsBundle.message("view.editors.user.column.name")){
     public String valueOf(EditorInfo object) {
@@ -55,11 +55,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
     }
 
     public Comparator<EditorInfo> getComparator() {
-      return new Comparator<EditorInfo>(){
-        public int compare(EditorInfo o, EditorInfo o1) {
-          return o.getUserName().compareTo(o1.getUserName());
-        }
-      };
+      return (o, o1) -> o.getUserName().compareTo(o1.getUserName());
     }
   };
 
@@ -69,11 +65,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
     }
 
     public Comparator<EditorInfo> getComparator() {
-      return new Comparator<EditorInfo>(){
-        public int compare(EditorInfo o, EditorInfo o1) {
-          return o.getHostName().compareTo(o1.getHostName());
-        }
-      };
+      return (o, o1) -> o.getHostName().compareTo(o1.getHostName());
     }
   };
 
@@ -83,11 +75,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
     }
 
     public Comparator<EditorInfo> getComparator() {
-      return new Comparator<EditorInfo>(){
-        public int compare(EditorInfo o, EditorInfo o1) {
-          return o.getEditDate().compareTo(o1.getEditDate());
-        }
-      };
+      return (o, o1) -> o.getEditDate().compareTo(o1.getEditDate());
     }
   };
 
@@ -97,11 +85,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
     }
 
     public Comparator<EditorInfo> getComparator() {
-      return new Comparator<EditorInfo>(){
-        public int compare(EditorInfo o, EditorInfo o1) {
-          return o.getPath().compareTo(o1.getPath());
-        }
-      };
+      return (o, o1) -> o.getPath().compareTo(o1.getPath());
     }
   };
 
@@ -111,11 +95,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
     }
 
     public Comparator<EditorInfo> getComparator() {
-      return new Comparator<EditorInfo>(){
-        public int compare(EditorInfo o, EditorInfo o1) {
-          return o.getFilePath().compareTo(o1.getFilePath());
-        }
-      };
+      return (o, o1) -> o.getFilePath().compareTo(o1.getFilePath());
     }
   };
 

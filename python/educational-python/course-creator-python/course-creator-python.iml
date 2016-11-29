@@ -11,8 +11,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="course-creator" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="educational-core" />
     <orderEntry type="module" module-name="educational-python" />
     <orderEntry type="module" module-name="python-community" />
+    <orderEntry type="module" module-name="student" />
+    <orderEntry type="module" module-name="python-community-ide" />
+    <orderEntry type="module" module-name="student-python" />
   </component>
 </module>

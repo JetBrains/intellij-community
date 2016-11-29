@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class IntentionDescriptionNotFoundInspectionTest extends LightCodeInsight
 
   public void testQuickFix() {
     myFixture.configureByFile("MyQuickFixIntentionAction.java");
-    IntentionAction item = myFixture.findSingleIntention("Create Description File");
+    IntentionAction item = myFixture.findSingleIntention("Create description file description.html");
     myFixture.launchAction(item);
 
     VirtualFile path = myFixture.findFileInTempDir("intentionDescriptions/MyQuickFixIntentionAction/description.html");

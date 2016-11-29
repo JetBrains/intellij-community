@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -91,11 +92,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   public GrMethodBaseImpl(final ASTNode node) {
     super(node);
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return getDefinitionParent();
   }
 
   @Override
@@ -584,11 +580,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrReflectedMethod[]>() {
-      @Override
-      public Result<GrReflectedMethod[]> compute() {
-        return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrMethodBaseImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-    });
+    return GrReflectedMethodImpl.createReflectedMethods(this);
   }
 }

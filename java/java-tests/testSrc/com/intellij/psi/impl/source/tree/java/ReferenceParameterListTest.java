@@ -56,15 +56,12 @@ public class ReferenceParameterListTest extends PsiTestCase {
             null);
 
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          classFromText.setName("Q");
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      try {
+        classFromText.setName("Q");
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
     final PsiClass classX = classFromText.getInnerClasses()[3];

@@ -69,11 +69,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";
   private static final String XSD_1_1 = new Resource("/standardSchemas/XMLSchema-1_1/XMLSchema.xsd", ExternalResourceManagerExImpl.class, null).getResourceUrl();
 
-  private final Map<String, Map<String, String>> myResources = new THashMap<String, Map<String, String>>();
-  private final Set<String> myResourceLocations = new THashSet<String>();
+  private final Map<String, Map<String, String>> myResources = new THashMap<>();
+  private final Set<String> myResourceLocations = new THashSet<>();
 
-  private final Set<String> myIgnoredResources = new TreeSet<String>();
-  private final Set<String> myStandardIgnoredResources = new TreeSet<String>();
+  private final Set<String> myIgnoredResources = new TreeSet<>();
+  private final Set<String> myStandardIgnoredResources = new TreeSet<>();
 
   private final NotNullLazyValue<Map<String, Map<String, Resource>>> myStandardResources = new AtomicNotNullLazyValue<Map<String, Map<String, Resource>>>() {
     @NotNull
@@ -83,29 +83,25 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   };
 
-  private final CachedValueProvider<MultiMap<String, String>> myUrlByNamespaceProvider = new CachedValueProvider<MultiMap<String, String>>() {
-    @Nullable
-    @Override
-    public CachedValueProvider.Result<MultiMap<String, String>> compute() {
-      MultiMap<String, String> result = new MultiMap<String, String>();
+  private final CachedValueProvider<MultiMap<String, String>> myUrlByNamespaceProvider = () -> {
+    MultiMap<String, String> result = new MultiMap<>();
 
-      Collection<Map<String, Resource>> values = myStandardResources.getValue().values();
-      for (Map<String, Resource> map : values) {
-        for (Map.Entry<String, Resource> entry : map.entrySet()) {
-          String url = entry.getValue().getResourceUrl();
-          if (url != null) {
-            VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
-            if (file != null) {
-              String namespace = XmlNamespaceIndex.computeNamespace(file);
-              if (namespace != null) {
-                result.putValue(namespace, entry.getKey());
-              }
+    Collection<Map<String, Resource>> values = myStandardResources.getValue().values();
+    for (Map<String, Resource> map : values) {
+      for (Map.Entry<String, Resource> entry : map.entrySet()) {
+        String url = entry.getValue().getResourceUrl();
+        if (url != null) {
+          VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
+          if (file != null) {
+            String namespace = XmlNamespaceIndex.computeNamespace(file);
+            if (namespace != null) {
+              result.putValue(namespace, entry.getKey());
             }
           }
         }
       }
-      return CachedValueProvider.Result.create(result, ExternalResourceManagerExImpl.this);
     }
+    return CachedValueProvider.Result.create(result, this);
   };
 
   private String myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;
@@ -155,7 +151,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     Map<String, T> map = resources.get(version);
     if (map == null) {
       if (create) {
-        map = new THashMap<String, T>();
+        map = new THashMap<>();
         resources.put(version, map);
       }
       else if (!version.equals(DEFAULT_VERSION)) {
@@ -253,7 +249,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @Override
   public String[] getResourceUrls(@Nullable FileType fileType, @Nullable @NonNls String version, boolean includeStandard) {
-    List<String> result = new LinkedList<String>();
+    List<String> result = new LinkedList<>();
     addResourcesFromMap(result, version, myResources);
 
     if (includeStandard) {
@@ -273,21 +269,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @TestOnly
   public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
     final ExternalResourceManagerExImpl instance = (ExternalResourceManagerExImpl)getInstance();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        instance.addResource(url, location);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> instance.addResource(url, location));
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            instance.removeResource(url);
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> instance.removeResource(url));
       }
     });
   }
@@ -342,7 +328,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @Override
   public String[] getAvailableUrls() {
-    Set<String> urls = new THashSet<String>();
+    Set<String> urls = new THashSet<>();
     for (Map<String, String> map : myResources.values()) {
       urls.addAll(map.keySet());
     }
@@ -429,7 +415,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       return ArrayUtil.toStringArray(myStandardIgnoredResources);
     }
 
-    Set<String> set = new THashSet<String>(myIgnoredResources.size() + myStandardIgnoredResources.size());
+    Set<String> set = new THashSet<>(myIgnoredResources.size() + myStandardIgnoredResources.size());
     set.addAll(myIgnoredResources);
     set.addAll(myStandardIgnoredResources);
     return ArrayUtil.toStringArray(set);
@@ -445,7 +431,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   public Element getState() {
     Element element = new Element("state");
 
-    Set<String> urls = new TreeSet<String>();
+    Set<String> urls = new TreeSet<>();
     for (Map<String, String> map : myResources.values()) {
       urls.addAll(map.keySet());
     }
@@ -630,22 +616,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @TestOnly
   public static void registerResourceTemporarily(final String url, final String location, Disposable disposable) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        getInstance().addResource(url, location);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> getInstance().addResource(url, location));
 
     Disposer.register(disposable, new Disposable() {
       @Override
       public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            getInstance().removeResource(url);
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> getInstance().removeResource(url));
       }
     });
   }

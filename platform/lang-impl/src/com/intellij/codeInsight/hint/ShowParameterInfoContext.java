@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
@@ -27,6 +26,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.HintHint;
@@ -48,14 +49,22 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private final int myParameterListStart;
   private PsiElement myHighlightedElement;
   private Object[] myItems;
+  private boolean myRequestFocus;
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
-                                    final PsiFile file, int offset, int parameterListStart) {
+                                  final PsiFile file, int offset, int parameterListStart) {
+    this(editor, project, file, offset, parameterListStart, false);
+  }
+
+  public ShowParameterInfoContext(final Editor editor, final Project project,
+                                  final PsiFile file, int offset, int parameterListStart,
+                                  boolean requestFocus) {
     myEditor = editor;
     myProject = project;
     myFile = file;
     myParameterListStart = parameterListStart;
     myOffset = offset;
+    myRequestFocus = requestFocus;
   }
 
   @Override
@@ -108,7 +117,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {
     final Object[] itemsToShow = getItemsToShow();
     if (itemsToShow == null || itemsToShow.length == 0) return;
-    showMethodInfo(getProject(), getEditor(), element, getHighlightedElement(), itemsToShow, offset, handler);
+    showMethodInfo(getProject(), getEditor(), element, getHighlightedElement(), itemsToShow, offset, handler, myRequestFocus);
   }
 
   private static void showParameterHint(final PsiElement element,
@@ -117,12 +126,14 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                         final Project project,
                                         @Nullable PsiElement highlighted,
                                         final int elementStart,
-                                        final ParameterInfoHandler handler) {
+                                        final ParameterInfoHandler handler,
+                                        final boolean requestFocus) {
     if (ParameterInfoController.isAlreadyShown(editor, elementStart)) return;
 
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
-    final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler);
+    final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler,requestFocus);
     component.setParameterOwner(element);
+    component.setRequestFocus(requestFocus);
     if (highlighted != null) {
       component.setHighlightedParameter(highlighted);
     }
@@ -135,7 +146,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final ShowParameterInfoHandler.BestLocationPointProvider provider = new MyBestLocationPointProvider(editor);
     final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true, HintManager.UNDER);
 
-    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+    PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
       if (editor.isDisposed() || DumbService.isDumb(project)) return;
 
       final Document document = editor.getDocument();
@@ -143,6 +154,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
       HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
       hintHint.setExplicitClose(true);
+      hintHint.setRequestFocus(requestFocus);
 
       Editor editorToShow = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
       // is case of injection we need to calculate position for EditorWindow
@@ -157,9 +169,10 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                      PsiElement highlighted,
                                      Object[] candidates,
                                      int offset,
-                                     ParameterInfoHandler handler
+                                     ParameterInfoHandler handler,
+                                     boolean requestFocus
                                      ) {
-    showParameterHint(list, editor, candidates, project, candidates.length > 1 ? highlighted : null, offset, handler);
+    showParameterHint(list, editor, candidates, project, candidates.length > 1 ? highlighted : null, offset, handler, requestFocus);
   }
 
   /**
@@ -200,26 +213,34 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     boolean p2Ok = p2.y >= 0;
 
     if (isLookupShown) {
-      if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
+      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
+      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
     }
     else {
       if (preferredPosition != HintManager.DEFAULT) {
         if (preferredPosition == HintManager.ABOVE) {
-          if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
+          if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
         } else if (preferredPosition == HintManager.UNDER) {
-          if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
+          if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
         }
       }
 
-      if (p1Ok) return new Pair<Point, Short>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<Point, Short>(p2, HintManager.ABOVE);
+      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
+      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
     }
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;
-    return aboveSpace > underSpace ? new Pair<Point, Short>(new Point(p2.x, 0), HintManager.UNDER) : new Pair<Point, Short>(p1,
-                                                                                                                            HintManager.ABOVE);
+    return aboveSpace > underSpace ? new Pair<>(new Point(p2.x, 0), HintManager.UNDER) : new Pair<>(p1,
+                                                                                                    HintManager.ABOVE);
+  }
+
+  public void setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
+
+  public boolean isRequestFocus() {
+    return myRequestFocus;
   }
 
   static class MyBestLocationPointProvider implements ShowParameterInfoHandler.BestLocationPointProvider {
@@ -239,12 +260,15 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                                    int offset,
                                                    final boolean awtTooltip,
                                                    short preferredPosition) {
-      final TextRange textRange = list.getTextRange();
-      offset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;
+      if (list != null) {
+        TextRange range = list.getTextRange();
+        if (!range.contains(offset)) {
+          offset = range.getStartOffset() + 1;
+        }
+      }
       if (previousOffset == offset) return Pair.create(previousBestPoint, previousBestPosition);
 
-      String listText = list.getText();
-      final boolean isMultiline = listText.indexOf('\n') >= 0 || listText.indexOf('\r') >= 0;
+      final boolean isMultiline = list != null && StringUtil.containsAnyChar(list.getText(), "\n\r");
       final LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
       Pair<Point, Short> position;
 
@@ -253,7 +277,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
       }
       else {
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
-        position = new Pair<Point, Short>(p, HintManager.ABOVE);
+        position = new Pair<>(p, HintManager.ABOVE);
       }
       previousBestPoint = position.getFirst();
       previousBestPosition = position.getSecond();

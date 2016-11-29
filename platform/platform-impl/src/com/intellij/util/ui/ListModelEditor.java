@@ -88,19 +88,16 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
 
     // todo should we really do this?
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!model.isEmpty()) {
-          list.setSelectedIndex(0);
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (!model.isEmpty()) {
+        list.setSelectedIndex(0);
       }
     });
   }
 
   private class MyListCellRenderer extends ColoredListCellRenderer {
     @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       setBackground(UIUtil.getListBackground(selected));
       if (value != null) {
         //noinspection unchecked

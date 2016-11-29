@@ -68,14 +68,8 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection {
 
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("bigdecimal.legacy.method.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("bigdecimal.legacy.method.quickfix");
     }
 
     @Override

@@ -53,21 +53,15 @@ public class MavenSelectProjectPopup {
                                                    final JTextField workingDirectoryField,
                                                    final JButton showModulesButton,
                                                    @Nullable final JComponent focusAfterSelection) {
-    attachToButton(projectsManager, showModulesButton, new Consumer<MavenProject>() {
-      @Override
-      public void consume(MavenProject project) {
-        workingDirectoryField.setText(project.getDirectory());
+    attachToButton(projectsManager, showModulesButton, project -> {
+      workingDirectoryField.setText(project.getDirectory());
 
-        if (focusAfterSelection != null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (workingDirectoryField.hasFocus()) {
-                focusAfterSelection.requestFocus();
-              }
-            }
-          });
-        }
+      if (focusAfterSelection != null) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (workingDirectoryField.hasFocus()) {
+            focusAfterSelection.requestFocus();
+          }
+        });
       }
     });
 
@@ -134,24 +128,21 @@ public class MavenSelectProjectPopup {
           }
         });
 
-        final Ref<JBPopup> popupRef = new Ref<JBPopup>();
+        final Ref<JBPopup> popupRef = new Ref<>();
 
-        final Runnable clickCallBack = new Runnable() {
-          @Override
-          public void run() {
-            TreePath path = projectTree.getSelectionPath();
-            if (path == null) return;
+        final Runnable clickCallBack = () -> {
+          TreePath path = projectTree.getSelectionPath();
+          if (path == null) return;
 
-            Object lastPathComponent = path.getLastPathComponent();
-            if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return;
+          Object lastPathComponent = path.getLastPathComponent();
+          if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return;
 
-            Object object = ((DefaultMutableTreeNode)lastPathComponent).getUserObject();
-            if (object == null) return; // may be it's the root
+          Object object = ((DefaultMutableTreeNode)lastPathComponent).getUserObject();
+          if (object == null) return; // may be it's the root
 
-            callback.consume((MavenProject)object);
+          callback.consume((MavenProject)object);
 
-            popupRef.get().closeOk(null);
-          }
+          popupRef.get().closeOk(null);
         };
 
         projectTree.addKeyListener(new KeyAdapter() {
@@ -180,7 +171,7 @@ public class MavenSelectProjectPopup {
         MavenProject[] projects = projectList.toArray(new MavenProject[projectList.size()]);
         Arrays.sort(projects, new MavenProjectNamer.MavenProjectComparator());
 
-        Map<MavenProject, DefaultMutableTreeNode> projectsToNode = new HashMap<MavenProject, DefaultMutableTreeNode>();
+        Map<MavenProject, DefaultMutableTreeNode> projectsToNode = new HashMap<>();
         for (MavenProject mavenProject : projects) {
           projectsToNode.put(mavenProject, new DefaultMutableTreeNode(mavenProject));
         }

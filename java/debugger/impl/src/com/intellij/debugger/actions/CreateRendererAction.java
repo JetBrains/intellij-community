@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
-import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableBase;
@@ -63,35 +63,31 @@ public class CreateRendererAction extends AnAction {
       public void threadAction() {
         Type type = javaValue.getDescriptor().getType();
         final String name = type != null ? type.name() :null;
-        DebuggerUIUtil.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final UserRenderersConfigurable ui = new UserRenderersConfigurable();
-            ConfigurableBase<UserRenderersConfigurable, NodeRendererSettings> configurable =
-              new ConfigurableBase<UserRenderersConfigurable, NodeRendererSettings>(
-                                                                      "reference.idesettings.debugger.typerenderers",
-                                                                      DebuggerBundle.message("user.renderers.configurable.display.name"),
-                                                                      "reference.idesettings.debugger.typerenderers") {
-                @NotNull
-                @Override
-                protected NodeRendererSettings getSettings() {
-                  return NodeRendererSettings.getInstance();
-                }
+        DebuggerUIUtil.invokeLater(() -> {
+          final UserRenderersConfigurable ui = new UserRenderersConfigurable();
+          ConfigurableBase<UserRenderersConfigurable, NodeRendererSettings> configurable =
+            new ConfigurableBase<UserRenderersConfigurable, NodeRendererSettings>(
+                                                                    "reference.idesettings.debugger.typerenderers",
+                                                                    DebuggerBundle.message("user.renderers.configurable.display.name"),
+                                                                    "reference.idesettings.debugger.typerenderers") {
+              @NotNull
+              @Override
+              protected NodeRendererSettings getSettings() {
+                return NodeRendererSettings.getInstance();
+              }
 
-                @Override
-                protected UserRenderersConfigurable createUi() {
-                  return ui;
-                }
-              };
-            SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
-            if (name != null) {
-              CompoundReferenceRenderer renderer =
-                NodeRendererSettings.getInstance().createCompoundReferenceRenderer(name, name, null, null);
-              renderer.setEnabled(true);
-              ui.addRenderer(renderer);
-            }
-            editor.show();
+              @Override
+              protected UserRenderersConfigurable createUi() {
+                return ui;
+              }
+            };
+          SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
+          if (name != null) {
+            NodeRenderer renderer = NodeRendererSettings.getInstance().createCompoundTypeRenderer(name, name, null, null);
+            renderer.setEnabled(true);
+            ui.addRenderer(renderer);
           }
+          editor.show();
         });
       }
     });

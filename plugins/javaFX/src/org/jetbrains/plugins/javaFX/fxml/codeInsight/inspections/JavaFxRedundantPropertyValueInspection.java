@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
+import com.intellij.codeInsight.daemon.impl.analysis.RemoveTagIntentionFix;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
@@ -9,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -21,7 +22,7 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,14 +42,10 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new XmlElementVisitor() {
-      @Override
-      public void visitXmlFile(XmlFile file) {
-        if (!JavaFxFileTypeFactory.isFxml(file)) return;
-        super.visitXmlFile(file);
-      }
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+    if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
+    return new XmlElementVisitor() {
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
         super.visitXmlAttribute(attribute);
@@ -61,14 +58,16 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
             attributeValue.startsWith("#") ||
             attributeValue.startsWith("%") ||
             FxmlConstants.FX_ID.equals(attributeName) ||
+            FxmlConstants.FX_VALUE.equals(attributeName) ||
+            FxmlConstants.FX_CONSTANT.equals(attributeName) ||
             FxmlConstants.FX_CONTROLLER.equals(attributeName)) {
           return;
         }
-
-        final String defaultValue = getDefaultValue(attributeName, attribute.getParent());
+        final PsiClass tagClass = JavaFxPsiUtil.getTagClass(attribute.getParent());
+        final String defaultValue = getDefaultValue(attributeName, tagClass);
         if (defaultValue == null) return;
 
-        if (isEqualValue(attributeValue, defaultValue, descriptor.getDeclaration())) {
+        if (isEqualValue(tagClass, attributeValue, defaultValue, descriptor.getDeclaration())) {
           holder.registerProblem(attribute, "Attribute is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveAttributeIntentionFix(attributeName, attribute));
@@ -79,52 +78,51 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
       public void visitXmlTag(XmlTag tag) {
         super.visitXmlTag(tag);
         final XmlElementDescriptor descriptor = tag.getDescriptor();
-        if (!(descriptor instanceof JavaFxPropertyElementDescriptor)) {
+        if (!(descriptor instanceof JavaFxPropertyTagDescriptor)) {
           return;
         }
         if (tag.getSubTags().length != 0) return;
-        final String tagText = tag.getValue().getText().trim();
+        final String tagText = tag.getValue().getTrimmedText();
         if (tagText.startsWith("$") ||
             tagText.startsWith("#") ||
             tagText.startsWith("%")) {
           return;
         }
 
-        final String defaultValue = getDefaultValue(tag.getName(), tag.getParentTag());
+        final XmlTag parentTag = tag.getParentTag();
+        if (parentTag == null) return;
+        final PsiClass tagClass = JavaFxPsiUtil.getTagClass(parentTag);
+        final String defaultValue = getDefaultValue(tag.getName(), tagClass);
         if (defaultValue == null) return;
 
-        if (isEqualValue(tagText, defaultValue, descriptor.getDeclaration())) {
+        if (isEqualValue(tagClass, tagText, defaultValue, descriptor.getDeclaration())) {
           holder.registerProblem(tag, "Tag is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new RemoveTagFix(tag.getName()));
+                                 new RemoveTagIntentionFix(tag.getName(), tag));
         }
       }
     };
   }
 
   @Nullable
-  private static String getDefaultValue(@NotNull String propertyName, @Nullable XmlTag enclosingTag) {
-    if (enclosingTag != null) {
-      final XmlElementDescriptor descriptor = enclosingTag.getDescriptor();
-      if (descriptor != null) {
-        final PsiElement declaration = descriptor.getDeclaration();
-        if (declaration instanceof PsiClass) {
-          for (PsiClass psiClass = ((PsiClass)declaration); psiClass != null; psiClass = psiClass.getSuperClass()) {
-            final String qualifiedName = psiClass.getQualifiedName();
-            if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) break;
-            final String defaultValue = getDefaultPropertyValue(qualifiedName, propertyName);
-            if (defaultValue != null) {
-              return defaultValue;
-            }
-          }
-        }
+  private static String getDefaultValue(@NotNull String propertyName, @Nullable PsiClass containingClass) {
+    for (PsiClass psiClass = containingClass; psiClass != null; psiClass = psiClass.getSuperClass()) {
+      final String qualifiedName = psiClass.getQualifiedName();
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) break;
+      final String defaultValue = getDefaultPropertyValue(qualifiedName, propertyName);
+      if (defaultValue != null) {
+        return defaultValue;
       }
     }
     return null;
   }
 
-  private static boolean isEqualValue(@NotNull String attributeValue, @NotNull String defaultValue, @Nullable PsiElement declaration) {
-    final String boxedQName = JavaFxPsiUtil.getBoxedPropertyType(declaration);
+  private static boolean isEqualValue(@Nullable PsiClass containingClass,
+                                      @NotNull String attributeValue,
+                                      @NotNull String defaultValue,
+                                      @Nullable PsiElement declaration) {
+    if (!(declaration instanceof PsiMember)) return false;
+    final String boxedQName = JavaFxPsiUtil.getBoxedPropertyType(containingClass, (PsiMember)declaration);
     if (boxedQName == null) {
       return defaultValue.equals(attributeValue);
     }

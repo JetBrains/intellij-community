@@ -35,12 +35,7 @@ class IdSet {
       description = description.substring(i + 1, description.length());
     }
     myIds = description.split(",");
-    myIds = ContainerUtil.filter(myIds, new Condition<String>() {
-      @Override
-      public boolean value(String id) {
-        return pluginGroups.findPlugin(id) != null;
-      }
-    }).toArray(new String[]{});
+    myIds = ContainerUtil.filter(myIds, id -> pluginGroups.findPlugin(id) != null).toArray(new String[]{});
 
     if (myIds.length > 1 && myTitle == null) {
       throw new IllegalArgumentException("There is no common title for " + myIds.length + " ids: " + description);
@@ -48,6 +43,9 @@ class IdSet {
     if (myTitle == null && myIds.length>0) {
       //noinspection ConstantConditions
       myTitle = pluginGroups.findPlugin(myIds[0]).getName();
+    }
+    if (myIds.length == 0 && myTitle != null) {
+      myTitle = null;
     }
     if (myTitle != null) {
       for (String skipWord : BLACK_LIST) {

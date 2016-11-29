@@ -32,7 +32,7 @@ import java.util.Map;
 * @author peter
 */
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
-  private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<LookupElement, Comparable>();
+  private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<>();
   private final LookupElementWeigher myWeigher;
   private Ref<Comparable> myFirstWeight;
   private boolean myPrimitive = true;

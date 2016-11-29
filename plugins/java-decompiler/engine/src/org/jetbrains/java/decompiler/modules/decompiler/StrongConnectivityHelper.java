@@ -92,8 +92,8 @@ public class StrongConnectivityHelper {
 
   public List<List<Statement>> findComponents(Statement stat) {
 
-    components = new ArrayList<List<Statement>>();
-    setProcessed = new HashSet<Statement>();
+    components = new ArrayList<>();
+    setProcessed = new HashSet<>();
 
     visitTree(stat.getFirst());
 
@@ -115,7 +115,7 @@ public class StrongConnectivityHelper {
 
   public static boolean isExitComponent(List<Statement> lst) {
 
-    HashSet<Statement> set = new HashSet<Statement>();
+    HashSet<Statement> set = new HashSet<>();
     for (Statement stat : lst) {
       set.addAll(stat.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_FORWARD));
     }
@@ -126,7 +126,7 @@ public class StrongConnectivityHelper {
 
   public static List<Statement> getExitReps(List<List<Statement>> lst) {
 
-    List<Statement> res = new ArrayList<Statement>();
+    List<Statement> res = new ArrayList<>();
 
     for (List<Statement> comp : lst) {
       if (isExitComponent(comp)) {
@@ -142,11 +142,11 @@ public class StrongConnectivityHelper {
   // *****************************************************************************
 
   private void visitTree(Statement stat) {
-    lstack = new ListStack<Statement>();
+    lstack = new ListStack<>();
     ncounter = 0;
-    tset = new HashSet<Statement>();
-    dfsnummap = new HashMap<Statement, Integer>();
-    lowmap = new HashMap<Statement, Integer>();
+    tset = new HashSet<>();
+    dfsnummap = new HashMap<>();
+    lowmap = new HashMap<>();
 
     visit(stat);
 
@@ -181,7 +181,7 @@ public class StrongConnectivityHelper {
 
 
     if (lowmap.get(stat).intValue() == dfsnummap.get(stat).intValue()) {
-      List<Statement> lst = new ArrayList<Statement>();
+      List<Statement> lst = new ArrayList<>();
       Statement v;
       do {
         v = lstack.pop();

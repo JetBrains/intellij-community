@@ -61,22 +61,19 @@ public class PluginBuildUtil {
   }
 
   public static void getDependencies(Module module, final Set<Module> modules) {
-    productionRuntimeDependencies(module).forEachModule(new Processor<Module>() {
-      @Override
-      public boolean process(Module dep) {
-        if (ModuleType.get(dep) == StdModuleTypes.JAVA && !modules.contains(dep)) {
-          modules.add(dep);
-          getDependencies(dep, modules);
-        }
-        return true;
+    productionRuntimeDependencies(module).forEachModule(dep -> {
+      if (ModuleType.get(dep) == StdModuleTypes.JAVA && !modules.contains(dep)) {
+        modules.add(dep);
+        getDependencies(dep, modules);
       }
+      return true;
     });
   }
 
   public static Module[] getWrongSetDependencies(final Module module) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
       public Module[] compute() {
-        ArrayList<Module> result = new ArrayList<Module>();
+        ArrayList<Module> result = new ArrayList<>();
         final Module[] projectModules = ModuleManager.getInstance(module.getProject()).getModules();
         for (Module projectModule : projectModules) {
           if (ArrayUtil.find(ModuleRootManager.getInstance(projectModule).getDependencies(), module) > -1) {
@@ -89,12 +86,9 @@ public class PluginBuildUtil {
   }
 
   public static void getLibraries(Module module, final Set<Library> libs) {
-    productionRuntimeDependencies(module).forEachLibrary(new Processor<Library>() {
-      @Override
-      public boolean process(Library library) {
-        libs.add(library);
-        return true;
-      }
+    productionRuntimeDependencies(module).forEachLibrary(library -> {
+      libs.add(library);
+      return true;
     });
   }
 

@@ -35,7 +35,7 @@ public class MvcRunTargetHistoryService implements PersistentStateComponent<Stri
 
   private static final int MAX_HISTORY_LENGTH = 20;
 
-  private final LinkedList<String> myHistory = new LinkedList<String>();
+  private final LinkedList<String> myHistory = new LinkedList<>();
 
   private String myVmOptions = "";
 

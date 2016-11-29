@@ -46,4 +46,5 @@ public abstract class LighterAST {
   public abstract List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent);
 
   public abstract void disposeChildren(@NotNull List<LighterASTNode> children);
+
 }

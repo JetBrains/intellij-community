@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,17 +72,14 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
       if (aClass == null) {
         myCachedScope = GlobalSearchScope.EMPTY_SCOPE;
       } else {
-        final List<PsiElement> classesToSearch = new LinkedList<PsiElement>();
+        final List<PsiElement> classesToSearch = new LinkedList<>();
         classesToSearch.add(aClass);
 
-        classesToSearch.addAll(ClassInheritorsSearch.search(aClass, true).findAll());
+        classesToSearch.addAll(ClassInheritorsSearch.search(aClass).findAll());
 
-        FunctionalExpressionSearch.search(aClass).forEach(new Processor<PsiFunctionalExpression>() {
-          @Override
-          public boolean process(PsiFunctionalExpression expression) {
-            classesToSearch.add(expression);
-            return true;
-          }
+        FunctionalExpressionSearch.search(aClass).forEach(expression -> {
+          classesToSearch.add(expression);
+          return true;
         });
 
         myCachedScope = new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,8 +130,8 @@ class NullableMethodAnalysis {
     NullableMethodInterpreter interpreter = new NullableMethodInterpreter(insns, origins, originsMapping);
     Frame<BasicValue>[] frames =
       jsr ?
-      new AnalyzerExt<BasicValue, Constraint, NullableMethodInterpreter>(interpreter, data, Constraint.EMPTY).analyze("this", methodNode) :
-      new LiteAnalyzerExt<BasicValue, Constraint, NullableMethodInterpreter>(interpreter, data, Constraint.EMPTY).analyze("this", methodNode);
+      new AnalyzerExt<>(interpreter, data, Constraint.EMPTY).analyze("this", methodNode) :
+      new LiteAnalyzerExt<>(interpreter, data, Constraint.EMPTY).analyze("this", methodNode);
 
     BasicValue result = BasicValue.REFERENCE_VALUE;
     for (int i = 0; i < frames.length; i++) {
@@ -148,7 +148,7 @@ class NullableMethodAnalysis {
       Calls calls = ((Calls)result);
       int mergedMappedLabels = calls.mergedLabels;
       if (mergedMappedLabels != 0) {
-        Set<Product> sum = new HashSet<Product>();
+        Set<Product> sum = new HashSet<>();
         Key[] createdKeys = interpreter.keys;
         for (int origin = 0; origin < originsMapping.length; origin++) {
           int mappedOrigin = originsMapping[origin];
@@ -211,12 +211,12 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   private final int[] originsMapping;
   final Key[] keys;
 
-  Constraint constraint = null;
-  int delta = 0;
-  int nullsDelta = 0;
+  Constraint constraint;
+  int delta;
+  int nullsDelta;
   int notNullInsn = -1;
-  int notNullCall = 0;
-  int notNullNull = 0;
+  int notNullCall;
+  int notNullNull;
 
   NullableMethodInterpreter(InsnList insns, boolean[] origins, int[] originsMapping) {
     this.insns = insns;

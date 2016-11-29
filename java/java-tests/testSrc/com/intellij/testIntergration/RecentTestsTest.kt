@@ -15,290 +15,130 @@
  */
 package com.intellij.testIntergration
 
-import com.intellij.execution.Location
-import com.intellij.execution.TestStateStorage
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.FAILED_INDEX
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.PASSED_INDEX
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testIntegration.*
 import org.assertj.core.api.Assertions.assertThat
-import org.mockito.Matchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.util.*
 
-fun passed(date: Date) = TestStateStorage.Record(TestStateInfo.Magnitude.PASSED_INDEX.value, date)
-fun failed(date: Date) = TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.value, date)
+fun String.suite() = "java:suite://$this"
+fun String.test() = "java:test://$this"
+
+fun mockConfiguration(name: String, uniqueID: String): RunnerAndConfigurationSettings {
+  val settings = mock(RunnerAndConfigurationSettings::class.java)
+  `when`(settings.uniqueID).thenAnswer { uniqueID }
+  `when`(settings.name).thenAnswer { name }
+  return settings
+}
 
 class RecentTestsStepTest: LightIdeaTestCase() {
-  val runner = mock(RecentTestRunner::class.java)
 
-  val passed = passed(Date(0))
-  val failed = failed(Date(0))
-  
-  class TestStorage {
-    private val map: MutableMap<String, TestStateStorage.Record> = hashMapOf()
-    
-    fun addSuite(name: String, pass: Boolean, date: Date = Date(0), language: String = "java") {
-      val magnitude = if (pass) TestStateInfo.Magnitude.PASSED_INDEX else TestStateInfo.Magnitude.FAILED_INDEX
-      addSuite(name, magnitude, date, language)
-    }
-    
-    fun addSuite(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0), language: String = "java") {
-      val record = TestStateStorage.Record(magnitude.value, date)
-      map.put("$language:suite://$name", record)
-    }
-    
-    fun addTest(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0)) {
-      val record = TestStateStorage.Record(magnitude.value, date)
-      map.put("java:test://$name", record)
-    }
+  lateinit var data: RecentTestsData
+  lateinit var allTests: RunnerAndConfigurationSettings
+  lateinit var now: Date
 
-    fun addTest(name: String, pass: Boolean, date: Date = Date(0)) {
-      val magnitude = if (pass) TestStateInfo.Magnitude.PASSED_INDEX else TestStateInfo.Magnitude.FAILED_INDEX
-      addTest(name, magnitude, date)
-    }
-    
-    fun getMap() = map
-
-    fun getSuite(name: String, language: String = "java") = map["$language:suite://$name"]
-    
-    fun removeUrl(url: String) {
-      map.remove(url)
-    }
+  override fun setUp() {
+    super.setUp()
+    data = RecentTestsData()
+    allTests = mockConfiguration("all tests", "JUnit.all tests")
+    now = Date()
   }
   
-  fun `test show sorted by date`() {
-    val storage = TestStorage()
+  fun `test all tests passed`() {
     
-    storage.addSuite("ASTest", true, Date(1000))
-    storage.addSuite("JSTest", true, Date(1200))
+    data.addTest(SingleTestEntry("Test.textXXX".test(), now, allTests, PASSED_INDEX))
     
-    val sortedUrlList = getSortedList(storage.getMap())
-    val values = sortedUrlList.map { VirtualFileManager.extractPath(it) }
     
-    assertThat(values).isEqualTo(listOf("JSTest", "ASTest"))
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+    
+    data.addSuite(SuiteEntry("JFSDTest".suite(), now, allTests))
+    
+    data.addTest(SingleTestEntry("Test.textYYY".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testItMakesMeSadToFixIt".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("Test.textZZZ".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("Test.textQQQ".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testUnconditionalAlignmentErrorneous".test(), now, allTests, PASSED_INDEX))
+
+    val tests = data.getTestsToShow()
+    assertThat(tests).hasSize(1)
+    assertThat(tests[0].presentation).isEqualTo("all tests")
+  }
+
+
+  fun `test if one failed in run configuration show failed suite`() {
+    data.addSuite(SuiteEntry("JFSDTest".suite(), now, allTests))
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+
+    data.addTest(SingleTestEntry("JFSDTest.testItMakesMeSadToFixIt".test(), now, allTests, FAILED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testUnconditionalAlignmentErrorneous".test(), now, allTests, PASSED_INDEX))
+    
+    data.addTest(SingleTestEntry("Test.textXXX".test(), now, allTests, PASSED_INDEX))
+    
+    val tests = data.getTestsToShow()
+
+    assertThat(tests).hasSize(1)
+    
+    assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
+    assertThat(tests[0].failed).isEqualTo(true)
   }
   
-  fun `test show tests sorted by date`() {
-    val storage = TestStorage()
-    
-    storage.addSuite("ASTest", false, Date(0))
-    storage.addTest("ASTest.xxxx", true, Date(99999))
-
-    storage.addTest("ASTest.aaaa", false, Date(10000))
-    storage.addTest("ASTest.cccc", false, Date(20000))
-    storage.addTest("ASTest.bbbb", false, Date(30000))
-    
-    val sortedUrlList = getSortedList(storage.getMap())
-    val values = sortedUrlList.map { VirtualFileManager.extractPath(it) }
-
-    assertThat(values).isEqualTo(listOf("ASTest", "ASTest.bbbb", "ASTest.cccc", "ASTest.aaaa"))
-  }
   
-  fun `test show ignored`() {
-    val storage = TestStorage()
-    storage.addSuite("ASTest", TestStateInfo.Magnitude.IGNORED_INDEX)
-    storage.addTest("ASTest.ignored", TestStateInfo.Magnitude.IGNORED_INDEX)
-    storage.addTest("ASTest.passed", pass = true)
+  fun `test if configuration with single test show failed test`() {
+    data.addSuite(SuiteEntry("JFSDTest".suite(), now, allTests))
+    data.addTest(SingleTestEntry("JFSDTest.testItMakesMeSadToFixIt".test(), now, allTests, FAILED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testUnconditionalAlignmentErrorneous".test(), now, allTests, PASSED_INDEX))
     
-    val sortedUrlList = getSortedList(storage.getMap())
-    val values = sortedUrlList.map { VirtualFileManager.extractPath(it) }
-
-    assertThat(values).isEqualTo(listOf("ASTest"))
+    val tests = data.getTestsToShow()
+    assertThat(tests).hasSize(1)
+    assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
   }
+
+
+  fun `test show test without suite`() {
+    data.addTest(SingleTestEntry("Test.sssss".test(), now, allTests, FAILED_INDEX))
+    val testsToShow = data.getTestsToShow()
+    assertThat(testsToShow).hasSize(1)
+  }
+
+
+  fun `test additional entries`() {
+    data.addSuite(SuiteEntry("Test2".suite(), now, allTests))
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+    data.addTest(SingleTestEntry("Test.sss".test(), now, allTests, FAILED_INDEX))
+
+    val tests = data.getTestsToShow()
+    assertThat(tests).hasSize(1)
+
+    val failedTest = tests[0]
+
+    val collector = TestConfigurationCollector()
+    failedTest.accept(collector)
+    val configs = collector.getEnclosingConfigurations()
+    
+    assertThat(configs).hasSize(2)
+    assertThat(configs[0]).isInstanceOf(SuiteEntry::class.java)
+    assertThat(configs[1]).isInstanceOf(RunConfigurationEntry::class.java)
+  }
+
+  fun `test if configuration consists of single test show only configuration`() {
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+    data.addTest(SingleTestEntry("Test.sss".test(), now, allTests, FAILED_INDEX))
+    val tests = data.getTestsToShow()
+    
+    assertThat(tests).hasSize(1)
+    
+    val collector = TestConfigurationCollector()
+    tests[0].accept(collector)
+    val configs = collector.getEnclosingConfigurations()
+    
+    assertThat(configs).hasSize(1)
+    assertThat(configs[0]).isInstanceOf(RunConfigurationEntry::class.java)
+  }
+
   
-  fun `test when suite passed - show only suite`() {
-    val map: MutableMap<String, TestStateStorage.Record> = hashMapOf()
-
-    map.put("java:suite://JavaFormatterSuperDuperTest", passed)
-    map.put("java:test://Test.textXXX", passed)
-    map.put("java:suite://Test", passed)
-    map.put("java:test://Test.textYYY", passed)
-    map.put("java:test://Test.textZZZ", passed)
-    map.put("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt", passed)
-    map.put("java:test://Test.textQQQ", passed)
-    map.put("java:test://JavaFormatterSuperDuperTest.testUnconditionalAlignmentErrorneous", passed)  
-    
-    val expected = listOf(
-        "java:suite://JavaFormatterSuperDuperTest",
-        "java:suite://Test"
-    )
-    
-    val list = getSortedList(map)
-    assertThat(list).isEqualTo(expected)
-  }
-
-  private fun getSortedList(map: MutableMap<String, TestStateStorage.Record>): List<String> {
-    val provider = RecentTestsListProvider(map)
-    return provider.urlsToShowFromHistory
-  }
-
   
-  fun `test show only java tests`() {
-    val storage = TestStorage()
-    
-    storage.addSuite("JavaTest1", true)
-    storage.addSuite("JavaTest2", true)
-    
-    storage.addSuite("JsSuite1", true, Date(0), "js")
-    storage.addSuite("JsSuite2", true, Date(0), "js")
-    storage.addSuite("JsSuite3", true, Date(0), "js")
-    
-    val values = getSortedList(storage.getMap())
-    assertThat(values.map { VirtualFileManager.extractPath(it) }).isEqualTo(listOf("JavaTest1", "JavaTest2"))
-  }
-  
-  fun `test show failed first`() {
-    val map: MutableMap<String, TestStateStorage.Record> = hashMapOf()
-
-    map.put("java:suite://JavaFormatterSuperDuperTest", failed)
-    map.put("java:test://Test.textXXX", passed)
-    map.put("java:suite://Test", passed)
-    map.put("java:suite://JavaFormatterFailed", failed)
-    map.put("java:test://JavaFormatterFailed.fail", failed)
-    map.put("java:test://JavaFormatterFailed.notFail", passed)
-    map.put("java:test://Test.textYYY", passed)
-    map.put("java:test://Test.textZZZ", passed)
-    map.put("java:test://JavaFormatterSuperDuperTest.testFail", failed)
-    map.put("java:test://Test.textQQQ", passed)
-    map.put("java:test://JavaFormatterSuperDuperTest.testUnconditionalAlignmentErrorneous", passed)
-    
-    val values = getSortedList(map)
-    
-    val expected = listOf(
-        "java:test://JavaFormatterFailed.fail",
-        "java:suite://JavaFormatterFailed",
-        "java:test://JavaFormatterSuperDuperTest.testFail",
-        "java:suite://JavaFormatterSuperDuperTest",
-        "java:suite://Test"
-    )
-    
-    assertThat(values).isEqualTo(expected)
-  }
-  
-  fun `test if failed more than 2 tests show suite first`() {
-    val storage = TestStorage()
-    storage.addSuite("ASTest", false)
-    storage.addTest("ASTest.failed1", false, Date(3000))
-    storage.addTest("ASTest.failed2", false, Date(2000))
-    storage.addTest("ASTest.failed3", false, Date(1000))
-    storage.addTest("ASTest.passed1", true)
-
-    val sortedUrlList = getSortedList(storage.getMap())
-    val values = sortedUrlList.map { VirtualFileManager.extractPath(it) }
-
-    assertThat(values).isEqualTo(listOf(
-        "ASTest",
-        "ASTest.failed1",
-        "ASTest.failed2",
-        "ASTest.failed3"
-    ))
-  }
-  
-  fun `test if failed less than 3 tests, show tests first`() {
-    val storage = TestStorage()
-
-    storage.addSuite("ASTest", false)
-    storage.addTest("ASTest.failed1", false, Date(3000))
-    storage.addTest("ASTest.failed2", false, Date(2000))
-    storage.addTest("ASTest.passed1", true)
-
-    val sortedUrlList = getSortedList(storage.getMap())
-    val values = sortedUrlList.map { VirtualFileManager.extractPath(it) }
-
-    assertThat(values).isEqualTo(listOf(
-        "ASTest.failed1",
-        "ASTest.failed2",
-        "ASTest"
-    ))
-  }
-  
-  fun `test if all failed show only suite`() {
-    val storage = TestStorage()
-
-    storage.addSuite("ASTest", false)
-    storage.addTest("ASTest.failed1", false)
-    storage.addTest("ASTest.failed2", false)
-    storage.addTest("ASTest.failed3", false)
-    storage.addTest("ASTest.failed4", false)
-
-    val sortedUrlList = getSortedList(storage.getMap())
-    val values = sortedUrlList.map { VirtualFileManager.extractPath(it) }
-
-    assertThat(values).isEqualTo(listOf("ASTest"))
-  }
-  
-  private fun locatorReturningNullIfContains(substring: String): TestLocator {
-    val locator = mock(TestLocator::class.java)
-    `when`(locator.getLocation(Matchers.anyString())).thenAnswer {
-      val url = it.arguments[0] as String
-      if (url.contains(substring)) null else mock(Location::class.java)
-    }
-    return locator
-  }
-  
-  fun `test shown value without protocol`() {
-    val step = SelectTestStep(emptyList(), emptyMap(), runner, mock(TestLocator::class.java))
-    var shownValue = step.getTextFor("java:suite://JavaFormatterSuperDuperTest")
-    assertThat(shownValue).isEqualTo("JavaFormatterSuperDuperTest")
-    
-    shownValue = step.getTextFor("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt")
-    assertThat(shownValue).isEqualTo("JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt")
-  }
-
-  fun `test do not show urls which we can locate without location`() {
-    val storage = TestStorage()
-
-    storage.addSuite("ASTest", true)
-    storage.addSuite("BSTest", false)
-    storage.addTest("BSTest.fff", false)
-    storage.addTest("BSTest.ppp", true)
-
-    storage.addTest("<default package>", false)
-    storage.addSuite("<default package>", false)
-
-    val testStorageMock = createMockStorage(storage)
-
-    val map = storage.getMap()
-
-    val cleaner = DeadTestsCleaner(testStorageMock, map.keys.toList(), locatorReturningNullIfContains("<"))
-    cleaner.run()
-
-    val sortedUrlList = getSortedList(storage.getMap())
-    val values = sortedUrlList.map { VirtualFileManager.extractPath(it) }
-
-    assertThat(values).isEqualTo(listOf("BSTest.fff", "BSTest", "ASTest"))
-    assertThat(storage.getSuite("<default package>")).isEqualTo(null)
-  }
-
-  fun `test do not remove tests if we are unable to locate them`() {
-    val storage = TestStorage()
-
-    storage.addSuite("ASTest", true)
-    
-    storage.addSuite("JsSuite1", true, Date(), "js")
-    storage.addSuite("JsSuite2", true, Date(), "js")
-    
-    val testStorageMock = createMockStorage(storage)
-    
-    val sortedUrlList = getSortedList(storage.getMap())
-    
-    val cleaner = DeadTestsCleaner(testStorageMock, sortedUrlList, locatorReturningNullIfContains("JsSuite"))
-    cleaner.run()
-
-    assertThat(storage.getSuite("JsSuite1", "js")).isNotEqualTo(null)
-    assertThat(storage.getSuite("JsSuite2", "js")).isNotEqualTo(null)
-  }
-
-  private fun createMockStorage(storage: TestStorage): TestStateStorage? {
-    val testStorageMock = mock(TestStateStorage::class.java)
-    `when`(testStorageMock.removeState(Matchers.anyString())).then {
-      val url = it.arguments[0]as String
-      storage.removeUrl(url)
-    }
-    return testStorageMock
-  }
-
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     }
     final PsiMethod method = (PsiMethod)enclosingElement;
 
-    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
+    final ArrayList<PsiMethod> methods = new ArrayList<>();
 
     final PsiCodeBlock body = method.getBody();
     if (body != null) {
@@ -55,9 +55,9 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
     final PsiClass baseClass = baseMethod.getContainingClass();
 
-    final HashMap<PsiMethod,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMethod, CallHierarchyNodeDescriptor>();
+    final HashMap<PsiMethod,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<>();
 
-    final ArrayList<CallHierarchyNodeDescriptor> result = new ArrayList<CallHierarchyNodeDescriptor>();
+    final ArrayList<CallHierarchyNodeDescriptor> result = new ArrayList<>();
 
     for (final PsiMethod calledMethod : methods) {
       if (!isInScope(baseClass, calledMethod, myScopeType)) continue;
@@ -74,7 +74,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     }
 
     // also add overriding methods as children
-    final PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
+    final PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
     for (final PsiMethod overridingMethod : overridingMethods) {
       if (!isInScope(baseClass, overridingMethod, myScopeType)) continue;
       final CallHierarchyNodeDescriptor node = new CallHierarchyNodeDescriptor(myProject, descriptor, overridingMethod, false, false);

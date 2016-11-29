@@ -105,13 +105,10 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
   private EditorNotificationPanel createPanel(@NotNull final VirtualFile file) {
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(IdeBundle.message("file.changed.externally.message"));
-    panel.createActionLabel(IdeBundle.message("file.changed.externally.reload"), new Runnable() {
-      @Override
-      public void run() {
-        if (!myProject.isDisposed()) {
-          file.refresh(false, false);
-          EditorNotifications.getInstance(myProject).updateNotifications(file);
-        }
+    panel.createActionLabel(IdeBundle.message("file.changed.externally.reload"), () -> {
+      if (!myProject.isDisposed()) {
+        file.refresh(false, false);
+        EditorNotifications.getInstance(myProject).updateNotifications(file);
       }
     });
     return panel;

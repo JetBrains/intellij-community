@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,9 +72,10 @@ public class BoolUtils {
     }
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
-      return conditionalExpression.getCondition().getText() +
-             '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
-             ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
+      final boolean needParenthesis = ParenthesesUtils.getPrecedence(conditionalExpression) >= precedence;
+      final String text = conditionalExpression.getCondition().getText() + '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
+                                                                           ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
+      return needParenthesis ? "(" + text + ")" : text;
     }
     else if (isNegation(expression)) {
       final PsiExpression negated = getNegated(expression);
@@ -91,6 +92,10 @@ public class BoolUtils {
       final boolean isEven = (operands.length & 1) != 1;
       for (int i = 0, length = operands.length; i < length; i++) {
         final PsiExpression operand = operands[i];
+        if (TypeUtils.hasFloatingPointType(operand)) {
+          // preserve semantics for NaNs
+          return "!(" + polyadicExpression.getText() + ')';
+        }
         if (i > 0) {
           if (isEven && (i & 1) != 1) {
             final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);

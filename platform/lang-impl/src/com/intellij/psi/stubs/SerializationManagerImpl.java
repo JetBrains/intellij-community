@@ -58,12 +58,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     }
     finally {
       registerSerializer(PsiFileStubImpl.TYPE);
-      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-        @Override
-        public void run() {
-          performShutdown();
-        }
-      });
+      ShutDownTracker.getInstance().registerShutdownTask(() -> performShutdown());
     }
   }
 

@@ -23,8 +23,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.containers.ConcurrentBitSet;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +31,10 @@ import java.util.List;
 /**
  * @author peter
  */
-class IgnoredFileCache {
-  private final ConcurrentBitSet myCheckedIds = new ConcurrentBitSet();
-  private final ConcurrentIntObjectMap<Object> myIgnoredIds = ContainerUtil.createConcurrentIntObjectMap();
+final class IgnoredFileCache {
+  private final ConcurrentBitSet myNonIgnoredIds = new ConcurrentBitSet();
   private final IgnoredPatternSet myIgnoredPatterns;
-  private volatile int myVfsEventNesting = 0;
+  private int myVfsEventNesting;
 
   IgnoredFileCache(@NotNull IgnoredPatternSet ignoredPatterns) {
     myIgnoredPatterns = ignoredPatterns;
@@ -62,8 +59,7 @@ class IgnoredFileCache {
           if (file instanceof NewVirtualFile && event instanceof VFilePropertyChangeEvent) {
             int id = ((NewVirtualFile)file).getId();
             if (id >= 0) {
-              myCheckedIds.clear(id);
-              myIgnoredIds.remove(id);
+              myNonIgnoredIds.clear(id);
             }
           }
         }
@@ -72,37 +68,19 @@ class IgnoredFileCache {
   }
 
   void clearCache() {
-    myCheckedIds.clear();
-    myIgnoredIds.clear();
+    myNonIgnoredIds.clear();
   }
 
-  boolean isFileIgnored(@NotNull VirtualFile file) {
-    if (myVfsEventNesting != 0 || !(file instanceof NewVirtualFile)) {
-      return isFileIgnoredNoCache(file);
+  boolean isFileIgnored(VirtualFile file) {
+    int id = myVfsEventNesting == 0 && file instanceof NewVirtualFile ? ((NewVirtualFile)file).getId() : -1;
+    if (id > 0 && myNonIgnoredIds.get(id)) {
+      return false;
     }
 
-    int id = ((NewVirtualFile)file).getId();
-    if (id < 0) {
-      return isFileIgnoredNoCache(file);
+    boolean result = myIgnoredPatterns.isIgnored(file.getNameSequence());
+    if (!result && id > 0) {
+      myNonIgnoredIds.set(id);
     }
-
-    ConcurrentBitSet checkedIds = myCheckedIds;
-    if (checkedIds.get(id)) {
-      return myIgnoredIds.containsKey(id);
-    }
-
-    boolean result = isFileIgnoredNoCache(file);
-    if (result) {
-      myIgnoredIds.put(id, Boolean.TRUE);
-    }
-    else {
-      myIgnoredIds.remove(id);
-    }
-    checkedIds.set(id);
     return result;
-  }
-
-  private boolean isFileIgnoredNoCache(@NotNull VirtualFile file) {
-    return myIgnoredPatterns.isIgnored(file.getName());
   }
 }

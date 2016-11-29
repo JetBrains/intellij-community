@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +30,6 @@ import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -85,20 +83,14 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
 
     final Document document = editor.getDocument();
-    if (!FileDocumentManager.getInstance().requestWriting(document, CommonDataKeys.PROJECT.getData(dataContext))) {
+    if (!EditorModificationUtil.requestWriting(editor)) {
       return;
     }
 
     DataContext context = new DataContext() {
       @Override
       public Object getData(@NonNls String dataId) {
-        return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? new Producer<Transferable>() {
-          @Nullable
-          @Override
-          public Transferable produce() {
-            return transferable;
-          }
-        } : dataContext.getData(dataId);
+        return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
       }
     };
 
@@ -156,8 +148,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<CopyPastePostProcessor, List<? extends TextBlockTransferableData>>();
-    final Collection<TextBlockTransferableData> allValues = new ArrayList<TextBlockTransferableData>();
+    final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<>();
+    final Collection<TextBlockTransferableData> allValues = new ArrayList<>();
 
     for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
       List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
@@ -201,11 +193,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     final String _text = text;
     ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          EditorModificationUtil.insertStringAtCaret(editor, _text, false, true);
-        }
+      () -> {
+        EditorModificationUtil.insertStringAtCaret(editor, _text, false, true);
       }
     );
 
@@ -221,7 +210,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     selectionModel.removeSelection();
 
-    final Ref<Boolean> indented = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> indented = new Ref<>(Boolean.FALSE);
     for (Map.Entry<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData.entrySet()) {
       //noinspection unchecked
       e.getKey().processTransferableData(project, editor, bounds, caretOffset, indented, e.getValue());
@@ -235,28 +224,25 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       final int indentOptions1 = indentOptions;
 
       ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          @Override
-          public void run() {
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-            switch (indentOptions1) {
-              case CodeInsightSettings.INDENT_BLOCK:
-                if (!indented.get()) {
-                  indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn);
-                }
-                break;
+        () -> {
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+          switch (indentOptions1) {
+            case CodeInsightSettings.INDENT_BLOCK:
+              if (!indented.get()) {
+                indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn);
+              }
+              break;
 
-              case CodeInsightSettings.INDENT_EACH_LINE:
-                if (!indented.get()) {
-                  indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
-                }
-                break;
+            case CodeInsightSettings.INDENT_EACH_LINE:
+              if (!indented.get()) {
+                indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+              }
+              break;
 
-              case CodeInsightSettings.REFORMAT_BLOCK:
-                indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset()); // this is needed for example when inserting a comment before method
-                reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
-                break;
-            }
+            case CodeInsightSettings.REFORMAT_BLOCK:
+              indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset()); // this is needed for example when inserting a comment before method
+              reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+              break;
           }
         }
       );
@@ -327,24 +313,12 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
   private static void reformatBlock(final Project project, final Editor editor, final int startOffset, final int endOffset) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Runnable task = new Runnable() {
-      @Override
-      public void run() {
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-        try {
-          CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset, true);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-    };
-
-    if (endOffset - startOffset > 1000) {
-      DocumentUtil.executeInBulk(editor.getDocument(), true, task);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    try {
+      CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset, true);
     }
-    else {
-      task.run();
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
     }
   }
 
@@ -524,15 +498,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         desiredSymbolsToRemove = -diff;
       }
 
-      Runnable deindentTask = new Runnable() {
-        public void run() {
-          for (int line = anchorLine + 1; line <= lastLine; line++) {
-            int currentLineStart = document.getLineStartOffset(line);
-            int currentLineIndentOffset = CharArrayUtil.shiftForward(chars, currentLineStart, " \t");
-            int symbolsToRemove = Math.min(currentLineIndentOffset - currentLineStart, desiredSymbolsToRemove);
-            if (symbolsToRemove > 0) {
-              document.deleteString(currentLineStart, currentLineStart + symbolsToRemove);
-            }
+      Runnable deindentTask = () -> {
+        for (int line = anchorLine + 1; line <= lastLine; line++) {
+          int currentLineStart = document.getLineStartOffset(line);
+          int currentLineIndentOffset = CharArrayUtil.shiftForward(chars, currentLineStart, " \t");
+          int symbolsToRemove = Math.min(currentLineIndentOffset - currentLineStart, desiredSymbolsToRemove);
+          if (symbolsToRemove > 0) {
+            document.deleteString(currentLineStart, currentLineStart + symbolsToRemove);
           }
         }
       };
@@ -549,12 +521,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
    */
   private static void indentLines(final @NotNull Document document, 
                                   final int startLine, final int endLine, final @NotNull CharSequence indentString) {
-    Runnable indentTask = new Runnable() {
-      public void run() {
-        for (int line = startLine; line <= endLine; line++) {
-          int lineStartOffset = document.getLineStartOffset(line);
-          document.insertString(lineStartOffset, indentString);
-        }
+    Runnable indentTask = () -> {
+      for (int line = startLine; line <= endLine; line++) {
+        int lineStartOffset = document.getLineStartOffset(line);
+        document.insertString(lineStartOffset, indentString);
       }
     };
     DocumentUtil.executeInBulk(document, endLine - startLine > LINE_LIMIT_FOR_BULK_CHANGE, indentTask);

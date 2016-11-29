@@ -42,12 +42,10 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   private static final Sorter KIND_SORTER = new Sorter() {
     @NotNull
     public Comparator getComparator() {
-      return new Comparator() {
-        public int compare(final Object o1, final Object o2) {
-          int weight1 = o1 instanceof PropertiesPrefixGroup ? 1 : 0;
-          int weight2 = o2 instanceof PropertiesPrefixGroup ? 1 : 0;
-          return weight1 - weight2;
-        }
+      return (o1, o2) -> {
+        int weight1 = o1 instanceof PropertiesPrefixGroup ? 1 : 0;
+        int weight2 = o2 instanceof PropertiesPrefixGroup ? 1 : 0;
+        return weight1 - weight2;
       };
     }
 

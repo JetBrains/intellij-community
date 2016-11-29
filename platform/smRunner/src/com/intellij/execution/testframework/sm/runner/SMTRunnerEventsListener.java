@@ -27,7 +27,7 @@ import java.util.List;
  * Handles Test Runner events
 */
 public interface SMTRunnerEventsListener {
-  Topic<SMTRunnerEventsListener> TEST_STATUS = new Topic<SMTRunnerEventsListener>("test status", SMTRunnerEventsListener.class);
+  Topic<SMTRunnerEventsListener> TEST_STATUS = new Topic<>("test status", SMTRunnerEventsListener.class);
 
   /**
    * On start testing, before tests and suits launching

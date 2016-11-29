@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ import java.awt.*;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
-import static git4idea.crlf.GitCrlfUtil.*;
+import static git4idea.crlf.GitCrlfUtil.RECOMMENDED_VALUE;
 
 /**
  * Warns the user that CRLF line separators are about to be committed to the repository.
@@ -76,12 +75,7 @@ public class GitCrlfDialog extends DialogWrapper {
       "<html>Fix and Commit: <code>git config --global core.autocrlf " + RECOMMENDED_VALUE + "</code> will be called,<br/>" +
       "Commit as Is: the config value won't be set.</html>", UIUtil.ComponentStyle.SMALL);
 
-    JLabel readMore = new LinkLabel("Read more", null, new LinkListener() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        BrowserUtil.browse("https://help.github.com/articles/dealing-with-line-endings");
-      }
-    });
+    JLabel readMore = LinkLabel.create("Read more", () -> BrowserUtil.browse("https://help.github.com/articles/dealing-with-line-endings"));
 
     JLabel icon = new JLabel(UIUtil.getWarningIcon(), SwingConstants.LEFT);
     myDontWarn = new JBCheckBox("Don't warn again");

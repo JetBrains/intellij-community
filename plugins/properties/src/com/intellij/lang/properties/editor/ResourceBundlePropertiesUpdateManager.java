@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,21 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -68,11 +70,25 @@ public class ResourceBundlePropertiesUpdateManager {
     }
   }
 
+  public void insertAfter(@NotNull String key, @NotNull String value, @NotNull String anchor) {
+    if (myAlphaSorted || !myOrdered) {
+      throw new IllegalStateException("Can't insert new properties by anchor while resource bundle is alpha-sorted");
+    }
+     final PropertiesFile file = myResourceBundle.getDefaultPropertiesFile();
+    final IProperty anchorProperty = file.findPropertyByKey(anchor);
+    file.addPropertyAfter(key, value, anchorProperty);
+    final int anchorIndex = myKeysOrder.indexOf(anchor);
+    myKeysOrder.add(anchorIndex + 1, key);
+  }
+
   public void insertOrUpdateTranslation(String key, String value, final PropertiesFile propertiesFile) throws IncorrectOperationException {
     final IProperty property = propertiesFile.findPropertyByKey(key);
     if (property != null) {
-      property.setValue(value);
-      myCodeStyleManager.reformat(property.getPsiElement());
+      final String oldValue = property.getValue();
+      if (!Comparing.equal(oldValue, value)) {
+        property.setValue(value);
+        myCodeStyleManager.reformat(property.getPsiElement());
+      }
       return;
     }
 
@@ -106,7 +122,13 @@ public class ResourceBundlePropertiesUpdateManager {
       }
     }
     if (property != null) {
-      property.getPsiElement().delete();
+      PsiElement anElement = property.getPsiElement();
+      if (anElement instanceof PomTargetPsiElement) {
+        final PomTarget xmlProperty = ((PomTargetPsiElement)anElement).getTarget();
+        LOG.assertTrue(xmlProperty instanceof XmlProperty);
+        anElement = ((XmlProperty)xmlProperty).getNavigationElement();
+      }
+      anElement.delete();
     }
   }
 
@@ -145,10 +167,10 @@ public class ResourceBundlePropertiesUpdateManager {
   @Nullable
   private static Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
     final boolean[] isAlphaSorted = new boolean[]{true};
-    final GraphGenerator<String> generator = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
+    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<String>() {
       @Override
       public Collection<String> getNodes() {
-        final Set<String> nodes = new LinkedHashSet<String>();
+        final Set<String> nodes = new LinkedHashSet<>();
         for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
           for (IProperty property : propertiesFile.getProperties()) {
             final String key = property.getKey();
@@ -162,7 +184,7 @@ public class ResourceBundlePropertiesUpdateManager {
 
       @Override
       public Iterator<String> getIn(String n) {
-        final Collection<String> siblings = new LinkedHashSet<String>();
+        final Collection<String> siblings = new LinkedHashSet<>();
         for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
           for (IProperty property : propertiesFile.findPropertiesByKey(n)) {
             PsiElement sibling = property.getPsiElement().getNextSibling();
@@ -183,11 +205,11 @@ public class ResourceBundlePropertiesUpdateManager {
         return siblings.iterator();
       }
     }));
-    DFSTBuilder<String> dfstBuilder = new DFSTBuilder<String>(generator);
+    DFSTBuilder<String> dfstBuilder = new DFSTBuilder<>(generator);
     final boolean acyclic = dfstBuilder.isAcyclic();
     if (acyclic) {
       if (isAlphaSorted[0]) {
-        final List<String> sortedNodes = new ArrayList<String>(generator.getNodes());
+        final List<String> sortedNodes = new ArrayList<>(generator.getNodes());
         Collections.sort(sortedNodes, String.CASE_INSENSITIVE_ORDER);
         return Pair.create(sortedNodes, true);
       } else {
@@ -201,8 +223,11 @@ public class ResourceBundlePropertiesUpdateManager {
     }
   }
 
-  @TestOnly
   public boolean isAlphaSorted() {
     return myAlphaSorted;
+  }
+
+  public boolean isSorted() {
+    return myOrdered;
   }
 }

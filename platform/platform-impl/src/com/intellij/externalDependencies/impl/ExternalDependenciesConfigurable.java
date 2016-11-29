@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 /**
@@ -48,7 +49,7 @@ import java.util.*;
  */
 public class ExternalDependenciesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final ExternalDependenciesManager myDependenciesManager;
-  private CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<ProjectExternalDependency>();
+  private CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();
   private Map<String, String> myPluginNameById;
 
   public ExternalDependenciesConfigurable(Project project) {
@@ -63,7 +64,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
 
   @Override
   public boolean isModified() {
-    return !new HashSet<ProjectExternalDependency>(myDependenciesManager.getAllDependencies()).equals(new HashSet<ProjectExternalDependency>(myListModel.getItems()));
+    return !new HashSet<>(myDependenciesManager.getAllDependencies()).equals(new HashSet<>(myListModel.getItems()));
   }
 
   @Override
@@ -111,6 +112,13 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
         }
       }
     });
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        return editSelectedDependency(dependenciesList);
+      }
+    }.installOn(dependenciesList);
+
     dependenciesList.setModel(myListModel);
     JPanel dependenciesPanel = ToolbarDecorator.createDecorator(dependenciesList)
       .disableUpDownActions()
@@ -123,10 +131,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          DependencyOnPlugin selected = (DependencyOnPlugin)dependenciesList.getSelectedValue();
-          if (selected != null) {
-            replaceDependency(selected, dependenciesList);
-          }
+          editSelectedDependency(dependenciesList);
         }
       })
       .createPanel();
@@ -135,10 +140,19 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
       .getPanel();
   }
 
+  public boolean editSelectedDependency(JBList dependenciesList) {
+    DependencyOnPlugin selected = (DependencyOnPlugin)dependenciesList.getSelectedValue();
+    if (selected != null) {
+      replaceDependency(selected, dependenciesList);
+      return true;
+    }
+    return false;
+  }
+
   private void replaceDependency(DependencyOnPlugin original, JBList dependenciesList) {
     DependencyOnPlugin dependency = editPluginDependency(dependenciesList, original);
     if (dependency != null) {
-      for (ProjectExternalDependency dependency1 : new ArrayList<ProjectExternalDependency>(myListModel.getItems())) {
+      for (ProjectExternalDependency dependency1 : new ArrayList<>(myListModel.getItems())) {
         if (dependency1 instanceof DependencyOnPlugin && ((DependencyOnPlugin)dependency1).getPluginId().equals(dependency.getPluginId())) {
           myListModel.remove(dependency1);
         }
@@ -154,7 +168,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
 
   private Map<String, String> getPluginNameByIdMap() {
     if (myPluginNameById == null) {
-      myPluginNameById = new HashMap<String, String>();
+      myPluginNameById = new HashMap<>();
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
         myPluginNameById.put(descriptor.getPluginId().getIdString(), descriptor.getName());
       }
@@ -170,16 +184,11 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
 
   @Nullable
   private DependencyOnPlugin editPluginDependency(@NotNull JComponent parent, @NotNull final DependencyOnPlugin original) {
-    List<String> pluginIds = new ArrayList<String>(getPluginNameByIdMap().keySet());
+    List<String> pluginIds = new ArrayList<>(getPluginNameByIdMap().keySet());
     if (!original.getPluginId().isEmpty() && !pluginIds.contains(original.getPluginId())) {
       pluginIds.add(original.getPluginId());
     }
-    Collections.sort(pluginIds, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return getPluginNameById(o1).compareToIgnoreCase(getPluginNameById(o2));
-      }
-    });
+    Collections.sort(pluginIds, (o1, o2) -> getPluginNameById(o1).compareToIgnoreCase(getPluginNameById(o2)));
 
     final ComboBox pluginChooser = new ComboBox(ArrayUtilRt.toStringArray(pluginIds), 250);
     pluginChooser.setRenderer(new ListCellRendererWrapper<String>() {
@@ -224,12 +233,6 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
                                     StringUtil.nullize(maxVersionField.getText().trim()),
                                     StringUtil.nullize(channelField.getText().trim()));
     }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public Runnable enableSearch(String option) {
     return null;
   }
 

@@ -15,18 +15,30 @@
  */
 package git4idea;
 
-import com.intellij.dvcs.DvcsPlatformFacade;
-import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
-import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepository;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface GitPlatformFacade extends DvcsPlatformFacade {
+/**
+ * @deprecated To remove in IDEA 2017. Use direct instance or ServiceManager methods to access platform structures.
+ */
+@Deprecated
+public interface GitPlatformFacade {
 
-  @NotNull
-  <T extends RepositoryManager<GitRepository>> T getRepositoryManager(@NotNull Project project);
+  /**
+   * @deprecated To remove in IDEA 2017. Use {@link ChangeListManager#getInstance(Project)}.
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  ChangeListManagerEx getChangeListManager(@NotNull Project project);
 
-  @NotNull
-  GitVcsSettings getSettings(Project project);
+  /**
+   * @deprecated To remove in IDEA 2017. Use {@link VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)}.
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  void hardRefresh(@NotNull VirtualFile root);
 }

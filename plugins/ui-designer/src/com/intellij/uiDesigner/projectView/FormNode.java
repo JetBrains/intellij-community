@@ -134,7 +134,7 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   private static Collection<BasePsiNode<? extends PsiElement>> getChildren(final Project project, final Form form, final ViewSettings settings) {
-    final Set<BasePsiNode<? extends PsiElement>> children = new LinkedHashSet<BasePsiNode<? extends PsiElement>>();
+    final Set<BasePsiNode<? extends PsiElement>> children = new LinkedHashSet<>();
     children.add(new ClassTreeNode(project, form.getClassToBind(), settings));
     for (PsiFile formBoundToClass : form.getFormFiles()) {
       children.add(new PsiFileNode(project, formBoundToClass, settings));

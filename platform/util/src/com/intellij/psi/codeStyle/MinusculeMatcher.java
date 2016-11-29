@@ -31,6 +31,8 @@ import java.util.Iterator;
  * Tells whether a string matches a specific pattern. Allows for lowercase camel-hump matching.
  * Used in navigation, code completion, speed search etc.
  *
+ * @see NameUtil#buildMatcher(String)
+ *
  * @author peter
 */
 public class MinusculeMatcher implements Matcher {
@@ -59,19 +61,10 @@ public class MinusculeMatcher implements Matcher {
    * Constructs a matcher by a given pattern.
    * @param pattern the pattern
    * @param options case sensitivity settings
-   */
-  public MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options) {
-    this(pattern, options, "");
-  }
-
-  /**
-   * Constructs a matcher by a given pattern.
-   * @param pattern the pattern
-   * @param options case sensitivity settings
    * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
    * Need either an explicit uppercase letter or the same separator character in prefix
   */
-  public MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
+  MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
     myHardSeparators = hardSeparators;

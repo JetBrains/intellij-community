@@ -92,12 +92,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     if (editor == null) return;
 
     final EditorActionHandler handler = getHandler();
-    Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
-      }
-    };
+    Runnable command = () -> handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
 
     if (!handler.executeInCommand(editor, dataContext)) {
       command.run();

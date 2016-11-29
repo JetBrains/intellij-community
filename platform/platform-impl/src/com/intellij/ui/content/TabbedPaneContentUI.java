@@ -297,7 +297,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
     public void selectionChanged(ContentManagerEvent event) {
       int index = event.getIndex();
-      if (index != -1) {
+      if (index != -1 && event.getOperation() != ContentManagerEvent.ContentOperation.remove) {
         myTabbedPaneWrapper.setSelectedIndex(index);
       }
     }

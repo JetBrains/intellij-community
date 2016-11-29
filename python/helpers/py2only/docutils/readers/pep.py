@@ -1,4 +1,4 @@
-# $Id: pep.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: pep.py 7320 2012-01-19 22:33:02Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,9 +8,10 @@ Python Enhancement Proposal (PEP) Reader.
 
 __docformat__ = 'reStructuredText'
 
-from docutils.parsers import rst
+
 from docutils.readers import standalone
-from docutils.transforms import peps, frontmatter
+from docutils.transforms import peps, references, misc, frontmatter
+from docutils.parsers import rst
 
 
 class Reader(standalone.Reader):
@@ -43,5 +44,5 @@ class Reader(standalone.Reader):
     def __init__(self, parser=None, parser_name=None):
         """`parser` should be ``None``."""
         if parser is None:
-            parser = rst.Parser(rfc2822=1, inliner=self.inliner_class())
+            parser = rst.Parser(rfc2822=True, inliner=self.inliner_class())
         standalone.Reader.__init__(self, parser, '')

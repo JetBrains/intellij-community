@@ -34,7 +34,7 @@ public class StructAnnotationParameterAttribute extends StructGeneralAttribute {
 
     int len = data.readUnsignedByte();
     if (len > 0) {
-      paramAnnotations = new ArrayList<List<AnnotationExprent>>(len);
+      paramAnnotations = new ArrayList<>(len);
       for (int i = 0; i < len; i++) {
         List<AnnotationExprent> annotations = StructAnnotationAttribute.parseAnnotations(pool, data);
         paramAnnotations.add(annotations);
